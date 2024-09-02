@@ -1,8 +1,6 @@
 package grpcutils
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,25 +20,7 @@ func ReadGrpcClientConfig(cfg *setting.Cfg) *GrpcClientConfig {
 	}
 }
 
-type Mode string
-
-func (s Mode) IsValid() bool {
-	switch s {
-	case ModeGRPC, ModeInProc, ModeCloud:
-		return true
-	}
-	return false
-}
-
-const (
-	ModeGRPC   Mode = "grpc"
-	ModeInProc Mode = "inproc"
-	ModeCloud  Mode = "cloud"
-)
-
 type GrpcServerConfig struct {
-	Mode Mode
-
 	SigningKeysURL   string
 	AllowedAudiences []string
 }
@@ -48,13 +28,7 @@ type GrpcServerConfig struct {
 func ReadGprcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
 	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 
-	mode := Mode(section.Key("mode").MustString(string(ModeGRPC)))
-	if !mode.IsValid() {
-		return nil, fmt.Errorf("grpc_server_authentication: invalid mode %q", mode)
-	}
-
 	return &GrpcServerConfig{
-		Mode:             mode,
 		SigningKeysURL:   section.Key("signing_keys_url").MustString(""),
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 	}, nil
