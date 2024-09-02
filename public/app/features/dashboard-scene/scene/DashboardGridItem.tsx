@@ -226,6 +226,9 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     }
 
     if (!repeatedPanels) {
+      if (body instanceof LibraryVizPanel) {
+        return <body.Component model={body} key={body.state.key} />;
+      }
       return null;
     }
 

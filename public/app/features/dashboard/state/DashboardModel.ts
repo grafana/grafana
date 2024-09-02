@@ -742,7 +742,6 @@ export class DashboardModel implements TimeModel {
       copy = this.getPanelRepeatClone(panel, index, panelIndex);
       copy.scopedVars ??= {};
       copy.scopedVars[variable.name] = option;
-      console.log('repeatPanel copy', copy);
 
       if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
         if (index > 0) {
