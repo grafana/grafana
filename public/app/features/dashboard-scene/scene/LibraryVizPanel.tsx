@@ -7,7 +7,6 @@ import {
   VizPanelState,
 } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
-import { appEvents } from 'app/core/core';
 import { PanelModel } from 'app/features/dashboard/state';
 import { showLibrayPanelWithRepeatNotice } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
@@ -93,7 +92,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
 
       // Migrate repeat settings from lib panel to grid item
       if (this.parent instanceof DashboardGridItem) {
-        if (!this.parent.state.variableName) {
+        if (libPanel.model.repeat && !this.parent.state.variableName) {
           showLibrayPanelWithRepeatNotice();
 
           this.parent.setState({
@@ -101,6 +100,8 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
             repeatDirection: libPanel.model.repeatDirection === 'h' ? 'h' : 'v',
             maxPerRow: libPanel.model.maxPerRow,
           });
+
+          this.parent.performRepeat();
         }
       }
     } catch (err) {
