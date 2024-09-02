@@ -40,6 +40,17 @@ export type UsePluginComponentsResult<Props = {}> = {
   isLoading: boolean;
 };
 
+export type UsePluginLinksOptions = {
+  extensionPointId: string;
+  context?: object | Record<string | symbol, unknown>;
+  limitPerPlugin?: number;
+};
+
+export type UsePluginLinksResult = {
+  isLoading: boolean;
+  links: PluginExtensionLink[];
+};
+
 let singleton: GetPluginExtensions | undefined;
 
 export function setPluginExtensionGetter(instance: GetPluginExtensions): void {
