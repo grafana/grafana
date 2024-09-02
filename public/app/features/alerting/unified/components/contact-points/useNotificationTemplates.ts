@@ -28,8 +28,14 @@ export interface NotificationTemplate {
   provenance: string;
 }
 
-const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
-const { useListNamespacedTemplateGroupQuery } = templatesApi;
+const { useGetAlertmanagerConfigurationQuery, useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
+const {
+  useListNamespacedTemplateGroupQuery,
+  useLazyReadNamespacedTemplateGroupQuery,
+  useCreateNamespacedTemplateGroupMutation,
+  useReplaceNamespacedTemplateGroupMutation,
+  useDeleteNamespacedTemplateGroupMutation,
+} = templatesApi;
 
 export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
@@ -98,9 +104,6 @@ interface GetTemplateParams extends BaseAlertmanagerArgs {
 }
 
 export function useGetNotificationTemplate({ alertmanager, uid }: GetTemplateParams) {
-  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
-  const { useLazyReadNamespacedTemplateGroupQuery } = templatesApi;
-
   const [fetchAmConfig, amConfigStatus] = useLazyGetAlertmanagerConfigurationQuery({
     selectFromResult: (state) => ({
       ...state,
@@ -136,8 +139,6 @@ interface CreateTemplateParams {
 
 export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
   const dispatch = useDispatch();
-  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
-  const { useCreateNamespacedTemplateGroupMutation } = templatesApi;
 
   const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
   const [createNamespacedTemplateGroup] = useCreateNamespacedTemplateGroupMutation();
@@ -187,8 +188,6 @@ interface UpdateTemplateParams {
 
 export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
   const dispatch = useDispatch();
-  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
-  const { useReplaceNamespacedTemplateGroupMutation } = templatesApi;
 
   const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
   const [replaceNamespacedTemplateGroup] = useReplaceNamespacedTemplateGroupMutation();
@@ -242,9 +241,6 @@ export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanager
 
 export function useDeleteNotificationTemplate({ alertmanager }: BaseAlertmanagerArgs) {
   const dispatch = useDispatch();
-  const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
-  const { useDeleteNamespacedTemplateGroupMutation } = templatesApi;
-
   const [fetchAmConfig] = useLazyGetAlertmanagerConfigurationQuery();
   const [deleteNamespacedTemplateGroup] = useDeleteNamespacedTemplateGroupMutation();
 
