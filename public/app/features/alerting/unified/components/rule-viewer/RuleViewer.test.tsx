@@ -12,18 +12,21 @@ import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 import {
   getCloudRule,
   getGrafanaRule,
+  getVanillaPromRule,
   grantUserPermissions,
   mockDataSource,
   mockPluginLinkExtension,
+  mockPromAlertingRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
 import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
 import * as ruleId from '../../utils/rule-id';
+import { stringifyIdentifier } from '../../utils/rule-id';
 
 import { AlertRuleProvider } from './RuleContext';
-import RuleViewer from './RuleViewer';
+import RuleViewer, { ActiveTab } from './RuleViewer';
 
 // metadata and interactive elements
 const ELEMENTS = {
@@ -34,6 +37,12 @@ const ELEMENTS = {
     dashboardAndPanel: byRole('link', { name: 'View panel' }),
     evaluationInterval: (interval: string) => byText(`Every ${interval}`),
     label: ([key, value]: [string, string]) => byRole('listitem', { name: `${key}: ${value}` }),
+  },
+  details: {
+    pendingPeriod: byText(/Pending period/i),
+  },
+  tabs: {
+    details: byRole('tab', { name: /Details/i }),
   },
   actions: {
     edit: byRole('link', { name: 'Edit' }),
@@ -259,13 +268,39 @@ describe('RuleViewer', () => {
       await waitFor(() => expect(ELEMENTS.actions.more.pluginActions.declareIncident.get()).toBeEnabled());
     });
   });
+
+  describe('Vanilla Prometheus rule', () => {
+    const mockRule = getVanillaPromRule({
+      name: 'prom test alert',
+      annotations: { [Annotation.summary]: 'prom summary', [Annotation.runbookURL]: 'https://runbook.example.com' },
+      promRule: {
+        ...mockPromAlertingRule(),
+        duration: 900, // 15 minutes
+      },
+    });
+
+    const mockRuleIdentifier = ruleId.fromCombinedRule('prometheus', mockRule);
+
+    it('should render pending period for vanilla Prometheus alert rule', async () => {
+      renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Details);
+
+      expect(screen.getByText('prom test alert')).toBeInTheDocument();
+
+      // One summary is rendered by the Title component, and the other by the DetailsTab component
+      expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
+
+      expect(within(ELEMENTS.details.pendingPeriod.get()).getByText(/15m/i)).toBeInTheDocument();
+    });
+  });
 });
 
-const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier) => {
+const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, tab: ActiveTab = ActiveTab.Query) => {
+  const path = `/alerting/${identifier.ruleSourceName}/${stringifyIdentifier(identifier)}/view?tab=${tab}`;
   render(
     <AlertRuleProvider identifier={identifier} rule={rule}>
       <RuleViewer />
-    </AlertRuleProvider>
+    </AlertRuleProvider>,
+    { historyOptions: { initialEntries: [path] } }
   );
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());

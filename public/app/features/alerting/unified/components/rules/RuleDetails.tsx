@@ -5,8 +5,9 @@ import { Tooltip, useStyles2 } from '@grafana/ui';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
 import { useCleanAnnotations } from '../../utils/annotations';
-import { isGrafanaRecordingRule, isRecordingRulerRule } from '../../utils/rules';
+import { isGrafanaRecordingRule } from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
@@ -64,16 +65,12 @@ interface EvaluationBehaviorSummaryProps {
 }
 
 const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
-  let forDuration: string | undefined;
   const every = rule.group.interval;
   const lastEvaluation = rule.promRule?.lastEvaluation;
   const lastEvaluationDuration = rule.promRule?.evaluationTime;
   const metric = isGrafanaRecordingRule(rule.rulerRule) ? rule.rulerRule?.grafana_alert.record?.metric : undefined;
 
-  // recording rules don't have a for duration
-  if (!isRecordingRulerRule(rule.rulerRule)) {
-    forDuration = rule.rulerRule?.for ?? '0s';
-  }
+  const pendingPeriod = usePendingPeriod(rule);
 
   return (
     <>
@@ -88,9 +85,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
         </DetailsField>
       )}
 
-      <DetailsField label="Pending period" horizontal={true}>
-        {forDuration}
-      </DetailsField>
+      {pendingPeriod && (
+        <DetailsField label="Pending period" horizontal={true}>
+          {pendingPeriod}
+        </DetailsField>
+      )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && (
         <DetailsField label="Last evaluation" horizontal={true}>

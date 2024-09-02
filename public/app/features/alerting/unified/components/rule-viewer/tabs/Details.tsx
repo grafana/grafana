@@ -7,6 +7,7 @@ import { ClipboardButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui'
 import { CombinedRule } from 'app/types/unified-alerting';
 import { Annotations } from 'app/types/unified-alerting-dto';
 
+import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
 import { isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
 import { MetaText } from '../../MetaText';
 import { Tokenize } from '../../Tokenize';
@@ -25,6 +26,8 @@ const Details = ({ rule }: DetailsProps) => {
   const styles = useStyles2(getStyles);
 
   let ruleType: RuleType;
+
+  const pendingPeriod = usePendingPeriod(rule);
 
   if (isGrafanaRulerRule(rule.rulerRule)) {
     ruleType = RuleType.GrafanaManagedAlertRule;
@@ -89,10 +92,10 @@ const Details = ({ rule }: DetailsProps) => {
           )}
         </MetaText>
         <MetaText direction="column">
-          {!isRecordingRulerRule(rule.rulerRule) && (
+          {pendingPeriod && (
             <>
               Pending period
-              <Text color="primary">{rule.rulerRule?.for ?? '0s'}</Text>
+              <Text color="primary">{pendingPeriod}</Text>
             </>
           )}
         </MetaText>
