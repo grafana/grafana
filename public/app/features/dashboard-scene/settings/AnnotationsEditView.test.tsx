@@ -107,10 +107,10 @@ describe('AnnotationsEditView', () => {
       expect(annotationsView.getUrlKey()).toBe('annotations');
     });
 
-    it('should add new annotation with correct datasource', async () => {
-      // current default datasource from test does not support annotations, so it should return grafana datasource
+    it('should return undefined when datasource does not support annotations', async () => {
       const ds = await annotationsView.getDataSourceRefForAnnotation();
-      expect(ds.uid).toBe('-- Grafana --');
+      expect(ds).toBe(undefined);
+      expect(console.error).toHaveBeenCalledWith('Default datasource does not support annotations');
     });
 
     it('should add a new annotation and group it with the other annotations', async () => {
