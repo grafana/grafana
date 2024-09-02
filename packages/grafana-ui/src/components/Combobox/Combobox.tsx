@@ -131,7 +131,14 @@ export const Combobox = ({
     onInputValueChange: ({ inputValue }) => {
       const filteredItems = options.filter(itemFilter(inputValue));
       if (createCustomValue && inputValue && filteredItems.findIndex((opt) => opt.label === inputValue) === -1) {
-        setItems([...filteredItems, { label: inputValue, value: inputValue, description: 'Create custom' }]);
+        setItems([
+          ...filteredItems,
+          {
+            label: inputValue,
+            value: inputValue,
+            description: t('combobox.custom-value.create', 'Create custom value'),
+          },
+        ]);
         return;
       } else {
         setItems(filteredItems);
