@@ -1,6 +1,7 @@
 import { render, screen, within } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
@@ -10,9 +11,10 @@ import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { NotificationTemplates } from './NotificationTemplates';
 
 const renderWithProvider = () => {
-  render(
+  return render(
     <AlertmanagerProvider accessType={'notification'}>
       <NotificationTemplates />
+      <AppNotificationList />
     </AlertmanagerProvider>
   );
 };
@@ -99,6 +101,23 @@ describe('NotificationTemplates', () => {
 
       const provisionedRow = await screen.findByRole('row', { name: /provisioned-template/i });
       expect(within(provisionedRow).getByText('Provisioned')).toBeInTheDocument();
+    });
+
+    it('Should delete template', async () => {
+      const { user } = renderWithProvider();
+
+      const emailRow = await screen.findByRole('row', { name: /custom-email/i });
+      const deleteEmailButton = within(emailRow).getByRole('button', { name: /delete template/i });
+
+      await user.click(deleteEmailButton);
+
+      const confirmDeleteButton = await screen.findByRole('button', { name: /Yes, delete/i });
+      await user.click(confirmDeleteButton);
+
+      expect(screen.queryByRole('row', { name: /custom-email/i })).not.toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: 'Template deleted' })).toHaveTextContent(
+        'Template custom-email has been deleted'
+      );
     });
   });
 });

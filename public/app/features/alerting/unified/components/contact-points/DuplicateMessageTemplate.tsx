@@ -41,19 +41,10 @@ const DuplicateMessageTemplate = ({ match }: Props) => {
     return <LoadingPlaceholder text="Loading notification template" />;
   }
 
-  if (error || templatesError) {
+  if (error || templatesError || !template || !templates) {
     return (
       <Alert title="Error loading notification template" severity="error">
         {stringifyErrorLike(error)}
-      </Alert>
-    );
-  }
-
-  // In theory this should never happen. If not loading nor error, then we should have data.
-  if (!template) {
-    return (
-      <Alert title="Unable to load notification template" severity="error">
-        Unknown error. Could not load notification template.
       </Alert>
     );
   }

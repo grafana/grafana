@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, within } from 'test/test-utils';
-import { byRole, byTestId } from 'testing-library-selector';
+import { byRole } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { CodeEditorProps } from '@grafana/ui/src/components/Monaco/types';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AccessControlAction } from 'app/types';
 
@@ -31,7 +32,12 @@ jest.mock('@grafana/ui', () => ({
 
 const ui = {
   templateForm: byRole('form', { name: 'Template form' }),
-  codeEditor: byTestId('code-editor'),
+};
+
+const navUrl = {
+  edit: (name: string) => `/alerting/notifications/templates/${name}/edit?alertmanager=grafana`,
+  duplicate: (name: string) => `/alerting/notifications/templates/${name}/duplicate?alertmanager=grafana`,
+  new: `/alerting/notifications/templates/new`,
 };
 
 setupMswServer();
@@ -42,31 +48,19 @@ beforeEach(() => {
 
 describe('Templates routes', () => {
   it('allows duplication of template with spaces in name', async () => {
-    render(<Templates />, {
-      historyOptions: {
-        initialEntries: ['/alerting/notifications/templates/template%20with%20spaces/duplicate?alertmanager=grafana'],
-      },
-    });
+    render(<Templates />, { historyOptions: { initialEntries: [navUrl.duplicate('template%20with%20spaces')] } });
 
     expect(await screen.findByText('Edit payload')).toBeInTheDocument();
   });
 
   it('allows editing of template with spaces in name', async () => {
-    render(<Templates />, {
-      historyOptions: {
-        initialEntries: ['/alerting/notifications/templates/template%20with%20spaces/edit?alertmanager=grafana'],
-      },
-    });
+    render(<Templates />, { historyOptions: { initialEntries: [navUrl.edit('template%20with%20spaces')] } });
 
     expect(await screen.findByText('Edit payload')).toBeInTheDocument();
   });
 
   it('renders empty template form', async () => {
-    render(<Templates />, {
-      historyOptions: {
-        initialEntries: ['/alerting/notifications/templates/new'],
-      },
-    });
+    render(<Templates />, { historyOptions: { initialEntries: [navUrl.new] } });
 
     const form = await ui.templateForm.find();
 
@@ -86,9 +80,7 @@ describe('Templates K8s API', () => {
 
   it('form edit renders with correct form values', async () => {
     render(<Templates />, {
-      historyOptions: {
-        initialEntries: ['/alerting/notifications/templates/k8s-custom-email-uid/edit?alertmanager=grafana'],
-      },
+      historyOptions: { initialEntries: [navUrl.edit('k8s-custom-email-resource-name')] },
     });
 
     const form = await ui.templateForm.find();
@@ -102,9 +94,7 @@ describe('Templates K8s API', () => {
 
   it('renders duplicate template form with correct values', async () => {
     render(<Templates />, {
-      historyOptions: {
-        initialEntries: ['/alerting/notifications/templates/k8s-custom-email-uid/duplicate?alertmanager=grafana'],
-      },
+      historyOptions: { initialEntries: [navUrl.duplicate('k8s-custom-email-resource-name')] },
     });
 
     const form = await ui.templateForm.find();
@@ -114,5 +104,32 @@ describe('Templates K8s API', () => {
     expect(within(form).getAllByTestId('code-editor')[0]).toHaveValue(
       "{{ define 'custom-email' }}  Custom email template {{ end }}"
     );
+  });
+
+  it('updates a template', async () => {
+    const { user } = render(
+      <>
+        <Templates />
+        <AppNotificationList />
+      </>,
+      {
+        historyOptions: { initialEntries: [navUrl.edit('k8s-custom-email-resource-name')] },
+      }
+    );
+
+    const form = await ui.templateForm.find();
+
+    const templateEditor = within(form).getAllByTestId('code-editor')[0];
+
+    await user.clear(templateEditor);
+    await user.type(templateEditor, "{{ define 'custom-email' }}Updated custom email template{{ end }}");
+
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByRole('status', { name: 'Template saved' })).toHaveTextContent(
+      'Template custom-email has been saved'
+    );
+
+    expect(ui.templateForm.query()).not.toBeInTheDocument();
   });
 });

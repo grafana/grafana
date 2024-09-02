@@ -1,12 +1,14 @@
 import { Fragment, useState } from 'react';
 
+import { logError } from '@grafana/runtime';
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { getAlertTableStyles } from '../../styles/table';
 import { PROVENANCE_NONE } from '../../utils/k8s/constants';
-import { makeAMLink } from '../../utils/misc';
+import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
 import { ProvisioningBadge } from '../Provisioning';
@@ -21,6 +23,7 @@ interface Props {
 }
 
 export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
+  const appNotification = useAppNotification();
   const deleteTemplate = useDeleteNotificationTemplate({ alertmanager: alertManagerName });
 
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
@@ -30,7 +33,15 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
 
   const onDeleteTemplate = async () => {
     if (templateToDelete) {
-      await deleteTemplate({ uid: templateToDelete.uid });
+      try {
+        await deleteTemplate({ uid: templateToDelete.uid });
+        appNotification.success('Template deleted', `Template ${templateToDelete.name} has been deleted`);
+      } catch (error) {
+        appNotification.error('Error deleting template', `Error deleting template ${templateToDelete.name}`);
+
+        const loggableError = error instanceof Error ? error : new Error(stringifyErrorLike(error));
+        logError(loggableError);
+      }
     }
     setTemplateToDelete(undefined);
   };

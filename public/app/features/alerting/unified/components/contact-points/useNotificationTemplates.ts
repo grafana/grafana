@@ -12,7 +12,6 @@ import {
   ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TemplateGroupList,
 } from '../../openapi/templatesApi.gen';
 import { updateAlertManagerConfigAction } from '../../state/actions';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from '../../utils/k8s/constants';
 import { shouldUseK8sApi, getK8sNamespace } from '../../utils/k8s/utils';
 import { ensureDefine } from '../../utils/templates';
@@ -28,16 +27,17 @@ export interface NotificationTemplate {
   template: string;
   provenance: string;
 }
-export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs) {
-  const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
-  const { useListNamespacedTemplateGroupQuery } = templatesApi;
 
+const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
+const { useListNamespacedTemplateGroupQuery } = templatesApi;
+
+export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
 
-  const k8sTemplatesRequestState = useListNamespacedTemplateGroupQuery(
+  const k8sApiTemplatesRequestState = useListNamespacedTemplateGroupQuery(
     { namespace: getK8sNamespace() },
     {
-      skip: !k8sApiSupported || alertmanager !== GRAFANA_RULES_SOURCE_NAME,
+      skip: !k8sApiSupported,
       selectFromResult: (state) => ({
         ...state,
         data: state.data ? templateGroupsToTemplates(state.data) : undefined,
@@ -46,8 +46,8 @@ export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs)
     }
   );
 
-  const templatesRequestState = useGetAlertmanagerConfigurationQuery(alertmanager, {
-    skip: !alertmanager || k8sApiSupported,
+  const configApiTemplatesRequestState = useGetAlertmanagerConfigurationQuery(alertmanager, {
+    skip: k8sApiSupported,
     selectFromResult: (state) => ({
       ...state,
       data: state.data ? amConfigToTemplates(state.data) : undefined,
@@ -55,7 +55,7 @@ export function useNotificationTemplates({ alertmanager }: BaseAlertmanagerArgs)
     }),
   });
 
-  return k8sApiSupported ? k8sTemplatesRequestState : templatesRequestState;
+  return k8sApiSupported ? k8sApiTemplatesRequestState : configApiTemplatesRequestState;
 }
 
 function templateGroupsToTemplates(
@@ -161,7 +161,6 @@ export function useCreateNotificationTemplate({ alertmanager }: BaseAlertmanager
         alertManagerSourceName: alertmanager,
         newConfig: updatedConfig,
         oldConfig: amConfig,
-        successMessage: 'Template saved.',
       })
     ).unwrap();
   }
@@ -221,7 +220,6 @@ export function useUpdateNotificationTemplate({ alertmanager }: BaseAlertmanager
         alertManagerSourceName: alertmanager,
         newConfig: updatedConfig,
         oldConfig: amConfig,
-        successMessage: 'Template saved.',
       })
     ).unwrap();
   }
@@ -263,7 +261,6 @@ export function useDeleteNotificationTemplate({ alertmanager }: BaseAlertmanager
         alertManagerSourceName: alertmanager,
         newConfig: updatedConfig,
         oldConfig: amConfig,
-        successMessage: 'Template deleted.',
       })
     ).unwrap();
   }

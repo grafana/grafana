@@ -150,6 +150,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
       } else {
         await updateTemplate({ template: originalTemplate, patch: values });
       }
+      appNotification.success('Template saved', `Template ${values.name} has been saved`);
       locationService.push(returnLink);
     } catch (error) {
       appNotification.error('Error saving template', stringifyErrorLike(error));
