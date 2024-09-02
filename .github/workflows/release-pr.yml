@@ -78,7 +78,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: yarn
       - name: Install frontend dependencies
         shell: bash
         run: |
