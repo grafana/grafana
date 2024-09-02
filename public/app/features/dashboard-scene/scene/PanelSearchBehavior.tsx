@@ -58,7 +58,7 @@ export class PanelSearchBehavior extends SceneObjectBase<SceneObjectState> {
       }
 
       if (!this.savedPositions) {
-        this.savedPositions = sceneGridLayout.state.children.map(({ state }) => ({
+        this.savedPositions = this.savedChildren.map(({ state }) => ({
           x: state.x,
           y: state.y,
           width: state.width,
@@ -69,7 +69,7 @@ export class PanelSearchBehavior extends SceneObjectBase<SceneObjectState> {
       }
 
       const panelFilterInterpolated = sceneGraph.interpolate(this, panelFilterValue).toLowerCase();
-      const filteredChildren = sceneGridLayout.state.children.filter(
+      let filteredChildren = this.savedChildren.filter(
         (gridItem) =>
           gridItem instanceof DashboardGridItem &&
           'title' in gridItem.state.body.state &&
@@ -94,6 +94,13 @@ export class PanelSearchBehavior extends SceneObjectBase<SceneObjectState> {
           isDraggable: false,
         });
       });
+
+      if (!filteredChildren.length && this.savedChildren.length) {
+        // hacky, but this way we don't get the "empty dashboard" view if there are no hits
+        filteredChildren = [this.savedChildren[0]];
+        filteredChildren[0].setState({ width: 0, height: 0 });
+      }
+
       sceneGridLayout.setState({ children: filteredChildren });
     } else if ((!panelFilterValue || panelFilterValue === '') && (!rowSizeVal || rowSizeVal === '')) {
       // Restore saved layout
