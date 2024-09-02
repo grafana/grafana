@@ -8,8 +8,7 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       label: 'grafana-select-menu',
       background: theme.components.dropdown.background,
       boxShadow: theme.shadows.z3,
-      position: 'relative',
-      zIndex: 1,
+      zIndex: theme.zIndex.dropdown,
     }),
     menuHeight: css({
       height: 400,
