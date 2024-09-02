@@ -10,28 +10,39 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
 	plog "github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 )
 
 // NewLoggerMiddleware creates a new plugins.ClientMiddleware that will
 // log requests.
-func NewLoggerMiddleware(logger plog.Logger) plugins.ClientMiddleware {
+func NewLoggerMiddleware(logger plog.Logger, pluginRegistry registry.Service) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &LoggerMiddleware{
 			baseMiddleware: baseMiddleware{
 				next: next,
 			},
-			logger: logger,
+			logger:         logger,
+			pluginRegistry: pluginRegistry,
 		}
 	})
 }
 
 type LoggerMiddleware struct {
 	baseMiddleware
-	logger plog.Logger
+	logger         plog.Logger
+	pluginRegistry registry.Service
 }
 
-func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.Context) (instrumentationutils.RequestStatus, error)) error {
+func (m *LoggerMiddleware) pluginTarget(ctx context.Context, pCtx backend.PluginContext) string {
+	p, exists := m.pluginRegistry.Plugin(ctx, pCtx.PluginID, pCtx.PluginVersion)
+	if !exists {
+		return ""
+	}
+	return string(p.Target())
+}
+
+func (m *LoggerMiddleware) logRequest(ctx context.Context, pCtx backend.PluginContext, fn func(ctx context.Context) (instrumentationutils.RequestStatus, error)) error {
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
@@ -41,6 +52,7 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, fn func(ctx context.C
 		"duration", time.Since(start),
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
+		"target", m.pluginTarget(ctx, pCtx),
 	}
 	if err != nil {
 		logParams = append(logParams, "error", err)
@@ -64,7 +76,7 @@ func (m *LoggerMiddleware) QueryData(ctx context.Context, req *backend.QueryData
 	}
 
 	var resp *backend.QueryDataResponse
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.next.QueryData(ctx, req)
 
@@ -96,7 +108,7 @@ func (m *LoggerMiddleware) CallResource(ctx context.Context, req *backend.CallRe
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		innerErr := m.next.CallResource(ctx, req, sender)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
@@ -110,7 +122,7 @@ func (m *LoggerMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHe
 	}
 
 	var resp *backend.CheckHealthResult
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.next.CheckHealth(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
@@ -125,7 +137,7 @@ func (m *LoggerMiddleware) CollectMetrics(ctx context.Context, req *backend.Coll
 	}
 
 	var resp *backend.CollectMetricsResult
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.next.CollectMetrics(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
@@ -140,7 +152,7 @@ func (m *LoggerMiddleware) SubscribeStream(ctx context.Context, req *backend.Sub
 	}
 
 	var resp *backend.SubscribeStreamResponse
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.next.SubscribeStream(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
@@ -155,7 +167,7 @@ func (m *LoggerMiddleware) PublishStream(ctx context.Context, req *backend.Publi
 	}
 
 	var resp *backend.PublishStreamResponse
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.next.PublishStream(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
@@ -169,7 +181,7 @@ func (m *LoggerMiddleware) RunStream(ctx context.Context, req *backend.RunStream
 		return m.next.RunStream(ctx, req, sender)
 	}
 
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		innerErr := m.next.RunStream(ctx, req, sender)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
 	})
@@ -183,7 +195,7 @@ func (m *LoggerMiddleware) ValidateAdmission(ctx context.Context, req *backend.A
 	}
 
 	var resp *backend.ValidationResponse
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.next.ValidateAdmission(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
@@ -198,7 +210,7 @@ func (m *LoggerMiddleware) MutateAdmission(ctx context.Context, req *backend.Adm
 	}
 
 	var resp *backend.MutationResponse
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.next.MutateAdmission(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
@@ -213,7 +225,7 @@ func (m *LoggerMiddleware) ConvertObjects(ctx context.Context, req *backend.Conv
 	}
 
 	var resp *backend.ConversionResponse
-	err := m.logRequest(ctx, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
+	err := m.logRequest(ctx, req.PluginContext, func(ctx context.Context) (instrumentationutils.RequestStatus, error) {
 		var innerErr error
 		resp, innerErr = m.next.ConvertObjects(ctx, req)
 		return instrumentationutils.RequestStatusFromError(innerErr), innerErr
