@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import { ChangeEvent, useState, useEffect } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -47,8 +47,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
-  const [contentSent, setContentSent] = useState<{ title?: string; folder?: {} }>({});
-  const [isRefreshed, setIsRefreshed] = useState(false);
+  const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
@@ -60,7 +59,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     } else {
       setContentSent({
         title: data.title,
-        folder: data.folder,
+        folderUid: data.folder.uid,
       });
     }
   };
@@ -75,7 +74,12 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     <SaveButton isValid={isValid} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
   );
 
-  const normalFooter = (error?: Error) => {
+  function renderFooter(error?: Error) {
+    const formValuesMatchContentSent =
+      formValues.title.trim() === contentSent.title && formValues.folder.uid === contentSent.folderUid;
+    if (isNameExistsError(error) && formValuesMatchContentSent) {
+      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
+    }
     return (
       <>
         {error && (
@@ -89,19 +93,8 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
         </Stack>
       </>
     );
-  };
-  function renderFooter(error?: Error) {
-    if (isNameExistsError(error)) {
-      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
-    }
-    return normalFooter(error);
   }
-  useEffect(() => {
-    if (Object.keys(contentSent).length === 0) {
-      return;
-    }
-    setIsRefreshed(contentSent.title !== formValues.title.trim() || contentSent.folder !== formValues.folder);
-  }, [contentSent, formValues]);
+
   return (
     <form onSubmit={handleSubmit(() => onSave(false))}>
       <Field
@@ -147,7 +140,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
           <Switch {...register('copyTags')} />
         </Field>
       )}
-      <Box paddingTop={2}>{isRefreshed ? normalFooter(state.error) : renderFooter(state.error)}</Box>
+      <Box paddingTop={2}>{renderFooter(state.error)}</Box>
     </form>
   );
 }
