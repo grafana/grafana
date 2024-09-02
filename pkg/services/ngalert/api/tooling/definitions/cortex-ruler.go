@@ -1,6 +1,7 @@
 package definitions
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -288,7 +289,8 @@ type GettableRuleGroupConfig struct {
 
 func (c *GettableRuleGroupConfig) PopulateRuleIdentifiers(namespace string) {
 	for i := range c.Rules {
-		c.Rules[i].Identifier = fmt.Sprintf("%s-%s-%d", namespace, c.Name, i)
+		identifier := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%s-%s-%s-%d", namespace, c.Name, c.Rules[i].Alert, i)))
+		c.Rules[i].Identifier = identifier
 	}
 }
 

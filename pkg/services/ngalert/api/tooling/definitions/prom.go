@@ -2,6 +2,7 @@ package definitions
 
 import (
 	"container/heap"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"sort"
@@ -102,7 +103,8 @@ type RuleGroup struct {
 
 func (g *RuleGroup) PopulateRuleIdentifiers() {
 	for i := range g.Rules {
-		g.Rules[i].Identifier = fmt.Sprintf("%s-%s-%d", g.File, g.Name, i)
+		identifier := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%s-%s-%s-%d", g.File, g.Name, g.Rules[i].Name, i)))
+		g.Rules[i].Identifier = identifier
 	}
 }
 
