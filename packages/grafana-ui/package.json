@@ -109,7 +109,7 @@
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
     "tinycolor2": "1.6.0",
-    "tslib": "2.6.3",
+    "tslib": "2.7.0",
     "uplot": "1.6.30",
     "uuid": "9.0.1"
   },
@@ -145,7 +145,7 @@
     "@types/is-hotkey": "0.1.10",
     "@types/jest": "29.5.12",
     "@types/mock-raf": "1.0.6",
-    "@types/node": "20.16.2",
+    "@types/node": "20.16.3",
     "@types/prismjs": "1.26.4",
     "@types/react": "18.3.3",
     "@types/react-color": "3.0.12",

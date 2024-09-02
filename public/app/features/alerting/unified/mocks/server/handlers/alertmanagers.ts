@@ -35,7 +35,7 @@ export const getGrafanaAlertmanagerConfigHandler = (config: AlertManagerCortexCo
 export const getAlertmanagerConfigHandler = (config: AlertManagerCortexConfig = alertmanagerConfigMock) =>
   http.get('/api/alertmanager/:name/config/api/v1/alerts', () => HttpResponse.json(config));
 
-const alertmanagerUpdateError = HttpResponse.json({ message: 'bad request' }, { status: 400 });
+export const ALERTMANAGER_UPDATE_ERROR_RESPONSE = HttpResponse.json({ message: 'bad request' }, { status: 400 });
 
 /** Perform some basic validation on the config that we expect the backend to also do */
 const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
@@ -46,27 +46,28 @@ const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => 
   const intervalsByName = new Set(intervals.map((interval) => interval.name));
   const duplicatedIntervals = intervalsByName.size !== intervals.length;
 
+  let routesReferencingMissingMuteTimings = false;
+
   if (route) {
-    const routesReferencingMissingMuteTimings = Boolean(
+    routesReferencingMissingMuteTimings = Boolean(
       route.routes?.find((route) => {
         return route.mute_time_intervals?.some((name) => !intervalsByName.has(name));
       })
     );
-
-    if (routesReferencingMissingMuteTimings) {
-      return alertmanagerUpdateError;
-    }
   }
 
-  if (duplicatedIntervals) {
-    return alertmanagerUpdateError;
+  if (routesReferencingMissingMuteTimings || duplicatedIntervals) {
+    return ALERTMANAGER_UPDATE_ERROR_RESPONSE;
   }
 
   return null;
 };
 
-const updateGrafanaAlertmanagerConfigHandler = () =>
+export const updateGrafanaAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
   http.post('/api/alertmanager/grafana/config/api/v1/alerts', async ({ request }) => {
+    if (responseOverride) {
+      return responseOverride;
+    }
     const body: AlertManagerCortexConfig = await request.clone().json();
     const potentialError = validateGrafanaAlertmanagerConfig(body);
     return potentialError ? potentialError : HttpResponse.json({ message: 'configuration created' });
@@ -95,6 +96,12 @@ const getReceiversHandler = () =>
     return HttpResponse.json({ message: 'Not found.' }, { status: 404 });
   });
 
+const testReceiversHandler = () =>
+  http.post('/api/alertmanager/grafana/config/api/v1/receivers/test', () => {
+    // TODO: scaffold out response as needed by tests
+    return HttpResponse.json({});
+  });
+
 const getGroupsHandler = () =>
   http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/alerts/groups', () =>
     // TODO: Scaffold out response with better data as required by tests
@@ -110,6 +117,7 @@ const handlers = [
   updateAlertmanagerConfigHandler(),
   getGrafanaAlertmanagerTemplatePreview(),
   getReceiversHandler(),
+  testReceiversHandler(),
   getGroupsHandler(),
 ];
 export default handlers;

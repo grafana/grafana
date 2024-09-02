@@ -451,12 +451,13 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
-			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
-			JSONData:        plugin.JSONData,
-			Signature:       plugin.Signature,
-			Module:          plugin.Module,
-			BaseURL:         plugin.BaseURL,
-			Angular:         plugin.Angular,
+			JSONData:                  plugin.JSONData,
+			Signature:                 plugin.Signature,
+			Module:                    plugin.Module,
+			BaseURL:                   plugin.BaseURL,
+			Angular:                   plugin.Angular,
+			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
+			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
 		}
 
 		if ds.JsonData == nil {

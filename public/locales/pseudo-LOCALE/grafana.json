@@ -333,6 +333,9 @@
   "combobox": {
     "clear": {
       "title": "Cľęäř väľūę"
+    },
+    "custom-value": {
+      "create": "Cřęäŧę čūşŧőm väľūę"
     }
   },
   "command-palette": {
@@ -711,6 +714,13 @@
     "share": {
       "time-range-description": "Cĥäŉģę ŧĥę čūřřęŉŧ řęľäŧįvę ŧįmę řäŉģę ŧő äŉ äþşőľūŧę ŧįmę řäŉģę",
       "time-range-label": "Ŀőčĸ ŧįmę řäŉģę"
+    }
+  },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": "Ŧĥę şęľęčŧęđ đäŧä şőūřčę đőęş ŉőŧ şūppőřŧ äŉŉőŧäŧįőŉş. Pľęäşę şęľęčŧ ä đįƒƒęřęŉŧ đäŧä şőūřčę."
+      }
     }
   },
   "explore": {

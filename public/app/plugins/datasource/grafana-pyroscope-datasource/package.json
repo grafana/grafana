@@ -17,7 +17,7 @@
     "react-dom": "18.2.0",
     "react-use": "17.5.1",
     "rxjs": "7.8.1",
-    "tslib": "2.6.3"
+    "tslib": "2.7.0"
   },
   "devDependencies": {
     "@grafana/plugin-configs": "11.3.0-pre",
@@ -27,7 +27,7 @@
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.7",
-    "@types/node": "20.16.2",
+    "@types/node": "20.16.3",
     "@types/prismjs": "1.26.4",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
