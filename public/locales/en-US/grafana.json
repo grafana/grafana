@@ -716,6 +716,13 @@
       "time-range-label": "Lock time range"
     }
   },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": "The selected data source does not support annotations. Please select a different data source."
+      }
+    }
+  },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
     "logs": {
