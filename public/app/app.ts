@@ -83,6 +83,9 @@ import { PanelDataErrorView } from './features/panel/components/PanelDataErrorVi
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
+import { AddedComponentsRegistry } from './features/plugins/extensions/registry/AddedComponentsRegistry';
+import { AddedLinksRegistry } from './features/plugins/extensions/registry/AddedLinksRegistry';
+import { ExposedComponentsRegistry } from './features/plugins/extensions/registry/ExposedComponentsRegistry';
 import { setupPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
 import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
@@ -124,6 +127,11 @@ if (process.env.NODE_ENV === 'development') {
 
 export class GrafanaApp {
   context!: GrafanaContextType;
+  extensionRegistries!: {
+    addedLinks: AddedLinksRegistry;
+    addedComponents: AddedComponentsRegistry;
+    exposedComponents: ExposedComponentsRegistry;
+  };
 
   async init() {
     try {
@@ -228,6 +236,12 @@ export class GrafanaApp {
       setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
       setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
       setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
+
+      this.extensionRegistries = {
+        addedLinks: pluginExtensionsRegistries.addedLinksRegistry,
+        addedComponents: pluginExtensionsRegistries.addedComponentsRegistry,
+        exposedComponents: pluginExtensionsRegistries.exposedComponentsRegistry,
+      };
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
