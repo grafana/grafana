@@ -8,20 +8,20 @@ import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
+import { Portal } from '../Portal/Portal';
 
 import { getComboboxStyles } from './getComboboxStyles';
 
-export type Value = string | number;
 export type Option = {
   label: string;
-  value: Value;
+  value: string;
   description?: string;
 };
 
 interface ComboboxProps
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
   onChange: (val: Option | null) => void;
-  value: Value | null;
+  value: string | null;
   options: Option[];
   isClearable?: boolean;
   createCustomValue?: boolean;
@@ -53,6 +53,11 @@ const INDEX_WIDTH_CALCULATION = 100;
 // A multiplier guesstimate times the amount of characters. If any padding or image support etc. is added this will need to be updated.
 const WIDTH_MULTIPLIER = 7.3;
 
+/**
+ * A performant Select replacement.
+ *
+ * @alpha
+ */
 export const Combobox = ({
   options,
   onChange,
@@ -233,46 +238,49 @@ export const Combobox = ({
           onBlur,
         })}
       />
-      <div
-        className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
-        style={{
-          ...floatingStyles,
-          maxWidth: popoverMaxWidth,
-          minWidth: inputRef.current?.offsetWidth,
-          width: popoverWidth,
-        }}
-        {...getMenuProps({ ref: floatingRef })}
-      >
-        {isOpen && (
-          <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              return (
-                <li
-                  key={items[virtualRow.index].value + items[virtualRow.index].label}
-                  data-index={virtualRow.index}
-                  className={cx(
-                    styles.option,
-                    selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
-                    highlightedIndex === virtualRow.index && styles.optionFocused
-                  )}
-                  style={{
-                    height: virtualRow.size,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                  {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
-                >
-                  <div className={styles.optionBody}>
-                    <span className={styles.optionLabel}>{items[virtualRow.index].label}</span>
-                    {items[virtualRow.index].description && (
-                      <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+
+      {isOpen && (
+        <Portal>
+          <div
+            className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
+            style={{
+              ...floatingStyles,
+              maxWidth: popoverMaxWidth,
+              minWidth: inputRef.current?.offsetWidth,
+              width: popoverWidth,
+            }}
+            {...getMenuProps({ ref: floatingRef })}
+          >
+            <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                return (
+                  <li
+                    key={items[virtualRow.index].value + items[virtualRow.index].label}
+                    data-index={virtualRow.index}
+                    className={cx(
+                      styles.option,
+                      selectedItem && items[virtualRow.index].value === selectedItem.value && styles.optionSelected,
+                      highlightedIndex === virtualRow.index && styles.optionFocused
                     )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+                    style={{
+                      height: virtualRow.size,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                    {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
+                  >
+                    <div className={styles.optionBody}>
+                      <span className={styles.optionLabel}>{items[virtualRow.index].label}</span>
+                      {items[virtualRow.index].description && (
+                        <span className={styles.optionDescription}>{items[virtualRow.index].description}</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </Portal>
+      )}
     </div>
   );
 };

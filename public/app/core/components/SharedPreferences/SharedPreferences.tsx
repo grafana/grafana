@@ -16,6 +16,8 @@ import {
   TimeZonePicker,
   WeekStartPicker,
   FeatureBadge,
+  Combobox,
+  Option,
 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
@@ -61,7 +63,7 @@ function getLanguageOptions(): Array<SelectableValue<string>> {
 
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
-  themeOptions: SelectableValue[];
+  themeOptions: Option[];
 
   constructor(props: Props) {
     super(props);
@@ -110,7 +112,10 @@ export class SharedPreferences extends PureComponent<Props, State> {
     }
   };
 
-  onThemeChanged = (value: SelectableValue<string>) => {
+  onThemeChanged = (value: Option | null) => {
+    if (!value) {
+      return;
+    }
     this.setState({ theme: value.value });
 
     if (value.value) {
@@ -153,11 +158,11 @@ export class SharedPreferences extends PureComponent<Props, State> {
       <form onSubmit={this.onSubmitForm} className={styles.form}>
         <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
           <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
-            <Select
+            <Combobox
               options={this.themeOptions}
-              value={currentThemeOption}
+              value={currentThemeOption.value}
               onChange={this.onThemeChanged}
-              inputId="shared-preferences-theme-select"
+              id="shared-preferences-theme-select"
             />
           </Field>
 
