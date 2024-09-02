@@ -72,6 +72,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       flex: '1 1 0',
+      width: '100%',
       minHeight: 0,
     }),
     icon: css({

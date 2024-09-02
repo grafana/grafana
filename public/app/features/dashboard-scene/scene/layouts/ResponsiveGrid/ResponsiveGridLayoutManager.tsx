@@ -1,4 +1,4 @@
-import { SelectableValue, toOption } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { SceneComponentProps, SceneCSSGridLayout, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Button, Field, Select } from '@grafana/ui';
 
@@ -110,7 +110,7 @@ export class ResponsiveGridLayoutManager
       layout: new SceneCSSGridLayout({
         children,
         templateColumns: 'repeat(auto-fit, minmax(400px, auto))',
-        autoRows: 'minmax(400px, auto)',
+        autoRows: 'minmax(300px, auto)',
       }),
     });
   }
@@ -118,7 +118,7 @@ export class ResponsiveGridLayoutManager
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridLayoutManager>) => {
     return (
       <LayoutEditChrome layoutManager={model}>
-        <model.state.layout.Component model={model.state.layout} />;
+        <model.state.layout.Component model={model.state.layout} />
       </LayoutEditChrome>
     );
   };
@@ -127,50 +127,49 @@ export class ResponsiveGridLayoutManager
 function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGridLayoutManager>) {
   const cssLayout = layoutManager.state.layout;
   const { templateColumns, autoRows } = cssLayout.useState();
-  const widthParams = parseMinMaxParameters(templateColumns);
-  const heightParams = parseMinMaxParameters(autoRows);
 
-  const minOptions = ['100px', '200px', '300px', '400px', '500px', '600px'].map(toOption);
-  const maxOptions = [{ label: 'Auto', value: 'auto' }, ...minOptions];
+  const rowOptions: Array<SelectableValue<string>> = [];
+  const sizes = [100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 650];
+  const colOptions: Array<SelectableValue<string>> = [
+    { label: `1 column`, value: `1fr` },
+    { label: `2 columns`, value: `1fr 1fr` },
+    { label: `3 columns`, value: `1fr 1fr 1fr` },
+  ];
 
-  const onMinWidthChange = (value: SelectableValue<string>) => {
-    cssLayout.setState({ templateColumns: `repeat(auto-fit, minmax(${value.value}, ${widthParams.max}))` });
+  for (const size of sizes) {
+    colOptions.push({ label: `Min: ${size}px`, value: `repeat(auto-fit, minmax(${size}px, auto))` });
+  }
+
+  for (const size of sizes) {
+    rowOptions.push({ label: `Min: ${size}px`, value: `minmax(${size}px, auto)` });
+  }
+
+  for (const size of sizes) {
+    rowOptions.push({ label: `Fixed: ${size}px`, value: `${size}px` });
+  }
+
+  const onColumnsChange = (value: SelectableValue<string>) => {
+    cssLayout.setState({ templateColumns: value.value });
   };
 
-  const onMaxWidthChange = (value: SelectableValue<string>) => {
-    cssLayout.setState({ templateColumns: `repeat(auto-fit, minmax(${widthParams.min}, ${value.value}))` });
-  };
-
-  const onMinHeightChange = (value: SelectableValue<string>) => {
-    cssLayout.setState({ autoRows: `minmax(${value.value},  ${heightParams.max})` });
-  };
-
-  const onMaxHeightChange = (value: SelectableValue<string>) => {
-    cssLayout.setState({ autoRows: `minmax(${heightParams.min}, ${value.value})` });
+  const onRowsChange = (value: SelectableValue<string>) => {
+    cssLayout.setState({ autoRows: value.value });
   };
 
   return (
     <>
-      {widthParams.min && (
-        <Field label="Min width">
-          <Select options={minOptions} value={widthParams.min} onChange={onMinWidthChange} />
-        </Field>
-      )}
-      {widthParams.max && (
-        <Field label="Max width">
-          <Select options={maxOptions} value={widthParams.max} onChange={onMaxWidthChange} />
-        </Field>
-      )}
-      {heightParams.min && (
-        <Field label="Min hight">
-          <Select options={minOptions} value={heightParams.min} onChange={onMinHeightChange} />
-        </Field>
-      )}
-      {heightParams.max && (
-        <Field label="Max hight">
-          <Select options={maxOptions} value={heightParams.max} onChange={onMaxHeightChange} />
-        </Field>
-      )}
+      <Field label="Columns">
+        <Select
+          options={colOptions}
+          value={String(templateColumns)}
+          onChange={onColumnsChange}
+          allowCustomValue={true}
+        />
+      </Field>
+
+      <Field label="Row height">
+        <Select options={rowOptions} value={String(autoRows)} onChange={onRowsChange} />
+      </Field>
       <Button
         fill="outline"
         icon="plus"
@@ -184,26 +183,4 @@ function AutomaticGridEditor({ layoutManager }: LayoutEditorProps<ResponsiveGrid
       </Button>
     </>
   );
-}
-
-function parseMinMaxParameters(input: string | number | undefined): { min: string | null; max: string | null } {
-  if (typeof input !== 'string') {
-    return { min: null, max: null };
-  }
-
-  // Regular expression to match the minmax function and its parameters
-  const minmaxRegex = /minmax\(([^,]+),\s*([^\)]+)\)/;
-
-  // Execute the regex on the input string
-  const match = input.match(minmaxRegex);
-
-  // If a match is found, return the min and max parameters
-  if (match) {
-    const min = match[1].trim(); // First parameter to minmax
-    const max = match[2].trim(); // Second parameter to minmax
-    return { min, max };
-  }
-
-  // If no match is found, return null values
-  return { min: null, max: null };
 }
