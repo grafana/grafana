@@ -176,7 +176,7 @@ type PluginMetaDTO struct {
 	BaseURL                   string          `json:"baseUrl"`
 	Angular                   AngularMeta     `json:"angular"`
 	MultiValueFilterOperators bool            `json:"multiValueFilterOperators"`
-	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
+	LoadingStrategy           LoadingStrategy `json:"loadingStrategy"`
 }
 
 type DataSourceDTO struct {
