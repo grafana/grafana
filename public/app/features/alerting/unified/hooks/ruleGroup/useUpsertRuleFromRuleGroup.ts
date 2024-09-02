@@ -114,7 +114,7 @@ export function useMoveRuleToRuleGroup() {
 
       const result = await upsertRuleGroup({
         rulerConfig: targetGroupRulerConfig,
-        namespace: currentRuleGroup.namespaceName,
+        namespace: targetRuleGroup.namespaceName,
         payload: newTargetGroup,
         notificationOptions: { successMessage },
       }).unwrap();
