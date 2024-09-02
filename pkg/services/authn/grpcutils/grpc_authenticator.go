@@ -49,11 +49,9 @@ func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error)
 }
 
 func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
-	grpcAuth, _ := authnlib.NewUnsafeGrpcAuthenticator(
+	return authnlib.NewUnsafeGrpcAuthenticator(
 		&authnlib.GrpcAuthenticatorConfig{},
 		authnlib.WithDisableAccessTokenAuthOption(),
 		authnlib.WithIDTokenAuthOption(true),
 	)
-
-	return grpcAuth
 }

@@ -4,7 +4,7 @@ go 1.23.0
 
 require (
 	github.com/fullstorydev/grpchan v1.1.1
-	github.com/grafana/authlib v0.0.0-20240830142353-b79220d2bc2e
+	github.com/grafana/authlib v0.0.0-20240902154225-8627380c8bdc
 	github.com/grafana/authlib/claims v0.0.0-20240830142353-b79220d2bc2e
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808164224-787abccfbc9e
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
