@@ -72,7 +72,6 @@ export interface UnifiedAlertingConfig {
   alertStateHistoryBackend?: string;
   // will be undefined if implementation is not "multiple"
   alertStateHistoryPrimary?: string;
-  grafanaRecordingRulesUrl?: string;
 }
 
 /** Supported OAuth services

@@ -95,7 +95,6 @@ type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval              string `json:"minInterval"`
 	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
 	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
-	GrafanaRecordingRulesUrl string `json:"grafanaRecordingRulesUrl,omitempty"`
 }
 
 // Enterprise-only

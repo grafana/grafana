@@ -3,7 +3,6 @@ import { chain, isEmpty, truncate } from 'lodash';
 import { useState } from 'react';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -14,7 +13,6 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { defaultPageNav } from '../../RuleViewer';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
-import { getAllDataSources } from '../../utils/config';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
 import {
@@ -197,41 +195,10 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   }
   if (isGrafanaRecordingRule(rule.rulerRule)) {
     const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
-
-    const dSWithRecordingRulesUrl = getDataSourceForRecordingRules();
-
-    if (dSWithRecordingRulesUrl) {
-      // if we have a datasource with recording rules, we can link to explore with the datasource and metric in the query
-      const exploreLink = createRelativeUrl('/explore', {
-        left: JSON.stringify({
-          datasource: dSWithRecordingRulesUrl.uid,
-          queries: [
-            {
-              refId: 'A',
-              datasource: { type: dSWithRecordingRulesUrl.type, uid: dSWithRecordingRulesUrl.uid },
-              expr: `${metric}{}`,
-            },
-          ],
-          range: { from: 'now-1h', to: 'now' },
-        }),
-      });
-
-      metadata.push({
-        label: 'Metric name',
-        value: (
-          <TextLink variant="bodySmall" href={exploreLink} external>
-            {metric}
-          </TextLink>
-        ),
-      });
-    } else {
-      // if we don't have a datasource with recording rules, we can just show the metric name
-      // this can happen if the datasource with the url specified in the config is not added as a datasource in Grafana
-      metadata.push({
-        label: 'Metric name',
-        value: <Text color="primary">{metric}</Text>,
-      });
-    }
+    metadata.push({
+      label: 'Metric name',
+      value: <Text color="primary">{metric}</Text>,
+    });
   }
 
   if (interval) {
@@ -251,12 +218,6 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 
   return metadata;
 };
-
-function getDataSourceForRecordingRules() {
-  const urlForRecordingRules = config.unifiedAlerting.grafanaRecordingRulesUrl;
-  const allDs = getAllDataSources();
-  return allDs.find((ds) => ds.url === urlForRecordingRules);
-}
 
 // TODO move somewhere else
 export const createListFilterLink = (values: Array<[string, string]>) => {
