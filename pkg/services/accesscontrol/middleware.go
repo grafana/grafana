@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -160,32 +159,6 @@ func getRedirectToQueryParam(c *contextmodel.ReqContext) string {
 	// remove any forceLogin=true params
 	redirectTo = removeForceLoginParams(redirectTo)
 	return "?redirectTo=" + url.QueryEscape(redirectTo)
-}
-
-// func getRedirectToUrl(c *contextmodel.ReqContext) string {
-// 	redirectTo := c.Req.RequestURI
-// 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
-// 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
-// 	}
-
-// 	if redirectTo == "/" {
-// 		return ""
-// 	}
-
-// 	// remove any forceLogin=true params
-// 	return removeForceLoginParams(redirectTo)
-// }
-
-func writeRedirectCookie(c *contextmodel.ReqContext) {
-	redirectTo := c.Req.RequestURI
-	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
-		redirectTo = setting.AppSubUrl + c.Req.RequestURI
-	}
-
-	// remove any forceLogin=true params
-	redirectTo = removeForceLoginParams(redirectTo)
-
-	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 }
 
 var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
