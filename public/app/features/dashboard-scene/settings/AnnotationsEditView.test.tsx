@@ -108,27 +108,27 @@ describe('AnnotationsEditView', () => {
       expect(annotationsView.getUrlKey()).toBe('annotations');
     });
 
-    it('should return undefined when datasource does not support annotations', async () => {
-      const ds = await annotationsView.getDataSourceRefForAnnotation();
+    it('should return undefined when datasource does not support annotations', () => {
+      const ds = annotationsView.getDataSourceRefForAnnotation();
       expect(ds).toBe(undefined);
       expect(console.error).toHaveBeenCalledWith('Default datasource does not support annotations');
     });
 
-    it('should add a new annotation and group it with the other annotations', async () => {
+    it('should add a new annotation and group it with the other annotations', () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       expect(dataLayers?.state.annotationLayers.length).toBe(1);
-      await annotationsView.onNew();
+      annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[1].state.name).toBe(newAnnotationName);
       expect(dataLayers?.state.annotationLayers[1].isActive).toBe(true);
     });
 
-    it('should move an annotation up one position', async () => {
+    it('should move an annotation up one position', () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
-      await annotationsView.onNew();
+      annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');
@@ -139,10 +139,10 @@ describe('AnnotationsEditView', () => {
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe(newAnnotationName);
     });
 
-    it('should move an annotation down one position', async () => {
+    it('should move an annotation down one position', () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
-      await annotationsView.onNew();
+      annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');

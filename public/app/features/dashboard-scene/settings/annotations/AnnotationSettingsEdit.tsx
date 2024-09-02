@@ -184,14 +184,13 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
         <Field label="Data source" htmlFor="data-source-picker">
           <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
         </Field>
-        {!ds ||
-          (!ds.annotations && (
-            <Alert title="No annotation support for this data source" severity="error">
-              <Trans i18nKey="errors.dashboard-settings.annotations.datasource">
-                The selected data source does not support annotations. Please select a different data source.
-              </Trans>
-            </Alert>
-          ))}
+        {!ds?.meta.annotations && (
+          <Alert title="No annotation support for this data source" severity="error">
+            <Trans i18nKey="errors.dashboard-settings.annotations.datasource">
+              The selected data source does not support annotations. Please select a different data source.
+            </Trans>
+          </Alert>
+        )}
         <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
           <Checkbox
             name="enable"

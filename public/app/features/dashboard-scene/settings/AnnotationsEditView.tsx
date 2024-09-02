@@ -51,7 +51,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     return this._dashboard;
   }
 
-  public getDataSourceRefForAnnotation = async () => {
+  public getDataSourceRefForAnnotation = () => {
     // get current default datasource ref from instance settings
     // null is passed to get the default datasource
     const defaultInstanceDS = getDataSourceSrv().getInstanceSettings(null);
@@ -67,7 +67,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     const newAnnotationQuery: AnnotationQuery = {
       name: newAnnotationName,
       enable: true,
-      datasource: await this.getDataSourceRefForAnnotation(),
+      datasource: this.getDataSourceRefForAnnotation(),
       iconColor: 'red',
     };
 
