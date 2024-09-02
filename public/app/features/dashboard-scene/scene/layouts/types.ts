@@ -22,7 +22,7 @@ export interface DashboardLayoutManager extends SceneObject {
    * Used for transferring state between layouts. Not sure what the return type should be here.
    * Right now we just check for VizPanels
    */
-  getElements(): LayoutElementInfo[];
+  getElements(): DashboardLayoutElement[];
   /**
    * Remove an elemenet / panel
    * @param element
@@ -67,14 +67,6 @@ export interface LayoutRegistryItem extends RegistryItem {
 export interface LayoutEditorProps<T> {
   layoutManager: T;
 }
-/**
- * Type used to support switching between layouts
- */
-export interface LayoutElementInfo {
-  body: SceneObject;
-  width?: number;
-  height?: number;
-}
 
 /**
  * This interface is needed to support layouts existing on different levels of the scene (DashboardScene and inside the TabsLayoutManager)
@@ -108,6 +100,10 @@ export interface DashboardLayoutElement extends SceneObject {
    * Used by panel edit to commit changes
    */
   setBody(body: SceneObject): void;
+  /**
+   * Only implemented by elements that wrap VizPanels
+   */
+  getVizPanel?(): VizPanel;
 }
 
 export function isDashboardLayoutElement(obj: SceneObject): obj is DashboardLayoutElement {

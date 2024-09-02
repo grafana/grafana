@@ -1,4 +1,3 @@
-import { DataLink, LinkModel } from '@grafana/data';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -28,13 +27,7 @@ import {
 import { DashboardGridItem } from '../../DashboardGridItem';
 import { LibraryVizPanel } from '../../LibraryVizPanel';
 import { LayoutEditChrome } from '../LayoutEditChrome';
-import {
-  DashboardLayoutManager,
-  LayoutRegistryItem,
-  LayoutEditorProps,
-  LayoutElementInfo,
-  DashboardLayoutElement,
-} from '../types';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, DashboardLayoutElement } from '../types';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   layout: SceneGridLayout;
@@ -44,9 +37,6 @@ export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
   implements DashboardLayoutManager
 {
-  toSaveModel?() {
-    throw new Error('Method not implemented.');
-  }
   public editModeChanged(isEditing: boolean): void {
     this.state.layout.setState({ isDraggable: isEditing, isResizable: isEditing });
     forceRenderChildren(this.state.layout, true);
@@ -93,6 +83,10 @@ export class DefaultGridLayoutManager
     }
 
     sceneGridLayout.setState({ children });
+  }
+
+  public toSaveModel?() {
+    throw new Error('Method not implemented.');
   }
 
   public addNewPanel(): VizPanel {
@@ -277,18 +271,18 @@ export class DefaultGridLayoutManager
     return <ManualGridLayoutEditor layoutManager={this} />;
   }
 
-  public getElements(): LayoutElementInfo[] {
-    const elements: LayoutElementInfo[] = [];
+  public getElements(): DashboardLayoutElement[] {
+    const elements: DashboardLayoutElement[] = [];
 
     for (const child of this.state.layout.state.children) {
-      if (child instanceof DashboardGridItem && child.state.body instanceof VizPanel) {
-        elements.push({ body: child.state.body });
+      if (child instanceof DashboardGridItem) {
+        elements.push(child);
       }
 
       if (child instanceof SceneGridRow) {
         for (const rowChild of child.state.children) {
-          if (rowChild instanceof DashboardGridItem && rowChild.state.body instanceof VizPanel) {
-            elements.push({ body: rowChild.state.body });
+          if (rowChild instanceof DashboardGridItem) {
+            elements.push(rowChild);
           }
         }
       }
@@ -326,15 +320,17 @@ export class DefaultGridLayoutManager
     const panelWidth = GRID_COLUMN_COUNT / 3;
 
     for (let element of elements) {
-      if (element.body instanceof VizPanel) {
+      if (element.getVizPanel) {
+        const vizPanel = element.getVizPanel();
+
         children.push(
           new DashboardGridItem({
-            key: `griditem-${getPanelIdForVizPanel(element.body)}`,
+            key: `griditem-${getPanelIdForVizPanel(vizPanel)}`,
             x: currentX,
             y: currentY,
             width: panelWidth,
             height: panelHeight,
-            body: element.body,
+            body: vizPanel,
           })
         );
 

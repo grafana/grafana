@@ -1,24 +1,9 @@
-import {
-  SceneComponentProps,
-  SceneCSSGridLayout,
-  SceneGridLayout,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectState,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneGridLayout, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Button, Tab, TabsBar } from '@grafana/ui';
 
 import { DefaultGridLayoutManager } from './DefaultGrid/DefaultGridLayoutManager';
 import { LayoutEditChrome } from './LayoutEditChrome';
-import { ResponsiveGridLayoutManager } from './ResponsiveGrid/ResponsiveGridLayoutManager';
-import {
-  DashboardLayoutManager,
-  LayoutRegistryItem,
-  LayoutEditorProps,
-  LayoutElementInfo,
-  DashboardLayoutElement,
-} from './types';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, DashboardLayoutElement } from './types';
 
 interface TabsLayoutManagerState extends SceneObjectState {
   tabLayouts: DashboardLayoutManager[];
@@ -83,8 +68,8 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     };
   }
 
-  public getElements(): LayoutElementInfo[] {
-    const elements: LayoutElementInfo[] = [];
+  public getElements(): DashboardLayoutElement[] {
+    const elements: DashboardLayoutElement[] = [];
 
     for (const childLayout of this.state.tabLayouts) {
       for (const child of childLayout.getElements()) {
@@ -96,15 +81,6 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public static createFromLayout(layout: DashboardLayoutManager): TabsLayoutManager {
-    const elements = layout.getElements();
-    const children: SceneObject[] = [];
-
-    for (let element of elements) {
-      if (element.body instanceof VizPanel) {
-        children.push(element.body.clone());
-      }
-    }
-
     return new TabsLayoutManager({
       tabLayouts: [layout],
       tabTitles: ['Tab 1'],

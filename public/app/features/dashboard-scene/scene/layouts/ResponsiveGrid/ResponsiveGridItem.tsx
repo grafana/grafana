@@ -57,6 +57,10 @@ export class ResponsiveGridItem extends SceneObjectBase<ResponsiveGridItemState>
     }
   }
 
+  public getVizPanel() {
+    return this.state.body;
+  }
+
   public static Component = ({ model }: SceneComponentProps<ResponsiveGridItem>) => {
     const { body } = model.useState();
 

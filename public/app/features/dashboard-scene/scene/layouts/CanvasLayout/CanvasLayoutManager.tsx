@@ -4,13 +4,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { forceRenderChildren, getDefaultVizPanel } from '../../../utils/utils';
 import { LayoutEditChrome } from '../LayoutEditChrome';
-import {
-  DashboardLayoutManager,
-  LayoutRegistryItem,
-  LayoutEditorProps,
-  LayoutElementInfo,
-  DashboardLayoutElement,
-} from '../types';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, DashboardLayoutElement } from '../types';
 
 import { CanvasElement } from './SceneCanvasElement';
 import { SceneCanvasRootLayout } from './SceneCanvasRootLayout';
@@ -22,7 +16,6 @@ interface CanvasLayoutManagerState extends SceneObjectState {
 
 export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerState> implements DashboardLayoutManager {
   public editModeChanged(isEditing: boolean): void {
-    //    this.setState({ isDraggable: isEditing });
     forceRenderChildren(this, true);
   }
 
@@ -51,12 +44,12 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     throw new Error('Method not implemented.');
   }
 
-  public getElements(): LayoutElementInfo[] {
-    const objects: LayoutElementInfo[] = [];
+  public getElements(): DashboardLayoutElement[] {
+    const objects: DashboardLayoutElement[] = [];
 
     for (const child of this.state.layout.state.children) {
-      if (child.state.body instanceof VizPanel) {
-        objects.push({ body: child.state.body });
+      if (child instanceof CanvasElement) {
+        objects.push(child);
       }
     }
 
@@ -96,10 +89,10 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     let currentX = 0;
 
     for (let element of elements) {
-      if (element.body instanceof VizPanel) {
+      if (element.getVizPanel) {
         children.push(
           new CanvasElement({
-            body: element.body,
+            body: element.getVizPanel(),
             placement: {
               top: currentY,
               left: currentX,

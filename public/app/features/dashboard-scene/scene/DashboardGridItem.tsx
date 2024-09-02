@@ -174,6 +174,14 @@ export class DashboardGridItem
     }
   }
 
+  public getVizPanel() {
+    if (this.state.body instanceof VizPanel) {
+      return this.state.body;
+    }
+
+    throw new Error('Unsupported body type');
+  }
+
   private setupLibraryPanelChangeSubscription(panel: LibraryVizPanel) {
     if (this._libPanelSubscription) {
       this._libPanelSubscription.unsubscribe();

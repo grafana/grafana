@@ -24,6 +24,10 @@ export class CanvasElement extends SceneObjectBase<CanvasElementState> {
     }
   }
 
+  public getVizPanel() {
+    return this.state.body;
+  }
+
   public static Component = ({ model }: SceneComponentProps<CanvasElement>) => {
     const { body, placement } = model.useState();
 

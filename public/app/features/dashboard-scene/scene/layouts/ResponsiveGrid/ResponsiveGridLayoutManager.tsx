@@ -5,13 +5,7 @@ import { Button, Field, Select } from '@grafana/ui';
 import { DashboardInteractions } from '../../../utils/interactions';
 import { getDefaultVizPanel, getPanelIdForVizPanel } from '../../../utils/utils';
 import { LayoutEditChrome } from '../LayoutEditChrome';
-import {
-  DashboardLayoutManager,
-  LayoutRegistryItem,
-  LayoutEditorProps,
-  LayoutElementInfo,
-  DashboardLayoutElement,
-} from '../types';
+import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, DashboardLayoutElement } from '../types';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
@@ -78,14 +72,12 @@ export class ResponsiveGridLayoutManager
     };
   }
 
-  public getElements(): LayoutElementInfo[] {
-    const elements: LayoutElementInfo[] = [];
+  public getElements(): DashboardLayoutElement[] {
+    const elements: DashboardLayoutElement[] = [];
 
     for (const child of this.state.layout.state.children) {
       if (child instanceof ResponsiveGridItem) {
-        if (child.state.body instanceof VizPanel) {
-          elements.push({ body: child.state.body });
-        }
+        elements.push(child);
       }
     }
 
@@ -101,8 +93,8 @@ export class ResponsiveGridLayoutManager
     const children: ResponsiveGridItem[] = [];
 
     for (let element of elements) {
-      if (element.body instanceof VizPanel) {
-        children.push(new ResponsiveGridItem({ body: element.body.clone() }));
+      if (element.getVizPanel) {
+        children.push(new ResponsiveGridItem({ body: element.getVizPanel() }));
       }
     }
 
