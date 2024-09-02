@@ -91,7 +91,6 @@ func TestIntegrationBackendHappyPath(t *testing.T) {
 		rv3, err = writeEvent(ctx, backend, "item3", resource.WatchEvent_ADDED)
 		require.NoError(t, err)
 		require.Greater(t, rv3, rv2)
-
 	})
 
 	t.Run("Update item2", func(t *testing.T) {
@@ -412,7 +411,6 @@ func TestClientServer(t *testing.T) {
 }
 
 func writeEvent(ctx context.Context, store sql.Backend, name string, action resource.WatchEvent_Type) (int64, error) {
-
 	return store.WriteEvent(ctx, resource.WriteEvent{
 		Type:  action,
 		Value: []byte(name + " " + resource.WatchEvent_Type_name[int32(action)]),

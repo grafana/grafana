@@ -663,9 +663,8 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 // in a single roundtrip. This would reduce the latency of the operation, and also increase the
 // throughput of the system. This is a good candidate for a future optimization.
 func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
-
 	// 1. Increase the resource version to the current epoch with microseconds precision.
-	// This is an update statement that will lock to row and prevent concurrent updates until the transaction is commited.
+	// This is an update statement that will lock to row and prevent concurrent updates until the transaction is committed.
 
 	// This is a trade-off between performance and consistency.
 
