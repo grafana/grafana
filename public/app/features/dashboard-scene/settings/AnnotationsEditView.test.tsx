@@ -101,6 +101,7 @@ describe('AnnotationsEditView', () => {
     beforeEach(async () => {
       const result = await buildTestScene();
       annotationsView = result.annotationsView;
+      jest.spyOn(console, 'error').mockImplementation();
     });
 
     it('should return the correct urlKey', () => {
