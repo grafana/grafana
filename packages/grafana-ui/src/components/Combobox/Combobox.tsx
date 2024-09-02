@@ -28,7 +28,7 @@ interface ComboboxProps
 }
 
 function itemToString(item: Option | null) {
-  return item?.label ?? '';
+  return item?.label ?? item?.value?.toString() ?? '';
 }
 
 function itemFilter(inputValue: string) {
@@ -64,12 +64,33 @@ export const Combobox = ({
 }: ComboboxProps) => {
   const [items, setItems] = useState(options);
 
-  const selectedItemIndex: number | null = useMemo(
-    () => (value === null ? null : options.findIndex((option) => option.value === value) || null),
-    [options, value]
-  );
+  const selectedItemIndex = useMemo(() => {
+    if (value === null) {
+      return null;
+    }
 
-  const selectedItem = selectedItemIndex ? options[selectedItemIndex] : null;
+    const index = options.findIndex((option) => option.value === value);
+    if (index === -1) {
+      return null;
+    }
+
+    return index;
+  }, [options, value]);
+
+  const selectedItem = useMemo(() => {
+    if (selectedItemIndex) {
+      return options[selectedItemIndex];
+    }
+
+    // Custom value
+    if (value !== null) {
+      return {
+        label: value.toString(),
+        value,
+      };
+    }
+    return null;
+  }, [selectedItemIndex, options, value]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
@@ -102,7 +123,7 @@ export const Combobox = ({
     items,
     itemToString,
     selectedItem,
-    onSelectedItemChange: ({ selectedItem }) => {
+    onSelectedItemChange: ({ selectedItem, inputValue }) => {
       onChange(selectedItem);
     },
     defaultHighlightedIndex: selectedItemIndex ?? undefined,
