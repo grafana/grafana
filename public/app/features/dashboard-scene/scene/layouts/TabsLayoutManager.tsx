@@ -12,7 +12,13 @@ import { Button, Tab, TabsBar } from '@grafana/ui';
 import { DefaultGridLayoutManager } from './DefaultGrid/DefaultGridLayoutManager';
 import { LayoutEditChrome } from './LayoutEditChrome';
 import { ResponsiveGridLayoutManager } from './ResponsiveGrid/ResponsiveGridLayoutManager';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from './types';
+import {
+  DashboardLayoutManager,
+  LayoutRegistryItem,
+  LayoutEditorProps,
+  LayoutElementInfo,
+  DashboardLayoutElement,
+} from './types';
 
 interface TabsLayoutManagerState extends SceneObjectState {
   tabLayouts: DashboardLayoutManager[];
@@ -40,8 +46,11 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public changeTab(tab: string) {
+    // TODO: Add url sync for current tab
     this.setState({ currentTab: tab });
   }
+
+  public removeElement(element: DashboardLayoutElement) {}
 
   public renderEditor() {
     return <TabsLayoutEditor layoutManager={this} />;

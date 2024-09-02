@@ -4,7 +4,13 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { forceRenderChildren, getDefaultVizPanel } from '../../../utils/utils';
 import { LayoutEditChrome } from '../LayoutEditChrome';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from '../types';
+import {
+  DashboardLayoutManager,
+  LayoutRegistryItem,
+  LayoutEditorProps,
+  LayoutElementInfo,
+  DashboardLayoutElement,
+} from '../types';
 
 import { CanvasElement } from './SceneCanvasElement';
 import { SceneCanvasRootLayout } from './SceneCanvasRootLayout';
@@ -39,6 +45,10 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     return max + 1;
   }
 
+  public removeElement(element: DashboardLayoutElement) {
+    this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
+  }
+
   public getElements(): LayoutElementInfo[] {
     const objects: LayoutElementInfo[] = [];
 
@@ -49,10 +59,6 @@ export class CanvasLayoutManager extends SceneObjectBase<CanvasLayoutManagerStat
     }
 
     return objects;
-  }
-
-  public getLayoutId(): string {
-    return 'canvas-layout';
   }
 
   public getDescriptor(): LayoutRegistryItem {

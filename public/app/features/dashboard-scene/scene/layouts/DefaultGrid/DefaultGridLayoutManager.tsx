@@ -26,7 +26,13 @@ import {
 import { DashboardGridItem } from '../../DashboardGridItem';
 import { LibraryVizPanel } from '../../LibraryVizPanel';
 import { LayoutEditChrome } from '../LayoutEditChrome';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from '../types';
+import {
+  DashboardLayoutManager,
+  LayoutRegistryItem,
+  LayoutEditorProps,
+  LayoutElementInfo,
+  DashboardLayoutElement,
+} from '../types';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   layout: SceneGridLayout;
@@ -36,6 +42,9 @@ export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
   implements DashboardLayoutManager
 {
+  toSaveModel?() {
+    throw new Error('Method not implemented.');
+  }
   public editModeChanged(isEditing: boolean): void {
     this.state.layout.setState({ isDraggable: isEditing, isResizable: isEditing });
     forceRenderChildren(this.state.layout, true);
@@ -103,47 +112,47 @@ export class DefaultGridLayoutManager
     });
   }
 
-  public removePanel(panel: VizPanel) {
+  /**
+   * Element here can be a DashboardGridItem
+   * @param element
+   * @returns
+   */
+  public removeElement(element: DashboardLayoutElement) {
     const panels: SceneObject[] = [];
-    const key = panel.parent instanceof LibraryVizPanel ? panel.parent.parent?.state.key : panel.parent?.state.key;
 
-    if (!key) {
-      return;
-    }
+    //const key = panel.parent instanceof LibraryVizPanel ? panel.parent.parent?.state.key : panel.parent?.state.key;
+
+    // if (!key) {
+    //   return;
+    // }
 
     let row: SceneGridRow | undefined;
 
     try {
-      row = sceneGraph.getAncestor(panel, SceneGridRow);
+      row = sceneGraph.getAncestor(element, SceneGridRow);
     } catch {
       row = undefined;
     }
 
     if (row) {
       row.state.children.forEach((child: SceneObject) => {
-        if (child.state.key !== key) {
+        if (child !== element) {
           panels.push(child);
         }
       });
 
       row.setState({ children: panels });
-
       this.state.layout.forceRender();
-
       return;
     }
 
     this.state.layout.forEachChild((child: SceneObject) => {
-      if (child.state.key !== key) {
+      if (child !== element) {
         panels.push(child);
       }
     });
 
-    const layout = this.state.layout;
-
-    if (layout instanceof SceneGridLayout) {
-      layout.setState({ children: panels });
-    }
+    this.state.layout.setState({ children: panels });
   }
 
   public getNextPanelId(): number {
@@ -217,10 +226,6 @@ export class DefaultGridLayoutManager
     }
 
     return elements;
-  }
-
-  public getLayoutId(): string {
-    return 'scene-grid-layout';
   }
 
   public getDescriptor(): LayoutRegistryItem {

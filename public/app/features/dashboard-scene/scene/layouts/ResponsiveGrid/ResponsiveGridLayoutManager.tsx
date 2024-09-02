@@ -5,7 +5,13 @@ import { Button, Field, Select } from '@grafana/ui';
 import { DashboardInteractions } from '../../../utils/interactions';
 import { getDefaultVizPanel, getPanelIdForVizPanel } from '../../../utils/utils';
 import { LayoutEditChrome } from '../LayoutEditChrome';
-import { DashboardLayoutManager, LayoutRegistryItem, LayoutEditorProps, LayoutElementInfo } from '../types';
+import {
+  DashboardLayoutManager,
+  LayoutRegistryItem,
+  LayoutEditorProps,
+  LayoutElementInfo,
+  DashboardLayoutElement,
+} from '../types';
 
 import { ResponsiveGridItem } from './ResponsiveGridItem';
 
@@ -43,6 +49,10 @@ export class ResponsiveGridLayoutManager
     }
 
     return max;
+  }
+
+  public removeElement(element: DashboardLayoutElement) {
+    this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
   }
 
   public getDescriptor(): LayoutRegistryItem {

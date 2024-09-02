@@ -76,7 +76,7 @@ import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DefaultGridLayoutManager } from './layouts/DefaultGrid/DefaultGridLayoutManager';
-import { DashboardLayoutManager } from './layouts/types';
+import { DashboardLayoutManager, isDashboardLayoutElement } from './layouts/types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 
@@ -363,6 +363,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public resumeTrackingChanges() {
     this._changeTracker.startTrackingChanges();
+  }
+
+  public removePanel(vizPanel: VizPanel) {
+    const layoutElement = vizPanel.parent!;
+
+    if (isDashboardLayoutElement(layoutElement)) {
+      // TODO Handle lookup of element layout manager in case of nested layouts (tabs)
+      this.state.body.removeElement(layoutElement);
+    }
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {

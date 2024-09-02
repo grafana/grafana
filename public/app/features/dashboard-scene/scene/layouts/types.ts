@@ -24,6 +24,11 @@ export interface DashboardLayoutManager extends SceneObject {
    */
   getElements(): LayoutElementInfo[];
   /**
+   * Remove an elemenet / panel
+   * @param element
+   */
+  removeElement(element: DashboardLayoutElement): void;
+  /**
    * Renders options and layout actions
    */
   renderEditor?(): React.ReactNode;
