@@ -3,6 +3,8 @@ import { css } from '@emotion/css';
 import { Button, ButtonGroup, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 
+import { queryLibraryTrackToggle } from '../QueryLibrary/QueryLibraryAnalyticsEvents';
+
 import { Tabs, useQueriesDrawerContext } from './QueriesDrawerContext';
 import { i18n } from './utils';
 
@@ -21,6 +23,8 @@ export function QueriesDrawerDropdown({ variant }: Props) {
   }
 
   function toggle(tab: Tabs) {
+    tab === Tabs.QueryLibrary && queryLibraryTrackToggle(!drawerOpened);
+
     setSelectedTab(tab);
     setDrawerOpened(false);
     setDrawerOpened(true);
@@ -38,7 +42,10 @@ export function QueriesDrawerDropdown({ variant }: Props) {
       <ToolbarButton
         icon="book"
         variant={drawerOpened ? 'active' : 'canvas'}
-        onClick={() => setDrawerOpened(!drawerOpened)}
+        onClick={() => {
+          setDrawerOpened(!drawerOpened);
+          selectedTab === Tabs.QueryLibrary && queryLibraryTrackToggle(!drawerOpened);
+        }}
         aria-label={selectedTab}
       >
         {variant === 'full' ? selectedTab : undefined}
@@ -48,7 +55,10 @@ export function QueriesDrawerDropdown({ variant }: Props) {
           className={styles.close}
           variant="secondary"
           icon="times"
-          onClick={() => setDrawerOpened(false)}
+          onClick={() => {
+            setDrawerOpened(false);
+            selectedTab === Tabs.QueryLibrary && queryLibraryTrackToggle(false);
+          }}
         ></Button>
       ) : (
         <Dropdown overlay={menu}>
