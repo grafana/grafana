@@ -39,4 +39,5 @@ var WireSet = wire.NewSet(
 	query.RegisterAPIService,
 	scope.RegisterAPIService,
 	notifications.RegisterAPIService,
+	//sso.RegisterAPIService,
 )

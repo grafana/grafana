@@ -56,7 +56,8 @@ export type GrafanaNotifierType =
   | 'pushover'
   | 'LINE'
   | 'kafka'
-  | 'wecom';
+  | 'wecom'
+  | 'mqtt';
 
 export type CloudNotifierType =
   | 'oncall' // Only FE implementation for now

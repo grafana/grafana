@@ -1000,7 +1000,7 @@ describe('DashboardScene', () => {
       scene.setState({ isDirty: true });
 
       locationService.push('/d/adsdas');
-      await scene.deleteDashboard();
+      await scene.onDashboardDelete();
 
       expect(scene.state.isDirty).toBe(false);
     });

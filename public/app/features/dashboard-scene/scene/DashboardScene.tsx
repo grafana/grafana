@@ -27,13 +27,13 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink, LibraryPanel } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
+import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
@@ -125,6 +125,8 @@ export interface DashboardSceneState extends SceneObjectState {
   isEmpty?: boolean;
   /** Kiosk mode */
   kioskMode?: KioskMode;
+  /** Share view */
+  shareView?: string;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -165,6 +167,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * A reference to the scopes facade
    */
   private _scopesFacade: ScopesFacade | null;
+  /**
+   * Remember scroll position when going into panel edit
+   */
+  private _scrollRef?: ScrollRefElement;
+  private _prevScrollPos?: number;
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -312,6 +319,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         editview: null,
         inspect: null,
         inspectTab: null,
+        shareView: null,
       })
     );
 
@@ -412,7 +420,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         uid: this.state.uid,
         slug: meta.slug,
         currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null },
+        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null, shareView: null },
         isHomeDashboard: !meta.url && !meta.slug && !meta.isNew,
       }),
     };
@@ -882,8 +890,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._initialSaveModel = saveModel;
   }
 
-  public async deleteDashboard() {
-    await deleteDashboard(this.state.uid!, true);
+  public async onDashboardDelete() {
     // Need to mark it non dirty to navigate away without unsaved changes warning
     this.setState({ isDirty: false });
     locationService.replace('/');
@@ -921,6 +928,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         sceneGridLayout.toggleRow(child);
       }
     });
+  }
+
+  public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
+    this._scrollRef = scrollElement;
+  };
+
+  public rememberScrollPos() {
+    this._prevScrollPos = this._scrollRef?.scrollTop;
+  }
+
+  public restoreScrollPos() {
+    if (this._prevScrollPos !== undefined) {
+      this._scrollRef?.scrollTo(0, this._prevScrollPos!);
+    }
   }
 }
 

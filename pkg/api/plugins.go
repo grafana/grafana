@@ -458,8 +458,15 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 
 	hs.log.Info("Plugin install/update requested", "pluginId", pluginID, "user", c.Login)
 
+	for _, preinstalled := range hs.Cfg.PreinstallPlugins {
+		if preinstalled.ID == pluginID && preinstalled.Version != "" {
+			return response.Error(http.StatusConflict, "Cannot update a pinned pre-installed plugin", nil)
+		}
+	}
+
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
-	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
+	ctx := repo.WithRequestOrigin(c.Req.Context(), "api")
+	err := hs.pluginInstaller.Add(ctx, pluginID, dto.Version, compatOpts)
 	if err != nil {
 		var dupeErr plugins.DuplicateError
 		if errors.As(err, &dupeErr) {
@@ -494,6 +501,12 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
+	}
+
+	for _, preinstalled := range hs.Cfg.PreinstallPlugins {
+		if preinstalled.ID == pluginID {
+			return response.Error(http.StatusConflict, "Cannot uninstall a pre-installed plugin", nil)
+		}
 	}
 
 	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID, plugin.Info.Version)
