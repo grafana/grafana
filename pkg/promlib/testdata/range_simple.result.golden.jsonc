@@ -4,17 +4,17 @@
 //      "type": "timeseries-multi",
 //      "typeVersion": [
 //          0,
-//          0
+//          1
 //      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      },
 //      "executedQueryString": "Expr: \nStep: 1s"
 //  }
-//  Name: prometheus_http_requests_total{code="200", handler="/api/v1/query_range", job="prometheus"}
+//  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+
-//  | Name: Time                        | Name: Value                                                                                            |
+//  | Name: Time                        | Name: prometheus_http_requests_total                                                                   |
 //  | Labels:                           | Labels: __name__=prometheus_http_requests_total, code=200, handler=/api/v1/query_range, job=prometheus |
 //  | Type: []time.Time                 | Type: []float64                                                                                        |
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+
@@ -29,16 +29,16 @@
 //      "type": "timeseries-multi",
 //      "typeVersion": [
 //          0,
-//          0
+//          1
 //      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      }
 //  }
-//  Name: prometheus_http_requests_total{code="400", handler="/api/v1/query_range", job="prometheus"}
+//  Name: 
 //  Dimensions: 2 Fields by 2 Rows
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+
-//  | Name: Time                        | Name: Value                                                                                            |
+//  | Name: Time                        | Name: prometheus_http_requests_total                                                                   |
 //  | Labels:                           | Labels: __name__=prometheus_http_requests_total, code=400, handler=/api/v1/query_range, job=prometheus |
 //  | Type: []time.Time                 | Type: []float64                                                                                        |
 //  +-----------------------------------+--------------------------------------------------------------------------------------------------------+
@@ -53,12 +53,11 @@
   "frames": [
     {
       "schema": {
-        "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
             0,
-            0
+            1
           ],
           "custom": {
             "resultType": "matrix"
@@ -77,7 +76,7 @@
             }
           },
           {
-            "name": "Value",
+            "name": "prometheus_http_requests_total",
             "type": "number",
             "typeInfo": {
               "frame": "float64"
@@ -111,12 +110,11 @@
     },
     {
       "schema": {
-        "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
             0,
-            0
+            1
           ],
           "custom": {
             "resultType": "matrix"
@@ -134,7 +132,7 @@
             }
           },
           {
-            "name": "Value",
+            "name": "prometheus_http_requests_total",
             "type": "number",
             "typeInfo": {
               "frame": "float64"

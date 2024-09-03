@@ -274,7 +274,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
 		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
 		PluginCatalogManagedPlugins:      hs.managedPluginsService.ManagedPlugins(c.Req.Context()),
-		PluginCatalogPreinstalledPlugins: hs.Cfg.InstallPlugins,
+		PluginCatalogPreinstalledPlugins: hs.Cfg.PreinstallPlugins,
 		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
@@ -449,11 +449,12 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
-			JSONData:  plugin.JSONData,
-			Signature: plugin.Signature,
-			Module:    plugin.Module,
-			BaseURL:   plugin.BaseURL,
-			Angular:   plugin.Angular,
+			JSONData:                  plugin.JSONData,
+			Signature:                 plugin.Signature,
+			Module:                    plugin.Module,
+			BaseURL:                   plugin.BaseURL,
+			Angular:                   plugin.Angular,
+			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 		}
 
 		if ds.JsonData == nil {

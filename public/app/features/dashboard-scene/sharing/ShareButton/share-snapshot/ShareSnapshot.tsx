@@ -4,18 +4,23 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { ShareDrawerConfirmAction } from '../../ShareDrawer/ShareDrawerConfirmAction';
 import { ShareSnapshotTab } from '../../ShareSnapshotTab';
+import { ShareView } from '../../types';
 
 import { CreateSnapshot } from './CreateSnapshot';
 import { SnapshotActions } from './SnapshotActions';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareSnapshot;
 
-export class ShareSnapshot extends ShareSnapshotTab {
+export class ShareSnapshot extends ShareSnapshotTab implements ShareView {
   static Component = ShareSnapshotRenderer;
+
+  public getTabLabel() {
+    return t('share-dashboard.menu.share-snapshot-title', 'Share snapshot');
+  }
 }
 
 function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
@@ -23,7 +28,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   const [showDeletedAlert, setShowDeletedAlert] = useState(false);
   const [step, setStep] = useState(1);
 
-  const { snapshotName, snapshotSharingOptions, selectedExpireOption, dashboardRef, panelRef } = model.useState();
+  const { snapshotName, snapshotSharingOptions, selectedExpireOption, panelRef, onDismiss } = model.useState();
 
   const [snapshotResult, createSnapshot] = useAsyncFn(async (external = false) => {
     const response = await model.onSnapshotCreate(external);
@@ -39,7 +44,7 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
   });
 
   const onCancelClick = () => {
-    dashboardRef.resolve().closeModal();
+    onDismiss?.();
   };
 
   if (showDeleteConfirmation) {

@@ -12,11 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/oauth2"
-	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -27,9 +28,14 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 var EXPIRED_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestService_HasOAuthEntry(t *testing.T) {
 	testCases := []struct {
@@ -116,13 +122,16 @@ func setupOAuthTokenService(t *testing.T) (*Service, *FakeAuthInfoStore, *social
 
 	authInfoStore := &FakeAuthInfoStore{ExpectedOAuth: &login.UserAuth{}}
 	authInfoService := authinfoimpl.ProvideService(authInfoStore, remotecache.NewFakeCacheStorage(), secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
+
+	store := db.InitTestDB(t)
+
 	return &Service{
 		Cfg:                  setting.NewCfg(),
 		SocialService:        socialService,
 		AuthInfoService:      authInfoService,
-		singleFlightGroup:    &singleflight.Group{},
+		serverLock:           serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 		tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
-		cache:                localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+		tracer:               tracing.InitializeTracerForTest(),
 	}, authInfoStore, socialConnector
 }
 
@@ -155,7 +164,7 @@ func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.Delet
 func TestService_TryTokenRefresh(t *testing.T) {
 	type environment struct {
 		authInfoService *authinfotest.FakeService
-		cache           *localcache.CacheService
+		serverLock      *serverlock.ServerLockService
 		identity        identity.Requester
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
@@ -207,13 +216,6 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					ID:              "1234",
 					Type:            claims.TypeUser,
 				}
-			},
-		},
-		{
-			desc: "should skip token refresh if the expiration check has already been cached",
-			setup: func(env *environment) {
-				env.identity = &authn.Identity{ID: "1234", Type: claims.TypeUser}
-				env.cache.Set("oauth-refresh-token-1234", true, 1*time.Minute)
 			},
 		},
 		{
@@ -287,7 +289,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					Expiry:       time.Now().Add(-time.Hour),
 					TokenType:    "Bearer",
 				}
-				env.identity = &authn.Identity{ID: "1234", Type: claims.TypeUser}
+				env.identity = &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule}
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
@@ -312,7 +314,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					Expiry:       time.Now().Add(time.Hour),
 					TokenType:    "Bearer",
 				}
-				env.identity = &authn.Identity{ID: "1234", Type: claims.TypeUser}
+				env.identity = &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule}
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
@@ -334,9 +336,11 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := &socialtest.MockSocialConnector{}
 
+			store := db.InitTestDB(t)
+
 			env := environment{
 				authInfoService: &authinfotest.FakeService{},
-				cache:           localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
 					ExpectedConnector: socialConnector,
@@ -347,89 +351,21 @@ func TestService_TryTokenRefresh(t *testing.T) {
 				tt.setup(&env)
 			}
 
-			env.service = &Service{
-				AuthInfoService:      env.authInfoService,
-				Cfg:                  setting.NewCfg(),
-				cache:                env.cache,
-				singleFlightGroup:    &singleflight.Group{},
-				SocialService:        env.socialService,
-				tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
-			}
+			env.service = ProvideService(
+				env.socialService,
+				env.authInfoService,
+				setting.NewCfg(),
+				prometheus.NewRegistry(),
+				env.serverLock,
+				tracing.InitializeTracerForTest(),
+			)
 
 			// token refresh
-			err := env.service.TryTokenRefresh(context.Background(), env.identity)
+			_, err := env.service.TryTokenRefresh(context.Background(), env.identity)
 
 			// test and validations
 			assert.ErrorIs(t, err, tt.expectedErr)
 			socialConnector.AssertExpectations(t)
-		})
-	}
-}
-
-func TestOAuthTokenSync_getOAuthTokenCacheTTL(t *testing.T) {
-	defaultTime := time.Now()
-	tests := []struct {
-		name              string
-		accessTokenExpiry time.Time
-		idTokenExpiry     time.Time
-		want              time.Duration
-	}{
-		{
-			name:              "should return maxOAuthTokenCacheTTL when no expiry is given",
-			accessTokenExpiry: time.Time{},
-			idTokenExpiry:     time.Time{},
-
-			want: maxOAuthTokenCacheTTL,
-		},
-		{
-			name:              "should return maxOAuthTokenCacheTTL when access token is not given and id token expiry is greater than max cache ttl",
-			accessTokenExpiry: time.Time{},
-			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-
-			want: maxOAuthTokenCacheTTL,
-		},
-		{
-			name:              "should return idTokenExpiry when access token is not given and id token expiry is less than max cache ttl",
-			accessTokenExpiry: time.Time{},
-			idTokenExpiry:     defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
-			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
-		},
-		{
-			name:              "should return maxOAuthTokenCacheTTL when access token expiry is greater than max cache ttl and id token is not given",
-			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-			idTokenExpiry:     time.Time{},
-			want:              maxOAuthTokenCacheTTL,
-		},
-		{
-			name:              "should return accessTokenExpiry when access token expiry is less than max cache ttl and id token is not given",
-			accessTokenExpiry: defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
-			idTokenExpiry:     time.Time{},
-			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
-		},
-		{
-			name:              "should return accessTokenExpiry when access token expiry is less than max cache ttl and less than id token expiry",
-			accessTokenExpiry: defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
-			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
-		},
-		{
-			name:              "should return idTokenExpiry when id token expiry is less than max cache ttl and less than access token expiry",
-			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-			idTokenExpiry:     defaultTime.Add(-3*time.Minute + maxOAuthTokenCacheTTL),
-			want:              time.Until(defaultTime.Add(-3*time.Minute + maxOAuthTokenCacheTTL)),
-		},
-		{
-			name:              "should return maxOAuthTokenCacheTTL when access token expiry is greater than max cache ttl and id token expiry is greater than max cache ttl",
-			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-			want:              maxOAuthTokenCacheTTL,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := getOAuthTokenCacheTTL(tt.accessTokenExpiry, tt.idTokenExpiry)
-
-			assert.Equal(t, tt.want.Round(time.Second), got.Round(time.Second))
 		})
 	}
 }
@@ -445,7 +381,6 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 			name:                     "should not need token refresh when token has no expiration date",
 			usr:                      &login.UserAuth{},
 			expectedTokenRefreshFlag: false,
-			expectedTokenDuration:    maxOAuthTokenCacheTTL,
 		},
 		{
 			name: "should not need token refresh with an invalid jwt token that might result in an error when parsing",
@@ -453,7 +388,6 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 				OAuthIdToken: "invalid_jwt_format",
 			},
 			expectedTokenRefreshFlag: false,
-			expectedTokenDuration:    maxOAuthTokenCacheTTL,
 		},
 		{
 			name: "should flag token refresh with id token is expired",
@@ -474,11 +408,10 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			token, needsTokenRefresh, tokenDuration := needTokenRefresh(tt.usr)
+			token, needsTokenRefresh := needTokenRefresh(tt.usr)
 
 			assert.NotNil(t, token)
 			assert.Equal(t, tt.expectedTokenRefreshFlag, needsTokenRefresh)
-			assert.Equal(t, tt.expectedTokenDuration, tokenDuration)
 		})
 	}
 }
@@ -493,7 +426,7 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 	}
 	type environment struct {
 		authInfoService *authinfotest.FakeService
-		cache           *localcache.CacheService
+		serverLock      *serverlock.ServerLockService
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
 
@@ -506,21 +439,6 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 		usr           *login.UserAuth
 		setup         func(env *environment)
 	}{
-		{
-			desc: "should find and retrieve token from cache",
-			usr: &login.UserAuth{
-				UserId:           int64(1234),
-				OAuthAccessToken: "new_access_token",
-				OAuthExpiry:      timeNow,
-			},
-			setup: func(env *environment) {
-				env.cache.Set("token-check-1234", token, 1*time.Minute)
-			},
-			expectedToken: &oauth2.Token{
-				AccessToken: "new_access_token",
-				Expiry:      timeNow,
-			},
-		},
 		{
 			desc: "should return ErrNotAnOAuthProvider error when the user is not an oauth provider",
 			usr: &login.UserAuth{
@@ -578,9 +496,11 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			socialConnector := &socialtest.MockSocialConnector{}
 
+			store := db.InitTestDB(t)
+
 			env := environment{
 				authInfoService: &authinfotest.FakeService{},
-				cache:           localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+				serverLock:      serverlock.ProvideService(store, tracing.InitializeTracerForTest()),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
 					ExpectedConnector: socialConnector,
@@ -591,14 +511,14 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 				tt.setup(&env)
 			}
 
-			env.service = &Service{
-				AuthInfoService:      env.authInfoService,
-				Cfg:                  setting.NewCfg(),
-				cache:                env.cache,
-				singleFlightGroup:    &singleflight.Group{},
-				SocialService:        env.socialService,
-				tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
-			}
+			env.service = ProvideService(
+				env.socialService,
+				env.authInfoService,
+				setting.NewCfg(),
+				prometheus.NewRegistry(),
+				env.serverLock,
+				tracing.InitializeTracerForTest(),
+			)
 
 			token, err := env.service.tryGetOrRefreshOAuthToken(context.Background(), tt.usr)
 

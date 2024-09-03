@@ -1,7 +1,6 @@
-import * as React from 'react';
 import { Route } from 'react-router-dom';
 import { ui } from 'test/helpers/alertingRuleEditor';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
@@ -11,14 +10,12 @@ import { backendSrv } from '../../../core/services/backend_srv';
 import { AccessControlAction } from '../../../types';
 
 import RuleEditor from './RuleEditor';
-import * as ruler from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource, mockFolder } from './mocks';
-import { grafanaRulerGroup, grafanaRulerRule } from './mocks/grafanaRulerApi';
+import { grafanaRulerRule } from './mocks/grafanaRulerApi';
 import { setupDataSources } from './testSetup/datasources';
 import { Annotation } from './utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   ExpressionEditor: ({ value, onChange }: ExpressionEditorProps) => (
@@ -42,9 +39,6 @@ jest.setTimeout(60 * 1000);
 
 const mocks = {
   searchFolders: jest.mocked(searchFolders),
-  api: {
-    setRulerRuleGroup: jest.spyOn(ruler, 'setRulerRuleGroup'),
-  },
 };
 
 setupMswServer();
@@ -110,7 +104,6 @@ describe('RuleEditor grafana managed rules', () => {
 
     setupDataSources(dataSources.default);
 
-    mocks.api.setRulerRuleGroup.mockResolvedValue();
     // mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     mocks.searchFolders.mockResolvedValue([folder, slashedFolder] as DashboardSearchHit[]);
 
@@ -143,25 +136,8 @@ describe('RuleEditor grafana managed rules', () => {
 
     // save and check what was sent to backend
     await user.click(ui.buttons.save.get());
-    await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
 
     mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
     expect(screen.getByText('New folder')).toBeInTheDocument();
-
-    expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
-      grafanaRulerRule.grafana_alert.namespace_uid,
-      {
-        interval: grafanaRulerGroup.interval,
-        name: grafanaRulerGroup.name,
-        rules: [
-          {
-            ...grafanaRulerRule,
-            annotations: { ...grafanaRulerRule.annotations, custom: 'value' },
-            grafana_alert: { ...grafanaRulerRule.grafana_alert, namespace_uid: undefined, rule_group: undefined },
-          },
-        ],
-      }
-    );
   });
 });
