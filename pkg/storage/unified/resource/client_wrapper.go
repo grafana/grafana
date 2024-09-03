@@ -86,7 +86,7 @@ func NewResourceStoreClientCloud(conn *grpc.ClientConn, cfg *setting.Cfg) (Resou
 
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
-		authnlib.WithMetadataExtractorOption(orgIdExtractor),
+		authnlib.WithMetadataExtractorOption(stackIdExtractor(cfg.StackID)),
 	}
 
 	if cfg.Env == setting.Dev {
@@ -136,4 +136,10 @@ func orgIdExtractor(ctx context.Context) (key string, values []string, err error
 	}
 
 	return authzlib.DefaultStackIDMetadataKey, []string{fmt.Sprintf("%d", requester.GetOrgID())}, nil
+}
+
+func stackIdExtractor(stackID string) func(ctx context.Context) (key string, values []string, err error) {
+	return func(ctx context.Context) (key string, values []string, err error) {
+		return authzlib.DefaultStackIDMetadataKey, []string{stackID}, nil
+	}
 }
