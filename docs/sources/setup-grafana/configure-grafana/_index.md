@@ -754,10 +754,6 @@ Set name for external snapshot button. Defaults to `Publish to snapshots.raintan
 
 Set to true to enable this Grafana instance to act as an external snapshot server and allow unauthenticated requests for creating and deleting snapshots. Default is `false`.
 
-### snapshot_remove_expired
-
-Enable this to automatically remove expired snapshots. Default is `true`.
-
 <hr />
 
 ## [dashboards]
@@ -955,6 +951,14 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 
 How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
+
+### oauth_refresh_token_server_lock_min_wait_ms
+
+Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.
+
+There are five retries in total, so with the default value, the total wait time (for acquiring the lock) is at least 5 seconds (the wait time between retries is calculated as random(n, n + 500)), which means that the maximum token refresh duration must be less than 5-6 seconds.
+
+If you experience issues with the OAuth token refresh mechanism, you can increase this value to allow more time for the token refresh to complete.
 
 ### oauth_skip_org_role_update_sync
 
@@ -1493,6 +1497,10 @@ Turn on console instrumentation. Only affects Grafana Javascript Agent
 ### instrumentations_webvitals_enabled
 
 Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
+
+### instrumentations_tracing_enabled
+
+Turns on tracing instrumentation. Only affects Grafana Javascript Agent.
 
 ### api_key
 

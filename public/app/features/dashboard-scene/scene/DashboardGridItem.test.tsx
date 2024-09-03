@@ -1,3 +1,4 @@
+import { VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
@@ -10,6 +11,12 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
+
+const mockGetQueryRunnerFor = jest.fn();
+jest.mock('../utils/utils', () => ({
+  ...jest.requireActual('../utils/utils'),
+  getQueryRunnerFor: jest.fn().mockImplementation(() => mockGetQueryRunnerFor()),
+}));
 
 describe('PanelRepeaterGridItem', () => {
   it('Given scene with variable with 2 values', async () => {
@@ -38,6 +45,80 @@ describe('PanelRepeaterGridItem', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     expect(repeater.state.repeatedPanels?.length).toBe(5);
+  });
+
+  it('Should update panels on refresh if variables load on time range change', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({
+      variableQueryTime: 0,
+      variableRefresh: VariableRefresh.onTimeRangeChanged,
+    });
+
+    const notifyPanelsSpy = jest.spyOn(repeater, 'notifyRepeatedPanelsWaitingForVariables');
+
+    activateFullSceneTree(scene);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(5);
+
+    expect(notifyPanelsSpy).toHaveBeenCalledTimes(0);
+
+    scene.state.$timeRange?.onRefresh();
+
+    //make sure notifier is called
+    expect(notifyPanelsSpy).toHaveBeenCalledTimes(1);
+
+    //make sure getQueryRunner is called for each repeated panel
+    expect(mockGetQueryRunnerFor).toHaveBeenCalledTimes(5);
+
+    notifyPanelsSpy.mockRestore();
+    mockGetQueryRunnerFor.mockClear();
+  });
+
+  it('Should display a panel when there are no options', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 1, numberOfOptions: 0 });
+
+    activateFullSceneTree(scene);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(0);
+
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
+  });
+
+  it('Should display a panel when there are variable errors', () => {
+    const { scene, repeater } = buildPanelRepeaterScene({
+      variableQueryTime: 0,
+      numberOfOptions: 0,
+      throwError: 'Error',
+    });
+
+    // we expect console.error when variable encounters an error
+    const origError = console.error;
+    console.error = jest.fn();
+
+    activateFullSceneTree(scene);
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
+    console.error = origError;
+  });
+
+  it('Should display a panel when there are variable errors async query', async () => {
+    const { scene, repeater } = buildPanelRepeaterScene({
+      variableQueryTime: 1,
+      numberOfOptions: 0,
+      throwError: 'Error',
+    });
+
+    // we expect console.error when variable encounters an error
+    const origError = console.error;
+    console.error = jest.fn();
+
+    activateFullSceneTree(scene);
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(repeater.state.repeatedPanels?.length).toBe(1);
+    console.error = origError;
   });
 
   it('Should adjust container height to fit panels direction is horizontal', async () => {

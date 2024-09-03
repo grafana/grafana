@@ -41,7 +41,7 @@ func (rs *ReplStore) DB() *SQLStore {
 // ReadReplica returns the read-only SQLStore. If no read replica is configured,
 // it returns the main SQLStore.
 func (rs *ReplStore) ReadReplica() *SQLStore {
-	if rs.repls == nil || len(rs.repls) == 0 {
+	if len(rs.repls) == 0 {
 		rs.log.Debug("ReadReplica not configured, using main SQLStore")
 		return rs.SQLStore
 	}
@@ -99,7 +99,7 @@ func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 			replCfg.Type = WrapDatabaseReplDriverWithHooks(replCfg.Type, uint(i), tracer)
 		}
 
-		s, err := newReadOnlySQLStore(cfg, replCfg, features, bus, tracer)
+		s, err := newReadOnlySQLStore(cfg, &replCfg, features, bus, tracer)
 		if err != nil {
 			return nil, err
 		}
@@ -190,13 +190,13 @@ func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 }
 
 // NewRODatabaseConfig creates a new read-only database configuration.
-func NewRODatabaseConfigs(cfg *setting.Cfg, features featuremgmt.FeatureToggles) ([]*DatabaseConfig, error) {
+func NewRODatabaseConfigs(cfg *setting.Cfg, features featuremgmt.FeatureToggles) ([]DatabaseConfig, error) {
 	if cfg == nil {
 		return nil, errors.New("cfg cannot be nil")
 	}
 
-	// if only one replica is configured in the database_replicas section, use it as the default
-	defaultReplCfg := &DatabaseConfig{}
+	// If one replica is configured in the database_replicas section, use it as the default
+	defaultReplCfg := DatabaseConfig{}
 	if err := defaultReplCfg.readConfigSection(cfg, "database_replicas"); err != nil {
 		return nil, err
 	}
@@ -204,13 +204,13 @@ func NewRODatabaseConfigs(cfg *setting.Cfg, features featuremgmt.FeatureToggles)
 	if err != nil {
 		return nil, err
 	}
-	ret := []*DatabaseConfig{defaultReplCfg}
+	ret := []DatabaseConfig{defaultReplCfg}
 
-	// Check for additional replicas as children of the database_replicas section (e.g. database_replicas.one, database_replicas.cheetara)
-	repls := cfg.Raw.Section("database_replicas")
+	// Check for individual replicas in the database_replica section (e.g. database_replica.one, database_replica.cheetara)
+	repls := cfg.Raw.Section("database_replica")
 	if len(repls.ChildSections()) > 0 {
 		for _, sec := range repls.ChildSections() {
-			replCfg := &DatabaseConfig{}
+			replCfg := DatabaseConfig{}
 			if err := replCfg.parseConfigIni(sec); err != nil {
 				return nil, err
 			}
@@ -263,4 +263,15 @@ func newReplStore(primary *SQLStore, readReplicas ...*SQLStore) *ReplStore {
 	}
 	ret.repls = readReplicas
 	return ret
+}
+
+// FakeReplStoreFromStore returns a ReplStore with the given primary
+// SQLStore and no read replicas. This is a bare-minimum wrapper for testing,
+// and should be removed when all services are using ReplStore in favor of
+// InitTestReplDB.
+func FakeReplStoreFromStore(primary *SQLStore) *ReplStore {
+	return &ReplStore{
+		SQLStore: primary,
+		next:     0,
+	}
 }

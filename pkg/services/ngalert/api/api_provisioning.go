@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"net/http"
 	"strings"
 
@@ -46,8 +45,9 @@ type ContactPointService interface {
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
-	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance) error
+	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error)
+	UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error
 }
 
 type NotificationPolicyService interface {
@@ -202,44 +202,38 @@ func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, 
 func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) response.Response {
 	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, templates)
 }
 
-func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.SignedInUser.GetOrgID())
+func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
+	template, err := srv.templates.GetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), nameOrUid)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	for _, tmpl := range templates {
-		if tmpl.Name == name {
-			return response.JSON(http.StatusOK, tmpl)
-		}
-	}
-	return response.Empty(http.StatusNotFound)
+	return response.JSON(http.StatusOK, template)
 }
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
 	tmpl := definitions.NotificationTemplate{
-		Name:       name,
-		Template:   body.Template,
-		Provenance: determineProvenance(c),
+		Name:            name,
+		Template:        body.Template,
+		Provenance:      determineProvenance(c),
+		ResourceVersion: body.ResourceVersion,
 	}
-	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
+	modified, err := srv.templates.UpsertTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrValidation) {
-			return ErrResp(http.StatusBadRequest, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, modified)
 }
 
-func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name, determineProvenance(c))
+func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
+	version := c.Query("version")
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), nameOrUid, determineProvenance(c), version)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusNoContent, nil)
 }
@@ -592,24 +586,22 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 	convertToResources := func() error {
 		for _, group := range body.Groups {
 			gr := group
-			sum := fnv.New64()
-			_, _ = sum.Write([]byte(gr.Name))
-			_, _ = sum.Write([]byte(gr.FolderUID))
-			hash := sum.Sum64()
+			hash := getHash([]string{gr.Name, gr.FolderUID})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_rule_group",
 				Name: fmt.Sprintf("rule_group_%016x", hash),
 				Body: &gr,
 			})
 		}
-		for idx, cp := range body.ContactPoints {
+		for _, cp := range body.ContactPoints {
 			upd, err := ContactPointFromContactPointExport(cp)
 			if err != nil {
 				return fmt.Errorf("failed to convert contact points to HCL:%w", err)
 			}
+			hash := getHash([]string{upd.Name})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_contact_point",
-				Name: fmt.Sprintf("contact_point_%d", idx),
+				Name: fmt.Sprintf("contact_point_%016x", hash),
 				Body: &upd,
 			})
 		}
@@ -623,14 +615,15 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 			})
 		}
 
-		for idx, mt := range body.MuteTimings {
+		for _, mt := range body.MuteTimings {
 			mthcl, err := MuteTimingIntervalToMuteTimeIntervalHclExport(mt)
 			if err != nil {
 				return fmt.Errorf("failed to convert mute timing [%s] to HCL:%w", mt.Name, err)
 			}
+			hash := getHash([]string{mthcl.Name})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_mute_timing",
-				Name: fmt.Sprintf("mute_timing_%d", idx+1),
+				Name: fmt.Sprintf("mute_timing_%016x", hash),
 				Body: mthcl,
 			})
 		}

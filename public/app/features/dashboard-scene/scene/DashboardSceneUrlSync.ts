@@ -1,7 +1,7 @@
 import { Unsubscribable } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   SceneGridLayout,
   SceneObjectBase,
@@ -16,7 +16,15 @@ import { KioskMode } from 'app/types';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
-import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanel, isPanelClone } from '../utils/utils';
+import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { ShareModal } from '../sharing/ShareModal';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getLibraryPanel,
+  isPanelClone,
+  isWithinUnactivatedRepeatRow,
+} from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
@@ -29,7 +37,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'kiosk'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'kiosk', 'shareView'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -41,11 +49,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       editview: state.editview?.getUrlKey(),
       editPanel: state.editPanel?.getUrlKey() || undefined,
       kiosk: state.kioskMode === KioskMode.Full ? '' : state.kioskMode === KioskMode.TV ? 'tv' : undefined,
+      shareView: state.shareView,
     };
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey, viewPanelScene, isEditing, editPanel } = this._scene.state;
+    const { inspectPanelKey, viewPanelScene, isEditing, editPanel, shareView } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
     if (typeof values.editview === 'string' && this._scene.canEditDashboard()) {
@@ -118,6 +127,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
+      if (isWithinUnactivatedRepeatRow(panel)) {
+        this._handleViewRepeatClone(values.viewPanel);
+        return;
+      }
+
       update.viewPanelScene = new ViewPanelScene({ panelRef: panel.getRef() });
     } else if (viewPanelScene && values.viewPanel === null) {
       update.viewPanelScene = undefined;
@@ -151,6 +165,20 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
+    }
+
+    if (typeof values.shareView === 'string') {
+      update.shareView = values.shareView;
+      update.overlay = config.featureToggles.newDashboardSharingComponent
+        ? new ShareDrawer({
+            shareView: values.shareView,
+          })
+        : new ShareModal({
+            activeTab: values.shareView,
+          });
+    } else if (shareView && values.shareView === null) {
+      update.overlay = undefined;
+      update.shareView = undefined;
     }
 
     if (this._scene.state.body instanceof SceneGridLayout) {

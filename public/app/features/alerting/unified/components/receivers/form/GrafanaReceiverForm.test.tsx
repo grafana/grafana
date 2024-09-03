@@ -1,5 +1,5 @@
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, waitFor, userEvent } from 'test/test-utils';
+import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
@@ -8,11 +8,9 @@ import {
   setOnCallIntegrations,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
 
@@ -35,25 +33,21 @@ const ui = {
 };
 
 describe('GrafanaReceiverForm', () => {
-  beforeEach(() => {
-    clearPluginSettingsCache();
-  });
-
   describe('OnCall contact point', () => {
     it('OnCall contact point should be disabled if OnCall integration is not enabled', async () => {
       disablePlugin(SupportedPlugin.OnCall);
 
-      const amConfig = getAmCortexConfig((_) => {});
-
-      render(<GrafanaReceiverForm alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME} config={amConfig} />);
+      render(<GrafanaReceiverForm />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
       await clickSelectOption(byTestId('items.0.type').get(), 'Grafana OnCall');
       // Clicking on a disable element shouldn't change the form value. email is the default value
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'email' });
 
       await clickSelectOption(byTestId('items.0.type').get(), 'Alertmanager');
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'prometheus-alertmanager' });
     });
 
@@ -63,16 +57,13 @@ describe('GrafanaReceiverForm', () => {
         { display_name: 'apac-oncall', value: 'apac-oncall', integration_url: 'https://apac.oncall.example.com' },
       ]);
 
-      const amConfig = getAmCortexConfig((_) => {});
-
-      const user = userEvent.setup();
-
-      render(<GrafanaReceiverForm alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME} config={amConfig} />);
+      const { user } = render(<GrafanaReceiverForm />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
       await clickSelectOption(byTestId('items.0.type').get(), 'Grafana OnCall');
 
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'oncall' });
       expect(ui.onCallIntegrationType.get()).toBeInTheDocument();
 
@@ -87,6 +78,7 @@ describe('GrafanaReceiverForm', () => {
 
       await user.type(ui.newOnCallIntegrationName.get(), 'emea-oncall');
 
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({
         'items.0.settings.integration_type': 'new_oncall_integration',
         'items.0.settings.integration_name': 'emea-oncall',
@@ -98,6 +90,7 @@ describe('GrafanaReceiverForm', () => {
 
       await clickSelectOption(ui.existingOnCallIntegrationSelect(0).get(), 'apac-oncall');
 
+      // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({
         'items.0.settings.url': 'https://apac.oncall.example.com',
         'items.0.settings.integration_name': undefined,
@@ -116,13 +109,7 @@ describe('GrafanaReceiverForm', () => {
         )
       );
 
-      render(
-        <GrafanaReceiverForm
-          alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
-          config={amConfig}
-          existing={amConfig.alertmanager_config.receivers![0]}
-        />
-      );
+      render(<GrafanaReceiverForm contactPoint={amConfig.alertmanager_config.receivers![0]} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 

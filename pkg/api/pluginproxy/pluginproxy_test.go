@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -79,7 +79,7 @@ func TestPluginProxy(t *testing.T) {
 			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login:        "test_user",
-					FallbackType: identity.TypeUser,
+					FallbackType: claims.TypeUser,
 					UserID:       1,
 				},
 				Context: &web.Context{

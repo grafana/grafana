@@ -155,7 +155,7 @@ func (o *APIServerOptions) Complete() error {
 	return nil
 }
 
-func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConfig, stopCh <-chan struct{}) error {
+func (o *APIServerOptions) RunAPIServer(ctx context.Context, config *genericapiserver.RecommendedConfig) error {
 	delegationTarget := genericapiserver.NewEmptyDelegate()
 	completedConfig := config.Complete()
 
@@ -167,7 +167,7 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 	// Install the API Group+version
 	// #TODO figure out how to configure storage type in o.Options.StorageOptions
 	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, config.RESTOptionsGetter, o.builders, o.Options.StorageOptions,
-		o.Options.MetricsOptions.MetricsRegisterer, nil, nil, // no need for server lock in standalone
+		o.Options.MetricsOptions.MetricsRegisterer, nil, nil, nil, // no need for server lock in standalone
 	)
 	if err != nil {
 		return err
@@ -187,7 +187,7 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 		deltaProfiling{}.Install(server.Handler.NonGoRestfulMux)
 	}
 
-	return server.PrepareRun().Run(stopCh)
+	return server.PrepareRun().RunWithContext(ctx)
 }
 
 // deltaProfiling adds godeltapprof handlers for pprof under /debug/pprof.

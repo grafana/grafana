@@ -20,18 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var logger = log.New("ngalert.eval")
 
 type EvaluatorFactory interface {
-	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
-	Validate(ctx EvaluationContext, condition models.Condition) error
 	// Create builds an evaluator pipeline ready to evaluate a rule's query
 	Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error)
 }
@@ -112,21 +108,18 @@ type evaluatorImpl struct {
 	evaluationResultLimit int
 	dataSourceCache       datasources.CacheService
 	expressionService     expressionBuilder
-	pluginsStore          pluginstore.Store
 }
 
 func NewEvaluatorFactory(
 	cfg setting.UnifiedAlertingSettings,
 	datasourceCache datasources.CacheService,
 	expressionService *expr.Service,
-	pluginsStore pluginstore.Store,
 ) EvaluatorFactory {
 	return &evaluatorImpl{
 		evaluationTimeout:     cfg.EvaluationTimeout,
 		evaluationResultLimit: cfg.EvaluationResultLimit,
 		dataSourceCache:       datasourceCache,
 		expressionService:     expressionService,
-		pluginsStore:          pluginsStore,
 	}
 }
 
@@ -825,36 +818,6 @@ func (evalResults Results) AsDataFrame() data.Frame {
 	return *frame
 }
 
-func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Condition) error {
-	req, err := getExprRequest(ctx, condition, e.dataSourceCache, ctx.AlertingResultsReader)
-	if err != nil {
-		return err
-	}
-	for _, query := range req.Queries {
-		if query.DataSource == nil {
-			continue
-		}
-		switch expr.NodeTypeFromDatasourceUID(query.DataSource.UID) {
-		case expr.TypeDatasourceNode:
-			p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
-			if !found { // technically this should fail earlier during datasource resolution phase.
-				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
-			}
-			if !p.Backend {
-				return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
-			}
-		case expr.TypeMLNode:
-			_, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
-			if !found {
-				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
-			}
-		case expr.TypeCMDNode:
-		}
-	}
-	_, err = e.create(condition, req)
-	return err
-}
-
 func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error) {
 	if len(condition.Data) == 0 {
 		return nil, errors.New("expression list is empty. must be at least 1 expression")
@@ -887,5 +850,5 @@ func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (C
 		}
 		conditions = append(conditions, node.RefID())
 	}
-	return nil, fmt.Errorf("condition %s does not exist, must be one of %v", condition.Condition, conditions)
+	return nil, models.ErrConditionNotExist(condition.Condition, conditions)
 }

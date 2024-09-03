@@ -3,6 +3,7 @@ package resource
 import (
 	"bytes"
 	context "context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,10 +19,8 @@ import (
 	"gocloud.dev/blob"
 	_ "gocloud.dev/blob/fileblob"
 	_ "gocloud.dev/blob/memblob"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type CDKBackendOptions struct {
@@ -135,7 +134,7 @@ func (s *cdkBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv int64
 	return rv, err
 }
 
-func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
+func (s *cdkBackend) ReadResource(ctx context.Context, req *ReadRequest) *ReadResponse {
 	rv := req.ResourceVersion
 
 	path := s.getPath(req.Key, rv)
@@ -143,7 +142,7 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 		iter := s.bucket.List(&blob.ListOptions{Prefix: path + "/", Delimiter: "/"})
 		for {
 			obj, err := iter.Next(ctx)
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			if strings.HasSuffix(obj.Key, ".json") {
@@ -163,15 +162,15 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 	raw, err := s.bucket.ReadAll(ctx, path)
 	if raw == nil && req.ResourceVersion > 0 {
 		if req.ResourceVersion > s.rv.Load() {
-			return nil, &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Reason:  metav1.StatusReasonTimeout, // match etcd behavior
+			return &ReadResponse{
+				Error: &ErrorResult{
 					Code:    http.StatusGatewayTimeout,
+					Reason:  string(metav1.StatusReasonTimeout), // match etcd behavior
 					Message: "ResourceVersion is larger than max",
-					Details: &metav1.StatusDetails{
-						Causes: []metav1.StatusCause{
+					Details: &ErrorDetails{
+						Causes: []*ErrorCause{
 							{
-								Type:    metav1.CauseTypeResourceVersionTooLarge,
+								Reason:  string(metav1.CauseTypeResourceVersionTooLarge),
 								Message: fmt.Sprintf("requested: %d, current %d", req.ResourceVersion, s.rv.Load()),
 							},
 						},
@@ -181,7 +180,7 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 		}
 
 		// If the there was an explicit request, get the latest
-		rsp, _ := s.Read(ctx, &ReadRequest{Key: req.Key})
+		rsp := s.ReadResource(ctx, &ReadRequest{Key: req.Key})
 		if rsp != nil && len(rsp.Value) > 0 {
 			raw = rsp.Value
 			rv = rsp.ResourceVersion
@@ -192,15 +191,12 @@ func (s *cdkBackend) Read(ctx context.Context, req *ReadRequest) (*ReadResponse,
 		raw = nil
 	}
 	if raw == nil {
-		return nil, apierrors.NewNotFound(schema.GroupResource{
-			Group:    req.Key.Group,
-			Resource: req.Key.Resource,
-		}, req.Key.Name)
+		return &ReadResponse{Error: NewNotFoundError(req.Key)}
 	}
 	return &ReadResponse{
 		ResourceVersion: rv,
 		Value:           raw,
-	}, err
+	}
 }
 
 func isDeletedMarker(raw []byte) bool {
@@ -214,29 +210,13 @@ func isDeletedMarker(raw []byte) bool {
 	return false
 }
 
-func (s *cdkBackend) PrepareList(ctx context.Context, req *ListRequest) (*ListResponse, error) {
+func (s *cdkBackend) ListIterator(ctx context.Context, req *ListRequest, cb func(ListIterator) error) (int64, error) {
 	resources, err := buildTree(ctx, s, req.Options.Key)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-
-	rsp := &ListResponse{
-		ResourceVersion: s.rv.Load(),
-	}
-	for _, item := range resources {
-		latest := item.versions[0]
-		raw, err := s.bucket.ReadAll(ctx, latest.key)
-		if err != nil {
-			return nil, err
-		}
-		if !isDeletedMarker(raw) {
-			rsp.Items = append(rsp.Items, &ResourceWrapper{
-				ResourceVersion: latest.rv,
-				Value:           raw,
-			})
-		}
-	}
-	return rsp, nil
+	err = cb(resources)
+	return resources.listRV, err
 }
 
 func (s *cdkBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
@@ -266,14 +246,87 @@ type cdkVersion struct {
 	key string
 }
 
-func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) ([]cdkResource, error) {
-	byPrefix := make(map[string]*cdkResource)
+type cdkListIterator struct {
+	bucket *blob.Bucket
+	ctx    context.Context
+	err    error
 
+	listRV    int64
+	resources []cdkResource
+	index     int
+
+	currentRV  int64
+	currentKey string
+	currentVal []byte
+}
+
+// Next implements ListIterator.
+func (c *cdkListIterator) Next() bool {
+	if c.err != nil {
+		return false
+	}
+	for {
+		c.currentVal = nil
+		c.index += 1
+		if c.index >= len(c.resources) {
+			return false
+		}
+
+		item := c.resources[c.index]
+		latest := item.versions[0]
+		raw, err := c.bucket.ReadAll(c.ctx, latest.key)
+		if err != nil {
+			c.err = err
+			return false
+		}
+		if !isDeletedMarker(raw) {
+			c.currentRV = latest.rv
+			c.currentKey = latest.key
+			c.currentVal = raw
+			return true
+		}
+	}
+}
+
+// Error implements ListIterator.
+func (c *cdkListIterator) Error() error {
+	return c.err
+}
+
+// ResourceVersion implements ListIterator.
+func (c *cdkListIterator) ResourceVersion() int64 {
+	return c.currentRV
+}
+
+// Value implements ListIterator.
+func (c *cdkListIterator) Value() []byte {
+	return c.currentVal
+}
+
+// ContinueToken implements ListIterator.
+func (c *cdkListIterator) ContinueToken() string {
+	return fmt.Sprintf("index:%d/key:%s", c.index, c.currentKey)
+}
+
+// Name implements ListIterator.
+func (c *cdkListIterator) Name() string {
+	return c.currentKey // TODO (parse name from key)
+}
+
+// Namespace implements ListIterator.
+func (c *cdkListIterator) Namespace() string {
+	return c.currentKey // TODO (parse namespace from key)
+}
+
+var _ ListIterator = (*cdkListIterator)(nil)
+
+func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) (*cdkListIterator, error) {
+	byPrefix := make(map[string]*cdkResource)
 	path := s.getPath(key, 0)
 	iter := s.bucket.List(&blob.ListOptions{Prefix: path, Delimiter: ""}) // "" is recursive
 	for {
 		obj, err := iter.Next(ctx)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if strings.HasSuffix(obj.Key, ".json") {
@@ -307,10 +360,16 @@ func buildTree(ctx context.Context, s *cdkBackend, key *ResourceKey) ([]cdkResou
 		resources = append(resources, *res)
 	}
 	sort.Slice(resources, func(i, j int) bool {
-		a := resources[i].versions[0].rv
-		b := resources[j].versions[0].rv
-		return a > b
+		a := resources[i].prefix
+		b := resources[j].prefix
+		return a < b
 	})
 
-	return resources, nil
+	return &cdkListIterator{
+		ctx:       ctx,
+		bucket:    s.bucket,
+		resources: resources,
+		listRV:    s.rv.Load(),
+		index:     -1, // must call next first
+	}, nil
 }

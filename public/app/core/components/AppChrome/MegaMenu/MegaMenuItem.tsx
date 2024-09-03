@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem, toIconName } from '@grafana/data';
@@ -104,9 +104,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
             }}
             target={link.target}
             url={link.url}
-            id={link.id}
             onPin={() => onPin(link)}
-            isPinned={isPinned(link.id)}
+            isPinned={isPinned(link.url)}
           >
             <div
               className={cx(styles.labelWrapper, {

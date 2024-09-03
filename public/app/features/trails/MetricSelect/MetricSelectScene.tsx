@@ -29,7 +29,6 @@ import {
 import { Alert, Field, Icon, IconButton, InlineSwitch, Input, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { DataTrail } from '../DataTrail';
 import { MetricScene } from '../MetricScene';
 import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
@@ -214,9 +213,19 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     try {
       const response = await getMetricNames(datasourceUid, timeRange, match, MAX_METRIC_NAMES);
       const searchRegex = createJSRegExpFromSearchTerms(getMetricSearch(this));
-      const metricNames = searchRegex
+      let metricNames = searchRegex
         ? response.data.filter((metric) => !searchRegex || searchRegex.test(metric))
         : response.data;
+
+      // use this to generate groups for metric prefix
+      const filteredMetricNames = metricNames;
+
+      // filter the remaining metrics with the metric prefix
+      const metricPrefix = this.state.metricPrefix;
+      if (metricPrefix && metricPrefix !== 'all') {
+        const prefixRegex = new RegExp(`(^${metricPrefix}.*)`, 'igy');
+        metricNames = metricNames.filter((metric) => !prefixRegex || prefixRegex.test(metric));
+      }
 
       const metricNamesWarning = response.limitReached
         ? `This feature will only return up to ${MAX_METRIC_NAMES} metric names for performance reasons. ` +
@@ -225,7 +234,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         : undefined;
 
       let bodyLayout = this.state.body;
-      const rootGroupNode = await this.generateGroups(metricNames);
+
+      let rootGroupNode = this.state.rootGroup;
+
+      // generate groups based on the search metrics input
+      rootGroupNode = await this.generateGroups(filteredMetricNames);
 
       this.setState({
         metricNames,
@@ -311,6 +324,21 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     this.buildLayout();
   }
 
+  private sortedPreviewMetrics() {
+    return Object.values(this.previewCache).sort((a, b) => {
+      if (a.isEmpty && b.isEmpty) {
+        return a.index - b.index;
+      }
+      if (a.isEmpty) {
+        return 1;
+      }
+      if (b.isEmpty) {
+        return -1;
+      }
+      return a.index - b.index;
+    });
+  }
+
   private async buildLayout() {
     // Temp hack when going back to select metric scene and variable updates
     if (this.ignoreNextUpdate) {
@@ -318,67 +346,32 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       return;
     }
 
-    if (!this.state.rootGroup) {
-      const rootGroupNode = await this.generateGroups(this.state.metricNames);
-      this.setState({ rootGroup: rootGroupNode });
-    }
+    const children: SceneFlexItem[] = [];
 
-    const children = await this.populateFilterableViewLayout();
-    const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
-    this.state.body.setState({ children, autoRows: rowTemplate });
-  }
-
-  private async populateFilterableViewLayout() {
     const trail = getTrailFor(this);
+
+    const metricsList = this.sortedPreviewMetrics();
+
     // Get the current filters to determine the count of them
     // Which is required for `getPreviewPanelFor`
     const filters = getFilters(this);
-
-    let rootGroupNode = this.state.rootGroup;
-    if (!rootGroupNode) {
-      rootGroupNode = await this.generateGroups(this.state.metricNames);
-      this.setState({ rootGroup: rootGroupNode });
-    }
-
-    const children: SceneFlexItem[] = [];
-
-    for (const [groupKey, groupNode] of rootGroupNode.groups) {
-      if (this.state.metricPrefix !== METRIC_PREFIX_ALL && this.state.metricPrefix !== groupKey) {
-        continue;
-      }
-
-      for (const [_, value] of groupNode.groups) {
-        const panels = await this.populatePanels(trail, filters, value.values);
-        children.push(...panels);
-      }
-
-      const morePanelsMaybe = await this.populatePanels(trail, filters, groupNode.values);
-      children.push(...morePanelsMaybe);
-    }
-
-    return children;
-  }
-
-  private async populatePanels(trail: DataTrail, filters: ReturnType<typeof getFilters>, values: string[]) {
     const currentFilterCount = filters?.length || 0;
 
-    const previewPanelLayoutItems: SceneFlexItem[] = [];
-    for (let index = 0; index < values.length; index++) {
-      const metricName = values[index];
-      const metric: MetricPanel = this.previewCache[metricName] ?? { name: metricName, index, loaded: false };
-      const metadata = await trail.getMetricMetadata(metricName);
+    for (let index = 0; index < metricsList.length; index++) {
+      const metric = metricsList[index];
+      const metadata = await trail.getMetricMetadata(metric.name);
       const description = getMetricDescription(metadata);
 
       if (this.state.showPreviews) {
         if (metric.itemRef && metric.isPanel) {
-          previewPanelLayoutItems.push(metric.itemRef.resolve());
+          children.push(metric.itemRef.resolve());
           continue;
         }
         const panel = getPreviewPanelFor(metric.name, index, currentFilterCount, description);
 
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
-        previewPanelLayoutItems.push(panel);
+        children.push(panel);
       } else {
         const panel = new SceneCSSGridItem({
           $variables: new SceneVariableSet({
@@ -388,11 +381,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
         });
         metric.itemRef = panel.getRef();
         metric.isPanel = false;
-        previewPanelLayoutItems.push(panel);
+        children.push(panel);
       }
     }
 
-    return previewPanelLayoutItems;
+    const rowTemplate = this.state.showPreviews ? ROW_PREVIEW_HEIGHT : ROW_CARD_HEIGHT;
+
+    this.state.body.setState({ children, autoRows: rowTemplate });
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
@@ -416,7 +411,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
 
   public onPrefixFilterChange = (val: SelectableValue) => {
     this.setState({ metricPrefix: val.value });
-    this.buildLayout();
+    this._refreshMetricNames();
   };
 
   public reportPrefixFilterInteraction = (isMenuOpen: boolean) => {
