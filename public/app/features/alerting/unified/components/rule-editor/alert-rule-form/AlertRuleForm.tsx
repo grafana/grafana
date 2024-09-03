@@ -14,6 +14,7 @@ import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedR
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
+  isCloudRulerRule,
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
@@ -42,7 +43,7 @@ import {
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
-import { fromRulerRuleAndRuleGroupIdentifier } from '../../../utils/rule-id';
+import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -167,6 +168,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
     if (exitOnSave && returnTo) {
       locationService.push(returnTo);
+    } else if (isCloudRulerRule(ruleDefinition)) {
+      const { dataSourceName, namespaceName, groupName } = getRuleGroupLocationFromFormValues(values);
+      const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
+      locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
     }
   };
 
