@@ -5,7 +5,7 @@ import { ComponentProps, useEffect, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { Combobox, Option, Value } from './Combobox';
+import { Combobox, Option } from './Combobox';
 
 const chance = new Chance();
 
