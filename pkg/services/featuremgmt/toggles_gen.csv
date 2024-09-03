@@ -136,7 +136,7 @@ newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 onPremToCloudMigrations,preview,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
-promQLScope,experimental,@grafana/observability-metrics,false,false,false
+promQLScope,GA,@grafana/observability-metrics,false,false,false
 sqlExpressions,experimental,@grafana/grafana-app-platform-squad,false,false,false
 nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,false,false,true
 groupToNestedTableTransformation,GA,@grafana/dataviz-squad,false,false,true
