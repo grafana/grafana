@@ -2,6 +2,7 @@ import { difference, groupBy, take, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedContactPoint,
@@ -206,3 +207,5 @@ function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedR
     description: match?.description,
   };
 }
+
+export const showManageContactPointPermissions = () => contextSrv.licensedAccessControlEnabled();
