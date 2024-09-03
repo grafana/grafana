@@ -1,7 +1,7 @@
 import { isString } from 'lodash';
 import { useState } from 'react';
-import { Trans } from 'src/utils/i18n';
 
+import { Trans } from '../../utils/i18n';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Drawer } from '../Drawer/Drawer';
 import { Stack } from '../Layout/Stack/Stack';
@@ -14,6 +14,7 @@ export enum TableCellInspectorMode {
 }
 
 interface TableCellInspectorProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
   onDismiss: () => void;
   mode: TableCellInspectorMode;
