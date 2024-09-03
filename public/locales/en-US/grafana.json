@@ -1022,10 +1022,39 @@
       }
     },
     "extra-security-section": {
+      "client-cert": {
+        "label": "Client certificate path",
+        "placeholder": "/path/to/client_cert.pem"
+      },
+      "client-cert-value": {
+        "label": "Client certificate content",
+        "placeholder": "Client certificate content in base64"
+      },
+      "client-key": {
+        "label": "Client key path",
+        "placeholder": "/path/to/client_key.pem"
+      },
+      "client-key-value": {
+        "label": "Client key content",
+        "placeholder": "Client key content in base64"
+      },
+      "encryption-provider": {
+        "base-64": "Base64-encoded content",
+        "description": "X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.",
+        "file-path": "Path to files",
+        "label": "Encryption key and certificate provision specification (required)"
+      },
       "label": "Extra security measures",
       "min-tls-version": {
         "description": "This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.",
         "label": "Min TLS version"
+      },
+      "root-ca-cert": {
+        "label": "Root CA certificate path",
+        "placeholder": "/path/to/root_ca_cert.pem"
+      },
+      "root-ca-cert-value": {
+        "label": "Root CA certificate content"
       },
       "start-tls": {
         "description": "If set to true, use LDAP with STARTTLS instead of LDAPS",

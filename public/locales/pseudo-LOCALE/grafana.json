@@ -1022,10 +1022,39 @@
       }
     },
     "extra-security-section": {
+      "client-cert": {
+        "label": "Cľįęŉŧ čęřŧįƒįčäŧę päŧĥ",
+        "placeholder": "/päŧĥ/ŧő/čľįęŉŧ_čęřŧ.pęm"
+      },
+      "client-cert-value": {
+        "label": "Cľįęŉŧ čęřŧįƒįčäŧę čőŉŧęŉŧ",
+        "placeholder": "Cľįęŉŧ čęřŧįƒįčäŧę čőŉŧęŉŧ įŉ þäşę64"
+      },
+      "client-key": {
+        "label": "Cľįęŉŧ ĸęy päŧĥ",
+        "placeholder": "/päŧĥ/ŧő/čľįęŉŧ_ĸęy.pęm"
+      },
+      "client-key-value": {
+        "label": "Cľįęŉŧ ĸęy čőŉŧęŉŧ",
+        "placeholder": "Cľįęŉŧ ĸęy čőŉŧęŉŧ įŉ þäşę64"
+      },
+      "encryption-provider": {
+        "base-64": "ßäşę64-ęŉčőđęđ čőŉŧęŉŧ",
+        "description": "X.509 čęřŧįƒįčäŧę přővįđęş ŧĥę pūþľįč päřŧ, ŵĥįľę ŧĥę přįväŧę ĸęy įşşūęđ įŉ ä PĶCŜ#8 ƒőřmäŧ přővįđęş ŧĥę přįväŧę päřŧ őƒ ŧĥę äşymmęŧřįč ęŉčřypŧįőŉ.",
+        "file-path": "Päŧĥ ŧő ƒįľęş",
+        "label": "Ēŉčřypŧįőŉ ĸęy äŉđ čęřŧįƒįčäŧę přővįşįőŉ şpęčįƒįčäŧįőŉ (řęqūįřęđ)"
+      },
       "label": "Ēχŧřä şęčūřįŧy męäşūřęş",
       "min-tls-version": {
         "description": "Ŧĥįş įş ŧĥę mįŉįmūm ŦĿŜ vęřşįőŉ äľľőŵęđ. Åččępŧęđ väľūęş äřę: ŦĿŜ1.2, ŦĿŜ1.3.",
         "label": "Mįŉ ŦĿŜ vęřşįőŉ"
+      },
+      "root-ca-cert": {
+        "label": "Ŗőőŧ CÅ čęřŧįƒįčäŧę päŧĥ",
+        "placeholder": "/päŧĥ/ŧő/řőőŧ_čä_čęřŧ.pęm"
+      },
+      "root-ca-cert-value": {
+        "label": "Ŗőőŧ CÅ čęřŧįƒįčäŧę čőŉŧęŉŧ"
       },
       "start-tls": {
         "description": "Ĩƒ şęŧ ŧő ŧřūę, ūşę ĿĐÅP ŵįŧĥ ŜŦÅŖŦŦĿŜ įŉşŧęäđ őƒ ĿĐÅPŜ",
