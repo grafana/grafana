@@ -74,11 +74,7 @@ jobs:
           sparse-checkout: |
             .github/workflows
             CHANGELOG.md
-            package.json
-            yarn.lock
             .nvmrc
-            .yarn
-            packages
             .prettierignore
             .prettierrc.js
           fetch-depth: 0
