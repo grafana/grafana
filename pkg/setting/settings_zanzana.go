@@ -22,6 +22,8 @@ type ZanzanaSettings struct {
 	HttpAddr string
 	// Number of check requests running concurrently
 	ConcurrentChecks int64
+	// If enabled, result will be only evaluated by zanzana
+	SingleRead bool
 }
 
 func (cfg *Cfg) readZanzanaSettings() {
@@ -41,6 +43,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	s.ListenHTTP = sec.Key("listen_http").MustBool(false)
 	s.HttpAddr = sec.Key("http_addr").MustString("127.0.0.1:8080")
 	s.ConcurrentChecks = sec.Key("concurrent_checks").MustInt64(10)
+	s.SingleRead = sec.Key("single_read").MustBool(false)
 
 	cfg.Zanzana = s
 }
