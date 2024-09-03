@@ -139,7 +139,7 @@ export default function AccordianLogs({
             );
           })}
           <small className={styles.AccordianLogsFooter}>
-            Log timestamps are relative to the start time of the full trace.
+            Event timestamps are relative to the start time of the full trace.
           </small>
         </div>
       )}
