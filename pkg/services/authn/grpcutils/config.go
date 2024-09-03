@@ -25,11 +25,11 @@ type GrpcServerConfig struct {
 	AllowedAudiences []string
 }
 
-func ReadGprcServerConfig(cfg *setting.Cfg) (*GrpcServerConfig, error) {
+func ReadGprcServerConfig(cfg *setting.Cfg) *GrpcServerConfig {
 	section := cfg.SectionWithEnvOverrides("grpc_server_authentication")
 
 	return &GrpcServerConfig{
 		SigningKeysURL:   section.Key("signing_keys_url").MustString(""),
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
-	}, nil
+	}
 }

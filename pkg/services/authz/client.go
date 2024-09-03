@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -116,18 +115,8 @@ func newInProcLegacyClient(server *legacyServer) (authzlib.MultiTenantClient, er
 
 func newGrpcLegacyClient(authCfg *Cfg) (authzlib.MultiTenantClient, error) {
 	// This client interceptor is a noop, as we don't send an access token
-	grpcClientConfig := authnlib.GrpcClientConfig{}
-	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig,
-		authnlib.WithDisableAccessTokenOption(),
-		authnlib.WithIDTokenExtractorOption(func(ctx context.Context) (string, error) {
-			r, err := identity.GetRequester(ctx)
-			if err != nil {
-				return "", err
-			}
-			token := r.GetIDToken()
-			return token, nil
-		}),
-	)
+	clientConfig := authnlib.GrpcClientConfig{}
+	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(&clientConfig, authnlib.WithDisableAccessTokenOption())
 	if err != nil {
 		return nil, err
 	}
