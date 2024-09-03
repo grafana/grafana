@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useId, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useId, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -22,10 +22,12 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { LdapPayload } from 'app/types';
+import { LdapPayload, MapKeyCertConfigured } from 'app/types';
 
 interface Props {
   onClose: () => void;
+  mapKeyCertConfigured: MapKeyCertConfigured;
+  setMapKeyCertConfigured: Dispatch<SetStateAction<MapKeyCertConfigured>>;
 }
 
 const serverConfig = 'settings.config.servers.0';
@@ -35,7 +37,7 @@ enum EncryptionProvider {
   FilePath = "file-path",
 }
 
-export const LdapDrawerComponent = ({ onClose }: Props) => {
+export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConfigured, setMapKeyCertConfigured: setMapCertConfigured }: Props) => {
   const [encryptionProvider, setEncryptionProvider] = useState(EncryptionProvider.Base64);
 
   const styles = useStyles2(getStyles);

@@ -138,3 +138,9 @@ export interface LdapPayload {
   settings: LdapSettings;
   source: string;
 }
+
+export interface MapKeyCertConfigured {
+  rootCaCertPath: boolean;
+  clientCertPath: boolean;
+  clientKeyCertPath: boolean;
+}

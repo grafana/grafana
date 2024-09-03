@@ -10,7 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { Loader } from 'app/features/plugins/admin/components/Loader';
-import { LdapPayload, StoreState } from 'app/types';
+import { LdapPayload, MapKeyCertConfigured, StoreState } from 'app/types';
 
 import { LdapDrawerComponent } from './LdapDrawer';
 
@@ -78,6 +78,13 @@ export const LdapSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  const [mapKeyCertConfigured, setMapKeyCertConfigured] = useState<MapKeyCertConfigured>({
+    // paths
+    rootCaCertPath: false,
+    clientCertPath: false,
+    clientKeyCertPath: false,
+  });
+
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
   const { getValues, handleSubmit, register, reset } = methods;
 
@@ -93,6 +100,13 @@ export const LdapSettingsPage = () => {
         });
         return;
       }
+
+      const serverConfig = payload.settings.config.servers[0];
+      setMapKeyCertConfigured({
+        rootCaCertPath: serverConfig.root_ca_cert !== '',
+        clientCertPath: serverConfig.client_cert !== '',
+        clientKeyCertPath: serverConfig.client_key !== '',
+      });
 
       reset(payload);
       setIsLoading(false);
@@ -303,7 +317,11 @@ export const LdapSettingsPage = () => {
                 </Box>
               </section>
             )}
-            {isDrawerOpen && <LdapDrawerComponent onClose={() => setIsDrawerOpen(false)} />}
+            {isDrawerOpen && <LdapDrawerComponent
+              onClose={() => setIsDrawerOpen(false)}
+              mapKeyCertConfigured={mapKeyCertConfigured}
+              setMapKeyCertConfigured={setMapKeyCertConfigured}
+              />}
           </form>
         </FormProvider>
       </Page.Contents>
