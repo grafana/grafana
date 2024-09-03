@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-func GetPermissionCacheKey(user identity.Requester) string {
+func GetUserPermissionCacheKey(user identity.Requester) string {
 	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
 }
 
