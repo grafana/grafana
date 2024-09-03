@@ -4623,7 +4623,7 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/getTeamLBACRulesResponse"
+            "$ref": "#/responses/okResponse"
           },
           "400": {
             "$ref": "#/responses/badRequestError"

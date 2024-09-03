@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { Field, FieldSet, Input, Select } from '@grafana/ui';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
@@ -11,6 +12,12 @@ import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { FormDTO } from './types';
 
+const getStyles = (theme: GrafanaTheme2) => ({
+  typeSelect: css`
+    max-width: ${theme.spacing(40)};
+  `,
+});
+
 export const ConfigureCorrelationTargetForm = () => {
   const { control, formState } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
@@ -18,6 +25,7 @@ export const ConfigureCorrelationTargetForm = () => {
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID;
   const correlationType: CorrelationType | undefined = useWatch({ name: 'type' }) || correlation?.type;
   let configTarget = useWatch({ name: 'config.target' }) || correlation?.config?.target;
+  const styles = useStyles2(getStyles);
 
   if (correlationType === CORR_TYPES.external.value && configTarget === undefined) {
     configTarget = { url: '' };
@@ -46,6 +54,7 @@ export const ConfigureCorrelationTargetForm = () => {
               invalid={!!formState.errors.type}
             >
               <Select
+                className={styles.typeSelect}
                 value={correlationType}
                 onChange={(value) => onChange(value.value)}
                 options={Object.values(CORR_TYPES)}
