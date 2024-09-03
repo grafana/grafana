@@ -20,6 +20,7 @@ type legacyServer struct {
 	acSvc  accesscontrol.Service
 	logger log.Logger
 	tracer tracing.Tracer
+	cfg    *Cfg
 }
 
 func newLegacyServer(
@@ -34,6 +35,7 @@ func newLegacyServer(
 		acSvc:  acSvc,
 		logger: log.New("authz-grpc-server"),
 		tracer: tracer,
+		cfg:    cfg,
 	}
 
 	if cfg.listen {
@@ -43,10 +45,24 @@ func newLegacyServer(
 	return s, nil
 }
 
-// AuthFuncOverride
-// FIXME(drclau): make sure we only run this when app_mode = development
+// AuthFuncOverride is a function that allows to override the default auth function.
+// This override is only allowed in development mode as we skip all authentication checks.
 func (s *legacyServer) AuthFuncOverride(ctx context.Context, _ string) (context.Context, error) {
+	if !s.cfg.allowInsecure {
+		s.logger.Error("AuthFuncOverride is not allowed in production mode")
+		return nil, tracing.Errorf(nil, "AuthFuncOverride is not allowed in production mode")
+	}
 	return ctx, nil
+}
+
+// AuthorizeFuncOverride is a function that allows to override the default authorize function that checks the namespace of the caller.
+// We skip all authorization checks in development mode. Once we have access tokens, we need to do namespace validation in the Read handler.
+func (s *legacyServer) AuthorizeFuncOverride(ctx context.Context) error {
+	if !s.cfg.allowInsecure {
+		s.logger.Error("AuthorizeFuncOverride is not allowed in production mode")
+		return tracing.Errorf(nil, "AuthorizeFuncOverride is not allowed in production mode")
+	}
+	return nil
 }
 
 func (s *legacyServer) Read(ctx context.Context, req *authzv1.ReadRequest) (*authzv1.ReadResponse, error) {
