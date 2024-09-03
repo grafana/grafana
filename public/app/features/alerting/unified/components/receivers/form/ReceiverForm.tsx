@@ -4,10 +4,12 @@ import { FieldErrors, FormProvider, SubmitErrorHandler, useForm } from 'react-ho
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
+import ManagePermissions from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 
 import { getMessageFromError } from '../../../../../../core/utils/errors';
 import { logError } from '../../../Analytics';
@@ -114,6 +116,8 @@ export function ReceiverForm<R extends ChannelValues>({
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
+  const showManagePermissions = showManageContactPointPermissions();
+
   return (
     <FormProvider {...formAPI}>
       {showDefaultRouteWarning && (
@@ -121,10 +125,21 @@ export function ReceiverForm<R extends ChannelValues>({
           Because there is no default policy configured yet, this contact point will automatically be set as default.
         </Alert>
       )}
-      <form onSubmit={handleSubmit(submitCallback, onInvalid)}>
-        <h4 className={styles.heading}>
-          {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
-        </h4>
+
+      <form onSubmit={handleSubmit(submitCallback, onInvalid)} className={styles.wrapper}>
+        <Stack justifyContent="space-between" alignItems="center">
+          <h2 className={styles.heading}>
+            {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
+          </h2>
+          {showManagePermissions && (
+            <ManagePermissions
+              resource="dashboards"
+              resourceId={'adke8niah0h6od'}
+              resourceName={initialValues?.name}
+              title="Manage contact point permissions"
+            />
+          )}
+        </Stack>
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
           <Input
             disabled={disableEditTitle}
@@ -215,7 +230,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   heading: css({
-    margin: theme.spacing(4, 0),
+    margin: theme.spacing(2, 0, 3, 0),
   }),
   buttons: css({
     marginTop: theme.spacing(4),
@@ -223,6 +238,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '& > * + *': {
       marginLeft: theme.spacing(1),
     },
+  }),
+  wrapper: css({
+    maxWidth: `${theme.breakpoints.values.xl}px`,
   }),
 });
 

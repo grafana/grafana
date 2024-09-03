@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
+import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -15,7 +16,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { UnusedContactPointBadge } from './components/UnusedBadge';
-import { ContactPointWithMetadata } from './utils';
+import { ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
 
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
@@ -32,12 +33,15 @@ export const ContactPointHeader = ({
 }: ContactPointHeaderProps) => {
   const { name, id, provisioned, policies = [] } = contactPoint;
   const styles = useStyles2(getStyles);
+  const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
   const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
 
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
+
+  const showManagePermissions = showManageContactPointPermissions();
 
   const numberOfPolicies = policies.length;
   const isReferencedByAnyPolicy = numberOfPolicies > 0;
@@ -47,6 +51,13 @@ export const ContactPointHeader = ({
   const canDelete = deleteSupported && deleteAllowed && !provisioned && !isReferencedByRegularPolicies;
 
   const menuActions: JSX.Element[] = [];
+  if (showManagePermissions) {
+    menuActions.push(
+      <Fragment key="manage-permissions">
+        <Menu.Item icon="unlock" label="Manage permissions" onClick={() => setShowPermissionsDrawer(true)} />
+      </Fragment>
+    );
+  }
 
   if (exportSupported) {
     menuActions.push(
@@ -139,6 +150,14 @@ export const ContactPointHeader = ({
         )}
       </Stack>
       {ExportDrawer}
+      {showPermissionsDrawer && (
+        <ManagePermissionsDrawer
+          resource="receivers"
+          resourceId={contactPoint.id}
+          resourceName={contactPoint.name}
+          onClose={() => setShowPermissionsDrawer(false)}
+        />
+      )}
     </div>
   );
 };

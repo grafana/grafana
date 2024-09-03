@@ -262,7 +262,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1),
     border: `solid 1px ${theme.colors.border.medium}`,
     borderRadius: theme.shape.radius.default,
-    maxWidth: `${theme.breakpoints.values.xl}${theme.breakpoints.unit}`,
   }),
   topRow: css({
     display: 'flex',
