@@ -37,18 +37,19 @@ function buttonSizeMixin(paddingY: string, paddingX: string, fontSize: string, b
 function widthMixin(theme: GrafanaTheme2, max: number) {
   let result: CSSInterpolation = {};
   for (let i = 1; i <= max; i++) {
+    const width = `${theme.spacing(2 * i)} !important`;
     result[`.width-${i}`] = {
-      width: `${theme.spacing(2 * i)} !important`,
+      width,
     };
     result[`.max-width-${i}`] = {
-      maxWidth: `${theme.spacing(2 * i)} !important`,
+      maxWidth: width,
       flexGrow: 1,
     };
     result[`.min-width-${i}`] = {
-      minWidth: `${theme.spacing(2 * i)} !important`,
+      minWidth: width,
     };
     result[`.offset-width-${i}`] = {
-      marginLeft: `${theme.spacing(2 * i)} !important`,
+      marginLeft: width,
     };
   }
   return result;
