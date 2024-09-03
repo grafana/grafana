@@ -10,11 +10,7 @@ import (
 )
 
 func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error) {
-	authCfg, err := ReadGprcServerConfig(cfg)
-	if err != nil {
-		return nil, err
-	}
-
+	authCfg := ReadGprcServerConfig(cfg)
 	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
 		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
 			SigningKeysURL: authCfg.SigningKeysURL,
