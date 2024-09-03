@@ -45,6 +45,7 @@ export type RepeatDirection = 'v' | 'h';
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
   private _libPanelSubscription: Unsubscribable | undefined;
   private _prevRepeatValues?: VariableValueSingle[];
+  private _oldBody?: VizPanel | LibraryVizPanel | AddLibraryPanelDrawer;
 
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
@@ -57,6 +58,11 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   private _activationHandler() {
     if (this.state.variableName) {
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
+      if (this._oldBody !== this.state.body) {
+        this._prevRepeatValues = undefined;
+      }
+
+      this._oldBody = this.state.body;
       this.performRepeat();
     }
 
