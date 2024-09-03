@@ -57,14 +57,16 @@ func ProvideAuthZClient(
 			return nil, err
 		}
 	case ModeGRPC:
-		client, err = newGrpcLegacyClient(authCfg)
-		if err != nil {
-			return nil, err
-		}
-	case ModeCloud:
-		client, err = newCloudLegacyClient(authCfg)
-		if err != nil {
-			return nil, err
+		if cfg.StackID == "" {
+			client, err = newGrpcLegacyClient(authCfg)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			client, err = newCloudLegacyClient(authCfg)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
