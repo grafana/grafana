@@ -190,3 +190,13 @@ Note that these alerting high availability metrics are exposed via the `/metrics
 ```
 
 For more information on monitoring alerting metrics, refer to [Alerting meta-monitoring](ref:meta-monitoring). For a demo, see [alerting high availability examples using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/).
+
+## Prevent duplicate notifications
+
+In high-availability mode, each Grafana instance runs its own pre-configured alertmanager to handle alert notifications.
+
+When multiple Grafana instances are running, all alert rules are evaluated on each instance. By default, each instance sends firing alerts to its respective alertmanager. This results in notification handling being duplicated across all running Grafana instances.
+
+Alertmanagers in HA mode communicate with each other to coordinate notification delivery. However, this setup can sometimes lead to duplicated or out-of-order notifications. By design, HA prioritizes sending duplicate notifications over the risk of missing notifications.
+
+To avoid duplicate notifications, you can configure a shared alertmanager to manage notifications for all Grafana instances. For more information, refer to [add an external alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/).
