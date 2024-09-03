@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -32,14 +33,24 @@ func TestSubQueryConnect(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/some-path", nil)
-	req.Header.Set("fromAlert", "true")
+	req.Header.Set(models.FromAlertHeaderName, "true")
+	req.Header.Set(models.CacheSkipHeaderName, "true")
+	req.Header.Set("X-Rule-Uid", "abc")
+	req.Header.Set("X-Rule-Folder", "folder-1")
+	req.Header.Set("X-Rule-Source", "grafana-ruler")
+	req.Header.Set("X-Grafana-Org-Id", "1")
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("some-unexpected-header", "some-value")
 	handler.ServeHTTP(rr, req)
 
 	// test that headers are forwarded and cased appropriately
 	require.Equal(t, map[string]string{
-		"FromAlert":    "true",
-		"Content-Type": "application/json",
+		models.FromAlertHeaderName: "true",
+		models.CacheSkipHeaderName: "true",
+		"X-Rule-Uid":               "abc",
+		"X-Rule-Folder":            "folder-1",
+		"X-Rule-Source":            "grafana-ruler",
+		"X-Grafana-Org-Id":         "1",
 	}, *sqr.builder.client.(mockClient).lastCalledWithHeaders)
 }
 

@@ -4,14 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query_headers "github.com/grafana/grafana/pkg/registry/apis/query"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -74,29 +74,10 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		ctx = contextualMiddlewares(ctx)
 
-		// only forward expected headers, log unexpected ones
-		headers := make(map[string]string)
-		// headers are case insensitive, however some datasources still check for camel casing so we have to send them camel cased
-		expectedHeaders := map[string]string{
-			"fromalert":      "FromAlert",
-			"content-type":   "Content-Type",
-			"content-length": "Content-Length",
-			"user-agent":     "User-Agent",
-			"accept":         "Accept",
-		}
-		for k, v := range req.Header {
-			headerToSend, ok := expectedHeaders[strings.ToLower(k)]
-			if ok {
-				headers[headerToSend] = v[0]
-			} else {
-				r.builder.log.Warn("datasource received an unexpected header, ignoring it", "header", k)
-			}
-		}
-
 		rsp, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginCtx,
-			Headers:       headers,
+			Headers:       query_headers.ExtractKnownHeaders(req.Header),
 		})
 		if err != nil {
 			responder.Error(err)
