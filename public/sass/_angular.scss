@@ -2602,3 +2602,7 @@ label.cr1 {
 input[type='checkbox'].cr1:checked + label {
   background: url($checkboxImageUrl) 0px -18px no-repeat;
 }
+
+.max-width {
+  width: 100%;
+}

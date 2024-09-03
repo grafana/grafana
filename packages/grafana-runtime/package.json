@@ -45,7 +45,7 @@
     "history": "4.10.1",
     "lodash": "4.17.21",
     "rxjs": "7.8.1",
-    "tslib": "2.6.3"
+    "tslib": "2.7.0"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
@@ -60,7 +60,7 @@
     "@types/lodash": "4.17.7",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
-    "@types/systemjs": "6.13.5",
+    "@types/systemjs": "6.15.0",
     "esbuild": "0.20.2",
     "lodash": "4.17.21",
     "react": "18.2.0",
