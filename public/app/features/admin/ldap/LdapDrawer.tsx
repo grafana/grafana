@@ -20,9 +20,9 @@ import {
   TextLink,
   Tooltip,
   RadioButtonGroup,
+  SecretInput,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { InputWithReset } from 'app/extensions/auth-config/components/InputWithReset';
 import { LdapPayload, MapKeyCertConfigured } from 'app/types';
 
 interface Props {
@@ -326,9 +326,8 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
               <>
                 <Field
                   label={t('ldap-drawer.extra-security-section.root-ca-cert.label', 'Root CA certificate path')}
-                  className={styles.configField}
                 >
-                  <InputWithReset
+                  <SecretInput
                     id="root-ca-cert"
                     placeholder={t('ldap-drawer.extra-security-section.root-ca-cert.placeholder', '/path/to/root_ca_cert.pem')}
                     isConfigured={mapCertConfigured.rootCaCertPath}
@@ -342,9 +341,8 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
                 </Field>
                 <Field
                   label={t('ldap-drawer.extra-security-section.client-cert.label', 'Client certificate path')}
-                  className={styles.configField}
                 >
-                  <InputWithReset
+                  <SecretInput
                     id="client-cert"
                     placeholder={t('ldap-drawer.extra-security-section.client-cert.placeholder', '/path/to/client_cert.pem')}
                     isConfigured={mapCertConfigured.clientCertPath}
@@ -358,9 +356,8 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
                 </Field>
                 <Field
                   label={t('ldap-drawer.extra-security-section.client-key.label', 'Client key path')}
-                  className={styles.configField}
                 >
-                  <InputWithReset
+                  <SecretInput
                     id="client-key"
                     placeholder={t('ldap-drawer.extra-security-section.client-key.placeholder', '/path/to/client_key.pem')}
                     isConfigured={mapCertConfigured.clientKeyCertPath}
@@ -385,17 +382,6 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     sectionLabel: css({
       fontSize: theme.typography.size.lg,
-    }),
-    configField: css({
-      'div:has(> div> div> div > input)': {
-        // 'width': '90%',
-      },
-      'div:has(> div> div > input)': {
-        // 'width': '100%',
-      },
-      'button': {
-        // 'width': '10%',
-      },
     }),
   };
 }
