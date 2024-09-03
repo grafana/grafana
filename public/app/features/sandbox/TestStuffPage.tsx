@@ -1,8 +1,14 @@
+import { useObservable } from 'react-use';
+
 import { NavModelItem } from '@grafana/data';
 import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useAppNotification } from 'app/core/copy/appNotification';
+
+import { ExtensionsLog } from '../plugins/extensions/log';
+
+const extensionsLog = new ExtensionsLog();
 
 export const TestStuffPage = () => {
   const node: NavModelItem = {
@@ -14,6 +20,7 @@ export const TestStuffPage = () => {
   };
 
   const notifyApp = useAppNotification();
+  const logs = useObservable(extensionsLog.asObservable().pipe(buffer));
 
   return (
     <Page navModel={{ node: node, main: node }}>
