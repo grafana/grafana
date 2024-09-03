@@ -267,7 +267,7 @@ export const LdapDrawerComponent = ({
                 onChange={({ currentTarget: { value } }) =>
                   setValue(
                     `${serverConfig}.tls_ciphers`,
-                    value?.split(/,|\s/).map((v: string) => v.trim())
+                    value?.split(/,|\s/).map((v) => v.trim())
                   )
                 }
               />
@@ -312,12 +312,12 @@ export const LdapDrawerComponent = ({
                   <MultiSelect
                     id="root-ca-cert"
                     allowCustomValue
-                    onChange={(values) =>
+                    onChange={(v) => {
                       setValue(
                         `${serverConfig}.root_ca_cert_value`,
-                        values.map(({ value }) => value as string)
-                      )
-                    }
+                        v.filter(({ v }) => typeof v === 'string').map(({ v }) => v)
+                      );
+                    }}
                     value={watch(`${serverConfig}.root_ca_cert_value`).map((v) => ({
                       label: renderMultiSelectLabel(v),
                       value: v,
