@@ -81,7 +81,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
   private buildTabs() {
     const panelManager = this.panelManager;
-    const panel = panelManager.state.panel;
+    const panel = panelManager.state.panelRef.resolve();
     const pluginId = panelManager.state.pluginId;
 
     const runner = this.panelManager.queryRunner;

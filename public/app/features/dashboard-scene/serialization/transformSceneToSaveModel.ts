@@ -153,18 +153,6 @@ export function gridItemToPanel(
   let gridItem_ = gridItem;
 
   // If we're saving while the panel editor is open, we need to persist those changes in the panel model
-  if (
-    sceneState &&
-    sceneState.editPanel?.state.vizManager &&
-    sceneState.editPanel.state.vizManager.state.sourcePanel.resolve() === gridItem.state.body
-  ) {
-    const gridItemClone = gridItem.clone();
-    if (gridItemClone.state.body instanceof VizPanel && !isLibraryPanel(gridItemClone.state.body)) {
-      sceneState.editPanel.state.vizManager.commitChangesTo(gridItemClone.state.body);
-      gridItem_ = gridItemClone;
-    }
-  }
-
   if (!(gridItem_.state.body instanceof VizPanel)) {
     throw new Error('DashboardGridItem body expected to be VizPanel');
   }

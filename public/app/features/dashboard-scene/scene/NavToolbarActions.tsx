@@ -619,7 +619,7 @@ function useEditingLibraryPanel(panelEditor?: PanelEditor) {
   useEffect(() => {
     if (panelEditor) {
       const unsub = panelEditor.state.vizManager.subscribeToState((vizManagerState) =>
-        setEditingLibraryPanel(isLibraryPanel(vizManagerState.sourcePanel.resolve()))
+        setEditingLibraryPanel(isLibraryPanel(vizManagerState.panelRef.resolve()))
       );
       return () => {
         unsub.unsubscribe();

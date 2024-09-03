@@ -182,7 +182,7 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
 }
 
 function PanelFrameTitle({ vizManager }: { vizManager: VizPanelManager }) {
-  const { title } = vizManager.state.panel.useState();
+  const { title } = vizManager.state.panelRef.resolve().useState();
 
   return (
     <Input

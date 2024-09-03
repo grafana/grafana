@@ -24,7 +24,8 @@ interface Props {
 }
 
 export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode, data }) => {
-  const { panel, repeat } = vizManager.useState();
+  const { panelRef, repeat } = vizManager.useState();
+  const panel = panelRef.resolve();
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps

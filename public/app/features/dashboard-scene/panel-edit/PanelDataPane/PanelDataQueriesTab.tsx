@@ -52,7 +52,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   buildQueryOptions(): QueryGroupOptions {
     const panelManager = this._panelManager;
-    const panelObj = this._panelManager.state.panel;
+    const panelObj = this._panelManager.state.panelRef.resolve();
     const queryRunner = this._panelManager.queryRunner;
     const timeRangeObj = sceneGraph.getTimeRange(panelObj);
 

@@ -1037,7 +1037,7 @@ describe('transformSceneToSaveModel', () => {
         }),
       });
 
-      editScene!.state.vizManager.state.panel.setState({
+      editScene!.state.vizManager.state.panelRef.setState({
         options: {
           mode: 'markdown',
           code: {
@@ -1085,7 +1085,7 @@ describe('transformSceneToSaveModel', () => {
       });
       activateFullSceneTree(scene);
 
-      editScene!.state.vizManager.state.panel.setState({
+      editScene!.state.vizManager.state.panelRef.setState({
         options: {
           mode: 'markdown',
           code: {

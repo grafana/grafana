@@ -42,7 +42,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
   const onHistoryBlock = (location: H.Location) => {
     const panelInEdit = dashboard.state.editPanel;
     const vizPanelManager = panelInEdit?.state.vizManager;
-    const vizPanel = vizPanelManager?.state.panel;
+    const vizPanel = vizPanelManager?.state.panelRef.resolve();
     const search = new URLSearchParams(location.search);
 
     // Are we leaving panel edit & library panel?
@@ -50,7 +50,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       panelInEdit &&
       vizPanel &&
       isLibraryPanel(vizPanel) &&
-      vizPanelManager.state.isDirty &&
+      vizPanelManager?.state.isDirty &&
       !search.has('editPanel')
     ) {
       const libPanelBehavior = getLibraryPanelBehavior(vizPanel);

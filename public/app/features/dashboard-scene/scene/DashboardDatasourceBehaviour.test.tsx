@@ -276,7 +276,7 @@ describe('DashboardDatasourceBehaviour', () => {
       const spy = jest.spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries');
 
       const vizPanelManager = new VizPanelManager({
-        panel: dashboardDSPanel.clone(),
+        panelRef: dashboardDSPanel.clone(),
         $data: dashboardDSPanel.state.$data?.clone(),
         sourcePanel: dashboardDSPanel.getRef(),
         pluginId: dashboardDSPanel.state.pluginId,

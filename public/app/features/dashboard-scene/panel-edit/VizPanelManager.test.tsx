@@ -195,25 +195,25 @@ describe('VizPanelManager', () => {
   describe('When changing plugin', () => {
     it('Should set the cache', () => {
       const { vizPanelManager } = setupTest('panel-1');
-      vizPanelManager.state.panel.changePluginType = jest.fn();
+      vizPanelManager.state.panelRef.changePluginType = jest.fn();
 
-      expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');
+      expect(vizPanelManager.state.panelRef.state.pluginId).toBe('timeseries');
 
       vizPanelManager.changePluginType('table');
 
       expect(vizPanelManager['_cachedPluginOptions']['timeseries']?.options).toBe(
-        vizPanelManager.state.panel.state.options
+        vizPanelManager.state.panelRef.state.options
       );
       expect(vizPanelManager['_cachedPluginOptions']['timeseries']?.fieldConfig).toBe(
-        vizPanelManager.state.panel.state.fieldConfig
+        vizPanelManager.state.panelRef.state.fieldConfig
       );
     });
 
     it('Should preserve correct field config', () => {
       const { vizPanelManager } = setupTest('panel-1');
       const mockFn = jest.fn();
-      vizPanelManager.state.panel.changePluginType = mockFn;
-      const fieldConfig = vizPanelManager.state.panel.state.fieldConfig;
+      vizPanelManager.state.panelRef.changePluginType = mockFn;
+      const fieldConfig = vizPanelManager.state.panelRef.state.fieldConfig;
       fieldConfig.defaults = {
         ...fieldConfig.defaults,
         unit: 'flop',
@@ -243,17 +243,17 @@ describe('VizPanelManager', () => {
           ],
         },
       ];
-      vizPanelManager.state.panel.setState({
+      vizPanelManager.state.panelRef.setState({
         fieldConfig: fieldConfig,
       });
 
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.color?.mode).toBe('palette-classic');
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.thresholds?.mode).toBe('absolute');
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.unit).toBe('flop');
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.decimals).toBe(2);
-      expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toHaveLength(2);
-      expect(vizPanelManager.state.panel.state.fieldConfig.overrides[1].properties).toHaveLength(1);
-      expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toHaveProperty('axisBorderShow');
+      expect(vizPanelManager.state.panelRef.state.fieldConfig.defaults.color?.mode).toBe('palette-classic');
+      expect(vizPanelManager.state.panelRef.state.fieldConfig.defaults.thresholds?.mode).toBe('absolute');
+      expect(vizPanelManager.state.panelRef.state.fieldConfig.defaults.unit).toBe('flop');
+      expect(vizPanelManager.state.panelRef.state.fieldConfig.defaults.decimals).toBe(2);
+      expect(vizPanelManager.state.panelRef.state.fieldConfig.overrides).toHaveLength(2);
+      expect(vizPanelManager.state.panelRef.state.fieldConfig.overrides[1].properties).toHaveLength(1);
+      expect(vizPanelManager.state.panelRef.state.fieldConfig.defaults.custom).toHaveProperty('axisBorderShow');
 
       vizPanelManager.changePluginType('table');
 
@@ -304,7 +304,7 @@ describe('VizPanelManager', () => {
 
       const apiCall = jest.spyOn(libAPI, 'saveLibPanel');
 
-      panelManager.state.panel.setState({ title: 'new title' });
+      panelManager.state.panelRef.setState({ title: 'new title' });
       panelManager.commitChanges();
 
       expect(apiCall.mock.calls[0][1].state.title).toBe('new title');
@@ -393,7 +393,7 @@ describe('VizPanelManager', () => {
       it('should load new data source', async () => {
         const { vizPanelManager } = setupTest('panel-1');
         vizPanelManager.activate();
-        vizPanelManager.state.panel.state.$data?.activate();
+        vizPanelManager.state.panelRef.state.$data?.activate();
 
         await Promise.resolve();
 
@@ -420,10 +420,10 @@ describe('VizPanelManager', () => {
         it('should create PanelTimeRange object', async () => {
           const { vizPanelManager } = setupTest('panel-1');
           vizPanelManager.activate();
-          vizPanelManager.state.panel.state.$data?.activate();
+          vizPanelManager.state.panelRef.state.$data?.activate();
           await Promise.resolve();
 
-          const panel = vizPanelManager.state.panel;
+          const panel = vizPanelManager.state.panelRef;
 
           expect(panel.state.$timeRange).toBeUndefined();
 
@@ -446,7 +446,7 @@ describe('VizPanelManager', () => {
           vizPanelManager.activate();
           await Promise.resolve();
 
-          const panel = vizPanelManager.state.panel;
+          const panel = vizPanelManager.state.panelRef;
 
           expect(panel.state.$timeRange).toBeUndefined();
 
@@ -487,7 +487,7 @@ describe('VizPanelManager', () => {
           vizPanelManager.activate();
           await Promise.resolve();
 
-          const panel = vizPanelManager.state.panel;
+          const panel = vizPanelManager.state.panelRef;
 
           expect(panel.state.$timeRange).toBeUndefined();
 
@@ -704,7 +704,7 @@ describe('VizPanelManager', () => {
 
       const vizPanelManager = scene.state.editPanel!.state.vizManager;
       vizPanelManager.activate();
-      vizPanelManager.state.panel.state.$data?.activate();
+      vizPanelManager.state.panelRef.state.$data?.activate();
 
       const reprocessMock = jest.fn();
       vizPanelManager.dataTransformer.reprocessTransformations = reprocessMock;
@@ -723,7 +723,7 @@ describe('VizPanelManager', () => {
         const { vizPanelManager } = setupTest('panel-1');
 
         vizPanelManager.activate();
-        vizPanelManager.state.panel.state.$data?.activate();
+        vizPanelManager.state.panelRef.state.$data?.activate();
 
         vizPanelManager.changeQueries([
           {
@@ -760,7 +760,7 @@ describe('VizPanelManager', () => {
 
         const vizPanelManager = scene.state.editPanel!.state.vizManager;
         vizPanelManager.activate();
-        vizPanelManager.state.panel.state.$data?.activate();
+        vizPanelManager.state.panelRef.state.$data?.activate();
 
         // Changing dashboard query to a panel with transformations
         vizPanelManager.changeQueries([

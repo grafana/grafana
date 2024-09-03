@@ -10,8 +10,8 @@ export interface Props {
 
 export function PanelEditControls({ panelEditor }: Props) {
   const vizManager = panelEditor.state.vizManager;
-  const { panel, tableView } = vizManager.useState();
-  const skipDataQuery = config.panels[panel.state.pluginId]?.skipDataQuery;
+  const { panelRef, tableView } = vizManager.useState();
+  const skipDataQuery = config.panels[panelRef.resolve().state.pluginId]?.skipDataQuery;
 
   return (
     <>

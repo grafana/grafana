@@ -52,7 +52,7 @@ describe('PanelEditor', () => {
 
       const deactivate = activateFullSceneTree(scene);
 
-      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
+      editScene.state.vizManager.state.panelRef.setState({ title: 'changed title' });
 
       deactivate();
 
@@ -81,7 +81,7 @@ describe('PanelEditor', () => {
 
       const deactivate = activateFullSceneTree(scene);
 
-      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
+      editScene.state.vizManager.state.panelRef.setState({ title: 'changed title' });
 
       editScene.onDiscard();
       deactivate();
@@ -160,8 +160,8 @@ describe('PanelEditor', () => {
 
       activateFullSceneTree(scene);
 
-      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
-      (editScene.state.vizManager.state.panel.state.$behaviors![0] as LibraryPanelBehavior).setState({
+      editScene.state.vizManager.state.panelRef.setState({ title: 'changed title' });
+      (editScene.state.vizManager.state.panelRef.state.$behaviors![0] as LibraryPanelBehavior).setState({
         name: 'changed name',
       });
 

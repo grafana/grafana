@@ -21,10 +21,11 @@ export interface Props {
 }
 
 export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
-  const { panel } = vizManager.useState();
+  const { panelRef } = vizManager.useState();
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const panel = panelRef.resolve();
   const isWidgetEnabled = false;
   const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
   const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;

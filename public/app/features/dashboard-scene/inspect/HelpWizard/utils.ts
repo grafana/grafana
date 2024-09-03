@@ -80,7 +80,7 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
     if (dashGridItem instanceof DashboardGridItem) {
       saveModel = {
         ...gridItemToPanel(dashGridItem),
-        ...vizPanelToPanel(scene.state.editPanel.state.vizManager.state.panel.clone()),
+        ...vizPanelToPanel(scene.state.editPanel.state.vizManager.state.panelRef.clone()),
       };
     }
   } else {

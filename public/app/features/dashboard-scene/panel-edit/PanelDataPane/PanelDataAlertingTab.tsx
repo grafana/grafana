@@ -43,7 +43,7 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
   }
 
   getLegacyPanelId() {
-    return getPanelIdForVizPanel(this._panelManager.state.panel);
+    return getPanelIdForVizPanel(this._panelManager.state.panelRef.resolve());
   }
 
   getCanCreateRules() {
@@ -56,7 +56,7 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
   }
 
   get panel() {
-    return this._panelManager.state.panel;
+    return this._panelManager.state.panelRef.resolve();
   }
 }
 

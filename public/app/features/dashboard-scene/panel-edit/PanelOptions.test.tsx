@@ -113,7 +113,7 @@ describe('PanelOptions', () => {
       const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: 'New title' } });
 
-      expect(vizManager.state.panel.state.title).toBe('New title');
+      expect(vizManager.state.panelRef.state.title).toBe('New title');
     });
 
     it('Clearing title should set hoverHeader to true', async () => {
@@ -124,11 +124,11 @@ describe('PanelOptions', () => {
       const input = screen.getByTestId(selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
       fireEvent.change(input, { target: { value: '' } });
 
-      expect(vizManager.state.panel.state.title).toBe('');
-      expect(vizManager.state.panel.state.hoverHeader).toBe(true);
+      expect(vizManager.state.panelRef.state.title).toBe('');
+      expect(vizManager.state.panelRef.state.hoverHeader).toBe(true);
 
       fireEvent.change(input, { target: { value: 'Muu' } });
-      expect(vizManager.state.panel.state.hoverHeader).toBe(false);
+      expect(vizManager.state.panelRef.state.hoverHeader).toBe(false);
     });
   });
 
@@ -193,7 +193,7 @@ describe('PanelOptions', () => {
       fireEvent.blur(input, { target: { value: 'new library panel name' } });
     });
 
-    expect((vizManager.state.panel.state.$behaviors![0] as LibraryPanelBehavior).state.name).toBe(
+    expect((vizManager.state.panelRef.state.$behaviors![0] as LibraryPanelBehavior).state.name).toBe(
       'new library panel name'
     );
   });
