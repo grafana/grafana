@@ -253,22 +253,14 @@ export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
 }
 
 export function isLibraryPanel(vizPanel: VizPanel): boolean {
-  return Boolean(
-    vizPanel.state.$behaviors &&
-      vizPanel.state.$behaviors?.find((behaviour) => behaviour instanceof LibraryPanelBehavior) instanceof
-        LibraryPanelBehavior
-  );
+  return getLibraryPanelBehavior(vizPanel) !== undefined;
 }
 
 export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavior | undefined {
-  if (isLibraryPanel(vizPanel)) {
-    const behavior = vizPanel.state.$behaviors?.find((behaviour) => behaviour instanceof LibraryPanelBehavior);
+  const behavior = vizPanel.state.$behaviors?.find((behaviour) => behaviour instanceof LibraryPanelBehavior);
 
-    if (behavior instanceof LibraryPanelBehavior) {
-      return behavior;
-    }
-
-    return undefined;
+  if (behavior) {
+    return behavior;
   }
 
   return undefined;

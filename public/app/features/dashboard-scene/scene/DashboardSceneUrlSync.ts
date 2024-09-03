@@ -8,6 +8,7 @@ import {
   SceneObjectState,
   SceneObjectUrlSyncHandler,
   SceneObjectUrlValues,
+  VizPanel,
 } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KioskMode } from 'app/types';
@@ -17,10 +18,18 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { findVizPanelByKey, getDashboardSceneFor, isPanelClone, isWithinUnactivatedRepeatRow } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getLibraryPanelBehavior,
+  isLibraryPanel,
+  isPanelClone,
+  isWithinUnactivatedRepeatRow,
+} from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { ViewPanelScene } from './ViewPanelScene';
+import { isDashboardLayoutElement } from './layouts/types';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
@@ -129,6 +138,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         this._scene.onEnterEditMode();
       }
 
+      if (isLibraryPanel(panel)) {
+        this._handleLibraryPanel(panel, (p) => {
+          this._scene.setState({ editPanel: buildPanelEditScene(p) });
+        });
+        return;
+      }
+
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
@@ -166,6 +182,30 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
+    }
+  }
+
+  private _handleLibraryPanel(vizPanel: VizPanel, cb: (p: VizPanel) => void): void {
+    const libraryPanel = getLibraryPanelBehavior(vizPanel)!;
+    const parent = vizPanel.parent!;
+
+    if (libraryPanel!.state.isLoaded) {
+      cb(vizPanel);
+    } else {
+      /**
+       * Because the LibraryPanelBehavior replaces the viz panel on the parent
+       * we have to subscribe to the parent state and check if it's loaded
+       */
+      const sub = parent.subscribeToState(() => {
+        if (isDashboardLayoutElement(parent)) {
+          const loadedViz = parent.getPanel();
+          const libPanel = getLibraryPanelBehavior(loadedViz);
+          if (libPanel && libPanel.state.isLoaded) {
+            cb(loadedViz);
+            sub.unsubscribe();
+          }
+        }
+      });
     }
   }
 
