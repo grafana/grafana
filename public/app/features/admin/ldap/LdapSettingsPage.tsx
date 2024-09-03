@@ -324,11 +324,13 @@ export const LdapSettingsPage = () => {
                 </Box>
               </section>
             )}
-            {isDrawerOpen && <LdapDrawerComponent
-              onClose={() => setIsDrawerOpen(false)}
-              mapKeyCertConfigured={mapKeyCertConfigured}
-              setMapKeyCertConfigured={setMapKeyCertConfigured}
-              />}
+            {isDrawerOpen && (
+              <LdapDrawerComponent
+                onClose={() => setIsDrawerOpen(false)}
+                mapKeyCertConfigured={mapKeyCertConfigured}
+                setMapKeyCertConfigured={setMapKeyCertConfigured}
+              />
+            )}
           </form>
         </FormProvider>
       </Page.Contents>

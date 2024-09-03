@@ -34,11 +34,15 @@ interface Props {
 const serverConfig = 'settings.config.servers.0';
 const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) => ({ label: v, value: v }));
 enum EncryptionProvider {
-  Base64 = "base64",
-  FilePath = "path",
+  Base64 = 'base64',
+  FilePath = 'path',
 }
 
-export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConfigured, setMapKeyCertConfigured: setMapCertConfigured }: Props) => {
+export const LdapDrawerComponent = ({
+  onClose,
+  mapKeyCertConfigured: mapCertConfigured,
+  setMapKeyCertConfigured: setMapCertConfigured,
+}: Props) => {
   const [encryptionProvider, setEncryptionProvider] = useState(EncryptionProvider.Base64);
 
   const styles = useStyles2(getStyles);
@@ -51,8 +55,12 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
   const emailId = useId();
 
   useEffect(() => {
-    const {client_cert, client_key, root_ca_cert} = getValues(serverConfig);
-    setEncryptionProvider(!client_cert.length && !client_key.length && !root_ca_cert.length ? EncryptionProvider.Base64 : EncryptionProvider.FilePath);
+    const { client_cert, client_key, root_ca_cert } = getValues(serverConfig);
+    setEncryptionProvider(
+      !client_cert.length && !client_key.length && !root_ca_cert.length
+        ? EncryptionProvider.Base64
+        : EncryptionProvider.FilePath
+    );
   }, [getValues]);
 
   const renderMultiSelectLabel = (value: string) => {
@@ -177,9 +185,7 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
         >
           <Input
             id="group-search-base-dns"
-            onChange={({ currentTarget: { value } }) =>
-              setValue(`${serverConfig}.group_search_base_dns`, [value])
-            }
+            onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.group_search_base_dns`, [value])}
           />
         </Field>
         <Field
@@ -279,8 +285,17 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
               <RadioButtonGroup
                 id="encryption-provider"
                 options={[
-                  { label: t('ldap-drawer.extra-security-section.encryption-provider.base-64', 'Base64-encoded content'), value: EncryptionProvider.Base64 },
-                  { label: t('ldap-drawer.extra-security-section.encryption-provider.file-path', 'Path to files'), value: EncryptionProvider.FilePath },
+                  {
+                    label: t(
+                      'ldap-drawer.extra-security-section.encryption-provider.base-64',
+                      'Base64-encoded content'
+                    ),
+                    value: EncryptionProvider.Base64,
+                  },
+                  {
+                    label: t('ldap-drawer.extra-security-section.encryption-provider.file-path', 'Path to files'),
+                    value: EncryptionProvider.FilePath,
+                  },
                 ]}
                 value={encryptionProvider}
                 onChange={setEncryptionProvider}
@@ -289,13 +304,24 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
             {encryptionProvider === EncryptionProvider.Base64 && (
               <>
                 <Field
-                  label={t('ldap-drawer.extra-security-section.root-ca-cert-value.label', 'Root CA certificate content')}
+                  label={t(
+                    'ldap-drawer.extra-security-section.root-ca-cert-value.label',
+                    'Root CA certificate content'
+                  )}
                 >
                   <MultiSelect
                     id="root-ca-cert"
                     allowCustomValue
-                    onChange={values => setValue(`${serverConfig}.root_ca_cert_value`, values.map(({value}) => value as string))}
-                    value={watch(`${serverConfig}.root_ca_cert_value`).map(v => ({label: renderMultiSelectLabel(v), value: v}))}
+                    onChange={(values) =>
+                      setValue(
+                        `${serverConfig}.root_ca_cert_value`,
+                        values.map(({ value }) => value as string)
+                      )
+                    }
+                    value={watch(`${serverConfig}.root_ca_cert_value`).map((v) => ({
+                      label: renderMultiSelectLabel(v),
+                      value: v,
+                    }))}
                   />
                 </Field>
                 <Field
@@ -303,7 +329,10 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
                 >
                   <SecretInput
                     id="client-cert"
-                    placeholder={t('ldap-drawer.extra-security-section.client-cert-value.placeholder', 'Client certificate content in base64')}
+                    placeholder={t(
+                      'ldap-drawer.extra-security-section.client-cert-value.placeholder',
+                      'Client certificate content in base64'
+                    )}
                     isConfigured={mapCertConfigured.clientCertValue}
                     onReset={() => {
                       setValue(`${serverConfig}.client_cert_value`, '');
@@ -311,12 +340,13 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
                     }}
                   />
                 </Field>
-                <Field
-                  label={t('ldap-drawer.extra-security-section.client-key-value.label', 'Client key content')}
-                >
+                <Field label={t('ldap-drawer.extra-security-section.client-key-value.label', 'Client key content')}>
                   <SecretInput
                     id="client-key"
-                    placeholder={t('ldap-drawer.extra-security-section.client-key-value.placeholder', 'Client key content in base64')}
+                    placeholder={t(
+                      'ldap-drawer.extra-security-section.client-key-value.placeholder',
+                      'Client key content in base64'
+                    )}
                     isConfigured={mapCertConfigured.clientKeyCertValue}
                     onReset={() => {
                       setValue(`${serverConfig}.client_key_value`, '');
@@ -328,49 +358,52 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
             )}
             {encryptionProvider === EncryptionProvider.FilePath && (
               <>
-                <Field
-                  label={t('ldap-drawer.extra-security-section.root-ca-cert.label', 'Root CA certificate path')}
-                >
+                <Field label={t('ldap-drawer.extra-security-section.root-ca-cert.label', 'Root CA certificate path')}>
                   <SecretInput
                     id="root-ca-cert"
-                    placeholder={t('ldap-drawer.extra-security-section.root-ca-cert.placeholder', '/path/to/root_ca_cert.pem')}
+                    placeholder={t(
+                      'ldap-drawer.extra-security-section.root-ca-cert.placeholder',
+                      '/path/to/root_ca_cert.pem'
+                    )}
                     isConfigured={mapCertConfigured.rootCaCertPath}
                     onReset={() => {
                       setValue(`${serverConfig}.root_ca_cert`, '');
                       setMapCertConfigured({ ...mapCertConfigured, rootCaCertPath: false });
                     }}
                     value={watch(`${serverConfig}.root_ca_cert`)}
-                    onChange={({currentTarget: {value}}) => setValue(`${serverConfig}.root_ca_cert`, value)}
+                    onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.root_ca_cert`, value)}
                   />
                 </Field>
-                <Field
-                  label={t('ldap-drawer.extra-security-section.client-cert.label', 'Client certificate path')}
-                >
+                <Field label={t('ldap-drawer.extra-security-section.client-cert.label', 'Client certificate path')}>
                   <SecretInput
                     id="client-cert"
-                    placeholder={t('ldap-drawer.extra-security-section.client-cert.placeholder', '/path/to/client_cert.pem')}
+                    placeholder={t(
+                      'ldap-drawer.extra-security-section.client-cert.placeholder',
+                      '/path/to/client_cert.pem'
+                    )}
                     isConfigured={mapCertConfigured.clientCertPath}
                     onReset={() => {
                       setValue(`${serverConfig}.client_cert`, '');
                       setMapCertConfigured({ ...mapCertConfigured, clientCertPath: false });
                     }}
                     value={watch(`${serverConfig}.client_cert`)}
-                    onChange={({currentTarget: {value}}) => setValue(`${serverConfig}.client_cert`, value)}
+                    onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.client_cert`, value)}
                   />
                 </Field>
-                <Field
-                  label={t('ldap-drawer.extra-security-section.client-key.label', 'Client key path')}
-                >
+                <Field label={t('ldap-drawer.extra-security-section.client-key.label', 'Client key path')}>
                   <SecretInput
                     id="client-key"
-                    placeholder={t('ldap-drawer.extra-security-section.client-key.placeholder', '/path/to/client_key.pem')}
+                    placeholder={t(
+                      'ldap-drawer.extra-security-section.client-key.placeholder',
+                      '/path/to/client_key.pem'
+                    )}
                     isConfigured={mapCertConfigured.clientKeyCertPath}
                     onReset={() => {
                       setValue(`${serverConfig}.client_key`, '');
                       setMapCertConfigured({ ...mapCertConfigured, clientKeyCertPath: false });
                     }}
                     value={watch(`${serverConfig}.client_key`)}
-                    onChange={({currentTarget: {value}}) => setValue(`${serverConfig}.client_key`, value)}
+                    onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.client_key`, value)}
                   />
                 </Field>
               </>
