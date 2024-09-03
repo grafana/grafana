@@ -238,17 +238,18 @@ export const Combobox = ({
           onBlur,
         })}
       />
-      <div
-        className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
-        style={{
-          ...floatingStyles,
-          maxWidth: popoverMaxWidth,
-          minWidth: inputRef.current?.offsetWidth,
-          width: popoverWidth,
-        }}
-        {...getMenuProps({ ref: floatingRef })}
-      >
-        {isOpen && (
+
+      {isOpen && (
+        <div
+          className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
+          style={{
+            ...floatingStyles,
+            maxWidth: popoverMaxWidth,
+            minWidth: inputRef.current?.offsetWidth,
+            width: popoverWidth,
+          }}
+          {...getMenuProps({ ref: floatingRef })}
+        >
           <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
@@ -276,8 +277,8 @@ export const Combobox = ({
               );
             })}
           </ul>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
