@@ -11,6 +11,7 @@ import { getClosestScopesFacade } from '../utils';
 
 import {
   fetchDashboardsSpy,
+  fetchMock,
   fetchNodesSpy,
   fetchScopeSpy,
   fetchSelectedScopesSpy,
@@ -66,6 +67,7 @@ jest.mock('@grafana/runtime', () => ({
   useChromeHeaderHeight: jest.fn(),
   getBackendSrv: () => ({
     get: getMock,
+    fetch: fetchMock,
   }),
   usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
 }));
@@ -114,6 +116,7 @@ describe('Scopes', () => {
       fetchSelectedScopesSpy.mockClear();
       fetchDashboardsSpy.mockClear();
       getMock.mockClear();
+      fetchMock.mockClear();
 
       initializeScopes();
 

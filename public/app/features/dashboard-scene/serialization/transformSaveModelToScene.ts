@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -59,11 +59,11 @@ export interface SaveModelToSceneOptions {
   isEmbedded?: boolean;
 }
 
-export function transformSaveModelToScene(rsp: DashboardDTO, reloadCb?: () => void): DashboardScene {
+export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, rsp.reloadOnScopesChange, reloadCb);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, rsp.reloadOnScopesChange);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
   scene.setInitialSaveModel(rsp.dashboard);
 
@@ -168,8 +168,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 export function createDashboardSceneFromDashboardModel(
   oldModel: DashboardModel,
   dto: DashboardDataDTO,
-  reloadOnScopesChange?: boolean,
-  reloadCb?: () => void
+  reloadOnScopesChange?: boolean
 ) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
@@ -252,8 +251,8 @@ export function createDashboardSceneFromDashboardModel(
       preserveDashboardSceneStateInLocalStorage,
       new ScopesFacade({
         handler: (facade) => {
-          if (reloadOnScopesChange && reloadCb && oldModel.uid) {
-            reloadCb();
+          if (reloadOnScopesChange && oldModel.uid) {
+            locationService.reload();
           } else {
             sceneGraph.getTimeRange(facade).onRefresh();
           }
