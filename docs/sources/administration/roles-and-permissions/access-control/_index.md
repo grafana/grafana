@@ -13,12 +13,87 @@ labels:
 menuTitle: Role-based access control (RBAC)
 title: Grafana Role-based access control (RBAC)
 weight: 120
+refs:
+  api-rbac:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/access_control/
+  rbac-role-definitions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+  rbac-role-definitions-basic-role-assignments:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#basic-role-assignments
+    - pattern: /docs/grafana-cloud/
+  rbac-manage-rbac-roles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/
+  rbac-assign-rbac-roles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/assign-rbac-roles/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/assign-rbac-roles/
+  rbac-basic-role-uid-mapping:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/#list-permissions-associated-with-roles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/#list-permissions-associated-with-roles
+  service-accounts:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/
+  alerting:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs//grafana-cloud/alerting-and-irm/alerting/
+  data-sources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs//grafana-cloud/connect-externally-hosted/data-sources/
+  roles-and-permissions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/
+  dashboards:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/
+  dashboards-annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  dashboards-create-reports:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/create-reports/
+  dashboards-manage-library-panels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/manage-library-panels/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/manage-library-panels/
+  dashboards-create-a-dashboard-folder:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#create-a-dashboard-folder
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#create-a-dashboard-folder
 ---
 
 # Role-based access control (RBAC)
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 RBAC provides a standardized way of granting, changing, and revoking access when it comes to viewing and modifying Grafana resources, such as dashboards, reports, and administrative settings.
@@ -43,7 +118,7 @@ RBAC roles contain multiple permissions, each of which has an action and a scope
     - **Action:** `datasources:read`
     - **Scope:** `datasources:*`
 
-For information on the RBAC API refer to [RBAC API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/access_control/#rbac-api).
+For information on the RBAC API refer to [RBAC API](ref:api-rbac).
 
 ### Basic roles
 
@@ -77,8 +152,8 @@ You can use RBAC to modify the permissions associated with any basic role, which
 Note that any modification to any of these basic role is not propagated to the other basic roles.
 For example, if you modify Viewer basic role and grant additional permission, Editors or Admins won't have that additional grant.
 
-For more information about the permissions associated with each basic role, refer to [Basic role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#basic-role-assignments" >}}).
-To interact with the API and view or modify basic roles permissions, refer to [the table]({{< relref "./manage-rbac-roles/#basic-role-uid-mapping" >}}) that maps basic role names to the associated UID.
+For more information about the permissions associated with each basic role, refer to [Basic role definitions](ref:rbac-role-definitions-basic-role-assignments).
+To interact with the API and view or modify basic roles permissions, refer to [the table](ref:rbac-basic-role-uid-mapping) that maps basic role names to the associated UID.
 
 {{% admonition type="note" %}}
 You cannot use a service account to modify basic roles via the RBAC API. To update basic roles, you must be a Grafana administrator and use basic authentication with the request.
@@ -86,31 +161,31 @@ You cannot use a service account to modify basic roles via the RBAC API. To upda
 
 ### Fixed roles
 
-Grafana Enterprise includes the ability for you to assign discrete fixed roles to users, teams, and service accounts. This gives you fine-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section]({{< relref "#custom-roles" >}}) below.
+Grafana Enterprise includes the ability for you to assign discrete fixed roles to users, teams, and service accounts. This gives you fine-grained control over user permissions than you would have with basic roles alone. These roles are called "fixed" because you cannot change or delete fixed roles. You can also create _custom_ roles of your own; see more information in the [custom roles section](#custom-roles) below.
 
 Assign fixed roles when the basic roles do not meet your permission requirements. For example, you might want a user with the basic viewer role to also edit dashboards. Or, you might want anyone with the editor role to also add and manage users. Fixed roles provide users more granular access to create, view, and update the following Grafana resources:
 
-- [Alerting]({{< relref "../../../alerting/" >}})
-- [Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}})
+- [Alerting](ref:alerting)
+- [Annotations](ref:dashboards-annotate-visualizations)
 - [API keys](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/)
-- [Dashboards and folders]({{< relref "../../../dashboards/" >}})
-- [Data sources]({{< relref "../../../datasources/" >}})
-- [Explore]({{< relref "../../../explore/" >}})
-- [Feature Toggles]({{< relref "../../feature-toggles/" >}})
-- [Folders]({{< relref "../../../dashboards/manage-dashboards/#create-a-dashboard-folder" >}})
-- [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
-- [Library panels]({{< relref "../../../dashboards/build-dashboards/manage-library-panels" >}})
-- [Licenses]({{< relref "../../stats-and-license/" >}})
-- [Organizations]({{< relref "../../organization-management/" >}})
-- [Provisioning]({{< relref "../../provisioning/" >}})
-- [Reports]({{< relref "../../../dashboards/create-reports/" >}})
-- [Roles]({{< relref "../../" >}})
-- [Settings]({{< relref "../../../setup-grafana/configure-grafana/settings-updates-at-runtime" >}})
-- [Service accounts]({{< relref "../../service-accounts/" >}})
-- [Teams]({{< relref "../../team-management/" >}})
-- [Users]({{< relref "../../user-management/" >}})
+- [Dashboards and folders](ref:dashboards)
+- [Data sources](ref:data-sources)
+- [Explore](/docs/grafana/<GRAFANA_VERSION>/explore/)
+- [Feature Toggles](/docs/grafana/<GRAFANA_VERSION>/administration/feature-toggles/)
+- [Folders](ref:dashboards-create-a-dashboard-folder)
+- [LDAP](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/ldap/)
+- [Library panels](ref:dashboards-manage-library-panels)
+- [Licenses](/docs/grafana/<GRAFANA_VERSION>/administration/stats-and-license/)
+- [Organizations](/docs/grafana/<GRAFANA_VERSION>/administration/organization-management/)
+- [Provisioning](/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/)
+- [Reports](ref:dashboards-create-reports)
+- [Roles](ref:roles-and-permissions)
+- [Settings](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/)
+- [Service accounts](ref:service-accounts)
+- [Teams](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/)
+- [Users](/docs/grafana/<GRAFANA_VERSION>/administration/user-management/)
 
-To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions/" >}}).
+To learn more about the permissions you can grant for each resource, refer to [RBAC role definitions](ref:rbac-role-definitions).
 
 ### Custom roles
 
@@ -126,11 +201,11 @@ Consider creating a custom role when fixed roles do not meet your permissions re
 
 You can use either of the following methods to create, assign, and manage custom roles:
 
-- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles]({{< relref "./manage-rbac-roles/" >}}). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles]({{< relref "./assign-rbac-roles/" >}}).
-- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API]({{< relref "../../../developers/http_api/access_control/" >}}).
+- Grafana provisioning: You can use a YAML file to configure roles. For more information about using provisioning to create custom roles, refer to [Manage RBAC roles](ref:rbac-manage-rbac-roles). For more information about using provisioning to assign RBAC roles to users or teams, refer to [Assign RBAC roles](ref:rbac-assign-rbac-roles).
+- RBAC API: As an alternative, you can use the Grafana HTTP API to create and manage roles. For more information about the HTTP API, refer to [RBAC API](ref:api-rbac).
 
 ### Limitation
 
 If you have created a folder with the name `General` or `general`, you cannot manage its permissions with RBAC.
 
-If you set [folder permissions]({{< relref "../../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
+If you set [folder permissions](/docs/grafana/<GRAFANA_VERSION>/administration/user-management/manage-dashboard-permissions/#grant-folder-permissions) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
