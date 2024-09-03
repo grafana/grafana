@@ -37,7 +37,7 @@ export interface TimeSeriesTooltipProps {
   annotate?: () => void;
   maxHeight?: number;
 
-  replaceVariables: InterpolateFunction;
+  replaceVariables?: InterpolateFunction;
 }
 
 export const TimeSeriesTooltip = ({
