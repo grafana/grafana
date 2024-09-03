@@ -22,6 +22,7 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { InputWithReset } from 'app/extensions/auth-config/components/InputWithReset';
 import { LdapPayload, MapKeyCertConfigured } from 'app/types';
 
 interface Props {
@@ -326,26 +327,47 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
                 <Field
                   label={t('ldap-drawer.extra-security-section.root-ca-cert.label', 'Root CA certificate path')}
                 >
-                  <Input
+                  <InputWithReset
                     id="root-ca-cert"
                     placeholder={t('ldap-drawer.extra-security-section.root-ca-cert.placeholder', '/path/to/root_ca_cert.pem')}
-                    {...register(`${serverConfig}.root_ca_cert`)} />
+                    isConfigured={mapCertConfigured.rootCaCertPath}
+                    onReset={() => {
+                      setValue(`${serverConfig}.root_ca_cert`, '');
+                      setMapCertConfigured({ ...mapCertConfigured, rootCaCertPath: false });
+                    }}
+                    value={watch(`${serverConfig}.root_ca_cert`)}
+                    onChange={({currentTarget: {value}}) => setValue(`${serverConfig}.root_ca_cert`, value)}
+                  />
                 </Field>
                 <Field
                   label={t('ldap-drawer.extra-security-section.client-cert.label', 'Client certificate path')}
                 >
-                  <Input
+                  <InputWithReset
                     id="client-cert"
                     placeholder={t('ldap-drawer.extra-security-section.client-cert.placeholder', '/path/to/client_cert.pem')}
-                    {...register(`${serverConfig}.client_cert`)} />
+                    isConfigured={mapCertConfigured.clientCertPath}
+                    onReset={() => {
+                      setValue(`${serverConfig}.client_cert`, '');
+                      setMapCertConfigured({ ...mapCertConfigured, clientCertPath: false });
+                    }}
+                    value={watch(`${serverConfig}.client_cert`)}
+                    onChange={({currentTarget: {value}}) => setValue(`${serverConfig}.client_cert`, value)}
+                  />
                 </Field>
                 <Field
                   label={t('ldap-drawer.extra-security-section.client-key.label', 'Client key path')}
                 >
-                  <Input
+                  <InputWithReset
                     id="client-key"
                     placeholder={t('ldap-drawer.extra-security-section.client-key.placeholder', '/path/to/client_key.pem')}
-                    {...register(`${serverConfig}.client_key`)} />
+                    isConfigured={mapCertConfigured.clientKeyCertPath}
+                    onReset={() => {
+                      setValue(`${serverConfig}.client_key`, '');
+                      setMapCertConfigured({ ...mapCertConfigured,  clientKeyCertPath: false });
+                    }}
+                    value={watch(`${serverConfig}.client_key`)}
+                    onChange={({currentTarget: {value}}) => setValue(`${serverConfig}.client_key`, value)}
+                  />
                 </Field>
               </>
             )}
