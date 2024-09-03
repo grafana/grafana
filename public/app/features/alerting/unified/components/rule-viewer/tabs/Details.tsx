@@ -95,7 +95,7 @@ const Details = ({ rule }: DetailsProps) => {
           )}
         </MetaText>
         <MetaText direction="column">
-          {!isRecordingRulerRule(rule.rulerRule) && !isGrafanaRecordingRule(rule.rulerRule) && pendingPeriod && (
+          {pendingPeriod && (
             <>
               Pending period
               <Text color="primary">{pendingPeriod}</Text>
