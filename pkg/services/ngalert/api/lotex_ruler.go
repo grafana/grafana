@@ -132,6 +132,8 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext, 
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
+	extractor := addIdentifiersToNamespaceRulesExtractor(yamlExtractor(&apimodels.NamespaceConfigResponse{}))
+
 	return r.requester.withReq(
 		ctx,
 		http.MethodGet,
@@ -144,7 +146,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext, 
 			),
 		),
 		nil,
-		yamlExtractor(apimodels.NamespaceConfigResponse{}),
+		extractor,
 		nil,
 	)
 }
@@ -165,6 +167,8 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext, name
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
+	extractor := addIdentifiersToRuleGroups(finalNamespace, yamlExtractor(&apimodels.GettableRuleGroupConfig{}))
+
 	return r.requester.withReq(
 		ctx,
 		http.MethodGet,
@@ -178,9 +182,20 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext, name
 			),
 		),
 		nil,
-		yamlExtractor(&apimodels.GettableRuleGroupConfig{}),
+		extractor,
 		nil,
 	)
+}
+
+func addIdentifiersToRuleGroups(namespace string, originalFunc func(*response.NormalResponse) (any, error)) func(*response.NormalResponse) (any, error) {
+	return func(resp *response.NormalResponse) (any, error) {
+		result, err := originalFunc(resp)
+
+		ruleGroup := result.(*apimodels.GettableRuleGroupConfig)
+		ruleGroup.PopulateRuleIdentifiers(namespace)
+
+		return result, err
+	}
 }
 
 func (r *LotexRuler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) response.Response {
