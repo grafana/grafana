@@ -116,7 +116,7 @@ For more information about dashboard permissions, refer to [Dashboard permission
 ## Delete multiple dashboards and folders
 
 When you delete one or more folders they are gone forever.
-However when you delete dashboards they will moved to the Recently deleted section where they are stored for another 30 days. If you change your mind and want to get your dashboards back you can restore them easily.
+However when you delete dashboards they will be moved to the Recently deleted section where they are stored for another 30 days. If you change your mind and want to get your dashboards back you can restore them easily.
 
 **To restore one or more dashboard:**
 
@@ -129,7 +129,7 @@ However when you delete dashboards they will moved to the Recently deleted secti
 4. Click Restore
 
 {{% admonition type="note" %}}
-Only users who have admin rights can access the Restore dashboards page. If you don't have this permission please refer to a user wha has the right permissions.
+Only users who have admin rights can access the Restore dashboards page. If you don't have this permission please refer to a user who has the right permissions.
 {{% /admonition %}}
 
 ## Set up generative AI features for dashboards
