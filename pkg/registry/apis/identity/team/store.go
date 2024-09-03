@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/team"
 )
 
 var (
@@ -129,29 +128,4 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		return &rsp.Items[0], nil
 	}
 	return nil, resource.NewNotFound(name)
-}
-
-func asTeam(team *team.Team, ns string) (*identityv0.Team, error) {
-	item := &identityv0.Team{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              team.UID,
-			Namespace:         ns,
-			CreationTimestamp: metav1.NewTime(team.Created),
-			ResourceVersion:   strconv.FormatInt(team.Updated.UnixMilli(), 10),
-		},
-		Spec: identityv0.TeamSpec{
-			Title: team.Name,
-			Email: team.Email,
-		},
-	}
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return nil, err
-	}
-	meta.SetUpdatedTimestamp(&team.Updated)
-	meta.SetOriginInfo(&utils.ResourceOriginInfo{
-		Name: "SQL",
-		Path: strconv.FormatInt(team.ID, 10),
-	})
-	return item, nil
 }

@@ -3,12 +3,13 @@ import { connect, ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { locationService, config, reportInteraction } from '@grafana/runtime';
-import { Modal, ConfirmModal, Button, Text, Space, TextLink } from '@grafana/ui';
+import { Modal, Button, Text, Space, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
 
 import { Trans, t } from '../../../../core/internationalization';
 import { useDeleteItemsMutation } from '../../../browse-dashboards/api/browseDashboardsAPI';
+import { DeleteDashboardModal as DeleteModal } from '../../../dashboard-scene/settings/DeleteDashboardButton';
 
 type DeleteDashboardModalProps = {
   hideModal(): void;
@@ -52,29 +53,7 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
     return <ProvisionedDeleteModal hideModal={hideModal} provisionedId={dashboard.meta.provisionedExternalId!} />;
   }
 
-  return (
-    <ConfirmModal
-      isOpen={true}
-      body={
-        <>
-          <Text element="p">
-            <Trans i18nKey="dashboard-settings.dashboard-delete-modal.text">
-              Do you want to delete this dashboard?
-            </Trans>
-          </Text>
-          <Space v={1} />
-          <Text element="p">{dashboard.title}</Text>
-          <Space v={2} />
-        </>
-      }
-      onConfirm={onConfirm}
-      onDismiss={hideModal}
-      title={t('dashboard-settings.dashboard-delete-modal.title', 'Delete')}
-      icon="trash-alt"
-      confirmText={t('dashboard-settings.dashboard-delete-modal.delete-button', 'Delete')}
-      confirmationText={t('dashboard-settings.dashboard-delete-modal.confirmation-text', 'Delete')}
-    />
-  );
+  return <DeleteModal onConfirm={onConfirm} onClose={hideModal} dashboardTitle={dashboard.title} />;
 };
 
 const ProvisionedDeleteModal = ({ hideModal, provisionedId }: { hideModal(): void; provisionedId: string }) => (

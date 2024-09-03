@@ -53,7 +53,7 @@
     "react-use": "17.5.1",
     "react-virtualized-auto-sizer": "1.0.24",
     "tinycolor2": "1.6.0",
-    "tslib": "2.6.3"
+    "tslib": "2.7.0"
   },
   "devDependencies": {
     "@babel/core": "7.25.2",
@@ -68,7 +68,7 @@
     "@types/d3": "^7",
     "@types/jest": "^29.5.4",
     "@types/lodash": "4.17.7",
-    "@types/node": "20.16.2",
+    "@types/node": "20.16.3",
     "@types/react": "18.3.3",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/tinycolor2": "1.4.6",
