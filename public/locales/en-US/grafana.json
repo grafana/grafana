@@ -333,6 +333,9 @@
   "combobox": {
     "clear": {
       "title": "Clear value"
+    },
+    "custom-value": {
+      "create": "Create custom value"
     }
   },
   "command-palette": {
@@ -375,6 +378,7 @@
       "placeholder": "Search all"
     }
   },
+  "Copy to Clipboard": "Copy to Clipboard",
   "correlations": {
     "add-new": "Add new",
     "alert": {
@@ -604,12 +608,13 @@
       "title": "Annotations"
     },
     "dashboard-delete-button": "Delete dashboard",
-    "dashboard-delete-modal": {
+    "delete-modal": {
       "confirmation-text": "Delete",
       "delete-button": "Delete",
-      "text": "Do you want to delete this dashboard?",
       "title": "Delete"
     },
+    "delete-modal-restore-dashboards-text": "This action will mark the dashboard for deletion in 30 days. Your organization administrator can restore it anytime before the 30 days expire.",
+    "delete-modal-text": "Do you want to delete this dashboard?",
     "general": {
       "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list. Use the format '5s' for seconds, '1m' for minutes, '1h' for hours, and '1d' for days (e.g.: '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
       "auto-refresh-label": "Auto refresh",
@@ -711,6 +716,13 @@
     "share": {
       "time-range-description": "Change the current relative time range to an absolute time range",
       "time-range-label": "Lock time range"
+    }
+  },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": "The selected data source does not support annotations. Please select a different data source."
+      }
     }
   },
   "explore": {

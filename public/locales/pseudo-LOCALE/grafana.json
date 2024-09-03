@@ -333,6 +333,9 @@
   "combobox": {
     "clear": {
       "title": "Cľęäř väľūę"
+    },
+    "custom-value": {
+      "create": "Cřęäŧę čūşŧőm väľūę"
     }
   },
   "command-palette": {
@@ -375,6 +378,7 @@
       "placeholder": "Ŝęäřčĥ äľľ"
     }
   },
+  "Copy to Clipboard": "Cőpy ŧő Cľįpþőäřđ",
   "correlations": {
     "add-new": "Åđđ ŉęŵ",
     "alert": {
@@ -604,12 +608,13 @@
       "title": "Åŉŉőŧäŧįőŉş"
     },
     "dashboard-delete-button": "Đęľęŧę đäşĥþőäřđ",
-    "dashboard-delete-modal": {
+    "delete-modal": {
       "confirmation-text": "Đęľęŧę",
       "delete-button": "Đęľęŧę",
-      "text": "Đő yőū ŵäŉŧ ŧő đęľęŧę ŧĥįş đäşĥþőäřđ?",
       "title": "Đęľęŧę"
     },
+    "delete-modal-restore-dashboards-text": "Ŧĥįş äčŧįőŉ ŵįľľ mäřĸ ŧĥę đäşĥþőäřđ ƒőř đęľęŧįőŉ įŉ 30 đäyş. Ÿőūř őřģäŉįžäŧįőŉ äđmįŉįşŧřäŧőř čäŉ řęşŧőřę įŧ äŉyŧįmę þęƒőřę ŧĥę 30 đäyş ęχpįřę.",
+    "delete-modal-text": "Đő yőū ŵäŉŧ ŧő đęľęŧę ŧĥįş đäşĥþőäřđ?",
     "general": {
       "auto-refresh-description": "Đęƒįŉę ŧĥę äūŧő řęƒřęşĥ įŉŧęřväľş ŧĥäŧ şĥőūľđ þę äväįľäþľę įŉ ŧĥę äūŧő řęƒřęşĥ ľįşŧ. Ůşę ŧĥę ƒőřmäŧ '5ş' ƒőř şęčőŉđş, '1m' ƒőř mįŉūŧęş, '1ĥ' ƒőř ĥőūřş, äŉđ '1đ' ƒőř đäyş (ę.ģ.: '5ş,10ş,30ş,1m,5m,15m,30m,1ĥ,2ĥ,1đ').",
       "auto-refresh-label": "Åūŧő řęƒřęşĥ",
@@ -711,6 +716,13 @@
     "share": {
       "time-range-description": "Cĥäŉģę ŧĥę čūřřęŉŧ řęľäŧįvę ŧįmę řäŉģę ŧő äŉ äþşőľūŧę ŧįmę řäŉģę",
       "time-range-label": "Ŀőčĸ ŧįmę řäŉģę"
+    }
+  },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": "Ŧĥę şęľęčŧęđ đäŧä şőūřčę đőęş ŉőŧ şūppőřŧ äŉŉőŧäŧįőŉş. Pľęäşę şęľęčŧ ä đįƒƒęřęŉŧ đäŧä şőūřčę."
+      }
     }
   },
   "explore": {

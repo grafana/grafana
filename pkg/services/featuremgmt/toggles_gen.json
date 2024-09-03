@@ -2188,13 +2188,17 @@
     {
       "metadata": {
         "name": "promQLScope",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-29T20:22:17Z"
+        "resourceVersion": "1724076197892",
+        "creationTimestamp": "2024-01-29T20:22:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 14:03:17.892558375 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "stage": "GA",
+        "codeowner": "@grafana/observability-metrics",
+        "expression": "true"
       }
     },
     {
