@@ -63,7 +63,7 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta);
 
-  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, rsp.reloadOnScopesChange);
+  const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
   scene.setInitialSaveModel(rsp.dashboard);
 
@@ -165,11 +165,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
   });
 }
 
-export function createDashboardSceneFromDashboardModel(
-  oldModel: DashboardModel,
-  dto: DashboardDataDTO,
-  reloadOnScopesChange?: boolean
-) {
+export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
@@ -251,7 +247,7 @@ export function createDashboardSceneFromDashboardModel(
       preserveDashboardSceneStateInLocalStorage,
       new ScopesFacade({
         handler: (facade) => {
-          if (reloadOnScopesChange && oldModel.uid) {
+          if (oldModel.meta.reloadOnScopesChange && oldModel.uid) {
             locationService.reload();
           } else {
             sceneGraph.getTimeRange(facade).onRefresh();

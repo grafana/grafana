@@ -1,5 +1,3 @@
-import { lastValueFrom } from 'rxjs';
-
 import { config, getBackendSrv } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
@@ -43,21 +41,11 @@ class LegacyDashboardAPI implements DashboardAPI {
     return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${uid}`, { showSuccessAlert });
   }
 
-  async getDashboardDTO(uid: string): Promise<DashboardDTO> {
+  getDashboardDTO(uid: string): Promise<DashboardDTO> {
     const scopes = getSelectedScopesNames();
     const queryParams = scopes.length > 0 ? { scopes } : undefined;
 
-    const response = await lastValueFrom(
-      getBackendSrv().fetch<DashboardDTO>({
-        url: `/api/dashboards/uid/${uid}`,
-        params: queryParams,
-      })
-    );
-
-    return {
-      ...response.data,
-      reloadOnScopesChange: response.headers.has('X-Reload-Scopes-Change'),
-    };
+    return getBackendSrv().get<DashboardDTO>(`/api/dashboards/uid/${uid}`, queryParams);
   }
 }
 

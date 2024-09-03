@@ -5,7 +5,7 @@ import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/das
 
 import { initializeScopes } from '../instance';
 
-import { fetchMock, getMock } from './utils/mocks';
+import { getMock } from './utils/mocks';
 import { resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
@@ -13,7 +13,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: getMock,
-    fetch: fetchMock,
   }),
 }));
 
@@ -26,7 +25,7 @@ describe('Scopes', () => {
       });
 
       beforeEach(() => {
-        fetchMock.mockClear();
+        getMock.mockClear();
         setDashboardAPI(undefined);
         locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
       });
@@ -39,7 +38,7 @@ describe('Scopes', () => {
       it('Legacy API should not pass the scopes', async () => {
         config.featureToggles.kubernetesDashboards = false;
         await getDashboardAPI().getDashboardDTO('1');
-        expect(fetchMock).toHaveBeenCalledWith({ url: '/api/dashboards/uid/1', params: undefined });
+        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', undefined);
       });
 
       it('K8s API should not pass the scopes', async () => {
@@ -71,10 +70,7 @@ describe('Scopes', () => {
       it('Legacy API should pass the scopes', async () => {
         config.featureToggles.kubernetesDashboards = false;
         await getDashboardAPI().getDashboardDTO('1');
-        expect(fetchMock).toHaveBeenCalledWith({
-          url: '/api/dashboards/uid/1',
-          params: { scopes: ['scope1', 'scope2', 'scope3'] },
-        });
+        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', { scopes: ['scope1', 'scope2', 'scope3'] });
       });
 
       it('K8s API should not pass the scopes', async () => {

@@ -7,10 +7,6 @@ export interface DashboardDTO {
   redirectUri?: string;
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
-
-  // This is a property added specifically for edge cases where dashboards should be reloaded on scopes changes
-  // This property is not persisted in the DB but its existence is controlled via a `X-Reload-Scopes-Change` HTTP header
-  reloadOnScopesChange?: boolean;
 }
 
 export interface ImportDashboardResponseDTO {
@@ -77,6 +73,10 @@ export interface DashboardMeta {
   // yes weird, but this means all the editor structures can exist unchanged
   // until we use the resource as the main container
   k8s?: Partial<ObjectMeta>;
+
+  // This is a property added specifically for edge cases where dashboards should be reloaded on scopes changes
+  // This property is not persisted in the DB but its existence is controlled via a `X-Reload-Scopes-Change` HTTP header
+  reloadOnScopesChange?: boolean;
 }
 
 export interface AnnotationActions {

@@ -1,5 +1,3 @@
-import { of } from 'rxjs';
-
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
 
 import * as api from '../../internal/api';
@@ -400,6 +398,10 @@ export const getMock = jest
       };
     }
 
+    if (url.startsWith('/api/dashboards/uid/')) {
+      return {};
+    }
+
     if (url.startsWith('/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/')) {
       return {
         metadata: {
@@ -410,13 +412,6 @@ export const getMock = jest
 
     return {};
   });
-
-export const fetchMock = jest.fn().mockImplementation(() => {
-  return of({
-    headers: new Headers(),
-    data: {},
-  });
-});
 
 const generateScopeDashboardBinding = (dashboardTitle: string, groups?: string[], dashboardId?: string) => ({
   metadata: { name: `${dashboardTitle}-name` },
