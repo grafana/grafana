@@ -2599,8 +2599,6 @@ Move an app plugin (referenced by its id), including all its pages, to a specifi
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
 Format: `<pageUrl> = <sectionId> <sortWeight>`
 
-<!--does this need to be updated -->
-
 ## [public_dashboards]
 
 This section configures the [public dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/) feature.

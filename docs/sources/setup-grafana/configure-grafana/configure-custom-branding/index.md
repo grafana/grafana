@@ -108,8 +108,6 @@ The following two links are always present in the footer:
 
 If you specify `footer_links` or `GF_WHITE_LABELING_FOOTER_LINKS`, then all other default links are removed from the footer, and only what is specified is included.
 
-<!-- does the ini file info need to be updated? -->
-
 ## Custom branding for shared dashboards
 
 In addition to the customizations described below, you can customize the footer of your shared dashboards.
