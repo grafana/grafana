@@ -326,6 +326,7 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
               <>
                 <Field
                   label={t('ldap-drawer.extra-security-section.root-ca-cert.label', 'Root CA certificate path')}
+                  className={styles.configField}
                 >
                   <InputWithReset
                     id="root-ca-cert"
@@ -341,6 +342,7 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
                 </Field>
                 <Field
                   label={t('ldap-drawer.extra-security-section.client-cert.label', 'Client certificate path')}
+                  className={styles.configField}
                 >
                   <InputWithReset
                     id="client-cert"
@@ -356,6 +358,7 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
                 </Field>
                 <Field
                   label={t('ldap-drawer.extra-security-section.client-key.label', 'Client key path')}
+                  className={styles.configField}
                 >
                   <InputWithReset
                     id="client-key"
@@ -382,6 +385,17 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     sectionLabel: css({
       fontSize: theme.typography.size.lg,
+    }),
+    configField: css({
+      'div:has(> div> div> div > input)': {
+        // 'width': '90%',
+      },
+      'div:has(> div> div > input)': {
+        // 'width': '100%',
+      },
+      'button': {
+        // 'width': '10%',
+      },
     }),
   };
 }
