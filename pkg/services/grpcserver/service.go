@@ -73,8 +73,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 
 	var opts []grpc.ServerOption
 
-	namespaceChecker := grpcutils.NewNamespaceAccessChecker(cfg)
-	stackIdExtractor := authzlib.MetadataStackIDExtractor(authzlib.DefaultStackIDMetadataKey)
+	namespaceAuthz := grpcutils.NewNamespaceAuthorizer(cfg)
 
 	// Default auth is admin token check, but this can be overridden by
 	// services which implement ServiceAuthFuncOverride interface.
@@ -83,14 +82,14 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
-			authzlib.UnaryNamespaceAccessInterceptor(namespaceChecker, stackIdExtractor),
+			authzlib.UnaryAuthorizeInterceptor(namespaceAuthz),
 			interceptors.LoggingUnaryInterceptor(s.cfg, s.logger), // needs to be registered after tracing interceptor to get trace id
 			middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 		),
 		grpc.ChainStreamInterceptor(
 			interceptors.TracingStreamInterceptor(tracer),
 			grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
-			authzlib.StreamNamespaceAccessInterceptor(namespaceChecker, stackIdExtractor),
+			authzlib.StreamAuthorizeInterceptor(namespaceAuthz),
 			middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 		),
 	}...)

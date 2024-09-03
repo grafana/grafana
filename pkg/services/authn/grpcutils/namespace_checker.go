@@ -7,17 +7,24 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewNamespaceAccessChecker(cfg *setting.Cfg) authzlib.NamespaceAccessChecker {
+func NewNamespaceAuthorizer(cfg *setting.Cfg) authzlib.AuthorizeFunc {
+	var na authzlib.NamespaceAccessChecker
+
 	if cfg.StackID != "" {
-		return authzlib.NewNamespaceAccessChecker(
+		na = authzlib.NewNamespaceAccessChecker(
 			claims.CloudNamespaceFormatter,
 			authzlib.WithIDTokenNamespaceAccessCheckerOption(true),
 		)
 	}
 
-	return authzlib.NewNamespaceAccessChecker(
+	na = authzlib.NewNamespaceAccessChecker(
 		claims.OrgNamespaceFormatter,
 		authzlib.WithDisableAccessTokenNamespaceAccessCheckerOption(),
 		authzlib.WithIDTokenNamespaceAccessCheckerOption(true),
+	)
+
+	return authzlib.NamespaceAuthorizationFunc(
+		na,
+		authzlib.MetadataStackIDExtractor(authzlib.DefaultStackIDMetadataKey),
 	)
 }
