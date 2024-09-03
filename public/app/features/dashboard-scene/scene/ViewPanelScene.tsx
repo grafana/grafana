@@ -12,12 +12,14 @@ import {
   SceneVariable,
 } from '@grafana/scenes';
 
+import { DashboardLayoutElement } from './layouts/types';
+
 interface ViewPanelSceneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   body?: VizPanel;
 }
 
-export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
+export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> implements DashboardLayoutElement {
   public constructor(state: ViewPanelSceneState) {
     super(state);
 
@@ -71,6 +73,18 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
 
   public getUrlKey() {
     return this.state.panelRef.resolve().state.key;
+  }
+
+  /**
+   * DashboardLayoutElement interface impementation
+   */
+  public isDashboardLayoutElement: true = true;
+
+  public setPanel(panel: VizPanel) {
+    this.setState({ body: panel });
+  }
+  public getPanel() {
+    return this.state.body!;
   }
 
   public static Component = ({ model }: SceneComponentProps<ViewPanelScene>) => {

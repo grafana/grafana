@@ -24,9 +24,10 @@ import {
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
-import { getMultiVariableValues, getQueryRunnerFor, isLibraryPanel, getLibraryPanelBehavior } from '../utils/utils';
+import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
+import { DashboardLayoutElement } from './layouts/types';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
@@ -40,7 +41,10 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 
 export type RepeatDirection = 'v' | 'h';
 
-export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
+export class DashboardGridItem
+  extends SceneObjectBase<DashboardGridItemState>
+  implements SceneGridItemLike, DashboardLayoutElement
+{
   private _libPanelSubscription: Unsubscribable | undefined;
   private _prevRepeatValues?: VariableValueSingle[];
 
@@ -206,6 +210,20 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   public isRepeated() {
     return this.state.variableName !== undefined;
   }
+
+  /**
+   * DashboardLayoutElement interface impementation
+   */
+  public isDashboardLayoutElement: true = true;
+
+  public setPanel(panel: VizPanel) {
+    this.setState({ body: panel });
+  }
+
+  public getPanel() {
+    return this.state.body;
+  }
+  /** End of DashboardLayoutElement interface impementation */
 
   public static Component = ({ model }: SceneComponentProps<DashboardGridItem>) => {
     const { repeatedPanels, itemHeight, variableName, body } = model.useState();
