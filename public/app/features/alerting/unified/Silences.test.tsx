@@ -304,6 +304,14 @@ describe('Silence create/edit', () => {
     TEST_TIMEOUT
   );
 
+  it('works when previewing alerts with spaces in label name', async () => {
+    renderSilences(`${baseUrlPath}?alertmanager=${GRAFANA_RULES_SOURCE_NAME}`);
+
+    await enterSilenceLabel(0, 'label with spaces', MatcherOperator.equal, 'value with spaces');
+
+    expect((await screen.findAllByTestId('row'))[0]).toBeInTheDocument();
+  });
+
   it('shows an error when existing silence cannot be found', async () => {
     renderSilences('/alerting/silence/foo-bar/edit');
 

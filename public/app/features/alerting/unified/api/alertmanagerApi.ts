@@ -72,7 +72,9 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         // TODO Add support for active, silenced, inhibited, unprocessed filters
         const filterMatchers = filter?.matchers
           ?.filter((matcher) => matcher.name && matcher.value)
-          .map((matcher) => `${matcher.name}${matcherToOperator(matcher)}${wrapWithQuotes(matcher.value)}`);
+          .map(
+            (matcher) => `${wrapWithQuotes(matcher.name)}${matcherToOperator(matcher)}${wrapWithQuotes(matcher.value)}`
+          );
 
         const { silenced, inhibited, unprocessed, active } = filter || {};
 
