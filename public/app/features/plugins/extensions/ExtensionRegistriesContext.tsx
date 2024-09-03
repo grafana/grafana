@@ -4,12 +4,10 @@ import { AddedComponentsRegistry } from 'app/features/plugins/extensions/registr
 import { AddedLinksRegistry } from 'app/features/plugins/extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from 'app/features/plugins/extensions/registry/ExposedComponentsRegistry';
 
+import { PluginExtensionRegistries } from './registry/types';
+
 export interface ExtensionRegistriesContextType {
-  registries: {
-    addedLinks: AddedLinksRegistry;
-    addedComponents: AddedComponentsRegistry;
-    exposedComponents: ExposedComponentsRegistry;
-  };
+  registries: PluginExtensionRegistries;
 }
 
 // Using a different context for each registry to avoid unnecessary re-renders
@@ -46,9 +44,9 @@ export const ExtensionRegistriesProvider = ({
   children,
 }: PropsWithChildren<ExtensionRegistriesContextType>) => {
   return (
-    <AddedLinksRegistryContext.Provider value={registries.addedLinks}>
-      <AddedComponentsRegistryContext.Provider value={registries.addedComponents}>
-        <ExposedComponentsRegistryContext.Provider value={registries.exposedComponents}>
+    <AddedLinksRegistryContext.Provider value={registries.addedLinksRegistry}>
+      <AddedComponentsRegistryContext.Provider value={registries.addedComponentsRegistry}>
+        <ExposedComponentsRegistryContext.Provider value={registries.exposedComponentsRegistry}>
           {children}
         </ExposedComponentsRegistryContext.Provider>
       </AddedComponentsRegistryContext.Provider>

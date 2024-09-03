@@ -27,4 +27,4 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
       component: wrapWithPluginContext(registryItem.pluginId, registryItem.component),
     };
   }, [id, registryState]);
-};
+}

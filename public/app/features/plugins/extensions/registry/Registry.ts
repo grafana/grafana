@@ -2,6 +2,8 @@ import { Observable, ReplaySubject, Subject, firstValueFrom, map, scan, startWit
 
 import { deepFreeze } from '../utils';
 
+export const MSG_CANNOT_REGISTER_READ_ONLY = 'Cannot register to a read-only registry';
+
 export type PluginExtensionConfigs<T> = {
   pluginId: string;
   configs: T[];
@@ -19,7 +21,7 @@ export abstract class Registry<TRegistryValue, TMapType> {
   private resultSubject: Subject<PluginExtensionConfigs<TMapType>>;
   // This is the subject that we expose.
   // (It will buffer the last value on the stream - the registry - and emit it to new subscribers immediately.)
-  private registrySubject: ReplaySubject<RegistryType<TRegistryValue>>;
+  protected registrySubject: ReplaySubject<RegistryType<TRegistryValue>>;
 
   constructor(options: {
     registrySubject?: ReplaySubject<RegistryType<TRegistryValue>>;
@@ -55,7 +57,7 @@ export abstract class Registry<TRegistryValue, TMapType> {
 
   register(result: PluginExtensionConfigs<TMapType>): void {
     if (this.isReadOnly) {
-      throw new Error('Cannot register to a read-only registry');
+      throw new Error(MSG_CANNOT_REGISTER_READ_ONLY);
     }
 
     this.resultSubject.next(result);
@@ -67,14 +69,5 @@ export abstract class Registry<TRegistryValue, TMapType> {
 
   getState(): Promise<RegistryType<TRegistryValue>> {
     return firstValueFrom(this.asObservable());
-  }
-
-  // Returns a read-only version of the registry.
-  readOnly() {
-    return new (this.constructor as new (options: {
-      registrySubject: ReplaySubject<RegistryType<TRegistryValue>>;
-    }) => this)({
-      registrySubject: this.registrySubject,
-    });
   }
 }

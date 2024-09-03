@@ -73,4 +73,11 @@ export class ExposedComponentsRegistry extends Registry<
 
     return registry;
   }
+
+  // Returns a read-only version of the registry.
+  readOnly() {
+    return new ExposedComponentsRegistry({
+      registrySubject: this.registrySubject,
+    });
+  }
 }

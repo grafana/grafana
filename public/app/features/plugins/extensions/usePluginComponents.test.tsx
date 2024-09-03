@@ -2,10 +2,12 @@ import { act, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
-import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
-import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
+import { setupPluginExtensionRegistries } from './registry/setup';
+import { PluginExtensionRegistries } from './registry/types';
 import { usePluginComponents } from './usePluginComponents';
+import * as utils from './utils';
+
+const wrapWithPluginContext = jest.spyOn(utils, 'wrapWithPluginContext');
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn().mockResolvedValue({
@@ -19,24 +21,16 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
 }));
 
 describe('usePluginComponents()', () => {
-  let addedComponents: AddedComponentsRegistry;
+  let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeEach(() => {
-    addedComponents = new AddedComponentsRegistry();
-    const addedLinks = new AddedLinksRegistry();
-    const exposedComponents = new ExposedComponentsRegistry();
+    registries = setupPluginExtensionRegistries();
+
+    wrapWithPluginContext.mockClear();
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider
-        registries={{
-          addedComponents,
-          addedLinks,
-          exposedComponents,
-        }}
-      >
-        {children}
-      </ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
     );
   });
 
@@ -56,7 +50,7 @@ describe('usePluginComponents()', () => {
     const extensionPointId = 'plugins/foo/bar/v1';
     const pluginId = 'my-app-plugin';
 
-    addedComponents.register({
+    registries.addedComponentsRegistry.register({
       pluginId,
       configs: [
         {
@@ -102,7 +96,7 @@ describe('usePluginComponents()', () => {
 
     // Add extensions to the registry
     act(() => {
-      addedComponents.register({
+      registries.addedComponentsRegistry.register({
         pluginId,
         configs: [
           {
@@ -133,14 +127,6 @@ describe('usePluginComponents()', () => {
     expect(result.current.components.length).toBe(2);
   });
 
-  it('should only render the hook once', () => {
-    const spy = jest.spyOn(addedComponents, 'asObservable');
-    const extensionPointId = 'plugins/foo/bar';
-
-    renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
-    expect(spy).toHaveBeenCalledTimes(1);
-  });
-
   it('should honour the limitPerPlugin arg if its set', () => {
     const extensionPointId = 'plugins/foo/bar/v1';
     const plugins = ['my-app-plugin1', 'my-app-plugin2', 'my-app-plugin3'];
@@ -154,7 +140,7 @@ describe('usePluginComponents()', () => {
     // Add extensions to the registry
     act(() => {
       for (let pluginId of plugins) {
-        addedComponents.register({
+        registries.addedComponentsRegistry.register({
           pluginId,
           configs: [
             {

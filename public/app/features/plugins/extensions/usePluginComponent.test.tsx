@@ -1,11 +1,13 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
-import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
-import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
-import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
+import { setupPluginExtensionRegistries } from './registry/setup';
+import { PluginExtensionRegistries } from './registry/types';
 import { usePluginComponent } from './usePluginComponent';
+import * as utils from './utils';
+
+const wrapWithPluginContext = jest.spyOn(utils, 'wrapWithPluginContext');
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn().mockResolvedValue({
@@ -19,24 +21,16 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
 }));
 
 describe('usePluginComponent()', () => {
-  let exposedComponents: ExposedComponentsRegistry;
+  let registries: PluginExtensionRegistries;
   let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeEach(() => {
-    exposedComponents = new ExposedComponentsRegistry();
-    const addedLinks = new AddedLinksRegistry();
-    const addedComponents = new AddedComponentsRegistry();
+    registries = setupPluginExtensionRegistries();
+
+    wrapWithPluginContext.mockClear();
 
     wrapper = ({ children }: { children: React.ReactNode }) => (
-      <ExtensionRegistriesProvider
-        registries={{
-          addedLinks,
-          addedComponents,
-          exposedComponents,
-        }}
-      >
-        {children}
-      </ExtensionRegistriesProvider>
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
     );
   });
 
@@ -51,7 +45,7 @@ describe('usePluginComponent()', () => {
     const id = 'my-app-plugin/foo/bar/v1';
     const pluginId = 'my-app-plugin';
 
-    exposedComponents.register({
+    registries.exposedComponentsRegistry.register({
       pluginId,
       configs: [{ id, title: 'not important', description: 'not important', component: () => <div>Hello World</div> }],
     });
@@ -79,7 +73,7 @@ describe('usePluginComponent()', () => {
 
     // Add extensions to the registry
     act(() => {
-      exposedComponents.register({
+      registries.exposedComponentsRegistry.register({
         pluginId,
         configs: [
           {
@@ -106,11 +100,27 @@ describe('usePluginComponent()', () => {
     expect(await screen.findByText('Hello World')).toBeVisible();
   });
 
-  it('should only render the hook once', () => {
-    const spy = jest.spyOn(exposedComponents, 'asObservable');
-    const id = 'my-app-plugin/foo/bar';
+  it('should only render the hook once', async () => {
+    const pluginId = 'my-app-plugin';
+    const id = `${pluginId}/foo/v1`;
 
+    // Add extensions to the registry
+    act(() => {
+      registries.exposedComponentsRegistry.register({
+        pluginId,
+        configs: [
+          {
+            id,
+            title: 'not important',
+            description: 'not important',
+            component: () => <div>Hello World</div>,
+          },
+        ],
+      });
+    });
+
+    expect(wrapWithPluginContext).toHaveBeenCalledTimes(0);
     renderHook(() => usePluginComponent(id), { wrapper });
-    expect(spy).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(wrapWithPluginContext).toHaveBeenCalledTimes(1));
   });
 });

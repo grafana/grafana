@@ -55,9 +55,9 @@ interface State {
 const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
 
 export function AppRootPage({ pluginId, pluginNavSection }: Props) {
-  const addedLinks = useAddedLinksRegistry();
-  const addedComponents = useAddedComponentsRegistry();
-  const exposedComponents = useExposedComponentsRegistry();
+  const addedLinksRegistry = useAddedLinksRegistry();
+  const addedComponentsRegistry = useAddedComponentsRegistry();
+  const exposedComponentsRegistry = useExposedComponentsRegistry();
   const match = useRouteMatch();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
@@ -98,7 +98,13 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   const pluginRoot = plugin.root && (
     <PluginContextProvider meta={plugin.meta}>
-      <ExtensionRegistriesProvider registries={{ addedLinks, addedComponents, exposedComponents }}>
+      <ExtensionRegistriesProvider
+        registries={{
+          addedLinksRegistry: addedLinksRegistry.readOnly(),
+          addedComponentsRegistry: addedComponentsRegistry.readOnly(),
+          exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+        }}
+      >
         <plugin.root
           meta={plugin.meta}
           basename={match.url}

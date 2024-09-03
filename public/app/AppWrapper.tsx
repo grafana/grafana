@@ -111,7 +111,7 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
               >
                 <GlobalStyles />
                 <SidecarContext.Provider value={sidecarService}>
-                  <ExtensionRegistriesProvider registries={app.extensionRegistries}>
+                  <ExtensionRegistriesProvider registries={app.pluginExtensionsRegistries}>
                     <div className="grafana-app">
                       {config.featureToggles.appSidecar ? (
                         <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
