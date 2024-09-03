@@ -8,6 +8,8 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { ExtensionsLog } from '../plugins/extensions/log';
 
+import { Logs } from './Logs';
+
 const extensionsLog = new ExtensionsLog();
 
 export const TestStuffPage = () => {
@@ -20,7 +22,6 @@ export const TestStuffPage = () => {
   };
 
   const notifyApp = useAppNotification();
-  const logs = useObservable(extensionsLog.asObservable().pipe(buffer));
 
   return (
     <Page navModel={{ node: node, main: node }}>
@@ -42,6 +43,8 @@ export const TestStuffPage = () => {
         >
           Error
         </Button>
+
+        <Logs></Logs>
       </Stack>
     </Page>
   );
