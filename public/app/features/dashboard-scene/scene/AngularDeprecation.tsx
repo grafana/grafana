@@ -49,7 +49,8 @@ function AngularDeprecationRenderer({ model }: SceneComponentProps<AngularDeprec
   const isAngularDatasource = panel.datasource?.uid
     ? isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid)
     : false;
-  const isAngularPanel = isPanelAngularPlugin(panel) && !panel.plugin?.meta.angular?.hideDeprecation;
+
+  const isAngularPanel = isPanelAngularPlugin(panel);
   const showAngularNotice =
     (config.featureToggles.angularDeprecationUI ?? false) && (isAngularDatasource || isAngularPanel);
 

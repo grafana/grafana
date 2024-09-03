@@ -1,13 +1,17 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
+import { GrafanaTheme2, PanelPluginMeta, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, sceneGraph } from '@grafana/scenes';
 import { FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
+import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
+
+import { isPanelAngularPlugin } from '../scene/AngularDeprecation';
 
 import { PanelEditor } from './PanelEditor';
 import { PanelOptions } from './PanelOptions';
@@ -43,10 +47,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
     const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
-    const { pluginId } = vizManager.useState();
+    const { pluginId, panel } = vizManager.useState();
     const { data } = sceneGraph.getData(vizManager.state.panel).useState();
     const styles = useStyles2(getStyles);
-
+    const isAngularPanel = isPanelAngularPlugin(panel);
     return (
       <>
         {!isVizPickerOpen && (
@@ -60,6 +64,16 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 onChange={model.onSetSearchQuery}
               />
             </div>
+            {isAngularPanel && (
+              <AngularDeprecationPluginNotice
+                className={styles.angularDeprecationWrapper}
+                showPluginDetailsLink={true}
+                pluginId={pluginId}
+                pluginType={PluginType.panel}
+                angularSupportEnabled={config?.angularSupportEnabled}
+                interactionElementId="panel-options"
+              />
+            )}
             <div className={styles.listOfOptions}>
               <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} data={data} />
             </div>
@@ -98,6 +112,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rotateIcon: css({
       rotate: '180deg',
+    }),
+    angularDeprecationWrapper: css({
+      padding: theme.spacing(1),
     }),
   };
 }
