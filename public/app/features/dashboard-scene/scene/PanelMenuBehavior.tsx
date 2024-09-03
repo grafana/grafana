@@ -227,7 +227,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         text: panel.state.options.legend.showLegend
           ? t('panel.header-menu.hide-legend', 'Hide legend')
           : t('panel.header-menu.show-legend', 'Show legend'),
-        // iconClassName: panel.state.options.legend.showLegend ? 'legend-hide' : 'legend-show',
+        iconClassName: panel.state.options.legend.showLegend ? 'legend-hide' : 'legend-show',
         onClick: (e) => {
           e.preventDefault();
           toggleVizPanelLegend(panel);
