@@ -1,4 +1,4 @@
-import { useObservable } from 'react-use';
+import { useLayoutEffect, useMemo, useState } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
@@ -6,13 +6,21 @@ import { Button, LinkButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { ExtensionsLog } from '../plugins/extensions/log';
+import { log, LogItem } from '../plugins/extensions/log';
 
 import { Logs } from './Logs';
 
-const extensionsLog = new ExtensionsLog();
-
 export const TestStuffPage = () => {
+  const [logs, setLogs] = useState<LogItem[]>([]);
+  const observable = useMemo(() => log.asObservable(), []);
+
+  useLayoutEffect(() => {
+    const subscription = observable.subscribe((item) => {
+      setLogs((logs) => [item, ...logs]);
+    });
+    return () => subscription.unsubscribe();
+  }, [observable]);
+
   const node: NavModelItem = {
     id: 'test-page',
     text: 'Test page',
@@ -26,8 +34,8 @@ export const TestStuffPage = () => {
   return (
     <Page navModel={{ node: node, main: node }}>
       <Stack>
+        {logs.length}
         <LinkToBasicApp extensionPointId="grafana/sandbox/testing" />
-
         <Button onClick={() => notifyApp.success('Success toast', 'some more text goes here')} variant="primary">
           Success
         </Button>
@@ -43,7 +51,6 @@ export const TestStuffPage = () => {
         >
           Error
         </Button>
-
         <Logs></Logs>
       </Stack>
     </Page>

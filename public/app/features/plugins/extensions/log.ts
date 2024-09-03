@@ -9,7 +9,7 @@ enum LogLevel {
   fatal = 'fatal',
 }
 
-type LogItem = {
+export type LogItem = {
   level: LogLevel;
   ts: number;
   obj: LogEntry;
@@ -80,3 +80,5 @@ export class ExtensionsLog {
     return this;
   }
 }
+
+export const log = new ExtensionsLog();
