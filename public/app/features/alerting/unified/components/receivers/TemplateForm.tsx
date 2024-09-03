@@ -48,12 +48,12 @@ import { TemplatePreview } from './TemplatePreview';
 import { snippets } from './editor/templateDataSuggestions';
 
 export interface TemplateFormValues {
-  name: string;
+  title: string;
   content: string;
 }
 
 export const defaults: TemplateFormValues = Object.freeze({
-  name: '',
+  title: '',
   content: '',
 });
 
@@ -92,7 +92,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
 
   const createNewTemplate = useCreateNotificationTemplate({ alertmanager: alertManagerSourceName });
   const updateTemplate = useUpdateNotificationTemplate({ alertmanager: alertManagerSourceName });
-  const { nameIsUnique } = useValidateNotificationTemplate({ alertmanager: alertManagerSourceName });
+  const { titleIsUnique } = useValidateNotificationTemplate({ alertmanager: alertManagerSourceName });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
@@ -107,7 +107,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
 
   const isProvisioned = Boolean(originalTemplate?.provenance) && originalTemplate?.provenance !== PROVENANCE_NONE;
   const originalTemplatePrefill = originalTemplate
-    ? { name: originalTemplate.name, content: originalTemplate.template }
+    ? { name: originalTemplate.title, content: originalTemplate.content }
     : undefined;
 
   // splitter for template and payload editor
@@ -150,7 +150,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
       } else {
         await updateTemplate({ template: originalTemplate, patch: values });
       }
-      appNotification.success('Template saved', `Template ${values.name} has been saved`);
+      appNotification.success('Template saved', `Template ${values.title} has been saved`);
       locationService.push(returnLink);
     } catch (error) {
       appNotification.error('Error saving template', stringifyErrorLike(error));
@@ -197,17 +197,17 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
           <FieldSet disabled={isProvisioned} className={styles.fieldset}>
             <InlineField
               label="Template name"
-              error={errors?.name?.message}
-              invalid={!!errors.name?.message}
+              error={errors?.title?.message}
+              invalid={!!errors.title?.message}
               required
               className={styles.nameField}
             >
               <Input
-                {...register('name', {
+                {...register('title', {
                   required: { value: true, message: 'Required.' },
-                  validate: { nameIsUnique },
+                  validate: { titleIsUnique },
                 })}
-                placeholder="Give your template a name"
+                placeholder="Give your template a title"
                 width={42}
                 autoFocus={true}
                 id="new-template-name"
@@ -285,7 +285,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
                     <div {...rowSplitter.splitterProps}></div>
                     <TemplatePreview
                       payload={payload}
-                      templateName={watch('name')}
+                      templateName={watch('title')}
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}

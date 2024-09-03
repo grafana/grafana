@@ -49,12 +49,12 @@ const DuplicateMessageTemplate = ({ match }: Props) => {
     );
   }
 
-  const duplicatedName = generateCopiedName(template.name, templates?.map((t) => t.name) ?? []);
+  const duplicatedName = generateCopiedName(template.title, templates?.map((t) => t.title) ?? []);
 
   return (
     <TemplateForm
       alertManagerSourceName={selectedAlertmanager}
-      prefill={{ name: duplicatedName, content: updateDefinesWithUniqueValue(template.template) }}
+      prefill={{ title: duplicatedName, content: updateDefinesWithUniqueValue(template.content) }}
     />
   );
 };

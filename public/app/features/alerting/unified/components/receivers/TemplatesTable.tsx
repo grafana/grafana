@@ -35,9 +35,9 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
     if (templateToDelete) {
       try {
         await deleteTemplate({ uid: templateToDelete.uid });
-        appNotification.success('Template deleted', `Template ${templateToDelete.name} has been deleted`);
+        appNotification.success('Template deleted', `Template ${templateToDelete.title} has been deleted`);
       } catch (error) {
-        appNotification.error('Error deleting template', `Error deleting template ${templateToDelete.name}`);
+        appNotification.error('Error deleting template', `Error deleting template ${templateToDelete.title}`);
 
         const loggableError = error instanceof Error ? error : new Error(stringifyErrorLike(error));
         logError(loggableError);
@@ -76,7 +76,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
             </tr>
           )}
           {templates.map((notificationTemplate, idx) => {
-            const { uid, name, template, provenance } = notificationTemplate;
+            const { uid, title: name, content: template, provenance } = notificationTemplate;
 
             const isProvisioned = provenance !== PROVENANCE_NONE;
             const isExpanded = expandedTemplates[uid];
@@ -166,7 +166,7 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
         <ConfirmModal
           isOpen={true}
           title="Delete template"
-          body={`Are you sure you want to delete template "${templateToDelete.name}"?`}
+          body={`Are you sure you want to delete template "${templateToDelete.title}"?`}
           confirmText="Yes, delete"
           onConfirm={onDeleteTemplate}
           onDismiss={() => setTemplateToDelete(undefined)}
