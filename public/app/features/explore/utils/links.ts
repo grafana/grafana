@@ -188,9 +188,8 @@ export const getFieldLinksForExplore = (options: {
       } else {
         variables = variableData.variables;
       }
-
-      if (!link.internal) {
-        if (variableData.allVariablesDefined) {
+      if (variableData.allVariablesDefined) {
+        if (!link.internal) {
           const replace: InterpolateFunction = (value, vars) =>
             getTemplateSrv().replace(value, { ...vars, ...allVars, ...scopedVars });
 
@@ -201,20 +200,16 @@ export const getFieldLinksForExplore = (options: {
           linkModel.target = '_blank';
           return { ...linkModel, variables: variables };
         } else {
-          return undefined;
-        }
-      } else {
-        const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
-          reportInteraction(DATA_LINK_USAGE_KEY, {
-            origin: link.origin || DataLinkConfigOrigin.Datasource,
-            app: CoreApp.Explore,
-            internal: true,
-          });
+          const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
+            reportInteraction(DATA_LINK_USAGE_KEY, {
+              origin: link.origin || DataLinkConfigOrigin.Datasource,
+              app: CoreApp.Explore,
+              internal: true,
+            });
 
-          splitOpenFn?.(options);
-        };
+            splitOpenFn?.(options);
+          };
 
-        if (variableData.allVariablesDefined) {
           const internalLink = mapInternalLinkToExplore({
             link,
             internalLink: link.internal,
@@ -226,9 +221,9 @@ export const getFieldLinksForExplore = (options: {
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
           return { ...internalLink, variables: variables };
-        } else {
-          return undefined;
         }
+      } else {
+        return undefined;
       }
     });
     return fieldLinks.filter((link): link is ExploreFieldLinkModel => !!link);
