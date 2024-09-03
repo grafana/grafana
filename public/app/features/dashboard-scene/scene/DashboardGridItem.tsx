@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useMemo } from 'react';
-import { Unsubscribable } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import {
@@ -41,7 +40,6 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
-  private _libPanelSubscription: Unsubscribable | undefined;
   private _prevRepeatValues?: VariableValueSingle[];
 
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
@@ -57,11 +55,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
       this.performRepeat();
     }
-
-    return () => {
-      this._libPanelSubscription?.unsubscribe();
-      this._libPanelSubscription = undefined;
-    };
   }
 
   /**
