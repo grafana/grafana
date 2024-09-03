@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
@@ -67,7 +69,14 @@ func (dr *DashboardServiceImpl) FindDashboardsZanzanaCompare(ctx context.Context
 }
 
 func (dr *DashboardServiceImpl) FindDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboardsZanzana")
+	if len(query.Title) > 8 {
+		return dr.FindDashboardsZanzanaCheck(ctx, query)
+	}
+	return dr.FindDashboardsZanzanaList(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) FindDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboardsZanzanaList")
 	defer span.End()
 
 	res, err := dr.acService.ListObjects(ctx, &openfgav1.ListObjectsRequest{
@@ -96,4 +105,65 @@ func (dr *DashboardServiceImpl) FindDashboardsZanzana(ctx context.Context, query
 	query.DashboardUIDs = append(dashboardUIDs, query.DashboardUIDs...)
 	query.SkipAccessControlFilter = true
 	return dr.dashboardStore.FindDashboards(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) FindDashboardsZanzanaCheck(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	query.SkipAccessControlFilter = true
+	findRes, err := dr.dashboardStore.FindDashboards(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	orgId := query.OrgId
+	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
+		orgId = query.SignedInUser.GetOrgID()
+	}
+
+	concurrentRequests := dr.cfg.Zanzana.ConcurrentChecks
+	res := make([]dashboards.DashboardSearchProjection, 0)
+	resToCheck := make(chan dashboards.DashboardSearchProjection, concurrentRequests)
+	allowedResults := make(chan dashboards.DashboardSearchProjection, len(findRes))
+	errChan := make(chan error, len(findRes))
+	var wg sync.WaitGroup
+	for i := 0; i < int(concurrentRequests); i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for d := range resToCheck {
+				objectType := zanzana.TypeDashboard
+				if d.IsFolder {
+					objectType = zanzana.TypeFolder
+				}
+				object := zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10))
+				key := &openfgav1.CheckRequestTupleKey{
+					User:     query.SignedInUser.GetUID(),
+					Relation: "read",
+					Object:   object,
+				}
+
+				checkRes, err := dr.acService.Check(ctx, &openfgav1.CheckRequest{
+					TupleKey: key,
+				})
+				if err != nil {
+					errChan <- err
+					dr.log.Error("error checking access", "error", err)
+				} else if checkRes.Allowed {
+					allowedResults <- d
+				}
+			}
+		}()
+	}
+
+	for _, r := range findRes {
+		resToCheck <- r
+	}
+	close(resToCheck)
+
+	wg.Wait()
+	close(allowedResults)
+	for r := range allowedResults {
+		res = append(res, r)
+	}
+
+	return res, nil
 }
