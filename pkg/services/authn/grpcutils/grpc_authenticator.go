@@ -49,6 +49,7 @@ func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error)
 }
 
 func NewInProcGrpcAuthenticator() *authnlib.GrpcAuthenticator {
+	// In proc grpc ID token signature verification can be skipped
 	return authnlib.NewUnsafeGrpcAuthenticator(
 		&authnlib.GrpcAuthenticatorConfig{},
 		authnlib.WithDisableAccessTokenAuthOption(),
