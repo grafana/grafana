@@ -34,7 +34,7 @@ export interface Props {
 
 export type State = UserPreferencesDTO;
 
-function getLanguageOptions(): Array<SelectableValue<string>> {
+function getLanguageOptions(): Option[] {
   const languageOptions = LANGUAGES.map((v) => ({
     value: v.code,
     label: v.name,
@@ -220,12 +220,12 @@ export class SharedPreferences extends PureComponent<Props, State> {
             }
             data-testid="User preferences language drop down"
           >
-            <Select
-              value={languages.find((lang) => lang.value === language)}
-              onChange={(lang: SelectableValue<string>) => this.onLanguageChanged(lang.value ?? '')}
+            <Combobox
+              value={languages.find((lang) => lang.value === language)?.value || null}
+              onChange={(lang: Option | null) => this.onLanguageChanged(lang?.value ?? '')}
               options={languages}
               placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
-              inputId="locale-select"
+              id="locale-select"
             />
           </Field>
         </FieldSet>
