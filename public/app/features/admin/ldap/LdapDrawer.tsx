@@ -32,7 +32,7 @@ interface Props {
 }
 
 const serverConfig = 'settings.config.servers.0';
-const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map(v => ({ label: v, value: v }));
+const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) => ({ label: v, value: v }));
 enum EncryptionProvider {
   Base64 = 'base64',
   FilePath = 'path',
@@ -267,7 +267,7 @@ export const LdapDrawerComponent = ({
                 onChange={({ currentTarget: { value } }) =>
                   setValue(
                     `${serverConfig}.tls_ciphers`,
-                    value?.split(/,|\s/).map(v => v.trim())
+                    value?.split(/,|\s/).map((v) => v.trim())
                   )
                 }
               />
@@ -312,14 +312,13 @@ export const LdapDrawerComponent = ({
                   <MultiSelect
                     id="root-ca-cert"
                     allowCustomValue
-                    onChange={v => {
+                    onChange={(v) => {
                       setValue(
                         `${serverConfig}.root_ca_cert_value`,
-                        v.filter(({ v }) => typeof v === 'string').map(({v}) => v)
-                      )
-                    }
-                    }
-                    value={watch(`${serverConfig}.root_ca_cert_value`).map(v => ({
+                        v.filter(({ v }) => typeof v === 'string').map(({ v }) => v)
+                      );
+                    }}
+                    value={watch(`${serverConfig}.root_ca_cert_value`).map((v) => ({
                       label: renderMultiSelectLabel(v),
                       value: v,
                     }))}
