@@ -25,7 +25,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   service-accounts-create-a-service-account-in-grafana:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#create-a-service-account-in-grafana
