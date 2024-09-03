@@ -483,7 +483,7 @@ export type {
   SplitOpenOptions,
   SplitOpen,
 } from './types/explore';
-export type { TraceLog, TraceKeyValuePair, TraceSpanReference, TraceSpanRow } from './types/trace';
+export type { TraceKeyValuePair, TraceLog, TraceSpanReference, TraceSpanRow } from './types/trace';
 export type { FlotDataPoint } from './types/flot';
 export { type UserOrgDTO, OrgRole } from './types/orgs';
 export { GrafanaThemeType, type GrafanaThemeCommons, type GrafanaTheme } from './types/theme';
