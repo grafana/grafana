@@ -143,6 +143,8 @@ describe('PanelRepeaterGridItem', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     vizPanel.setState({ title: 'Changed' });
+    //mimic returning to dashboard from panel edit cloning panel
+    panel.setState({ body: vizPanel.clone() });
 
     // mimic returning to dashboard
     activateFullSceneTree(scene);
