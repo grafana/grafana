@@ -47,6 +47,10 @@ This can be mitigated by using the Enterprise [caching](ref:caching) and/or rate
 
 Externally shared dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization.
 
+{{< admonition type="note" >}}
+If you change a dashboard, ensure that you save the changes before sharing.
+{{< /admonition >}}
+
 ## Shared dashboards list
 
 You can see a list of all your externally shared dashboards in one place by navigating to **Dashboards > Shared dashboards**. For each dashboard in the list, the page displays:
@@ -71,9 +75,9 @@ You can also click the name of the dashboard to navigate to the dashboard intern
 Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud).
 {{< /admonition >}}
 
-To share a dashboard with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people instead of anyone who navigates to the link. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the shared dashboard for **30 days**.
+To share a dashboard with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the shared dashboard for **30 days**.
 
-When you share a dashboard with an email link, your organization is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.
+When you share a dashboard with an email link, your organization is billed per user, regardless of how many dashboards are shared. Grafana bills monthly per user until access is revoked.
 
 To share a dashboard with specific people, follow these steps:
 
