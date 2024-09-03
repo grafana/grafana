@@ -40,12 +40,6 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       return;
     }
 
-    const gridItem = vizPanel.parent;
-
-    if (!(gridItem instanceof DashboardGridItem)) {
-      return;
-    }
-
     const libPanelModel = new PanelModel(libPanel.model);
 
     const vizPanelState: VizPanelState = {
@@ -60,9 +54,18 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     };
 
     this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
+    vizPanel.setState(vizPanelState);
 
-    const clone = vizPanel.clone(vizPanelState);
-    gridItem.setState({ body: clone });
+    // Migrate repeat options to layout element
+    const layoutElement = vizPanel.parent;
+    if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
+      layoutElement.setState({
+        variableName: libPanelModel.repeat,
+        repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
+        maxPerRow: libPanelModel.maxPerRow,
+      });
+      layoutElement.performRepeat();
+    }
   }
 
   private async loadLibraryPanelFromPanelModel() {

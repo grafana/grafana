@@ -58,30 +58,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this.performRepeat();
     }
 
-    // Subscriptions that handles body updates
-    this._subs.add(
-      this.subscribeToState((newState, prevState) => {
-        if (newState.body !== prevState.body) {
-          if (newState.body instanceof VizPanel && isLibraryPanel(newState.body)) {
-            const libraryPanel = getLibraryPanelBehavior(newState.body);
-
-            if (!libraryPanel) {
-              return;
-            }
-            if (libraryPanel.state._loadedPanel?.model.repeat) {
-              this.setState({
-                variableName: libraryPanel.state._loadedPanel.model.repeat,
-                repeatDirection: libraryPanel.state._loadedPanel.model.repeatDirection,
-                maxPerRow: libraryPanel.state._loadedPanel.model.maxPerRow,
-                itemHeight: this.state.height ?? 10,
-              });
-              this.performRepeat();
-            }
-          }
-        }
-      })
-    );
-
     return () => {
       this._libPanelSubscription?.unsubscribe();
       this._libPanelSubscription = undefined;
