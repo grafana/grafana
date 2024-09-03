@@ -27,7 +27,6 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
-import { DashboardLayoutElement } from './layouts/types';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
@@ -41,10 +40,7 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 
 export type RepeatDirection = 'v' | 'h';
 
-export class DashboardGridItem
-  extends SceneObjectBase<DashboardGridItemState>
-  implements SceneGridItemLike, DashboardLayoutElement
-{
+export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
   private _libPanelSubscription: Unsubscribable | undefined;
   private _prevRepeatValues?: VariableValueSingle[];
 
