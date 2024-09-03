@@ -41,9 +41,11 @@ const ContactPointsTab = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [queryParams] = useURLSearchParams();
 
+  const SHOW_POLICIES = true;
+
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
-    fetchPolicies: true,
+    fetchPolicies: SHOW_POLICIES,
     fetchStatuses: true,
   });
 
@@ -99,7 +101,12 @@ const ContactPointsTab = () => {
           )}
         </Stack>
       </Stack>
-      <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
+      <ContactPointsList
+        showPolicies={SHOW_POLICIES}
+        contactPoints={contactPoints}
+        search={search}
+        pageSize={DEFAULT_PAGE_SIZE}
+      />
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
       {ExportDrawer}
@@ -195,6 +202,7 @@ interface ContactPointsListProps {
   search?: string | null;
   disabled?: boolean;
   pageSize?: number;
+  showPolicies?: boolean;
 }
 
 const ContactPointsList = ({
@@ -202,6 +210,7 @@ const ContactPointsList = ({
   disabled = false,
   search,
   pageSize = DEFAULT_PAGE_SIZE,
+  showPolicies,
 }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
@@ -210,7 +219,7 @@ const ContactPointsList = ({
     <>
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
-        return <ContactPoint key={key} contactPoint={contactPoint} disabled={disabled} />;
+        return <ContactPoint key={key} contactPoint={contactPoint} disabled={disabled} showPolicies={showPolicies} />;
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>

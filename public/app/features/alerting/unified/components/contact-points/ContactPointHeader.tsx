@@ -21,9 +21,15 @@ interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
   disabled?: boolean;
   onDelete: (contactPoint: ContactPointWithMetadata) => void;
+  showPolicies?: boolean;
 }
 
-export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }: ContactPointHeaderProps) => {
+export const ContactPointHeader = ({
+  contactPoint,
+  disabled = false,
+  onDelete,
+  showPolicies = true,
+}: ContactPointHeaderProps) => {
   const { name, id, provisioned, policies = [] } = contactPoint;
   const styles = useStyles2(getStyles);
 
@@ -97,7 +103,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
             {name}
           </Text>
         </Stack>
-        {isReferencedByAnyPolicy && (
+        {isReferencedByAnyPolicy && showPolicies && (
           <TextLink
             href={createRelativeUrl('/alerting/routes', { contactPoint: name })}
             variant="bodySmall"
@@ -110,7 +116,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
         {provisioned && (
           <ProvisioningBadge tooltip provenance={contactPoint.metadata?.annotations?.[PROVENANCE_ANNOTATION]} />
         )}
-        {!isReferencedByAnyPolicy && <UnusedContactPointBadge />}
+        {!isReferencedByAnyPolicy && showPolicies && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
           tooltipPlacement="top"
