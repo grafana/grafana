@@ -1039,8 +1039,9 @@ var (
 		{
 			Name:        "promQLScope",
 			Description: "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Expression:  "true",
 		},
 		{
 			Name:         "sqlExpressions",
