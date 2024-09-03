@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/errgroup"
@@ -39,6 +40,22 @@ var (
 	_ rest.Connecter            = (*queryREST)(nil)
 	_ rest.Scoper               = (*queryREST)(nil)
 	_ rest.StorageMetadata      = (*queryREST)(nil)
+	// Set of headers that we want to forward to the datasource api servers. Those are used i.e. for
+	// cache control or identifying the source of the request.
+	//
+	// The headers related to grafana alerting can be found here:
+	// https://github.com/grafana/grafana-ruler/blob/96e6d4b25c0d973a7615b92b35739511a6fbd72f/pkg/ruler/rulesmanager/ds_query_rule_evaluator.go#L313-L328
+	//
+	// The usage of strings.ToLower is because the server would convert `FromAlert` to `Fromalert`. So the make matching
+	// easier, we just match all headers in lower case.
+	expectedHeaders = map[string]string{
+		strings.ToLower(models.FromAlertHeaderName): models.FromAlertHeaderName,
+		strings.ToLower(models.CacheSkipHeaderName): models.CacheSkipHeaderName,
+		strings.ToLower("X-Rule-Uid"):               "X-Rule-Uid",
+		strings.ToLower("X-Rule-Folder"):            "X-Rule-Folder",
+		strings.ToLower("X-Rule-Source"):            "X-Rule-Source",
+		strings.ToLower("X-Grafana-Org-Id"):         "X-Grafana-Org-Id",
+	}
 )
 
 func newQueryREST(builder *QueryAPIBuilder) *queryREST {
@@ -135,24 +152,11 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
-		// get headers from the original http req and add them to each sub request
-		// headers are case insensitive, however some datasources still check for camel casing so we have to send them camel cased
-		expectedHeaders := map[string]string{
-			"fromalert":      "FromAlert",
-			"content-type":   "Content-Type",
-			"content-length": "Content-Length",
-			"user-agent":     "User-Agent",
-			"accept":         "Accept",
-		}
-
 		for i := range req.Requests {
 			req.Requests[i].Headers = make(map[string]string)
 			for k, v := range httpreq.Header {
-				headerToSend, ok := expectedHeaders[strings.ToLower(k)]
-				if ok {
-					req.Requests[i].Headers[headerToSend] = v[0]
-				} else {
-					b.log.Warn(fmt.Sprintf("query service received an unexpected header, ignoring it: %s", k))
+				if headerName, exists := expectedHeaders[strings.ToLower(k)]; exists {
+					req.Requests[i].Headers[headerName] = v[0]
 				}
 			}
 		}
