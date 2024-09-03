@@ -75,18 +75,6 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> impleme
     return this.state.panelRef.resolve().state.key;
   }
 
-  /**
-   * DashboardLayoutElement interface impementation
-   */
-  public isDashboardLayoutElement: true = true;
-
-  public setPanel(panel: VizPanel) {
-    this.setState({ body: panel });
-  }
-  public getPanel() {
-    return this.state.body!;
-  }
-
   public static Component = ({ model }: SceneComponentProps<ViewPanelScene>) => {
     const { body } = model.useState();
 

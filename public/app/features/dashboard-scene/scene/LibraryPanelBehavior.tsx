@@ -6,7 +6,6 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
 import { DashboardGridItem } from './DashboardGridItem';
-import { isDashboardLayoutElement } from './layouts/types';
 
 interface LibraryPanelBehaviorState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
@@ -56,12 +55,10 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
 
-    const layoutElement = vizPanel.parent!;
+    vizPanel.setState(vizPanelState);
+    vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
 
-    // Update panel instance on the layout element
-    if (isDashboardLayoutElement(layoutElement)) {
-      layoutElement.setPanel(vizPanel.clone(vizPanelState));
-    }
+    const layoutElement = vizPanel.parent!;
 
     // Migrate repeat options to layout element
     if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {

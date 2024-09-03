@@ -211,20 +211,6 @@ export class DashboardGridItem
     return this.state.variableName !== undefined;
   }
 
-  /**
-   * DashboardLayoutElement interface impementation
-   */
-  public isDashboardLayoutElement: true = true;
-
-  public setPanel(panel: VizPanel) {
-    this.setState({ body: panel });
-  }
-
-  public getPanel() {
-    return this.state.body;
-  }
-  /** End of DashboardLayoutElement interface impementation */
-
   public static Component = ({ model }: SceneComponentProps<DashboardGridItem>) => {
     const { repeatedPanels, itemHeight, variableName, body } = model.useState();
     const itemCount = repeatedPanels?.length ?? 0;
