@@ -26,32 +26,27 @@ func NewLocalResourceStoreClient(server ResourceStoreServer) ResourceStoreClient
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 
-	grpcAuthInterceptor := grpcutils.NewInProcGrpcAuthenticator()
+	grpcAuthInt := grpcutils.NewInProcGrpcAuthenticator()
 	channel.RegisterService(
 		grpchan.InterceptServer(
 			&ResourceStore_ServiceDesc,
-			grpcAuth.UnaryServerInterceptor(grpcAuthInterceptor.Authenticate),
-			grpcAuth.StreamServerInterceptor(grpcAuthInterceptor.Authenticate),
+			grpcAuth.UnaryServerInterceptor(grpcAuthInt.Authenticate),
+			grpcAuth.StreamServerInterceptor(grpcAuthInt.Authenticate),
 		),
 		server,
 	)
 
-	clientInterceptor, _ := authnlib.NewGrpcClientInterceptor(
+	clientInt, _ := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
 		authnlib.WithDisableAccessTokenOption(),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 	)
-	return NewResourceStoreClient(
-		grpchan.InterceptClientConn(
-			channel,
-			clientInterceptor.UnaryClientInterceptor,
-			clientInterceptor.StreamClientInterceptor,
-		))
+	return NewResourceStoreClient(grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor))
 }
 
 func NewResourceStoreClientGRPC(conn *grpc.ClientConn) (ResourceStoreClient, error) {
 	// scenario: remote on-prem
-	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(
+	clientInt, err := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
 		authnlib.WithDisableAccessTokenOption(),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
@@ -61,28 +56,12 @@ func NewResourceStoreClientGRPC(conn *grpc.ClientConn) (ResourceStoreClient, err
 		return nil, err
 	}
 
-	return NewResourceStoreClient(
-			grpchan.InterceptClientConn(
-				conn,
-				clientInterceptor.UnaryClientInterceptor,
-				clientInterceptor.StreamClientInterceptor,
-			)),
-		nil
+	return NewResourceStoreClient(grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)), nil
 }
 
 func NewResourceStoreClientCloud(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceStoreClient, error) {
 	// scenario: remote cloud
-	grpcClientCfg := grpcutils.ReadGrpcClientConfig(cfg)
-	grpcClientConfig := authnlib.GrpcClientConfig{
-		TokenClientConfig: &authnlib.TokenExchangeConfig{
-			Token:            grpcClientCfg.Token,
-			TokenExchangeURL: grpcClientCfg.TokenExchangeURL,
-		},
-		TokenRequest: &authnlib.TokenExchangeRequest{
-			Namespace: grpcClientCfg.TokenNamespace,
-			Audiences: []string{resourceStoreAudience},
-		},
-	}
+	grpcClientConfig := clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg))
 
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
@@ -90,29 +69,15 @@ func NewResourceStoreClientCloud(conn *grpc.ClientConn, cfg *setting.Cfg) (Resou
 	}
 
 	if cfg.Env == setting.Dev {
-		client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
-		tokenClient, _ := authnlib.NewTokenExchangeClient(
-			*grpcClientConfig.TokenClientConfig,
-			authnlib.WithHTTPClient(client),
-		)
-		opts = append(opts, authnlib.WithTokenClientOption(tokenClient))
+		opts = allowInsecureTransportOpt(&grpcClientConfig, opts)
 	}
 
-	clientInterceptor, err := authnlib.NewGrpcClientInterceptor(
-		&grpcClientConfig,
-		opts...,
-	)
+	clientInt, err := authnlib.NewGrpcClientInterceptor(&grpcClientConfig, opts...)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewResourceStoreClient(
-			grpchan.InterceptClientConn(
-				conn,
-				clientInterceptor.UnaryClientInterceptor,
-				clientInterceptor.StreamClientInterceptor,
-			)),
-		nil
+	return NewResourceStoreClient(grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)), nil
 }
 
 func idTokenExtractor(ctx context.Context) (string, error) {
@@ -141,5 +106,24 @@ func orgIdExtractor(ctx context.Context) (key string, values []string, err error
 func stackIdExtractor(stackID string) func(ctx context.Context) (key string, values []string, err error) {
 	return func(ctx context.Context) (key string, values []string, err error) {
 		return authzlib.DefaultStackIDMetadataKey, []string{stackID}, nil
+	}
+}
+
+func allowInsecureTransportOpt(grpcClientConfig *authnlib.GrpcClientConfig, opts []authnlib.GrpcClientInterceptorOption) []authnlib.GrpcClientInterceptorOption {
+	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	tokenClient, _ := authnlib.NewTokenExchangeClient(*grpcClientConfig.TokenClientConfig, authnlib.WithHTTPClient(client))
+	return append(opts, authnlib.WithTokenClientOption(tokenClient))
+}
+
+func clientCfgMapping(clientCfg *grpcutils.GrpcClientConfig) authnlib.GrpcClientConfig {
+	return authnlib.GrpcClientConfig{
+		TokenClientConfig: &authnlib.TokenExchangeConfig{
+			Token:            clientCfg.Token,
+			TokenExchangeURL: clientCfg.TokenExchangeURL,
+		},
+		TokenRequest: &authnlib.TokenExchangeRequest{
+			Namespace: clientCfg.TokenNamespace,
+			Audiences: []string{resourceStoreAudience},
+		},
 	}
 }
