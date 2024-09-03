@@ -75,7 +75,7 @@ export interface DashboardMeta {
   k8s?: Partial<ObjectMeta>;
 
   // This is a property added specifically for edge cases where dashboards should be reloaded on scopes changes
-  // This property is not persisted in the DB but its existence is controlled via a `X-Reload-Scopes-Change` HTTP header
+  // This property is not persisted in the DB but its existence is controlled by the API
   reloadOnScopesChange?: boolean;
 }
 
