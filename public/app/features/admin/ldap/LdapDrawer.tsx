@@ -55,6 +55,13 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
     setEncryptionProvider(!client_cert.length && !client_key.length && !root_ca_cert.length ? EncryptionProvider.Base64 : EncryptionProvider.FilePath);
   }, [getValues]);
 
+  const renderMultiSelectLabel = (value: string) => {
+    if (value.length >= 5) {
+      return `${value.slice(0, 2)}...${value.slice(-2)}`;
+    }
+    return value;
+  };
+
   const groupMappingsLabel = (
     <Label
       className={styles.sectionLabel}
@@ -288,7 +295,7 @@ export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConf
                     id="root-ca-cert"
                     allowCustomValue
                     onChange={values => setValue(`${serverConfig}.root_ca_cert_value`, values.map(({value}) => value as string))}
-                    value={watch(`${serverConfig}.root_ca_cert_value`).map(v => ({label: v, value: v}))}
+                    value={watch(`${serverConfig}.root_ca_cert_value`).map(v => ({label: renderMultiSelectLabel(v), value: v}))}
                   />
                 </Field>
                 <Field
