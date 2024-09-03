@@ -6,8 +6,6 @@ import 'file-saver';
 import 'jquery';
 import 'vendor/bootstrap/bootstrap';
 
-import 'app/features/all';
-
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
