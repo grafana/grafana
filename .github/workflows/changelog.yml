@@ -78,6 +78,7 @@ jobs:
             yarn.lock
             .nvmrc
             .yarn
+            packages
           fetch-depth: 0
           fetch-tags: true
       - name: Setup nodejs environment
