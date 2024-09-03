@@ -33,8 +33,8 @@ interface Props {
 const serverConfig = 'settings.config.servers.0';
 const tlsOptions: Array<SelectableValue<string>> = ['TLS1.2', 'TLS1.3'].map((v) => ({ label: v, value: v }));
 enum EncryptionProvider {
-  Base64 = "base-64",
-  FilePath = "file-path",
+  Base64 = "base64",
+  FilePath = "path",
 }
 
 export const LdapDrawerComponent = ({ onClose, mapKeyCertConfigured: mapCertConfigured, setMapKeyCertConfigured: setMapCertConfigured }: Props) => {
