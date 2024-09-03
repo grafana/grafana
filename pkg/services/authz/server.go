@@ -48,9 +48,12 @@ func newLegacyServer(
 // AuthFuncOverride is a function that allows to override the default auth function.
 // This override is only allowed in development mode as we skip all authentication checks.
 func (s *legacyServer) AuthFuncOverride(ctx context.Context, _ string) (context.Context, error) {
+	ctx, span := s.tracer.Start(ctx, "authz.AuthFuncOverride")
+	defer span.End()
+
 	if !s.cfg.allowInsecure {
 		s.logger.Error("AuthFuncOverride is not allowed in production mode")
-		return nil, tracing.Errorf(nil, "AuthFuncOverride is not allowed in production mode")
+		return nil, tracing.Errorf(span, "AuthFuncOverride is not allowed in production mode")
 	}
 	return ctx, nil
 }
@@ -58,9 +61,12 @@ func (s *legacyServer) AuthFuncOverride(ctx context.Context, _ string) (context.
 // AuthorizeFuncOverride is a function that allows to override the default authorize function that checks the namespace of the caller.
 // We skip all authorization checks in development mode. Once we have access tokens, we need to do namespace validation in the Read handler.
 func (s *legacyServer) AuthorizeFuncOverride(ctx context.Context) error {
+	_, span := s.tracer.Start(ctx, "authz.AuthorizeFuncOverride")
+	defer span.End()
+
 	if !s.cfg.allowInsecure {
 		s.logger.Error("AuthorizeFuncOverride is not allowed in production mode")
-		return tracing.Errorf(nil, "AuthorizeFuncOverride is not allowed in production mode")
+		return tracing.Errorf(span, "AuthorizeFuncOverride is not allowed in production mode")
 	}
 	return nil
 }
