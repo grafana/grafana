@@ -1,3 +1,4 @@
+import { CSSInterpolation } from '@emotion/css';
 import { css } from '@emotion/react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -31,6 +32,26 @@ function buttonSizeMixin(paddingY: string, paddingX: string, fontSize: string, b
     fontSize: fontSize,
     borderRadius: borderRadius,
   };
+}
+
+function widthMixin(theme: GrafanaTheme2, max: number) {
+  let result: CSSInterpolation = {};
+  for (let i = 1; i <= max; i++) {
+    result[`.width-${i}`] = {
+      width: `${theme.spacing(2 * i)} !important`,
+    };
+    result[`.max-width-${i}`] = {
+      maxWidth: `${theme.spacing(2 * i)} !important`,
+      flexGrow: 1,
+    };
+    result[`.min-width-${i}`] = {
+      minWidth: `${theme.spacing(2 * i)} !important`,
+    };
+    result[`.offset-width-${i}`] = {
+      marginLeft: `${theme.spacing(2 * i)} !important`,
+    };
+  }
+  return result;
 }
 
 export function getUtilityClassStyles(theme: GrafanaTheme2) {
@@ -140,5 +161,6 @@ export function getUtilityClassStyles(theme: GrafanaTheme2) {
     '.typeahead': {
       zIndex: theme.zIndex.typeahead,
     },
+    ...widthMixin(theme, 30),
   });
 }
