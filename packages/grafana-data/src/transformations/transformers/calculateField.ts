@@ -5,7 +5,7 @@ import { getTimeField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { NullValueMode } from '../../types/data';
 import { DataFrame, FieldType, Field } from '../../types/dataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataTransformContext, DataTransformerInfo } from '../../types/transformations';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { UnaryOperationID, unaryOperators } from '../../utils/unaryOperators';
 import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
@@ -182,7 +182,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                     const right = findFieldValuesWithNameOrConstant(
                       frame,
                       binaryOptions.right ?? defaultBinaryOptions.right,
-                      data
+                      data,
+                      ctx
                     );
                     if (!left || !right || !operator) {
                       return undefined;
@@ -203,7 +204,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
                 return { ...frame, fields: newFields };
               });
             } else {
-              creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
+              creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data, ctx);
             }
             break;
           case CalculateFieldMode.Index:
@@ -535,14 +536,15 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
 function findFieldValuesWithNameOrConstant(
   frame: DataFrame,
   value: BinaryValue,
-  allFrames: DataFrame[]
+  allFrames: DataFrame[],
+  ctx: DataTransformContext
 ): number[] | undefined {
   if (!value) {
     return undefined;
   }
 
   if (value.matcher && value.matcher.id === FieldMatcherID.byName) {
-    const name = value.matcher.options;
+    const name = ctx.interpolate(value.matcher.options ?? '');
     for (const f of frame.fields) {
       if (name === getFieldDisplayName(f, frame, allFrames)) {
         if (f.type === FieldType.boolean) {
@@ -561,13 +563,12 @@ function findFieldValuesWithNameOrConstant(
   return undefined;
 }
 
-function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): ValuesCreator {
+function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[], ctx: DataTransformContext): ValuesCreator {
   const operator = binaryOperators.getIfExists(options.operator);
 
   return (frame: DataFrame) => {
-    // TODO Add ctx.interpolate for left and right
-    const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
-    const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
+    const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames, ctx);
+    const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames, ctx);
     if (!left || !right || !operator) {
       return undefined;
     }
