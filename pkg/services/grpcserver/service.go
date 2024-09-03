@@ -7,7 +7,6 @@ import (
 	"time"
 
 	authzlib "github.com/grafana/authlib/authz"
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/dskit/instrument"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -20,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
@@ -73,13 +73,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authe
 
 	var opts []grpc.ServerOption
 
-	// We don't need to support the CloudNamespaceFormatter here, because the grpcserver is only used on-prem.
-	// TODO(drclau): validate this assumption.
-	namespaceChecker := authzlib.NewNamespaceAccessChecker(
-		claims.OrgNamespaceFormatter,
-		authzlib.WithDisableAccessTokenNamespaceAccessCheckerOption(),
-		authzlib.WithIDTokenNamespaceAccessCheckerOption(true),
-	)
+	namespaceChecker := grpcutils.NewNamespaceAccessChecker(cfg)
 	stackIdExtractor := authzlib.MetadataStackIDExtractor(authzlib.DefaultStackIDMetadataKey)
 
 	// Default auth is admin token check, but this can be overridden by
