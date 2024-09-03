@@ -1,18 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
-import { type PluginExtensionLinkConfig, PluginExtensionTypes, dateTime, usePluginContext } from '@grafana/data';
+import { dateTime, usePluginContext } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import {
-  deepFreeze,
-  isPluginExtensionLinkConfig,
-  handleErrorsInFn,
-  getReadOnlyProxy,
-  getEventHelpers,
-  wrapWithPluginContext,
-} from './utils';
+import { deepFreeze, handleErrorsInFn, getReadOnlyProxy, getEventHelpers, wrapWithPluginContext } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   ...jest.requireActual('app/features/plugins/pluginSettings'),
@@ -195,28 +188,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(Object.isFrozen(frozen.b)).toBe(true);
       // @ts-ignore
       expect(Object.isFrozen(frozen.b.d)).toBe(true);
-    });
-  });
-
-  describe('isPluginExtensionLinkConfig()', () => {
-    test('should return TRUE if the object is a command extension config', () => {
-      expect(
-        isPluginExtensionLinkConfig({
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          path: '...',
-        } as PluginExtensionLinkConfig)
-      ).toBe(true);
-    });
-    test('should return FALSE if the object is NOT a link extension', () => {
-      expect(
-        isPluginExtensionLinkConfig({
-          title: 'Title',
-          description: 'Description',
-          path: '...',
-        } as PluginExtensionLinkConfig)
-      ).toBe(false);
     });
   });
 

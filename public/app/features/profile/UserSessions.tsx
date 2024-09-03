@@ -60,6 +60,7 @@ class UserSessions extends PureComponent<Props> {
                       <Button
                         size="sm"
                         variant="destructive"
+                        tooltip={t('user-session.revoke', 'Revoke user session')}
                         onClick={() => revokeUserSession(session.id)}
                         aria-label={t('user-session.revoke', 'Revoke user session')}
                       >

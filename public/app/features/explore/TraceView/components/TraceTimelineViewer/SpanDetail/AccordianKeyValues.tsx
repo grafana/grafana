@@ -67,7 +67,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     summaryItem: css`
       label: summaryItem;
       display: inline;
-      margin-left: 0.7em;
       padding-right: 0.5rem;
       border-right: 1px solid ${autoColor(theme, '#ddd')};
       &:last-child {
@@ -90,10 +89,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
 export type AccordianKeyValuesProps = {
   className?: string | TNil;
   data: TraceKeyValuePair[];
+  logName?: string;
   highContrast?: boolean;
   interactive?: boolean;
   isOpen: boolean;
-  label: string;
+  label: string | React.ReactNode;
   linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   onToggle?: null | (() => void);
 };
@@ -127,6 +127,7 @@ export function KeyValuesSummary({ data = null }: KeyValuesSummaryProps) {
 export default function AccordianKeyValues({
   className = null,
   data,
+  logName,
   highContrast = false,
   interactive = true,
   isOpen,
@@ -134,11 +135,12 @@ export default function AccordianKeyValues({
   linksGetter,
   onToggle = null,
 }: AccordianKeyValuesProps) {
-  const isEmpty = !Array.isArray(data) || !data.length;
+  const isEmpty = (!Array.isArray(data) || !data.length) && !logName;
   const styles = useStyles2(getStyles);
   const iconCls = cx(alignIcon, { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
+  const tableFields = logName ? [{ key: 'event name', value: logName }, ...data] : data;
   if (interactive) {
     arrow = isOpen ? (
       <Icon name={'angle-down'} className={iconCls} />
@@ -169,9 +171,13 @@ export default function AccordianKeyValues({
           {label}
           {showDataSummaryFields && ':'}
         </strong>
-        {showDataSummaryFields && <KeyValuesSummary data={data} />}
+        {showDataSummaryFields && (
+          <span className={css({ marginLeft: '0.7em' })}>
+            <KeyValuesSummary data={data} />
+          </span>
+        )}
       </div>
-      {isOpen && <KeyValuesTable data={data} linksGetter={linksGetter} />}
+      {isOpen && <KeyValuesTable data={tableFields} linksGetter={linksGetter} />}
     </div>
   );
 }

@@ -59,6 +59,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     AccordianKeyValuesItem: css({
       marginBottom: theme.spacing(0.5),
     }),
+    parenthesis: css({
+      color: `${autoColor(theme, '#777')}`,
+    }),
   };
 };
 
@@ -110,13 +113,22 @@ export default function AccordianLogs({
         <div className={styles.AccordianLogsContent}>
           {_sortBy(logs, 'timestamp').map((log, i) => {
             const formattedDuration = formatDuration(log.timestamp - timestamp);
-            const label = log.name ? `${log.name} (${formattedDuration})` : formattedDuration;
+            const truncateLogNameInSummary = log.name && log.name.length > 20;
+            const formattedLogName = log.name && truncateLogNameInSummary ? log.name.slice(0, 20) + '...' : log.name;
+            const label = formattedLogName ? (
+              <span>
+                {formattedDuration} <span>({formattedLogName})</span>
+              </span>
+            ) : (
+              formattedDuration
+            );
             return (
               <AccordianKeyValues
                 // `i` is necessary in the key because timestamps can repeat
                 key={`${log.timestamp}-${i}`}
                 className={i < logs.length - 1 ? styles.AccordianKeyValuesItem : null}
                 data={log.fields || []}
+                logName={truncateLogNameInSummary ? log.name : undefined}
                 highContrast
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(log) : false}
@@ -127,7 +139,7 @@ export default function AccordianLogs({
             );
           })}
           <small className={styles.AccordianLogsFooter}>
-            Log timestamps are relative to the start time of the full trace.
+            Event timestamps are relative to the start time of the full trace.
           </small>
         </div>
       )}

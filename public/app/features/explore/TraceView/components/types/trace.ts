@@ -23,6 +23,12 @@ export type TraceLink = {
   text: string;
 };
 
+export type TraceLog = {
+  timestamp: number;
+  fields: TraceKeyValuePair[];
+  name?: string;
+};
+
 export type TraceProcess = {
   serviceName: string;
   tags: TraceKeyValuePair[];

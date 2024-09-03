@@ -136,11 +136,14 @@ jest.mock('@grafana/runtime', () => ({
         toDataQuery: (q: StandardVariableQuery) => q,
       },
     }),
+    // mock getInstanceSettings()
+    getInstanceSettings: jest.fn(),
   }),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     panels: {
       text: { skipDataQuery: true },
     },

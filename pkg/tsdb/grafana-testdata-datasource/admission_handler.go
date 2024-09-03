@@ -69,11 +69,6 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 	}, err
 }
 
-// ConvertObject implements backend.AdmissionHandler.
-func (s *Service) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 func getBadRequest(msg string) *backend.MutationResponse {
 	return &backend.MutationResponse{
 		Allowed: false,

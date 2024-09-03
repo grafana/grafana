@@ -98,10 +98,6 @@ func (f *FakeUserService) Search(ctx context.Context, query *user.SearchUsersQue
 	return &f.ExpectedSearchUsers, f.ExpectedError
 }
 
-func (f *FakeUserService) List(ctx context.Context, query *user.ListUsersCommand) (*user.ListUserResult, error) {
-	return &f.ExpectedListUsers, f.ExpectedError
-}
-
 func (f *FakeUserService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
 	if f.BatchDisableUsersFn != nil {
 		return f.BatchDisableUsersFn(ctx, cmd)

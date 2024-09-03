@@ -122,6 +122,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
 			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
 			reqContext.IsRenderCall = id.IsAuthenticatedBy(login.RenderModule)
+			ctx = identity.WithRequester(ctx, id)
 		}
 
 		h.excludeSensitiveHeadersFromRequest(reqContext.Req)
@@ -139,8 +140,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		// End the span to make next handlers not wrapped within middleware span
 		span.End()
-
-		next.ServeHTTP(w, r.WithContext(identity.WithRequester(ctx, id)))
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -155,22 +155,21 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 			return
 		}
 
-		id := ident.GetID()
-		if !identity.IsIdentityType(
-			id,
+		id, _ := ident.GetInternalID()
+		if !ident.IsIdentityType(
 			claims.TypeUser,
 			claims.TypeServiceAccount,
 			claims.TypeAPIKey,
-		) || id.ID() == "0" {
+		) || id == 0 {
 			return
 		}
 
-		if _, ok := h.Cfg.IDResponseHeaderNamespaces[id.Type().String()]; !ok {
+		if _, ok := h.Cfg.IDResponseHeaderNamespaces[string(ident.GetIdentityType())]; !ok {
 			return
 		}
 
 		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
-		w.Header().Add(headerName, id.String())
+		w.Header().Add(headerName, ident.GetID())
 	}
 }
 

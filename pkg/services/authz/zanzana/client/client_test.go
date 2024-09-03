@@ -5,13 +5,15 @@ import (
 	"testing"
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+	"github.com/openfga/language/pkg/go/transformer"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
 	zstore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
@@ -63,12 +65,14 @@ func TestIntegrationClient(t *testing.T) {
 
 	t.Run("should update authorization model if it has new changes", func(t *testing.T) {
 		dsl := `
-model
-  schema 1.1
+module core
 
 type user
 		`
-		c, err := New(context.Background(), conn, WithTenantID("new"), WithSchema(dsl))
+		modules := []transformer.ModuleFile{
+			{Name: "core.fga", Contents: dsl},
+		}
+		c, err := New(context.Background(), conn, WithTenantID("new"), WithSchema(modules))
 		require.NoError(t, err)
 
 		assert.Equal(t, prevStoreID, c.storeID)
