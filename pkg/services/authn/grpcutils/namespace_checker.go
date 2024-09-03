@@ -15,13 +15,13 @@ func NewNamespaceAuthorizer(cfg *setting.Cfg) authzlib.AuthorizeFunc {
 			claims.CloudNamespaceFormatter,
 			authzlib.WithIDTokenNamespaceAccessCheckerOption(true),
 		)
+	} else {
+		na = authzlib.NewNamespaceAccessChecker(
+			claims.OrgNamespaceFormatter,
+			authzlib.WithDisableAccessTokenNamespaceAccessCheckerOption(),
+			authzlib.WithIDTokenNamespaceAccessCheckerOption(true),
+		)
 	}
-
-	na = authzlib.NewNamespaceAccessChecker(
-		claims.OrgNamespaceFormatter,
-		authzlib.WithDisableAccessTokenNamespaceAccessCheckerOption(),
-		authzlib.WithIDTokenNamespaceAccessCheckerOption(true),
-	)
 
 	return authzlib.NamespaceAuthorizationFunc(
 		na,
