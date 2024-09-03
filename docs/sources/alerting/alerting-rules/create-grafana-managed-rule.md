@@ -83,7 +83,7 @@ Grafana-managed rules are the most flexible alert rule type. They allow you to c
 Multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
 
 {{% admonition type="note" %}}
-For Grafana Cloud, you can create 100 free Grafana-managed alert rules.
+For Grafana Cloud Free Forever, you can create up to 100 free Grafana-managed alert rules with each alert rule having a maximum of 1000 alert instances.
 {{% /admonition %}}
 
 Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
