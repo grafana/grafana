@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
@@ -6,6 +6,9 @@ import { NodeGraphSuggestionsSupplier } from './suggestions';
 import { NodeGraphOptions } from './types';
 
 export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
+  .useFieldConfig({
+    disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
+  })
   .setPanelOptions((builder, context) => {
     builder.addNestedOptions({
       category: ['Nodes'],

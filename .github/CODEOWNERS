@@ -403,7 +403,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
 /public/app/core/history/ @grafana/explore-squad
-/public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
@@ -693,6 +692,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/community-release.yml @grafana/grafana-release-guild
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
+/.github/workflows/auto-triager.yml @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @grafana/grafana-release-guild
