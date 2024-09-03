@@ -18,7 +18,7 @@
     "react-select": "5.8.0",
     "react-use": "17.5.1",
     "rxjs": "7.8.1",
-    "tslib": "2.6.3",
+    "tslib": "2.7.0",
     "uuid": "9.0.1"
   },
   "devDependencies": {
@@ -30,7 +30,7 @@
     "@types/d3-random": "^3.0.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.7",
-    "@types/node": "20.16.2",
+    "@types/node": "20.16.3",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.25",
     "@types/testing-library__jest-dom": "5.14.9",
