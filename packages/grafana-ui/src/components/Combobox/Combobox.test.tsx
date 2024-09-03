@@ -79,7 +79,7 @@ describe('Combobox', () => {
   });
 
   it('clears selected value', async () => {
-    render(<Combobox options={options} value={options[1].value} onChange={onChangeHandler} />);
+    render(<Combobox options={options} value={options[1].value} onChange={onChangeHandler} isClearable />);
 
     expect(screen.queryByDisplayValue('Option 2')).toBeInTheDocument();
     const input = screen.getByRole('combobox');

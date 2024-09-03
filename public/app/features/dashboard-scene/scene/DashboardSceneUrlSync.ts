@@ -18,7 +18,13 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanel, isPanelClone } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getLibraryPanel,
+  isPanelClone,
+  isWithinUnactivatedRepeatRow,
+} from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
@@ -118,6 +124,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
       if (getLibraryPanel(panel)) {
         this._handleLibraryPanel(panel, (p) => this._buildLibraryPanelViewScene(p));
+        return;
+      }
+
+      if (isWithinUnactivatedRepeatRow(panel)) {
+        this._handleViewRepeatClone(values.viewPanel);
         return;
       }
 

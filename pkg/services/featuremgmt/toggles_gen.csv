@@ -183,6 +183,7 @@ prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,fa
 backgroundPluginInstaller,experimental,@grafana/plugins-platform-backend,false,true,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 adhocFilterOneOf,experimental,@grafana/dashboards-squad,false,false,false
+newFiltersUI,experimental,@grafana/dashboards-squad,false,false,false
 lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
 singleTopNav,experimental,@grafana/grafana-frontend-platform,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
