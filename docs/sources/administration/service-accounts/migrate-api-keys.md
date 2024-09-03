@@ -15,17 +15,38 @@ labels:
 menuTitle: Migrate API keys
 title: Migrate API keys to service account tokens
 weight: 700
+refs:
+  service-accounts:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/
+  service-accounts-benefits:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#service-account-benefits
+    - pattern: /docs/grafana-cloud/
+      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/#service-account-benefits
+  roles-and-permissions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/
+  api-service-account:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/serviceaccount/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/serviceaccount/
 ---
 
 # Migrate API keys to service account tokens
 
 {{% admonition type="note" %}}
-API keys are deprecated. [Service accounts](/docs/grafana/latest/administration/service-accounts/) now replace API keys for authenticating with the **HTTP APIs** and interacting with Grafana.
+API keys are deprecated. [Service accounts](ref:service-accounts) now replace API keys for authenticating with the **HTTP APIs** and interacting with Grafana.
 {{% /admonition %}}
 
 API keys specify a role—either **Admin**, **Editor**, or **Viewer**—that determine the permissions associated with interacting with Grafana.
 
-Compared to API keys, service accounts have limited scopes that provide more security. For more information on the benefits of service accounts, refer to [service account benefits](/docs/grafana/latest/administration/service-accounts/#service-account-benefits).
+Compared to API keys, service accounts have limited scopes that provide more security. For more information on the benefits of service accounts, refer to [service account benefits](ref:service-accounts-benefits).
 
 When you migrate an API key to a service account, a service account is created with a service account token. Your existing API key—now migrated to a service account token—will continue working as before.
 
@@ -43,7 +64,7 @@ To follow these instructions, you need at least one of the following:
 - Editor permissions
 - Service account writer
 
-For more information about permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
+For more information about permissions, refer to [Roles and permissions](ref:roles-and-permissions).
 
 #### Steps
 
@@ -64,7 +85,7 @@ To migrate a single API key to a service account, complete the following steps:
 
 ## Migrate API keys using the HTTP API
 
-This section shows you how to programmatically migrate API keys to Grafana service accounts using the HTTP API. For API additional information, refer to [Service account HTTP APIs](/docs/grafana/latest/developers/http_api/serviceaccount/).
+This section shows you how to programmatically migrate API keys to Grafana service accounts using the HTTP API. For API additional information, refer to [Service account HTTP APIs](ref:api-service-account).
 
 #### Before you begin
 
