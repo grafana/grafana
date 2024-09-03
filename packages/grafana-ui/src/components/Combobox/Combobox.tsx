@@ -127,10 +127,10 @@ export const Combobox = ({
     items,
     itemToString,
     selectedItem,
-    onSelectedItemChange: ({ selectedItem, inputValue }) => {
+    onSelectedItemChange: ({ selectedItem }) => {
       onChange(selectedItem);
     },
-    defaultHighlightedIndex: selectedItemIndex ?? undefined,
+    defaultHighlightedIndex: selectedItemIndex ?? 0,
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
       const filteredItems = options.filter(itemFilter(inputValue));
@@ -238,18 +238,18 @@ export const Combobox = ({
           onBlur,
         })}
       />
-
-      {isOpen && (
-        <div
-          className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
-          style={{
-            ...floatingStyles,
-            maxWidth: popoverMaxWidth,
-            minWidth: inputRef.current?.offsetWidth,
-            width: popoverWidth,
-          }}
-          {...getMenuProps({ ref: floatingRef })}
-        >
+      <div
+        className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
+        style={{
+          ...floatingStyles,
+          maxWidth: popoverMaxWidth,
+          minWidth: inputRef.current?.offsetWidth,
+          width: popoverWidth,
+          display: isOpen ? 'block' : 'none', // Remove empty list box from screen reader when closed
+        }}
+        {...getMenuProps({ ref: floatingRef })}
+      >
+        {isOpen && (
           <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
@@ -277,8 +277,8 @@ export const Combobox = ({
               );
             })}
           </ul>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
