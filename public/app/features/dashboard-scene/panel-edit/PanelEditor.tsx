@@ -32,7 +32,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _activationHandler() {
     const panelManager = this.state.vizManager;
-    const panel = panelManager.state.panelRef.resolve();
 
     this._subs.add(
       panelManager.subscribeToState((n, p) => {
@@ -42,7 +41,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       })
     );
 
-    this._initDataPane(panel.state.pluginId);
+    this._initDataPane(panelManager.getPanel().state.pluginId);
   }
 
   private _initDataPane(pluginId: string) {
@@ -75,7 +74,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.state.vizManager.discardChanges();
 
     if (this.state.isNewPanel) {
-      getDashboardSceneFor(this).removePanel(this.state.vizManager.state.panelRef.resolve());
+      getDashboardSceneFor(this).removePanel(this.state.vizManager.getPanel());
     }
 
     locationService.partial({ editPanel: null });

@@ -98,17 +98,19 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   private _onActivate() {
     this.loadDataSource();
-    const changesSub = this.state.panelRef
-      .resolve()
-      .subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange);
+    const changesSub = this.getPanel().subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange);
 
     return () => {
       changesSub.unsubscribe();
     };
   }
 
+  public getPanel() {
+    return this.state.panelRef.resolve();
+  }
+
   private _detectPanelModelChanges = debounce(() => {
-    const { hasChanges } = getPanelChanges(this._originalSaveModel, vizPanelToPanel(this.state.panelRef.resolve()));
+    const { hasChanges } = getPanelChanges(this._originalSaveModel, vizPanelToPanel(this.panel));
     this.setState({ isDirty: hasChanges });
   }, 250);
 
@@ -121,7 +123,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public discardChanges() {
     this.setState({ isDirty: false });
 
-    const panel = this.state.panelRef.resolve();
+    const panel = this.getPanel();
     const pluginIdChanged = panel.state.pluginId !== this._originalState.pluginId;
 
     panel.setState(this._originalState);
@@ -137,7 +139,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   private async loadDataSource() {
-    const panel = this.state.panelRef.resolve();
+    const panel = this.getPanel();
     const dataObj = panel.state.$data;
 
     if (!dataObj) {
@@ -204,7 +206,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public changePluginType(pluginId: string) {
-    const panel = this.state.panelRef.resolve();
+    const panel = this.getPanel();
     const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = panel.state;
 
     // clear custom options
@@ -226,7 +228,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     // When changing from non-data to data panel, we need to add a new data provider
-    if (!this.state.panelRef.resolve().state.$data && !config.panels[pluginId].skipDataQuery) {
+    if (!this.getPanel().state.$data && !config.panels[pluginId].skipDataQuery) {
       let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
 
       if (!ds) {
@@ -282,7 +284,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public changeQueryOptions(options: QueryGroupOptions) {
-    const panel = this.state.panelRef.resolve();
+    const panel = this.getPanel();
     const dataObj = this.queryRunner;
     const timeRangeObj = panel.state.$timeRange;
 
@@ -340,7 +342,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public inspectPanel() {
-    const panel = this.state.panelRef.resolve();
+    const panel = this.getPanel();
     const panelId = getPanelIdForVizPanel(panel);
 
     locationService.partial({
@@ -351,7 +353,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   get queryRunner(): SceneQueryRunner {
     // Panel data object is always SceneQueryRunner wrapped in a SceneDataTransformer
-    const runner = getQueryRunnerFor(this.state.panelRef.resolve());
+    const runner = getQueryRunnerFor(this.getPanel());
 
     if (!runner) {
       throw new Error('Query runner not found');
@@ -361,7 +363,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   get dataTransformer(): SceneDataTransformer {
-    const provider = this.state.panelRef.resolve().state.$data;
+    const provider = this.getPanel().state.$data;
     if (!provider || !(provider instanceof SceneDataTransformer)) {
       throw new Error('Could not find SceneDataTransformer for panel');
     }
@@ -387,7 +389,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public unlinkLibraryPanel() {
-    const panel = this.state.panelRef.resolve();
+    const panel = this.getPanel();
     if (!isLibraryPanel(panel)) {
       throw new Error('VizPanel is not a library panel');
     }
@@ -400,8 +402,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   public saveLibPanel() {
-    if (isLibraryPanel(this.state.panelRef.resolve())) {
-      saveLibPanel(this.state.panelRef.resolve());
+    if (isLibraryPanel(this.getPanel())) {
+      saveLibPanel(this.getPanel());
     }
   }
 
@@ -424,7 +426,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   // }
 
   public setPanelTitle(newTitle: string) {
-    this.state.panelRef.resolve().setState({ title: newTitle, hoverHeader: newTitle === '' });
+    this.getPanel().setState({ title: newTitle, hoverHeader: newTitle === '' });
   }
 
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {

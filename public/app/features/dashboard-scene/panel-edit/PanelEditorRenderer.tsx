@@ -67,8 +67,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { vizManager, dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
-  const { panelRef } = vizManager.useState();
-  const libraryPanel = getLibraryPanelBehavior(panelRef.resolve());
+  const libraryPanel = getLibraryPanelBehavior(vizManager.getPanel());
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
