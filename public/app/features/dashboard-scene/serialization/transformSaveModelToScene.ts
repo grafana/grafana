@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -20,6 +20,7 @@ import {
   SceneDataLayerControls,
   UserActionEvent,
   sceneGraph,
+  SceneInteractionProfileEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ScopesFacade } from 'app/features/scopes';
@@ -254,6 +255,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
         sync: oldModel.graphTooltip,
       }),
       new behaviors.SceneQueryController({
+        enableProfiling: true, // TODO config for this
         onProfileComplete: reportDashboardInteractions,
       }),
       registerDashboardMacro,
@@ -452,6 +454,9 @@ function reportDashboardInteractions(e: SceneInteractionProfileEvent) {
       interactionType,
       duration: e.duration,
       networkDuration: e.networkDuration,
+      totalJSHeapSize: e.totalJSHeapSize,
+      usedJSHeapSize: e.usedJSHeapSize,
+      jsHeapSizeLimit: e.jsHeapSizeLimit,
       crumbs: e.crumbs,
     });
   }

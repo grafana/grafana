@@ -54,10 +54,16 @@ module.exports = defineConfig({
       on('task', {
         writeBenchmarkResult: async ({ fileName, data }) => {
           return await new Promise((resolve, reject) => {
-            let csv = 'run, duration, networkDuration, interactionType\n';
+            let csv =
+              'run, duration, networkDuration, jsHeapSizeLimit, usedJSHeapSize, totalJSHeapSize, interactionType\n';
             const projectPath = config.env.CWD || process.cwd();
-            const filePath = path.join(projectPath, 'benchmark-results', fileName);
-            csv += data.map((r, i) => `${i + 1}, ${r.duration}, ${r.networkDuration}, ${r.interactionType}`).join('\n');
+            const filePath = path.join(projectPath, 'benchmark-results', new Date().toString(), fileName);
+            csv += data
+              .map(
+                (r, i) =>
+                  `${i + 1}, ${r.duration}, ${r.networkDuration}, ${r.jsHeapSizeLimit}, ${r.usedJSHeapSize}, ${r.totalJSHeapSize}, ${r.interactionType}`
+              )
+              .join('\n');
 
             const dir = path.dirname(filePath);
 

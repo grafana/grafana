@@ -7,7 +7,15 @@ describe('Dashboard rendering benchmark', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  it('dashboard with a single panel', () => {
+  it('dashboard with a single text panel', () => {
+    setupBenchmark('cdt8wrar2blkwe/benchmark3a-single-query');
+    const fileName = 'benchmark-single-text-panel.csv';
+
+    runBenchmarkInteraction(RUNS, () => e2e.components.RefreshPicker.runButtonV2().click());
+    processBenchmarkResults(fileName);
+  });
+
+  it.only('dashboard with a single panel', () => {
     setupBenchmark('cdt8wrar2blkwe/benchmark3a-single-query');
     const fileName = 'benchmark-single-query.csv';
 

@@ -23,6 +23,7 @@
     "bench-query-variable-single-panel": (import '../dev-dashboards/benchmark/bench-query-variable-single-panel.json'),
     "bench-single-panel": (import '../dev-dashboards/benchmark/bench-single-panel.json'),
     "bench-slow-query": (import '../dev-dashboards/benchmark/bench-slow-query.json'),
+    "bench-text-panel": (import '../dev-dashboards/benchmark/bench-text-panel.json'),
     "candlestick": (import '../dev-dashboards/panel-candlestick/candlestick.json'),
     "canvas-connection-examples": (import '../dev-dashboards/panel-canvas/canvas-connection-examples.json'),
     "canvas-datalinks": (import '../dev-dashboards/panel-canvas/canvas-datalinks.json'),
