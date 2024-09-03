@@ -80,7 +80,7 @@ export const LdapDrawerComponent = ({
   );
 
   const useTlsDescription = (
-    <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl.tooltip">
+    <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl-tooltip">
       For a complete list of supported ciphers and TLS versions, refer to:{' '}
       {
         <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
@@ -94,18 +94,18 @@ export const LdapDrawerComponent = ({
     <Drawer title={t('ldap-drawer.title', 'Advanced settings')} onClose={onClose}>
       <CollapsableSection label={t('ldap-drawer.misc-section.label', 'Misc')} isOpen={true}>
         <Field
-          label={t('ldap-drawer.misc-section.allow-sign-up.label', 'Allow sign up')}
+          label={t('ldap-drawer.misc-section.allow-sign-up-label', 'Allow sign up')}
           description={t(
-            'ldap-drawer.misc-section.allow-sign-up.descrition',
+            'ldap-drawer.misc-section.allow-sign-up-descrition',
             'If not enabled, only existing Grafana users can log in using LDAP'
           )}
         >
           <Switch id="allow-sign-up" {...register('settings.allowSignUp')} />
         </Field>
         <Field
-          label={t('ldap-drawer.misc-section.port.label', 'Port')}
+          label={t('ldap-drawer.misc-section.port-label', 'Port')}
           description={t(
-            'ldap-drawer.misc-section.port.description',
+            'ldap-drawer.misc-section.port-description',
             'Default port is 389 without SSL or 636 with SSL'
           )}
         >
@@ -117,9 +117,9 @@ export const LdapDrawerComponent = ({
           />
         </Field>
         <Field
-          label={t('ldap-drawer.misc-section.timeout.label', 'Timeout')}
+          label={t('ldap-drawer.misc-section.timeout-label', 'Timeout')}
           description={t(
-            'ldap-drawer.misc-section.timeout.description',
+            'ldap-drawer.misc-section.timeout-description',
             'Timeout in seconds for the connection to the LDAP server'
           )}
         >
@@ -138,28 +138,28 @@ export const LdapDrawerComponent = ({
             the application correctly retrieves and displays user information.
           </Trans>
         </Text>
-        <Field label={t('ldap-drawer.attributes-section.name.label', 'Name')}>
+        <Field label={t('ldap-drawer.attributes-section.name-label', 'Name')}>
           <Input id={nameId} {...register(`${serverConfig}.attributes.name`)} />
         </Field>
-        <Field label={t('ldap-drawer.attributes-section.surname.label', 'Surname')}>
+        <Field label={t('ldap-drawer.attributes-section.surname-label', 'Surname')}>
           <Input id={surnameId} {...register(`${serverConfig}.attributes.surname`)} />
         </Field>
-        <Field label={t('ldap-drawer.attributes-section.username.label', 'Username')}>
+        <Field label={t('ldap-drawer.attributes-section.username-label', 'Username')}>
           <Input id={usernameId} {...register(`${serverConfig}.attributes.username`)} />
         </Field>
-        <Field label={t('ldap-drawer.attributes-section.member-of.label', 'Member Of')}>
+        <Field label={t('ldap-drawer.attributes-section.member-of-label', 'Member Of')}>
           <Input id={memberOfId} {...register(`${serverConfig}.attributes.member_of`)} />
         </Field>
-        <Field label={t('ldap-drawer.attributes-section.email.label', 'Email')}>
+        <Field label={t('ldap-drawer.attributes-section.email-label', 'Email')}>
           <Input id={emailId} {...register(`${serverConfig}.attributes.email`)} />
         </Field>
       </CollapsableSection>
       <CollapsableSection label={groupMappingsLabel} isOpen={true}>
         <Field
           htmlFor="skip-org-role-sync"
-          label={t('ldap-drawer.group-mapping-section.skip-org-role-sync.label', 'Skip organization role sync')}
+          label={t('ldap-drawer.group-mapping-section.skip-org-role-sync-label', 'Skip organization role sync')}
           description={t(
-            'ldap-drawer.group-mapping-section.skip-org-role-sync.description',
+            'ldap-drawer.group-mapping-section.skip-org-role-sync-description',
             'Prevent synchronizing users’ organization roles from your IdP'
           )}
         >
@@ -167,9 +167,9 @@ export const LdapDrawerComponent = ({
         </Field>
         <Field
           htmlFor="group-search-filter"
-          label={t('ldap-drawer.group-mapping-section.group-search-filter.label', 'Group search filter')}
+          label={t('ldap-drawer.group-mapping-section.group-search-filter-label', 'Group search filter')}
           description={t(
-            'ldap-drawer.group-mapping-section.group-search-filter.description',
+            'ldap-drawer.group-mapping-section.group-search-filter-description',
             'Used to filter and identify group entries within the directory'
           )}
         >
@@ -177,9 +177,9 @@ export const LdapDrawerComponent = ({
         </Field>
         <Field
           htmlFor="group-search-base-dns"
-          label={t('ldap-drawer.group-mapping-section.group-search-base-dns.label', 'Group search base DNS')}
+          label={t('ldap-drawer.group-mapping-section.group-search-base-dns-label', 'Group search base DNS')}
           description={t(
-            'ldap-drawer.group-mapping-section.group-search-base-dns.description',
+            'ldap-drawer.group-mapping-section.group-search-base-dns-description',
             'Separate by commas or spaces'
           )}
         >
@@ -191,11 +191,11 @@ export const LdapDrawerComponent = ({
         <Field
           htmlFor="group-search-filter-user-attribute"
           label={t(
-            'ldap-drawer.group-mapping-section.group-search-filter-user-attribute.label',
+            'ldap-drawer.group-mapping-section.group-search-filter-user-attribute-label',
             'Group name attribute'
           )}
           description={t(
-            'ldap-drawer.group-mapping-section.group-search-filter-user-attribute.description',
+            'ldap-drawer.group-mapping-section.group-search-filter-user-attribute-description',
             'Identifies users within group entries for filtering purposes'
           )}
         >
@@ -211,9 +211,9 @@ export const LdapDrawerComponent = ({
         isOpen={true}
       >
         <Field
-          label={t('ldap-drawer.extra-security-section.use-ssl.label', 'Use SSL')}
+          label={t('ldap-drawer.extra-security-section.use-ssl-label', 'Use SSL')}
           description={t(
-            'ldap-drawer.extra-security-section.use-ssl.description',
+            'ldap-drawer.extra-security-section.use-ssl-description',
             'Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)'
           )}
         >
@@ -227,9 +227,9 @@ export const LdapDrawerComponent = ({
         {watch(`${serverConfig}.use_ssl`) && (
           <>
             <Field
-              label={t('ldap-drawer.extra-security-section.start-tls.label', 'Start TLS')}
+              label={t('ldap-drawer.extra-security-section.start-tls-label', 'Start TLS')}
               description={t(
-                'ldap-drawer.extra-security-section.start-tls.description',
+                'ldap-drawer.extra-security-section.start-tls-description',
                 'If set to true, use LDAP with STARTTLS instead of LDAPS'
               )}
             >
@@ -237,9 +237,9 @@ export const LdapDrawerComponent = ({
             </Field>
             <Field
               htmlFor="min-tls-version"
-              label={t('ldap-drawer.extra-security-section.min-tls-version.label', 'Min TLS version')}
+              label={t('ldap-drawer.extra-security-section.min-tls-version-label', 'Min TLS version')}
               description={t(
-                'ldap-drawer.extra-security-section.min-tls-version.description',
+                'ldap-drawer.extra-security-section.min-tls-version-description',
                 'This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.'
               )}
             >
@@ -251,16 +251,16 @@ export const LdapDrawerComponent = ({
               />
             </Field>
             <Field
-              label={t('ldap-drawer.extra-security-section.tls-ciphers.label', 'TLS ciphers')}
+              label={t('ldap-drawer.extra-security-section.tls-ciphers-label', 'TLS ciphers')}
               description={t(
-                'ldap-drawer.extra-security-section.tls-ciphers.description',
+                'ldap-drawer.extra-security-section.tls-ciphers-description',
                 'List of comma- or space-separated ciphers'
               )}
             >
               <Input
                 id="tls-ciphers"
                 placeholder={t(
-                  'ldap-drawer.extra-security-section.tls-ciphers.placeholder',
+                  'ldap-drawer.extra-security-section.tls-ciphers-placeholder',
                   'e.g. ["TLS_AES_256_GCM_SHA384"]'
                 )}
                 value={watch(`${serverConfig}.tls_ciphers`) || ''}
@@ -274,11 +274,11 @@ export const LdapDrawerComponent = ({
             </Field>
             <Field
               label={t(
-                'ldap-drawer.extra-security-section.encryption-provider.label',
+                'ldap-drawer.extra-security-section.encryption-provider-label',
                 'Encryption key and certificate provision specification (required)'
               )}
               description={t(
-                'ldap-drawer.extra-security-section.encryption-provider.description',
+                'ldap-drawer.extra-security-section.encryption-provider-description',
                 'X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.'
               )}
             >
@@ -287,13 +287,13 @@ export const LdapDrawerComponent = ({
                 options={[
                   {
                     label: t(
-                      'ldap-drawer.extra-security-section.encryption-provider.base-64',
+                      'ldap-drawer.extra-security-section.encryption-provider-base-64',
                       'Base64-encoded content'
                     ),
                     value: EncryptionProvider.Base64,
                   },
                   {
-                    label: t('ldap-drawer.extra-security-section.encryption-provider.file-path', 'Path to files'),
+                    label: t('ldap-drawer.extra-security-section.encryption-provider-file-path', 'Path to files'),
                     value: EncryptionProvider.FilePath,
                   },
                 ]}
@@ -305,7 +305,7 @@ export const LdapDrawerComponent = ({
               <>
                 <Field
                   label={t(
-                    'ldap-drawer.extra-security-section.root-ca-cert-value.label',
+                    'ldap-drawer.extra-security-section.root-ca-cert-value-label',
                     'Root CA certificate content'
                   )}
                 >
@@ -326,12 +326,12 @@ export const LdapDrawerComponent = ({
                   />
                 </Field>
                 <Field
-                  label={t('ldap-drawer.extra-security-section.client-cert-value.label', 'Client certificate content')}
+                  label={t('ldap-drawer.extra-security-section.client-cert-value-label', 'Client certificate content')}
                 >
                   <SecretInput
                     id="client-cert"
                     placeholder={t(
-                      'ldap-drawer.extra-security-section.client-cert-value.placeholder',
+                      'ldap-drawer.extra-security-section.client-cert-value-placeholder',
                       'Client certificate content in base64'
                     )}
                     isConfigured={mapCertConfigured.clientCertValue}
@@ -341,11 +341,11 @@ export const LdapDrawerComponent = ({
                     }}
                   />
                 </Field>
-                <Field label={t('ldap-drawer.extra-security-section.client-key-value.label', 'Client key content')}>
+                <Field label={t('ldap-drawer.extra-security-section.client-key-value-label', 'Client key content')}>
                   <SecretInput
                     id="client-key"
                     placeholder={t(
-                      'ldap-drawer.extra-security-section.client-key-value.placeholder',
+                      'ldap-drawer.extra-security-section.client-key-value-placeholder',
                       'Client key content in base64'
                     )}
                     isConfigured={mapCertConfigured.clientKeyCertValue}
@@ -359,11 +359,11 @@ export const LdapDrawerComponent = ({
             )}
             {encryptionProvider === EncryptionProvider.FilePath && (
               <>
-                <Field label={t('ldap-drawer.extra-security-section.root-ca-cert.label', 'Root CA certificate path')}>
+                <Field label={t('ldap-drawer.extra-security-section.root-ca-cert-label', 'Root CA certificate path')}>
                   <SecretInput
                     id="root-ca-cert"
                     placeholder={t(
-                      'ldap-drawer.extra-security-section.root-ca-cert.placeholder',
+                      'ldap-drawer.extra-security-section.root-ca-cert-placeholder',
                       '/path/to/root_ca_cert.pem'
                     )}
                     isConfigured={mapCertConfigured.rootCaCertPath}
@@ -375,11 +375,11 @@ export const LdapDrawerComponent = ({
                     onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.root_ca_cert`, value)}
                   />
                 </Field>
-                <Field label={t('ldap-drawer.extra-security-section.client-cert.label', 'Client certificate path')}>
+                <Field label={t('ldap-drawer.extra-security-section.client-cert-label', 'Client certificate path')}>
                   <SecretInput
                     id="client-cert"
                     placeholder={t(
-                      'ldap-drawer.extra-security-section.client-cert.placeholder',
+                      'ldap-drawer.extra-security-section.client-cert-placeholder',
                       '/path/to/client_cert.pem'
                     )}
                     isConfigured={mapCertConfigured.clientCertPath}
@@ -391,11 +391,11 @@ export const LdapDrawerComponent = ({
                     onChange={({ currentTarget: { value } }) => setValue(`${serverConfig}.client_cert`, value)}
                   />
                 </Field>
-                <Field label={t('ldap-drawer.extra-security-section.client-key.label', 'Client key path')}>
+                <Field label={t('ldap-drawer.extra-security-section.client-key-label', 'Client key path')}>
                   <SecretInput
                     id="client-key"
                     placeholder={t(
-                      'ldap-drawer.extra-security-section.client-key.placeholder',
+                      'ldap-drawer.extra-security-section.client-key-placeholder',
                       '/path/to/client_key.pem'
                     )}
                     isConfigured={mapCertConfigured.clientKeyCertPath}
