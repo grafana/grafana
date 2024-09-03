@@ -24,7 +24,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
-          token: ${{ steps.generate_token.outputs.token }}
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Download sources
         id: crowdin-download
@@ -60,7 +61,6 @@ jobs:
           # Magic details of the github-actions bot user, to pass CLA checks
           github_user_name: "github-actions[bot]"
           github_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
-          token: ${{ steps.generate_token.outputs.token }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
