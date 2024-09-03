@@ -63,8 +63,6 @@ You can also click the name of the dashboard to navigate to the dashboard intern
 
 ## Security implications of sharing your dashboard externally
 
-<!-- this seems like a misnamed section; I'd be expecting to see things that are all security risks -->
-
 - Anyone with the URL can access the dashboard.
 - Externally shared dashboards are read-only.
 - Arbitrary queries **cannot** be run against your data sources through externally shared dashboards. Externally shared dashboards can only execute the queries stored on the original dashboard.

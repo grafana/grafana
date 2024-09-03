@@ -233,8 +233,6 @@ You can share a panels in the following ways:
 - [As a snapshot](#panel-snapshot)
 - [As a library panel](#share-a-library-panel)
 
-<!--Should library panel still be here since it's not in a Share modal anymore and we have a whole page for this? -->
-
 {{< admonition type="note" >}}
 If you change a panel, ensure that you save the changes before sharing.
 {{< /admonition >}}
@@ -272,10 +270,8 @@ You can also update these parameters in the [image rendering configuration](ref:
 The following example shows a link to a server-side rendered PNG:
 
 ```bash
-https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
+https://play.grafana.org/render/d-solo/ktMs4D6Mk?from=2024-09-03T11:55:44.442Z&to=2024-09-03T17:55:44.442Z&panelId=panel-13&__feature.dashboardSceneSolo&width=1000&height=500&tz=UTC
 ```
-
-<!-- above grafana play link isn't valid but when i try to generate one, the URL is very long -->
 
 ### Share an embed
 
@@ -294,7 +290,6 @@ To create a panel that can be embedded, follow these steps:
 
 1. (Optional) Toggle the **Lock time range** switch to set whether the panel uses the current relative time range or an absolute time range. This option is enabled by default.
 1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
-<!-- Can you make changes to the HTML here? -->
 1. Click **Copy to clipboard**.
 1. Paste the HTML code into your website code.
 1. Click the **X** at the top-right corner to close the share drawer.
@@ -355,8 +350,6 @@ To delete existing snapshots, follow these steps:
 The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
 
 ### Share a library panel
-
-<!--since this isn't in the share options, should it really be on this page anymore? -->
 
 Library panels can be reused in different dashboards throughout Grafana. To create a library panel, follow these steps:
 
