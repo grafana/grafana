@@ -23,7 +23,7 @@ Report any unexpected behavior to the Grafana Support team.
 The feature is under `teamHttpHeaders` for reasons of the feature using headers for the requests to send the lbac rules.
 
 - Be sure that you are running Grafana Enterprise.
-{{< /admonition >}}
+  {{< /admonition >}}
 
 You can configure user access based upon team memberships using LogQL.
 Team LBAC controls access to logs depending on the rules set for each team.
