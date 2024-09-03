@@ -58,7 +58,6 @@ export const createLogLineLinks = (hiddenFieldsWithLinks: FieldDef[]): FieldDef[
           fieldIndex: linkField.fieldIndex,
         });
       }
-      }
     });
   });
   return fieldsWithLinksFromVariableMap;
