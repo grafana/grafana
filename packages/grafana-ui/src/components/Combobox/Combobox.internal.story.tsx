@@ -76,7 +76,7 @@ async function generateOptions(amount: number): Promise<Option[]> {
 }
 
 const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...args }) => {
-  const [value, setValue] = useState<Value | null>(null);
+  const [value, setValue] = useState<string | null>(null);
   const [options, setOptions] = useState<Option[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
