@@ -177,7 +177,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	}
 
 	if cfg.PluginLogBackendRequests {
-		middlewares = append(middlewares, clientmiddleware.NewLoggerMiddleware(log.New("plugin.instrumentation")))
+		middlewares = append(middlewares, clientmiddleware.NewLoggerMiddleware(log.New("plugin.instrumentation"), registry))
 	}
 
 	skipCookiesNames := []string{cfg.LoginCookieName}
