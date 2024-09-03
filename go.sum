@@ -2253,6 +2253,8 @@ github.com/grafana/alerting v0.0.0-20240827075410-70248a7a3a67 h1:3spByRvTR3Qo7u
 github.com/grafana/alerting v0.0.0-20240827075410-70248a7a3a67/go.mod h1:GMLi6d09Xqo96fCVUjNk//rcjP5NKEdjOzfWIffD5r4=
 github.com/grafana/authlib v0.0.0-20240902154225-8627380c8bdc h1:2bW5tKM7CEvHB3OCyap3g85GHV6lSncP4RfsCYCG4CE=
 github.com/grafana/authlib v0.0.0-20240902154225-8627380c8bdc/go.mod h1:PFzXbCrn0GIpN4KwT6NP1l5Z1CPLfmKHnYx8rZzQcyY=
+github.com/grafana/authlib v0.0.0-20240903121118-16441568af1e h1:FhuMCsOqm6wCzlikbmjSGJJ6pDrcC3FeFTQBCqvOfyk=
+github.com/grafana/authlib v0.0.0-20240903121118-16441568af1e/go.mod h1:PFzXbCrn0GIpN4KwT6NP1l5Z1CPLfmKHnYx8rZzQcyY=
 github.com/grafana/authlib/claims v0.0.0-20240830142353-b79220d2bc2e h1:mwDijVnw0/7L/34B/5nypzT7nXuxJt71TrTbZRyESBQ=
 github.com/grafana/authlib/claims v0.0.0-20240830142353-b79220d2bc2e/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
