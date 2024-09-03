@@ -14,6 +14,7 @@ export type TraceLink = {
 export type TraceLog = {
   timestamp: number;
   fields: TraceKeyValuePair[];
+  name?: string;
 };
 
 export type TraceProcess = {

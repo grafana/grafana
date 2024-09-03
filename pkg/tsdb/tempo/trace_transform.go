@@ -22,6 +22,7 @@ type TraceLog struct {
 	// Millisecond epoch time
 	Timestamp float64     `json:"timestamp"`
 	Fields    []*KeyValue `json:"fields"`
+	Name      string      `json:"name,omitempty"`
 }
 
 type TraceReference struct {
@@ -260,12 +261,6 @@ func spanEventsToLogs(events ptrace.SpanEventSlice) []*TraceLog {
 	for i := 0; i < events.Len(); i++ {
 		event := events.At(i)
 		fields := make([]*KeyValue, 0, event.Attributes().Len()+1)
-		if event.Name() != "" {
-			fields = append(fields, &KeyValue{
-				Key:   TagMessage,
-				Value: event.Name(),
-			})
-		}
 		event.Attributes().Range(func(key string, attr pcommon.Value) bool {
 			fields = append(fields, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 			return true
@@ -273,6 +268,7 @@ func spanEventsToLogs(events ptrace.SpanEventSlice) []*TraceLog {
 		logs = append(logs, &TraceLog{
 			Timestamp: float64(event.Timestamp()) / 1_000_000,
 			Fields:    fields,
+			Name:      event.Name(),
 		})
 	}
 

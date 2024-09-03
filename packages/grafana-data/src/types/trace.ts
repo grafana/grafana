@@ -13,6 +13,7 @@ export type TraceLog = {
   // Millisecond epoch time
   timestamp: number;
   fields: TraceKeyValuePair[];
+  name?: string;
 };
 
 export type TraceSpanReference = {
