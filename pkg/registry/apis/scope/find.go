@@ -71,7 +71,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		results := &scope.FindScopeNodeChildrenResults{}
 
 		raw, err := r.scopeNodeStorage.List(ctx, &internalversion.ListOptions{
-			Limit: 1000,
+			Limit: 10000,
 		})
 
 		if err != nil {
@@ -80,6 +80,7 @@ func (r *findREST) Connect(ctx context.Context, name string, opts runtime.Object
 		}
 
 		all, ok := raw.(*scope.ScopeNodeList)
+
 		if !ok {
 			responder.Error(fmt.Errorf("expected ScopeNodeList"))
 			return

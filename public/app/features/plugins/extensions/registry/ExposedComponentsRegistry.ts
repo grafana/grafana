@@ -1,4 +1,4 @@
-import { PluginExposedComponentConfig } from '@grafana/data';
+import { PluginExtensionExposedComponentConfig } from '@grafana/data';
 
 import { logWarning } from '../utils';
 import { extensionPointEndsWithVersion } from '../validators';
@@ -12,7 +12,10 @@ export type ExposedComponentRegistryItem<Props = {}> = {
   component: React.ComponentType<Props>;
 };
 
-export class ExposedComponentsRegistry extends Registry<ExposedComponentRegistryItem, PluginExposedComponentConfig> {
+export class ExposedComponentsRegistry extends Registry<
+  ExposedComponentRegistryItem,
+  PluginExtensionExposedComponentConfig
+> {
   constructor(initialState: RegistryType<ExposedComponentRegistryItem> = {}) {
     super({
       initialState,
@@ -21,7 +24,7 @@ export class ExposedComponentsRegistry extends Registry<ExposedComponentRegistry
 
   mapToRegistry(
     registry: RegistryType<ExposedComponentRegistryItem>,
-    { pluginId, configs }: PluginExtensionConfigs<PluginExposedComponentConfig>
+    { pluginId, configs }: PluginExtensionConfigs<PluginExtensionExposedComponentConfig>
   ): RegistryType<ExposedComponentRegistryItem> {
     if (!configs) {
       return registry;

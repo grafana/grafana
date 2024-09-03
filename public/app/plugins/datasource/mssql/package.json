@@ -13,7 +13,7 @@
     "lodash": "4.17.21",
     "react": "18.2.0",
     "rxjs": "7.8.1",
-    "tslib": "2.6.3"
+    "tslib": "2.7.0"
   },
   "devDependencies": {
     "@grafana/e2e-selectors": "workspace:*",
@@ -22,7 +22,7 @@
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.17.7",
-    "@types/node": "20.16.2",
+    "@types/node": "20.16.3",
     "@types/react": "18.3.3",
     "@types/testing-library__jest-dom": "5.14.9",
     "ts-node": "10.9.2",

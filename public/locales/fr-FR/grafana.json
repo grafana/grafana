@@ -233,6 +233,12 @@
       "message": ""
     }
   },
+  "bookmarks-page": {
+    "empty": {
+      "message": "",
+      "tip": ""
+    }
+  },
   "bouncing-loader": {
     "label": "Chargement"
   },
@@ -327,6 +333,9 @@
   "combobox": {
     "clear": {
       "title": ""
+    },
+    "custom-value": {
+      "create": ""
     }
   },
   "command-palette": {
@@ -705,6 +714,13 @@
     "share": {
       "time-range-description": "",
       "time-range-label": ""
+    }
+  },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": ""
+      }
     }
   },
   "explore": {
