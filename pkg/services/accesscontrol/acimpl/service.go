@@ -274,7 +274,8 @@ func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user ident
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedBasicRolesPermissions")
 	defer span.End()
 
-	permissions := make([]accesscontrol.Permission, 0)
+	// Viewer role has ~30 permissions, so we can pre-allocate memory
+	permissions := make([]accesscontrol.Permission, 0, 50)
 	basicRoles := accesscontrol.GetOrgRoles(user)
 	span.SetAttributes(attribute.Int("roles", len(basicRoles)))
 	for _, role := range basicRoles {
