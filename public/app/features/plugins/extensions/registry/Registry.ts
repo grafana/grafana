@@ -1,5 +1,6 @@
 import { Observable, ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rxjs';
 
+import { ExtensionsLog } from '../log';
 import { deepFreeze } from '../utils';
 
 export const MSG_CANNOT_REGISTER_READ_ONLY = 'Cannot register to a read-only registry';
@@ -19,6 +20,7 @@ export abstract class Registry<TRegistryValue, TMapType> {
   private isReadOnly: boolean;
   // This is the subject that receives extension configs for a loaded plugin.
   private resultSubject: Subject<PluginExtensionConfigs<TMapType>>;
+  protected logger: ExtensionsLog;
   // This is the subject that we expose.
   // (It will buffer the last value on the stream - the registry - and emit it to new subscribers immediately.)
   protected registrySubject: ReplaySubject<RegistryType<TRegistryValue>>;
@@ -28,6 +30,7 @@ export abstract class Registry<TRegistryValue, TMapType> {
     initialState?: RegistryType<TRegistryValue>;
   }) {
     this.resultSubject = new Subject<PluginExtensionConfigs<TMapType>>();
+    this.logger = new ExtensionsLog();
     this.isReadOnly = false;
 
     // If the registry subject (observable) is provided, it means that all the registry updates are taken care of outside of this class -> it is read-only.

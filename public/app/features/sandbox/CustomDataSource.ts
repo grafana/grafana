@@ -1,14 +1,18 @@
-import {
-  DataFrameType,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  LoadingState,
-  TestDataSourceResponse,
-} from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataQueryResponse, LoadingState, TestDataSourceResponse } from '@grafana/data';
 import { RuntimeDataSource } from '@grafana/scenes';
 
+import { ExtensionsLog } from '../plugins/extensions/log';
+
 export class MyCustomDS extends RuntimeDataSource {
+  extensionsLog: ExtensionsLog;
+  constructor(
+    public readonly uid: string,
+    public readonly pluginId: string
+  ) {
+    super(uid, pluginId);
+    this.extensionsLog = new ExtensionsLog();
+  }
+
   query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
     return Promise.resolve({
       state: LoadingState.Done,
