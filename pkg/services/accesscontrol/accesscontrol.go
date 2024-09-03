@@ -32,6 +32,7 @@ type AccessControl interface {
 
 type Service interface {
 	registry.ProvidesUsageStats
+	ZanzanaChecker
 	// GetRoleByName returns a role by name
 	GetRoleByName(ctx context.Context, orgID int64, roleName string) (*RoleDTO, error)
 	// GetUserPermissions returns user permissions with only action and scope fields set.
@@ -57,7 +58,9 @@ type Service interface {
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	// SyncUserRoles adds provided roles to user
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
+}
 
+type ZanzanaChecker interface {
 	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
 	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 }
