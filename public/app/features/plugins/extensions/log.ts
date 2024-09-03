@@ -15,7 +15,9 @@ type LogItem = {
   obj: LogEntry;
 };
 
-type LogEntry = Record<string | symbol, string | symbol | number | boolean | object>;
+type LogEntry = string;
+// type LogEntry = { entry: string; labels: Labels };
+// type LogEntry = Record<string | symbol, string | symbol | number | boolean | object>;
 
 const channelName = 'ui-extension-logs';
 const windowTime = 1000 * 60 * 10;
@@ -63,7 +65,7 @@ export class ExtensionsLog {
     this.channel.postMessage(item);
   }
 
-  asObservable(): Observable<LogEntry> {
+  asObservable(): Observable<LogItem> {
     if (!this.subject) {
       // Lazily create the subject on first subscription to prevent
       // to create buffers when no subscribers exists
