@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+import { comboboxMockSetup } from '@grafana/ui/src/unstable';
 
 import SharedPreferences from './SharedPreferences';
 
@@ -121,18 +122,7 @@ describe('SharedPreferences', () => {
       value: { reload: mockReload },
     });
 
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    comboboxMockSetup();
   });
 
   afterAll(() => {

@@ -80,9 +80,10 @@ describe('Combobox', () => {
     const input = screen.getByRole('combobox');
     await userEvent.click(input);
 
-    await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
-    expect(onChangeHandler).toHaveBeenCalledWith(options[1]);
-    expect(screen.queryByDisplayValue('Option 2')).toBeInTheDocument();
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // Focus is at index 0 to start with
+
+    expect(onChangeHandler).toHaveBeenCalledWith(options[2]);
+    expect(screen.queryByDisplayValue('Option 3')).toBeInTheDocument();
   });
 
   it('clears selected value', async () => {
