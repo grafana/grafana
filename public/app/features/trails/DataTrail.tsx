@@ -217,21 +217,19 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
-      <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
-        <div className={styles.container}>
-          {showHeaderForFirstTimeUsers && <MetricsHeader />}
-          <history.Component model={history} />
-          {controls && (
-            <div className={styles.controls}>
-              {controls.map((control) => (
-                <control.Component key={control.state.key} model={control} />
-              ))}
-              <settings.Component model={settings} />
-            </div>
-          )}
-          <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
-        </div>
-      </Page>
+      <div className={styles.container}>
+        {showHeaderForFirstTimeUsers && <MetricsHeader />}
+        <history.Component model={history} />
+        {controls && (
+          <div className={styles.controls}>
+            {controls.map((control) => (
+              <control.Component key={control.state.key} model={control} />
+            ))}
+            <settings.Component model={settings} />
+          </div>
+        )}
+        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+      </div>
     );
   };
 }
