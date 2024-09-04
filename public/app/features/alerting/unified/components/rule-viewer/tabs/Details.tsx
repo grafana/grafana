@@ -5,10 +5,9 @@ import { useCallback } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { ClipboardButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { Annotations } from 'app/types/unified-alerting-dto';
 
 import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
-import { isGrafanaRecordingRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
+import { getAnnotations, isGrafanaRecordingRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
 import { MetaText } from '../../MetaText';
 import { Tokenize } from '../../Tokenize';
 
@@ -52,9 +51,7 @@ const Details = ({ rule }: DetailsProps) => {
     }
   }, [rule.rulerRule]);
 
-  const annotations: Annotations | undefined = !isRecordingRulerRule(rule.rulerRule)
-    ? (rule.annotations ?? [])
-    : undefined;
+  const annotations = getAnnotations(rule);
 
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);
 
@@ -122,7 +119,7 @@ const Details = ({ rule }: DetailsProps) => {
       </div>
 
       {/* annotations go here */}
-      {annotations && !isRecordingRulerRule(rule.rulerRule) && !isGrafanaRecordingRule(rule.rulerRule) && (
+      {annotations && (
         <>
           <Text variant="h4">Annotations</Text>
           {Object.keys(annotations).length === 0 ? (

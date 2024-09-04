@@ -22,6 +22,7 @@ import {
   RulesSource,
 } from 'app/types/unified-alerting';
 import {
+  Annotations,
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
   PostableRuleDTO,
@@ -157,6 +158,16 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   return undefined;
 }
 
+export function getAnnotations(rule: CombinedRule): Annotations | undefined {
+  if (
+    isRecordingRulerRule(rule.rulerRule) ||
+    isRecordingRule(rule.promRule) ||
+    isGrafanaRecordingRule(rule.rulerRule)
+  ) {
+    return undefined;
+  }
+  return rule.annotations ?? [];
+}
 export interface RulePluginOrigin {
   pluginId: string;
 }
