@@ -74,6 +74,10 @@ jobs:
           fetch-depth: '0'
           fetch-tags: 'false'
           path: .grafana-main
+      - name: Setup nodejs environment
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
       - name: Configure git user
         run: |
           git config --local user.name "github-actions[bot]"
@@ -120,7 +124,9 @@ jobs:
           rm -f CHANGELOG.part changelog_items.md
 
           git diff CHANGELOG.md
-
+          
+      - name: "Prettify CHANGELOG.md"
+        run: npx prettier --write CHANGELOG.md
       - name: Commit CHANGELOG.md changes
         run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
 
