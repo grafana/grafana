@@ -3,7 +3,6 @@ package v0alpha1
 import (
 	"fmt"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,7 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var FolderResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var FolderResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	RESOURCE, "folder", "Folder",
 	func() runtime.Object { return &Folder{} },
 	func() runtime.Object { return &FolderList{} },

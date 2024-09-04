@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,7 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var DashboardSnapshotResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var DashboardSnapshotResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"dashboardsnapshots", "dashboardsnapshot", "DashboardSnapshot",
 	func() runtime.Object { return &DashboardSnapshot{} },
 	func() runtime.Object { return &DashboardSnapshotList{} },

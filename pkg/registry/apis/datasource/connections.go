@@ -3,12 +3,11 @@ package datasource
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 var (
@@ -20,7 +19,7 @@ var (
 )
 
 type connectionAccess struct {
-	resourceInfo   common.ResourceInfo
+	resourceInfo   utils.ResourceInfo
 	tableConverter rest.TableConvertor
 	datasources    PluginDatasourceProvider
 }

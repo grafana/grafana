@@ -1,7 +1,6 @@
-package v0alpha1
+package utils
 
 import (
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -9,7 +8,6 @@ import (
 )
 
 // ResourceInfo helps define a k8s resource
-// +k8s:openapi-gen=false
 type ResourceInfo struct {
 	group        string
 	version      string
@@ -19,11 +17,11 @@ type ResourceInfo struct {
 	kind         string
 	newObj       func() runtime.Object
 	newList      func() runtime.Object
-	columns      utils.TableColumns
+	columns      TableColumns
 }
 
 func NewResourceInfo(group, version, resourceName, singularName, kind string,
-	newObj func() runtime.Object, newList func() runtime.Object, columns utils.TableColumns) ResourceInfo {
+	newObj func() runtime.Object, newList func() runtime.Object, columns TableColumns) ResourceInfo {
 	shortName := "" // an optional alias helpful in kubectl eg ("sa" for serviceaccounts)
 	return ResourceInfo{group, version, resourceName, singularName, shortName, kind, newObj, newList, columns}
 }
@@ -116,8 +114,8 @@ func (info *ResourceInfo) NewListFunc() runtime.Object {
 	return info.newList()
 }
 
-func (info *ResourceInfo) TableConverter() utils.TableConvertor {
-	return utils.NewTableConverter(info.GroupResource(), info.columns)
+func (info *ResourceInfo) TableConverter() TableConvertor {
+	return NewTableConverter(info.GroupResource(), info.columns)
 }
 
 func (info *ResourceInfo) NewNotFound(name string) *errors.StatusError {
