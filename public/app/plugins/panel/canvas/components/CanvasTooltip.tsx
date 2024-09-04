@@ -11,6 +11,7 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   ScopedVars,
+  ValueLinkConfig,
 } from '@grafana/data/src';
 import { ActionModel } from '@grafana/data/src/types/action';
 import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
@@ -105,13 +106,15 @@ export const CanvasTooltip = ({ scene }: Props) => {
       },
     };
 
+    const config: ValueLinkConfig = { valueRowIndex: getRowIndex(element.data.field, scene) };
+
     const actionsModel = getActions(
       frames[0],
       defaultField,
       scopedVars,
       scene.panel.props.replaceVariables!,
       element.options.actions ?? [],
-      {}
+      config
     );
 
     actionsModel.forEach((action) => {
