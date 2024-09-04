@@ -1,6 +1,7 @@
 import { isString } from 'lodash';
 import { useState } from 'react';
 
+import { Trans } from '../../utils/i18n';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Drawer } from '../Drawer/Drawer';
 import { Stack } from '../Layout/Stack/Stack';
@@ -13,6 +14,7 @@ export enum TableCellInspectorMode {
 }
 
 interface TableCellInspectorProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
   onDismiss: () => void;
   mode: TableCellInspectorMode;
@@ -28,10 +30,17 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
     if (trimmedValue[0] === '{' || trimmedValue[0] === '[' || mode === 'code') {
       try {
         value = JSON.parse(value);
-      } catch {}
+        displayValue = JSON.stringify(value, null, '  ');
+      } catch (error: any) {
+        // Display helpful error to help folks diagnose json errors
+        console.log(
+          'Failed to parse JSON in Table cell inspector (this will cause JSON to not print nicely): ',
+          error.message
+        );
+      }
     }
   } else {
-    displayValue = JSON.stringify(value, null, ' ');
+    displayValue = JSON.stringify(value);
   }
   let text = displayValue;
 
@@ -62,7 +71,7 @@ export function TableCellInspector({ value, onDismiss, mode }: TableCellInspecto
     <Drawer onClose={onDismiss} title="Inspect value" tabs={tabBar}>
       <Stack direction="column" gap={2}>
         <ClipboardButton icon="copy" getText={() => text} style={{ marginLeft: 'auto', width: '200px' }}>
-          Copy to Clipboard
+          <Trans>Copy to Clipboard</Trans>
         </ClipboardButton>
         {currentMode === 'code' ? (
           <CodeEditor

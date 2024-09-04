@@ -11,7 +11,7 @@ import {
   VariableHide,
   urlUtil,
 } from '@grafana/data';
-import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -696,10 +696,12 @@ function getVariableSet(
         addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
-        layout: 'vertical',
+        layout: config.featureToggles.newFiltersUI ? 'combobox' : 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
         applyMode: 'manual',
+        // since we only support prometheus datasources, this is always true
+        supportsMultiValueOperators: true,
       }),
       ...getVariablesWithOtelJoinQueryConstant(otelJoinQuery ?? ''),
     ],

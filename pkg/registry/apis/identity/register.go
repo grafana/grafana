@@ -82,10 +82,14 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 
 	teamResource := identityv0.TeamResourceInfo
 	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.Store)
+	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.Store)
+
+	teamBindingResource := identityv0.TeamBindingResourceInfo
+	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.Store)
 
 	userResource := identityv0.UserResourceInfo
 	storage[userResource.StoragePath()] = user.NewLegacyStore(b.Store)
-	storage[userResource.StoragePath("teams")] = team.NewLegacyUserTeamsStore(b.Store)
+	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.Store)
 
 	serviceaccountResource := identityv0.ServiceAccountResourceInfo
 	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.Store)
@@ -96,7 +100,7 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	}
 
 	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["display"] = user.NewLegacyDisplayStore(b.Store)
+	storage["display"] = user.NewLegacyDisplayREST(b.Store)
 
 	apiGroupInfo.VersionedResourcesStorageMap[identityv0.VERSION] = storage
 	return &apiGroupInfo, nil

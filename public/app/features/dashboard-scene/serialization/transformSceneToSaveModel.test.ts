@@ -136,6 +136,8 @@ jest.mock('@grafana/runtime', () => ({
         toDataQuery: (q: StandardVariableQuery) => q,
       },
     }),
+    // mock getInstanceSettings()
+    getInstanceSettings: jest.fn(),
   }),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);

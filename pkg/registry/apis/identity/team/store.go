@@ -12,9 +12,9 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
 	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/team"
 )
 
 var (
@@ -59,10 +59,6 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) doList(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamQuery) (*identityv0.TeamList, error) {
-	if query.Limit < 1 {
-		query.Limit = 100
-	}
-
 	rsp, err := s.store.ListTeams(ctx, ns, query)
 	if err != nil {
 		return nil, err
@@ -96,9 +92,10 @@ func (s *LegacyStore) doList(ctx context.Context, ns claims.NamespaceInfo, query
 		})
 		list.Items = append(list.Items, item)
 	}
-	if rsp.ContinueID > 0 {
-		list.ListMeta.Continue = strconv.FormatInt(rsp.ContinueID, 10)
-	}
+
+	list.ListMeta.Continue = common.OptionalFormatInt(rsp.Continue)
+	list.ListMeta.ResourceVersion = common.OptionalFormatInt(rsp.RV)
+
 	return list, nil
 }
 
@@ -107,17 +104,11 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	if err != nil {
 		return nil, err
 	}
-	query := legacy.ListTeamQuery{
-		OrgID: ns.OrgID,
-		Limit: options.Limit,
-	}
-	if options.Continue != "" {
-		query.ContinueID, err = strconv.ParseInt(options.Continue, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return s.doList(ctx, ns, query)
+
+	return s.doList(ctx, ns, legacy.ListTeamQuery{
+		OrgID:      ns.OrgID,
+		Pagination: common.PaginationFromListOptions(options),
+	})
 }
 
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
@@ -126,9 +117,9 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, err
 	}
 	rsp, err := s.doList(ctx, ns, legacy.ListTeamQuery{
-		OrgID: ns.OrgID,
-		Limit: 1,
-		UID:   name,
+		OrgID:      ns.OrgID,
+		UID:        name,
+		Pagination: common.Pagination{Limit: 1},
 	})
 	if err != nil {
 		return nil, err
@@ -137,29 +128,4 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		return &rsp.Items[0], nil
 	}
 	return nil, resource.NewNotFound(name)
-}
-
-func asTeam(team *team.Team, ns string) (*identityv0.Team, error) {
-	item := &identityv0.Team{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              team.UID,
-			Namespace:         ns,
-			CreationTimestamp: metav1.NewTime(team.Created),
-			ResourceVersion:   strconv.FormatInt(team.Updated.UnixMilli(), 10),
-		},
-		Spec: identityv0.TeamSpec{
-			Title: team.Name,
-			Email: team.Email,
-		},
-	}
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return nil, err
-	}
-	meta.SetUpdatedTimestamp(&team.Updated)
-	meta.SetOriginInfo(&utils.ResourceOriginInfo{
-		Name: "SQL",
-		Path: strconv.FormatInt(team.ID, 10),
-	})
-	return item, nil
 }
