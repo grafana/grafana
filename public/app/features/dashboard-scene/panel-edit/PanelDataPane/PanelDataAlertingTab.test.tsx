@@ -143,7 +143,7 @@ const dashboard = {
     from: 'now-6h',
     to: 'now',
   },
-  timepicker: { refresh_intervals: 5 },
+  timepicker: { refresh_intervals: ['5s', '30s', '1m'] },
   meta: {
     canSave: true,
     folderId: 1,
