@@ -19,7 +19,7 @@ export class MyCustomDS extends RuntimeDataSource {
     public readonly uid: string,
     public readonly pluginId: string
   ) {
-    super(uid, pluginId);
+    super(pluginId, uid);
     this.extensionsLog = new ExtensionsLog();
   }
 
@@ -35,7 +35,7 @@ export class MyCustomDS extends RuntimeDataSource {
     frame.addField({ name: 'body', type: FieldType.string });
     frame.addField({ name: 'severity', type: FieldType.string });
     frame.addField({ name: 'id', type: FieldType.string });
-    frame.addField({ name: 'labels', type: FieldType.other });
+    frame.addField({ name: 'labels', type: FieldType.string });
 
     return this.extensionsLog.asObservable().pipe(
       map((item: LogItem) => {
@@ -44,7 +44,7 @@ export class MyCustomDS extends RuntimeDataSource {
           body: item.message,
           severity: String(item.level),
           id: item.id,
-          labels: JSON.stringify(item.obj),
+          labels: item.obj,
         });
 
         return {

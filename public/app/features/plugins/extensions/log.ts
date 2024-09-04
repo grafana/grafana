@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { Observable, ReplaySubject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 enum LogLevel {
   info = 'info',
@@ -23,14 +23,14 @@ type LogEntry = string;
 // type LogEntry = Record<string | symbol, string | symbol | number | boolean | object>;
 
 const channelName = 'ui-extension-logs';
-const windowTime = 1000 * 60 * 10;
-const bufferSize = 1000;
 
 export class ExtensionsLog {
-  private subject: ReplaySubject<LogItem> | undefined;
+  private baseLabels: Record<string | symbol, unknown> | undefined;
+  private subject: Subject<LogItem> | undefined;
   private channel: BroadcastChannel;
 
-  constructor() {
+  constructor(baseLabels?: Record<string | symbol, unknown>) {
+    this.baseLabels = baseLabels;
     this.channel = new BroadcastChannel(channelName);
   }
 
@@ -61,7 +61,9 @@ export class ExtensionsLog {
   private log(level: LogLevel, entry: LogEntry): void {
     const item: LogItem = {
       level: level,
-      obj: {},
+      obj: {
+        ...this.baseLabels,
+      },
       ts: Date.now(),
       id: nanoid(),
       message: entry,
@@ -74,15 +76,18 @@ export class ExtensionsLog {
     if (!this.subject) {
       // Lazily create the subject on first subscription to prevent
       // to create buffers when no subscribers exists
-      this.subject = new ReplaySubject<LogItem>(bufferSize, windowTime);
+      this.subject = new Subject<LogItem>();
       this.channel.onmessage = (msg: MessageEvent<LogItem>) => this.subject?.next(msg.data);
     }
 
     return this.subject.asObservable();
   }
 
-  child(): ExtensionsLog {
-    return this;
+  child(labels: Record<string | symbol, unknown>): ExtensionsLog {
+    return new ExtensionsLog({
+      ...labels,
+      ...this.baseLabels,
+    });
   }
 }
 

@@ -43,32 +43,32 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
     for (const config of configs) {
       const { path, title, description, configure, onClick, targets } = config;
+      const log = this.logger.child({ path, description, title, pluginId });
+
       if (!title) {
-        this.logger.warning(`Could not register added link with title '${title}'. Reason: Title is missing.`);
+        log.warning(`Could not register added link with title '${title}'. Reason: Title is missing.`);
         continue;
       }
 
       if (!description) {
-        this.logger.warning(`Could not register added link with title '${title}'. Reason: Description is missing.`);
+        log.warning(`Could not register added link with title '${title}'. Reason: Description is missing.`);
         continue;
       }
 
       if (!isConfigureFnValid(configure)) {
-        this.logger.warning(
-          `Could not register added link with title '${title}'. Reason: configure is not a function.`
-        );
+        log.warning(`Could not register added link with title '${title}'. Reason: configure is not a function.`);
         continue;
       }
 
       if (!path && !onClick) {
-        this.logger.warning(
+        log.warning(
           `Could not register added link with title '${title}'. Reason: Either "path" or "onClick" is required.`
         );
         continue;
       }
 
       if (path && !isLinkPathValid(pluginId, path)) {
-        this.logger.warning(
+        log.warning(
           `Could not register added link with title '${title}'. Reason: The "path" is required and should start with "/a/${pluginId}/" (currently: "${path}"). Skipping the extension.`
         );
         continue;
@@ -76,16 +76,18 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
       const extensionPointIds = Array.isArray(targets) ? targets : [targets];
       for (const extensionPointId of extensionPointIds) {
+        const pointIdLog = log.child({ id: extensionPointId });
+
         if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
-          this.logger.warning(
+          pointIdLog.warning(
             `Could not register added link with id '${extensionPointId}'. Reason: Target extension point id must start with grafana, plugins or plugin id.`
           );
           continue;
         }
 
         if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
-          this.logger.warning(
-            `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+          pointIdLog.warning(
+            `Added link with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
           );
         }
 

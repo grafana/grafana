@@ -36,34 +36,35 @@ export class ExposedComponentsRegistry extends Registry<
 
     for (const config of configs) {
       const { id, description, title } = config;
+      const log = this.logger.child({ id, description, title, pluginId });
 
       if (!id.startsWith(pluginId)) {
-        this.logger.warning(
+        log.warning(
           `Could not register exposed component with id '${id}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id. e.g 'myorg-basic-app/my-component-id/v1'.`
         );
         continue;
       }
 
       if (!extensionPointEndsWithVersion(id)) {
-        this.logger.warning(
+        log.warning(
           `Exposed component with id '${id}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
         );
       }
 
       if (registry[id]) {
-        this.logger.warning(
+        log.warning(
           `Could not register exposed component with id '${id}'. Reason: An exposed component with the same id already exists.`
         );
         continue;
       }
 
       if (!title) {
-        this.logger.warning(`Could not register exposed component with id '${id}'. Reason: Title is missing.`);
+        log.warning(`Could not register exposed component with id '${id}'. Reason: Title is missing.`);
         continue;
       }
 
       if (!description) {
-        this.logger.warning(`Could not register exposed component with id '${id}'. Reason: Description is missing.`);
+        log.warning(`Could not register exposed component with id '${id}'. Reason: Description is missing.`);
         continue;
       }
 
