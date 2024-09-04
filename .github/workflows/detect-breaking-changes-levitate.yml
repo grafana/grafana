@@ -357,7 +357,7 @@ jobs:
       - name: Exit
         run: |
           if [ "${{ steps.levitate-run.outputs.exit_code }}" -ne 0 ]; then
-            echo "Breaking changes detected. Please check the levitate report in your Pull Request. This workflow won't block merging."
+            echo "Breaking changes detected. Please check the levitate report in your pull request. This workflow won't block merging."
           fi
           exit ${{ steps.levitate-run.outputs.exit_code }}
         shell: bash
