@@ -177,7 +177,12 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
       const labelValue = otelFilters[i].value;
 
       allFilters += `,${labelName}${op}"${labelValue}"`;
-      allLabels += `,${labelName}`;
+
+      const addLabelToGroupLeft = labelName !== 'job' && labelName !== 'instance';
+
+      if (addLabelToGroupLeft) {
+        allLabels += `,${labelName}`;
+      }
     }
 
     otelResourcesObject.labels = allLabels;
