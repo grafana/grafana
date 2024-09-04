@@ -220,7 +220,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
             data-testid="User preferences language drop down"
           >
             <Combobox
-              value={languages.find((lang) => lang.value === language)?.value || null}
+              value={languages.find((lang) => lang.value === language)?.value || ''}
               onChange={(lang: Option | null) => this.onLanguageChanged(lang?.value ?? '')}
               options={languages}
               placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}

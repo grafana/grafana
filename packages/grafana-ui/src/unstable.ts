@@ -10,3 +10,5 @@
  */
 
 export * from './utils/skeleton';
+export * from './components/Combobox/Combobox';
+export { comboboxMockSetup } from './components/Combobox/Combobox.test';

@@ -11,21 +11,28 @@ const options: Option[] = [
   { label: 'Option 4', value: '4' },
 ];
 
+/**
+ * Because of list virtualization, items may be hard to select in tests. This mockes the getBoundingClientRect method.
+ */
+export const comboboxMockSetup = () => {
+  const mockGetBoundingClientRect = jest.fn(() => ({
+    width: 120,
+    height: 120,
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  }));
+
+  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+    value: mockGetBoundingClientRect,
+  });
+};
+
 describe('Combobox', () => {
   const onChangeHandler = jest.fn();
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    comboboxMockSetup();
   });
 
   it('renders without error', () => {
