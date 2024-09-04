@@ -68,6 +68,8 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const variable = model.getVariable();
     const { loading: labelsLoading, options: labelOptions } = variable.useState();
 
+    const { useOtelExperience } = getTrailFor(model).useState();
+
     // Get unit name from the metric name
     const metricScene = getMetricSceneFor(model);
     const metric = metricScene.state.metric;
@@ -110,7 +112,9 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>
-                <Trans i18nKey="trails.metric-overview.labels-label">Labels</Trans>
+                <Trans i18nKey="trails.metric-overview.labels-label">
+                  {useOtelExperience ? 'Metric attributes' : 'Labels'}
+                </Trans>
               </Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
               {labelOptions.map((l) => (
