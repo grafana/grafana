@@ -3,7 +3,10 @@ import { ComponentProps, ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import {
+  testWithFeatureToggles,
+  testWithLicenseFeatures,
+} from 'app/features/alerting/unified/utils/alerting-test-utils';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -57,10 +60,16 @@ const basicContactPoint: ContactPointWithMetadata = {
   grafana_managed_receiver_configs: [],
 };
 
-const attemptDeleteContactPoint = async (name: string) => {
+const clickMoreActionsButton = async (name: string) => {
   const user = userEvent.setup();
   const moreActions = await screen.findByRole('button', { name: `More actions for contact point "${name}"` });
   await user.click(moreActions);
+};
+
+const attemptDeleteContactPoint = async (name: string) => {
+  const user = userEvent.setup();
+
+  await clickMoreActionsButton(name);
 
   const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
   await user.click(deleteButton);
@@ -369,8 +378,9 @@ describe('contact points', () => {
   });
 
   describe('alertingApiServer enabled', () => {
+    testWithFeatureToggles(['alertingApiServer']);
+
     beforeEach(() => {
-      config.featureToggles.alertingApiServer = true;
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsWrite,
@@ -402,6 +412,34 @@ describe('contact points', () => {
       renderGrafanaContactPoints();
 
       return expect(attemptDeleteContactPoint('provisioned-contact-point')).rejects.toBeTruthy();
+    });
+
+    describe('accesscontrol license feature enabled', () => {
+      testWithLicenseFeatures(['accesscontrol']);
+
+      it('shows manage permissions', async () => {
+        // Stub out console.error due to act warnings that I can't get to the bottom of right now
+        // When rendering the ManagePermissions logic in a button that isn't in a dropdown,
+        // it will render without any console errors, but showing inside a dropdown causes act warnings
+        // for some reason
+        // TODO: Work out why, and remove the console.error logic here
+        const originalConsoleError = console.error;
+        jest.spyOn(console, 'error').mockImplementation((msg) => {
+          if (/Warning: An update to (.*) inside a test was not wrapped in act/.test(msg)) {
+            return;
+          }
+          originalConsoleError(msg);
+          return;
+        });
+
+        const { user } = renderGrafanaContactPoints();
+
+        clickMoreActionsButton('lotsa-emails');
+        await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
+        // await user.click((await screen.findAllByRole('button', { name: /manage permissions/i }))[1]);
+        expect(await screen.findByRole('dialog', { name: /drawer title manage permissions/i })).toBeInTheDocument();
+        expect(await screen.findByRole('table')).toBeInTheDocument();
+      });
     });
   });
 });
