@@ -22,12 +22,8 @@ import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { ShareSnapshot } from '../sharing/ShareButton/share-snapshot/ShareSnapshot';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
-import { ShareLibraryPanelTab } from '../sharing/ShareLibraryPanelTab';
 import { ShareModal } from '../sharing/ShareModal';
-import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
-import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -91,8 +87,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         shortcut: 'p u',
         onClick: () => {
           const drawer = new ShareDrawer({
-            title: t('share-panel.drawer.share-link-title', 'Link settings'),
-            body: new SharePanelInternally({ panelRef: panel.getRef() }),
+            shareView: shareDashboardType.link,
+            panelRef: panel.getRef(),
           });
 
           dashboard.showModal(drawer);
@@ -104,8 +100,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         shortcut: 'p e',
         onClick: () => {
           const drawer = new ShareDrawer({
-            title: t('share-panel.drawer.share-embed-title', 'Share embed'),
-            body: new SharePanelEmbedTab({ panelRef: panel.getRef() }),
+            shareView: shareDashboardType.embed,
+            panelRef: panel.getRef(),
           });
 
           dashboard.showModal(drawer);
@@ -119,8 +115,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           shortcut: 'p s',
           onClick: () => {
             const drawer = new ShareDrawer({
-              title: t('share-panel.drawer.share-snapshot-title', 'Share snapshot'),
-              body: new ShareSnapshot({ dashboardRef: dashboard.getRef(), panelRef: panel.getRef() }),
+              shareView: shareDashboardType.snapshot,
+              panelRef: panel.getRef(),
             });
 
             dashboard.showModal(drawer);
@@ -192,8 +188,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
             text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
             onClick: () => {
               const drawer = new ShareDrawer({
-                title: t('share-panel.drawer.new-library-panel-title', 'New library panel'),
-                body: new ShareLibraryPanelTab({ panelRef: panel.getRef() }),
+                shareView: shareDashboardType.libraryPanel,
+                panelRef: panel.getRef(),
               });
 
               dashboard.showModal(drawer);

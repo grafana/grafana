@@ -19,7 +19,7 @@
   "devDependencies": {
     "@typescript-eslint/types": "^6.0.0",
     "eslint": "8.57.0",
-    "tslib": "2.6.3"
+    "tslib": "2.7.0"
   },
   "private": true
 }

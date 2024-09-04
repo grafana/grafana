@@ -1,0 +1,75 @@
+# This workflow is triggered when a new issue is opened
+# It will run an internal github action to try to automate the triage process
+name: Auto Triage Issues
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  config:
+    runs-on: "ubuntu-latest"
+    outputs:
+      has-secrets: ${{ steps.check.outputs.has-secrets }}
+    steps:
+      - name: "Check for secrets"
+        id: check
+        shell: bash
+        run: |
+          if [ -n "${{ (secrets.GRAFANA_DELIVERY_BOT_APP_ID != '' &&
+                        secrets.GRAFANA_DELIVERY_BOT_APP_PEM != '' &&
+                        secrets.OPENAI_API_KEY != '' &&
+                        secrets.SLACK_WEBHOOK_URL != ''
+                        ) || '' }}" ]; then
+            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+          fi
+  auto-triage:
+    needs: config
+    if: needs.config.outputs.has-secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
+      - name: Checkout auto-triager repository
+        uses: actions/checkout@v4
+        with:
+          repository: grafana/auto-triager
+          path: auto-triager
+          token:  ${{ steps.generate_token.outputs.token }}
+
+      - name: Send issue to the auto triager action
+        id: auto_triage
+        # https://github.com/grafana/auto-triager/blob/main/action.yml
+        #uses: grafana/auto-triager@main
+        uses: ./auto-triager
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue_number: ${{ github.event.issue.number }}
+          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
+          # Leaving the actionin monitoring mode for now
+          # should be set to true when ready to use
+          # add_labels: true
+          add_labels: false
+
+      - name: Labels from auto triage
+        run: |
+          echo ${{ steps.auto_triage.outputs.triage_labels }}
+
+      - name: "Send Slack notification"
+        if : ${{ steps.auto_triage.outputs.triage_labels != '' }}
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: >
+            {
+              "icon_emoji": ":robocto:",
+              "username": "Auto Triager",
+              "type": "mrkdwn",
+              "text": "Auto triager found the following labels: ${{ steps.auto_triage.outputs.triage_labels }} for [issue #${{ github.event.issue.number }}](${{ github.event.issue.html_url }})",
+              "channel": "#triage-automation-ci"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
