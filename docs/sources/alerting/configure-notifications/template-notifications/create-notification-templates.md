@@ -103,11 +103,13 @@ Template the subject of an email to contain the number of firing and resolved al
    {{ end }}
    ```
 
-2. Execute the template from the subject field in your contact point integration:
+2. Execute the template from the **Subject** field in your contact point integration:
 
    ```
    {{ template "email.subject" . }}
    ```
+
+   If you are using an external Alertmanager, such as the Prometheus Alertmanager, execute the template from the **Headers** field in your contact point integration.
 
 ## Template the message of an email
 
