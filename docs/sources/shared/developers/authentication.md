@@ -6,7 +6,7 @@ comments: |
 
 You can authenticate HTTP API requests using basic authentication, a service account token, or a session cookie (acquired via regular login or OAuth).
 
-### Basic Auth
+### Basic auth
 
 If basic auth is enabled (it is enabled by default), then you can authenticate your HTTP request via
 standard basic auth. Basic auth will also authenticate LDAP users.
@@ -18,7 +18,7 @@ curl http://admin:admin@localhost:3000/api/org
 {"id":1,"name":"Main Org."}
 ```
 
-### Service Account Token
+### Service account token
 
 To create a service account token, click on **Administration** in the left-side menu, click **Users and access**, then **Service Accounts**.
 For more information on how to use service account tokens, refer to the [Service Accounts]({{< relref "../../administration/service-accounts/" >}}) documentation.
