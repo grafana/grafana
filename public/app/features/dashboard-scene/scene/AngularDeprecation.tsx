@@ -7,7 +7,7 @@ import { Icon, PanelChrome, Tooltip, useStyles2 } from '@grafana/ui';
 import { explicitlyControlledMigrationPanels } from 'app/features/dashboard/state/PanelModel';
 import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/utils';
 
 export class AngularDeprecation extends SceneObjectBase {
   static Component = AngularDeprecationRenderer;
@@ -43,20 +43,10 @@ function AngularDeprecationRenderer({ model }: SceneComponentProps<AngularDeprec
     return null;
   }
 
-  //panel.isAngularPlugin()
-  const pluginType = panel.state.pluginId;
-  console.log('panel from angularDeprecation', panel);
-  const isAngularDatasource = panel.datasource?.uid
-    ? isAngularDatasourcePluginAndNotHidden(panel.datasource?.uid)
-    : false;
-
-  const isAngularPanel = isPanelAngularPlugin(panel);
-  const showAngularNotice =
-    (config.featureToggles.angularDeprecationUI ?? false) && (isAngularDatasource || isAngularPanel);
-
+  const showAngularNotice = shouldShowAngularNotice(panel);
   if (showAngularNotice) {
-    //original code ${pluginType(angularNotice)}
-    const message = `This ${pluginType} requires Angular (deprecated).`;
+    const pluginTypeNotice = getPluginTypeNotice(isPanelAngularDatasource(panel), isPanelAngularPlugin(panel));
+    const message = `This ${pluginTypeNotice} requires Angular (deprecated).`;
     const angularNoticeTooltip = (
       <Tooltip content={message}>
         <PanelChrome.TitleItem className={styles.angularNotice} data-testid="angular-deprecation-icon">
@@ -69,11 +59,35 @@ function AngularDeprecationRenderer({ model }: SceneComponentProps<AngularDeprec
   return null;
 }
 
+export function getPluginTypeNotice(isAngularDatasource: boolean, isAngularPanel: boolean) {
+  if (isAngularPanel) {
+    return 'panel';
+  }
+  if (isAngularDatasource) {
+    return 'data source';
+  }
+  return 'panel or data source';
+}
+
 export function isPanelAngularPlugin(panel: VizPanel) {
   return (
     (config.panels[panel.state.pluginId]?.angular?.detected ||
       explicitlyControlledMigrationPanels.includes(panel.state.pluginId)) &&
     !config.panels[panel.state.pluginId]?.angular?.hideDeprecation
+  );
+}
+
+export function isPanelAngularDatasource(panel: VizPanel) {
+  const queryRunner = getQueryRunnerFor(panel);
+  const datasource = queryRunner?.state.datasource;
+
+  return datasource?.uid ? isAngularDatasourcePluginAndNotHidden(datasource?.uid) : false;
+}
+
+export function shouldShowAngularNotice(panel: VizPanel) {
+  return (
+    (config.featureToggles.angularDeprecationUI ?? false) &&
+    (isPanelAngularDatasource(panel) || isPanelAngularPlugin(panel))
   );
 }
 
