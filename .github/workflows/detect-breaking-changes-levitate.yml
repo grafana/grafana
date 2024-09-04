@@ -254,6 +254,8 @@ jobs:
 
             [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
             [Console output](${{ steps.levitate-run.outputs.job_link }})
+
+            * Your pull request merge won't be blocked.
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       # Remove comment from the PR (no more breaking changes)
