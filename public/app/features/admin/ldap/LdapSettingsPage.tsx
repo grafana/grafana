@@ -107,7 +107,7 @@ export const LdapSettingsPage = () => {
 
       const serverConfig = payload.settings.config.servers[0];
       setMapKeyCertConfigured({
-        rootCaCertValue: serverConfig.root_ca_cert_value.length > 0,
+        rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
         clientCertValue: serverConfig.client_cert_value !== '',
         clientKeyCertValue: serverConfig.client_key_value !== '',
         rootCaCertPath: serverConfig.root_ca_cert !== '',

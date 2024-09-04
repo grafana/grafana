@@ -57,7 +57,7 @@ export const LdapDrawerComponent = ({
   useEffect(() => {
     const { client_cert, client_key, root_ca_cert } = getValues(serverConfig);
     setEncryptionProvider(
-      !client_cert.length && !client_key.length && !root_ca_cert.length
+      !client_cert.length && !client_key.length && !root_ca_cert?.length
         ? EncryptionProvider.Base64
         : EncryptionProvider.FilePath
     );
@@ -315,10 +315,10 @@ export const LdapDrawerComponent = ({
                     onChange={(v) => {
                       setValue(
                         `${serverConfig}.root_ca_cert_value`,
-                        v.filter(({ v }) => typeof v === 'string').map(({ v }) => v)
+                        v.filter(({ v }) => typeof v === 'string')?.map(({ v }) => v)
                       );
                     }}
-                    value={watch(`${serverConfig}.root_ca_cert_value`).map((v) => ({
+                    value={watch(`${serverConfig}.root_ca_cert_value`)?.map((v) => ({
                       label: renderMultiSelectLabel(v),
                       value: v,
                     }))}
