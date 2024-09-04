@@ -407,24 +407,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
   }
 
-  /**
-   * Used from inspect json tab to view the current persisted model
-   */
-  // public getPanelSaveModel(): Panel | object {
-  //   const sourcePanel = this.state.panel.resolve();
-  //   const gridItem = sourcePanel.parent;
-
-  //   if (!(gridItem instanceof DashboardGridItem)) {
-  //     return { error: 'Unsupported panel parent' };
-  //   }
-
-  //   const parentClone = gridItem.clone({
-  //     body: this.state.panel.clone(),
-  //   });
-
-  //   return gridItemToPanel(parentClone);
-  // }
-
   public setPanelTitle(newTitle: string) {
     this.getPanel().setState({ title: newTitle, hoverHeader: newTitle === '' });
   }

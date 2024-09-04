@@ -152,7 +152,6 @@ export function gridItemToPanel(
 
   let gridItem_ = gridItem;
 
-  // If we're saving while the panel editor is open, we need to persist those changes in the panel model
   if (!(gridItem_.state.body instanceof VizPanel)) {
     throw new Error('DashboardGridItem body expected to be VizPanel');
   }
