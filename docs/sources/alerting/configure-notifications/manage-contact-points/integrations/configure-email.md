@@ -78,8 +78,8 @@ To set up email integration, complete the following steps.
 
    E-mail addresses are case sensitive. Ensure that the e-mail address entered is correct.
 
-2. Click **Test** to check that your integration works.
-3. Click **Save contact point**.
+1. Click **Test** to check that your integration works.
+1. Click **Save contact point**.
 
 ## Next steps
 
