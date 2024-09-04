@@ -129,6 +129,10 @@
       "new-recording-rule": "New recording rule",
       "title": "Grafana"
     },
+    "manage-permissions": {
+      "button": "Manage permissions",
+      "title": "Manage permissions"
+    },
     "mute_timings": {
       "error-loading": {
         "description": "Could not load mute timings. Please try again later.",
