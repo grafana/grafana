@@ -5,7 +5,7 @@ import { ComponentProps, useEffect, useState } from 'react';
 
 import { Field } from '../Forms/Field';
 
-import { Combobox, Option } from './Combobox';
+import { Combobox, ComboboxOption } from './Combobox';
 
 const chance = new Chance();
 
@@ -67,7 +67,7 @@ type Story = StoryObj<typeof Combobox>;
 
 export const Basic: Story = {};
 
-async function generateOptions(amount: number): Promise<Option[]> {
+async function generateOptions(amount: number): Promise<ComboboxOption[]> {
   return Array.from({ length: amount }, (_, index) => ({
     label: chance.sentence({ words: index % 5 }),
     value: chance.guid(),
@@ -77,7 +77,7 @@ async function generateOptions(amount: number): Promise<Option[]> {
 
 const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...args }) => {
   const [value, setValue] = useState<string | null>(null);
-  const [options, setOptions] = useState<Option[]>([]);
+  const [options, setOptions] = useState<ComboboxOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

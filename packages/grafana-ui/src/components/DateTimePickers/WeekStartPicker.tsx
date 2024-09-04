@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Combobox, Option } from '../Combobox/Combobox';
+import { Combobox, ComboboxOption } from '../Combobox/Combobox';
 
 export interface Props {
   onChange: (weekStart: string) => void;
@@ -15,7 +15,7 @@ export interface Props {
 }
 
 export type WeekStart = 'saturday' | 'sunday' | 'monday';
-const weekStarts: Option[] = [
+const weekStarts: ComboboxOption[] = [
   { value: '', label: 'Default' },
   { value: 'saturday', label: 'Saturday' },
   { value: 'sunday', label: 'Sunday' },
@@ -38,7 +38,7 @@ export const WeekStartPicker = (props: Props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
 
   const onChangeWeekStart = useCallback(
-    (selectable: Option | null) => {
+    (selectable: ComboboxOption | null) => {
       if (selectable && selectable.value !== undefined) {
         onChange(selectable.value);
       }

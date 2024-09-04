@@ -15,9 +15,8 @@ import {
   TimeZonePicker,
   WeekStartPicker,
   FeatureBadge,
-  Combobox,
-  Option,
 } from '@grafana/ui';
+import { Combobox, ComboboxOption } from '@grafana/ui/src/unstable';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES, PSEUDO_LOCALE } from 'app/core/internationalization/constants';
@@ -33,7 +32,7 @@ export interface Props {
 
 export type State = UserPreferencesDTO;
 
-function getLanguageOptions(): Option[] {
+function getLanguageOptions(): ComboboxOption[] {
   const languageOptions = LANGUAGES.map((v) => ({
     value: v.code,
     label: v.name,
@@ -62,7 +61,7 @@ function getLanguageOptions(): Option[] {
 
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
-  themeOptions: Option[];
+  themeOptions: ComboboxOption[];
 
   constructor(props: Props) {
     super(props);
@@ -111,7 +110,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
     }
   };
 
-  onThemeChanged = (value: Option | null) => {
+  onThemeChanged = (value: ComboboxOption | null) => {
     if (!value) {
       return;
     }
@@ -221,7 +220,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
           >
             <Combobox
               value={languages.find((lang) => lang.value === language)?.value || ''}
-              onChange={(lang: Option | null) => this.onLanguageChanged(lang?.value ?? '')}
+              onChange={(lang: ComboboxOption | null) => this.onLanguageChanged(lang?.value ?? '')}
               options={languages}
               placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
               id="locale-select"

@@ -11,7 +11,7 @@ import { Input, Props as InputProps } from '../Input/Input';
 
 import { getComboboxStyles } from './getComboboxStyles';
 
-export type Option = {
+export type ComboboxOption = {
   label: string;
   value: string;
   description?: string;
@@ -19,21 +19,21 @@ export type Option = {
 
 interface ComboboxProps
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
-  onChange: (val: Option | null) => void;
+  onChange: (val: ComboboxOption | null) => void;
   value: string | null;
-  options: Option[];
+  options: ComboboxOption[];
   isClearable?: boolean;
   createCustomValue?: boolean;
 }
 
-function itemToString(item: Option | null) {
+function itemToString(item: ComboboxOption | null) {
   return item?.label ?? item?.value ?? '';
 }
 
 function itemFilter(inputValue: string) {
   const lowerCasedInputValue = inputValue.toLowerCase();
 
-  return (item: Option) => {
+  return (item: ComboboxOption) => {
     return (
       !inputValue ||
       item?.label?.toLowerCase().includes(lowerCasedInputValue) ||
@@ -284,7 +284,7 @@ export const Combobox = ({
 };
 
 const useDynamicWidth = (
-  items: Option[],
+  items: ComboboxOption[],
   range: { startIndex: number; endIndex: number } | null,
   setPopoverWidth: { (value: SetStateAction<number | undefined>): void }
 ) => {

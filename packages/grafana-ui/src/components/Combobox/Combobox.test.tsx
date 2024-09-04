@@ -1,10 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Combobox, Option } from './Combobox';
+import { Combobox, ComboboxOption } from './Combobox';
 
 // Mock data for the Combobox options
-const options: Option[] = [
+const options: ComboboxOption[] = [
   { label: 'Option 1', value: '1' },
   { label: 'Option 2', value: '2' },
   { label: 'Option 3', value: '3', description: 'This is option 3' },
