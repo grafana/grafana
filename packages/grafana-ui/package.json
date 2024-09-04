@@ -89,7 +89,7 @@
     "rc-slider": "11.1.5",
     "rc-time-picker": "^3.7.3",
     "rc-tooltip": "6.2.0",
-    "react-calendar": "5.0.0",
+    "react-calendar": "patch:react-calendar@npm%3A5.0.0#~/.yarn/patches/react-calendar-npm-5.0.0-10f08df0a4.patch",
     "react-colorful": "5.6.1",
     "react-custom-scrollbars-2": "4.5.0",
     "react-dropzone": "14.2.3",

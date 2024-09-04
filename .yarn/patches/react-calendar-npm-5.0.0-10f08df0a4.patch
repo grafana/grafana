@@ -1,0 +1,280 @@
+diff --git a/dist/cjs/Flex.js b/dist/cjs/Flex.js
+index 9aeb1d12ff908cf7f88396cae8c7a50b9a73480a..2a74d54122ed3ebf98b315a097434a7cd916adf1 100644
+--- a/dist/cjs/Flex.js
++++ b/dist/cjs/Flex.js
+@@ -22,6 +22,7 @@ var __rest = (this && this.__rest) || function (s, e) {
+     return t;
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
++exports.default = Flex;
+ var jsx_runtime_1 = require("react/jsx-runtime");
+ var react_1 = require("react");
+ function toPercent(num) {
+@@ -29,17 +30,19 @@ function toPercent(num) {
+ }
+ function Flex(_a) {
+     var children = _a.children, className = _a.className, count = _a.count, direction = _a.direction, offset = _a.offset, style = _a.style, wrap = _a.wrap, otherProps = __rest(_a, ["children", "className", "count", "direction", "offset", "style", "wrap"]);
+-    return ((0, jsx_runtime_1.jsx)("div", __assign({ className: className, style: __assign({ display: 'flex', flexDirection: direction, flexWrap: wrap ? 'wrap' : 'nowrap' }, style) }, otherProps, { children: react_1.Children.map(children, function (child, index) {
++    return ((0, jsx_runtime_1.jsx)("ul", __assign({ className: className, style: __assign({ display: "flex", flexDirection: direction, flexWrap: wrap ? "wrap" : "nowrap", margin: 0, padding: 0 }, style) }, otherProps, { children: react_1.Children.map(children, function (child, index) {
+             var marginInlineStart = offset && index === 0 ? toPercent((100 * offset) / count) : null;
+-            return (0, react_1.cloneElement)(child, __assign(__assign({}, child.props), { style: {
++            return ((0, jsx_runtime_1.jsx)("li", { style: {
++                    display: "flex",
+                     flexBasis: toPercent(100 / count),
+                     flexShrink: 0,
+                     flexGrow: 0,
+-                    overflow: 'hidden',
+-                    marginLeft: marginInlineStart,
+-                    marginInlineStart: marginInlineStart,
++                    overflow: "hidden",
++                    marginLeft: marginInlineStart || undefined,
++                    marginInlineStart: marginInlineStart || undefined,
+                     marginInlineEnd: 0,
+-                } }));
++                }, children: (0, react_1.cloneElement)(child, __assign(__assign({}, child.props), { style: {
++                        flex: 1,
++                    } })) }));
+         }) })));
+ }
+-exports.default = Flex;
+diff --git a/dist/cjs/Tile.js b/dist/cjs/Tile.js
+index 9ac2a40c40f481e39f6cff63303cd585b9cd27cf..aa80689981506d1ead436f2f4929243d2b8f77b4 100644
+--- a/dist/cjs/Tile.js
++++ b/dist/cjs/Tile.js
+@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
+     return (mod && mod.__esModule) ? mod : { "default": mod };
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
++exports.default = Tile;
+ var jsx_runtime_1 = require("react/jsx-runtime");
+ var react_1 = require("react");
+ var clsx_1 = __importDefault(require("clsx"));
+@@ -10,14 +11,17 @@ function Tile(props) {
+     var activeStartDate = props.activeStartDate, children = props.children, classes = props.classes, date = props.date, formatAbbr = props.formatAbbr, locale = props.locale, maxDate = props.maxDate, maxDateTransform = props.maxDateTransform, minDate = props.minDate, minDateTransform = props.minDateTransform, onClick = props.onClick, onMouseOver = props.onMouseOver, style = props.style, tileClassNameProps = props.tileClassName, tileContentProps = props.tileContent, tileDisabled = props.tileDisabled, view = props.view;
+     var tileClassName = (0, react_1.useMemo)(function () {
+         var args = { activeStartDate: activeStartDate, date: date, view: view };
+-        return typeof tileClassNameProps === 'function' ? tileClassNameProps(args) : tileClassNameProps;
++        return typeof tileClassNameProps === "function"
++            ? tileClassNameProps(args)
++            : tileClassNameProps;
+     }, [activeStartDate, date, tileClassNameProps, view]);
+     var tileContent = (0, react_1.useMemo)(function () {
+         var args = { activeStartDate: activeStartDate, date: date, view: view };
+-        return typeof tileContentProps === 'function' ? tileContentProps(args) : tileContentProps;
++        return typeof tileContentProps === "function"
++            ? tileContentProps(args)
++            : tileContentProps;
+     }, [activeStartDate, date, tileContentProps, view]);
+     return ((0, jsx_runtime_1.jsxs)("button", { className: (0, clsx_1.default)(classes, tileClassName), disabled: (minDate && minDateTransform(minDate) > date) ||
+             (maxDate && maxDateTransform(maxDate) < date) ||
+-            (tileDisabled && tileDisabled({ activeStartDate: activeStartDate, date: date, view: view })), onClick: onClick ? function (event) { return onClick(date, event); } : undefined, onFocus: onMouseOver ? function () { return onMouseOver(date); } : undefined, onMouseOver: onMouseOver ? function () { return onMouseOver(date); } : undefined, style: style, type: "button", children: [formatAbbr ? (0, jsx_runtime_1.jsx)("abbr", { "aria-label": formatAbbr(locale, date), children: children }) : children, tileContent] }));
++            (tileDisabled && tileDisabled({ activeStartDate: activeStartDate, date: date, view: view })), onClick: onClick ? function (event) { return onClick(date, event); } : undefined, onFocus: onMouseOver ? function () { return onMouseOver(date); } : undefined, onMouseOver: onMouseOver ? function () { return onMouseOver(date); } : undefined, style: style, type: "button", "aria-pressed": !!(classes === null || classes === void 0 ? void 0 : classes.find(function (classString) { return classString.indexOf("--active") != -1 || classString.indexOf("--hasActive") != -1; })), children: [formatAbbr ? ((0, jsx_runtime_1.jsx)("abbr", { "aria-label": formatAbbr(locale, date), children: children })) : (children), tileContent] }));
+ }
+-exports.default = Tile;
+diff --git a/dist/esm/Flex.js b/dist/esm/Flex.js
+index 8bcaa1df7a2ac247efa7ede07586a4358fbf82f8..323e6ec20b71378eaf59fcf1c7cbdf9b499f0487 100644
+--- a/dist/esm/Flex.js
++++ b/dist/esm/Flex.js
+@@ -21,22 +21,25 @@ var __rest = (this && this.__rest) || function (s, e) {
+     return t;
+ };
+ import { jsx as _jsx } from "react/jsx-runtime";
+-import { Children, cloneElement } from 'react';
++import { Children, cloneElement } from "react";
+ function toPercent(num) {
+     return "".concat(num, "%");
+ }
+ export default function Flex(_a) {
+     var children = _a.children, className = _a.className, count = _a.count, direction = _a.direction, offset = _a.offset, style = _a.style, wrap = _a.wrap, otherProps = __rest(_a, ["children", "className", "count", "direction", "offset", "style", "wrap"]);
+-    return (_jsx("div", __assign({ className: className, style: __assign({ display: 'flex', flexDirection: direction, flexWrap: wrap ? 'wrap' : 'nowrap' }, style) }, otherProps, { children: Children.map(children, function (child, index) {
++    return (_jsx("ul", __assign({ className: className, style: __assign({ display: "flex", flexDirection: direction, flexWrap: wrap ? "wrap" : "nowrap", margin: 0, padding: 0 }, style) }, otherProps, { children: Children.map(children, function (child, index) {
+             var marginInlineStart = offset && index === 0 ? toPercent((100 * offset) / count) : null;
+-            return cloneElement(child, __assign(__assign({}, child.props), { style: {
++            return (_jsx("li", { style: {
++                    display: "flex",
+                     flexBasis: toPercent(100 / count),
+                     flexShrink: 0,
+                     flexGrow: 0,
+-                    overflow: 'hidden',
+-                    marginLeft: marginInlineStart,
+-                    marginInlineStart: marginInlineStart,
++                    overflow: "hidden",
++                    marginLeft: marginInlineStart || undefined,
++                    marginInlineStart: marginInlineStart || undefined,
+                     marginInlineEnd: 0,
+-                } }));
++                }, children: cloneElement(child, __assign(__assign({}, child.props), { style: {
++                        flex: 1,
++                    } })) }));
+         }) })));
+ }
+diff --git a/dist/esm/Tile.js b/dist/esm/Tile.js
+index d460d70e6c95309407b3113c0029a248761c668a..a0d9a74fceb6a5c64e26859174bc333a8dac18a0 100644
+--- a/dist/esm/Tile.js
++++ b/dist/esm/Tile.js
+@@ -1,17 +1,21 @@
+ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+-import { useMemo } from 'react';
+-import clsx from 'clsx';
++import { useMemo } from "react";
++import clsx from "clsx";
+ export default function Tile(props) {
+     var activeStartDate = props.activeStartDate, children = props.children, classes = props.classes, date = props.date, formatAbbr = props.formatAbbr, locale = props.locale, maxDate = props.maxDate, maxDateTransform = props.maxDateTransform, minDate = props.minDate, minDateTransform = props.minDateTransform, onClick = props.onClick, onMouseOver = props.onMouseOver, style = props.style, tileClassNameProps = props.tileClassName, tileContentProps = props.tileContent, tileDisabled = props.tileDisabled, view = props.view;
+     var tileClassName = useMemo(function () {
+         var args = { activeStartDate: activeStartDate, date: date, view: view };
+-        return typeof tileClassNameProps === 'function' ? tileClassNameProps(args) : tileClassNameProps;
++        return typeof tileClassNameProps === "function"
++            ? tileClassNameProps(args)
++            : tileClassNameProps;
+     }, [activeStartDate, date, tileClassNameProps, view]);
+     var tileContent = useMemo(function () {
+         var args = { activeStartDate: activeStartDate, date: date, view: view };
+-        return typeof tileContentProps === 'function' ? tileContentProps(args) : tileContentProps;
++        return typeof tileContentProps === "function"
++            ? tileContentProps(args)
++            : tileContentProps;
+     }, [activeStartDate, date, tileContentProps, view]);
+     return (_jsxs("button", { className: clsx(classes, tileClassName), disabled: (minDate && minDateTransform(minDate) > date) ||
+             (maxDate && maxDateTransform(maxDate) < date) ||
+-            (tileDisabled && tileDisabled({ activeStartDate: activeStartDate, date: date, view: view })), onClick: onClick ? function (event) { return onClick(date, event); } : undefined, onFocus: onMouseOver ? function () { return onMouseOver(date); } : undefined, onMouseOver: onMouseOver ? function () { return onMouseOver(date); } : undefined, style: style, type: "button", children: [formatAbbr ? _jsx("abbr", { "aria-label": formatAbbr(locale, date), children: children }) : children, tileContent] }));
++            (tileDisabled && tileDisabled({ activeStartDate: activeStartDate, date: date, view: view })), onClick: onClick ? function (event) { return onClick(date, event); } : undefined, onFocus: onMouseOver ? function () { return onMouseOver(date); } : undefined, onMouseOver: onMouseOver ? function () { return onMouseOver(date); } : undefined, style: style, type: "button", "aria-pressed": !!(classes === null || classes === void 0 ? void 0 : classes.find(function (classString) { return classString.indexOf("--active") != -1 || classString.indexOf("--hasActive") != -1; })), children: [formatAbbr ? (_jsx("abbr", { "aria-label": formatAbbr(locale, date), children: children })) : (children), tileContent] }));
+ }
+diff --git a/src/Flex.tsx b/src/Flex.tsx
+index 3a2a22732018e272251e008a8e94cd87ce52ba3c..362c27b101940386e5c531a5a0de4cec5748b733 100644
+--- a/src/Flex.tsx
++++ b/src/Flex.tsx
+@@ -1,11 +1,11 @@
+-import { Children, cloneElement } from 'react';
++import { Children, cloneElement } from "react";
+ 
+-type FlexProps = React.HTMLAttributes<HTMLDivElement> & {
++type FlexProps = React.HTMLAttributes<HTMLUListElement> & {
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   children: React.ReactElement<any>[];
+   className?: string;
+   count: number;
+-  direction?: 'row' | 'column';
++  direction?: "row" | "column";
+   offset?: number;
+   style?: React.CSSProperties;
+   wrap?: boolean;
+@@ -26,32 +26,44 @@ export default function Flex({
+   ...otherProps
+ }: FlexProps) {
+   return (
+-    <div
++    <ul
+       className={className}
+       style={{
+-        display: 'flex',
++        display: "flex",
+         flexDirection: direction,
+-        flexWrap: wrap ? 'wrap' : 'nowrap',
++        flexWrap: wrap ? "wrap" : "nowrap",
++        margin: 0,
++        padding: 0,
+         ...style,
+       }}
+       {...otherProps}
+     >
+       {Children.map(children, (child, index) => {
+-        const marginInlineStart = offset && index === 0 ? toPercent((100 * offset) / count) : null;
++        const marginInlineStart =
++          offset && index === 0 ? toPercent((100 * offset) / count) : null;
+ 
+-        return cloneElement(child, {
+-          ...child.props,
+-          style: {
+-            flexBasis: toPercent(100 / count),
+-            flexShrink: 0,
+-            flexGrow: 0,
+-            overflow: 'hidden',
+-            marginLeft: marginInlineStart,
+-            marginInlineStart: marginInlineStart,
+-            marginInlineEnd: 0,
+-          },
+-        });
++        return (
++          <li
++            style={{
++              display: "flex",
++              flexBasis: toPercent(100 / count),
++              flexShrink: 0,
++              flexGrow: 0,
++              overflow: "hidden",
++              marginLeft: marginInlineStart || undefined,
++              marginInlineStart: marginInlineStart || undefined,
++              marginInlineEnd: 0,
++            }}
++          >
++            {cloneElement(child, {
++              ...child.props,
++              style: {
++                flex: 1,
++              },
++            })}
++          </li>
++        );
+       })}
+-    </div>
++    </ul>
+   );
+ }
+diff --git a/src/Tile.tsx b/src/Tile.tsx
+index 8b2683caa6d1f8f0c733947282a3c45d1b2aae4c..0843011d09784114aff51f335f2b23c86c7ce855 100644
+--- a/src/Tile.tsx
++++ b/src/Tile.tsx
+@@ -1,5 +1,5 @@
+-import { useMemo } from 'react';
+-import clsx from 'clsx';
++import { useMemo } from "react";
++import clsx from "clsx";
+ 
+ import type {
+   ClassName,
+@@ -7,7 +7,7 @@ import type {
+   TileContentFunc,
+   TileDisabledFunc,
+   View,
+-} from './shared/types.js';
++} from "./shared/types.js";
+ 
+ type TileProps = {
+   /**
+@@ -98,13 +98,17 @@ export default function Tile(props: TileProps) {
+   const tileClassName = useMemo(() => {
+     const args = { activeStartDate, date, view };
+ 
+-    return typeof tileClassNameProps === 'function' ? tileClassNameProps(args) : tileClassNameProps;
++    return typeof tileClassNameProps === "function"
++      ? tileClassNameProps(args)
++      : tileClassNameProps;
+   }, [activeStartDate, date, tileClassNameProps, view]);
+ 
+   const tileContent = useMemo(() => {
+     const args = { activeStartDate, date, view };
+ 
+-    return typeof tileContentProps === 'function' ? tileContentProps(args) : tileContentProps;
++    return typeof tileContentProps === "function"
++      ? tileContentProps(args)
++      : tileContentProps;
+   }, [activeStartDate, date, tileContentProps, view]);
+ 
+   return (
+@@ -120,8 +124,15 @@ export default function Tile(props: TileProps) {
+       onMouseOver={onMouseOver ? () => onMouseOver(date) : undefined}
+       style={style}
+       type="button"
++      aria-pressed={
++        !!classes?.find((classString) => classString.indexOf("--active") != -1 || classString.indexOf("--hasActive") != -1)
++      }
+     >
+-      {formatAbbr ? <abbr aria-label={formatAbbr(locale, date)}>{children}</abbr> : children}
++      {formatAbbr ? (
++        <abbr aria-label={formatAbbr(locale, date)}>{children}</abbr>
++      ) : (
++        children
++      )}
+       {tileContent}
+     </button>
+   );
