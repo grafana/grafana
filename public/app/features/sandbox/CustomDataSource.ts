@@ -1,7 +1,17 @@
-import { DataQuery, DataQueryRequest, DataQueryResponse, LoadingState, TestDataSourceResponse } from '@grafana/data';
+import { map, Observable } from 'rxjs';
+
+import {
+  CircularDataFrame,
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
+  FieldType,
+  LoadingState,
+  TestDataSourceResponse,
+} from '@grafana/data';
 import { RuntimeDataSource } from '@grafana/scenes';
 
-import { ExtensionsLog } from '../plugins/extensions/log';
+import { ExtensionsLog, LogItem } from '../plugins/extensions/log';
 
 export class MyCustomDS extends RuntimeDataSource {
   extensionsLog: ExtensionsLog;
@@ -13,32 +23,37 @@ export class MyCustomDS extends RuntimeDataSource {
     this.extensionsLog = new ExtensionsLog();
   }
 
-  query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
-    return Promise.resolve({
-      state: LoadingState.Done,
-      data: [
-        {
-          name: 'infra Stats',
-          fields: [
-            {
-              name: 'started',
-              type: 'time',
-              values: [1635319376502, 1635319376502, 1635319796502, 1635319796502],
-            },
-            {
-              name: 'server',
-              type: 'string',
-              values: ['Server A started', 'Server B started', 'Server A shutdown', 'Server B shutdown'],
-            },
-            {
-              name: 'level',
-              type: 'string',
-              values: ['info', 'info', 'error', 'warn'],
-            },
-          ],
-        },
-      ],
+  query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
+    const [query] = request.targets;
+    const frame = new CircularDataFrame({
+      append: 'tail',
+      capacity: 1000,
     });
+
+    frame.refId = query.refId;
+    frame.addField({ name: 'time', type: FieldType.time });
+    frame.addField({ name: 'body', type: FieldType.string });
+    frame.addField({ name: 'severity', type: FieldType.string });
+    frame.addField({ name: 'id', type: FieldType.string });
+    frame.addField({ name: 'labels', type: FieldType.other });
+
+    return this.extensionsLog.asObservable().pipe(
+      map((item: LogItem) => {
+        frame.add({
+          time: item.ts,
+          body: item.message,
+          severity: String(item.level),
+          id: item.id,
+          labels: JSON.stringify(item.obj),
+        });
+
+        return {
+          data: [frame],
+          key: query.refId,
+          state: LoadingState.Streaming,
+        };
+      })
+    );
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {

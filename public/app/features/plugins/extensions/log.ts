@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid';
 import { Observable, ReplaySubject } from 'rxjs';
 
 enum LogLevel {
@@ -12,7 +13,9 @@ enum LogLevel {
 export type LogItem = {
   level: LogLevel;
   ts: number;
-  obj: LogEntry;
+  obj: Record<string, unknown>;
+  message: string;
+  id: string;
 };
 
 type LogEntry = string;
@@ -58,8 +61,10 @@ export class ExtensionsLog {
   private log(level: LogLevel, entry: LogEntry): void {
     const item: LogItem = {
       level: level,
-      obj: entry,
+      obj: {},
       ts: Date.now(),
+      id: nanoid(),
+      message: entry,
     };
 
     this.channel.postMessage(item);

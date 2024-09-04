@@ -29,7 +29,7 @@ const getScene = () => {
   const queryRunner = new SceneQueryRunner({
     datasource: DATASOURCE_REF,
     queries: [{ refId: 'C', datasource: { uid: 'my-custom-ds-uid' }, expr: '<my prometheus query>' }],
-    maxDataPoints: 100,
+    maxDataPoints: 1000,
   });
 
   return new EmbeddedScene({
@@ -56,7 +56,9 @@ const getScene = () => {
 };
 
 // Important to specify a unique pluginId and uid for your data source that is unlikely to confict with any other scene app plugin.
-sceneUtils.registerRuntimeDataSource({ dataSource: new MyCustomDS('my-custom-ds', 'my-custom-ds-uid') });
+sceneUtils.registerRuntimeDataSource({
+  dataSource: new MyCustomDS('my-custom-ds-uid', 'my-custom-ds'),
+});
 
 export function Logs() {
   const scene = useMemo(() => getScene(), []);
