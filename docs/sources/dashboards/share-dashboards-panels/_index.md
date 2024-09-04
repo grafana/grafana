@@ -190,7 +190,7 @@ To delete existing snapshots, follow these steps:
 
 The snapshot is immediately deleted. You might need to clear your browser cache or use a private or incognito browser to confirm this.
 
-## Export dashboards {#export-a-dashboard}
+## Export dashboards
 
 In addition to sharing dashboards as links, reports, and snapshots, you can export them as PDFs or JSON files.
 
