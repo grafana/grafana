@@ -81,8 +81,9 @@ To set up email integration, complete the following steps.
    An incorrect entry is: ExampleAddress@domain.com
 
    A correct entry is: exampleaddress@domain.com
-2. Click **Test** to check that your integration works.
-3. Click **Save contact point**.
+
+1. Click **Test** to check that your integration works.
+1. Click **Save contact point**.
 
 ## Next steps
 
