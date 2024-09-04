@@ -97,6 +97,8 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
           registry[extensionPointId] = [];
         }
 
+        pointIdLog.info(`Registered added link with id '${extensionPointId}'`);
+
         registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
       }
     }
