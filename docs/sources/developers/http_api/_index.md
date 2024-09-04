@@ -29,38 +29,9 @@ Starting from version 9.1, there is also a [OpenAPI v3 specification](https://ed
 
 Users can browser and try out both via the Swagger UI editor (served by the grafana server) by navigating to `/swagger-ui`.
 
-## Authenticating API requests
+## Authenticate API requests
 
-You can authenticate requests using basic auth, a service account token or a session cookie (acquired using regular login or OAuth).
-
-### Basic Auth
-
-If basic auth is enabled (it is enabled by default), then you can authenticate your HTTP request via
-standard basic auth. Basic auth will also authenticate LDAP users.
-
-curl example:
-
-```bash
-curl http://admin:admin@localhost:3000/api/org
-{"id":1,"name":"Main Org."}
-```
-
-### Service Account Token
-
-To create a service account token, click on **Administration** in the left-side menu, click **Users and access**, then **Service Accounts**.
-For more information on how to use service account tokens, refer to the [Service Accounts]({{< relref "../../administration/service-accounts/" >}}) documentation.
-
-You use the token in all requests in the `Authorization` header, like this:
-
-**Example**:
-
-```http
-GET http://your.grafana.com/api/dashboards/db/mydash HTTP/1.1
-Accept: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
-
-The `Authorization` header value should be `Bearer <your service account token>`.
+{{< docs/shared lookup="developers/authentication.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## X-Grafana-Org-Id Header
 
