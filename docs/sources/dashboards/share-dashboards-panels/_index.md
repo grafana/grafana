@@ -231,7 +231,6 @@ You can share a panels in the following ways:
 - [Internally with a link](#share-an-internal-link)
 - [As an embed](#share-an-embed)
 - [As a snapshot](#panel-snapshot)
-- [As a library panel](#share-a-library-panel)
 
 {{< admonition type="note" >}}
 If you change a panel, ensure that you save the changes before sharing.
@@ -348,18 +347,3 @@ To delete existing snapshots, follow these steps:
 1. Click the red **x** next to the snapshot URL that you want to delete.
 
 The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
-
-### Share a library panel
-
-Library panels can be reused in different dashboards throughout Grafana. To create a library panel, follow these steps:
-
-1. In the top-right corner of the dashboard, click **Edit**.
-1. Hover over any part of the panel you want to share to display the actions menu on the top right corner.
-1. Click **More > New library panel**.
-1. In the **Library panel name** field, enter the name.
-1. In the **Save in folder** drop-down list, select the folder in which to save the library panel. By default, the root level is selected.
-1. Click **Create library panel** to save your changes.
-1. Click **Save dashboard**.
-1. (Optional) Enter a description of the changes you've made.
-1. Click **Save**.
-1. Click **Exit edit**.
