@@ -10,7 +10,7 @@ import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 import { Loader } from 'app/features/plugins/admin/components/Loader';
-import { LdapPayload, StoreState } from 'app/types';
+import { LdapPayload, MapKeyCertConfigured, StoreState } from 'app/types';
 
 import { LdapDrawerComponent } from './LdapDrawer';
 
@@ -44,7 +44,9 @@ const emptySettings: LdapPayload = {
           bind_dn: '',
           bind_password: '',
           client_cert: '',
+          client_cert_value: '',
           client_key: '',
+          client_key_value: '',
           group_mappings: [],
           group_search_base_dns: [],
           group_search_filter: '',
@@ -53,6 +55,7 @@ const emptySettings: LdapPayload = {
           min_tls_version: '',
           port: 389,
           root_ca_cert: '',
+          root_ca_cert_value: [],
           search_base_dns: [],
           search_filter: '',
           skip_org_role_sync: false,
@@ -75,6 +78,17 @@ export const LdapSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
+  const [mapKeyCertConfigured, setMapKeyCertConfigured] = useState<MapKeyCertConfigured>({
+    // values
+    rootCaCertValue: false,
+    clientCertValue: false,
+    clientKeyCertValue: false,
+    // paths
+    rootCaCertPath: false,
+    clientCertPath: false,
+    clientKeyCertPath: false,
+  });
+
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
   const { getValues, handleSubmit, register, reset } = methods;
 
@@ -90,6 +104,16 @@ export const LdapSettingsPage = () => {
         });
         return;
       }
+
+      const serverConfig = payload.settings.config.servers[0];
+      setMapKeyCertConfigured({
+        rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
+        clientCertValue: serverConfig.client_cert_value !== '',
+        clientKeyCertValue: serverConfig.client_key_value !== '',
+        rootCaCertPath: serverConfig.root_ca_cert !== '',
+        clientCertPath: serverConfig.client_cert !== '',
+        clientKeyCertPath: serverConfig.client_key !== '',
+      });
 
       reset(payload);
       setIsLoading(false);
@@ -300,7 +324,13 @@ export const LdapSettingsPage = () => {
                 </Box>
               </section>
             )}
-            {isDrawerOpen && <LdapDrawerComponent onClose={() => setIsDrawerOpen(false)} />}
+            {isDrawerOpen && (
+              <LdapDrawerComponent
+                onClose={() => setIsDrawerOpen(false)}
+                mapKeyCertConfigured={mapKeyCertConfigured}
+                setMapKeyCertConfigured={setMapKeyCertConfigured}
+              />
+            )}
           </form>
         </FormProvider>
       </Page.Contents>
