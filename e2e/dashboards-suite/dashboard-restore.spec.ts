@@ -23,6 +23,7 @@ describe('Dashboard restore', () => {
     cy.contains('button', 'Restore').click();
     cy.contains('p', 'This action will restore 1 dashboard.').should('be.visible');
     e2e.pages.ConfirmModal.delete().click();
+    e2e.components.Alert.alertV2('success').contains('Dashboard E2E Test - Restore Dashboard restored').should('exist');
 
     // Dashboard should appear in Browse
     e2e.pages.Dashboards.visit();
@@ -37,6 +38,7 @@ describe('Dashboard restore', () => {
     cy.contains('button', 'Delete permanently').click();
     cy.contains('p', 'This action will delete 1 dashboard.').should('be.visible');
     e2e.flows.confirmDelete();
+    e2e.components.Alert.alertV2('success').contains('Dashboard E2E Test - Restore Dashboard deleted').should('exist');
 
     // Dashboard should not appear in Recently Deleted or Browse
     e2e.pages.Search.table.row('E2E Test - Restore Dashboard').should('not.exist');
@@ -51,5 +53,8 @@ const deleteDashboard = () => {
 
   cy.contains('button', 'Delete').click();
   e2e.flows.confirmDelete();
+  e2e.components.Alert.alertV2('success')
+    .contains('Dashboard E2E Test - Restore Dashboard moved to Recently deleted')
+    .should('exist');
   e2e.pages.BrowseDashboards.table.row('E2E Test - Restore Dashboard').should('not.exist');
 };
