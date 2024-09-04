@@ -35,7 +35,7 @@ export class MyCustomDS extends RuntimeDataSource {
     frame.addField({ name: 'body', type: FieldType.string });
     frame.addField({ name: 'severity', type: FieldType.string });
     frame.addField({ name: 'id', type: FieldType.string });
-    frame.addField({ name: 'labels', type: FieldType.string });
+    frame.addField({ name: 'labels', type: FieldType.other });
 
     return this.extensionsLog.asObservable().pipe(
       map((item: LogItem) => {
