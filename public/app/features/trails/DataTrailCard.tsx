@@ -55,7 +55,7 @@ export function DataTrailCard(props: Props) {
       <div className={styles.description}>
         <Stack gap={1.5} wrap="wrap">
           {filters.map((f) => (
-            <Tag key={f.key} name={truncateLongLabels(f)} colorIndex={12} />
+            <Tag key={f.key} name={`${f.key}: ${f.value}`} colorIndex={12} />
           ))}
         </Stack>
       </div>
@@ -106,6 +106,9 @@ function getStyles(theme: GrafanaTheme2) {
       margin: theme.spacing(1, 0, 0),
       color: theme.colors.text.secondary,
       lineHeight: theme.typography.body.lineHeight,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
     actions: css({
       marginRight: theme.spacing(1),
@@ -115,13 +118,4 @@ function getStyles(theme: GrafanaTheme2) {
       overflowWrap: 'anywhere',
     }),
   };
-}
-
-function truncateLongLabels(filter: { key: string; value: string }, maxlength?: number, suffix?: string) {
-  suffix = suffix ?? '...';
-  maxlength = maxlength ?? 80;
-
-  const label = `${filter.key}: ${filter.value}`;
-
-  return label.slice(0, maxlength) + suffix;
 }
