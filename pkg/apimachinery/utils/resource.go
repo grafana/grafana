@@ -8,7 +8,6 @@ import (
 )
 
 // ResourceInfo helps define a k8s resource
-// +k8s:openapi-gen=false
 type ResourceInfo struct {
 	group        string
 	version      string
