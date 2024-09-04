@@ -113,7 +113,7 @@ export const SuggestionsInput = ({
       if (x[startPos - 1] === '$') {
         input.value = x.slice(0, startPos) + item.value + x.slice(curPos);
       } else {
-        input.value = x.slice(0, startPos) + '$' + item.value + x.slice(curPos);
+        input.value = x.slice(0, startPos) + '$' + `{${item.value}}` + x.slice(curPos);
       }
 
       setVariableValue(input.value);
