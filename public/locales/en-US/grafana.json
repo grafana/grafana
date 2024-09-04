@@ -922,6 +922,11 @@
   "folder-picker": {
     "loading": "Loading folders..."
   },
+  "gen-ai": {
+    "apply-suggestion": "Apply",
+    "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
+    "send-custom-feedback": "Send"
+  },
   "grafana-ui": {
     "drawer": {
       "close": "Close"
