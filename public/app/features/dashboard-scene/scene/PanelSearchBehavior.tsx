@@ -27,7 +27,27 @@ export class PanelSearchBehavior extends SceneObjectBase<SceneObjectState> {
   constructor() {
     super({});
 
-    this.addActivationHandler(this.onReferencedVariableValueChanged.bind(this));
+    this.addActivationHandler(this._activationHandler.bind(this));
+  }
+
+  private _activationHandler() {
+    if (!(this.parent instanceof DashboardScene)) {
+      console.error('Parent is not a DashboardScene');
+      return;
+    }
+
+    this.onReferencedVariableValueChanged();
+
+    this._subs.add(
+      this.parent.subscribeToState((newState, oldState) => {
+        if (newState.editPanel && !oldState.editPanel) {
+          // Restore layout when entering panel edit
+          this.restoreLayout();
+        } else if (!newState.editPanel && oldState.editPanel) {
+          this.onReferencedVariableValueChanged();
+        }
+      })
+    );
   }
 
   private onReferencedVariableValueChanged() {
@@ -103,17 +123,31 @@ export class PanelSearchBehavior extends SceneObjectBase<SceneObjectState> {
 
       sceneGridLayout.setState({ children: filteredChildren });
     } else if ((!panelFilterValue || panelFilterValue === '') && (!rowSizeVal || rowSizeVal === '')) {
-      // Restore saved layout
-      if (this.savedChildren && this.savedPositions) {
-        this.savedChildren.forEach((child, i) => {
-          child.setState({ ...this.savedPositions![i] });
-        });
-        sceneGridLayout.setState({
-          children: this.savedChildren,
-        });
-        this.savedPositions = undefined;
-        this.savedChildren = undefined;
-      }
+      this.restoreLayout();
+    }
+  }
+
+  private restoreLayout() {
+    if (!(this.parent instanceof DashboardScene)) {
+      console.error('Parent is not a DashboardScene');
+      return;
+    }
+
+    const sceneGridLayout = this.parent.state.body;
+    if (!(sceneGridLayout instanceof SceneGridLayout)) {
+      console.error('Scene body is not SceneGridLayout');
+      return;
+    }
+
+    if (this.savedChildren && this.savedPositions) {
+      this.savedChildren.forEach((child, i) => {
+        child.setState({ ...this.savedPositions![i] });
+      });
+      sceneGridLayout.setState({
+        children: this.savedChildren,
+      });
+      this.savedPositions = undefined;
+      this.savedChildren = undefined;
     }
   }
 }
