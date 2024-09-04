@@ -289,6 +289,7 @@ To create a panel that can be embedded, follow these steps:
 
 1. (Optional) Toggle the **Lock time range** switch to set whether the panel uses the current relative time range or an absolute time range. This option is enabled by default.
 1. Select the theme for the dashboard. Choose from **Current**, **Dark**, or **Light**.
+1. (Optional) Make any changes to the HTML that you need.
 1. Click **Copy to clipboard**.
 1. Paste the HTML code into your website code.
 1. Click the **X** at the top-right corner to close the share drawer.
