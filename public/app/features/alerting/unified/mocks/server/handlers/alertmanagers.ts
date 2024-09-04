@@ -12,8 +12,37 @@ export const grafanaAlertingConfigurationStatusHandler = (
   response = defaultGrafanaAlertingConfigurationStatusResponse
 ) => http.get('/api/v1/ngalert', () => HttpResponse.json(response));
 
+const getInvalidMatcher = (matchers: string[]) => {
+  return matchers.find((matcher) => {
+    const split = matcher.split('=');
+    try {
+      // Try and parse as JSON, as this will fail if
+      // we've failed to wrap the label value in quotes
+      // (e.g. `foo space` can't be parsed, but `"foo space"` can)
+      JSON.parse(split[0]);
+      return false;
+    } catch (e) {
+      return true;
+    }
+  });
+};
+
 export const alertmanagerAlertsListHandler = () =>
-  http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ params }) => {
+  http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ params, request }) => {
+    const matchers = new URL(request.url).searchParams.getAll('filter');
+
+    const invalidMatcher = getInvalidMatcher(matchers);
+
+    if (invalidMatcher) {
+      return HttpResponse.json(
+        {
+          message: `bad matcher format: ${invalidMatcher}: unable to retrieve alerts`,
+          traceID: '',
+        },
+        { status: 400 }
+      );
+    }
+
     if (params.datasourceUid === MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER) {
       return HttpResponse.json({ traceId: '' }, { status: 502 });
     }
@@ -35,7 +64,7 @@ export const getGrafanaAlertmanagerConfigHandler = (config: AlertManagerCortexCo
 export const getAlertmanagerConfigHandler = (config: AlertManagerCortexConfig = alertmanagerConfigMock) =>
   http.get('/api/alertmanager/:name/config/api/v1/alerts', () => HttpResponse.json(config));
 
-const alertmanagerUpdateError = HttpResponse.json({ message: 'bad request' }, { status: 400 });
+export const ALERTMANAGER_UPDATE_ERROR_RESPONSE = HttpResponse.json({ message: 'bad request' }, { status: 400 });
 
 /** Perform some basic validation on the config that we expect the backend to also do */
 const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
@@ -46,27 +75,28 @@ const validateGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => 
   const intervalsByName = new Set(intervals.map((interval) => interval.name));
   const duplicatedIntervals = intervalsByName.size !== intervals.length;
 
+  let routesReferencingMissingMuteTimings = false;
+
   if (route) {
-    const routesReferencingMissingMuteTimings = Boolean(
+    routesReferencingMissingMuteTimings = Boolean(
       route.routes?.find((route) => {
         return route.mute_time_intervals?.some((name) => !intervalsByName.has(name));
       })
     );
-
-    if (routesReferencingMissingMuteTimings) {
-      return alertmanagerUpdateError;
-    }
   }
 
-  if (duplicatedIntervals) {
-    return alertmanagerUpdateError;
+  if (routesReferencingMissingMuteTimings || duplicatedIntervals) {
+    return ALERTMANAGER_UPDATE_ERROR_RESPONSE;
   }
 
   return null;
 };
 
-const updateGrafanaAlertmanagerConfigHandler = () =>
+export const updateGrafanaAlertmanagerConfigHandler = (responseOverride?: typeof ALERTMANAGER_UPDATE_ERROR_RESPONSE) =>
   http.post('/api/alertmanager/grafana/config/api/v1/alerts', async ({ request }) => {
+    if (responseOverride) {
+      return responseOverride;
+    }
     const body: AlertManagerCortexConfig = await request.clone().json();
     const potentialError = validateGrafanaAlertmanagerConfig(body);
     return potentialError ? potentialError : HttpResponse.json({ message: 'configuration created' });
