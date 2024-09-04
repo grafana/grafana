@@ -1,8 +1,21 @@
-package identity
+package iam
 
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -12,20 +25,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/serviceaccount"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/sso"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/team"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/user"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAPIBuilder)(nil)
