@@ -58,8 +58,8 @@ jobs:
           source: 'public/locales/en-US/grafana.json'
           translation: 'public/locales/%locale%/%original_file_name%'
           # Magic details of the github-actions bot user, to pass CLA checks
-          # github_user_name: "github-actions[bot]"
-          # github_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          github_user_name: "github-actions[bot]"
+          github_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
