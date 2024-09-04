@@ -59,7 +59,7 @@ export const submitAddToQueryLibrary = async ({ description }: { description: st
   const input = within(screen.getByRole('dialog')).getByLabelText('Description');
   await userEvent.type(input, description);
   const saveButton = screen.getByRole('button', {
-    name: /save/i,
+    name: /^save$/i,
   });
   await userEvent.click(saveButton);
 };

@@ -1,7 +1,9 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
-import { ComponentProps, useMemo, useState } from 'react';
+import { ComponentProps, useEffect, useState } from 'react';
+
+import { Field } from '../Forms/Field';
 
 import { Combobox, Option, Value } from './Combobox';
 
@@ -15,11 +17,18 @@ const meta: Meta<PropsAndCustomArgs> = {
   args: {
     loading: undefined,
     invalid: undefined,
+    width: 30,
     placeholder: 'Select an option...',
     options: [
       { label: 'Apple', value: 'apple' },
       { label: 'Banana', value: 'banana' },
       { label: 'Carrot', value: 'carrot' },
+      // Long label to test overflow
+      {
+        label:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        value: 'long-text',
+      },
       { label: 'Dill', value: 'dill' },
       { label: 'Eggplant', value: 'eggplant' },
       { label: 'Fennel', value: 'fennel' },
@@ -40,14 +49,17 @@ const meta: Meta<PropsAndCustomArgs> = {
 const BasicWithState: StoryFn<typeof Combobox> = (args) => {
   const [value, setValue] = useState(args.value);
   return (
-    <Combobox
-      {...args}
-      value={value}
-      onChange={(val) => {
-        setValue(val.value);
-        action('onChange')(val);
-      }}
-    />
+    <Field label="Test input" description="Input with a few options">
+      <Combobox
+        id="test-combobox"
+        {...args}
+        value={value}
+        onChange={(val) => {
+          setValue(val?.value || null);
+          action('onChange')(val);
+        }}
+      />
+    </Field>
   );
 };
 
@@ -55,27 +67,39 @@ type Story = StoryObj<typeof Combobox>;
 
 export const Basic: Story = {};
 
-function generateOptions(amount: number): Option[] {
-  return Array.from({ length: amount }, () => ({
-    label: chance.name(),
+async function generateOptions(amount: number): Promise<Option[]> {
+  return Array.from({ length: amount }, (_, index) => ({
+    label: chance.sentence({ words: index % 5 }),
     value: chance.guid(),
-    description: chance.sentence(),
+    //description: chance.sentence(),
   }));
 }
 
-const manyOptions = generateOptions(1e5);
-manyOptions.push({ label: 'Banana', value: 'banana', description: 'A yellow fruit' });
+const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...args }) => {
+  const [value, setValue] = useState<Value | null>(null);
+  const [options, setOptions] = useState<Option[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions }) => {
-  const [value, setValue] = useState<Value>(manyOptions[5].value);
-  const options = useMemo(() => generateOptions(numberOfOptions), [numberOfOptions]);
+  useEffect(() => {
+    setTimeout(() => {
+      generateOptions(numberOfOptions).then((options) => {
+        setIsLoading(false);
+        setOptions(options);
+        setValue(options[5].value);
+        console.log("I've set stuff");
+      });
+    }, 1000);
+  }, [numberOfOptions]);
+
   return (
     <Combobox
+      {...args}
+      loading={isLoading}
       options={options}
       value={value}
-      onChange={(val) => {
-        setValue(val.value);
-        action('onChange')(val);
+      onChange={(opt) => {
+        setValue(opt?.value || null);
+        action('onChange')(opt);
       }}
     />
   );

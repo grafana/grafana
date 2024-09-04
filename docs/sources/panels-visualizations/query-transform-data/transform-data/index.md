@@ -192,8 +192,6 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
-> **Note:** **Cumulative functions** and **Window functions** modes are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `addFieldFromCalculationStatFunctions` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
-
 In the example below, we added two fields together and named them Sum.
 
 {{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" alt="A stat visualization including one field called Sum" >}}
@@ -564,8 +562,6 @@ Use this transformation to customize the output of a string field. This transfor
 - **Substring** - Returns a substring of the string, using the specified start and end positions.
 
 This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
-
-> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the `formatString` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 ### Format time
 
@@ -1426,6 +1422,27 @@ For each generated **Trend** field value, a calculation function can be selected
 {{< figure src="/static/img/docs/transformations/timeseries-table-select-stat.png" class="docs-image--no-shadow" max-width= "1100px" alt="A select box showing available statistics that can be calculated." >}}
 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify the Grafana [configuration file][] to use it.
+
+### Transpose
+
+Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
+If you have multiple types it will default to string type.
+
+**Before Transformation:**
+
+| env  | January | February |
+| ---- | ------- | -------- |
+| prod | 1       | 2        |
+| dev  | 3       | 4        |
+
+**After applying transpose transformation:**
+
+| Field    | prod | dev |
+| -------- | ---- | --- |
+| January  | 1    | 3   |
+| February | 2    | 4   |
+
+{{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-2-transpose-transformation.png" class="docs-image--no-shadow" max-width= "1100px" alt="Before and after transpose transformation" >}}
 
 ### Regression analysis
 

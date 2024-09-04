@@ -72,6 +72,7 @@ type API struct {
 	AlertRules           *provisioning.AlertRuleService
 	AlertsRouter         *sender.AlertsRouter
 	EvaluatorFactory     eval.EvaluatorFactory
+	ConditionValidator   *eval.ConditionValidator
 	FeatureManager       featuremgmt.FeatureToggles
 	Historian            Historian
 	Tracer               tracing.Tracer
@@ -120,7 +121,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexRuler(proxy, logger),
 		&RulerSrv{
-			conditionValidator: api.EvaluatorFactory,
+			conditionValidator: api.ConditionValidator,
 			QuotaService:       api.QuotaService,
 			store:              api.RuleStore,
 			provenanceStore:    api.ProvenanceStore,

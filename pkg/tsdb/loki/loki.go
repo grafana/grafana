@@ -22,16 +22,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
 type Service struct {
-	im       instancemgmt.InstanceManager
-	features featuremgmt.FeatureToggles
-	tracer   tracing.Tracer
-	logger   log.Logger
+	im     instancemgmt.InstanceManager
+	tracer tracing.Tracer
+	logger log.Logger
 }
 
 var (
@@ -40,24 +40,23 @@ var (
 	_ backend.CallResourceHandler = (*Service)(nil)
 )
 
-func ProvideService(httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
-		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
-		features: features,
-		tracer:   tracer,
-		logger:   backend.NewLoggerWith("logger", "tsdb.loki"),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		tracer: tracer,
+		logger: backend.NewLoggerWith("logger", "tsdb.loki"),
 	}
 }
 
 var (
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-)
 
-// Used in logging to mark a stage
-var (
 	stagePrepareRequest  = "prepareRequest"
 	stageDatabaseRequest = "databaseRequest"
 	stageParseResponse   = "parseResponse"
+
+	dashboardTitleHeader = "X-Dashboard-Title"
+	panelTitleHeader     = "X-Panel-Title"
 )
 
 type datasourceInfo struct {
@@ -92,6 +91,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 		if err != nil {
 			return nil, err
 		}
+		opts.ForwardHTTPHeaders = true
 
 		client, err := httpClientProvider.New(opts)
 		if err != nil {
@@ -160,11 +160,32 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	responseOpts := ResponseOpts{
-		metricDataplane: s.features.IsEnabled(ctx, featuremgmt.FlagLokiMetricDataplane),
-		logsDataplane:   s.features.IsEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
+		metricDataplane: isFeatureEnabled(ctx, featuremgmt.FlagLokiMetricDataplane),
+		logsDataplane:   isFeatureEnabled(ctx, featuremgmt.FlagLokiLogsDataplane),
 	}
 
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, s.features.IsEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), s.features.IsEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
+	if isFeatureEnabled(ctx, featuremgmt.FlagLokiSendDashboardPanelNames) {
+		s.applyHeaders(ctx, req)
+	}
+
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger, isFeatureEnabled(ctx, featuremgmt.FlagLokiRunQueriesInParallel), isFeatureEnabled(ctx, featuremgmt.FlagLokiStructuredMetadata))
+}
+
+func (s *Service) applyHeaders(ctx context.Context, req backend.ForwardHTTPHeaders) {
+	reqCtx := contexthandler.FromContext(ctx)
+	if req == nil || reqCtx == nil || reqCtx.Req == nil {
+		return
+	}
+
+	var hList = []string{dashboardTitleHeader, panelTitleHeader}
+
+	for _, hName := range hList {
+		hVal := reqCtx.Req.Header.Get(hName)
+		if hVal == "" {
+			continue
+		}
+		req.SetHTTPHeader(hName, hVal)
+	}
 }
 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger, runInParallel bool, requestStructuredMetadata bool) (*backend.QueryDataResponse, error) {
@@ -273,4 +294,8 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 	}
 
 	return instance, nil
+}
+
+func isFeatureEnabled(ctx context.Context, feature string) bool {
+	return backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(feature)
 }

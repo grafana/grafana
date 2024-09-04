@@ -68,6 +68,8 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
+  RawRecordingRules,
+  RuleQueryMapping,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 
@@ -81,7 +83,7 @@ export class PrometheusDatasource
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
 {
   type: string;
-  ruleMappings: { [index: string]: string };
+  ruleMappings: RuleQueryMapping;
   hasIncrementalQuery: boolean;
   url: string;
   id: number;
@@ -601,7 +603,7 @@ export class PrometheusDatasource
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
 
-    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
+    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map(remapOneOf).map((f) => ({
       label: f.key,
       value: f.value,
       op: f.operator,
@@ -618,7 +620,7 @@ export class PrometheusDatasource
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
-    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
+    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map(remapOneOf).map((f) => ({
       label: f.key,
       value: f.value,
       op: f.operator,
@@ -773,7 +775,7 @@ export class PrometheusDatasource
       }
       case 'EXPAND_RULES': {
         if (action.options) {
-          expression = expandRecordingRules(expression, action.options);
+          expression = expandRecordingRules(expression, action.options as any);
         }
         break;
       }
@@ -820,7 +822,7 @@ export class PrometheusDatasource
       return [];
     }
 
-    return filters.map((f) => ({
+    return filters.map(remapOneOf).map((f) => ({
       ...f,
       value: this.templateSrv.replace(f.value, {}, this.interpolateQueryExpr),
       operator: scopeFilterOperatorMap[f.operator],
@@ -832,7 +834,7 @@ export class PrometheusDatasource
       return expr;
     }
 
-    const finalQuery = filters.reduce((acc, filter) => {
+    const finalQuery = filters.map(remapOneOf).reduce((acc, filter) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -969,18 +971,22 @@ export function alignRange(
   };
 }
 
-export function extractRuleMappingFromGroups(groups: any[]) {
-  return groups.reduce(
+export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {
+  return groups.reduce<RuleQueryMapping>(
     (mapping, group) =>
       group.rules
-        .filter((rule: any) => rule.type === 'recording')
-        .reduce(
-          (acc: { [key: string]: string }, rule: any) => ({
-            ...acc,
-            [rule.name]: rule.query,
-          }),
-          mapping
-        ),
+        .filter((rule) => rule.type === 'recording')
+        .reduce((acc, rule) => {
+          // retrieve existing record
+          const existingRule = acc[rule.name] ?? [];
+          // push a new query with labels
+          existingRule.push({
+            query: rule.query,
+            labels: rule.labels,
+          });
+          acc[rule.name] = existingRule;
+          return acc;
+        }, mapping),
     {}
   );
 }
@@ -994,4 +1000,20 @@ export function prometheusRegularEscape<T>(value: T) {
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+}
+
+export function remapOneOf(filter: AdHocVariableFilter) {
+  let { operator, value, values } = filter;
+  if (operator === '=|') {
+    operator = '=~';
+    value = values?.map(prometheusRegularEscape).join('|') ?? '';
+  } else if (operator === '!=|') {
+    operator = '!~';
+    value = values?.map(prometheusRegularEscape).join('|') ?? '';
+  }
+  return {
+    ...filter,
+    operator,
+    value,
+  };
 }

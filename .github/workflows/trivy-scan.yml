@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Run Trivy vulnerability scanner (table output)
-      uses: aquasecurity/trivy-action@0.22.0
+      uses: aquasecurity/trivy-action@0.24.0
       with:
         # scan the filesystem, rather than building a Docker image prior - the
         # downside is we won't catch dependencies that are only installed in the
@@ -33,7 +33,7 @@ jobs:
         # for the PR check, ignore JS-related issues
         skip-files: 'yarn.lock,package.json'
     - name: Run Trivy vulnerability scanner (SARIF)
-      uses: aquasecurity/trivy-action@0.22.0
+      uses: aquasecurity/trivy-action@0.24.0
       with:
         scan-type: 'fs'
         scanners: 'vuln'

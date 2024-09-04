@@ -12,12 +12,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -54,7 +55,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 	canInstall := []ac.Permission{{Action: pluginaccesscontrol.ActionInstall}}
 	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
 
-	pluginID := "grafana-test-datasource"
+	pluginID := ""
 	localOrg := int64(1)
 	globalOrg := int64(ac.GlobalOrgID)
 
@@ -65,6 +66,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		pluginAdminEnabled               bool
 		pluginAdminExternalManageEnabled bool
 		singleOrganization               bool
+		preInstalledPlugin               bool
 	}
 	tcs := []testCase{
 		{expectedCode: http.StatusNotFound, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true},
@@ -75,6 +77,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 		{expectedCode: http.StatusForbidden, permissionOrg: localOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false},
 		{expectedCode: http.StatusForbidden, permissionOrg: localOrg, permissions: cannotInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, singleOrganization: true},
 		{expectedCode: http.StatusOK, permissionOrg: localOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, singleOrganization: true},
+		{expectedCode: http.StatusConflict, permissionOrg: globalOrg, permissions: canInstall, pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, preInstalledPlugin: true},
 	}
 
 	testName := func(action string, tc testCase) string {
@@ -83,11 +86,16 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
+		pluginID = "grafana-test-datasource"
+		if tc.preInstalledPlugin {
+			pluginID = "grafana-preinstalled-datasource"
+		}
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = setting.NewCfg()
 			hs.Cfg.PluginAdminEnabled = tc.pluginAdminEnabled
 			hs.Cfg.PluginAdminExternalManageEnabled = tc.pluginAdminExternalManageEnabled
-			hs.Cfg.RBACSingleOrganization = tc.singleOrganization
+			hs.Cfg.RBAC.SingleOrganization = tc.singleOrganization
+			hs.Cfg.PreinstallPlugins = []setting.InstallPlugin{{ID: "grafana-preinstalled-datasource", Version: "1.0.0"}}
 
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 			hs.accesscontrolService = &actest.FakeService{}
@@ -99,6 +107,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 					ID: pluginID,
 				},
 			})
+			hs.managedPluginsService = managedplugins.NewNoop()
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tc.permissionOrg,
@@ -109,6 +118,8 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.authnService = &authntest.FakeService{
 				ExpectedIdentity: expectedIdentity,
 			}
+
+			hs.log = log.NewNopLogger()
 		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
@@ -639,6 +650,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 				hs.PluginSettings = &pluginSettings
 				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+				hs.managedPluginsService = managedplugins.NewNoop()
 				var err error
 				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
 				require.NoError(t, err)
@@ -741,7 +753,7 @@ func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			hs.Cfg = setting.NewCfg()
-			hs.Cfg.RBACSingleOrganization = tt.singleOrg
+			hs.Cfg.RBAC.SingleOrganization = tt.singleOrg
 			hs.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{tt.plugin},
 			}

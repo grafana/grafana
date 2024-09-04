@@ -2,14 +2,15 @@ package accesscontrol
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -84,7 +85,7 @@ type SearchOptions struct {
 	Action       string
 	ActionSets   []string
 	Scope        string
-	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
+	TypedID      string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
 	RolePrefixes []string
 }
@@ -105,21 +106,16 @@ func (s *SearchOptions) Wildcards() []string {
 }
 
 func (s *SearchOptions) ComputeUserID() (int64, error) {
-	if s.NamespacedID == "" {
-		return 0, errors.New("namespacedID must be set")
-	}
-
-	id, err := identity.ParseNamespaceID(s.NamespacedID)
+	typ, id, err := identity.ParseTypeAndID(s.TypedID)
 	if err != nil {
 		return 0, err
 	}
 
-	// Validate namespace type is user or service account
-	if id.Namespace() != identity.NamespaceUser && id.Namespace() != identity.NamespaceServiceAccount {
-		return 0, fmt.Errorf("invalid namespace: %s", id.Namespace())
+	if !claims.IsIdentityType(typ, claims.TypeUser, claims.TypeServiceAccount) {
+		return 0, fmt.Errorf("invalid type: %s", typ)
 	}
 
-	return id.ParseInt()
+	return strconv.ParseInt(id, 10, 64)
 }
 
 type SyncUserRolesCommand struct {
@@ -360,6 +356,20 @@ func GetOrgRoles(user identity.Requester) []string {
 	}
 
 	return roles
+}
+
+// PermissionsForActions generate Permissions for all actions provided scoped to provided scope.
+func PermissionsForActions(actions []string, scope string) []Permission {
+	permissions := make([]Permission, len(actions))
+
+	for i, action := range actions {
+		permissions[i] = Permission{
+			Action: action,
+			Scope:  scope,
+		}
+	}
+
+	return permissions
 }
 
 func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -189,7 +190,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	return contexthandler.ProvideService(
 		cfg,
 		tracing.InitializeTracerForTest(),
-		&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: authn.AnonymousNamespaceID, SessionToken: &usertoken.UserToken{}}},
+		&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: "0", Type: claims.TypeAnonymous, SessionToken: &usertoken.UserToken{}}},
 	)
 }
 

@@ -91,7 +91,7 @@ func (m *ContextualLoggerMiddleware) MutateAdmission(ctx context.Context, req *b
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (m *ContextualLoggerMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (m *ContextualLoggerMiddleware) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	ctx = instrumentContext(ctx, req.PluginContext)
-	return m.next.ConvertObject(ctx, req)
+	return m.next.ConvertObjects(ctx, req)
 }

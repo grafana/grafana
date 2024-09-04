@@ -208,7 +208,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "4"]
     ],
     "packages/grafana-data/src/types/config.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -451,9 +452,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
     ],
     "packages/grafana-prometheus/src/language_provider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -515,7 +515,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
-    "packages/grafana-runtime/src/services/LocationService.ts:5381": [
+    "packages/grafana-runtime/src/services/LocationService.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
@@ -534,7 +534,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
     "packages/grafana-runtime/src/services/pluginExtensions/getPluginExtensions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -542,9 +543,11 @@ exports[`better eslint`] = {
     "packages/grafana-runtime/src/services/pluginExtensions/usePluginComponent.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "packages/grafana-runtime/src/services/pluginExtensions/usePluginExtensions.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-runtime/src/utils/DataSourceWithBackend.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -832,8 +835,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-ui/src/components/Table/TableCellInspector.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-ui/src/components/Table/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1280,14 +1282,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
-    "public/app/core/navigation/testRoutes.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
-    ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1706,21 +1700,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/contact-points/ContactPoints.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "14"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/alerting/unified/components/contact-points/components/ContactPointsFilter.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -1768,10 +1751,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/extensions/AlertInstanceExtensionPointMenu.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`app/features/explore/extensions/ToolbarExtensionPointMenu\`)", "0"]
     ],
-    "public/app/features/alerting/unified/components/mute-timings/MuteTimingForm.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
-    ],
     "public/app/features/alerting/unified/components/mute-timings/MuteTimingTimeInterval.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -1782,11 +1761,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/mute-timings/MuteTimingsTable.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
-    ],
-    "public/app/features/alerting/unified/components/notification-policies/ContactPointSelector.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/alerting/unified/components/notification-policies/EditDefaultPolicyForm.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -1819,25 +1794,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"]
     ],
-    "public/app/features/alerting/unified/components/notification-policies/Policy.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "11"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "12"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "13"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "14"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "15"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "16"]
-    ],
     "public/app/features/alerting/unified/components/notification-policies/PromDurationDocs.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -1858,9 +1814,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/alerting/unified/components/receivers/DuplicateTemplateView.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "public/app/features/alerting/unified/components/receivers/EditReceiverView.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/alerting/unified/components/receivers/EditTemplateView.tsx:5381": [
@@ -2291,9 +2244,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/alerting/unified/components/rules/GrafanaRules.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
     "public/app/features/alerting/unified/components/rules/RuleConfigStatus.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -2339,10 +2290,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rules/RuleState.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/alerting/unified/components/rules/RuleStats.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -2523,9 +2471,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"]
-    ],
-    "public/app/features/alerting/unified/utils/rulerClient.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/alerting/unified/utils/rules.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2885,9 +2830,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/scene/RowRepeaterBehavior.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/dashboard-scene/scene/Scopes/ScopesInput.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/dashboard-scene/scene/row-actions/RowActions.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -2922,7 +2864,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "14"]
     ],
     "public/app/features/dashboard-scene/serialization/transformSceneToSaveModel.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2941,8 +2885,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/dashboard-scene/settings/JsonModelEditView.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -3963,10 +3906,6 @@ exports[`better eslint`] = {
     "public/app/features/explore/QueryLibrary/QueryTemplatesTable/QueryDescriptionCell.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/explore/RichHistory/RichHistoryAddToLibraryForm.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
-    ],
     "public/app/features/explore/RichHistory/RichHistoryCard.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -4154,7 +4093,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"]
     ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/AccordianReferences.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -4456,9 +4397,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/features/gops/configuration-tracker/components/ConfigCard.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
     "public/app/features/gops/configuration-tracker/components/ConfigureIRM.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
@@ -4739,12 +4677,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
     ],
     "public/app/features/manage-dashboards/state/reducers.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4758,10 +4691,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/migrate-to-cloud/onprem/NameCell.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
-    ],
-    "public/app/features/migrate-to-cloud/onprem/Page.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/notifications/StoredNotifications.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -4840,11 +4772,7 @@ exports[`better eslint`] = {
     "public/app/features/playlist/PlaylistTableRows.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/playlist/StartModal.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -4889,14 +4817,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/plugins/admin/components/InstallControls/ExternallyManagedButton.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
-    ],
-    "public/app/features/plugins/admin/components/InstallControls/InstallControlsButton.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"]
     ],
     "public/app/features/plugins/admin/components/InstallControls/InstallControlsWarning.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
@@ -4904,23 +4828,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "6"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "7"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "8"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "9"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
     ],
     "public/app/features/plugins/admin/components/InstallControls/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./InstallControlsWarning\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`./InstallControlsButton\`)", "1"]
     ],
     "public/app/features/plugins/admin/components/PluginActions.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "\'VerticalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/plugins/admin/components/PluginDashboards.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -4957,12 +4873,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/plugins/admin/components/PluginDetailsPage.tsx:5381": [
-      [0, 0, 0, "\'Layout\' import from \'@grafana/ui/src/components/Layout/Layout\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "3"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "5"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "4"]
     ],
     "public/app/features/plugins/admin/components/PluginDetailsSignature.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -4970,9 +4885,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/plugins/admin/components/PluginListItem.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
-    "public/app/features/plugins/admin/components/PluginListItemBadges.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
     "public/app/features/plugins/admin/components/PluginSignatureDetailsBadge.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -5036,9 +4948,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/plugins/components/PluginsErrorsInfo.tsx:5381": [
-      [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/plugins/datasource_srv.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5055,8 +4966,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Do not use any type assertions.", "12"]
     ],
-    "public/app/features/plugins/extensions/getPluginExtensions.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    "public/app/features/plugins/extensions/usePluginComponents.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/plugins/loader/sharedDependencies.ts:5381": [
       [0, 0, 0, "* import is invalid because \'Layout,HorizontalGroup,VerticalGroup\' from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
@@ -5220,6 +5131,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+    ],
+    "public/app/features/scopes/index.ts:5381": [
+      [0, 0, 0, "Do not re-export imported variable (\`./instance\`)", "0"],
+      [0, 0, 0, "Do not re-export imported variable (\`./ScopesDashboards\`)", "1"]
     ],
     "public/app/features/search/page/components/ActionRow.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
@@ -5478,9 +5393,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
     ],
     "public/app/features/trails/MetricScene.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "2"]
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
     ],
     "public/app/features/trails/MetricSelect/MetricSelectScene.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
@@ -5928,8 +5842,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/alertmanager/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/azuremonitor/azureMetadata/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
@@ -6132,6 +6045,9 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloudwatch/utils/datalinks.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/plugins/datasource/dashboard/datasource.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/dashboard/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./runSharedRequest\`)", "0"],
@@ -7358,11 +7274,25 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/types/teams.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`TeamDTO\`)", "0"]
-    ],
     "public/app/types/unified-alerting-dto.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/swagger/K8sNameLookup.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/swagger/SwaggerPage.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"]
+    ],
+    "public/swagger/index.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
+    ],
+    "public/swagger/plugins.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/test/core/redux/reduxTester.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7630,6 +7560,34 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
+    "packages/grafana-ui/src/themes/GlobalStyles/forms.ts:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
     "packages/grafana-ui/src/themes/GlobalStyles/legacySelect.ts:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
@@ -7829,7 +7787,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "public/app/features/variables/adhoc/picker/AdHocFilter.tsx:5381": [
@@ -7893,9 +7850,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/ConfigEditor.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
     "public/app/plugins/datasource/cloudwatch/components/ConfigEditor/XrayLinkConfig.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
@@ -7908,10 +7862,6 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LegacyLogGroupNamesSelection.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/components/shared/LogGroups/LogGroupsField.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],

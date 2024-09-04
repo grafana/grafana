@@ -12,7 +12,7 @@ import { generateCopiedName } from './utils/duplicate';
 import { stringifyErrorLike } from './utils/misc';
 import { rulerRuleToFormValues } from './utils/rule-form';
 import { getRuleName, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
-import { createUrl } from './utils/url';
+import { createRelativeUrl } from './utils/url';
 
 export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier }) {
   const { loading, result: rule, error } = useRuleWithLocation({ ruleIdentifier: sourceRuleId });
@@ -40,7 +40,7 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
     <Alert
       title="Cannot copy the rule. The rule does not exist"
       buttonContent="Go back to alert list"
-      onRemove={() => locationService.replace(createUrl('/alerting/list'))}
+      onRemove={() => locationService.replace(createRelativeUrl('/alerting/list'))}
     />
   );
 }

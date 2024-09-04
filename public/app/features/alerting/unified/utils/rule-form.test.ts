@@ -8,6 +8,8 @@ import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
   MANUAL_ROUTING_KEY,
   alertingRulerRuleToRuleForm,
+  cleanAnnotations,
+  cleanLabels,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
@@ -17,10 +19,21 @@ import {
 } from './rule-form';
 
 describe('formValuesToRulerGrafanaRuleDTO', () => {
-  it('should correctly convert rule form values', () => {
+  it('should correctly convert rule form values for grafana alerting rule', () => {
     const formValues: RuleFormValues = {
       ...getDefaultFormValues(),
       condition: 'A',
+      type: RuleFormType.grafana,
+    };
+
+    expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
+  });
+
+  it('should correctly convert rule form values for grafana recording rule', () => {
+    const formValues: RuleFormValues = {
+      ...getDefaultFormValues(),
+      condition: 'A',
+      type: RuleFormType.grafanaRecording,
     };
 
     expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
@@ -31,6 +44,7 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
 
     const values: RuleFormValues = {
       ...defaultValues,
+      type: RuleFormType.grafana,
       queries: [
         {
           refId: 'A',
@@ -240,5 +254,34 @@ describe('getDefautManualRouting', () => {
     expect(getDefautManualRouting()).toBe(true);
     localStorage.removeItem(MANUAL_ROUTING_KEY);
     expect(getDefautManualRouting()).toBe(true);
+  });
+});
+
+describe('cleanAnnotations', () => {
+  it('should remove falsy KVs', () => {
+    const output = cleanAnnotations([{ key: '', value: '' }]);
+    expect(output).toStrictEqual([]);
+  });
+
+  it('should trim keys and values', () => {
+    const output = cleanAnnotations([{ key: ' spaces ', value: ' spaces too  ' }]);
+    expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
+  });
+});
+
+describe('cleanLabels', () => {
+  it('should remove falsy KVs', () => {
+    const output = cleanLabels([{ key: '', value: '' }]);
+    expect(output).toStrictEqual([]);
+  });
+
+  it('should trim keys and values', () => {
+    const output = cleanLabels([{ key: ' spaces ', value: ' spaces too  ' }]);
+    expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
+  });
+
+  it('should leave empty values', () => {
+    const output = cleanLabels([{ key: 'key', value: '' }]);
+    expect(output).toStrictEqual([{ key: 'key', value: '' }]);
   });
 });

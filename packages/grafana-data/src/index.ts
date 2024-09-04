@@ -515,6 +515,7 @@ export {
   type UserVariableModel,
   type SystemVariable,
   type BaseVariableModel,
+  type SnapshotVariableModel,
 } from './types/templateVars';
 export { type Threshold, ThresholdsMode, type ThresholdsConfig } from './types/thresholds';
 export {
@@ -554,6 +555,9 @@ export {
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
+  type PluginExtensionExposedComponentConfig,
+  type PluginExtensionAddedComponentConfig,
+  type PluginExtensionAddedLinkConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -793,6 +797,7 @@ export {
   VariableOrigin,
   type VariableSuggestion,
   VariableSuggestionsScope,
+  OneClickMode,
 } from './types/dataLink';
 export { DataFrameType } from './types/dataFrameTypes';
 export {

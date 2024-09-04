@@ -35,22 +35,22 @@ export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig
   return config;
 }
 
-export function removeMuteTimingFromRoute(muteTiming: string, route: Route): Route {
+export function removeTimeIntervalFromRoute(muteTiming: string, route: Route): Route {
   const newRoute: Route = {
     ...route,
     mute_time_intervals: route.mute_time_intervals?.filter((muteName) => muteName !== muteTiming) ?? [],
-    routes: route.routes?.map((subRoute) => removeMuteTimingFromRoute(muteTiming, subRoute)),
+    active_time_intervals: route.active_time_intervals?.filter((muteName) => muteName !== muteTiming) ?? [],
+    routes: route.routes?.map((subRoute) => removeTimeIntervalFromRoute(muteTiming, subRoute)),
   };
   return newRoute;
 }
 
-export function renameMuteTimings(newMuteTimingName: string, oldMuteTimingName: string, route: Route): Route {
+export function renameTimeInterval(newName: string, oldName: string, route: Route): Route {
   return {
     ...route,
-    mute_time_intervals: route.mute_time_intervals?.map((name) =>
-      name === oldMuteTimingName ? newMuteTimingName : name
-    ),
-    routes: route.routes?.map((subRoute) => renameMuteTimings(newMuteTimingName, oldMuteTimingName, subRoute)),
+    mute_time_intervals: route.mute_time_intervals?.map((name) => (name === oldName ? newName : name)),
+    active_time_intervals: route.active_time_intervals?.map((name) => (name === oldName ? newName : name)),
+    routes: route.routes?.map((subRoute) => renameTimeInterval(newName, oldName, subRoute)),
   };
 }
 

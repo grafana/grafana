@@ -89,7 +89,7 @@ export function LogsTable(props: Props) {
         };
 
         // If it's a string, then try to guess for a better type for numeric support in viz
-        field.type = field.type === FieldType.string ? guessFieldTypeForField(field) ?? FieldType.string : field.type;
+        field.type = field.type === FieldType.string ? (guessFieldTypeForField(field) ?? FieldType.string) : field.type;
       }
 
       return frameWithOverrides;

@@ -1,10 +1,8 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { mockSearchApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import * as analytics from '../../Analytics';
 import { MockDataSourceSrv } from '../../mocks';
@@ -12,7 +10,7 @@ import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
 import RulesFilter from './RulesFilter';
 
-const server = setupMswServer();
+setupMswServer();
 jest.spyOn(analytics, 'logInfo');
 
 jest.mock('./MultipleDataSourcePicker', () => {
@@ -43,14 +41,11 @@ const ui = {
 
 beforeEach(() => {
   locationService.replace({ search: '' });
-  mockSearchApi(server).search([]);
 });
 
 describe('RulesFilter', () => {
   it('Should apply state filter to the search input', async () => {
-    const user = userEvent.setup();
-
-    render(<RulesFilter />, { wrapper: TestProvider });
+    const { user } = render(<RulesFilter />);
 
     await user.click(ui.stateFilter.firing.get());
 
@@ -58,9 +53,7 @@ describe('RulesFilter', () => {
   });
 
   it('Should apply multiple UI-based filters to the search input', async () => {
-    const user = userEvent.setup();
-
-    render(<RulesFilter />, { wrapper: TestProvider });
+    const { user } = render(<RulesFilter />);
 
     await user.click(ui.health.ok.get());
     await user.click(ui.ruleType.alert.get());
@@ -70,9 +63,7 @@ describe('RulesFilter', () => {
   });
 
   it('Should combine UI filters and typed expressions', async () => {
-    const user = userEvent.setup();
-
-    render(<RulesFilter />, { wrapper: TestProvider });
+    const { user } = render(<RulesFilter />);
 
     await user.type(ui.searchInput.get(), 'cpu{Enter}');
     await user.click(ui.health.ok.get());
@@ -84,11 +75,11 @@ describe('RulesFilter', () => {
 
 describe('Analytics', () => {
   it('Sends log info when clicking alert state filters', async () => {
-    render(<RulesFilter />, { wrapper: TestProvider });
+    const { user } = render(<RulesFilter />);
 
     const button = screen.getByText('Pending');
 
-    await userEvent.click(button);
+    await user.click(button);
 
     expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.clickingAlertStateFilters);
   });

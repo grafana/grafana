@@ -1,0 +1,206 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Creating a Data source managed rule should be able to add a rule to a existing rule group 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "group-1",
+      "rules": [
+        {
+          "alert": "alert1",
+          "annotations": {
+            "summary": "test alert",
+          },
+          "expr": "up = 1",
+          "labels": {
+            "severity": "warning",
+          },
+        },
+        {
+          "alert": "my new rule",
+          "annotations": {
+            "summary": "test alert",
+          },
+          "expr": "up = 1",
+          "labels": {
+            "severity": "warning",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1?subtype=mimir",
+  },
+]
+`;
+
+exports[`Creating a Data source managed rule should be able to add a rule to a new rule group 1`] = `
+[
+  {
+    "body": {
+      "interval": "15m",
+      "name": "new group",
+      "rules": [
+        {
+          "annotations": {},
+          "for": "",
+          "grafana_alert": {
+            "condition": "",
+            "data": [],
+            "exec_err_state": "Error",
+            "namespace_uid": "NAMESPACE_UID",
+            "no_data_state": "NoData",
+            "rule_group": "my-group",
+            "title": "my new rule",
+            "uid": "mock-rule-uid-123",
+          },
+          "labels": {},
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/new%20namespace?subtype=mimir",
+  },
+]
+`;
+
+exports[`Creating a Grafana managed rule should be able to add a rule to a existing rule group 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "grafana-group-1",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+        {
+          "annotations": {},
+          "for": "",
+          "grafana_alert": {
+            "condition": "",
+            "data": [],
+            "exec_err_state": "Error",
+            "namespace_uid": "NAMESPACE_UID",
+            "no_data_state": "NoData",
+            "rule_group": "my-group",
+            "title": "my new rule",
+            "uid": "mock-rule-uid-123",
+          },
+          "labels": {},
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+]
+`;
+
+exports[`Creating a Grafana managed rule should be able to add a rule to a new rule group 1`] = `
+[
+  {
+    "body": {
+      "interval": "15m",
+      "name": "grafana-group-3",
+      "rules": [
+        {
+          "annotations": {},
+          "for": "",
+          "grafana_alert": {
+            "condition": "",
+            "data": [],
+            "exec_err_state": "Error",
+            "namespace_uid": "NAMESPACE_UID",
+            "no_data_state": "NoData",
+            "rule_group": "my-group",
+            "title": "my new rule",
+            "uid": "mock-rule-uid-123",
+          },
+          "labels": {},
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+]
+`;

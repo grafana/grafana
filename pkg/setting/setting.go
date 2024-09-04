@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/osutil"
@@ -92,6 +93,7 @@ type Cfg struct {
 	// HTTP Server Settings
 	CertFile          string
 	KeyFile           string
+	CertPassword      string
 	CertWatchInterval time.Duration
 	HTTPAddr          string
 	HTTPPort          string
@@ -196,6 +198,8 @@ type Cfg struct {
 	HideAngularDeprecation           []string
 	PluginInstallToken               string
 	ForwardHostEnvVars               []string
+	PreinstallPlugins                []InstallPlugin
+	PreinstallPluginsAsync           bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -256,9 +260,10 @@ type Cfg struct {
 	AuthProxy AuthProxySettings
 
 	// OAuth
-	OAuthAutoLogin                bool
-	OAuthCookieMaxAge             int
-	OAuthAllowInsecureEmailLookup bool
+	OAuthAutoLogin                       bool
+	OAuthCookieMaxAge                    int
+	OAuthAllowInsecureEmailLookup        bool
+	OAuthRefreshTokenServerLockMinWaitMs int64
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
@@ -322,9 +327,6 @@ type Cfg struct {
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
 
-	// accessactionsets
-	OnlyStoreAccessActionSets bool
-
 	// Data sources
 	DataSourceLimit int
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
@@ -345,8 +347,6 @@ type Cfg struct {
 	ExternalSnapshotUrl  string
 	ExternalSnapshotName string
 	ExternalEnabled      bool
-	// Deprecated: setting this to false adds deprecation warnings at runtime
-	SnapShotRemoveExpired bool
 
 	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
@@ -467,14 +467,7 @@ type Cfg struct {
 	OAuth2ServerGeneratedKeyTypeForClient string
 	OAuth2ServerAccessTokenLifespan       time.Duration
 
-	// Access Control
-	RBACPermissionCache bool
-	// Enable Permission validation during role creation and provisioning
-	RBACPermissionValidationEnabled bool
-	// Reset basic roles permissions on start-up
-	RBACResetBasicRoles bool
-	// RBAC single organization. This configuration option is subject to change.
-	RBACSingleOrganization bool
+	RBAC RBACSettings
 
 	Zanzana ZanzanaSettings
 
@@ -531,6 +524,18 @@ type Cfg struct {
 
 	//Short Links
 	ShortLinkExpiration int
+
+	// Unified Storage
+	UnifiedStorage map[string]UnifiedStorageConfig
+}
+
+type UnifiedStorageConfig struct {
+	DualWriterMode rest.DualWriterMode
+}
+
+type InstallPlugin struct {
+	ID      string `json:"id"`
+	Version string `json:"version"`
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1116,7 +1121,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	readOAuth2ServerSettings(cfg)
 
-	readAccessControlSettings(iniFile, cfg)
+	cfg.readRBACSettings()
 
 	cfg.readZanzanaSettings()
 
@@ -1326,6 +1331,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	scopesSection := iniFile.Section("scopes")
 	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
 	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
+
+	// read unifed storage config
+	cfg.setUnifiedStorageConfig()
 
 	return nil
 }
@@ -1608,6 +1616,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
+	cfg.OAuthRefreshTokenServerLockMinWaitMs = auth.Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(1000)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
 	// Deprecated
@@ -1655,15 +1664,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.SSOSettingsConfigurableProviders[provider] = true
 	}
 	return nil
-}
-
-func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
-	rbac := iniFile.Section("rbac")
-	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
-	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
-	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
-	cfg.RBACSingleOrganization = rbac.Key("single_organization").MustBool(false)
-	cfg.OnlyStoreAccessActionSets = rbac.Key("only_store_access_action_sets").MustBool(false)
 }
 
 func readOAuth2ServerSettings(cfg *Cfg) {
@@ -1870,7 +1870,6 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
 
 	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
-	cfg.SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil
@@ -1896,11 +1895,13 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.Protocol = HTTPSScheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "h2" {
 		cfg.Protocol = HTTP2Scheme
 		cfg.CertFile = server.Key("cert_file").String()
 		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
 	}
 	if protocolStr == "socket" {
 		cfg.Protocol = SocketScheme

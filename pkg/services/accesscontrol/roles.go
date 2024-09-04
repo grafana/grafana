@@ -33,6 +33,10 @@ const (
 	FixedCloudViewerRole = "fixed:cloud:viewer"
 	FixedCloudEditorRole = "fixed:cloud:editor"
 	FixedCloudAdminRole  = "fixed:cloud:admin"
+
+	FixedCloudSupportTicketReader = "fixed:cloud:supportticket:reader"
+	FixedCloudSupportTicketEditor = "fixed:cloud:supportticket:editor"
+	FixedCloudSupportTicketAdmin  = "fixed:cloud:supportticket:admin"
 )
 
 // Roles definition

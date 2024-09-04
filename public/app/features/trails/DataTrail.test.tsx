@@ -52,8 +52,8 @@ describe('DataTrail', () => {
       expect(trail.state.topScene).toBeInstanceOf(MetricSelectScene);
     });
 
-    it('Should set history current step to 0', () => {
-      expect(trail.state.history.state.currentStep).toBe(0);
+    it('Should set history current step to 1', () => {
+      expect(trail.state.history.state.currentStep).toBe(1);
     });
 
     it('Should set history step 0 parentIndex to -1', () => {
@@ -75,11 +75,11 @@ describe('DataTrail', () => {
       });
 
       it('should add history step', () => {
-        expect(trail.state.history.state.steps[1].type).toBe('metric');
+        expect(trail.state.history.state.steps[1].type).toBe('metric_page');
       });
 
-      it('Should set history currentStep to 1', () => {
-        expect(trail.state.history.state.currentStep).toBe(1);
+      it('Should set history currentStep to 2', () => {
+        expect(trail.state.history.state.currentStep).toBe(2);
       });
 
       it('Should set history step 1 parentIndex to 0', () => {
@@ -105,11 +105,11 @@ describe('DataTrail', () => {
         });
 
         it('should add history step', () => {
-          expect(trail.state.history.state.steps[2].type).toBe('time');
+          expect(trail.state.history.state.steps[3].type).toBe('time');
         });
 
-        it('Should set history currentStep to 2', () => {
-          expect(trail.state.history.state.currentStep).toBe(2);
+        it('Should set history currentStep to 3', () => {
+          expect(trail.state.history.state.currentStep).toBe(3);
         });
 
         it('Should set history step 2 parentIndex to 1', () => {
@@ -125,7 +125,7 @@ describe('DataTrail', () => {
         });
 
         it('Current history step should have new `from` of "now-1h"', () => {
-          expect(trail.state.history.state.steps[2].trailState.$timeRange?.state.from).toBe('now-1h');
+          expect(trail.state.history.state.steps[3].trailState.$timeRange?.state.from).toBe('now-1h');
         });
 
         describe('And when traversing back to step 1', () => {
@@ -154,12 +154,12 @@ describe('DataTrail', () => {
               expect(trail.state.history.state.steps[3].type).toBe('time');
             });
 
-            it('Should set history currentStep to 3', () => {
-              expect(trail.state.history.state.currentStep).toBe(3);
+            it('Should set history currentStep to 4', () => {
+              expect(trail.state.history.state.currentStep).toBe(4);
             });
 
-            it('Should set history step 3 parentIndex to 1', () => {
-              expect(trail.state.history.state.steps[3].parentIndex).toBe(1);
+            it('Should set history step 4 parentIndex to 1', () => {
+              expect(trail.state.history.state.steps[4].parentIndex).toBe(1);
             });
 
             it('Should have time range `from` be updated "now-15m"', () => {
@@ -171,7 +171,7 @@ describe('DataTrail', () => {
             });
 
             it('History step 2 should still have `from` of "now-1h"', () => {
-              expect(trail.state.history.state.steps[2].trailState.$timeRange?.state.from).toBe('now-1h');
+              expect(trail.state.history.state.steps[3].trailState.$timeRange?.state.from).toBe('now-1h');
             });
 
             describe('And then when returning again to step 1', () => {
@@ -191,12 +191,12 @@ describe('DataTrail', () => {
                 expect(trail.state.history.state.steps[1].trailState.$timeRange?.state.from).toBe('now-6h');
               });
 
-              it('History step 2 should still have `from` of "now-1h"', () => {
-                expect(trail.state.history.state.steps[2].trailState.$timeRange?.state.from).toBe('now-1h');
+              it('History step 3 should still have `from` of "now-1h"', () => {
+                expect(trail.state.history.state.steps[3].trailState.$timeRange?.state.from).toBe('now-1h');
               });
 
-              it('History step 3 should still have `from` of "now-15m"', () => {
-                expect(trail.state.history.state.steps[3].trailState.$timeRange?.state.from).toBe('now-15m');
+              it('History step 4 should still have `from` of "now-15m"', () => {
+                expect(trail.state.history.state.steps[4].trailState.$timeRange?.state.from).toBe('now-15m');
               });
 
               it('Should have time range `from` be set back to "now-6h"', () => {
@@ -217,11 +217,11 @@ describe('DataTrail', () => {
         });
 
         it('should add history step', () => {
-          expect(trail.state.history.state.steps[2].type).toBe('filters');
+          expect(trail.state.history.state.steps[3].type).toBe('filters');
         });
 
-        it('Should set history currentStep to 2', () => {
-          expect(trail.state.history.state.currentStep).toBe(2);
+        it('Should set history currentStep to 3', () => {
+          expect(trail.state.history.state.currentStep).toBe(3);
         });
 
         it('Should set history step 2 parentIndex to 1', () => {
@@ -238,8 +238,8 @@ describe('DataTrail', () => {
         });
 
         it('Current history step should have new filter zone=a', () => {
-          expect(getStepFilterVar(2).state.filters[0].key).toBe('zone');
-          expect(getStepFilterVar(2).state.filters[0].value).toBe('a');
+          expect(getStepFilterVar(3).state.filters[0].key).toBe('zone');
+          expect(getStepFilterVar(3).state.filters[0].value).toBe('a');
         });
 
         describe('And when traversing back to step 1', () => {
@@ -268,12 +268,12 @@ describe('DataTrail', () => {
               expect(trail.state.history.state.steps[3].type).toBe('filters');
             });
 
-            it('Should set history currentStep to 3', () => {
-              expect(trail.state.history.state.currentStep).toBe(3);
+            it('Should set history currentStep to 4', () => {
+              expect(trail.state.history.state.currentStep).toBe(4);
             });
 
-            it('Should set history step 3 parentIndex to 1', () => {
-              expect(trail.state.history.state.steps[3].parentIndex).toBe(1);
+            it('Should set history step 4 parentIndex to 1', () => {
+              expect(trail.state.history.state.steps[4].parentIndex).toBe(1);
             });
 
             it('Should have filter be updated to "zone=b"', () => {
@@ -285,14 +285,14 @@ describe('DataTrail', () => {
               expect(getStepFilterVar(1).state.filters.length).toBe(0);
             });
 
-            it('History step 2 should still have old filter zone=a', () => {
-              expect(getStepFilterVar(2).state.filters[0].key).toBe('zone');
-              expect(getStepFilterVar(2).state.filters[0].value).toBe('a');
+            it('History step 3 should still have old filter zone=a', () => {
+              expect(getStepFilterVar(3).state.filters[0].key).toBe('zone');
+              expect(getStepFilterVar(3).state.filters[0].value).toBe('a');
             });
 
-            it('Current history step 3 should have new filter zone=b', () => {
-              expect(getStepFilterVar(3).state.filters[0].key).toBe('zone');
-              expect(getStepFilterVar(3).state.filters[0].value).toBe('b');
+            it('Current history step 4 should have new filter zone=b', () => {
+              expect(getStepFilterVar(4).state.filters[0].key).toBe('zone');
+              expect(getStepFilterVar(4).state.filters[0].value).toBe('b');
             });
 
             describe('And then when returning again to step 1', () => {
@@ -316,14 +316,14 @@ describe('DataTrail', () => {
                 expect(getStepFilterVar(1).state.filters.length).toBe(0);
               });
 
-              it('History step 2 should still have old filter zone=a', () => {
-                expect(getStepFilterVar(2).state.filters[0].key).toBe('zone');
-                expect(getStepFilterVar(2).state.filters[0].value).toBe('a');
+              it('History step 3 should still have old filter zone=a', () => {
+                expect(getStepFilterVar(3).state.filters[0].key).toBe('zone');
+                expect(getStepFilterVar(3).state.filters[0].value).toBe('a');
               });
 
-              it('History step 3 should have new filter zone=b', () => {
-                expect(getStepFilterVar(3).state.filters[0].key).toBe('zone');
-                expect(getStepFilterVar(3).state.filters[0].value).toBe('b');
+              it('History step 4 should have new filter zone=b', () => {
+                expect(getStepFilterVar(4).state.filters[0].key).toBe('zone');
+                expect(getStepFilterVar(4).state.filters[0].value).toBe('b');
               });
             });
           });
@@ -331,11 +331,11 @@ describe('DataTrail', () => {
       });
     });
 
-    describe('When going back to history step 1', () => {
+    describe('When going back to history step 2', () => {
       beforeEach(() => {
         trail.publishEvent(new MetricSelectedEvent('first_metric'));
         trail.publishEvent(new MetricSelectedEvent('second_metric'));
-        trail.state.history.goBackToStep(1);
+        trail.state.history.goBackToStep(2);
       });
 
       it('Should restore state and url', () => {
@@ -343,12 +343,12 @@ describe('DataTrail', () => {
         expect(locationService.getSearchObject().metric).toBe('first_metric');
       });
 
-      it('Should set history currentStep to 1', () => {
-        expect(trail.state.history.state.currentStep).toBe(1);
+      it('Should set history currentStep to 2', () => {
+        expect(trail.state.history.state.currentStep).toBe(2);
       });
 
       it('Should not create another history step', () => {
-        expect(trail.state.history.state.steps.length).toBe(3);
+        expect(trail.state.history.state.steps.length).toBe(4);
       });
 
       describe('But then selecting a new metric', () => {
@@ -357,15 +357,15 @@ describe('DataTrail', () => {
         });
 
         it('Should create another history step', () => {
-          expect(trail.state.history.state.steps.length).toBe(4);
+          expect(trail.state.history.state.steps.length).toBe(5);
         });
 
-        it('Should set history current step to 3', () => {
-          expect(trail.state.history.state.currentStep).toBe(3);
+        it('Should set history current step to 4', () => {
+          expect(trail.state.history.state.currentStep).toBe(4);
         });
 
-        it('Should set history step 3 parent index to 1', () => {
-          expect(trail.state.history.state.steps[3].parentIndex).toBe(1);
+        it('Should set history step 4 parent index to 2', () => {
+          expect(trail.state.history.state.steps[4].parentIndex).toBe(2);
         });
 
         describe('And browser back button is pressed', () => {
@@ -407,9 +407,9 @@ describe('DataTrail', () => {
         expect(getFilterVar().state.filters[0].value).toBe('a');
       });
 
-      it('Filter of step 1 should be zone=a', () => {
-        expect(getStepFilterVar(1).state.filters[0].key).toBe('zone');
-        expect(getStepFilterVar(1).state.filters[0].value).toBe('a');
+      it('Filter of step 2 should be zone=a', () => {
+        expect(getStepFilterVar(2).state.filters[0].key).toBe('zone');
+        expect(getStepFilterVar(2).state.filters[0].value).toBe('a');
       });
 
       it('Filter of step 0 should empty', () => {
@@ -440,12 +440,12 @@ describe('DataTrail', () => {
         expect(trail.state.$timeRange?.state.from).toBe('now-15m');
       });
 
-      it('Time range `from` of step 1 should be now-15m', () => {
-        expect(trail.state.history.state.steps[1].trailState.$timeRange?.state.from).toBe('now-15m');
+      it('Time range `from` of step 2 should be now-15m', () => {
+        expect(trail.state.history.state.steps[2].trailState.$timeRange?.state.from).toBe('now-15m');
       });
 
-      it('Time range `from` of step 0 should be now-6h', () => {
-        expect(trail.state.history.state.steps[0].trailState.$timeRange?.state.from).toBe('now-6h');
+      it('Time range `from` of step 1 should be now-6h', () => {
+        expect(trail.state.history.state.steps[1].trailState.$timeRange?.state.from).toBe('now-6h');
       });
 
       describe('When returning to step 0', () => {

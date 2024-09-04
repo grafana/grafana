@@ -69,6 +69,7 @@ type FS interface {
 
 	Base() string
 	Files() ([]string, error)
+	Rel(string) (string, error)
 }
 
 type FSRemover interface {
@@ -91,6 +92,7 @@ type Client interface {
 	backend.CheckHealthHandler
 	backend.StreamHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 	backend.CallResourceHandler
 	backend.CollectMetricsHandler
 }
@@ -127,11 +129,6 @@ type Licensing interface {
 	Path() string
 
 	AppURL() string
-}
-
-// RoleRegistry handles the plugin RBAC roles and their assignments
-type RoleRegistry interface {
-	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
 }
 
 // ClientMiddleware is an interface representing the ability to create a middleware
