@@ -189,21 +189,6 @@ export function SelectBase<T, Rest = {}>({
     [isMulti, onChange]
   );
 
-  const toggleAll = useCallback(() => {
-    let toSelect = toggleAllState === ToggleAllState.noneSelected ? options : [];
-    if (toggleAllOptions?.optionsFilter) {
-      toSelect =
-        toggleAllState === ToggleAllState.noneSelected
-          ? options.filter(toggleAllOptions.optionsFilter)
-          : options.filter(negate(toggleAllOptions.optionsFilter));
-    }
-
-    onChange(toSelect, {
-      action: 'select-option',
-      option: {},
-    });
-  }, [options, toggleAllOptions, onChange]);
-
   let ReactSelectComponent = ReactSelect;
 
   const creatableProps: ComponentProps<typeof Creatable<SelectableValue<T>>> = {};
@@ -330,6 +315,21 @@ export function SelectBase<T, Rest = {}>({
       toggleAllState = determineToggleAllState(selectedValue, options);
     }
   }
+
+  const toggleAll = useCallback(() => {
+    let toSelect = toggleAllState === ToggleAllState.noneSelected ? options : [];
+    if (toggleAllOptions?.optionsFilter) {
+      toSelect =
+        toggleAllState === ToggleAllState.noneSelected
+          ? options.filter(toggleAllOptions.optionsFilter)
+          : options.filter(negate(toggleAllOptions.optionsFilter));
+    }
+
+    onChange(toSelect, {
+      action: 'select-option',
+      option: {},
+    });
+  }, [options, toggleAllOptions, onChange, toggleAllState]);
 
   return (
     <>

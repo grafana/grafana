@@ -179,18 +179,14 @@ const ToggleAllOption = ({ state, onClick }: { state: ToggleAllState; onClick: (
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   return (
-    <div className={styles.option} role="menuitemcheckbox" onClick={onClick}>
-      <div>
-        <label>
-          <Checkbox
-            className={styles.toggleAll}
-            checked={state === ToggleAllState.allSelected}
-            indeterminate={state === ToggleAllState.indeterminate}
-          ></Checkbox>
-          {state === ToggleAllState.noneSelected ? 'Select all' : 'Unselect all'}
-        </label>
-      </div>
-    </div>
+    <label className={styles.option} onClick={onClick}>
+      <Checkbox
+        className={styles.toggleAll}
+        checked={state === ToggleAllState.allSelected}
+        indeterminate={state === ToggleAllState.indeterminate}
+      ></Checkbox>
+      {state === ToggleAllState.noneSelected ? 'Select all' : 'Unselect all'}
+    </label>
   );
 };
 
