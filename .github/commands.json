@@ -485,6 +485,14 @@
   },
   {
     "type": "label",
+    "name": "type/build-packaging",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/509"
+    }
+  },
+  {
+    "type": "label",
     "name": "type/accessibility",
     "action": "addToProject",
     "addToProject": {
@@ -656,7 +664,7 @@
     "name": "area/security",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/47"
+      "url": "https://github.com/orgs/grafana/projects/470"
     }
   },
   {
