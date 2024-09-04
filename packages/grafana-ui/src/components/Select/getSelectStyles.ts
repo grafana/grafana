@@ -166,5 +166,8 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
     toggleAll: css({
       marginRight: '16px',
     }),
+    toggleAllButton: css({
+      width: '100%',
+    }),
   };
 });

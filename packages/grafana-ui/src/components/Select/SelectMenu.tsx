@@ -1,14 +1,15 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { max } from 'lodash';
 import { RefCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import * as React from 'react';
-import { Trans } from 'react-i18next';
 import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { Trans } from '../../utils/i18n';
+import { Button, clearButtonStyles } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Checkbox } from '../Forms/Checkbox';
 import { Icon } from '../Icon/Icon';
@@ -201,15 +202,23 @@ const ToggleAllOption = ({
 }) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
+
   return (
-    <label className={styles.option} onClick={onClick}>
+    <Button
+      className={css(clearButtonStyles(theme), styles.option, styles.toggleAllButton, {
+        height: VIRTUAL_LIST_ITEM_HEIGHT,
+      })}
+      onClick={onClick}
+    >
       <Checkbox
         className={styles.toggleAll}
         checked={state === ToggleAllState.allSelected}
         indeterminate={state === ToggleAllState.indeterminate}
       ></Checkbox>
-      <Trans i18nKey="select.select-menu.selected-count">Selected ({selectedCount ?? 0})</Trans>
-    </label>
+      <Trans i18nKey="select.select-menu.selected-count">Selected (</Trans>
+      {selectedCount ?? 0}
+      <Trans>)</Trans>
+    </Button>
   );
 };
 
