@@ -1005,78 +1005,61 @@
   "ldap-drawer": {
     "attributes-section": {
       "description": "Ŝpęčįƒy ŧĥę ĿĐÅP äŧŧřįþūŧęş ŧĥäŧ mäp ŧő ŧĥę ūşęř&ľşqūő;ş ģįvęŉ ŉämę, şūřŉämę, äŉđ ęmäįľ äđđřęşş, ęŉşūřįŉģ ŧĥę äppľįčäŧįőŉ čőřřęčŧľy řęŧřįęvęş äŉđ đįşpľäyş ūşęř įŉƒőřmäŧįőŉ.",
-      "email": {
-        "label": "Ēmäįľ"
-      },
+      "email-label": "Ēmäįľ",
       "label": "Åŧŧřįþūŧęş",
-      "member-of": {
-        "label": "Męmþęř Øƒ"
-      },
-      "name": {
-        "label": "Ńämę"
-      },
-      "surname": {
-        "label": "Ŝūřŉämę"
-      },
-      "username": {
-        "label": "Ůşęřŉämę"
-      }
+      "member-of-label": "Męmþęř Øƒ",
+      "name-label": "Ńämę",
+      "surname-label": "Ŝūřŉämę",
+      "username-label": "Ůşęřŉämę"
     },
     "extra-security-section": {
+      "client-cert-label": "Cľįęŉŧ čęřŧįƒįčäŧę päŧĥ",
+      "client-cert-placeholder": "/päŧĥ/ŧő/čľįęŉŧ_čęřŧ.pęm",
+      "client-cert-value-label": "Cľįęŉŧ čęřŧįƒįčäŧę čőŉŧęŉŧ",
+      "client-cert-value-placeholder": "Cľįęŉŧ čęřŧįƒįčäŧę čőŉŧęŉŧ įŉ þäşę64",
+      "client-key-label": "Cľįęŉŧ ĸęy päŧĥ",
+      "client-key-placeholder": "/päŧĥ/ŧő/čľįęŉŧ_ĸęy.pęm",
+      "client-key-value-label": "Cľįęŉŧ ĸęy čőŉŧęŉŧ",
+      "client-key-value-placeholder": "Cľįęŉŧ ĸęy čőŉŧęŉŧ įŉ þäşę64",
+      "encryption-provider-base-64": "ßäşę64-ęŉčőđęđ čőŉŧęŉŧ",
+      "encryption-provider-description": "X.509 čęřŧįƒįčäŧę přővįđęş ŧĥę pūþľįč päřŧ, ŵĥįľę ŧĥę přįväŧę ĸęy įşşūęđ įŉ ä PĶCŜ#8 ƒőřmäŧ přővįđęş ŧĥę přįväŧę päřŧ őƒ ŧĥę äşymmęŧřįč ęŉčřypŧįőŉ.",
+      "encryption-provider-file-path": "Päŧĥ ŧő ƒįľęş",
+      "encryption-provider-label": "Ēŉčřypŧįőŉ ĸęy äŉđ čęřŧįƒįčäŧę přővįşįőŉ şpęčįƒįčäŧįőŉ.",
       "label": "Ēχŧřä şęčūřįŧy męäşūřęş",
-      "min-tls-version": {
-        "description": "Ŧĥįş įş ŧĥę mįŉįmūm ŦĿŜ vęřşįőŉ äľľőŵęđ. Åččępŧęđ väľūęş äřę: ŦĿŜ1.2, ŦĿŜ1.3.",
-        "label": "Mįŉ ŦĿŜ vęřşįőŉ"
-      },
-      "start-tls": {
-        "description": "Ĩƒ şęŧ ŧő ŧřūę, ūşę ĿĐÅP ŵįŧĥ ŜŦÅŖŦŦĿŜ įŉşŧęäđ őƒ ĿĐÅPŜ",
-        "label": "Ŝŧäřŧ ŦĿŜ"
-      },
-      "tls-ciphers": {
-        "description": "Ŀįşŧ őƒ čőmmä- őř şpäčę-şępäřäŧęđ čįpĥęřş",
-        "label": "ŦĿŜ čįpĥęřş",
-        "placeholder": "ę.ģ. [\"ŦĿŜ_ÅĒŜ_256_ĞCM_ŜĦÅ384\"]"
-      },
-      "use-ssl": {
-        "description": "Ŝęŧ ŧő ŧřūę įƒ ĿĐÅP şęřvęř şĥőūľđ ūşę ŦĿŜ čőŉŉęčŧįőŉ (ęįŧĥęř ŵįŧĥ ŜŦÅŖŦŦĿŜ őř ĿĐÅPŜ)",
-        "label": "Ůşę ŜŜĿ",
-        "tooltip": "Főř ä čőmpľęŧę ľįşŧ őƒ şūppőřŧęđ čįpĥęřş äŉđ ŦĿŜ vęřşįőŉş, řęƒęř ŧő: {\n        <ŦęχŧĿįŉĸ şŧyľę={{ fontSize: 'inherit' }} ĥřęƒ=\"ĥŧŧpş://ģő.đęv/şřč/čřypŧő/ŧľş/čįpĥęř_şūįŧęş.ģő\" ęχŧęřŉäľ>\n          ĥŧŧpş://ģő.đęv/şřč/čřypŧő/ŧľş/čįpĥęř_şūįŧęş.ģő\n        </ŦęχŧĿįŉĸ>}"
-      }
+      "min-tls-version-description": "Ŧĥįş įş ŧĥę mįŉįmūm ŦĿŜ vęřşįőŉ äľľőŵęđ. Åččępŧęđ väľūęş äřę: ŦĿŜ1.2, ŦĿŜ1.3.",
+      "min-tls-version-label": "Mįŉ ŦĿŜ vęřşįőŉ",
+      "root-ca-cert-label": "Ŗőőŧ CÅ čęřŧįƒįčäŧę päŧĥ",
+      "root-ca-cert-placeholder": "/päŧĥ/ŧő/řőőŧ_čä_čęřŧ.pęm",
+      "root-ca-cert-value-label": "Ŗőőŧ CÅ čęřŧįƒįčäŧę čőŉŧęŉŧ",
+      "start-tls-description": "Ĩƒ şęŧ ŧő ŧřūę, ūşę ĿĐÅP ŵįŧĥ ŜŦÅŖŦŦĿŜ įŉşŧęäđ őƒ ĿĐÅPŜ",
+      "start-tls-label": "Ŝŧäřŧ ŦĿŜ",
+      "tls-ciphers-description": "Ŀįşŧ őƒ čőmmä- őř şpäčę-şępäřäŧęđ čįpĥęřş",
+      "tls-ciphers-label": "ŦĿŜ čįpĥęřş",
+      "tls-ciphers-placeholder": "ę.ģ. [\"ŦĿŜ_ÅĒŜ_256_ĞCM_ŜĦÅ384\"]",
+      "use-ssl-description": "Ŝęŧ ŧő ŧřūę įƒ ĿĐÅP şęřvęř şĥőūľđ ūşę ŦĿŜ čőŉŉęčŧįőŉ (ęįŧĥęř ŵįŧĥ ŜŦÅŖŦŦĿŜ őř ĿĐÅPŜ)",
+      "use-ssl-label": "Ůşę ŜŜĿ",
+      "use-ssl-tooltip": "Főř ä čőmpľęŧę ľįşŧ őƒ şūppőřŧęđ čįpĥęřş äŉđ ŦĿŜ vęřşįőŉş, řęƒęř ŧő: {\n        <ŦęχŧĿįŉĸ şŧyľę={{ fontSize: 'inherit' }} ĥřęƒ=\"ĥŧŧpş://ģő.đęv/şřč/čřypŧő/ŧľş/čįpĥęř_şūįŧęş.ģő\" ęχŧęřŉäľ>\n          ĥŧŧpş://ģő.đęv/şřč/čřypŧő/ŧľş/čįpĥęř_şūįŧęş.ģő\n        </ŦęχŧĿįŉĸ>}"
     },
     "group-mapping-section": {
       "description": "Mäp ĿĐÅP ģřőūpş ŧő Ğřäƒäŉä őřģ řőľęş",
-      "group-search-base-dns": {
-        "description": "Ŝępäřäŧę þy čőmmäş őř şpäčęş",
-        "label": "Ğřőūp şęäřčĥ þäşę ĐŃŜ"
-      },
-      "group-search-filter": {
-        "description": "Ůşęđ ŧő ƒįľŧęř äŉđ įđęŉŧįƒy ģřőūp ęŉŧřįęş ŵįŧĥįŉ ŧĥę đįřęčŧőřy",
-        "label": "Ğřőūp şęäřčĥ ƒįľŧęř"
-      },
-      "group-search-filter-user-attribute": {
-        "description": "Ĩđęŉŧįƒįęş ūşęřş ŵįŧĥįŉ ģřőūp ęŉŧřįęş ƒőř ƒįľŧęřįŉģ pūřpőşęş",
-        "label": "Ğřőūp ŉämę äŧŧřįþūŧę"
-      },
+      "group-search-base-dns-description": "Ŝępäřäŧę þy čőmmäş őř şpäčęş",
+      "group-search-base-dns-label": "Ğřőūp şęäřčĥ þäşę ĐŃŜ",
+      "group-search-filter-description": "Ůşęđ ŧő ƒįľŧęř äŉđ įđęŉŧįƒy ģřőūp ęŉŧřįęş ŵįŧĥįŉ ŧĥę đįřęčŧőřy",
+      "group-search-filter-label": "Ğřőūp şęäřčĥ ƒįľŧęř",
+      "group-search-filter-user-attribute-description": "Ĩđęŉŧįƒįęş ūşęřş ŵįŧĥįŉ ģřőūp ęŉŧřįęş ƒőř ƒįľŧęřįŉģ pūřpőşęş",
+      "group-search-filter-user-attribute-label": "Ğřőūp ŉämę äŧŧřįþūŧę",
       "label": "Ğřőūp mäppįŉģ",
-      "skip-org-role-sync": {
-        "description": "Přęvęŉŧ şyŉčĥřőŉįžįŉģ ūşęřş’ őřģäŉįžäŧįőŉ řőľęş ƒřőm yőūř ĨđP",
-        "label": "Ŝĸįp őřģäŉįžäŧįőŉ řőľę şyŉč"
-      }
+      "skip-org-role-sync-description": "Přęvęŉŧ şyŉčĥřőŉįžįŉģ ūşęřş’ őřģäŉįžäŧįőŉ řőľęş ƒřőm yőūř ĨđP",
+      "skip-org-role-sync-label": "Ŝĸįp őřģäŉįžäŧįőŉ řőľę şyŉč"
     },
     "misc-section": {
-      "allow-sign-up": {
-        "descrition": "Ĩƒ ŉőŧ ęŉäþľęđ, őŉľy ęχįşŧįŉģ Ğřäƒäŉä ūşęřş čäŉ ľőģ įŉ ūşįŉģ ĿĐÅP",
-        "label": "Åľľőŵ şįģŉ ūp"
-      },
+      "allow-sign-up-descrition": "Ĩƒ ŉőŧ ęŉäþľęđ, őŉľy ęχįşŧįŉģ Ğřäƒäŉä ūşęřş čäŉ ľőģ įŉ ūşįŉģ ĿĐÅP",
+      "allow-sign-up-label": "Åľľőŵ şįģŉ ūp",
       "label": "Mįşč",
-      "port": {
-        "description": "Đęƒäūľŧ pőřŧ įş 389 ŵįŧĥőūŧ ŜŜĿ őř 636 ŵįŧĥ ŜŜĿ",
-        "label": "Pőřŧ"
-      },
-      "timeout": {
-        "description": "Ŧįmęőūŧ įŉ şęčőŉđş ƒőř ŧĥę čőŉŉęčŧįőŉ ŧő ŧĥę ĿĐÅP şęřvęř",
-        "label": "Ŧįmęőūŧ"
-      }
+      "port-description": "Đęƒäūľŧ pőřŧ įş 389 ŵįŧĥőūŧ ŜŜĿ őř 636 ŵįŧĥ ŜŜĿ",
+      "port-label": "Pőřŧ",
+      "timeout-description": "Ŧįmęőūŧ įŉ şęčőŉđş ƒőř ŧĥę čőŉŉęčŧįőŉ ŧő ŧĥę ĿĐÅP şęřvęř",
+      "timeout-label": "Ŧįmęőūŧ"
     },
     "title": "Åđväŉčęđ şęŧŧįŉģş"
   },
