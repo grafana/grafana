@@ -483,6 +483,13 @@ export const PMM_NAV_MONGO: NavModelItem = {
           url: `${config.appSubUrl}/d/mongodb-replicaset-summary/mongodb-replset-summary`,
           hideFromTabs: true,
         },
+        {
+          id: 'mongo-router-summary',
+          text: 'Router summary',
+          icon: 'percona-cluster',
+          url: `${config.appSubUrl}/d/mongodb-router-summary/mongodb-router-summary`,
+          hideFromTabs: true,
+        },
       ],
     },
     {
