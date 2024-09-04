@@ -17,13 +17,15 @@ export interface ScopeDashboardBinding {
   status: ScopeDashboardBindingStatus;
 }
 
-export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
+export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match' | 'one-of' | 'not-one-of';
 
 export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
   '=': 'equals',
   '!=': 'not-equals',
   '=~': 'regex-match',
   '!~': 'regex-not-match',
+  '=|': 'one-of',
+  '!=|': 'not-one-of',
 };
 
 export interface ScopeSpecFilter {
