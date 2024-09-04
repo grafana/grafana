@@ -9,6 +9,7 @@ import {
   CombinedRule,
   CombinedRuleGroup,
   CombinedRuleWithLocation,
+  EditableRuleIdentifier,
   GrafanaRuleIdentifier,
   PromRuleWithLocation,
   PrometheusRuleIdentifier,
@@ -19,9 +20,9 @@ import {
   RuleNamespace,
   RuleWithLocation,
   RulesSource,
-  EditableRuleIdentifier,
 } from 'app/types/unified-alerting';
 import {
+  Annotations,
   GrafanaAlertState,
   GrafanaAlertStateWithReason,
   PostableRuleDTO,
@@ -81,10 +82,6 @@ export function isGrafanaRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule 
   return typeof rule === 'object' && 'grafana_alert' in rule;
 }
 
-export function isGrafanaRecordingRulerRule(rule?: RulerRuleDTO) {
-  return typeof rule === 'object' && 'grafana_alert' in rule && 'record' in rule.grafana_alert;
-}
-
 export function isCloudRulerRule(rule?: RulerRuleDTO | PostableRuleDTO): rule is RulerCloudRuleDTO {
   return typeof rule === 'object' && !isGrafanaRulerRule(rule);
 }
@@ -138,7 +135,11 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
 }
 
 export function getPendingPeriod(rule: CombinedRule): string | undefined {
-  if (isRecordingRulerRule(rule.rulerRule) || isRecordingRule(rule.promRule)) {
+  if (
+    isRecordingRulerRule(rule.rulerRule) ||
+    isRecordingRule(rule.promRule) ||
+    isGrafanaRecordingRule(rule.rulerRule)
+  ) {
     return undefined;
   }
 
@@ -157,6 +158,16 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   return undefined;
 }
 
+export function getAnnotations(rule: CombinedRule): Annotations | undefined {
+  if (
+    isRecordingRulerRule(rule.rulerRule) ||
+    isRecordingRule(rule.promRule) ||
+    isGrafanaRecordingRule(rule.rulerRule)
+  ) {
+    return undefined;
+  }
+  return rule.annotations ?? [];
+}
 export interface RulePluginOrigin {
   pluginId: string;
 }
