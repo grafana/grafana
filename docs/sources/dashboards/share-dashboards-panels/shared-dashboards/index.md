@@ -40,15 +40,15 @@ refs:
 
 # Externally shared dashboards
 
-{{< admonition type="warning" >}}
-Sharing your dashboard externally could result in a large number of queries to the data sources used by your dashboard.
-This can be mitigated by using the Enterprise [caching](ref:caching) and/or rate limiting features.
-{{< /admonition >}}
+{{< docs/public-preview product="The redesigned external sharing feature" >}}
 
 Externally shared dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization.
 
-{{< admonition type="note" >}}
 If you change a dashboard, ensure that you save the changes before sharing.
+
+{{< admonition type="warning" >}}
+Sharing your dashboard externally could result in a large number of queries to the data sources used by your dashboard.
+This can be mitigated by using the Enterprise [caching](ref:caching) and/or rate limiting features.
 {{< /admonition >}}
 
 ## Shared dashboards list
