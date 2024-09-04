@@ -57,6 +57,7 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
+      settingsButton: 'data-testid settings-button',
       scrollContainer: 'data-testid Dashboard canvas scroll container',
       newShareButton: {
         container: 'data-testid new share button',
