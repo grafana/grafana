@@ -409,6 +409,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 
 
 /public/app/core/history/ @grafana/explore-squad
+/public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
