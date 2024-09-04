@@ -18,6 +18,9 @@ Team LBAC is available on Cloud for data sources created with basic authenticati
 
 ## Before you begin
 
+To be able to use Team LBAC rules, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
+
+- Be sure that you are running Grafana Enterprise.
 - Be sure that you have admin data source permissions for Grafana.
 - Be sure that you have a team setup in Grafana.
 
