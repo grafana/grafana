@@ -1023,7 +1023,7 @@
       "encryption-provider-base-64": "Base64-encoded content",
       "encryption-provider-description": "X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.",
       "encryption-provider-file-path": "Path to files",
-      "encryption-provider-label": "Encryption key and certificate provision specification (required)",
+      "encryption-provider-label": "Encryption key and certificate provision specification.",
       "label": "Extra security measures",
       "min-tls-version-description": "This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.",
       "min-tls-version-label": "Min TLS version",

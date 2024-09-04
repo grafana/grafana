@@ -275,7 +275,7 @@ export const LdapDrawerComponent = ({
             <Field
               label={t(
                 'ldap-drawer.extra-security-section.encryption-provider-label',
-                'Encryption key and certificate provision specification (required)'
+                'Encryption key and certificate provision specification.'
               )}
               description={t(
                 'ldap-drawer.extra-security-section.encryption-provider-description',
