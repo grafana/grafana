@@ -399,6 +399,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
       const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, this);
       const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, this);
+      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
 
       const datasourceUid = sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
 
@@ -409,7 +410,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       if (
         otelResourcesVariable instanceof AdHocFiltersVariable &&
         otelDepEnvVariable instanceof CustomVariable &&
-        otelJoinQueryVariable instanceof ConstantVariable
+        otelJoinQueryVariable instanceof ConstantVariable &&
+        filtersVariable instanceof AdHocFiltersVariable
       ) {
         // HERE WE START THE OTEL EXPERIENCE ENGINE
         // 1. Set deployment variable values
@@ -422,6 +424,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         //  - otelTargets used to filter metrics
         //  - and default to useOtelExperience
         if (hasOtelResources && isStandard && deploymentEnvironments.length > 0) {
+          // *** apply VAR FILTERS manually
+          // otherwise they will appear anywhere the query contains {} characters
+          filtersVariable.setState({
+            addFilterButtonText: 'Select metric attributes',
+            label: 'Select metric attribute',
+          });
+
           // 1. set deployment variable values
           let varQuery = '';
           const options = deploymentEnvironments.map((env) => {
@@ -538,6 +547,12 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             useOtelExperience: true,
           });
         } else {
+          // reset filters to apply auto, anywhere there are {} characters
+          filtersVariable.setState({
+            addFilterButtonText: 'Add label',
+            label: 'Select label',
+          });
+
           // if there are no resources reset the otel variables and otel state
           // or if not standard
           otelResourcesVariable.setState({
@@ -664,7 +679,8 @@ function getVariableSet(
       }),
       new AdHocFiltersVariable({
         name: VAR_OTEL_RESOURCES,
-        addFilterButtonText: 'Add OTel resources',
+        label: 'Select resource attributes',
+        addFilterButtonText: 'Select resource attributes',
         datasource: trailDS,
         hide: VariableHide.hideVariable,
         layout: 'vertical',
