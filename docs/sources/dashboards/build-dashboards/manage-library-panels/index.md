@@ -37,7 +37,7 @@ You can control permissions for library panels using [role-based access control 
 
 ## Create a library panel
 
-When you create a library panel, the panel on the source dashboard is converted to a library panel as well. You need to save the original dashboard once a panel is converted.
+Library panels can be reused in different dashboards throughout Grafana. When you create a library panel, the panel on the source dashboard is converted to a library panel as well. You need to save the original dashboard once a panel is converted.
 
 To create a library panel, follow these steps:
 
