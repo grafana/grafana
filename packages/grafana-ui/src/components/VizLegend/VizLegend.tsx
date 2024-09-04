@@ -106,7 +106,7 @@ export function VizLegend<T>({
       return (
         <>
           {/* render series colors if more than one series or no threshold colors */}
-          {(items.length > 1 || thresholdItems?.length === 0) && (
+          {(items.length > 1 || !thresholdItems) && (
             <VizLegendList<T>
               className={className}
               items={items}
