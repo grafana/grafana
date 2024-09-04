@@ -3,9 +3,9 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2, PanelPluginMeta, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, sceneGraph } from '@grafana/scenes';
-import { FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Button, Card, FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
@@ -44,6 +44,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     this.setState({ listMode });
   };
 
+  onOpenPanelJSON = (vizPanel: VizPanel) => {
+    locationService.partial({
+      inspect: vizPanel.state.key,
+      inspectTab: 'json',
+    });
+  };
+
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
     const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
@@ -65,14 +72,31 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
               />
             </div>
             {isAngularPanel && (
-              <AngularDeprecationPluginNotice
-                className={styles.angularDeprecationWrapper}
-                showPluginDetailsLink={true}
-                pluginId={pluginId}
-                pluginType={PluginType.panel}
-                angularSupportEnabled={config?.angularSupportEnabled}
-                interactionElementId="panel-options"
-              />
+              <div className={styles.angularDeprecationContainer}>
+                <AngularDeprecationPluginNotice
+                  showPluginDetailsLink={true}
+                  pluginId={pluginId}
+                  pluginType={PluginType.panel}
+                  angularSupportEnabled={config?.angularSupportEnabled}
+                  interactionElementId="panel-options"
+                />
+                <>
+                  <Card.Heading>Angular Panel Options</Card.Heading>
+                  <Card.Description>To modify the panel options, use the Panel JSON editor.</Card.Description>
+                  <Card.Actions>
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      onClick={() => {
+                        model.onOpenPanelJSON(panel);
+                      }}
+                    >
+                      {' '}
+                      Open Panel JSON{' '}
+                    </Button>
+                  </Card.Actions>
+                </>
+              </div>
             )}
             <div className={styles.listOfOptions}>
               <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} data={data} />
@@ -113,8 +137,12 @@ function getStyles(theme: GrafanaTheme2) {
     rotateIcon: css({
       rotate: '180deg',
     }),
-    angularDeprecationWrapper: css({
+    angularDeprecationContainer: css({
+      label: 'angular-deprecation-container',
       padding: theme.spacing(1),
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-end',
     }),
   };
 }
