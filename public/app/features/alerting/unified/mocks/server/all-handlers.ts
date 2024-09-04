@@ -2,6 +2,7 @@
  * Contains all handlers that are required for test rendering of components within Alerting
  */
 
+import accessControlHandlers from 'app/features/alerting/unified/mocks/server/handlers/accessControl';
 import alertNotifierHandlers from 'app/features/alerting/unified/mocks/server/handlers/alertNotifiers';
 import alertmanagerHandlers from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import datasourcesHandlers from 'app/features/alerting/unified/mocks/server/handlers/datasources';
@@ -22,6 +23,7 @@ import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers
  * Array of all mock handlers that are required across Alerting tests
  */
 const allHandlers = [
+  ...accessControlHandlers,
   ...alertNotifierHandlers,
   ...grafanaRulerHandlers,
   ...mimirRulerHandlers,
