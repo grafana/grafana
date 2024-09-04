@@ -41,7 +41,7 @@ export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
   private _prevRepeatValues?: VariableValueSingle[];
-  private _oldBody?: VizPanel | LibraryVizPanel | AddLibraryPanelDrawer;
+  private _oldBody?: VizPanel;
 
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
