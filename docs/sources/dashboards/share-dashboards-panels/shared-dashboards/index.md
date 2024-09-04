@@ -61,7 +61,7 @@ You can see a list of all your externally shared dashboards in one place by navi
 
 You can also click the name of the dashboard to navigate to the dashboard internally.
 
-## Security implications of sharing your dashboard externally
+## Important notes about sharing your dashboard externally
 
 - Anyone with the URL can access the dashboard.
 - Externally shared dashboards are read-only.
