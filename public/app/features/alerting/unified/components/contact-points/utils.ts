@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
+import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedContactPoint,
@@ -208,4 +209,5 @@ function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedR
   };
 }
 
-export const showManageContactPointPermissions = () => contextSrv.licensedAccessControlEnabled();
+export const showManageContactPointPermissions = (alertmanager: string) =>
+  shouldUseK8sApi(alertmanager) && contextSrv.licensedAccessControlEnabled();
