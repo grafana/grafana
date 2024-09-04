@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,7 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var UserResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"users", "user", "User",
 	func() runtime.Object { return &User{} },
 	func() runtime.Object { return &UserList{} },
@@ -43,7 +42,7 @@ var UserResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var TeamResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var TeamResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"teams", "team", "Team",
 	func() runtime.Object { return &Team{} },
 	func() runtime.Object { return &TeamList{} },
@@ -69,7 +68,7 @@ var TeamResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var ServiceAccountResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var ServiceAccountResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"serviceaccounts", "serviceaccount", "ServiceAccount",
 	func() runtime.Object { return &ServiceAccount{} },
 	func() runtime.Object { return &ServiceAccountList{} },
@@ -95,7 +94,7 @@ var ServiceAccountResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var SSOSettingResourceInfo = common.NewResourceInfo(
+var SSOSettingResourceInfo = utils.NewResourceInfo(
 	GROUP, VERSION, "ssosettings", "ssosetting", "SSOSetting",
 	func() runtime.Object { return &SSOSetting{} },
 	func() runtime.Object { return &SSOSettingList{} },
@@ -121,7 +120,7 @@ var SSOSettingResourceInfo = common.NewResourceInfo(
 	},
 )
 
-var TeamBindingResourceInfo = common.NewResourceInfo(
+var TeamBindingResourceInfo = utils.NewResourceInfo(
 	GROUP, VERSION, "teambindings", "teambinding", "TeamBinding",
 	func() runtime.Object { return &TeamBinding{} },
 	func() runtime.Object { return &TeamBindingList{} },
