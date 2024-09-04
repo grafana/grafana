@@ -118,7 +118,9 @@ For more information about dashboard permissions, refer to [Dashboard permission
 When you delete one or more folders they are gone forever.
 However when you delete dashboards they will be moved to the Recently deleted section where they are stored for another 30 days. If you change your mind and want to get your dashboards back you can restore them easily.
 
-**To restore one or more dashboard:**
+## Restore dashboards
+
+To restore on or more dashboards, follow these steps:
 
 1. Go to the **Recently deleted** page under the Dashboards menu item
 2. Select the dashboards you want to restore
