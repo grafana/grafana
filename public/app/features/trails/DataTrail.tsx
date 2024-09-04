@@ -423,7 +423,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         //  - isStandardOtel flag
         //  - otelTargets used to filter metrics
         //  - and default to useOtelExperience
-        if (hasOtelResources && isStandard && deploymentEnvironments.length > 0) {
+
+        // isStandard is not reliable because of an issue where there are
+        // multiple target_info series with job&instance pairs due to staleness which breaks the join.
+        // We handle this by now using topk to choose 1 series to allow for the join
+        if (hasOtelResources && deploymentEnvironments.length > 0 /*&& isStandard*/) {
           // *** apply VAR FILTERS manually
           // otherwise they will appear anywhere the query contains {} characters
           filtersVariable.setState({
