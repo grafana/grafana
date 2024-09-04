@@ -44,7 +44,7 @@ export abstract class Registry<TRegistryValue, TMapType> {
     this.registrySubject = new ReplaySubject<RegistryType<TRegistryValue>>(1);
     this.resultSubject
       .pipe(
-        scan(this.mapToRegistry, options.initialState ?? {}),
+        scan(this.mapToRegistry.bind(this), options.initialState ?? {}),
         // Emit an empty registry to start the stream (it is only going to do it once during construction, and then just passes down the values)
         startWith(options.initialState ?? {}),
         map((registry) => deepFreeze(registry))

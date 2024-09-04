@@ -2,7 +2,7 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
-import { logWarning, wrapWithPluginContext } from '../utils';
+import { wrapWithPluginContext } from '../utils';
 import {
   extensionPointEndsWithVersion,
   isExtensionPointIdValid,
@@ -40,33 +40,37 @@ export class AddedComponentsRegistry extends Registry<
 
     for (const config of configs) {
       if (!isReactComponent(config.component)) {
-        logWarning(
+        this.logger.warning(
           `Could not register added component with title '${config.title}'. Reason: The provided component is not a valid React component.`
         );
         continue;
       }
 
       if (!config.title) {
-        logWarning(`Could not register added component with title '${config.title}'. Reason: Title is missing.`);
+        this.logger.warning(
+          `Could not register added component with title '${config.title}'. Reason: Title is missing.`
+        );
         continue;
       }
 
       if (!config.description) {
-        logWarning(`Could not register added component with title '${config.title}'. Reason: Description is missing.`);
+        this.logger.warning(
+          `Could not register added component with title '${config.title}'. Reason: Description is missing.`
+        );
         continue;
       }
 
       const extensionPointIds = Array.isArray(config.targets) ? config.targets : [config.targets];
       for (const extensionPointId of extensionPointIds) {
         if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
-          logWarning(
+          this.logger.warning(
             `Could not register added component with id '${extensionPointId}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id or grafana. e.g '<grafana|myorg-basic-app>/my-component-id/v1'.`
           );
           continue;
         }
 
         if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
-          logWarning(
+          this.logger.warning(
             `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
           );
         }
