@@ -68,9 +68,9 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/panel-overview/
   export-dashboards:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/#export-a-dashboard
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/#export-dashboards
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/#export-a-dashboard
+      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/#export-dashboards
 ---
 
 # Use dashboards
