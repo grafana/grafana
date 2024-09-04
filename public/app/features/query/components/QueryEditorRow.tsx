@@ -2,8 +2,8 @@
 import classNames from 'classnames';
 import { cloneDeep, filter, has, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import { PureComponent, ReactNode } from 'react';
 import * as React from 'react';
+import { PureComponent, ReactNode } from 'react';
 
 // Utils & Services
 import {
@@ -35,7 +35,7 @@ import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -64,6 +64,7 @@ export interface Props<TQuery extends DataQuery> {
   history?: Array<HistoryItem<TQuery>>;
   eventBus?: EventBusExtended;
   alerting?: boolean;
+  hideActionButtons?: boolean;
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
@@ -527,7 +528,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, index, visualization, collapsable } = this.props;
+    const { query, index, visualization, collapsable, hideActionButtons } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
     const error =
@@ -548,11 +549,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={this.id}
-          draggable={true}
+          draggable={!hideActionButtons}
           collapsable={collapsable}
           index={index}
           headerElement={this.renderHeader}
-          actions={this.renderActions}
+          actions={hideActionButtons ? undefined : this.renderActions}
           onOpen={this.onOpen}
         >
           <div className={rowClasses} id={this.id}>
