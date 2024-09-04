@@ -7,6 +7,7 @@ import { t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
+import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -34,6 +35,7 @@ export const ContactPointHeader = ({
   const { name, id, provisioned, policies = [] } = contactPoint;
   const styles = useStyles2(getStyles);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
+  const { selectedAlertmanager } = useAlertmanager();
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
@@ -41,7 +43,7 @@ export const ContactPointHeader = ({
 
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
-  const showManagePermissions = showManageContactPointPermissions();
+  const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!);
 
   const numberOfPolicies = policies.length;
   const isReferencedByAnyPolicy = numberOfPolicies > 0;

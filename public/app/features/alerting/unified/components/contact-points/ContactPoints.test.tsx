@@ -414,6 +414,14 @@ describe('contact points', () => {
       return expect(attemptDeleteContactPoint('provisioned-contact-point')).rejects.toBeTruthy();
     });
 
+    it('does not show manage permissions', async () => {
+      renderGrafanaContactPoints();
+
+      clickMoreActionsButton('lotsa-emails');
+
+      expect(screen.queryByRole('menuitem', { name: /manage permissions/i })).not.toBeInTheDocument();
+    });
+
     describe('accesscontrol license feature enabled', () => {
       testWithLicenseFeatures(['accesscontrol']);
 
@@ -436,7 +444,7 @@ describe('contact points', () => {
 
         clickMoreActionsButton('lotsa-emails');
         await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
-        // await user.click((await screen.findAllByRole('button', { name: /manage permissions/i }))[1]);
+
         expect(await screen.findByRole('dialog', { name: /drawer title manage permissions/i })).toBeInTheDocument();
         expect(await screen.findByRole('table')).toBeInTheDocument();
       });

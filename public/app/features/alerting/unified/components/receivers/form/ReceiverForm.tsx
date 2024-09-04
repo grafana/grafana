@@ -116,7 +116,7 @@ export function ReceiverForm<R extends ChannelValues>({
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
-  const showManagePermissions = showManageContactPointPermissions();
+  const showManagePermissions = showManageContactPointPermissions(alertManagerSourceName);
 
   return (
     <FormProvider {...formAPI}>

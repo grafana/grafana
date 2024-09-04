@@ -2,6 +2,7 @@ import { useState, ComponentProps } from 'react';
 
 import { Button, Drawer } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
+import { t, Trans } from 'app/core/internationalization';
 
 type ButtonProps = { onClick: () => void };
 
@@ -21,22 +22,24 @@ type Props = BaseProps & {
  * controlling button within a dropdown etc.
  */
 export const ManagePermissionsDrawer = ({
-  resource,
-  resourceId,
   resourceName,
   title,
   onClose,
-}: BaseProps & Pick<ComponentProps<typeof Drawer>, 'onClose'>) => (
-  <Drawer onClose={onClose} title={title || 'Manage permissions'} subtitle={resourceName}>
-    <Permissions resource={resource} resourceId={resourceId} canSetPermissions></Permissions>
-  </Drawer>
-);
+  ...permissionsProps
+}: BaseProps & Pick<ComponentProps<typeof Drawer>, 'onClose'>) => {
+  const defaultTitle = t('alerting.manage-permissions.title', 'Manage permissions');
+  return (
+    <Drawer onClose={onClose} title={title || defaultTitle} subtitle={resourceName}>
+      <Permissions {...permissionsProps} canSetPermissions></Permissions>
+    </Drawer>
+  );
+};
 
 /** Default way to render the button for "manage permissions" */
 const DefaultButton = ({ onClick }: ButtonProps) => {
   return (
     <Button variant="secondary" onClick={onClick} icon="unlock">
-      Manage permissions
+      <Trans i18nKey="alerting.manage-permissions.button">Manage permissions</Trans>
     </Button>
   );
 };
