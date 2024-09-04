@@ -215,9 +215,8 @@ const ToggleAllOption = ({
         checked={state === ToggleAllState.allSelected}
         indeterminate={state === ToggleAllState.indeterminate}
       ></Checkbox>
-      <Trans i18nKey="select.select-menu.selected-count">Selected (</Trans>
-      {selectedCount ?? 0}
-      <Trans>)</Trans>
+      <Trans i18nKey="select.select-menu.selected-count">Selected </Trans>
+      {`(${selectedCount ?? 0})`}
     </Button>
   );
 };
