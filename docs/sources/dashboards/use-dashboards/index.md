@@ -85,7 +85,7 @@ The dashboard user interface provides a number of features that you can use to c
 
 The following image and descriptions highlight all dashboard features.
 
-![An annotated image of a dashboard](screenshot-dashboard-toggle-annotated-11.3.png)
+![An annotated image of a dashboard](/media/docs/grafana/screenshot-dashboard-toggle-annotated-11.3.png)
 
 1. **Grafana home** - Click **Home** in the breadcrumb to go to the home page configured in the Grafana instance.
 1. **Dashboard folder** - When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](ref:dashboard-folders).
