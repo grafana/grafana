@@ -95,7 +95,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   return (
     <div className={styles.listItem}>
       <Field label="Title">
-        <SuggestionsInput value={value.title} onChange={onTitleChange} suggestions={suggestions} />
+        <SuggestionsInput value={value.title} onChange={onTitleChange} suggestions={suggestions} autoFocus={true} />
       </Field>
 
       <InlineFieldRow>

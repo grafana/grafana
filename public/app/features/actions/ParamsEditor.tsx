@@ -26,6 +26,9 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
   const [paramValue, setParamValue] = useState('');
   const [contentTypeParamValue, setContentTypeParamValue] = useState(headersContentType ? 'application/json' : '');
 
+  // forces re-init of first SuggestionsInput(s), since they are stateful and don't respond to 'value' prop changes to be able to clear them :(
+  const [entryKey, setEntryKey] = useState(Math.random().toString());
+
   const changeParamValue = (paramValue: string) => {
     setParamValue(paramValue);
   };
@@ -55,6 +58,7 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
 
     setParamName('');
     setParamValue('');
+    setEntryKey(Math.random().toString());
   };
 
   const changeContentTypeParamValue = (value: string) => {
@@ -66,7 +70,7 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
 
   return (
     <div>
-      <Stack direction="row">
+      <Stack direction="row" key={entryKey}>
         <SuggestionsInput
           value={paramName}
           onChange={changeParamName}
