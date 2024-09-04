@@ -76,14 +76,10 @@ To set up email integration, complete the following steps.
 1. From the Integration list, select **Email**.
 1. Enter the email addresses you want to send notifications to.
 
-   Capital letters in email addresses are not supported.
+   E-mail addresses are case sensitive. Ensure that the e-mail address entered is correct.
 
-   An incorrect entry is: ExampleAddress@domain.com
-
-   A correct entry is: exampleaddress@domain.com
-
-1. Click **Test** to check that your integration works.
-1. Click **Save contact point**.
+2. Click **Test** to check that your integration works.
+3. Click **Save contact point**.
 
 ## Next steps
 
