@@ -374,6 +374,7 @@ func createNotificationSrvSutFromEnv(t *testing.T, env *testEnvironment) Notific
 		env.secrets,
 		env.xact,
 		env.log,
+		nil,
 	)
 	return NotificationSrv{
 		logger:          env.log,

@@ -7,15 +7,19 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/authlib/claims"
 	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -40,6 +44,7 @@ type ReceiverService struct {
 	xact                   transactionManager
 	log                    log.Logger
 	provenanceValidator    validation.ProvenanceStatusTransitionValidator
+	resourcePermissions    ac.ReceiverPermissionsService
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -88,6 +93,7 @@ func NewReceiverService(
 	encryptionService secretService,
 	xact transactionManager,
 	log log.Logger,
+	resourcePermissions ac.ReceiverPermissionsService,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -98,6 +104,7 @@ func NewReceiverService(
 		xact:                   xact,
 		log:                    log,
 		provenanceValidator:    validation.ValidateProvenanceRelaxed,
+		resourcePermissions:    resourcePermissions,
 	}
 }
 
@@ -304,6 +311,12 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		if err != nil {
 			return err
 		}
+		if rs.resourcePermissions != nil {
+			err = rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, uid)
+			if err != nil {
+				rs.log.Error("Could not delete receiver permissions", "receiver", existing.Name, "error", err)
+			}
+		}
 		return rs.deleteProvenances(ctx, orgID, existing.Integrations)
 	})
 }
@@ -338,6 +351,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		err = rs.cfgStore.Save(ctx, revision, orgID)
 		if err != nil {
 			return err
+		}
+		if rs.resourcePermissions != nil {
+			rs.setDefaultPermissions(ctx, orgID, user, createdReceiver)
 		}
 		return rs.setReceiverProvenance(ctx, orgID, &createdReceiver)
 	})
@@ -512,6 +528,39 @@ func (rs *ReceiverService) checkOptimisticConcurrency(receiver *models.Receiver,
 		return makeErrReceiverVersionConflict(receiver, desiredVersion)
 	}
 	return nil
+}
+
+func (rs *ReceiverService) setDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, receiver models.Receiver) {
+	// TODO: Do we need support for cfg.RBAC.PermissionsOnCreation?
+
+	var permissions []ac.SetResourcePermissionCommand
+	clearCache := false
+	if receiver.Provenance == models.ProvenanceNone && user.IsIdentityType(claims.TypeUser) {
+		userID, err := user.GetInternalID()
+		if err != nil {
+			rs.log.Error("Could not make user admin", "receiver", receiver.Name, "id", user.GetID(), "error", err)
+		} else {
+			permissions = append(permissions, ac.SetResourcePermissionCommand{
+				UserID: userID, Permission: string(alertingac.ReceiverPermissionAdmin),
+			})
+			clearCache = true
+		}
+	}
+
+	permissions = append(permissions, []ac.SetResourcePermissionCommand{
+		{BuiltinRole: string(org.RoleEditor), Permission: string(alertingac.ReceiverPermissionEdit)},
+		{BuiltinRole: string(org.RoleViewer), Permission: string(alertingac.ReceiverPermissionView)},
+	}...)
+
+	if _, err := rs.resourcePermissions.SetPermissions(ctx, orgID, receiver.UID, permissions...); err != nil {
+		rs.log.Error("Could not set default permissions", "receiver", receiver.Name, "error", err)
+	}
+
+	if clearCache {
+		// Clear permission cache for the user who created the receiver, so that new permissions are fetched for their next call
+		// Required for cases when caller wants to immediately interact with the newly created object
+		rs.resourcePermissions.ClearUserPermissionCache(user)
+	}
 }
 
 // limitOffset returns a subslice of items with the given offset and limit. Returns the same underlying array, not a copy.

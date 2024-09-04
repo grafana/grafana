@@ -1901,6 +1901,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		env.secrets,
 		env.xact,
 		env.log,
+		nil,
 	)
 	return ProvisioningSrv{
 		log:                 env.log,

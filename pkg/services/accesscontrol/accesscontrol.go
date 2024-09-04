@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -146,6 +147,12 @@ type DatasourcePermissionsService interface {
 
 type ServiceAccountPermissionsService interface {
 	PermissionsService
+}
+
+type ReceiverPermissionsService interface {
+	PermissionsService
+	// ClearUserPermissionCache removes the permission cache entry for the given user
+	ClearUserPermissionCache(user identity.Requester)
 }
 
 type PermissionsService interface {

@@ -17,6 +17,15 @@ var (
 	ScopeReceiversAll      = ScopeReceiversProvider.GetResourceAllScope()
 )
 
+// ReceiverPermission is a type for representing a receiver permission.
+type ReceiverPermission string
+
+const (
+	ReceiverPermissionView  ReceiverPermission = "View"
+	ReceiverPermissionEdit  ReceiverPermission = "Edit"
+	ReceiverPermissionAdmin ReceiverPermission = "Admin"
+)
+
 var (
 	// Asserts pre-conditions for read access to redacted receivers. If this evaluates to false, the user cannot read any redacted receivers.
 	readRedactedReceiversPreConditionsEval = ac.EvalAny(
