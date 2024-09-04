@@ -47,7 +47,7 @@ export function createHistogramMetricQueryDefs(metricParts: string[]) {
     vizBuilder: () => heatmapGraphBuilder(heatmap),
   };
 
-  return { preview: p50, main: percentiles, variants: [percentiles, heatmap], breakdown: breakdown };
+  return { preview: heatmap, main: heatmap, variants: [percentiles, heatmap], breakdown: breakdown };
 }
 
 const BASE_QUERY = `rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])${VAR_OTEL_JOIN_QUERY_EXPR}`;
