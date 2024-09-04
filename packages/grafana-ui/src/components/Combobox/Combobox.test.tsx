@@ -37,7 +37,7 @@ describe('Combobox', () => {
     render(<Combobox options={options} onChange={onChangeHandler} value={null} />);
 
     const input = screen.getByRole('combobox');
-    userEvent.click(input);
+    await userEvent.click(input);
 
     const item = await screen.findByRole('option', { name: 'Option 1' });
     await userEvent.click(item);
