@@ -110,6 +110,17 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
     return undefined;
   };
 
+  private rowId = () => {
+    const row = this.getParent();
+    const { title } = row.useState();
+
+    return title.replace(/[.#\s]/g, '-').toLowerCase();
+  };
+
+  private rowAnchor = () => {
+    return `#${this.rowId()}`;
+  };
+
   static Component = ({ model }: SceneComponentProps<RowActions>) => {
     const dashboard = model.getDashboard();
     const row = model.getParent();
@@ -121,9 +132,14 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
 
     return (
       <>
-        {meta.canEdit && isEditing && (
-          <>
-            <div className={styles.rowActions}>
+        <div className={styles.rowActions}>
+          <button type="button" aria-label="Link to row">
+            <a id={model.rowId()} href={model.rowAnchor()}>
+              <Icon name="link" />
+            </a>
+          </button>
+          {meta.canEdit && isEditing && (
+            <>
               <RowOptionsButton
                 title={title}
                 repeat={behaviour instanceof RowRepeaterBehavior ? behaviour.state.variableName : undefined}
@@ -134,9 +150,9 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
               <button type="button" onClick={model.onDelete} aria-label="Delete row">
                 <Icon name="trash-alt" />
               </button>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </>
     );
   };
