@@ -27,10 +27,10 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 )
 
-var _ builder.APIGroupBuilder = (*IdentityAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
-type IdentityAPIBuilder struct {
+type IdentityAccessManagementAPIBuilder struct {
 	Store      legacy.LegacyIdentityStore
 	SSOService ssosettings.Service
 }
@@ -40,12 +40,12 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
-) (*IdentityAPIBuilder, error) {
+) (*IdentityAccessManagementAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
-	builder := &IdentityAPIBuilder{
+	builder := &IdentityAccessManagementAPIBuilder{
 		Store:      legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
 		SSOService: ssoService,
 	}
@@ -54,11 +54,11 @@ func RegisterAPIService(
 	return builder, nil
 }
 
-func (b *IdentityAPIBuilder) GetGroupVersion() schema.GroupVersion {
+func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return identityv0.SchemeGroupVersion
 }
 
-func (b *IdentityAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
+func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	identityv0.AddKnownTypes(scheme, identityv0.VERSION)
 
 	// Link this version to the internal representation.
@@ -70,7 +70,7 @@ func (b *IdentityAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(identityv0.SchemeGroupVersion)
 }
 
-func (b *IdentityAPIBuilder) GetAPIGroupInfo(
+func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
@@ -105,16 +105,16 @@ func (b *IdentityAPIBuilder) GetAPIGroupInfo(
 	return &apiGroupInfo, nil
 }
 
-func (b *IdentityAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return identityv0.GetOpenAPIDefinitions
 }
 
-func (b *IdentityAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	// no custom API routes
 	return nil
 }
 
-func (b *IdentityAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// TODO: handle authorization based in entity.
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
