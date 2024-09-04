@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
@@ -9,17 +9,17 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { log, LogItem } from '../plugins/extensions/log';
 
 import { Logs } from './Logs';
+const observableLog = log.asObservable();
 
 export const TestStuffPage = () => {
   const [logs, setLogs] = useState<LogItem[]>([]);
-  const observable = useMemo(() => log.asObservable(), []);
 
   useLayoutEffect(() => {
-    const subscription = observable.subscribe((item) => {
+    const subscription = observableLog.subscribe((item) => {
       setLogs((logs) => [item, ...logs]);
     });
     return () => subscription.unsubscribe();
-  }, [observable]);
+  }, []);
 
   const node: NavModelItem = {
     id: 'test-page',
