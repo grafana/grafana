@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"golang.org/x/sync/errgroup"
@@ -64,6 +66,7 @@ func ProvideService(
 type Service interface {
 	Run(ctx context.Context) error
 	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
+	QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.ConvertQueryRequest) (*dtos.ConvertQueryRequest, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -104,6 +107,61 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
+}
+
+func (s *ServiceImpl) QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.ConvertQueryRequest) (*dtos.ConvertQueryRequest, error) {
+	ds, err := s.getDataSourceFromQuery(ctx, user, skipDSCache, reqDTO.Queries[0], map[string]*datasources.DataSource{})
+	if err != nil {
+		return nil, err
+	}
+	if ds == nil {
+		return nil, ErrInvalidDatasourceID
+	}
+	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
+	if err != nil {
+		return nil, err
+	}
+	convertRequest := &backend.ConversionRequest{
+		PluginContext: pCtx,
+		UID:           uuid.New().String(),
+		TargetVersion: backend.GroupVersion{
+			Group:   "query",
+			Version: "v0alpha1",
+		},
+		Objects: make([]backend.RawObject, 0, len(reqDTO.Queries)),
+	}
+
+	for _, query := range reqDTO.Queries {
+		raw, err := json.Marshal(query)
+		if err != nil {
+			return nil, err
+		}
+		convertRequest.Objects = append(convertRequest.Objects, backend.RawObject{
+			Raw:         raw,
+			ContentType: "application/json",
+		})
+	}
+
+	convertResponse, err := s.pluginClient.ConvertObjects(ctx, convertRequest)
+	if err != nil {
+		// TODO: Use convertResponse.Result to return an error?
+		return nil, err
+	}
+	convertedQueries := make([]*simplejson.Json, 0, len(convertResponse.Objects))
+	for _, obj := range convertResponse.Objects {
+		// var q backend.DataQuery
+		// if err := json.Unmarshal(obj.Raw, q); err != nil {
+		// 	return nil, err
+		// }
+		q, err := simplejson.NewJson(obj.Raw)
+		if err != nil {
+			return nil, err
+		}
+		convertedQueries = append(convertedQueries, q)
+	}
+	reqDTO.Queries = convertedQueries
+
+	return &reqDTO, nil
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers

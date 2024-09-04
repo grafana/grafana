@@ -993,6 +993,18 @@
     },
     {
       "metadata": {
+        "name": "dsQueryConvert",
+        "resourceVersion": "1725439955658",
+        "creationTimestamp": "2024-09-04T08:52:35Z"
+      },
+      "spec": {
+        "description": "Expose convert endpoint for datasource queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs"
+      }
+    },
+    {
+      "metadata": {
         "name": "editPanelCSVDragAndDrop",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-01-24T09:43:44Z"

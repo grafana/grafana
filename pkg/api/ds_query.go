@@ -55,6 +55,24 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 	return routing.Wrap(hs.QueryMetricsV2)
 }
 
+func (hs *HTTPServer) getDSQueryConvertEndpoint() web.Handler {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryServiceRewrite) {
+		// rewrite requests from /ds/query to the new query service
+		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
+		return func(w http.ResponseWriter, r *http.Request) {
+			user, err := identity.GetRequester(r.Context())
+			if err != nil || user == nil {
+				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
+				return
+			}
+			// TODO: This is not implemented in the new query service yet
+			r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.GetOrgID()) + "/query/convert"
+			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
+		}
+	}
+	return routing.Wrap(hs.QueryConvert)
+}
+
 // QueryMetricsV2 returns query metrics.
 // swagger:route POST /ds/query ds queryMetricsWithExpressions
 //
@@ -81,6 +99,19 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 		return hs.handleQueryMetricsError(err)
 	}
 	return hs.toJsonStreamingResponse(c.Req.Context(), resp)
+}
+
+func (hs *HTTPServer) QueryConvert(c *contextmodel.ReqContext) response.Response {
+	reqDTO := dtos.ConvertQueryRequest{}
+	if err := web.Bind(c.Req, &reqDTO); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	resp, err := hs.queryDataService.QueryConvert(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	if err != nil {
+		return hs.handleQueryMetricsError(err)
+	}
+	return response.JSONStreaming(http.StatusOK, resp)
 }
 
 func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.QueryDataResponse) response.Response {

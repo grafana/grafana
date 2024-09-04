@@ -763,6 +763,10 @@ const (
 	// Used in Explore Logs to query by aggregated metrics
 	FlagExploreLogsAggregatedMetrics = "exploreLogsAggregatedMetrics"
 
+	// FlagDsQueryConvert
+	// Expose convert endpoint for datasource queries
+	FlagDsQueryConvert = "dsQueryConvert"
+
 	// FlagExploreLogsLimitedTimeRange
 	// Used in Explore Logs to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"

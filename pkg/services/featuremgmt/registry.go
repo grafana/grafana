@@ -1425,6 +1425,12 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:        "dsQueryConvert",
+			Description: "Expose convert endpoint for datasource queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "exploreLogsLimitedTimeRange",
 			Description:  "Used in Explore Logs to limit the time range",
 			Stage:        FeatureStageExperimental,

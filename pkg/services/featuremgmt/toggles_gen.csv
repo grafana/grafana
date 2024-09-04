@@ -188,4 +188,5 @@ lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false
 singleTopNav,experimental,@grafana/grafana-frontend-platform,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
+dsQueryConvert,experimental,@grafana/observability-logs,false,false,false
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
