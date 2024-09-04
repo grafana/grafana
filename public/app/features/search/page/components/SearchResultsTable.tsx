@@ -7,6 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { Observable } from 'rxjs';
 
 import { Field, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { TableCell } from '@grafana/ui/src/components/Table/TableCell';
@@ -137,9 +138,13 @@ export const SearchResultsTable = React.memo(
           className += ' ' + styles.selectedRow;
         }
         const { key, ...rowProps } = row.getRowProps({ style });
-
         return (
-          <div key={key} {...rowProps} className={className}>
+          <div
+            key={key}
+            {...rowProps}
+            className={className}
+            data-testid={selectors.pages.Search.table.row(response.view.fields.name.values[rowIndex])}
+          >
             {row.cells.map((cell: Cell, index: number) => {
               return (
                 <TableCell
@@ -160,6 +165,7 @@ export const SearchResultsTable = React.memo(
         rows,
         prepareRow,
         response.view.fields.url?.values,
+        response.view.fields.name?.values,
         highlightIndex,
         styles,
         tableStyles,
@@ -173,7 +179,12 @@ export const SearchResultsTable = React.memo(
     }
 
     return (
-      <div {...getTableProps()} aria-label="Search results table" role="table">
+      <div
+        {...getTableProps()}
+        aria-label="Search results table"
+        role="table"
+        data-testid={selectors.pages.Search.table.body}
+      >
         {headerGroups.map((headerGroup) => {
           const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps({
             style: { width },
