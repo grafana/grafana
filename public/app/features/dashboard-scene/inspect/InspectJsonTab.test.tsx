@@ -5,6 +5,8 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  PanelPlugin,
+  PluginType,
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
@@ -25,10 +27,33 @@ import { findVizPanelByKey } from '../utils/utils';
 import { InspectJsonTab } from './InspectJsonTab';
 
 standardTransformersRegistry.setInit(getStandardTransformers);
+const panelPlugin: PanelPlugin = new PanelPlugin(() => null);
+panelPlugin.meta = {
+  id: 'table',
+  name: 'Table',
+  sort: 1,
+  type: PluginType.panel,
+  info: {
+    author: {
+      name: 'name',
+    },
+    description: '',
+    links: [],
+    logos: {
+      large: '',
+      small: '',
+    },
+    screenshots: [],
+    updated: '',
+    version: '1.0.',
+  },
+  module: '',
+  baseUrl: '',
+};
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
-  getPanelPluginFromCache: (id: string) => undefined,
+  getPanelPluginFromCache: (id: string) => panelPlugin,
 });
 
 jest.mock('@grafana/runtime', () => ({
@@ -265,7 +290,7 @@ async function buildTestSceneWithLibraryPanel() {
   await new Promise((r) => setTimeout(r, 1));
 
   const tab = new InspectJsonTab({
-    panelRef: gridItem.state.body.getRef(),
+    panelRef: libraryPanel.getRef(),
     onClose: jest.fn(),
   });
 
