@@ -3,9 +3,9 @@ import { Route } from 'react-router';
 import { render, screen } from 'test/test-utils';
 import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-library-selector';
 
-import { config } from '@grafana/runtime';
 import { makeGrafanaAlertmanagerConfigUpdateFail } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
+import { testWithFeatureToggles } from 'app/features/alerting/unified/utils/alerting-test-utils';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
@@ -36,9 +36,7 @@ beforeEach(() => {
 });
 
 describe('alerting API server enabled', () => {
-  beforeEach(() => {
-    config.featureToggles.alertingApiServer = true;
-  });
+  testWithFeatureToggles(['alertingApiServer']);
 
   it('can create a receiver', async () => {
     const { user } = renderForm();
@@ -59,9 +57,6 @@ describe('alerting API server enabled', () => {
 });
 
 describe('alerting API server disabled', () => {
-  beforeEach(() => {
-    config.featureToggles.alertingApiServer = false;
-  });
   it('should be able to test and save a receiver', async () => {
     const capture = captureRequests();
 
