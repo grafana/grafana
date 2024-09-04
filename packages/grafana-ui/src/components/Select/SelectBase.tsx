@@ -387,6 +387,7 @@ export function SelectBase<T, Rest = {}>({
           toggleAllOptions?.enabled && {
             state: toggleAllState,
             selectAllClicked: toggleAll,
+            selectedCount: isArray(selectedValue) ? selectedValue.length : undefined,
           }
         }
         styles={selectStyles}

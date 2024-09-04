@@ -2,6 +2,7 @@ import { cx } from '@emotion/css';
 import { max } from 'lodash';
 import { RefCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import * as React from 'react';
+import { Trans } from 'react-i18next';
 import { FixedSizeList as List } from 'react-window';
 
 import { SelectableValue, toIconName } from '@grafana/data';
@@ -15,11 +16,19 @@ import { Icon } from '../Icon/Icon';
 import { getSelectStyles } from './getSelectStyles';
 import { ToggleAllState } from './types';
 
+interface ToggleAllOptions {
+  state: ToggleAllState;
+  selectAllClicked: () => void;
+  selectedCount?: number;
+}
+
 interface SelectMenuProps {
   maxHeight: number;
   innerRef: RefCallback<HTMLDivElement>;
   innerProps: {};
-  selectProps: { toggleAllOptions?: { state: ToggleAllState; selectAllClicked: () => void } };
+  selectProps: {
+    toggleAllOptions?: ToggleAllOptions;
+  };
 }
 
 export const SelectMenu = ({
@@ -69,7 +78,9 @@ interface VirtualSelectMenuProps<T> {
   innerProps: JSX.IntrinsicElements['div'];
   options: T[];
   maxHeight: number;
-  selectProps: { toggleAllOptions?: { state: ToggleAllState; selectAllClicked: () => void } };
+  selectProps: {
+    toggleAllOptions?: ToggleAllOptions;
+  };
 }
 
 export const VirtualizedSelectMenu = ({
@@ -132,7 +143,11 @@ export const VirtualizedSelectMenu = ({
 
   if (toggleAllOptions) {
     flattenedChildren.unshift(
-      <ToggleAllOption state={toggleAllOptions.state} onClick={toggleAllOptions.selectAllClicked}></ToggleAllOption>
+      <ToggleAllOption
+        state={toggleAllOptions.state}
+        selectedCount={toggleAllOptions.selectedCount}
+        onClick={toggleAllOptions.selectAllClicked}
+      ></ToggleAllOption>
     );
   }
 
@@ -175,7 +190,15 @@ interface SelectMenuOptionProps<T> {
   data: SelectableValue<T>;
 }
 
-const ToggleAllOption = ({ state, onClick }: { state: ToggleAllState; onClick: () => void }) => {
+const ToggleAllOption = ({
+  state,
+  onClick,
+  selectedCount,
+}: {
+  state: ToggleAllState;
+  onClick: () => void;
+  selectedCount?: number;
+}) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   return (
@@ -185,7 +208,7 @@ const ToggleAllOption = ({ state, onClick }: { state: ToggleAllState; onClick: (
         checked={state === ToggleAllState.allSelected}
         indeterminate={state === ToggleAllState.indeterminate}
       ></Checkbox>
-      {state === ToggleAllState.noneSelected ? 'Select all' : 'Unselect all'}
+      <Trans i18nKey="select.select-menu.selected-count">Selected ({selectedCount ?? 0})</Trans>
     </label>
   );
 };
