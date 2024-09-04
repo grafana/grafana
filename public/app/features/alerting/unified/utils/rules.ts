@@ -134,7 +134,11 @@ export function getRuleHealth(health: string): RuleHealth | undefined {
 }
 
 export function getPendingPeriod(rule: CombinedRule): string | undefined {
-  if (isRecordingRulerRule(rule.rulerRule) || isRecordingRule(rule.promRule)) {
+  if (
+    isRecordingRulerRule(rule.rulerRule) ||
+    isRecordingRule(rule.promRule) ||
+    isGrafanaRecordingRule(rule.rulerRule)
+  ) {
     return undefined;
   }
 
