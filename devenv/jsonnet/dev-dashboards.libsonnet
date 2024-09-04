@@ -80,6 +80,7 @@
     "opentsdb_v23": (import '../dev-dashboards/datasource-opentsdb/opentsdb_v23.json'),
     "panel-geomap": (import '../dev-dashboards/panel-geomap/panel-geomap.json'),
     "panel-stat-tests": (import '../dev-dashboards/panel-stat/panel-stat-tests.json'),
+    "panel-with-library-panel-field": (import '../dev-dashboards/panel-with-library-panel-field.json'),
     "panel_test_piechart": (import '../dev-dashboards/panel-piechart/panel_test_piechart.json'),
     "panel_tests_bar_gauge": (import '../dev-dashboards/panel-bargauge/panel_tests_bar_gauge.json'),
     "panel_tests_bar_gauge2": (import '../dev-dashboards/panel-bargauge/panel_tests_bar_gauge2.json'),
