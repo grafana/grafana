@@ -95,7 +95,13 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
   return (
     <div className={styles.listItem}>
       <Field label="Title">
-        <SuggestionsInput value={value.title} onChange={onTitleChange} suggestions={suggestions} autoFocus={true} />
+        <SuggestionsInput
+          value={value.title}
+          onChange={onTitleChange}
+          suggestions={suggestions}
+          autoFocus={true}
+          placeholder="Action title"
+        />
       </Field>
 
       <InlineFieldRow>
@@ -111,7 +117,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
 
       <InlineFieldRow>
         <InlineField label="URL" labelWidth={LABEL_WIDTH} grow={true}>
-          <SuggestionsInput value={value.options.url} onChange={onUrlChange} suggestions={suggestions} />
+          <SuggestionsInput
+            value={value.options.url}
+            onChange={onUrlChange}
+            suggestions={suggestions}
+            placeholder="URL"
+          />
         </InlineField>
       </InlineFieldRow>
 
