@@ -172,8 +172,6 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
   const [inProgress, setInProgress] = useState(false);
   const [selectedPlugins, setSelectedPlugins] = useState<Set<string>>();
 
-  // THe following states are only used in cloud to guarantee synchronous requests
-
   const pluginsSet = useMemo(() => new Set(plugins.map((plugin) => plugin.id)), [plugins]);
   const installsRemaining = plugins.length;
 
