@@ -530,7 +530,7 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
 	t.Skip("Skipping this test due to known issues with uniqueness constraints")
-	
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
