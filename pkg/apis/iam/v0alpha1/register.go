@@ -75,18 +75,18 @@ var ServiceAccountResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Account", Type: "string", Format: "string", Description: "The service account email"},
-			{Name: "Email", Type: "string", Format: "string", Description: "The user email"},
+			{Name: "Title", Type: "string", Format: "string"},
+			{Name: "Disabled", Type: "boolean"},
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			u, ok := obj.(*ServiceAccount)
+			sa, ok := obj.(*ServiceAccount)
 			if ok {
 				return []interface{}{
-					u.Name,
-					u.Spec.Name,
-					u.Spec.Email,
-					u.CreationTimestamp.UTC().Format(time.RFC3339),
+					sa.Name,
+					sa.Spec.Title,
+					sa.Spec.Disabled,
+					sa.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			}
 			return nil, fmt.Errorf("expected service account")
@@ -163,6 +163,7 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		&UserTeamList{},
 		&ServiceAccount{},
 		&ServiceAccountList{},
+		&ServiceAccountTokenList{},
 		&Team{},
 		&TeamList{},
 		&IdentityDisplayResults{},

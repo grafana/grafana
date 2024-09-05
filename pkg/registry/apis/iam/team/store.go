@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -25,7 +25,7 @@ var (
 	_ rest.Storage              = (*LegacyStore)(nil)
 )
 
-var resource = identityv0.TeamResourceInfo
+var resource = iamv0.TeamResourceInfo
 
 func NewLegacyStore(store legacy.LegacyIdentityStore) *LegacyStore {
 	return &LegacyStore{store}
@@ -58,25 +58,25 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 	return resource.TableConverter().ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *LegacyStore) doList(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamQuery) (*identityv0.TeamList, error) {
+func (s *LegacyStore) doList(ctx context.Context, ns claims.NamespaceInfo, query legacy.ListTeamQuery) (*iamv0.TeamList, error) {
 	rsp, err := s.store.ListTeams(ctx, ns, query)
 	if err != nil {
 		return nil, err
 	}
-	list := &identityv0.TeamList{
+	list := &iamv0.TeamList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: strconv.FormatInt(rsp.RV, 10),
 		},
 	}
 	for _, team := range rsp.Teams {
-		item := identityv0.Team{
+		item := iamv0.Team{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              team.UID,
 				Namespace:         ns.Value,
 				CreationTimestamp: metav1.NewTime(team.Created),
 				ResourceVersion:   strconv.FormatInt(team.Updated.UnixMilli(), 10),
 			},
-			Spec: identityv0.TeamSpec{
+			Spec: iamv0.TeamSpec{
 				Title: team.Name,
 				Email: team.Email,
 			},
