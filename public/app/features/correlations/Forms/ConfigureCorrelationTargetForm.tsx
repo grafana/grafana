@@ -22,7 +22,7 @@ export const ConfigureCorrelationTargetForm = () => {
   const { control, formState } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
   const { correlation } = useCorrelationsFormContext();
-  const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID;
+  const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID || undefined;
   const correlationType: CorrelationType | undefined = useWatch({ name: 'type' }) || correlation?.type;
   let configTarget = useWatch({ name: 'config.target' }) || correlation?.config?.target;
   const styles = useStyles2(getStyles);
