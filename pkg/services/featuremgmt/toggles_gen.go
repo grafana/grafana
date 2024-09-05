@@ -739,10 +739,6 @@ const (
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
 
-	// FlagAdhocFilterOneOf
-	// Exposes a new &#39;one of&#39; operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.
-	FlagAdhocFilterOneOf = "adhocFilterOneOf"
-
 	// FlagNewFiltersUI
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"

@@ -52,7 +52,8 @@
       "metadata": {
         "name": "adhocFilterOneOf",
         "resourceVersion": "1723119716623",
-        "creationTimestamp": "2024-08-08T12:21:56Z"
+        "creationTimestamp": "2024-08-08T12:21:56Z",
+        "deletionTimestamp": "2024-09-05T12:30:12Z"
       },
       "spec": {
         "description": "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",

@@ -182,7 +182,6 @@ cloudwatchMetricInsightsCrossAccount,preview,@grafana/aws-datasources,false,fals
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
 backgroundPluginInstaller,experimental,@grafana/plugins-platform-backend,false,true,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
-adhocFilterOneOf,experimental,@grafana/dashboards-squad,false,false,false
 newFiltersUI,experimental,@grafana/dashboards-squad,false,false,false
 lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
 singleTopNav,experimental,@grafana/grafana-frontend-platform,false,false,true
