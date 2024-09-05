@@ -6,7 +6,7 @@ import { ExploreItemState } from 'app/types';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 
-import { CORR_TYPES, CreateCorrelationParams, CreateCorrelationResponse } from './types';
+import { CreateCorrelationParams, CreateCorrelationResponse } from './types';
 import {
   CorrelationData,
   CorrelationsData,
@@ -53,9 +53,9 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
   dataFrame.fields.forEach((field) => {
     field.config.links = field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.Correlations) || [];
     correlations.map((correlation) => {
-      if (correlation.config?.field === field.name) {
-        if (correlation.type === CORR_TYPES.query.value && correlation.target !== undefined) {
-          const targetQuery = correlation.config?.target || {};
+      if (correlation.config.field === field.name) {
+        if (correlation.type === 'query') {
+          const targetQuery = correlation.config.target || {};
           field.config.links!.push({
             internal: {
               query: { ...targetQuery, datasource: { uid: correlation.target.uid } },
@@ -66,19 +66,17 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             title: correlation.label || correlation.target.name,
             origin: DataLinkConfigOrigin.Correlations,
             meta: {
-              transformations: correlation.config?.transformations,
+              transformations: correlation.config.transformations,
             },
           });
-        } else if (correlation.type === CORR_TYPES.external.value) {
+        } else if (correlation.type === 'external') {
           const externalTarget = correlation.config.target;
-          if ('url' in externalTarget && externalTarget.url !== undefined) {
-            field.config.links!.push({
-              url: externalTarget.url,
-              title: correlation.label || 'External URL',
-              origin: DataLinkConfigOrigin.Correlations,
-              meta: { transformations: correlation.config?.transformations },
-            });
-          }
+          field.config.links!.push({
+            url: externalTarget.url,
+            title: correlation.label || 'External URL',
+            origin: DataLinkConfigOrigin.Correlations,
+            meta: { transformations: correlation.config?.transformations },
+          });
         }
       }
     });

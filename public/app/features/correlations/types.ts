@@ -57,9 +57,15 @@ export type CorrelationType = 'query' | 'external'; //(typeof corrTypeArray)[num
 
 export type ExternalTypeTarget = { url: string };
 
-export type CorrelationConfig = {
+export type CorrelationConfigQuery = {
   field: string;
-  target: object | ExternalTypeTarget; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic. For external, it simply contains a URL
+  target: object; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic. For external, it simply contains a URL
+  transformations?: DataLinkTransformationConfig[];
+};
+
+export type CorrelationConfigExternal = {
+  field: string;
+  target: ExternalTypeTarget; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic. For external, it simply contains a URL
   transformations?: DataLinkTransformationConfig[];
 };
 
@@ -70,15 +76,16 @@ type CorrelationBase = {
   description?: string;
   provisioned: boolean;
   orgId?: number;
-  config: CorrelationConfig;
 };
 
-type CorrelationExternal = CorrelationBase & {
+export type CorrelationExternal = CorrelationBase & {
   type: 'external';
+  config: CorrelationConfigExternal;
 };
 
-type CorrelationQuery = CorrelationBase & {
+export type CorrelationQuery = CorrelationBase & {
   type: 'query';
+  config: CorrelationConfigQuery;
   targetUID: string;
 };
 
