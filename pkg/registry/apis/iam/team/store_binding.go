@@ -137,7 +137,7 @@ func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) iamv0.Tea
 			CreationTimestamp: metav1.NewTime(ct),
 		},
 		Spec: iamv0.TeamBindingSpec{
-			TeamRef: iamv0.TeamRef{
+			Team: iamv0.TeamRef{
 				Name: b.TeamUID,
 			},
 			Subjects: mapToSubjects(b.Members),
@@ -149,7 +149,10 @@ func mapToSubjects(members []legacy.TeamMember) []iamv0.TeamSubject {
 	out := make([]iamv0.TeamSubject, 0, len(members))
 	for _, m := range members {
 		out = append(out, iamv0.TeamSubject{
-			Name:       m.MemberID(),
+			Identity: iamv0.IdentityRef{
+				Type: claims.TypeUser,
+				Name: m.UserUID,
+			},
 			Permission: common.MapTeamPermission(m.Permission),
 		})
 	}
