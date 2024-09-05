@@ -165,6 +165,7 @@ type Props = {
 };
 
 export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
+
   const install = useInstall();
   const { error } = useInstallStatus();
   const [errorMap, setErrorMap] = useState(new Map<string, UpdateError>());
@@ -172,8 +173,6 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
   const [selectedPlugins, setSelectedPlugins] = useState<Set<string>>();
 
   // THe following states are only used in cloud to guarantee synchronous requests
-  const [startSyncUpdate, setStartSyncUpdate] = useState(false);
-  const [inRequest, setInRequest] = useState<string>('');
 
   const pluginsSet = useMemo(() => new Set(plugins.map((plugin) => plugin.id)), [plugins]);
   const installsRemaining = plugins.length;
@@ -188,14 +187,11 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
             newSelectedPlugins.delete(id);
             return newSelectedPlugins;
           });
-
-          setInRequest('');
         }
       });
 
       if (selectedPlugins?.size === 0) {
         setInProgress(false);
-        setStartSyncUpdate(false);
       }
     }
   }, [inProgress, pluginsSet, selectedPlugins]);
@@ -223,29 +219,21 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
         return newSelectedPlugins;
       });
 
-      setInRequest('');
     }
   }, [error, errorMap, inProgress, selectedPlugins]);
 
-  // update plugins one by one (only used in cloud)
-  useEffect(() => {
-    if (startSyncUpdate && !inRequest) {
-      for (let plugin of plugins) {
-        if (selectedPlugins?.has(plugin.id) && !errorMap.has(plugin.id)) {
-          install(plugin.id, plugin.latestVersion, true);
-          setInRequest(plugin.id);
-          break;
-        }
-      }
-    }
-  }, [errorMap, inRequest, install, plugins, selectedPlugins, startSyncUpdate]);
 
-  const onConfirm = () => {
+  const onConfirm = async () => {
     if (!inProgress) {
       setInProgress(true);
 
+      // in cloud the requests need to be sync
       if (config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) {
-        setStartSyncUpdate(true);
+        for (let plugin of plugins) {
+          if (selectedPlugins?.has(plugin.id)) {
+            await install(plugin.id, plugin.latestVersion, true);
+          }
+        }
       } else {
         plugins.forEach((plugin) => {
           if (selectedPlugins?.has(plugin.id)) {
@@ -260,8 +248,6 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
     setErrorMap(new Map());
     setInProgress(false);
     setSelectedPlugins(undefined);
-    setInRequest('');
-    setStartSyncUpdate(false);
     onDismiss();
   };
 
