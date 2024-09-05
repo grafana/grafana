@@ -721,7 +721,7 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *das
 	var res []dashboards.DashboardSearchProjection
 	var err error
 	if dr.features.IsEnabled(ctx, featuremgmt.FlagZanzana) {
-		res, err = dr.FindDashboardsZanzanaCompare(ctx, query)
+		res, err = dr.FindDashboardsZanzana(ctx, query)
 	} else {
 		res, err = dr.FindDashboards(ctx, query)
 	}

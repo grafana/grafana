@@ -22,7 +22,21 @@ type searchResult struct {
 	duration time.Duration
 }
 
-func (dr *DashboardServiceImpl) FindDashboardsZanzanaCompare(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) FindDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	if dr.cfg.Zanzana.SingleRead {
+		return dr.findDashboardsZanzanaSingleRead(ctx, query)
+	}
+	return dr.findDashboardsZanzanaCompare(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) findDashboardsZanzanaSingleRead(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	timer := prometheus.NewTimer(dr.metrics.searchRequestsDuration.WithLabelValues("zanzana"))
+	defer timer.ObserveDuration()
+
+	return dr.findDashboardsZanzana(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	result := make(chan searchResult, 2)
 
 	go func() {
@@ -31,7 +45,7 @@ func (dr *DashboardServiceImpl) FindDashboardsZanzanaCompare(ctx context.Context
 		defer timer.ObserveDuration()
 
 		queryZanzana := *query
-		res, err := dr.FindDashboardsZanzana(ctx, &queryZanzana)
+		res, err := dr.findDashboardsZanzana(ctx, &queryZanzana)
 		result <- searchResult{"zanzana", res, err, time.Since(start)}
 	}()
 
@@ -68,15 +82,15 @@ func (dr *DashboardServiceImpl) FindDashboardsZanzanaCompare(ctx context.Context
 	return first.result, first.err
 }
 
-func (dr *DashboardServiceImpl) FindDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) findDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	if len(query.Title) > 8 {
-		return dr.FindDashboardsZanzanaCheck(ctx, query)
+		return dr.findDashboardsZanzanaCheck(ctx, query)
 	}
-	return dr.FindDashboardsZanzanaList(ctx, query)
+	return dr.findDashboardsZanzanaList(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) FindDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.FindDashboardsZanzanaList")
+func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
 
 	res, err := dr.acService.ListObjects(ctx, &openfgav1.ListObjectsRequest{
@@ -107,7 +121,10 @@ func (dr *DashboardServiceImpl) FindDashboardsZanzanaList(ctx context.Context, q
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) FindDashboardsZanzanaCheck(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaCheck")
+	defer span.End()
+
 	query.SkipAccessControlFilter = true
 	findRes, err := dr.dashboardStore.FindDashboards(ctx, query)
 	if err != nil {
