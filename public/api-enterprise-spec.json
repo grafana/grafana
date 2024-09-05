@@ -9439,6 +9439,12 @@
         }
       }
     },
+    "goneError": {
+      "description": "GoneError is returned when the requested endpoint was removed.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
     "helpFlagResponse": {
       "description": "",
       "schema": {
@@ -9621,12 +9627,6 @@
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
-      }
-    },
-    "postAPIkeyResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/NewApiKeyResult"
       }
     },
     "postAnnotationResponse": {

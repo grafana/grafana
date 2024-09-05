@@ -113,15 +113,16 @@ func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response
 // see: https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.
 //
 // Responses:
-// 301: statusMovedPermanently
+// 410: goneError
 func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
-	// Set the Location header to the new URL
 	hs.log.Warn("Obsolete and Permanently moved API endpoint called", "path", c.Req.URL.Path)
-	c.Context.Resp.Header().Set("Location", "/api/serviceaccounts/tokens")
 
-	// Respond with a 301 Moved Permanently status code
-	// the Location header is enough for clients to know where to go next.
-	return response.JSON(http.StatusMovedPermanently, nil)
+	// Respond with a 410 Gone status code
+	return response.Error(
+		http.StatusGone,
+		"this endpoint has been removed, please use POST /api/serviceaccounts and POST /api/serviceaccounts/{id}/tokens instead",
+		nil,
+	)
 }
 
 // swagger:parameters getAPIkeys
@@ -145,11 +146,4 @@ type GetAPIkeyResponse struct {
 	// The response message
 	// in: body
 	Body []*dtos.ApiKeyDTO `json:"body"`
-}
-
-// swagger:response postAPIkeyResponse
-type PostAPIkeyResponse struct {
-	// The response message
-	// in: body
-	Body dtos.NewApiKeyResult `json:"body"`
 }

@@ -1372,6 +1372,16 @@
         },
         "description": "(empty)"
       },
+      "goneError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponseBody"
+            }
+          }
+        },
+        "description": "GoneError is returned when the requested endpoint was removed."
+      },
       "helpFlagResponse": {
         "content": {
           "application/json": {
@@ -1627,16 +1637,6 @@
           }
         },
         "description": "An OKResponse is returned if the request was successful."
-      },
-      "postAPIkeyResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/NewApiKeyResult"
-            }
-          }
-        },
-        "description": "(empty)"
       },
       "postAnnotationResponse": {
         "content": {
@@ -15392,8 +15392,8 @@
         "description": "Will return details of the created API key.",
         "operationId": "addAPIkey",
         "responses": {
-          "301": {
-            "$ref": "#/components/responses/statusMovedPermanently"
+          "410": {
+            "$ref": "#/components/responses/goneError"
           }
         },
         "summary": "Creates an API key.",

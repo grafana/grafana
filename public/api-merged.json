@@ -2226,8 +2226,8 @@
         "operationId": "addAPIkey",
         "deprecated": true,
         "responses": {
-          "301": {
-            "$ref": "#/responses/statusMovedPermanently"
+          "410": {
+            "$ref": "#/responses/goneError"
           }
         }
       }
@@ -23806,6 +23806,12 @@
         }
       }
     },
+    "goneError": {
+      "description": "GoneError is returned when the requested endpoint was removed.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
     "helpFlagResponse": {
       "description": "(empty)",
       "schema": {
@@ -23988,12 +23994,6 @@
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
-      }
-    },
-    "postAPIkeyResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/NewApiKeyResult"
       }
     },
     "postAnnotationResponse": {
