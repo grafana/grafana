@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -44,6 +44,9 @@ export interface DynamicTableProps<T = unknown> {
   onExpand?: (item: DynamicTableItemProps<T>) => void;
   isExpanded?: (item: DynamicTableItemProps<T>) => boolean;
 
+  // Invoked for each item when rendering. When pagination is enabled it is invoked only for current page items.
+  onItemRender?: (item: DynamicTableItemProps<T>, index: number) => void;
+
   renderExpandedContent?: (
     item: DynamicTableItemProps<T>,
     index: number,
@@ -71,6 +74,7 @@ export const DynamicTable = <T extends object>({
   testIdGenerator,
   pagination,
   paginationStyles,
+  onItemRender,
   // render a cell BEFORE expand icon for header/ each row.
   // currently use by RuleList to render guidelines
   renderPrefixCell,
@@ -102,6 +106,12 @@ export const DynamicTable = <T extends object>({
 
   const itemsPerPage = pagination?.itemsPerPage ?? items.length;
   const { page, numberOfPages, onPageChange, pageItems } = usePagination(items, 1, itemsPerPage);
+
+  useEffect(() => {
+    if (onItemRender) {
+      pageItems.forEach((item, index) => onItemRender(item, index));
+    }
+  }, [pageItems, onItemRender]);
 
   return (
     <>

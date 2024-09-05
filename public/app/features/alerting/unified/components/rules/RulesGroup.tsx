@@ -5,15 +5,14 @@ import React, { useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
-import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
+import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
-import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
@@ -39,7 +38,7 @@ interface Props {
 
 export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }: Props) => {
   const { rulesSource } = namespace;
-  const dispatch = useDispatch();
+  const [deleteRuleGroup] = useDeleteRuleGroup();
   const styles = useStyles2(getStyles);
 
   const [isEditingGroup, setIsEditingGroup] = useState(false);
@@ -54,14 +53,13 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     setIsCollapsed(!expandAll);
   }, [expandAll]);
 
-  const { hasRuler, rulerRulesLoaded } = useHasRuler();
+  const { hasRuler, rulerRulesLoaded } = useHasRuler(namespace.rulesSource);
   const rulerRule = group.rules[0]?.rulerRule;
   const folderUID = (rulerRule && isGrafanaRulerRule(rulerRule) && rulerRule.grafana_alert.namespace_uid) || undefined;
   const { folder } = useFolder(folderUID);
 
   // group "is deleting" if rules source has ruler, but this group has no rules that are in ruler
-  const isDeleting =
-    hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
+  const isDeleting = hasRuler && rulerRulesLoaded && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
   // check if group has provisioned items
@@ -73,8 +71,13 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
 
-  const deleteGroup = () => {
-    dispatch(deleteRulesGroupAction(namespace, group));
+  const deleteGroup = async () => {
+    const namespaceName = decodeGrafanaNamespace(namespace).name;
+    const groupName = group.name;
+    const dataSourceName = getRulesSourceName(namespace.rulesSource);
+
+    const ruleGroupIdentifier: RuleGroupIdentifier = { namespaceName, groupName, dataSourceName };
+    await deleteRuleGroup.execute(ruleGroupIdentifier);
     setIsDeletingGroup(false);
   };
 
@@ -166,7 +169,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         }
       }
     }
-  } else if (canEditRules(rulesSource.name) && hasRuler(rulesSource)) {
+  } else if (canEditRules(rulesSource.name) && hasRuler) {
     if (!isFederated) {
       actionIcons.push(
         <ActionIcon

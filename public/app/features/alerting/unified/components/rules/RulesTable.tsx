@@ -2,13 +2,19 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Tooltip, LoadingPlaceholder } from '@grafana/ui';
+import { useStyles2, Tooltip, LoadingPlaceholder, Pagination } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
+import { alertRuleApi } from '../../api/alertRuleApi';
+import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
+import { useAsync } from '../../hooks/useAsync';
+import { attachRulerRuleToCombinedRule } from '../../hooks/useCombinedRuleNamespaces';
 import { useHasRuler } from '../../hooks/useHasRuler';
+import { usePagination } from '../../hooks/usePagination';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
+import { getRulesSourceName } from '../../utils/datasource';
 import { getRulePluginOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
@@ -22,11 +28,6 @@ import { RuleConfigStatus } from './RuleConfigStatus';
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
 import { RuleState } from './RuleState';
-import { alertRuleApi } from '../../api/alertRuleApi';
-import { useAsync } from '../../hooks/useAsync';
-import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
-import { getRulesSourceName } from '../../utils/datasource';
-import { attachRulerRuleToCombinedRule, attachRulerRulesToCombinedRules } from '../../hooks/useCombinedRuleNamespaces';
 
 type RuleTableColumnProps = DynamicTableColumnProps<CombinedRule>;
 type RuleTableItemProps = DynamicTableItemProps<CombinedRule>;
@@ -57,11 +58,13 @@ export const RulesTable = ({
   const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
   const [fetchRulerRuleGroup, { isLoading: isLoadingRulerGroup }] = useLazyGetRuleGroupForNamespaceQuery();
-  const [fetchDsFeatures, { isLoading: isLoadingDsFeatures }] = useLazyDiscoverDsFeaturesQuery();
+  const [fetchDsFeatures] = useLazyDiscoverDsFeaturesQuery();
 
-  const [actions, { result: rulesWithRulerDefinitions, status }] = useAsync(async () => {
+  const { pageItems, page, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
+
+  const [actions, { result: rulesWithRulerDefinitions }] = useAsync(async () => {
     const result = Promise.all(
-      rules.map(async (rule) => {
+      pageItems.map(async (rule) => {
         const dsFeatures = await fetchDsFeatures({
           rulesSourceName: getRulesSourceName(rule.namespace.rulesSource),
         }).unwrap();
@@ -84,11 +87,11 @@ export const RulesTable = ({
       })
     );
     return result;
-  }, rules);
+  }, pageItems);
 
   useEffect(() => {
     actions.execute();
-  }, [rules]);
+  }, [pageItems, actions]);
 
   const items = useMemo((): RuleTableItemProps[] => {
     return rulesWithRulerDefinitions.map((rule, ruleIdx) => {
@@ -101,7 +104,7 @@ export const RulesTable = ({
 
   const columns = useColumns(showSummaryColumn, showGroupColumn, showNextEvaluationColumn, isLoadingRulerGroup);
 
-  if (!rules.length) {
+  if (!pageItems.length) {
     return <div className={cx(wrapperClass, styles.emptyMessage)}>{emptyMessage}</div>;
   }
 
@@ -114,9 +117,10 @@ export const RulesTable = ({
         isExpandable={true}
         items={items}
         renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
-        pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
-        paginationStyles={styles.pagination}
+        // pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
+        // paginationStyles={styles.pagination}
       />
+      <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </div>
   );
 };
@@ -152,32 +156,12 @@ function useColumns(
   showNextEvaluationColumn: boolean,
   isRulerLoading: boolean
 ) {
-  const { hasRuler, rulerRulesLoaded } = useHasRuler();
-
   return useMemo((): RuleTableColumnProps[] => {
-    const ruleIsDeleting = (rule: CombinedRule) => {
-      const { namespace, promRule, rulerRule } = rule;
-      const { rulesSource } = namespace;
-      return Boolean(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
-    };
-
-    const ruleIsCreating = (rule: CombinedRule) => {
-      const { namespace, promRule, rulerRule } = rule;
-      const { rulesSource } = namespace;
-      return Boolean(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
-    };
-
     const columns: RuleTableColumnProps[] = [
       {
         id: 'state',
         label: 'State',
-        renderCell: ({ data: rule }) => {
-          const isDeleting = ruleIsDeleting(rule);
-          const isCreating = ruleIsCreating(rule);
-          const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
-
-          return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
-        },
+        renderCell: ({ data: rule }) => <RuleStateCell rule={rule} />,
         size: '165px',
       },
       {
@@ -278,26 +262,45 @@ function useColumns(
       id: 'actions',
       label: 'Actions',
       // eslint-disable-next-line react/display-name
-      renderCell: ({ data: rule }) => {
-        const isDeleting = ruleIsDeleting(rule);
-        const isCreating = ruleIsCreating(rule);
-
-        if (isRulerLoading) {
-          return <LoadingPlaceholder text="Loading actions..." />;
-        }
-
-        return (
-          <RuleActionsButtons
-            compact
-            showViewButton={!isDeleting && !isCreating}
-            rule={rule}
-            rulesSource={rule.namespace.rulesSource}
-          />
-        );
-      },
+      renderCell: ({ data: rule }) => <RuleActionsCell rule={rule} isLoadingRuler={isRulerLoading} />,
       size: '200px',
     });
 
     return columns;
-  }, [showSummaryColumn, showGroupColumn, showNextEvaluationColumn, hasRuler, rulerRulesLoaded]);
+  }, [showSummaryColumn, showGroupColumn, showNextEvaluationColumn, isRulerLoading]);
+}
+
+function RuleStateCell({ rule }: { rule: CombinedRule }) {
+  const { isDeleting, isCreating, isPaused } = useRuleStatus(rule);
+  return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
+}
+
+// TODO This component itself should load the ruler rule
+function RuleActionsCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadingRuler: boolean }) {
+  const { isDeleting, isCreating } = useRuleStatus(rule);
+
+  if (isLoadingRuler) {
+    return <LoadingPlaceholder text="Loading actions..." />;
+  }
+
+  return (
+    <RuleActionsButtons
+      compact
+      showViewButton={!isDeleting && !isCreating}
+      rule={rule}
+      rulesSource={rule.namespace.rulesSource}
+    />
+  );
+}
+
+function useRuleStatus(rule: CombinedRule) {
+  const { hasRuler, rulerRulesLoaded } = useHasRuler(rule.namespace.rulesSource);
+
+  const { promRule, rulerRule } = rule;
+
+  const isDeleting = Boolean(hasRuler && rulerRulesLoaded && promRule && !rulerRule);
+  const isCreating = Boolean(hasRuler && rulerRulesLoaded && rulerRule && !promRule);
+  const isPaused = isGrafanaRulerRule(rulerRule) && isGrafanaRulerRulePaused(rulerRule);
+
+  return { isDeleting, isCreating, isPaused };
 }
