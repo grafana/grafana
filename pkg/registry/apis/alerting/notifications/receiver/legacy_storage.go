@@ -25,6 +25,9 @@ var (
 
 var resourceInfo = notifications.ReceiverResourceInfo
 
+// AccessControlKey is the label selector key used to return access control metadata during List queries.
+const AccessControlKey = "grafana.com/accessControl"
+
 type ReceiverService interface {
 	GetReceiver(ctx context.Context, q ngmodels.GetReceiverQuery, user identity.Requester) (*ngmodels.Receiver, error)
 	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, error)
@@ -33,10 +36,15 @@ type ReceiverService interface {
 	DeleteReceiver(ctx context.Context, name string, provenance definitions.Provenance, version string, orgID int64, user identity.Requester) error
 }
 
+type MetadataService interface {
+	Access(ctx context.Context, user identity.Requester, receivers ...*ngmodels.Receiver) (map[string]ngmodels.ReceiverPermissionSet, error)
+}
+
 type legacyStorage struct {
 	service        ReceiverService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+	metadata       MetadataService
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -61,7 +69,7 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
-func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
+func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
 	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
@@ -85,7 +93,27 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 		return nil, err
 	}
 
-	return convertToK8sResources(orgId, res, s.namespacer)
+	var accesses map[string]ngmodels.ReceiverPermissionSet
+	if shouldIncludeAccessControlMetadata(opts) {
+		accesses, err = s.metadata.Access(ctx, user, res...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+		}
+	}
+
+	return convertToK8sResources(orgId, res, accesses, s.namespacer)
+}
+
+func shouldIncludeAccessControlMetadata(opts *internalversion.ListOptions) bool {
+	if opts.LabelSelector != nil {
+		labelSelectors, _ := opts.LabelSelector.Requirements()
+		for _, req := range labelSelectors {
+			if req.Key() == AccessControlKey {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -113,7 +141,18 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, r, s.namespacer)
+
+	var access *ngmodels.ReceiverPermissionSet
+	accesses, err := s.metadata.Access(ctx, user, r)
+	if err == nil {
+		if a, ok := accesses[r.GetUID()]; ok {
+			access = &a
+		}
+	} else {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+
+	return convertToK8sResource(info.OrgID, r, access, s.namespacer)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -151,7 +190,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, s.namespacer)
+	return convertToK8sResource(info.OrgID, out, nil, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -203,7 +242,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	r, err := convertToK8sResource(info.OrgID, updated, s.namespacer)
+	r, err := convertToK8sResource(info.OrgID, updated, nil, s.namespacer)
 	return r, false, err
 }
 
