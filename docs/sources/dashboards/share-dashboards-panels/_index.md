@@ -19,8 +19,6 @@ keywords:
   - documentation
   - share
   - panel
-  - library panel
-  - playlist
   - reporting
   - export
   - pdf
