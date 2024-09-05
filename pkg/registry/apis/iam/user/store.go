@@ -11,7 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -26,7 +26,7 @@ var (
 	_ rest.Storage              = (*LegacyStore)(nil)
 )
 
-var resource = identityv0.UserResourceInfo
+var resource = iamv0.UserResourceInfo
 
 func NewLegacyStore(store legacy.LegacyIdentityStore) *LegacyStore {
 	return &LegacyStore{store}
@@ -65,15 +65,14 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	}
 
 	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
-		OrgID:            ns.OrgID,
-		IsServiceAccount: false,
-		Pagination:       common.PaginationFromListOptions(options),
+		OrgID:      ns.OrgID,
+		Pagination: common.PaginationFromListOptions(options),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	list := &identityv0.UserList{}
+	list := &iamv0.UserList{}
 	for _, item := range found.Users {
 		list.Items = append(list.Items, *toUserItem(&item, ns.Value))
 	}
@@ -90,9 +89,8 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, err
 	}
 	query := legacy.ListUserQuery{
-		OrgID:            ns.OrgID,
-		IsServiceAccount: false,
-		Pagination:       common.Pagination{Limit: 1},
+		OrgID:      ns.OrgID,
+		Pagination: common.Pagination{Limit: 1},
 	}
 
 	found, err := s.store.ListUsers(ctx, ns, query)
@@ -105,15 +103,15 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	return toUserItem(&found.Users[0], ns.Value), nil
 }
 
-func toUserItem(u *user.User, ns string) *identityv0.User {
-	item := &identityv0.User{
+func toUserItem(u *user.User, ns string) *iamv0.User {
+	item := &iamv0.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
 			Namespace:         ns,
 			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(u.Created),
 		},
-		Spec: identityv0.UserSpec{
+		Spec: iamv0.UserSpec{
 			Name:          u.Name,
 			Login:         u.Login,
 			Email:         u.Email,

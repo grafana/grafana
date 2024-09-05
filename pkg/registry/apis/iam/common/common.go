@@ -3,7 +3,7 @@ package common
 import (
 	"strconv"
 
-	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
@@ -16,10 +16,10 @@ func OptionalFormatInt(num int64) string {
 	return ""
 }
 
-func MapTeamPermission(p team.PermissionType) identityv0.TeamPermission {
+func MapTeamPermission(p team.PermissionType) iamv0.TeamPermission {
 	if p == team.PermissionTypeAdmin {
-		return identityv0.TeamPermissionAdmin
+		return iamv0.TeamPermissionAdmin
 	} else {
-		return identityv0.TeamPermissionMember
+		return iamv0.TeamPermissionMember
 	}
 }

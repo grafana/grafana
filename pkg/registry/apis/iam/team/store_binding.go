@@ -11,14 +11,14 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/claims"
-	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
-var bindingResource = identityv0.TeamBindingResourceInfo
+var bindingResource = iamv0.TeamBindingResourceInfo
 
 var (
 	_ rest.Storage              = (*LegacyBindingStore)(nil)
@@ -102,8 +102,8 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 		return nil, err
 	}
 
-	list := identityv0.TeamBindingList{
-		Items: make([]identityv0.TeamBinding, 0, len(res.Bindings)),
+	list := iamv0.TeamBindingList{
+		Items: make([]iamv0.TeamBinding, 0, len(res.Bindings)),
 	}
 
 	for _, b := range res.Bindings {
@@ -116,7 +116,7 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 	return &list, nil
 }
 
-func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) identityv0.TeamBinding {
+func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) iamv0.TeamBinding {
 	rv := time.Time{}
 	ct := time.Now()
 
@@ -129,15 +129,15 @@ func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) identityv
 		}
 	}
 
-	return identityv0.TeamBinding{
+	return iamv0.TeamBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              b.TeamUID,
 			Namespace:         ns.Value,
 			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
 			CreationTimestamp: metav1.NewTime(ct),
 		},
-		Spec: identityv0.TeamBindingSpec{
-			TeamRef: identityv0.TeamRef{
+		Spec: iamv0.TeamBindingSpec{
+			TeamRef: iamv0.TeamRef{
 				Name: b.TeamUID,
 			},
 			Subjects: mapToSubjects(b.Members),
@@ -145,10 +145,10 @@ func mapToBindingObject(ns claims.NamespaceInfo, b legacy.TeamBinding) identityv
 	}
 }
 
-func mapToSubjects(members []legacy.TeamMember) []identityv0.TeamSubject {
-	out := make([]identityv0.TeamSubject, 0, len(members))
+func mapToSubjects(members []legacy.TeamMember) []iamv0.TeamSubject {
+	out := make([]iamv0.TeamSubject, 0, len(members))
 	for _, m := range members {
-		out = append(out, identityv0.TeamSubject{
+		out = append(out, iamv0.TeamSubject{
 			Name:       m.MemberID(),
 			Permission: common.MapTeamPermission(m.Permission),
 		})
@@ -156,10 +156,10 @@ func mapToSubjects(members []legacy.TeamMember) []identityv0.TeamSubject {
 	return out
 }
 
-func mapPermisson(p team.PermissionType) identityv0.TeamPermission {
+func mapPermisson(p team.PermissionType) iamv0.TeamPermission {
 	if p == team.PermissionTypeAdmin {
-		return identityv0.TeamPermissionAdmin
+		return iamv0.TeamPermissionAdmin
 	} else {
-		return identityv0.TeamPermissionMember
+		return iamv0.TeamPermissionMember
 	}
 }

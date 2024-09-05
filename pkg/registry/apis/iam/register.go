@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -55,19 +55,19 @@ func RegisterAPIService(
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return identityv0.SchemeGroupVersion
+	return iamv0.SchemeGroupVersion
 }
 
 func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	identityv0.AddKnownTypes(scheme, identityv0.VERSION)
+	iamv0.AddKnownTypes(scheme, iamv0.VERSION)
 
 	// Link this version to the internal representation.
 	// This is used for server-side-apply (PATCH), and avoids the error:
 	// "no kind is registered for the type"
-	identityv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
+	iamv0.AddKnownTypes(scheme, runtime.APIVersionInternal)
 
-	metav1.AddToGroupVersion(scheme, identityv0.SchemeGroupVersion)
-	return scheme.SetVersionPriority(identityv0.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, iamv0.SchemeGroupVersion)
+	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
@@ -76,37 +76,38 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
 	optsGetter generic.RESTOptionsGetter,
 	dualWriteBuilder grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(identityv0.GROUP, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(iamv0.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	teamResource := identityv0.TeamResourceInfo
+	teamResource := iamv0.TeamResourceInfo
 	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.Store)
 	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.Store)
 
-	teamBindingResource := identityv0.TeamBindingResourceInfo
+	teamBindingResource := iamv0.TeamBindingResourceInfo
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.Store)
 
-	userResource := identityv0.UserResourceInfo
+	userResource := iamv0.UserResourceInfo
 	storage[userResource.StoragePath()] = user.NewLegacyStore(b.Store)
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.Store)
 
-	serviceaccountResource := identityv0.ServiceAccountResourceInfo
+	serviceaccountResource := iamv0.ServiceAccountResourceInfo
 	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.Store)
+	storage[serviceaccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.Store)
 
 	if b.SSOService != nil {
-		ssoResource := identityv0.SSOSettingResourceInfo
+		ssoResource := iamv0.SSOSettingResourceInfo
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.SSOService)
 	}
 
 	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
 	storage["display"] = user.NewLegacyDisplayREST(b.Store)
 
-	apiGroupInfo.VersionedResourcesStorageMap[identityv0.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return identityv0.GetOpenAPIDefinitions
+	return iamv0.GetOpenAPIDefinitions
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {

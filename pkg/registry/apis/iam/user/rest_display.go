@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	identity "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,7 +35,7 @@ func NewLegacyDisplayREST(store legacy.LegacyIdentityStore) *LegacyDisplayREST {
 }
 
 func (r *LegacyDisplayREST) New() runtime.Object {
-	return &identity.IdentityDisplayResults{}
+	return &iamv0.IdentityDisplayResults{}
 }
 
 func (r *LegacyDisplayREST) Destroy() {}
@@ -54,7 +54,7 @@ func (r *LegacyDisplayREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *LegacyDisplayREST) ProducesObject(verb string) any {
-	return &identity.IdentityDisplayResults{}
+	return &iamv0.IdentityDisplayResults{}
 }
 
 func (r *LegacyDisplayREST) ConnectMethods() []string {
@@ -91,13 +91,13 @@ func (r *LegacyDisplayREST) Connect(ctx context.Context, name string, _ runtime.
 			return
 		}
 
-		rsp := &identity.IdentityDisplayResults{
+		rsp := &iamv0.IdentityDisplayResults{
 			Keys:        keys.keys,
 			InvalidKeys: keys.invalid,
-			Display:     make([]identity.IdentityDisplay, 0, len(users.Users)+len(keys.disp)+1),
+			Display:     make([]iamv0.IdentityDisplay, 0, len(users.Users)+len(keys.disp)+1),
 		}
 		for _, user := range users.Users {
-			disp := identity.IdentityDisplay{
+			disp := iamv0.IdentityDisplay{
 				IdentityType: claims.TypeUser,
 				Display:      user.NameOrFallback(),
 				UID:          user.UID,
@@ -124,7 +124,7 @@ type dispKeys struct {
 	invalid []string
 
 	// For terminal keys, this is a constant
-	disp []identity.IdentityDisplay
+	disp []iamv0.IdentityDisplay
 }
 
 func parseKeys(req []string) dispKeys {
@@ -145,14 +145,14 @@ func parseKeys(req []string) dispKeys {
 
 			switch t {
 			case claims.TypeAnonymous:
-				keys.disp = append(keys.disp, identity.IdentityDisplay{
+				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
 					IdentityType: t,
 					Display:      "Anonymous",
 					AvatarURL:    dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
 			case claims.TypeAPIKey:
-				keys.disp = append(keys.disp, identity.IdentityDisplay{
+				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
 					IdentityType: t,
 					UID:          key,
 					Display:      "API Key",
@@ -160,7 +160,7 @@ func parseKeys(req []string) dispKeys {
 				})
 				continue
 			case claims.TypeProvisioning:
-				keys.disp = append(keys.disp, identity.IdentityDisplay{
+				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
 					IdentityType: t,
 					UID:          "Provisioning",
 					Display:      "Provisioning",
@@ -176,7 +176,7 @@ func parseKeys(req []string) dispKeys {
 		id, err := strconv.ParseInt(key, 10, 64)
 		if err == nil {
 			if id == 0 {
-				keys.disp = append(keys.disp, identity.IdentityDisplay{
+				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
 					IdentityType: claims.TypeUser,
 					UID:          key,
 					Display:      "System admin",
