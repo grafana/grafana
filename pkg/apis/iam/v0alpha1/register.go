@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	GROUP      = "identity.grafana.app"
+	GROUP      = "iam.grafana.app"
 	VERSION    = "v0alpha1"
 	APIVERSION = GROUP + "/" + VERSION
 )
