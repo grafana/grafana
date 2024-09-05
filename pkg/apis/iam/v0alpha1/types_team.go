@@ -35,7 +35,7 @@ type TeamBinding struct {
 
 type TeamBindingSpec struct {
 	Subjects []TeamSubject `json:"subjects,omitempty"`
-	TeamRef  TeamRef       `json:"teamRef,omitempty"`
+	Team     TeamRef       `json:"team,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -47,8 +47,8 @@ type TeamBindingList struct {
 }
 
 type TeamSubject struct {
-	// Name is the unique identifier for subject.
-	Name string `json:"name,omitempty"`
+	// Identity is a reference to the identity of this subject.
+	Identity IdentityRef `json:"identity"`
 
 	// Permission subject has in team.
 	Permission TeamPermission `json:"permission,omitempty"`

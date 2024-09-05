@@ -16,6 +16,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplay":         schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplayResults":  schema_pkg_apis_iam_v0alpha1_IdentityDisplayResults(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef":             schema_pkg_apis_iam_v0alpha1_IdentityRef(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting":              schema_pkg_apis_iam_v0alpha1_SSOSetting(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingList":          schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref),
 		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec":          schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref),
@@ -48,23 +49,13 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) 
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"type": {
+					"identity": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/2f8d13a83ca3e82da08b53726de1697ee5b5b4cc/claims/type.go#L15-L24",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
 						},
 					},
-					"uid": {
-						SchemaProps: spec.SchemaProps{
-							Description: "UID for identity, is a unique value for the type within a namespace.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"display": {
+					"displayName": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Display name for identity.",
 							Default:     "",
@@ -87,9 +78,11 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"type", "uid", "display"},
+				Required: []string{"identity", "displayName"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
 	}
 }
 
@@ -178,6 +171,35 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplayResults(ref common.ReferenceCal
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplay"},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_IdentityRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/2f8d13a83ca3e82da08b53726de1697ee5b5b4cc/claims/type.go#L15-L24",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name is the unique identifier for identity, guaranteed jo be a unique value for the type within a namespace.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"type", "name"},
+			},
+		},
 	}
 }
 
@@ -645,7 +667,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) 
 							},
 						},
 					},
-					"teamRef": {
+					"team": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef"),
@@ -712,23 +734,13 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"type": {
+					"identity": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type of identity e.g. \"user\". For a full list see https://github.com/grafana/authlib/blob/2f8d13a83ca3e82da08b53726de1697ee5b5b4cc/claims/type.go#L15-L24",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
 						},
 					},
-					"uid": {
-						SchemaProps: spec.SchemaProps{
-							Description: "UID for identity, is a unique value for the type within a namespace.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"display": {
+					"displayName": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Display name for identity.",
 							Default:     "",
@@ -766,9 +778,11 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 						},
 					},
 				},
-				Required: []string{"type", "uid", "display"},
+				Required: []string{"identity", "displayName"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
 	}
 }
 
@@ -868,11 +882,11 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"name": {
+					"identity": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name is the unique identifier for subject.",
-							Type:        []string{"string"},
-							Format:      "",
+							Description: "Identity is a reference to the identity of this subject.",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
 						},
 					},
 					"permission": {
@@ -884,8 +898,11 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 						},
 					},
 				},
+				Required: []string{"identity"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"},
 	}
 }
 

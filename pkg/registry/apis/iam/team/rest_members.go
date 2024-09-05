@@ -98,11 +98,13 @@ var cfg = &setting.Cfg{}
 func mapToTeamMember(m legacy.TeamMember) iamv0.TeamMember {
 	return iamv0.TeamMember{
 		IdentityDisplay: iamv0.IdentityDisplay{
-			IdentityType: claims.TypeUser,
-			UID:          m.UserUID,
-			Display:      m.Name,
-			AvatarURL:    dtos.GetGravatarUrlWithDefault(cfg, m.Email, m.Name),
-			InternalID:   m.UserID,
+			Identity: iamv0.IdentityRef{
+				Type: claims.TypeUser,
+				Name: m.UserUID,
+			},
+			DisplayName: m.Name,
+			AvatarURL:   dtos.GetGravatarUrlWithDefault(cfg, m.Email, m.Name),
+			InternalID:  m.UserID,
 		},
 		External:   m.External,
 		Permission: mapPermisson(m.Permission),
