@@ -86,10 +86,11 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsExternalRead,
-      ]),
+      // TODO: add proper access control here
+      // roles: evaluateAccess([
+      //   AccessControlAction.AlertingNotificationsRead,
+      //   AccessControlAction.AlertingNotificationsExternalRead,
+      // ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
       ),
