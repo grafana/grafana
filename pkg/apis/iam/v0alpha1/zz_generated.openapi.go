@@ -14,33 +14,33 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplay":        schema_pkg_apis_identity_v0alpha1_IdentityDisplay(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplayResults": schema_pkg_apis_identity_v0alpha1_IdentityDisplayResults(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.SSOSetting":             schema_pkg_apis_identity_v0alpha1_SSOSetting(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.SSOSettingList":         schema_pkg_apis_identity_v0alpha1_SSOSettingList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.SSOSettingSpec":         schema_pkg_apis_identity_v0alpha1_SSOSettingSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.ServiceAccount":         schema_pkg_apis_identity_v0alpha1_ServiceAccount(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.ServiceAccountList":     schema_pkg_apis_identity_v0alpha1_ServiceAccountList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.ServiceAccountSpec":     schema_pkg_apis_identity_v0alpha1_ServiceAccountSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.Team":                   schema_pkg_apis_identity_v0alpha1_Team(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBinding":            schema_pkg_apis_identity_v0alpha1_TeamBinding(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBindingList":        schema_pkg_apis_identity_v0alpha1_TeamBindingList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBindingSpec":        schema_pkg_apis_identity_v0alpha1_TeamBindingSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamList":               schema_pkg_apis_identity_v0alpha1_TeamList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMember":             schema_pkg_apis_identity_v0alpha1_TeamMember(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMemberList":         schema_pkg_apis_identity_v0alpha1_TeamMemberList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef":                schema_pkg_apis_identity_v0alpha1_TeamRef(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec":               schema_pkg_apis_identity_v0alpha1_TeamSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSubject":            schema_pkg_apis_identity_v0alpha1_TeamSubject(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.User":                   schema_pkg_apis_identity_v0alpha1_User(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserList":               schema_pkg_apis_identity_v0alpha1_UserList(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserSpec":               schema_pkg_apis_identity_v0alpha1_UserSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserTeam":               schema_pkg_apis_identity_v0alpha1_UserTeam(ref),
-		"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserTeamList":           schema_pkg_apis_identity_v0alpha1_UserTeamList(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplay":        schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplayResults": schema_pkg_apis_iam_v0alpha1_IdentityDisplayResults(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting":             schema_pkg_apis_iam_v0alpha1_SSOSetting(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingList":         schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec":         schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccount":         schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountList":     schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountSpec":     schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Team":                   schema_pkg_apis_iam_v0alpha1_Team(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamBinding":            schema_pkg_apis_iam_v0alpha1_TeamBinding(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamBindingList":        schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamBindingSpec":        schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamList":               schema_pkg_apis_iam_v0alpha1_TeamList(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember":             schema_pkg_apis_iam_v0alpha1_TeamMember(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMemberList":         schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef":                schema_pkg_apis_iam_v0alpha1_TeamRef(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSpec":               schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSubject":            schema_pkg_apis_iam_v0alpha1_TeamSubject(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.User":                   schema_pkg_apis_iam_v0alpha1_User(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserList":               schema_pkg_apis_iam_v0alpha1_UserList(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserSpec":               schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam":               schema_pkg_apis_iam_v0alpha1_UserTeam(ref),
+		"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeamList":           schema_pkg_apis_iam_v0alpha1_UserTeamList(ref),
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -91,7 +91,7 @@ func schema_pkg_apis_identity_v0alpha1_IdentityDisplay(ref common.ReferenceCallb
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_IdentityDisplayResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_IdentityDisplayResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -144,7 +144,7 @@ func schema_pkg_apis_identity_v0alpha1_IdentityDisplayResults(ref common.Referen
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplay"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplay"),
 									},
 								},
 							},
@@ -175,11 +175,11 @@ func schema_pkg_apis_identity_v0alpha1_IdentityDisplayResults(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.IdentityDisplay"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityDisplay"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_SSOSetting(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_SSOSetting(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -209,18 +209,18 @@ func schema_pkg_apis_identity_v0alpha1_SSOSetting(ref common.ReferenceCallback) 
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.SSOSettingSpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.SSOSettingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSettingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_SSOSettingList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -253,7 +253,7 @@ func schema_pkg_apis_identity_v0alpha1_SSOSettingList(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.SSOSetting"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting"),
 									},
 								},
 							},
@@ -263,11 +263,11 @@ func schema_pkg_apis_identity_v0alpha1_SSOSettingList(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.SSOSetting", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.SSOSetting", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_SSOSettingSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_SSOSettingSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -297,7 +297,7 @@ func schema_pkg_apis_identity_v0alpha1_SSOSettingSpec(ref common.ReferenceCallba
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_ServiceAccount(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -326,18 +326,18 @@ func schema_pkg_apis_identity_v0alpha1_ServiceAccount(ref common.ReferenceCallba
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.ServiceAccountSpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.ServiceAccountSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccountSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_ServiceAccountList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -370,7 +370,7 @@ func schema_pkg_apis_identity_v0alpha1_ServiceAccountList(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.ServiceAccount"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccount"),
 									},
 								},
 							},
@@ -380,11 +380,11 @@ func schema_pkg_apis_identity_v0alpha1_ServiceAccountList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.ServiceAccount", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.ServiceAccount", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_ServiceAccountSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -420,7 +420,7 @@ func schema_pkg_apis_identity_v0alpha1_ServiceAccountSpec(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_Team(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_Team(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -449,18 +449,18 @@ func schema_pkg_apis_identity_v0alpha1_Team(ref common.ReferenceCallback) common
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_TeamBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_TeamBinding(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -489,18 +489,18 @@ func schema_pkg_apis_identity_v0alpha1_TeamBinding(ref common.ReferenceCallback)
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBindingSpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamBindingSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBindingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamBindingSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_TeamBindingList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -533,7 +533,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamBindingList(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBinding"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamBinding"),
 									},
 								},
 							},
@@ -543,11 +543,11 @@ func schema_pkg_apis_identity_v0alpha1_TeamBindingList(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -560,7 +560,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamBindingSpec(ref common.ReferenceCallb
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSubject"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSubject"),
 									},
 								},
 							},
@@ -569,18 +569,18 @@ func schema_pkg_apis_identity_v0alpha1_TeamBindingSpec(ref common.ReferenceCallb
 					"teamRef": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef", "github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamSubject"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef", "github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamSubject"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_TeamList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_TeamList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -613,7 +613,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamList(ref common.ReferenceCallback) co
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.Team"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Team"),
 									},
 								},
 							},
@@ -623,11 +623,11 @@ func schema_pkg_apis_identity_v0alpha1_TeamList(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.Team", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.Team", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_TeamMember(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -693,7 +693,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamMember(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_TeamMemberList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -726,7 +726,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamMemberList(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMember"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember"),
 									},
 								},
 							},
@@ -736,11 +736,11 @@ func schema_pkg_apis_identity_v0alpha1_TeamMemberList(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamMember", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_TeamRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_TeamRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -759,7 +759,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamRef(ref common.ReferenceCallback) com
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_TeamSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_TeamSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -783,7 +783,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamSpec(ref common.ReferenceCallback) co
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_TeamSubject(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -810,7 +810,7 @@ func schema_pkg_apis_identity_v0alpha1_TeamSubject(ref common.ReferenceCallback)
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_User(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -839,18 +839,18 @@ func schema_pkg_apis_identity_v0alpha1_User(ref common.ReferenceCallback) common
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserSpec"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserSpec"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_UserList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_UserList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -883,7 +883,7 @@ func schema_pkg_apis_identity_v0alpha1_UserList(ref common.ReferenceCallback) co
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.User"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.User"),
 									},
 								},
 							},
@@ -893,11 +893,11 @@ func schema_pkg_apis_identity_v0alpha1_UserList(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.User", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.User", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_UserSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -939,7 +939,7 @@ func schema_pkg_apis_identity_v0alpha1_UserSpec(ref common.ReferenceCallback) co
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_UserTeam(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_UserTeam(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -954,7 +954,7 @@ func schema_pkg_apis_identity_v0alpha1_UserTeam(ref common.ReferenceCallback) co
 					"teamRef": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef"),
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef"),
 						},
 					},
 					"permission": {
@@ -969,11 +969,11 @@ func schema_pkg_apis_identity_v0alpha1_UserTeam(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.TeamRef"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef"},
 	}
 }
 
-func schema_pkg_apis_identity_v0alpha1_UserTeamList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_UserTeamList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -1006,7 +1006,7 @@ func schema_pkg_apis_identity_v0alpha1_UserTeamList(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserTeam"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam"),
 									},
 								},
 							},
@@ -1016,6 +1016,6 @@ func schema_pkg_apis_identity_v0alpha1_UserTeamList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/identity/v0alpha1.UserTeam", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }

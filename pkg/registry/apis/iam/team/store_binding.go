@@ -11,9 +11,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/claims"
-	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
+	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/team"
 )

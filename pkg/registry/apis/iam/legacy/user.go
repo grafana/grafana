@@ -6,7 +6,7 @@ import (
 	"text/template"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/common"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
