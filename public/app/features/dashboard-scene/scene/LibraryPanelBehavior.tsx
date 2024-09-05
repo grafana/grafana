@@ -1,5 +1,7 @@
-import { SceneObjectBase, SceneObjectState, VizPanel, VizPanelState } from '@grafana/scenes';
+import { PanelPlugin, PanelProps } from '@grafana/data';
+import { SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
+import { Stack } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -17,6 +19,8 @@ interface LibraryPanelBehaviorState extends SceneObjectState {
 }
 
 export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorState> {
+  public static LOADING_VIZ_PANEL_PLUGIN_ID = 'library-panel-loading-plugin';
+
   public constructor(state: LibraryPanelBehaviorState) {
     super(state);
 
@@ -37,6 +41,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     const vizPanel = this.parent;
 
     if (!(vizPanel instanceof VizPanel)) {
+      console.log('Parent is not VizPanel');
       return;
     }
 
@@ -53,10 +58,10 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
       $data: createPanelDataProvider(libPanelModel),
     };
 
-    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
-
     vizPanel.setState(vizPanelState);
     vizPanel.changePluginType(libPanelModel.type, vizPanelState.options, vizPanelState.fieldConfig);
+
+    this.setState({ _loadedPanel: libPanel, isLoaded: true, name: libPanel.name, title: libPanelModel.title });
 
     const layoutElement = vizPanel.parent!;
 
@@ -88,3 +93,18 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
   }
 }
+
+const LoadingVizPanelPlugin = new PanelPlugin(LoadingVizPanel);
+
+function LoadingVizPanel(props: PanelProps) {
+  return (
+    <Stack direction={'column'} justifyContent={'space-between'}>
+      Loading library panel
+    </Stack>
+  );
+}
+
+sceneUtils.registerRuntimePanelPlugin({
+  pluginId: LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID,
+  plugin: LoadingVizPanelPlugin,
+});
