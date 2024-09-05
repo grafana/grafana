@@ -35,6 +35,10 @@ type APIServerFactory interface {
 	// Any optional middlewares this factory wants configured via apiserver's BuildHandlerChain facility
 	GetOptionalMiddlewares(tracer tracing.Tracer) []web.Middleware
 
+	// Any optional middlewares that should be added once the k8s middleware has run, this can be useful for multi-tenant
+	// middlewares that need to know which tenant the request should be associated to.
+	GetOptionalMiddlewaresK8sDependent() []web.Middleware
+
 	// Make an API server for a given group+version
 	MakeAPIServer(ctx context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
 
@@ -53,6 +57,10 @@ func (p *DummyAPIFactory) GetOptions() options.OptionsProvider {
 }
 
 func (p *DummyAPIFactory) GetOptionalMiddlewares(_ tracing.Tracer) []web.Middleware {
+	return []web.Middleware{}
+}
+
+func (p *DummyAPIFactory) GetOptionalMiddlewaresK8sDependent() []web.Middleware {
 	return []web.Middleware{}
 }
 

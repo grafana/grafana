@@ -61,7 +61,8 @@ func SetupConfig(
 	buildVersion string,
 	buildCommit string,
 	buildBranch string,
-	optionalMiddlewares ...web.Middleware,
+	optionalMiddlewares []web.Middleware,
+	optionalMiddlewaresK8sDependent []web.Middleware,
 ) error {
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
@@ -105,6 +106,9 @@ func SetupConfig(
 
 		// Needs to run last in request chain to function as expected, hence we register it first.
 		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+		for _, m := range optionalMiddlewaresK8sDependent {
+			handler = m(handler)
+		}
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
 		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
