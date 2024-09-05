@@ -227,14 +227,14 @@ export const LdapDrawerComponent = ({
             {...register(`${serverConfig}.group_search_filter_user_attribute`)}
           />
         </Field>
-        {watch('settings.config.servers.0.group_mappings')?.map((gp, i) => (
+        {watch('settings.config.servers.0.group_mappings')?.map((_, i) => {
+          return (
           <GroupMappingComponent
             key={i}
-            groupMapping={gp}
-            onChange={(settings) => console.log('change', settings)}
+            groupMappingIndex={i}
             onRemove={() => onRemoveGroupMapping(i)}
           />
-        ))}
+        )})}
         <Divider />
         <Button className={styles.button} variant="secondary" icon="plus" onClick={() => onAddGroupMapping()}>
           <Trans i18nKey="ldap-drawer.group-mapping-section.add.button">Add group mapping</Trans>

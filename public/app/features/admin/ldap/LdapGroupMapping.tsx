@@ -1,7 +1,9 @@
+import { useFormContext } from 'react-hook-form';
+
 import { SelectableValue } from '@grafana/data';
 import { Box, Button, Field, Input, RadioButtonGroup, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { GroupMapping, OrgRole } from 'app/types';
+import { LdapPayload, OrgRole } from 'app/types';
 
 const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map(key => {
   return { label: key, value: key };
@@ -9,11 +11,11 @@ const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map(key
 
 interface GroupMappingProps {
   onRemove: () => void;
-  onChange: (settings: GroupMapping) => void;
-  groupMapping: GroupMapping;
+  groupMappingIndex: number;
 }
 
-export const GroupMappingComponent = ({ groupMapping, onRemove, onChange }: GroupMappingProps) => {
+export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMappingProps) => {
+  const { getValues, register, setValue } = useFormContext<LdapPayload>();
   return (
     <Box borderColor="strong" borderStyle="solid" padding={2} marginBottom={2}>
       <Field
@@ -26,14 +28,15 @@ export const GroupMappingComponent = ({ groupMapping, onRemove, onChange }: Grou
       >
         <Input
           id="group-dn"
-          defaultValue={groupMapping.group_dn}
+          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.group_dn`)}
         />
       </Field>
-      <Field htmlFor="org-role" label={t('ldap-drawer.group-mapping.org-role.label', 'Org role *')}>
+      <Field label={t('ldap-drawer.group-mapping.org-role.label', 'Org role *')}>
         <RadioButtonGroup
-          id="org-role"
+          id={`org-role-${groupMappingIndex}`}
           options={roleOptions}
-          value={groupMapping.org_role}
+          value={getValues(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_role`)}
+          onChange={v => setValue(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_role`, v)}
         />
       </Field>
       <Field
@@ -46,8 +49,8 @@ export const GroupMappingComponent = ({ groupMapping, onRemove, onChange }: Grou
       >
         <Input
           id="org-id"
-          defaultValue={groupMapping.org_id}
-          onChange={({ currentTarget: { value } }) => onChange({ ...groupMapping, org_id: +value })}
+          type='number'
+          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_id`)}
         />
       </Field>
       <Field
@@ -60,8 +63,7 @@ export const GroupMappingComponent = ({ groupMapping, onRemove, onChange }: Grou
       >
         <Switch
           id="grafana-admin"
-          value={groupMapping.grafana_admin}
-          onChange={() => onChange({ ...groupMapping, grafana_admin: !groupMapping.grafana_admin })}
+          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.grafana_admin`)}
         />
       </Field>
       <Button variant="secondary" fill="outline" icon="trash-alt" onClick={onRemove}>
