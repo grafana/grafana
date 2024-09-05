@@ -79,7 +79,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
     });
   };
 
-  const renderJSON = (data: string) => {
+  const renderJSON = (data = '{}') => {
     try {
       const json = JSON.parse(data);
       return <JSONFormatter json={json} />;
@@ -92,6 +92,10 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
     }
   };
 
+  const shouldRenderJSON =
+    value.options.method !== HttpRequestMethod.GET &&
+    value.options.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
+
   return (
     <div className={styles.listItem}>
       <Field label="Title">
@@ -99,7 +103,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
           value={value.title}
           onChange={onTitleChange}
           suggestions={suggestions}
-          autoFocus={true}
+          autoFocus={value.title === ''}
           placeholder="Action title"
         />
       </Field>
@@ -154,8 +158,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
         </Field>
       )}
 
-      <br />
-      {value?.options.method !== HttpRequestMethod.GET && renderJSON(value?.options.body ?? '{}')}
+      {shouldRenderJSON && (
+        <>
+          <br />
+          {renderJSON(value?.options.body)}
+        </>
+      )}
     </div>
   );
 });
