@@ -12,7 +12,7 @@ menutitle: Search
 title: Search
 weight: 80
 aliases:
-- /docs/grafana/latest/search/
+  - ../search/ # /docs/grafana/latest/search/
 ---
 
 # Search dashboards
