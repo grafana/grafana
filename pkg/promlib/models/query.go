@@ -103,6 +103,8 @@ const (
 	FilterOperatorNotEquals     FilterOperator = "not-equals"
 	FilterOperatorRegexMatch    FilterOperator = "regex-match"
 	FilterOperatorRegexNotMatch FilterOperator = "regex-not-match"
+	FilterOperatorOneOf         FilterOperator = "one-of"
+	FilterOperatorNotOneOf      FilterOperator = "not-one-of"
 )
 
 // Internal interval and range variables

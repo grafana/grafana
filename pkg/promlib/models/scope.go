@@ -76,6 +76,10 @@ func filtersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matc
 		if err != nil {
 			return nil, err
 		}
+		if filterMap[filter.Key] != nil &&
+			(filter.Operator == FilterOperatorOneOf || filter.Operator == FilterOperatorNotOneOf) {
+			matcher.Value = filterMap[filter.Key].Value + "|" + matcher.Value
+		}
 		filterMap[filter.Key] = matcher
 	}
 
@@ -97,6 +101,10 @@ func filterToMatcher(f ScopeFilter) (*labels.Matcher, error) {
 	case FilterOperatorRegexMatch:
 		mt = labels.MatchRegexp
 	case FilterOperatorRegexNotMatch:
+		mt = labels.MatchNotRegexp
+	case FilterOperatorOneOf:
+		mt = labels.MatchRegexp
+	case FilterOperatorNotOneOf:
 		mt = labels.MatchNotRegexp
 	default:
 		return nil, fmt.Errorf("unknown operator %q", f.Operator)

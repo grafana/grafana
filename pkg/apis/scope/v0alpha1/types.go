@@ -41,6 +41,8 @@ const (
 	FilterOperatorNotEquals     FilterOperator = "not-equals"
 	FilterOperatorRegexMatch    FilterOperator = "regex-match"
 	FilterOperatorRegexNotMatch FilterOperator = "regex-not-match"
+	FilterOperatorOneOf         FilterOperator = "one-of"
+	FilterOperatorNotOneOf      FilterOperator = "not-one-of"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
