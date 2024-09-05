@@ -27,7 +27,7 @@ import { AccessControlAction } from 'app/types';
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
 import { EditCorrelationForm } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
-import type { RemoveCorrelationParams } from './types';
+import type { Correlation, RemoveCorrelationParams } from './types';
 import { CorrelationData, useCorrelations } from './useCorrelations';
 
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
@@ -246,13 +246,11 @@ function ExpendedRow({ correlation: { source, target, ...correlation }, readOnly
     []
   );
 
-  return (
-    <EditCorrelationForm
-      correlation={{ ...correlation, sourceUID: source.uid, targetUID: target?.uid }}
-      onUpdated={onUpdated}
-      readOnly={readOnly}
-    />
-  );
+  let corr: Correlation = target?.uid
+    ? { ...correlation, type: 'query', sourceUID: source.uid, targetUID: target?.uid }
+    : { ...correlation, type: 'external', sourceUID: source.uid };
+
+  return <EditCorrelationForm correlation={corr} onUpdated={onUpdated} readOnly={readOnly} />;
 }
 
 const getDatasourceCellStyles = (theme: GrafanaTheme2) => ({

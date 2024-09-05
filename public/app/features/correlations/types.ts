@@ -27,12 +27,18 @@ export interface RemoveCorrelationResponse {
 }
 
 type CorrelationTypeOptions = {
-  value: string;
+  value: CorrelationType;
   label: string;
   description: string;
 };
 
-export const CORR_TYPES: Record<string, CorrelationTypeOptions> = {
+export const CORR_TYPES_QUERY = {
+  value: 'query' as 'query',
+  label: 'Query',
+  description: 'Open a query',
+};
+
+export const CORR_TYPES: Record<CorrelationType, CorrelationTypeOptions> = {
   query: {
     value: 'query',
     label: 'Query',
@@ -65,12 +71,10 @@ type CorrelationBase = {
   provisioned: boolean;
   orgId?: number;
   config: CorrelationConfig;
-  type: CorrelationType;
 };
 
 type CorrelationExternal = CorrelationBase & {
   type: 'external';
-  targetUID: undefined;
 };
 
 type CorrelationQuery = CorrelationBase & {
@@ -84,6 +88,8 @@ export type GetCorrelationsParams = {
   page: number;
 };
 
+export type OmitUnion<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
+
 export type RemoveCorrelationParams = Pick<Correlation, 'sourceUID' | 'uid'>;
-export type CreateCorrelationParams = Omit<Correlation, 'uid' | 'provisioned'>;
-export type UpdateCorrelationParams = Omit<Correlation, 'targetUID' | 'provisioned'>;
+export type CreateCorrelationParams = OmitUnion<Correlation, 'uid' | 'provisioned'>;
+export type UpdateCorrelationParams = OmitUnion<Correlation, 'targetUID' | 'provisioned'>;

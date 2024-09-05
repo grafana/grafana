@@ -23,7 +23,7 @@ import {
   createRemoveCorrelationResponse,
   createUpdateCorrelationResponse,
 } from './__mocks__/useCorrelations.mocks';
-import { CORR_TYPES, Correlation, CreateCorrelationParams } from './types';
+import { Correlation, CreateCorrelationParams, OmitUnion } from './types';
 
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
@@ -43,7 +43,7 @@ const renderWithContext = async (
 
       throw createFetchCorrelationsError();
     },
-    post: async (url: string, data: Omit<CreateCorrelationParams, 'sourceUID'>) => {
+    post: async (url: string, data: OmitUnion<CreateCorrelationParams, 'sourceUID'>) => {
       const matches = url.match(/^\/api\/datasources\/uid\/(?<sourceUID>[a-zA-Z0-9]+)\/correlations$/);
       if (matches?.groups) {
         const { sourceUID } = matches.groups;
@@ -54,7 +54,7 @@ const renderWithContext = async (
 
       throw createFetchCorrelationsError();
     },
-    patch: async (url: string, data: Omit<CreateCorrelationParams, 'sourceUID'>) => {
+    patch: async (url: string, data: OmitUnion<CreateCorrelationParams, 'sourceUID'>) => {
       const matches = url.match(
         /^\/api\/datasources\/uid\/(?<sourceUID>[a-zA-Z0-9]+)\/correlations\/(?<correlationUid>[a-zA-Z0-9]+)$/
       );
