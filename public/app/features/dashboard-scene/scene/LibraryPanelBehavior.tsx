@@ -34,7 +34,6 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
   }
 
   public setPanelFromLibPanel(libPanel: LibraryPanel) {
-    console.log(this.state._loadedPanel);
     if (this.state._loadedPanel?.version === libPanel.version) {
       return;
     }
