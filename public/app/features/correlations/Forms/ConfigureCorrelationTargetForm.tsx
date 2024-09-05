@@ -1,16 +1,35 @@
 import { css } from '@emotion/css';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { Controller, FieldError, useFormContext, useWatch } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { CORR_TYPES, CORR_TYPES_QUERY, CorrelationType, ExternalTypeTarget } from '../types';
+import { CorrelationType, ExternalTypeTarget } from '../types';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
-import { FormDTO } from './types';
+import { assertIsQueryTypeError, FormDTO } from './types';
+
+type CorrelationTypeOptions = {
+  value: CorrelationType;
+  label: string;
+  description: string;
+};
+
+export const CORR_TYPES_SELECT: Record<CorrelationType, CorrelationTypeOptions> = {
+  query: {
+    value: 'query',
+    label: 'Query',
+    description: 'Open a query',
+  },
+  external: {
+    value: 'external',
+    label: 'External',
+    description: 'Open an external URL',
+  },
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   typeSelect: css`
@@ -19,10 +38,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export const ConfigureCorrelationTargetForm = () => {
-  const { control, formState } = useFormContext<FormDTO>();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
   const { correlation } = useCorrelationsFormContext();
-  const targetUIDFromCorrelation = correlation?.type === CORR_TYPES_QUERY.value ? correlation?.targetUID : undefined;
+  const targetUIDFromCorrelation = correlation && 'targetUID' in correlation ? correlation.targetUID : undefined;
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || targetUIDFromCorrelation;
   const correlationType: CorrelationType | undefined = useWatch({ name: 'type' }) || correlation?.type;
   const styles = useStyles2(getStyles);
@@ -47,60 +69,69 @@ export const ConfigureCorrelationTargetForm = () => {
               label={t('correlations.target-form.type-label', 'Type')}
               description={t('correlations.target-form.target-type-description', 'Specify the type of correlation')}
               htmlFor="corrType"
-              invalid={!!formState.errors.type}
+              invalid={!!errors.type}
             >
               <Select
                 className={styles.typeSelect}
                 value={correlationType}
                 onChange={(value) => onChange(value.value)}
-                options={Object.values(CORR_TYPES)}
+                options={Object.values(CORR_TYPES_SELECT)}
                 aria-label="correlation type"
               />
             </Field>
           )}
         />
-        {correlationType === 'query' && (
-          <>
-            <Controller
-              control={control}
-              name="targetUID"
-              rules={{
-                required: {
-                  value: true,
-                  message: t('correlations.target-form.control-rules', 'This field is required.'),
-                },
-              }}
-              render={({ field: { onChange, value } }) => (
-                <Field
-                  label={t('correlations.target-form.target-label', 'Target')}
-                  description={t(
-                    'correlations.target-form.target-description-query',
-                    'Specify which data source is queried when the link is clicked'
-                  )}
-                  htmlFor="target"
-                  invalid={!!formState.errors.targetUID}
-                  error={formState.errors.targetUID?.message}
-                >
-                  <DataSourcePicker
-                    onChange={withDsUID(onChange)}
-                    noDefault
-                    current={value}
-                    inputId="target"
-                    width={32}
-                    disabled={correlation !== undefined}
-                  />
-                </Field>
-              )}
-            />
 
-            <QueryEditorField
-              name="config.target"
-              dsUid={targetUID}
-              invalid={!!formState.errors?.config?.target}
-              error={formState.errors?.config?.target?.message}
-            />
-          </>
-        )}
+        {correlationType === 'query' &&
+          (() => {
+            assertIsQueryTypeError(errors);
+            return (
+              <>
+                <Controller
+                  control={control}
+                  name="targetUID"
+                  rules={{
+                    required: {
+                      value: true,
+                      message: t('correlations.target-form.control-rules', 'This field is required.'),
+                    },
+                  }}
+                  render={({ field: { onChange, value } }) => (
+                    <Field
+                      label={t('correlations.target-form.target-label', 'Target')}
+                      description={t(
+                        'correlations.target-form.target-description-query',
+                        'Specify which data source is queried when the link is clicked'
+                      )}
+                      htmlFor="target"
+                      invalid={!!errors.targetUID}
+                      error={errors.targetUID?.message}
+                    >
+                      <DataSourcePicker
+                        onChange={withDsUID(onChange)}
+                        noDefault
+                        current={value}
+                        inputId="target"
+                        width={32}
+                        disabled={correlation !== undefined}
+                      />
+                    </Field>
+                  )}
+                />
+
+                <QueryEditorField
+                  name="config.target"
+                  dsUid={targetUID}
+                  invalid={!!errors?.config?.target}
+                  error={
+                    errors?.config?.target && 'message' in errors?.config?.target
+                      ? (errors?.config?.target as FieldError).message
+                      : 'Error'
+                  }
+                />
+              </>
+            );
+          })()}
         {correlationType === 'external' && (
           <>
             <Controller
@@ -122,8 +153,6 @@ export const ConfigureCorrelationTargetForm = () => {
                       'Specify the URL that will open when the link is clicked'
                     )}
                     htmlFor="target"
-                    invalid={!!formState.errors.targetUID}
-                    error={formState.errors.targetUID?.message}
                   >
                     <Input
                       value={castVal.url || ''}

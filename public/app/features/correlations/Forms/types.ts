@@ -1,3 +1,5 @@
+import { DeepMap, FieldError, FieldErrors } from 'react-hook-form';
+
 import { SupportedTransformationType } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 
@@ -21,6 +23,12 @@ export interface FormQueryDTO {
 }
 
 export type FormDTO = FormExternalDTO | FormQueryDTO;
+
+export function assertIsQueryTypeError(
+  errors: FieldErrors<FormDTO>
+): asserts errors is DeepMap<FormQueryDTO, FieldError> {
+  // explicitly assert the type so that TS can narrow down FormDTO to FormQueryDTO
+}
 
 export type EditFormDTO = OmitUnion<FormDTO, 'targetUID' | 'sourceUID'>;
 
