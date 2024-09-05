@@ -76,15 +76,17 @@ var ServiceAccountResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
 			{Name: "Title", Type: "string", Format: "string"},
+			{Name: "Disabled", Type: "boolean"},
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			u, ok := obj.(*ServiceAccount)
+			sa, ok := obj.(*ServiceAccount)
 			if ok {
 				return []interface{}{
-					u.Name,
-					u.Spec.Title,
-					u.CreationTimestamp.UTC().Format(time.RFC3339),
+					sa.Name,
+					sa.Spec.Title,
+					sa.Spec.Disabled,
+					sa.CreationTimestamp.UTC().Format(time.RFC3339),
 				}, nil
 			}
 			return nil, fmt.Errorf("expected service account")

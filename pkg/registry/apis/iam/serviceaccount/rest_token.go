@@ -110,5 +110,6 @@ func mapToToken(t legacy.ServiceAccountToken) iamv0.ServiceAccountToken {
 		Expires:  expires,
 		LastUsed: lastUsed,
 		Revoked:  t.Revoked,
+		Created:  metav1.NewTime(t.Created),
 	}
 }

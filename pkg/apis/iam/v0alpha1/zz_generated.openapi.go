@@ -438,7 +438,13 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountToken(ref common.ReferenceCallba
 							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
 						},
 					},
+					"created": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
 				},
+				Required: []string{"created"},
 			},
 		},
 		Dependencies: []string{

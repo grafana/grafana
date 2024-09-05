@@ -38,4 +38,5 @@ type ServiceAccountToken struct {
 	Revoked  bool         `json:"revoked,omitempty"`
 	Expires  *metav1.Time `json:"expires,omitempty"`
 	LastUsed *metav1.Time `json:"lastUsed,omitempty"`
+	Created  metav1.Time  `json:"created"`
 }
