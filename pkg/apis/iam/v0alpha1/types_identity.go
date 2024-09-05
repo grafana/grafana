@@ -2,6 +2,7 @@ package v0alpha1
 
 import (
 	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -23,7 +24,7 @@ type IdentityDisplayResults struct {
 }
 
 type IdentityDisplay struct {
-	IdentityRef IdentityRef `json:"identityRef"`
+	Identity IdentityRef `json:"identity"`
 
 	// Display name for identity.
 	DisplayName string `json:"displayName"`
@@ -42,4 +43,8 @@ type IdentityRef struct {
 
 	// Name is the unique identifier for identity, guaranteed jo be a unique value for the type within a namespace.
 	Name string `json:"name"`
+}
+
+func (i *IdentityRef) String() string {
+	return identity.NewTypedIDString(i.Type, i.Name)
 }

@@ -49,7 +49,7 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) 
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"identityRef": {
+					"identity": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
@@ -78,7 +78,7 @@ func schema_pkg_apis_iam_v0alpha1_IdentityDisplay(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"identityRef", "displayName"},
+				Required: []string{"identity", "displayName"},
 			},
 		},
 		Dependencies: []string{
@@ -667,7 +667,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) 
 							},
 						},
 					},
-					"teamRef": {
+					"team": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamRef"),
@@ -734,7 +734,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"identityRef": {
+					"identity": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
@@ -778,7 +778,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 						},
 					},
 				},
-				Required: []string{"identityRef", "displayName"},
+				Required: []string{"identity", "displayName"},
 			},
 		},
 		Dependencies: []string{
@@ -882,9 +882,9 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"identityRef": {
+					"identity": {
 						SchemaProps: spec.SchemaProps{
-							Description: "IdentityRef is a reference to the identity of this subject.",
+							Description: "Identity is a reference to the identity of this subject.",
 							Default:     map[string]interface{}{},
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.IdentityRef"),
 						},
@@ -898,7 +898,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamSubject(ref common.ReferenceCallback) comm
 						},
 					},
 				},
-				Required: []string{"identityRef"},
+				Required: []string{"identity"},
 			},
 		},
 		Dependencies: []string{

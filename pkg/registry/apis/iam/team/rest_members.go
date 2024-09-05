@@ -98,7 +98,7 @@ var cfg = &setting.Cfg{}
 func mapToTeamMember(m legacy.TeamMember) iamv0.TeamMember {
 	return iamv0.TeamMember{
 		IdentityDisplay: iamv0.IdentityDisplay{
-			IdentityRef: iamv0.IdentityRef{
+			Identity: iamv0.IdentityRef{
 				Type: claims.TypeUser,
 				Name: m.UserUID,
 			},
