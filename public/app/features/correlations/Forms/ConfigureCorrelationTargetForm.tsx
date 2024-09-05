@@ -6,7 +6,7 @@ import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { CORR_TYPES, CorrelationType, ExternalTypeTarget } from '../types';
+import { CORR_TYPES, CORR_TYPES_QUERY, CorrelationType, ExternalTypeTarget } from '../types';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
@@ -22,14 +22,10 @@ export const ConfigureCorrelationTargetForm = () => {
   const { control, formState } = useFormContext<FormDTO>();
   const withDsUID = (fn: Function) => (ds: DataSourceInstanceSettings) => fn(ds.uid);
   const { correlation } = useCorrelationsFormContext();
-  const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || correlation?.targetUID || undefined;
+  const targetUIDFromCorrelation = correlation?.type === CORR_TYPES_QUERY.value ? correlation?.targetUID : undefined;
+  const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || targetUIDFromCorrelation;
   const correlationType: CorrelationType | undefined = useWatch({ name: 'type' }) || correlation?.type;
-  let configTarget = useWatch({ name: 'config.target' }) || correlation?.config?.target;
   const styles = useStyles2(getStyles);
-
-  if (correlationType === CORR_TYPES.external.value && configTarget === undefined) {
-    configTarget = { url: '' };
-  }
 
   return (
     <>
@@ -63,7 +59,7 @@ export const ConfigureCorrelationTargetForm = () => {
             </Field>
           )}
         />
-        {correlationType === CORR_TYPES.query.value && (
+        {correlationType === 'query' && (
           <>
             <Controller
               control={control}
@@ -105,7 +101,7 @@ export const ConfigureCorrelationTargetForm = () => {
             />
           </>
         )}
-        {correlationType === CORR_TYPES.external.value && (
+        {correlationType === 'external' && (
           <>
             <Controller
               control={control}
