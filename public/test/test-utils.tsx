@@ -10,9 +10,21 @@ import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
-import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
+import {
+  HistoryWrapper,
+  LocationServiceProvider,
+  setAppEvents,
+  setLocationService,
+  setPluginComponentsHook,
+  setPluginLinksHook,
+  setReturnToPreviousHook,
+} from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
+import { GrafanaContext, GrafanaContextType, useReturnToPreviousInternal } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
+import { setupPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { createUsePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
+import { createUsePluginLinks } from 'app/features/plugins/extensions/usePluginLinks';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types/store';
 
@@ -36,27 +48,48 @@ interface ExtendedRenderOptions extends RenderOptions {
    * Props to pass to `createMemoryHistory`, if being used
    */
   historyOptions?: MemoryHistoryBuildOptions;
+  /**
+   * Method to return any preset plugin links that you would like to be available for the component being rendered
+   */
+  pluginLinks?: Parameters<typeof setPluginLinksHook>[0];
 }
 
-/**
- * Get a wrapper component that implements all of the providers that components
- * within the app will need
- */
-const getWrapper = ({
-  store,
-  renderWithRouter,
-  historyOptions,
-  grafanaContext,
-}: ExtendedRenderOptions & {
-  grafanaContext?: Partial<GrafanaContextType>;
-}) => {
-  const reduxStore = store || configureStore();
-
+/** Perform the same setup that we expect `app.ts` to have done when our components are rendering "for real" */
+const performAppSetup = (options: ExtendedRenderOptions) => {
+  const { historyOptions, pluginLinks } = options;
   // Create a fresh location service for each test - otherwise we run the risk
   // of it being stateful in between runs
   const history = createMemoryHistory(historyOptions);
   const locationService = new HistoryWrapper(history);
   setLocationService(locationService);
+
+  const pluginExtensionsRegistries = setupPluginExtensionRegistries();
+  setPluginLinksHook(pluginLinks || createUsePluginLinks(pluginExtensionsRegistries.addedLinksRegistry));
+  setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
+
+  setAppEvents(appEvents);
+
+  setReturnToPreviousHook(useReturnToPreviousInternal);
+
+  return {
+    locationService,
+    history,
+  };
+};
+
+/**
+ * Get a wrapper component that implements all of the providers that components
+ * within the app will need
+ */
+const getWrapper = (
+  options: ExtendedRenderOptions & {
+    grafanaContext?: Partial<GrafanaContextType>;
+  }
+) => {
+  const { store, renderWithRouter, grafanaContext } = options;
+  const reduxStore = store || configureStore();
+
+  const { locationService, history } = performAppSetup(options);
 
   /**
    * Conditional router - either a MemoryRouter or just a Fragment
