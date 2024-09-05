@@ -127,6 +127,10 @@ export enum AccessControlAction {
   AlertingProvisioningRead = 'alert.provisioning:read',
   AlertingProvisioningWrite = 'alert.provisioning:write',
 
+  // Alerting receivers access control management
+  AlertingReceiversRead = 'receivers.permissions:read',
+  AlertingReceiversWrite = 'receivers.permissions:write',
+
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',
