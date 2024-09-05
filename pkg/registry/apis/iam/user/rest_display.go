@@ -160,7 +160,6 @@ func parseKeys(req []string) dispKeys {
 				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
 					IdentityRef: iamv0.IdentityRef{
 						Type: t,
-						Name: "Provisioning",
 					},
 					DisplayName: "Provisioning",
 					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
