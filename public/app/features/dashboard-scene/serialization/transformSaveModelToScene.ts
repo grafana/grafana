@@ -298,14 +298,18 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
-    $behaviors:
-      panel.libraryPanel && panel.libraryPanel.uid && panel.libraryPanel?.name
-        ? [new LibraryPanelBehavior({ uid: panel.libraryPanel.uid, name: panel.libraryPanel.name })]
-        : undefined,
-
+    $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
   };
+
+  if (panel.libraryPanel) {
+    vizPanelState.$behaviors!.push(
+      new LibraryPanelBehavior({ uid: panel.libraryPanel.uid, name: panel.libraryPanel.name })
+    );
+    vizPanelState.pluginId = LibraryPanelBehavior.LOADING_VIZ_PANEL_PLUGIN_ID;
+    vizPanelState.$data = undefined;
+  }
 
   if (!config.publicDashboardAccessToken) {
     vizPanelState.menu = new VizPanelMenu({

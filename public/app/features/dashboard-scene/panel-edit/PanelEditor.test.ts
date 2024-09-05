@@ -174,9 +174,9 @@ describe('PanelEditor', () => {
       editScene.state.vizManager.commitChanges();
 
       await new Promise(process.nextTick); // Wait for mock api to return and update the library panel
-      expect((gridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior).state._loadedPanel?.version).toBe(2);
-      expect((gridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior).state.name).toBe('changed name');
-      expect((gridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior).state.title).toBe('changed title');
+      expect(libPanelBehavior.state._loadedPanel?.version).toBe(2);
+      expect(libPanelBehavior.state.name).toBe('changed name');
+      expect(libPanelBehavior.state.title).toBe('changed title');
       expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
     });
   });

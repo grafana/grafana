@@ -8,6 +8,7 @@ import {
   SceneObjectState,
   SceneObjectUrlSyncHandler,
   SceneObjectUrlValues,
+  VizPanel,
 } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 import { KioskMode } from 'app/types';
@@ -17,9 +18,16 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { findVizPanelByKey, getDashboardSceneFor, isPanelClone, isWithinUnactivatedRepeatRow } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getLibraryPanelBehavior,
+  isPanelClone,
+  isWithinUnactivatedRepeatRow,
+} from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { DashboardRepeatsProcessedEvent } from './types';
 
@@ -129,6 +137,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         this._scene.onEnterEditMode();
       }
 
+      const libPanelBehavior = getLibraryPanelBehavior(panel);
+      if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
+        this._waitForLibPanelToLoadBeforeEnteringPanelEdit(panel, libPanelBehavior);
+        return;
+      }
+
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
@@ -179,6 +193,18 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         }
       });
     }
+  }
+
+  /**
+   * Temporary solution, with some refactoring of PanelEditor we can remove this
+   */
+  private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panel: VizPanel, libPanel: LibraryPanelBehavior) {
+    const sub = libPanel.subscribeToState((state) => {
+      if (state.isLoaded) {
+        this._scene.setState({ editPanel: buildPanelEditScene(panel) });
+        sub.unsubscribe();
+      }
+    });
   }
 }
 

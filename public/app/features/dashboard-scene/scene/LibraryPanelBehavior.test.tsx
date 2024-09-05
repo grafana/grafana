@@ -3,7 +3,8 @@ import { of } from 'rxjs';
 import { FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { SceneCanvasText, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneCanvasText, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { LibraryPanel } from '@grafana/schema';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -12,7 +13,6 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
-import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -66,16 +66,16 @@ setRunRequest(runRequestMock);
 
 describe('LibraryPanelBehavior', () => {
   it('should load library panel', async () => {
-    const { gridItem, spy } = await buildTestSceneWithLibraryPanel();
-
-    const behavior = gridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior;
-    expect(behavior).toBeDefined();
+    const { gridItem, spy, behavior } = await buildTestSceneWithLibraryPanel();
 
     expect(behavior.state.isLoaded).toBe(true);
     expect(behavior.state._loadedPanel).toBeDefined();
     expect(behavior.state._loadedPanel?.model).toBeDefined();
     expect(behavior.state._loadedPanel?.name).toBe('LibraryPanel A');
     expect(behavior.state._loadedPanel?.type).toBe('table');
+
+    // Verify the viz panel state have been updated with lib panel options
+    expect(gridItem.state.body.state.options).toEqual({ showHeader: true });
 
     expect(spy).toHaveBeenCalled();
   });
@@ -126,58 +126,34 @@ describe('LibraryPanelBehavior', () => {
     expect(behaviorClone.state._loadedPanel?.name).toBe('LibraryPanel A');
     expect(behaviorClone.state._loadedPanel?.uid).toBe('111');
   });
-
-  it('should not update panel if panel not part of a vigridItemzPanel', async () => {
-    const { gridItem } = await buildTestSceneWithLibraryPanel();
-
-    const behavior = gridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior;
-    expect(behavior).toBeDefined();
-
-    const panel = vizPanelToPanel(gridItem.state.body.clone({ $behaviors: undefined }));
-
-    const libraryPanelState = {
-      name: 'LibraryPanel B',
-      title: 'LibraryPanel B title',
-      uid: '222',
-      type: 'table',
-      version: 2,
-      model: panel,
-    };
-
-    const vizPanelClone = gridItem.state.body.clone();
-    const behaviorClone = vizPanelClone.state.$behaviors![0] as LibraryPanelBehavior;
-    behaviorClone.setPanelFromLibPanel(libraryPanelState);
-
-    expect(behaviorClone.state._loadedPanel?.name).toBe('LibraryPanel A');
-    expect(behaviorClone.state._loadedPanel?.uid).toBe('111');
-  });
 });
 
 async function buildTestSceneWithLibraryPanel() {
-  const libraryPanel = new VizPanel({
+  const behavior = new LibraryPanelBehavior({ title: 'LibraryPanel A title', name: 'LibraryPanel A', uid: '111' });
+
+  const vizPanel = new VizPanel({
     title: 'Panel A',
-    pluginId: 'table',
+    pluginId: 'lib-panel-loading',
     key: 'panel-1',
-    $behaviors: [new LibraryPanelBehavior({ title: 'LibraryPanel A title', name: 'LibraryPanel A', uid: '111' })],
-    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
-    $data: new SceneQueryRunner({
-      datasource: { uid: 'abcdef' },
-      queries: [{ refId: 'A' }],
-    }),
+    $behaviors: [behavior],
   });
 
-  const panel = vizPanelToPanel(libraryPanel.clone({ $behaviors: undefined }));
-
-  const libraryPanelState = {
+  const libraryPanel: LibraryPanel = {
     name: 'LibraryPanel A',
-    title: 'LibraryPanel A title',
     uid: '111',
-    model: panel,
     type: 'table',
+    model: {
+      title: 'LibraryPanel A title',
+      type: 'table',
+      options: { showHeader: true },
+      fieldConfig: { defaults: {}, overrides: [] },
+      datasource: { uid: 'abcdef' },
+      targets: [{ refId: 'A' }],
+    },
     version: 1,
   };
 
-  const spy = jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue({ ...libraryPanelState, ...panel });
+  const spy = jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue(libraryPanel);
 
   const gridItem = new DashboardGridItem({
     key: 'griditem-1',
@@ -185,7 +161,7 @@ async function buildTestSceneWithLibraryPanel() {
     y: 0,
     width: 10,
     height: 12,
-    body: libraryPanel,
+    body: vizPanel,
   });
 
   const scene = new DashboardScene({
@@ -203,5 +179,5 @@ async function buildTestSceneWithLibraryPanel() {
 
   await new Promise((r) => setTimeout(r, 1));
 
-  return { scene, gridItem, spy };
+  return { scene, gridItem, spy, behavior };
 }

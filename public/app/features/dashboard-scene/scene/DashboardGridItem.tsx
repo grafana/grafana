@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useMemo } from 'react';
-import { Unsubscribable } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import {
@@ -24,7 +23,7 @@ import {
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
-import { getMultiVariableValues, getQueryRunnerFor, isLibraryPanel, getLibraryPanelBehavior } from '../utils/utils';
+import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
@@ -41,7 +40,6 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
-  private _libPanelSubscription: Unsubscribable | undefined;
   private _prevRepeatValues?: VariableValueSingle[];
   private _oldBody?: VizPanel;
 
@@ -63,35 +61,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this._oldBody = this.state.body;
       this.performRepeat();
     }
-
-    // Subscriptions that handles body updates
-    this._subs.add(
-      this.subscribeToState((newState, prevState) => {
-        if (newState.body !== prevState.body) {
-          if (newState.body instanceof VizPanel && isLibraryPanel(newState.body)) {
-            const libraryPanel = getLibraryPanelBehavior(newState.body);
-
-            if (!libraryPanel) {
-              return;
-            }
-            if (libraryPanel.state._loadedPanel?.model.repeat) {
-              this.setState({
-                variableName: libraryPanel.state._loadedPanel.model.repeat,
-                repeatDirection: libraryPanel.state._loadedPanel.model.repeatDirection,
-                maxPerRow: libraryPanel.state._loadedPanel.model.maxPerRow,
-                itemHeight: this.state.height ?? 10,
-              });
-              this.performRepeat();
-            }
-          }
-        }
-      })
-    );
-
-    return () => {
-      this._libPanelSubscription?.unsubscribe();
-      this._libPanelSubscription = undefined;
-    };
   }
 
   /**
