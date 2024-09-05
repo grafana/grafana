@@ -922,6 +922,11 @@
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
+  "gen-ai": {
+    "apply-suggestion": "Åppľy",
+    "incomplete-request-error": "Ŝőřřy, Ĩ ŵäş ūŉäþľę ŧő čőmpľęŧę yőūř řęqūęşŧ. Pľęäşę ŧřy äģäįŉ.",
+    "send-custom-feedback": "Ŝęŉđ"
+  },
   "grafana-ui": {
     "drawer": {
       "close": "Cľőşę"
