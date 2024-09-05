@@ -139,10 +139,16 @@ export class DashboardSceneChangeTracker {
   }
 
   private detectSaveModelChanges() {
-    this._changesWorker?.postMessage({
-      changed: transformSceneToSaveModel(this._dashboard),
-      initial: this._dashboard.getInitialSaveModel(),
-    });
+    const changedDashboard = transformSceneToSaveModel(this._dashboard);
+    const initialDashboard = this._dashboard.getInitialSaveModel();
+
+    // Objects must be stringify to ensure they are clonable, so they don't contain functions
+    const changed =
+      typeof changedDashboard === 'object' ? JSON.parse(JSON.stringify(changedDashboard)) : changedDashboard;
+    const initial =
+      typeof initialDashboard === 'object' ? JSON.parse(JSON.stringify(initialDashboard)) : initialDashboard;
+
+    this._changesWorker?.postMessage({ initial, changed });
   }
 
   private hasMetadataChanges() {
