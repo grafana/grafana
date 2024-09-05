@@ -442,8 +442,6 @@ service ResourceStore {
 service ResourceIndex {
   // TODO: rpc Search(...) ... eventually a typed response
 
-  rpc Read(ReadRequest) returns (ReadResponse); // Duplicated -- for client read only usage
-
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);
 

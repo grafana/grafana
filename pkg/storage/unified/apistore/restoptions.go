@@ -50,7 +50,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 		return nil, err
 	}
 	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceStoreClient(server),
+		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
 	), nil
 }
@@ -84,7 +84,7 @@ func NewRESTOptionsGetterForFile(path string,
 		return nil, err
 	}
 	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceStoreClient(server),
+		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
 	), nil
 }

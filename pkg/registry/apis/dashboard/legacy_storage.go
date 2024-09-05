@@ -41,7 +41,7 @@ func (s *dashboardStorage) newStore(scheme *runtime.Scheme, defaultOptsGetter ge
 	if err != nil {
 		return nil, err
 	}
-	client := resource.NewLocalResourceStoreClient(server)
+	client := resource.NewLocalResourceClient(server)
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client,
 		defaultOpts.StorageConfig.Config,
 	)

@@ -97,7 +97,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		Backend: backend,
 	})
 	require.NoError(t, err)
-	client := resource.NewLocalResourceStoreClient(server)
+	client := resource.NewLocalResourceClient(server)
 
 	config := storagebackend.NewDefaultConfig(setupOpts.prefix, setupOpts.codec)
 	store, destroyFunc, err := NewStorage(

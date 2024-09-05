@@ -25,7 +25,6 @@ type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
 	DiagnosticsServer
-	LifecycleHooks
 }
 
 type ListIterator interface {
