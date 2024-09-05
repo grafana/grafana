@@ -42,7 +42,6 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     const vizPanel = this.parent;
 
     if (!(vizPanel instanceof VizPanel)) {
-      console.log('Parent is not VizPanel');
       return;
     }
 
