@@ -203,7 +203,7 @@ To export a dashboard in its current state as a PDF, follow these steps:
 1. Click the **Export** drop-down in the top-right corner and select **Export as PDF**.
 1. In the **Export dashboard PDF** drawer that opens, select either **Landscape** or **Portrait** for the PDF orientation.
 1. Select either **Grid** or **Simple** for the PDF layout.
-1. Set the **Zoom** level, which increases or decreases the numbrer of rows and columns in table visualizations.
+1. Set the **Zoom** level; zoom in to enlarge text, or zoom out to see more data (like table columns) per panel.
 1. Click **Generate PDF**.
 
    The PDF opens in another tab where you can download it.
