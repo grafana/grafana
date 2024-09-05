@@ -47,8 +47,8 @@ type TeamBindingList struct {
 }
 
 type TeamSubject struct {
-	// Name is the unique identifier for subject.
-	Name string `json:"name,omitempty"`
+	// IdentityRef is a reference to the identity of this subject.
+	IdentityRef IdentityRef `json:"identityRef"`
 
 	// Permission subject has in team.
 	Permission TeamPermission `json:"permission,omitempty"`
