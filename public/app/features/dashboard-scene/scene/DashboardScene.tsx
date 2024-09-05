@@ -34,7 +34,6 @@ import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 import { getClosestScopesFacade, ScopesFacade } from 'app/features/scopes';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, KioskMode, SaveDashboardResponseDTO } from 'app/types';
@@ -70,7 +69,7 @@ import {
 } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
-import { isPanelAngularPlugin } from './AngularDeprecation';
+import { isGridPanelAngularDatasource, isGridPanelAngularPlugin } from './AngularDeprecation';
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -946,38 +945,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       if (!(vizPanel instanceof DashboardGridItem)) {
         throw new Error('Trying to get a panel in a layout that is not DashboardGridItem');
       }
-      const panel = vizPanel.state.body.state;
-      return panel;
+      return vizPanel.state.body;
     });
   };
-  // FIXME:: ts errors because safeguards not in place
-  public hasAngularPlugins = () => {
+
+  public hasDashboardAngularPlugins = () => {
     const sceneGridLayout = this.state.body;
+    if (!(sceneGridLayout instanceof SceneGridLayout)) {
+      return false;
+    }
     const gridItems = sceneGridLayout.state.children;
     const dashboardWasAngular = gridItems.some((gridItem) => {
-      let panelGrid = gridItem.state.body;
-      const isAngularPanel = isPanelAngularPlugin(panelGrid);
-      console.log('isAngularPanel from Dashboard Scene', isAngularPanel);
-      let isAngularDs = false;
-      if (panelGrid.datasource?.uid) {
-        isAngularDs = isAngularDatasourcePluginAndNotHidden(panelGrid.state.datasource?.uid);
+      if (!(gridItem instanceof DashboardGridItem)) {
+        return false;
       }
+      const isAngularPanel = isGridPanelAngularPlugin(gridItem.state.body);
+      const isAngularDs = isGridPanelAngularDatasource(gridItem.state.body);
       return isAngularPanel || isAngularDs;
     });
     return dashboardWasAngular;
   };
 
-  public shouldShowAngularDeprecationNotice() {
-    const { uid } = this.state;
-    const hasAngularPlugins = this.hasAngularPlugins();
-    const isAngularDeprecationNoticeDismissed = true; // this is a mock value
-    const shouldShowDeprecation =
-      config.featureToggles.angularDeprecationUI &&
-      hasAngularPlugins &&
-      isAngularDeprecationNoticeDismissed &&
-      uid !== undefined;
-    return shouldShowDeprecation;
-  }
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
     this._scrollRef = scrollElement;
   };

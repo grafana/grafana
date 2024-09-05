@@ -16,6 +16,7 @@ import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecatio
 import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
@@ -62,17 +63,22 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     if (!panels) {
       return null;
     }
-    //FIXME: ts erros no safeguards here
     const shouldShowAutoMigrateLink = panels.some((panel) => {
-      if (panel.pluginId === undefined) {
-        return false;
+      if (panel instanceof LibraryVizPanel) {
+        const pluginId = panel.state.panel?.state.pluginId;
+        if (!pluginId) {
+          return false;
+        }
+        return explicitlyControlledMigrationPanels.includes(pluginId);
+      } else if (panel instanceof VizPanel) {
+        return explicitlyControlledMigrationPanels.includes(panel.state.pluginId);
       }
-      return explicitlyControlledMigrationPanels.includes(panel.pluginId);
+      return false;
     });
 
     return (
       config.featureToggles.angularDeprecationUI &&
-      model.hasAngularPlugins() &&
+      model.hasDashboardAngularPlugins() &&
       model.state.uid && (
         <AngularDeprecationNotice
           dashboardUid={model.state.uid}

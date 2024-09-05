@@ -2,12 +2,14 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneGridItemLike, SceneObjectBase, VizPanel } from '@grafana/scenes';
 import { Icon, PanelChrome, Tooltip, useStyles2 } from '@grafana/ui';
 import { explicitlyControlledMigrationPanels } from 'app/features/dashboard/state/PanelModel';
 import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 
 import { getQueryRunnerFor } from '../utils/utils';
+
+import { LibraryVizPanel } from './LibraryVizPanel';
 
 export class AngularDeprecation extends SceneObjectBase {
   static Component = AngularDeprecationRenderer;
@@ -82,6 +84,26 @@ export function isPanelAngularDatasource(panel: VizPanel) {
   const datasource = queryRunner?.state.datasource;
 
   return datasource?.uid ? isAngularDatasourcePluginAndNotHidden(datasource?.uid) : false;
+}
+
+export function isGridPanelAngularPlugin(gridItem: SceneGridItemLike) {
+  //check if panel is library panel
+  if (gridItem instanceof LibraryVizPanel && gridItem.parent instanceof VizPanel) {
+    return gridItem.parent ? isPanelAngularPlugin(gridItem.parent) : false;
+  } else if (gridItem instanceof VizPanel) {
+    return isPanelAngularPlugin(gridItem);
+  }
+  return false;
+}
+
+export function isGridPanelAngularDatasource(gridItem: SceneGridItemLike) {
+  //check if panel is library panel
+  if (gridItem instanceof LibraryVizPanel && gridItem.parent instanceof VizPanel) {
+    return gridItem.parent ? isPanelAngularDatasource(gridItem.parent) : false;
+  } else if (gridItem instanceof VizPanel) {
+    return isPanelAngularDatasource(gridItem);
+  }
+  return false;
 }
 
 export function shouldShowAngularNotice(panel: VizPanel) {

@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, sceneGraph } from '@grafana/scenes';
 import { Button, Card, FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
@@ -81,8 +82,15 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                   interactionElementId="panel-options"
                 />
                 <>
-                  <Card.Heading>Angular Panel Options</Card.Heading>
-                  <Card.Description>To modify the panel options, use the Panel JSON editor.</Card.Description>
+                  <Card.Heading>
+                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-heading"> Angular Panel Options </Trans>
+                  </Card.Heading>
+                  <Card.Description>
+                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-description">
+                      {' '}
+                      This panel is built with AngularJS. To modify the panel options, use the Panel JSON editor.
+                    </Trans>
+                  </Card.Description>
                   <Card.Actions>
                     <Button
                       variant="secondary"
@@ -91,8 +99,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                         model.onOpenPanelJSON(panel);
                       }}
                     >
-                      {' '}
-                      Open Panel JSON{' '}
+                      <Trans i18nKey="dashboards.panel-edit.angular-deprecation-button-open-panel-json">
+                        Open Panel JSON
+                      </Trans>
                     </Button>
                   </Card.Actions>
                 </>
