@@ -163,5 +163,29 @@ export function getUtilityClassStyles(theme: GrafanaTheme2) {
       zIndex: theme.zIndex.typeahead,
     },
     ...widthMixin(theme, 30),
+    '.row': {
+      display: 'flex',
+      flexWrap: 'wrap',
+      marginLeft: `calc(${theme.spacing(4)} / -2)`,
+      marginRight: `calc(${theme.spacing(4)} / -2)`,
+    },
+    '.container': {
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      paddingLeft: `calc(${theme.spacing(4)} / 2)`,
+      paddingRight: `calc(${theme.spacing(4)} / 2)`,
+      [theme.breakpoints.up('sm')]: {
+        maxWidth: theme.breakpoints.values.sm,
+      },
+      [theme.breakpoints.up('md')]: {
+        maxWidth: theme.breakpoints.values.md,
+      },
+      [theme.breakpoints.up('lg')]: {
+        maxWidth: theme.breakpoints.values.lg,
+      },
+      [theme.breakpoints.up('xl')]: {
+        maxWidth: theme.breakpoints.values.xl,
+      },
+    },
   });
 }
