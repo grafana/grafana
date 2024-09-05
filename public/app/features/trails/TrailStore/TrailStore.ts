@@ -1,7 +1,7 @@
 import { debounce, isEqual } from 'lodash';
 
 import { urlUtil } from '@grafana/data';
-import { getUrlSyncManager, SceneObject, SceneObjectRef, SceneObjectUrlValues, sceneUtils } from '@grafana/scenes';
+import { SceneObject, SceneObjectRef, SceneObjectUrlValues, sceneUtils } from '@grafana/scenes';
 import { dispatch } from 'app/store/store';
 
 import { notifyApp } from '../../../core/reducers/appNotification';
@@ -120,7 +120,7 @@ export class TrailStore {
     const history = trail.state.history.state.steps.map((step) => {
       const stepTrail = new DataTrail(sceneUtils.cloneSceneObjectState(step.trailState));
       return {
-        urlValues: getUrlSyncManager().getUrlState(stepTrail),
+        urlValues: sceneUtils.getUrlState(stepTrail),
         type: step.type,
         description: step.description,
         parentIndex: step.parentIndex,
@@ -203,7 +203,7 @@ export class TrailStore {
   }
 
   addBookmark(trail: DataTrail) {
-    const urlState = getUrlSyncManager().getUrlState(trail);
+    const urlState = sceneUtils.getUrlState(trail);
 
     const bookmarkState: DataTrailBookmark = {
       urlValues: urlState,
@@ -243,7 +243,7 @@ export class TrailStore {
 }
 
 function getUrlStateForComparison(trail: DataTrail) {
-  const urlState = getUrlSyncManager().getUrlState(trail);
+  const urlState = sceneUtils.getUrlState(trail);
   // Make a few corrections
   correctUrlStateForComparison(urlState);
 

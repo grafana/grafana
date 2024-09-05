@@ -52,10 +52,6 @@ type MigrationResult struct {
 	FailedDetails   []string `json:"failedDetails"`
 }
 
-type ServiceAccount struct {
-	Id int64
-}
-
 // swagger:model
 type CreateServiceAccountForm struct {
 	// example: grafana
