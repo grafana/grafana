@@ -1,6 +1,7 @@
 package options
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +26,7 @@ type KubeAggregatorOptions struct {
 	ProxyClientKeyFile     string
 	RemoteServicesFile     string
 	APIServiceCABundleFile string
+	Reg                    prometheus.Registerer
 }
 
 func NewAggregatorServerOptions() *KubeAggregatorOptions {
@@ -81,7 +83,7 @@ func (o *KubeAggregatorOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Co
 		return err
 	}
 	// override the RESTOptionsGetter to use the in memory storage options
-	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig)
+	restOptionsGetter, err := apistore.NewRESTOptionsGetterMemory(etcdOptions.StorageConfig, o.Reg)
 	if err != nil {
 		return err
 	}

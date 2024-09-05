@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
@@ -27,16 +28,17 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 type RESTOptionsGetter struct {
 	client   resource.ResourceStoreClient
 	original storagebackend.Config
+	reg      prometheus.Registerer
 }
 
-func NewRESTOptionsGetterForClient(client resource.ResourceStoreClient, original storagebackend.Config) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(client resource.ResourceStoreClient, original storagebackend.Config, reg prometheus.Registerer) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:   client,
 		original: original,
 	}
 }
 
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, reg prometheus.Registerer) (*RESTOptionsGetter, error) {
 	backend, err := resource.NewCDKBackend(context.Background(), resource.CDKBackendOptions{
 		Bucket: memblob.OpenBucket(&memblob.Options{}),
 	})
@@ -52,6 +54,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceStoreClient(server),
 		originalStorageConfig,
+		reg,
 	), nil
 }
 
@@ -59,7 +62,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 // for resources that are required to be read/watched on startup and there
 // won't be any write operations that initially bootstrap their directories
 func NewRESTOptionsGetterForFile(path string,
-	originalStorageConfig storagebackend.Config) (*RESTOptionsGetter, error) {
+	originalStorageConfig storagebackend.Config, reg prometheus.Registerer) (*RESTOptionsGetter, error) {
 	if path == "" {
 		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
@@ -86,6 +89,7 @@ func NewRESTOptionsGetterForFile(path string,
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceStoreClient(server),
 		originalStorageConfig,
+		reg,
 	), nil
 }
 
@@ -122,7 +126,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc, trigger, indexers)
+			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc, trigger, indexers, r.reg)
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
