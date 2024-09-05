@@ -2226,8 +2226,8 @@
         "operationId": "addAPIkey",
         "deprecated": true,
         "responses": {
-          "301": {
-            "$ref": "#/responses/statusMovedPermanently"
+          "410": {
+            "$ref": "#/responses/goneError"
           }
         }
       }
@@ -23804,6 +23804,12 @@
         "items": {
           "$ref": "#/definitions/TeamDTO"
         }
+      }
+    },
+    "goneError": {
+      "description": "GoneError is returned when the requested endpoint was removed.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
       }
     },
     "helpFlagResponse": {
