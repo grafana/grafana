@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -33,7 +33,7 @@ type LegacyTeamMemberREST struct {
 
 // New implements rest.Storage.
 func (s *LegacyTeamMemberREST) New() runtime.Object {
-	return &identityv0.TeamMemberList{}
+	return &iamv0.TeamMemberList{}
 }
 
 // Destroy implements rest.Storage.
@@ -71,7 +71,7 @@ func (s *LegacyTeamMemberREST) Connect(ctx context.Context, name string, options
 			return
 		}
 
-		list := &identityv0.TeamMemberList{Items: make([]identityv0.TeamMember, 0, len(res.Members))}
+		list := &iamv0.TeamMemberList{Items: make([]iamv0.TeamMember, 0, len(res.Members))}
 
 		for _, m := range res.Members {
 			list.Items = append(list.Items, mapToTeamMember(m))
@@ -95,9 +95,9 @@ func (s *LegacyTeamMemberREST) ConnectMethods() []string {
 
 var cfg = &setting.Cfg{}
 
-func mapToTeamMember(m legacy.TeamMember) identityv0.TeamMember {
-	return identityv0.TeamMember{
-		IdentityDisplay: identityv0.IdentityDisplay{
+func mapToTeamMember(m legacy.TeamMember) iamv0.TeamMember {
+	return iamv0.TeamMember{
+		IdentityDisplay: iamv0.IdentityDisplay{
 			IdentityType: claims.TypeUser,
 			UID:          m.UserUID,
 			Display:      m.Name,
