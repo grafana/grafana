@@ -63,8 +63,6 @@ refs:
 
 # Share dashboards and panels
 
-{{< docs/public-preview product="The redesigned sharing feature" >}}
-
 Grafana enables you to share dashboards and panels with other users within your organization and in certain situations, publicly on the web. You can share using:
 
 - Direct links with users in and outside of your organization
