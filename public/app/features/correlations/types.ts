@@ -45,29 +45,40 @@ export const CORR_TYPES: Record<string, CorrelationTypeOptions> = {
   },
 };
 
-const corrTypeArray = Object.values(CORR_TYPES).map((ct) => ct.value);
+//const corrTypeArray = Object.values(CORR_TYPES).map((ct) => ct.value);
 
-export type CorrelationType = (typeof corrTypeArray)[number];
+export type CorrelationType = 'query' | 'external'; //(typeof corrTypeArray)[number];
 
 export type ExternalTypeTarget = { url: string };
 
-export interface CorrelationConfig {
+export type CorrelationConfig = {
   field: string;
   target: object | ExternalTypeTarget; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic. For external, it simply contains a URL
   transformations?: DataLinkTransformationConfig[];
-}
+};
 
-export interface Correlation {
+type CorrelationBase = {
   uid: string;
   sourceUID: string;
-  targetUID?: string;
   label?: string;
   description?: string;
   provisioned: boolean;
   orgId?: number;
   config: CorrelationConfig;
   type: CorrelationType;
-}
+};
+
+type CorrelationExternal = CorrelationBase & {
+  type: 'external';
+  targetUID: undefined;
+};
+
+type CorrelationQuery = CorrelationBase & {
+  type: 'query';
+  targetUID: string;
+};
+
+export type Correlation = CorrelationExternal | CorrelationQuery;
 
 export type GetCorrelationsParams = {
   page: number;
