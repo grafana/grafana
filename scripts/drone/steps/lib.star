@@ -1266,7 +1266,8 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def retry_command(command, attempts = 5, delay = 60):
+# This retry will currently continue for 30 minutes until fail, unless successful.
+def retry_command(command, attempts = 60, delay = 30):
     return [
         "for i in $(seq 1 %d); do" % attempts,
         "    if %s; then" % command,
