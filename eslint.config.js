@@ -238,6 +238,7 @@ module.exports = [
       'dot-notation': 'error',
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',
+      'unicorn/no-unused-properties': 'error',
     },
   },
   {
