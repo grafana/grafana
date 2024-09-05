@@ -123,14 +123,6 @@ type ListServiceAccountTokenResult struct {
 	RV       int64
 }
 
-/*
-t.id,
-t.name,
-t.is_revoked,
-t.expires,
-t.created,
-t.updated
-*/
 type ServiceAccountToken struct {
 	ID       int64
 	Name     string
