@@ -65,7 +65,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("token validation failure: %v", body)
+		return fmt.Errorf("token validation failure: %v", string(body))
 	}
 
 	return nil
