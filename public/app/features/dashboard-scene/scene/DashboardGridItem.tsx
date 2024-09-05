@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { useMemo } from 'react';
-import { Unsubscribable } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import {
@@ -26,13 +25,11 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
-import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
-import { LibraryVizPanel } from './LibraryVizPanel';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
-  body: VizPanel | LibraryVizPanel | AddLibraryPanelDrawer;
+  body: VizPanel;
   repeatedPanels?: VizPanel[];
   variableName?: string;
   itemHeight?: number;
@@ -43,9 +40,8 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
-  private _libPanelSubscription: Unsubscribable | undefined;
   private _prevRepeatValues?: VariableValueSingle[];
-  private _oldBody?: VizPanel | LibraryVizPanel | AddLibraryPanelDrawer;
+  private _oldBody?: VizPanel;
 
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
@@ -65,45 +61,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this._oldBody = this.state.body;
       this.performRepeat();
     }
-
-    // Subscriptions that handles body updates, i.e. VizPanel -> LibraryVizPanel, AddLibPanelWidget -> LibraryVizPanel
-    this._subs.add(
-      this.subscribeToState((newState, prevState) => {
-        if (newState.body !== prevState.body) {
-          if (newState.body instanceof LibraryVizPanel) {
-            this.setupLibraryPanelChangeSubscription(newState.body);
-          }
-        }
-      })
-    );
-
-    // Initial setup of the lbrary panel subscription. Lib panels are lazy laded, so only then we can subscribe to the repeat config changes
-    if (this.state.body instanceof LibraryVizPanel) {
-      this.setupLibraryPanelChangeSubscription(this.state.body);
-    }
-
-    return () => {
-      this._libPanelSubscription?.unsubscribe();
-      this._libPanelSubscription = undefined;
-    };
-  }
-
-  private setupLibraryPanelChangeSubscription(panel: LibraryVizPanel) {
-    if (this._libPanelSubscription) {
-      this._libPanelSubscription.unsubscribe();
-      this._libPanelSubscription = undefined;
-    }
-
-    this._libPanelSubscription = panel.subscribeToState((newState) => {
-      if (newState._loadedPanel?.model.repeat) {
-        this.setState({
-          variableName: newState._loadedPanel.model.repeat,
-          repeatDirection: newState._loadedPanel.model.repeatDirection,
-          maxPerRow: newState._loadedPanel.model.maxPerRow,
-        });
-        this.performRepeat();
-      }
-    });
   }
 
   /**
@@ -132,10 +89,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   }
 
   public performRepeat() {
-    if (this.state.body instanceof AddLibraryPanelDrawer) {
-      return;
-    }
-
     if (!this.state.variableName || sceneGraph.hasVariableDependencyInLoadingState(this)) {
       return;
     }
@@ -165,7 +118,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     }
 
     this._prevRepeatValues = values;
-    const panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
+    const panelToRepeat = this.state.body;
     const repeatedPanels: VizPanel[] = [];
 
     // when variable has no options (due to error or similar) it will not render any panels at all
@@ -260,14 +213,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
 
     if (!variableName) {
       if (body instanceof VizPanel) {
-        return <body.Component model={body} key={body.state.key} />;
-      }
-
-      if (body instanceof LibraryVizPanel) {
-        return <body.Component model={body} key={body.state.key} />;
-      }
-
-      if (body instanceof AddLibraryPanelDrawer) {
         return <body.Component model={body} key={body.state.key} />;
       }
     }
