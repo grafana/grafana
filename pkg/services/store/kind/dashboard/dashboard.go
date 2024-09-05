@@ -396,9 +396,13 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup) panelInfo {
 			panel.PluginVersion = iter.ReadString() // since 7x (the saved version for the plugin model)
 
 		case "libraryPanel":
-			var v map[string]string
+			var v map[string]interface{}
 			iter.ReadVal(&v)
-			panel.LibraryPanel = v["uid"]
+			if uid, ok := v["uid"]; ok {
+				if u, isString := uid.(string); isString {
+					panel.LibraryPanel = u
+				}
+			}
 
 		case "datasource":
 			targets.addDatasource(iter)

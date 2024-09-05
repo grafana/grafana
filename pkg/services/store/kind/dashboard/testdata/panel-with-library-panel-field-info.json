@@ -1,0 +1,30 @@
+{
+  "id": 345,
+  "title": "The libraryPanel field should get read properly despite the version being an integer",
+  "tags": null,
+  "datasource": [
+    {
+      "uid": "default.uid",
+      "type": "default.type"
+    }
+  ],
+  "panels": [
+    {
+      "id": 454,
+      "title": "Example title",
+      "type": "timeseries",
+      "libraryPanel": "dfkljg98345dkf",
+      "datasource": [
+        {
+          "uid": "default.uid",
+          "type": "default.type"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "linkCount": 0,
+  "timeFrom": "now-6h",
+  "timeTo": "now",
+  "timezone": ""
+}
