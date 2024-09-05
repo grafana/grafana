@@ -11,10 +11,9 @@ type ServiceAccount struct {
 }
 
 type ServiceAccountSpec struct {
-	Name          string `json:"name,omitempty"`
-	Email         string `json:"email,omitempty"`
-	EmailVerified bool   `json:"emailVerified,omitempty"`
-	Disabled      bool   `json:"disabled,omitempty"`
+	Title     string `json:"title,omitempty"`
+	Disabled  bool   `json:"disabled,omitempty"`
+	AvatarURL string `json:"avatarURL,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

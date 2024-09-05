@@ -10,12 +10,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -63,20 +64,18 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	if err != nil {
 		return nil, err
 	}
-	query := legacy.ListUserQuery{
-		OrgID:            ns.OrgID,
-		IsServiceAccount: true,
-		Pagination:       common.PaginationFromListOptions(options),
-	}
 
-	found, err := s.store.ListUsers(ctx, ns, query)
+	found, err := s.store.ListServiceAccounts(ctx, ns, legacy.ListServiceAccountsQuery{
+		OrgID:      ns.OrgID,
+		Pagination: common.PaginationFromListOptions(options),
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	list := &iamv0.ServiceAccountList{}
-	for _, item := range found.Users {
-		list.Items = append(list.Items, *toSAItem(&item, ns.Value))
+	for _, item := range found.Items {
+		list.Items = append(list.Items, toSAItem(item, ns.Value))
 	}
 
 	list.ListMeta.Continue = common.OptionalFormatInt(found.Continue)
@@ -85,26 +84,28 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	return list, err
 }
 
-func toSAItem(u *user.User, ns string) *iamv0.ServiceAccount {
-	item := &iamv0.ServiceAccount{
+// FIXME: do we even need this or can we just use relative urls for avatars
+var cfg = &setting.Cfg{}
+
+func toSAItem(sa legacy.ServiceAccount, ns string) iamv0.ServiceAccount {
+	item := iamv0.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              u.UID,
+			Name:              sa.UID,
 			Namespace:         ns,
-			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
-			CreationTimestamp: metav1.NewTime(u.Created),
+			ResourceVersion:   fmt.Sprintf("%d", sa.Updated.UnixMilli()),
+			CreationTimestamp: metav1.NewTime(sa.Created),
 		},
 		Spec: iamv0.ServiceAccountSpec{
-			Name:          u.Name,
-			Email:         u.Email,
-			EmailVerified: u.EmailVerified,
-			Disabled:      u.IsDisabled,
+			Title:     sa.Name,
+			Disabled:  sa.Disabled,
+			AvatarURL: dtos.GetGravatarUrlWithDefault(cfg, "", sa.Name),
 		},
 	}
-	obj, _ := utils.MetaAccessor(item)
-	obj.SetUpdatedTimestamp(&u.Updated)
+	obj, _ := utils.MetaAccessor(&item)
+	obj.SetUpdatedTimestamp(&sa.Updated)
 	obj.SetOriginInfo(&utils.ResourceOriginInfo{
 		Name: "SQL",
-		Path: strconv.FormatInt(u.ID, 10),
+		Path: strconv.FormatInt(sa.ID, 10),
 	})
 	return item
 }
@@ -114,18 +115,19 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 	if err != nil {
 		return nil, err
 	}
-	query := legacy.ListUserQuery{
-		OrgID:            ns.OrgID,
-		IsServiceAccount: true,
-		Pagination:       common.Pagination{Limit: 1},
-	}
 
-	found, err := s.store.ListUsers(ctx, ns, query)
+	found, err := s.store.ListServiceAccounts(ctx, ns, legacy.ListServiceAccountsQuery{
+		UID:        name,
+		OrgID:      ns.OrgID,
+		Pagination: common.Pagination{Limit: 1},
+	})
 	if found == nil || err != nil {
 		return nil, resource.NewNotFound(name)
 	}
-	if len(found.Users) < 1 {
+	if len(found.Items) < 1 {
 		return nil, resource.NewNotFound(name)
 	}
-	return toSAItem(&found.Users[0], ns.Value), nil
+
+	res := toSAItem(found.Items[0], ns.Value)
+	return &res, nil
 }

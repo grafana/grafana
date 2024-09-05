@@ -14,9 +14,8 @@ import (
 )
 
 type ListUserQuery struct {
-	OrgID            int64
-	UID              string
-	IsServiceAccount bool
+	OrgID int64
+	UID   string
 
 	Pagination common.Pagination
 }

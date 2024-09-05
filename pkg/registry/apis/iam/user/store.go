@@ -65,9 +65,8 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	}
 
 	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
-		OrgID:            ns.OrgID,
-		IsServiceAccount: false,
-		Pagination:       common.PaginationFromListOptions(options),
+		OrgID:      ns.OrgID,
+		Pagination: common.PaginationFromListOptions(options),
 	})
 	if err != nil {
 		return nil, err
@@ -90,9 +89,8 @@ func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetO
 		return nil, err
 	}
 	query := legacy.ListUserQuery{
-		OrgID:            ns.OrgID,
-		IsServiceAccount: false,
-		Pagination:       common.Pagination{Limit: 1},
+		OrgID:      ns.OrgID,
+		Pagination: common.Pagination{Limit: 1},
 	}
 
 	found, err := s.store.ListUsers(ctx, ns, query)
