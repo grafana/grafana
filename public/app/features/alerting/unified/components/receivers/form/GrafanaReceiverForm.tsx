@@ -152,6 +152,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       {contactPoint?.provisioned && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
 
       <ReceiverForm<GrafanaChannelValues>
+        contactPointId={contactPoint?.id}
         disableEditTitle={disableEditTitle}
         isEditable={isEditable}
         isTestable={isTestable}

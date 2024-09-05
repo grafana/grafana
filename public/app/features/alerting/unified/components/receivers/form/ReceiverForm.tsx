@@ -45,6 +45,7 @@ interface Props<R extends ChannelValues> {
    * as at the time of writing this is not possible
    */
   disableEditTitle?: boolean;
+  contactPointId?: string;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -60,6 +61,7 @@ export function ReceiverForm<R extends ChannelValues>({
   customValidators,
   showDefaultRouteWarning,
   disableEditTitle,
+  contactPointId,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -131,10 +133,10 @@ export function ReceiverForm<R extends ChannelValues>({
           <h2 className={styles.heading}>
             {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
           </h2>
-          {showManagePermissions && (
+          {showManagePermissions && contactPointId && (
             <ManagePermissions
-              resource="dashboards"
-              resourceId={'adke8niah0h6od'}
+              resource="receivers"
+              resourceId={contactPointId}
               resourceName={initialValues?.name}
               title="Manage contact point permissions"
             />
