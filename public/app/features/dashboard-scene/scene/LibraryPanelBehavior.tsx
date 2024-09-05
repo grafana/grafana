@@ -2,6 +2,7 @@ import { PanelPlugin, PanelProps } from '@grafana/data';
 import { SceneObjectBase, SceneObjectState, sceneUtils, VizPanel, VizPanelState } from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -71,6 +72,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
         variableName: libPanelModel.repeat,
         repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
         maxPerRow: libPanelModel.maxPerRow,
+        itemHeight: layoutElement.state.height ?? 10,
       });
       layoutElement.performRepeat();
     }
@@ -99,7 +101,7 @@ const LoadingVizPanelPlugin = new PanelPlugin(LoadingVizPanel);
 function LoadingVizPanel(props: PanelProps) {
   return (
     <Stack direction={'column'} justifyContent={'space-between'}>
-      Loading library panel
+      <Trans i18nKey="library-panels.loading-panel-text">Loading library panel</Trans>
     </Stack>
   );
 }
