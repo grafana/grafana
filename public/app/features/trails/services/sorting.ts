@@ -89,6 +89,7 @@ const initOutlierDetector = (series: DataFrame[]) => {
     outliers = detector.detect();
   } catch (e) {
     console.error(e);
+    outliers = undefined;
   }
 };
 
