@@ -3,7 +3,6 @@ import { defaults, isEqual } from 'lodash';
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
   behaviors,
-  SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
   VizPanel,
@@ -144,12 +143,6 @@ export function gridItemToPanel(
   sceneState?: DashboardSceneState,
   isSnapshot = false
 ): Panel {
-  let vizPanel: VizPanel | undefined;
-  let x = 0,
-    y = 0,
-    w = 0,
-    h = 0;
-
   let gridItem_ = gridItem;
 
   // If we're saving while the panel editor is open, we need to persist those changes in the panel model
@@ -165,45 +158,41 @@ export function gridItemToPanel(
     }
   }
 
-  if (!(gridItem_.state.body instanceof VizPanel)) {
+  const vizPanel = gridItem_.state.body;
+
+  const gridPos = {
+    x: gridItem_.state.x ?? 0,
+    y: gridItem_.state.y ?? 0,
+    w: gridItem_.state.width ?? 0,
+    h: (gridItem_.state.variableName ? gridItem_.state.itemHeight : gridItem_.state.height) ?? 0,
+  };
+
+  if (!(vizPanel instanceof VizPanel)) {
     throw new Error('DashboardGridItem body expected to be VizPanel');
   }
 
-  vizPanel = gridItem_.state.body;
-  x = gridItem_.state.x ?? 0;
-  y = gridItem_.state.y ?? 0;
-  w = gridItem_.state.width ?? 0;
-  h = (gridItem_.state.variableName ? gridItem_.state.itemHeight : gridItem_.state.height) ?? 0;
-
-  if (!vizPanel) {
-    throw new Error('Unsupported grid item type');
-  }
-
-  const panel: Panel = vizPanelToPanel(vizPanel, { x, y, h, w }, isSnapshot, gridItem_);
-
-  return panel;
+  return vizPanelToPanel(vizPanel, gridPos, isSnapshot);
 }
 
-export function vizPanelToPanel(
-  vizPanel: VizPanel,
-  gridPos?: GridPos,
-  isSnapshot = false,
-  gridItem?: SceneGridItemLike
-) {
+export function vizPanelToPanel(vizPanel: VizPanel, gridPos?: GridPos, isSnapshot = false): Panel {
   let panel: Panel;
+  let gridItem = vizPanel.parent;
 
   if (isLibraryPanel(vizPanel)) {
     const libPanel = getLibraryPanelBehavior(vizPanel);
 
     panel = {
       id: getPanelIdForVizPanel(vizPanel),
-      title: libPanel!.state.title,
-      gridPos: gridPos,
-      libraryPanel: {
-        name: libPanel!.state.name,
-        uid: libPanel!.state.uid,
-      },
+      title: vizPanel.state.title,
+      gridPos,
+      libraryPanel: { name: libPanel!.state.name, uid: libPanel!.state.uid },
     } as Panel;
+
+    if (gridItem instanceof DashboardGridItem) {
+      panel.repeat = gridItem.state.variableName;
+      panel.repeatDirection = gridItem.getRepeatDirection();
+      panel.maxPerRow = gridItem.state.maxPerRow;
+    }
 
     return panel;
   } else {

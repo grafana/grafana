@@ -5,6 +5,7 @@ import { Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
+import { showLibrayPanelWithRepeatNotice } from 'app/features/panel/state/actions';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
@@ -66,14 +67,15 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     const layoutElement = vizPanel.parent!;
 
     // Migrate repeat options to layout element
-    if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
+    if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem && !layoutElement.state.variableName) {
       layoutElement.setState({
         variableName: libPanelModel.repeat,
         repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
         maxPerRow: libPanelModel.maxPerRow,
         itemHeight: layoutElement.state.height ?? 10,
       });
-      layoutElement.performRepeat();
+
+      showLibrayPanelWithRepeatNotice();
     }
   }
 

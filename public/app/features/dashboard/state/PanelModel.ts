@@ -24,6 +24,7 @@ import {
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
+import { appEvents } from 'app/core/core';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { QueryGroupOptions } from 'app/types';
 import {
@@ -311,8 +312,13 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.render();
   }
 
-  getSaveModel() {
+  getSaveModel(forRepeat?: boolean): any {
     const model: any = {};
+
+    // Clean libarary panels on save
+    if (this.libraryPanel && !forRepeat) {
+      return getSaveModelWithLibPanelRef(this);
+    }
 
     for (const property in this) {
       if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
@@ -330,16 +336,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (this.type === 'row' && this.panels && this.panels.length > 0) {
       model.panels = this.panels.map((panel) => {
         if (panel.libraryPanel) {
-          const { id, title, libraryPanel, gridPos } = panel;
-          return {
-            id,
-            title,
-            gridPos,
-            libraryPanel: {
-              uid: libraryPanel.uid,
-              name: libraryPanel.name,
-            },
-          };
+          return getSaveModelWithLibPanelRef(this);
         }
 
         return panel;
@@ -691,12 +688,25 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       switch (key) {
         case 'id':
         case 'gridPos':
+        case 'repeat':
+        case 'repeatDirection':
+        case 'maxPerRow':
         case 'libraryPanel': // recursive?
           continue;
       }
       (this as any)[key] = val; // :grimmice:
     }
+
     this.libraryPanel = libPanel;
+
+    // Migrate repeat options on libary panel to the panel model
+    // But only if there is no repeat options set on panel and if this is not repeat clone
+    if (this.repeat == null && libPanel.model.repeat != null && !this.repeatPanelId) {
+      this.repeat = libPanel.model.repeat;
+      this.repeatDirection = libPanel.model.repeatDirection;
+      this.maxPerRow = libPanel.model.maxPerRow;
+      showLibrayPanelWithRepeatNotice();
+    }
   }
 
   unlinkLibraryPanel() {
@@ -728,4 +738,26 @@ export function stringifyPanelModel(panel: PanelModel) {
     });
 
   return safeStringifyValue(model);
+}
+
+function getSaveModelWithLibPanelRef(model: PanelModel) {
+  return {
+    id: model.id,
+    title: model.title,
+    gridPos: model.gridPos,
+    repeat: model.repeat,
+    repeatDirection: model.repeatDirection,
+    maxPerRow: model.maxPerRow,
+    libraryPanel: {
+      uid: model.libraryPanel!.uid,
+      name: model.libraryPanel!.name,
+    },
+  };
+}
+
+export function showLibrayPanelWithRepeatNotice() {
+  appEvents.emit('alert-error', [
+    'Library panel with repeat detected',
+    'Panel repeat option has moved to the dashboard level. Save dashboard and reload to resolve any issues',
+  ]);
 }

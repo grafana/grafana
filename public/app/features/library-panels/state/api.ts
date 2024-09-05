@@ -69,7 +69,7 @@ export async function getLibraryPanel(uid: string, isHandled = false): Promise<L
     schemaVersion: 35, // should be saved in the library panel
     panels: [result.model],
   });
-  const { scopedVars, ...model } = dash.panels[0].getSaveModel(); // migrated panel
+  const { scopedVars, ...model } = dash.panels[0].getSaveModel(true); // migrated panel
 
   //These properties should not exist on LibraryPanel.model which is of type Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>
   delete model.gridPos;
@@ -169,8 +169,7 @@ export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
         w: gridItem.state.width ?? 0,
         h: gridItem.state.height ?? 0,
       },
-      false,
-      gridItem
+      false
     ),
     kind: LibraryElementKind.Panel,
     version: _loadedPanel?.version || 0,

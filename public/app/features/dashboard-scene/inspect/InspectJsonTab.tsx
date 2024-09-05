@@ -282,7 +282,7 @@ function libraryPanelToLegacyRepresentation(panel: VizPanel<{}, {}>) {
     w: gridItem.state.width || 0,
   };
   const libraryPanelObj = vizPanelToLibraryPanel(panel);
-  const panelObj = vizPanelToPanel(panel.clone({ $behaviors: undefined }), gridPos, false, gridItem);
+  const panelObj = vizPanelToPanel(panel.clone({ $behaviors: undefined }), gridPos, false);
 
   return { libraryPanel: { ...libraryPanelObj }, ...panelObj };
 }

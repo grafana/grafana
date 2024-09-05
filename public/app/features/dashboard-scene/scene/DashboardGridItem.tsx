@@ -212,13 +212,11 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     const layoutStyle = useLayoutStyle(model.getRepeatDirection(), itemCount, model.getMaxPerRow(), itemHeight ?? 10);
 
     if (!variableName) {
-      if (body instanceof VizPanel) {
-        return <body.Component model={body} key={body.state.key} />;
-      }
+      return <body.Component model={body} key={body.state.key} />;
     }
 
     if (!repeatedPanels) {
-      return null;
+      return <div>Panel repeater loading</div>;
     }
 
     return (
