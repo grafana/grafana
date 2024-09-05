@@ -37,7 +37,7 @@ cards:
       height: 24
     - title: Sharing
       href: ./share-dashboards-panels/
-      description: Share Grafana dashboards and panels within your organization using links, snapshots, and JSON exports.
+      description: Share Grafana dashboards and panels using links, snapshots, embeds, and exports.
       height: 24
     - title: Shared dashboards
       href: ./share-dashboards-panels/shared-dashboards/
