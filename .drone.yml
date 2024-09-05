@@ -3845,8 +3845,8 @@ steps:
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
-  - '        echo "Waiting 60 seconds before next attempt..."'
-  - '        sleep 60'
+  - '        echo "Waiting 30 seconds before next attempt..."'
+  - '        sleep 30'
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
@@ -3894,8 +3894,8 @@ steps:
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
-  - '        echo "Waiting 60 seconds before next attempt..."'
-  - '        sleep 60'
+  - '        echo "Waiting 30 seconds before next attempt..."'
+  - '        sleep 30'
   - '    fi'
   - done
   - '    echo "Verifying GPG key..."'
@@ -4022,8 +4022,8 @@ steps:
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
-  - '        echo "Waiting 60 seconds before next attempt..."'
-  - '        sleep 60'
+  - '        echo "Waiting 30 seconds before next attempt..."'
+  - '        sleep 30'
   - '    fi'
   - done
   - 'echo "Step 6: Verifying Grafana installation..."'
@@ -4072,8 +4072,8 @@ steps:
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
-  - '        echo "Waiting 60 seconds before next attempt..."'
-  - '        sleep 60'
+  - '        echo "Waiting 30 seconds before next attempt..."'
+  - '        sleep 30'
   - '    fi'
   - done
   - '    echo "Verifying GPG key..."'
@@ -6074,6 +6074,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d35eadf9a166f68973ffd6df85f165bbda468d422d5debe416ec6a5af6ead84a
+hmac: 05a965bddd23cd5f950b68159697a19fc2847fce81c65643205dc3a361c4fece
 
 ...
