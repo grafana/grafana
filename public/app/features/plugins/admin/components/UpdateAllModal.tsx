@@ -165,7 +165,6 @@ type Props = {
 };
 
 export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
-
   const install = useInstall();
   const { error } = useInstallStatus();
   const [errorMap, setErrorMap] = useState(new Map<string, UpdateError>());
@@ -216,10 +215,8 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
         newSelectedPlugins.delete(error.id);
         return newSelectedPlugins;
       });
-
     }
   }, [error, errorMap, inProgress, selectedPlugins]);
-
 
   const onConfirm = async () => {
     if (!inProgress) {
