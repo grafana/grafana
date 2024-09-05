@@ -110,8 +110,11 @@ export const RolePicker = ({
     // Ensure the menu stays within the viewport
     horizontal = Math.max(0, Math.min(horizontal, window.innerWidth - ROLE_PICKER_MAX_MENU_WIDTH));
     vertical = Math.max(0, Math.min(vertical, window.innerHeight - MENU_MAX_HEIGHT));
-
-    return { horizontal, vertical, menuToLeft, menuToTop };
+    if (menuToTop) {
+      // Adjust vertical position to align with the input
+      vertical -= 48;
+    }
+    return { horizontal, vertical, menuToLeft };
   };
 
   const onOpen = useCallback(
