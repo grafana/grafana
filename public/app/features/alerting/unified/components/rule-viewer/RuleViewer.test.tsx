@@ -1,8 +1,6 @@
-import { within } from '@testing-library/react';
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -64,18 +62,7 @@ const ELEMENTS = {
 };
 
 setupMswServer();
-
-setPluginLinksHook(() => ({
-  links: [
-    mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
-    mockPluginLinkExtension({
-      pluginId: 'grafana-asserts-app',
-      title: 'Open workbench',
-      path: '/a/grafana-asserts-app',
-    }),
-  ],
-  isLoading: false,
-}));
+setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-1' }));
 
 const openSilenceDrawer = async () => {
   const user = userEvent.setup();
@@ -152,7 +139,7 @@ describe('RuleViewer', () => {
     });
 
     it('should render a Grafana managed alert rule', async () => {
-      await renderRuleViewer(mockRule, mockRuleIdentifier);
+      const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier);
 
       // assert on basic info to be visible
       expect(screen.getByText('Test alert')).toBeInTheDocument();
@@ -178,7 +165,7 @@ describe('RuleViewer', () => {
       expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
       // check the "more actions" button
-      await userEvent.click(ELEMENTS.actions.more.button.get());
+      await user.click(ELEMENTS.actions.more.button.get());
       const menuItems = Object.values(ELEMENTS.actions.more.actions);
       for (const menuItem of menuItems) {
         expect(menuItem.get()).toBeInTheDocument();
@@ -328,11 +315,9 @@ describe('RuleViewer', () => {
       );
       const sloRuleIdentifier = ruleId.fromCombinedRule(mimir.name, sloRule);
 
-      const user = userEvent.setup();
+      const { user } = await renderRuleViewer(sloRule, sloRuleIdentifier);
 
-      renderRuleViewer(sloRule, sloRuleIdentifier);
-
-      expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
+      expect(await ELEMENTS.actions.more.button.find()).toBeInTheDocument();
 
       await user.click(ELEMENTS.actions.more.button.get());
 
@@ -349,11 +334,11 @@ describe('RuleViewer', () => {
       );
       const assertsRuleIdentifier = ruleId.fromCombinedRule(mimir.name, assertsRule);
 
-      renderRuleViewer(assertsRule, assertsRuleIdentifier);
+      const { user } = await renderRuleViewer(assertsRule, assertsRuleIdentifier);
 
       expect(ELEMENTS.actions.more.button.get()).toBeInTheDocument();
 
-      await userEvent.click(ELEMENTS.actions.more.button.get());
+      await user.click(ELEMENTS.actions.more.button.get());
 
       expect(ELEMENTS.actions.more.pluginActions.assertsWorkbench.get()).toBeInTheDocument();
       expect(ELEMENTS.actions.more.pluginActions.sloDashboard.query()).not.toBeInTheDocument();
@@ -405,15 +390,23 @@ const renderRuleViewer = async (rule: CombinedRule, identifier: RuleIdentifier, 
     <AlertRuleProvider identifier={identifier} rule={rule}>
       <RuleViewer />
     </AlertRuleProvider>,
-    { historyOptions: { initialEntries: [path] } }
+    {
+      historyOptions: { initialEntries: [path] },
+      pluginLinks: () => ({
+        links: [
+          mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
+          mockPluginLinkExtension({
+            pluginId: 'grafana-asserts-app',
+            title: 'Open workbench',
+            path: '/a/grafana-asserts-app',
+          }),
+        ],
+        isLoading: false,
+      }),
+    }
   );
 
   await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
 
   return view;
 };
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  useReturnToPrevious: jest.fn(),
-}));
