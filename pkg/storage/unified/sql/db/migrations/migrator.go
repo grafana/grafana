@@ -16,7 +16,6 @@ func MigrateResourceStore(_ context.Context, engine *xorm.Engine, cfg *setting.C
 	mg.AddCreateMigration()
 
 	initResourceTables(mg)
-	initSecureFieldTables(mg)
 
 	// since it's a new feature enable migration locking by default
 	return mg.Start(true, 0)
