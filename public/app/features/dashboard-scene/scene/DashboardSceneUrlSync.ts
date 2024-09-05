@@ -21,13 +21,13 @@ import { ShareModal } from '../sharing/ShareModal';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,
-  getLibraryPanel,
+  getLibraryPanelBehavior,
   isPanelClone,
   isWithinUnactivatedRepeatRow,
 } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
-import { LibraryVizPanel } from './LibraryVizPanel';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { DashboardRepeatsProcessedEvent } from './types';
 
@@ -83,20 +83,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      if (getLibraryPanel(panel)) {
-        this._handleLibraryPanel(panel, (p) => {
-          if (p.state.key === undefined) {
-            // Inspect drawer require a panel key to be set
-            throw new Error('library panel key is undefined');
-          }
-          const drawer = new PanelInspectDrawer({
-            $behaviors: [new ResolveInspectPanelByKey({ panelKey: p.state.key })],
-          });
-          this._scene.setState({ overlay: drawer, inspectPanelKey: p.state.key });
-        });
-        return;
-      }
-
       update.inspectPanelKey = values.inspect;
       update.overlay = new PanelInspectDrawer({
         $behaviors: [new ResolveInspectPanelByKey({ panelKey: values.inspect })],
@@ -119,11 +105,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ viewPanel: null });
-        return;
-      }
-
-      if (getLibraryPanel(panel)) {
-        this._handleLibraryPanel(panel, (p) => this._buildLibraryPanelViewScene(p));
         return;
       }
 
@@ -155,10 +136,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       if (!isEditing) {
         this._scene.onEnterEditMode();
       }
-      if (getLibraryPanel(panel)) {
-        this._handleLibraryPanel(panel, (p) => {
-          this._scene.setState({ editPanel: buildPanelEditScene(p) });
-        });
+
+      const libPanelBehavior = getLibraryPanelBehavior(panel);
+      if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
+        this._waitForLibPanelToLoadBeforeEnteringPanelEdit(panel, libPanelBehavior);
         return;
       }
 
@@ -202,25 +183,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     }
   }
 
-  private _buildLibraryPanelViewScene(vizPanel: VizPanel) {
-    this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: vizPanel.getRef() }) });
-  }
-
-  private _handleLibraryPanel(vizPanel: VizPanel, cb: (p: VizPanel) => void): void {
-    if (!(vizPanel.parent instanceof LibraryVizPanel)) {
-      throw new Error('Panel is not a child of a LibraryVizPanel');
-    }
-    const libraryPanel = vizPanel.parent;
-    if (libraryPanel.state.isLoaded) {
-      cb(vizPanel);
-    } else {
-      libraryPanel.subscribeToState((n) => {
-        cb(n.panel!);
-      });
-      libraryPanel.activate();
-    }
-  }
-
   private _handleViewRepeatClone(viewPanel: string) {
     if (!this._eventSub) {
       this._eventSub = this._scene.subscribeToEvent(DashboardRepeatsProcessedEvent, () => {
@@ -231,6 +193,18 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         }
       });
     }
+  }
+
+  /**
+   * Temporary solution, with some refactoring of PanelEditor we can remove this
+   */
+  private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panel: VizPanel, libPanel: LibraryPanelBehavior) {
+    const sub = libPanel.subscribeToState((state) => {
+      if (state.isLoaded) {
+        this._scene.setState({ editPanel: buildPanelEditScene(panel) });
+        sub.unsubscribe();
+      }
+    });
   }
 }
 

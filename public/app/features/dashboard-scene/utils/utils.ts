@@ -15,7 +15,7 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
@@ -32,10 +32,6 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
-}
-
-export function getPanelIdForLibraryVizPanel(panel: LibraryVizPanel): number {
-  return parseInt(panel.state.panelKey!.replace('panel-', ''), 10);
 }
 
 /**
@@ -256,11 +252,18 @@ export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
   });
 }
 
-export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined {
-  if (vizPanel.parent instanceof LibraryVizPanel) {
-    return vizPanel.parent;
+export function isLibraryPanel(vizPanel: VizPanel): boolean {
+  return getLibraryPanelBehavior(vizPanel) !== undefined;
+}
+
+export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavior | undefined {
+  const behavior = vizPanel.state.$behaviors?.find((behaviour) => behaviour instanceof LibraryPanelBehavior);
+
+  if (behavior) {
+    return behavior;
   }
-  return;
+
+  return undefined;
 }
 
 /**

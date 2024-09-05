@@ -34,7 +34,7 @@ import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
-import { updateLibraryVizPanel } from 'app/features/library-panels/state/api';
+import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
@@ -42,10 +42,15 @@ import { QueryGroupOptions } from 'app/types';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getMultiVariableValues, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import {
+  getDashboardSceneFor,
+  getMultiVariableValues,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  isLibraryPanel,
+} from '../utils/utils';
 
 export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
@@ -85,7 +90,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public static createFor(sourcePanel: VizPanel) {
     let repeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
 
-    const gridItem = sourcePanel.parent instanceof LibraryVizPanel ? sourcePanel.parent.parent : sourcePanel.parent;
+    const gridItem = sourcePanel.parent;
 
     if (!(gridItem instanceof DashboardGridItem)) {
       console.error('VizPanel is not a child of a dashboard grid item');
@@ -143,8 +148,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   private _detectPanelModelChanges = debounce(() => {
     const { hasChanges } = getPanelChanges(
-      vizPanelToPanel(this.state.sourcePanel.resolve()),
-      vizPanelToPanel(this.state.panel)
+      vizPanelToPanel(this.state.sourcePanel.resolve().clone({ $behaviors: undefined })),
+      vizPanelToPanel(this.state.panel.clone({ $behaviors: undefined }))
     );
     this.setState({ isDirty: hasChanges });
   }, 250);
@@ -263,10 +268,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       });
     }
 
-    this.setState({
-      pluginId,
-    });
-
+    this.setState({ pluginId });
     this.state.panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
 
     this.loadDataSource();
@@ -405,21 +407,22 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   public unlinkLibraryPanel() {
     const sourcePanel = this.state.sourcePanel.resolve();
-    if (!(sourcePanel.parent instanceof LibraryVizPanel)) {
-      throw new Error('VizPanel is not a child of a library panel');
+    if (!isLibraryPanel(sourcePanel)) {
+      throw new Error('VizPanel is not a library panel');
     }
 
-    const gridItem = sourcePanel.parent.parent;
+    const gridItem = sourcePanel.parent;
 
     if (!(gridItem instanceof DashboardGridItem)) {
       throw new Error('Library panel not a child of a grid item');
     }
 
-    const newSourcePanel = this.state.panel.clone({ $data: this.state.$data?.clone() });
+    const newSourcePanel = this.state.panel.clone({ $data: sourcePanel.state.$data?.clone(), $behaviors: undefined });
     gridItem.setState({
       body: newSourcePanel,
     });
 
+    this.state.panel.setState({ $behaviors: undefined });
     this.setState({ sourcePanel: newSourcePanel.getRef() });
   }
 
@@ -435,30 +438,17 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       maxPerRow: this.state.maxPerRow,
     };
 
+    const vizPanel = this.state.panel.clone();
+
     if (sourcePanel.parent instanceof DashboardGridItem) {
       sourcePanel.parent.setState({
         ...repeatUpdate,
-        body: this.state.panel.clone(),
+        body: vizPanel,
       });
     }
 
-    if (sourcePanel.parent instanceof LibraryVizPanel) {
-      if (sourcePanel.parent.parent instanceof DashboardGridItem) {
-        const newLibPanel = sourcePanel.parent.clone({
-          panel: this.state.panel.clone(),
-        });
-
-        sourcePanel.parent.parent.setState({
-          body: newLibPanel,
-          ...repeatUpdate,
-        });
-
-        updateLibraryVizPanel(newLibPanel!).then((p) => {
-          if (sourcePanel.parent instanceof LibraryVizPanel) {
-            newLibPanel.setPanelFromLibPanel(p);
-          }
-        });
-      }
+    if (isLibraryPanel(vizPanel)) {
+      saveLibPanel(vizPanel);
     }
   }
 
@@ -467,9 +457,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
    */
   public getPanelSaveModel(): Panel | object {
     const sourcePanel = this.state.sourcePanel.resolve();
-
-    const isLibraryPanel = sourcePanel.parent instanceof LibraryVizPanel;
-    const gridItem = isLibraryPanel ? sourcePanel.parent.parent : sourcePanel.parent;
+    const gridItem = sourcePanel.parent;
 
     if (!(gridItem instanceof DashboardGridItem)) {
       return { error: 'Unsupported panel parent' };

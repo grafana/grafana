@@ -4,7 +4,7 @@ import * as libAPI from 'app/features/library-panels/state/api';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -135,20 +135,19 @@ describe('PanelEditor', () => {
         version: 1,
       };
 
-      const libraryPanel = new LibraryVizPanel({
+      const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: true,
         title: libraryPanelModel.title,
         uid: libraryPanelModel.uid,
         name: libraryPanelModel.name,
-        panelKey: panel.state.key!,
-        panel: panel,
         _loadedPanel: libraryPanelModel,
       });
-      const gridItem = new DashboardGridItem({ body: libraryPanel });
 
-      const apiCall = jest
-        .spyOn(libAPI, 'updateLibraryVizPanel')
-        .mockResolvedValue({ type: 'panel', ...libAPI.libraryVizPanelToSaveModel(libraryPanel), version: 2 });
+      panel.setState({
+        $behaviors: [libPanelBehavior],
+      });
+
+      const gridItem = new DashboardGridItem({ body: panel });
 
       const editScene = buildPanelEditScene(panel);
       const scene = new DashboardScene({
@@ -162,17 +161,23 @@ describe('PanelEditor', () => {
       activateFullSceneTree(scene);
 
       editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
-      (editScene.state.vizManager.state.sourcePanel.resolve().parent as LibraryVizPanel).setState({
+      (editScene.state.vizManager.state.panel.state.$behaviors![0] as LibraryPanelBehavior).setState({
         name: 'changed name',
       });
+
+      jest.spyOn(libAPI, 'saveLibPanel').mockImplementation(async (panel) => {
+        const updatedPanel = { ...libAPI.libraryVizPanelToSaveModel(panel), version: 2 };
+
+        libPanelBehavior.setPanelFromLibPanel(updatedPanel);
+      });
+
       editScene.state.vizManager.commitChanges();
 
-      const calledWith = apiCall.mock.calls[0][0].state;
-      expect(calledWith.panel?.state.title).toBe('changed title');
-      expect(calledWith.name).toBe('changed name');
-
       await new Promise(process.nextTick); // Wait for mock api to return and update the library panel
-      expect((gridItem.state.body as LibraryVizPanel).state._loadedPanel?.version).toBe(2);
+      expect(libPanelBehavior.state._loadedPanel?.version).toBe(2);
+      expect(libPanelBehavior.state.name).toBe('changed name');
+      expect(libPanelBehavior.state.title).toBe('changed title');
+      expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
     });
   });
 

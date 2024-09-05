@@ -20,7 +20,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -286,28 +286,28 @@ describe('VizPanelManager', () => {
         version: 1,
       };
 
-      const libraryPanel = new LibraryVizPanel({
+      const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: true,
         title: libraryPanelModel.title,
         uid: libraryPanelModel.uid,
         name: libraryPanelModel.name,
-        panelKey: panel.state.key!,
-        panel: panel,
         _loadedPanel: libraryPanelModel,
       });
 
-      new DashboardGridItem({ body: libraryPanel });
+      panel.setState({
+        $behaviors: [libPanelBehavior],
+      });
+
+      new DashboardGridItem({ body: panel });
 
       const panelManager = VizPanelManager.createFor(panel);
 
-      const apiCall = jest
-        .spyOn(libAPI, 'updateLibraryVizPanel')
-        .mockResolvedValue({ type: 'panel', ...libAPI.libraryVizPanelToSaveModel(libraryPanel) });
+      const apiCall = jest.spyOn(libAPI, 'saveLibPanel');
 
       panelManager.state.panel.setState({ title: 'new title' });
       panelManager.commitChanges();
 
-      expect(apiCall.mock.calls[0][0].state.panel?.state.title).toBe('new title');
+      expect(apiCall.mock.calls[0][0].state.title).toBe('new title');
     });
 
     it('unlinks library panel', () => {
@@ -325,23 +325,25 @@ describe('VizPanelManager', () => {
         version: 1,
       };
 
-      const libraryPanel = new LibraryVizPanel({
+      const libPanelBehavior = new LibraryPanelBehavior({
         isLoaded: true,
         title: libraryPanelModel.title,
         uid: libraryPanelModel.uid,
         name: libraryPanelModel.name,
-        panelKey: panel.state.key!,
-        panel: panel,
         _loadedPanel: libraryPanelModel,
       });
 
-      const gridItem = new DashboardGridItem({ body: libraryPanel });
+      panel.setState({
+        $behaviors: [libPanelBehavior],
+      });
+
+      new DashboardGridItem({ body: panel });
 
       const panelManager = VizPanelManager.createFor(panel);
       panelManager.unlinkLibraryPanel();
 
       const sourcePanel = panelManager.state.sourcePanel.resolve();
-      expect(sourcePanel.parent?.state.key).toBe(gridItem.state.key);
+      expect(sourcePanel.state.$behaviors).toBe(undefined);
     });
   });
 
