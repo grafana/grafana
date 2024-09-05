@@ -1,0 +1,32 @@
+22 assets
+3563 modules
+
+[1m[33mWARNING[39m[22m in [1masset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets: 
+  module.js (1.08 MiB)
+  node_modules/typescript/lib/cs/diagnosticMessages.generated.json (272 KiB)
+  node_modules/typescript/lib/es/diagnosticMessages.generated.json (291 KiB)
+  node_modules/typescript/lib/fr/diagnosticMessages.generated.json (294 KiB)
+  node_modules/typescript/lib/de/diagnosticMessages.generated.json (295 KiB)
+  node_modules/typescript/lib/it/diagnosticMessages.generated.json (291 KiB)
+  node_modules/typescript/lib/ja/diagnosticMessages.generated.json (328 KiB)
+  node_modules/typescript/lib/ko/diagnosticMessages.generated.json (296 KiB)
+  node_modules/typescript/lib/pl/diagnosticMessages.generated.json (293 KiB)
+  node_modules/typescript/lib/pt-br/diagnosticMessages.generated.json (282 KiB)
+  node_modules/typescript/lib/zh-cn/diagnosticMessages.generated.json (253 KiB)
+  node_modules/typescript/lib/ru/diagnosticMessages.generated.json (381 KiB)
+  node_modules/typescript/lib/tr/diagnosticMessages.generated.json (283 KiB)
+  node_modules/typescript/lib/zh-tw/diagnosticMessages.generated.json (250 KiB)[39m[22m
+
+[1m[33mWARNING[39m[22m in [1mentrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  module (1.08 MiB)
+      module.js
+[39m[22m
+
+[1m[33mWARNING[39m[22m in [1mwebpack performance recommendations: 
+You can limit the size of your bundles by using import() or require.ensure to lazy load some parts of your application.
+For more info visit https://webpack.js.org/guides/code-splitting/[39m[22m
+
+webpack 5.94.0 compiled with [1m[33m3 warnings[39m[22m in 19048 ms
