@@ -169,7 +169,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       if (parent instanceof LibraryVizPanel) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
-          iconClassName: 'link-broken 1',
+          iconClassName: 'link-broken',
           onClick: () => {
             dashboard.showModal(
               new UnlinkLibraryPanelModal({
