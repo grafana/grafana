@@ -68,9 +68,10 @@ export const getActions = (
 /** @internal */
 const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunction) => {
   try {
-    const url = new URL(replaceVariables(getUrl(action.options.url)));
+    const url = new URL(getUrl(replaceVariables(action.options.url)));
 
-    const requestHeaders: HeadersInit = [];
+    const requestHeaders: Record<string, string> = {};
+
     let request: BackendSrvRequest = {
       url: url.toString(),
       method: action.options.method,
@@ -79,20 +80,20 @@ const buildActionOnClick = (action: Action, replaceVariables: InterpolateFunctio
     };
 
     if (action.options.headers) {
-      action.options.headers.forEach((param) => {
-        requestHeaders.push([replaceVariables(param[0]), replaceVariables(param[1])]);
+      action.options.headers.forEach(([name, value]) => {
+        requestHeaders[replaceVariables(name)] = replaceVariables(value);
       });
     }
 
     if (action.options.queryParams) {
-      action.options.queryParams?.forEach((param) => {
-        url.searchParams.append(replaceVariables(param[0]), replaceVariables(param[1]));
+      action.options.queryParams?.forEach(([name, value]) => {
+        url.searchParams.append(replaceVariables(name), replaceVariables(value));
       });
 
       request.url = url.toString();
     }
 
-    requestHeaders.push(['X-Grafana-Action', '1']);
+    requestHeaders['X-Grafana-Action'] = '1';
     request.headers = requestHeaders;
 
     getBackendSrv()
