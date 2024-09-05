@@ -1,4 +1,5 @@
 import { screen, render, fireEvent, waitFor } from '@testing-library/react';
+import { useEffect, useState } from 'react';
 
 import { measureText } from '../../utils/measureText';
 
@@ -116,5 +117,31 @@ describe('AutoSizeInput', () => {
     await waitFor(() => expect(measureText).toHaveBeenCalled());
 
     expect(getComputedStyle(screen.getByTestId('input-wrapper')).width).toBe('32px');
+  });
+
+  it('should update the input value if the value prop changes', () => {
+    // Wrapper component to control the `value` prop
+    const Wrapper = () => {
+      const [value, setValue] = useState('Initial');
+
+      // Simulate prop change after render
+      useEffect(() => {
+        setTimeout(() => setValue('Updated'), 100); // Update `value` after 100ms
+      }, []);
+
+      return <AutoSizeInput value={value} />;
+    };
+
+    render(<Wrapper />);
+
+    const input: HTMLInputElement = screen.getByTestId('autosize-input');
+
+    // Check initial value
+    expect(input.value).toBe('Initial');
+
+    // Wait for the value to update
+    return waitFor(() => {
+      expect(input.value).toBe('Updated');
+    });
   });
 });
