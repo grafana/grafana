@@ -1,5 +1,5 @@
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, getUrlSyncManager, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, sceneGraph, sceneUtils } from '@grafana/scenes';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { MockDataSourceSrv, mockDataSource } from '../../alerting/unified/mocks';
@@ -303,7 +303,7 @@ describe('TrailStore', () => {
         getTrailStore().load();
         const store = getTrailStore();
         trail = store.recent[0].resolve();
-        const urlState = getUrlSyncManager().getUrlState(trail);
+        const urlState = sceneUtils.getUrlState(trail);
         locationService.partial(urlState);
         trail.activate();
         trail.state.history.activate();
@@ -356,7 +356,7 @@ describe('TrailStore', () => {
         getTrailStore().load();
         const store = getTrailStore();
         trail = store.recent[0].resolve();
-        const urlState = getUrlSyncManager().getUrlState(trail);
+        const urlState = sceneUtils.getUrlState(trail);
         locationService.partial(urlState);
 
         trail.activate();

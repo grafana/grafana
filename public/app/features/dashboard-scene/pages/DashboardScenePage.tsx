@@ -86,7 +86,7 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   }
 
   return (
-    <UrlSyncContextProvider scene={dashboard}>
+    <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
     </UrlSyncContextProvider>

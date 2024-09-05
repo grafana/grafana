@@ -5,7 +5,6 @@ import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
-  getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
   sceneGraph,
@@ -20,6 +19,7 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  UrlSyncManager,
   VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
@@ -160,7 +160,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       })
     );
 
-    const urlState = getUrlSyncManager().getUrlState(this);
+    const urlState = new UrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
     locationService.replace(fullUrl);
   }
