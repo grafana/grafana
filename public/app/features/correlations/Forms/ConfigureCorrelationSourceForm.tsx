@@ -8,7 +8,6 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getVariableUsageInfo } from '../../explore/utils/links';
-import { CORR_TYPES } from '../types';
 
 import { TransformationsEditor } from './TransformationsEditor';
 import { useCorrelationsFormContext } from './correlationsFormContext';
@@ -26,7 +25,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 const getFormText = (queryType: string, dataSourceName?: string) => {
-  if (queryType === CORR_TYPES.query.value) {
+  if (queryType === 'query') {
     return {
       title: t(
         'correlations.source-form.query-title',

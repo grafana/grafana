@@ -26,46 +26,19 @@ export interface RemoveCorrelationResponse {
   message: string;
 }
 
-type CorrelationTypeOptions = {
-  value: CorrelationType;
-  label: string;
-  description: string;
-};
-
-export const CORR_TYPES_QUERY = {
-  value: 'query' as 'query',
-  label: 'Query',
-  description: 'Open a query',
-};
-
-export const CORR_TYPES: Record<CorrelationType, CorrelationTypeOptions> = {
-  query: {
-    value: 'query',
-    label: 'Query',
-    description: 'Open a query',
-  },
-  external: {
-    value: 'external',
-    label: 'External',
-    description: 'Open an external URL',
-  },
-};
-
-//const corrTypeArray = Object.values(CORR_TYPES).map((ct) => ct.value);
-
-export type CorrelationType = 'query' | 'external'; //(typeof corrTypeArray)[number];
+export type CorrelationType = 'query' | 'external';
 
 export type ExternalTypeTarget = { url: string };
 
 export type CorrelationConfigQuery = {
   field: string;
-  target: object; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic. For external, it simply contains a URL
+  target: object; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic.
   transformations?: DataLinkTransformationConfig[];
 };
 
 export type CorrelationConfigExternal = {
   field: string;
-  target: ExternalTypeTarget; // for queries, this contains anything that would go in the query editor, so any extension off DataQuery a datasource would have, and needs to be generic. For external, it simply contains a URL
+  target: ExternalTypeTarget; // For external, this simply contains a URL
   transformations?: DataLinkTransformationConfig[];
 };
 
