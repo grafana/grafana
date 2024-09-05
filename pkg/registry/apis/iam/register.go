@@ -92,6 +92,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
 
 	serviceaccountResource := iamv0.ServiceAccountResourceInfo
 	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.Store)
+	storage[serviceaccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.Store)
 
 	if b.SSOService != nil {
 		ssoResource := iamv0.SSOSettingResourceInfo

@@ -10,13 +10,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -84,9 +82,6 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	return list, err
 }
 
-// FIXME: do we even need this or can we just use relative urls for avatars
-var cfg = &setting.Cfg{}
-
 func toSAItem(sa legacy.ServiceAccount, ns string) iamv0.ServiceAccount {
 	item := iamv0.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
@@ -96,9 +91,8 @@ func toSAItem(sa legacy.ServiceAccount, ns string) iamv0.ServiceAccount {
 			CreationTimestamp: metav1.NewTime(sa.Created),
 		},
 		Spec: iamv0.ServiceAccountSpec{
-			Title:     sa.Name,
-			Disabled:  sa.Disabled,
-			AvatarURL: dtos.GetGravatarUrlWithDefault(cfg, "", sa.Name),
+			Title:    sa.Name,
+			Disabled: sa.Disabled,
 		},
 	}
 	obj, _ := utils.MetaAccessor(&item)

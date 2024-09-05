@@ -161,6 +161,7 @@ func AddKnownTypes(scheme *runtime.Scheme, version string) {
 		&UserTeamList{},
 		&ServiceAccount{},
 		&ServiceAccountList{},
+		&ServiceAccountTokenList{},
 		&Team{},
 		&TeamList{},
 		&IdentityDisplayResults{},
