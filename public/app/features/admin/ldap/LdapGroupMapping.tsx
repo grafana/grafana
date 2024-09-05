@@ -50,7 +50,7 @@ export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMapp
         <Input
           id="org-id"
           type='number'
-          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_id`)}
+          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_id`, {valueAsNumber: true})}
         />
       </Field>
       <Field
