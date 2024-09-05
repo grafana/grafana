@@ -23996,12 +23996,6 @@
         "$ref": "#/definitions/SuccessResponseBody"
       }
     },
-    "postAPIkeyResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/NewApiKeyResult"
-      }
-    },
     "postAnnotationResponse": {
       "description": "(empty)",
       "schema": {
