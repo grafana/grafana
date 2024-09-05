@@ -438,15 +438,17 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       maxPerRow: this.state.maxPerRow,
     };
 
+    const vizPanel = this.state.panel.clone();
+
     if (sourcePanel.parent instanceof DashboardGridItem) {
       sourcePanel.parent.setState({
         ...repeatUpdate,
-        body: this.state.panel.clone(),
+        body: vizPanel,
       });
     }
 
-    if (isLibraryPanel(sourcePanel)) {
-      saveLibPanel(sourcePanel, this.state.panel);
+    if (isLibraryPanel(vizPanel)) {
+      saveLibPanel(vizPanel);
     }
   }
 

@@ -307,7 +307,7 @@ describe('VizPanelManager', () => {
       panelManager.state.panel.setState({ title: 'new title' });
       panelManager.commitChanges();
 
-      expect(apiCall.mock.calls[0][1].state.title).toBe('new title');
+      expect(apiCall.mock.calls[0][0].state.title).toBe('new title');
     });
 
     it('unlinks library panel', () => {

@@ -165,7 +165,7 @@ describe('PanelEditor', () => {
         name: 'changed name',
       });
 
-      jest.spyOn(libAPI, 'saveLibPanel').mockImplementation(async (_, panel) => {
+      jest.spyOn(libAPI, 'saveLibPanel').mockImplementation(async (panel) => {
         const updatedPanel = { ...libAPI.libraryVizPanelToSaveModel(panel), version: 2 };
 
         libPanelBehavior.setPanelFromLibPanel(updatedPanel);
