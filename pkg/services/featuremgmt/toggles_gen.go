@@ -762,4 +762,8 @@ const (
 	// FlagExploreLogsLimitedTimeRange
 	// Used in Explore Logs to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
+
+	// FlagAppPlatformAccessTokens
+	// Enables the use of access tokens for the App Platform
+	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
 )
