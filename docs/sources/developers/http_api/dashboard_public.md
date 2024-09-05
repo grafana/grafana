@@ -64,10 +64,10 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Optional. Unique identifier when creating a public dashboard. If it's null, it will generate a new uid.
+- **uid** – Optional. Unique identifier when creating a shared dashboard. If it's null, it will generate a new uid.
 - **accessToken** – Optional. Unique access token. If it's null, it will generate a new access token.
-- **timeSelectionEnabled** – Optional. Set to `true` to enable the time picker in the public dashboard. The default value is `false`.
-- **isEnabled** – Optional. Set to `true` to enable the public dashboard. The default value is `false`.
+- **timeSelectionEnabled** – Optional. Set to `true` to enable the time picker in the shared dashboard. The default value is `false`.
+- **isEnabled** – Optional. Set to `true` to enable the shared dashboard. The default value is `false`.
 - **annotationsEnabled** – Optional. Set to `true` to show annotations. The default value is `false`.
 - **share** – Optional. Set the share mode. The default value is `public`.
 
@@ -123,7 +123,7 @@ Will update the shared dashboard given the specified unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction](#public-dashboard-api) for an explanation.
+See note in the [introduction](#shared-dashboard-api) for an explanation.
 
 | Action                    | Scope                            |
 | ------------------------- | -------------------------------- |
@@ -204,7 +204,7 @@ Will return the shared dashboard given the dashboard unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction](#public-dashboard-api) for an explanation.
+See note in the [introduction](#shared-dashboard-api) for an explanation.
 
 | Action            | Scope                            |
 | ----------------- | -------------------------------- |
@@ -255,7 +255,7 @@ Will delete the shared dashboard given the specified unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction](#public-dashboard-api) for an explanation.
+See note in the [introduction](#shared-dashboard-api) for an explanation.
 
 | Action                    | Scope                            |
 | ------------------------- | -------------------------------- |
@@ -282,7 +282,7 @@ Status Codes:
 
 **Required permissions**
 
-See note in the [introduction](#public-dashboard-api) for an explanation.
+See note in the [introduction](#shared-dashboard-api) for an explanation.
 
 | Action            | Scope                            |
 | ----------------- | -------------------------------- |
