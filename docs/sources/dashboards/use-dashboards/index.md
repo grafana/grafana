@@ -85,7 +85,7 @@ The dashboard user interface provides a number of features that you can use to c
 
 The following image and descriptions highlight all dashboard features.
 
-![An annotated image of a dashboard](/media/docs/grafana/screenshot-dashboard-toggle-annotated-11.3.png)
+![An annotated image of a dashboard](/media/docs/grafana/dashboards/screenshot-dashboard-no-toggle-annotated-11.3.png)
 
 1. **Grafana home** - Click **Home** in the breadcrumb to go to the home page configured in the Grafana instance.
 1. **Dashboard folder** - When you click the dashboard folder name, you can search for other dashboards contained in the folder and perform other [folder management tasks](ref:dashboard-folders).
@@ -93,7 +93,6 @@ The following image and descriptions highlight all dashboard features.
 1. **Mark as favorite** - Mark the dashboard as one of your favorites so it's included in your list of **Starred** dashboards in the main menu.
 1. **Public label** - When you share a dashboard externally, it's marked with the **Public** label.
 1. **Dashboard insights** - Click to view analytics about your dashboard including information about users, activity, query counts. Learn more about [dashboard analytics](ref:dashboard-analytics).
-1. **Switch to old dashboard page/Scene** - Toggle between the old dashboard architecture and [Scenes](https://grafana.com/developers/scenes/).
 1. **Edit** - Click to leave view-only mode and enter edit mode, where you can make changes directly to the dashboard and access dashboard settings, as well as several panel editing functions.
 1. **Export** - Access [dashboard exporting](ref:export-dashboards) options.
 1. **Share dashboard** - Access several [dashboard sharing](ref:sharing) options.
