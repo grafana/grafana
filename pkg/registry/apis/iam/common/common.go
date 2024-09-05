@@ -3,7 +3,7 @@ package common
 import (
 	"strconv"
 
-	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
