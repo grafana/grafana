@@ -11,7 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -26,7 +26,7 @@ var (
 	_ rest.Storage              = (*LegacyStore)(nil)
 )
 
-var resource = identityv0.ServiceAccountResourceInfo
+var resource = iamv0.ServiceAccountResourceInfo
 
 func NewLegacyStore(store legacy.LegacyIdentityStore) *LegacyStore {
 	return &LegacyStore{store}
@@ -74,7 +74,7 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 		return nil, err
 	}
 
-	list := &identityv0.ServiceAccountList{}
+	list := &iamv0.ServiceAccountList{}
 	for _, item := range found.Users {
 		list.Items = append(list.Items, *toSAItem(&item, ns.Value))
 	}
@@ -85,15 +85,15 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	return list, err
 }
 
-func toSAItem(u *user.User, ns string) *identityv0.ServiceAccount {
-	item := &identityv0.ServiceAccount{
+func toSAItem(u *user.User, ns string) *iamv0.ServiceAccount {
+	item := &iamv0.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              u.UID,
 			Namespace:         ns,
 			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(u.Created),
 		},
-		Spec: identityv0.ServiceAccountSpec{
+		Spec: iamv0.ServiceAccountSpec{
 			Name:          u.Name,
 			Email:         u.Email,
 			EmailVerified: u.EmailVerified,
