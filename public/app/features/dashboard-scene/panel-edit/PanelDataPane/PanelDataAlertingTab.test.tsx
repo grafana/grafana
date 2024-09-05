@@ -1,12 +1,10 @@
-import userEvent from '@testing-library/user-event';
-import { render } from 'test/test-utils';
+import { render, userEvent } from 'test/test-utils';
 import { byTestId } from 'testing-library-selector';
 
 import { PromOptions } from '@grafana/prometheus';
 import { config, locationService, setPluginLinksHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
-import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as alertingAbilities from 'app/features/alerting/unified/hooks/useAbilities';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
@@ -24,7 +22,6 @@ import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, DashboardDataDTO } from 'app/types';
 import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
@@ -38,17 +35,8 @@ import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataA
  * These tests has been copied from public/app/features/alerting/unified/PanelAlertTabContent.test.tsx and been slightly modified to make sure the scenes alert edit tab is as close to the old alert edit tab as possible
  */
 
-jest.mock('app/features/alerting/unified/api/prometheus');
-jest.mock('app/features/alerting/unified/api/ruler');
-
-jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
-
-setPluginLinksHook(() => ({
-  links: [],
-  isLoading: false,
-}));
 
 const dataSources = {
   prometheus: mockDataSource<PromOptions>(
@@ -81,10 +69,6 @@ const dataSources = {
 const mocks = {
   useAlertRuleAbilityMock: jest.mocked(alertingAbilities.useAlertRuleAbility),
   rulerBuilderMock: jest.mocked(ruler.rulerUrlBuilder),
-};
-
-const renderAlertTabContent = (model: PanelDataAlertingTab, initialStore?: ReturnType<typeof configureStore>) => {
-  render(<PanelDataAlertingTabRendered model={model} />);
 };
 
 const promResponse: PromRulesResponse = {
@@ -174,7 +158,6 @@ const ui = {
 const server = setupMswServer();
 
 describe('PanelAlertTabContent', () => {
-  // silenceConsoleOutput();
   beforeEach(() => {
     jest.resetAllMocks();
     grantUserPermissions([
@@ -337,17 +320,16 @@ describe('PanelAlertTabContent', () => {
 
 function renderAlertTab(dashboard: DashboardModel, dto: DashboardDataDTO) {
   const model = createModel(dashboard, dto);
-  renderAlertTabContent(model);
+  return render(<PanelDataAlertingTabRendered model={model}></PanelDataAlertingTabRendered>);
 }
 
 async function clickNewButton() {
+  const user = userEvent.setup();
   const pushMock = jest.fn();
   const oldPush = locationService.push;
   locationService.push = pushMock;
   const button = await ui.createButton.find();
-
-  await userEvent.click(button);
-
+  await user.click(button);
   const match = pushMock.mock.lastCall[0].match(/alerting\/new\?defaults=(.*)&returnTo=/);
   const defaults = JSON.parse(decodeURIComponent(match![1]));
   locationService.push = oldPush;
