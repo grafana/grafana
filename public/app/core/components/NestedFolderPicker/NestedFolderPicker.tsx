@@ -250,7 +250,7 @@ export function NestedFolderPicker({
   });
 
   let label = selectedFolder.data?.title;
-  if (value === '' || label === 'Root') {
+  if (value === '') {
     label = 'Dashboards';
   }
 
