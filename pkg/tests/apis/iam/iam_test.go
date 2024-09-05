@@ -15,13 +15,13 @@ import (
 )
 
 var gvrTeams = schema.GroupVersionResource{
-	Group:    "identity.grafana.app",
+	Group:    "iam.grafana.app",
 	Version:  "v0alpha1",
 	Resource: "teams",
 }
 
 var gvrUsers = schema.GroupVersionResource{
-	Group:    "identity.grafana.app",
+	Group:    "iam.grafana.app",
 	Version:  "v0alpha1",
 	Resource: "users",
 }
@@ -42,7 +42,7 @@ func TestIntegrationRequiresDevMode(t *testing.T) {
 		},
 	})
 
-	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("identity.grafana.app/v0alpha1")
+	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("iam.grafana.app/v0alpha1")
 	require.Error(t, err)
 }
 
@@ -57,7 +57,7 @@ func TestIntegrationIdentity(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
 	})
-	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("identity.grafana.app/v0alpha1")
+	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("iam.grafana.app/v0alpha1")
 	require.NoError(t, err)
 
 	t.Run("read only views", func(t *testing.T) {
@@ -72,7 +72,7 @@ func TestIntegrationIdentity(t *testing.T) {
 		require.JSONEq(t, `{
       "items": [
         {
-          "apiVersion": "identity.grafana.app/v0alpha1",
+          "apiVersion": "iam.grafana.app/v0alpha1",
           "kind": "Team",
           "metadata": {
             "annotations": {

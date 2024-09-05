@@ -8,8 +8,8 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	identity "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/identity/legacy"
+	identity "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"

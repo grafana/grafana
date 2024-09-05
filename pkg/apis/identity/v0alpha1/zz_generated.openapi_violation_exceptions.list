@@ -1,3 +1,0 @@
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/identity/v0alpha1,TeamBindingSpec,Subjects
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/identity/v0alpha1,IdentityDisplay,IdentityType
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/identity/v0alpha1,IdentityDisplay,InternalID

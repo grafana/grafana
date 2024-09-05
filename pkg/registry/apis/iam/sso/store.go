@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	identityv0 "github.com/grafana/grafana/pkg/apis/identity/v0alpha1"
+	identityv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssomodels "github.com/grafana/grafana/pkg/services/ssosettings/models"
