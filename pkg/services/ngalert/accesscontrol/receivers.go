@@ -132,7 +132,7 @@ type ReceiverAccess[T models.Identified] struct {
 	readDecrypted actionAccess[T]
 	create        actionAccess[T]
 	update        actionAccess[T]
-	delete        actionAccess[models.Identified]
+	delete        actionAccess[T]
 }
 
 // NewReceiverAccess creates a new ReceiverAccess service. If includeProvisioningActions is true, the service will include
@@ -210,7 +210,7 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			},
 			authorizeAll: ac.EvalAll(readRedactedAllReceiversEval, updateAllReceiversEval),
 		},
-		delete: actionAccess[models.Identified]{
+		delete: actionAccess[T]{
 			genericService: genericService{
 				ac: a,
 			},
@@ -306,4 +306,73 @@ func (s ReceiverAccess[T]) AuthorizeUpdateByUID(ctx context.Context, user identi
 // AuthorizeReadSome checks if user has access to read some redacted receivers. Returns an error if user does not have access.
 func (s ReceiverAccess[T]) AuthorizeReadSome(ctx context.Context, user identity.Requester) error {
 	return s.read.AuthorizePreConditions(ctx, user)
+}
+
+// All access permissions for a given receiver.
+
+// Access returns the permission sets for a slice of receivers. The permission set includes secrets, write, and
+// delete which corresponds the given user being able to read, write, and delete each given receiver.
+func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, receivers ...T) (map[string]models.ReceiverPermissionSet, error) {
+	basePerms := models.NewReceiverPermissionSet()
+	if err := s.readDecrypted.AuthorizePreConditions(ctx, user); err != nil {
+		basePerms.Set(models.ReceiverPermissionReadSecret, false) // Doesn't match the preconditions.
+	} else if err := s.readDecrypted.AuthorizeAll(ctx, user); err == nil {
+		basePerms.Set(models.ReceiverPermissionReadSecret, true) // Has access to all receivers.
+	}
+
+	// TODO: Add when resource permissions are implemented.
+	//if err := s.permissions.AuthorizePreConditions(ctx, user); err != nil {
+	//	basePerms.Set(models.ReceiverPermissionAdmin, false) // Doesn't match the preconditions.
+	//} else if err := s.permissions.AuthorizeAll(ctx, user); err == nil {
+	//	basePerms.Set(models.ReceiverPermissionAdmin, true) // Has access to all receivers.
+	//}
+
+	if err := s.update.AuthorizePreConditions(ctx, user); err != nil {
+		basePerms.Set(models.ReceiverPermissionWrite, false) // Doesn't match the preconditions.
+	} else if err := s.update.AuthorizeAll(ctx, user); err == nil {
+		basePerms.Set(models.ReceiverPermissionWrite, true) // Has access to all receivers.
+	}
+
+	if err := s.delete.AuthorizePreConditions(ctx, user); err != nil {
+		basePerms.Set(models.ReceiverPermissionDelete, false) // Doesn't match the preconditions.
+	} else if err := s.delete.AuthorizeAll(ctx, user); err == nil {
+		basePerms.Set(models.ReceiverPermissionDelete, true) // Has access to all receivers.
+	}
+
+	if basePerms.AllSet() {
+		// Shortcut for the case when all permissions are known based on preconditions.
+		result := make(map[string]models.ReceiverPermissionSet, len(receivers))
+		for _, rcv := range receivers {
+			result[rcv.GetUID()] = basePerms.Clone()
+		}
+		return result, nil
+	}
+
+	result := make(map[string]models.ReceiverPermissionSet, len(receivers))
+	for _, rcv := range receivers {
+		permSet := basePerms.Clone()
+		if _, ok := permSet.Has(models.ReceiverPermissionReadSecret); !ok {
+			err := s.readDecrypted.authorize(ctx, user, rcv) // Check permissions ignoring preconditions and all access.
+			permSet.Set(models.ReceiverPermissionReadSecret, err == nil)
+		}
+
+		// TODO: Add when resource permissions are implemented.
+		//if _, ok := permSet.Has(models.ReceiverPermissionAdmin); !ok {
+		//	err := s.permissions.authorize(ctx, user, rcv)
+		//	permSet.Set(models.ReceiverPermissionAdmin, err == nil)
+		//}
+
+		if _, ok := permSet.Has(models.ReceiverPermissionWrite); !ok {
+			err := s.update.authorize(ctx, user, rcv)
+			permSet.Set(models.ReceiverPermissionWrite, err == nil)
+		}
+
+		if _, ok := permSet.Has(models.ReceiverPermissionDelete); !ok {
+			err := s.delete.authorize(ctx, user, rcv)
+			permSet.Set(models.ReceiverPermissionDelete, err == nil)
+		}
+
+		result[rcv.GetUID()] = permSet
+	}
+	return result, nil
 }
