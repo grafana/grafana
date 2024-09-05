@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
 import {
   Badge,
@@ -238,7 +238,7 @@ interface ExpandedRowProps {
   readOnly: boolean;
   onUpdated: () => void;
 }
-function ExpendedRow({ correlation: { source, target, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
+function ExpendedRow({ correlation: { source, ...correlation }, readOnly, onUpdated }: ExpandedRowProps) {
   useEffect(
     () => reportInteraction('grafana_correlations_details_expanded'),
     // we only want to fire this on first render
@@ -246,9 +246,10 @@ function ExpendedRow({ correlation: { source, target, ...correlation }, readOnly
     []
   );
 
-  let corr: Correlation = target?.uid
-    ? { ...correlation, type: 'query', sourceUID: source.uid, targetUID: target?.uid }
-    : { ...correlation, type: 'external', sourceUID: source.uid };
+  let corr: Correlation =
+    correlation.type === 'query'
+      ? { ...correlation, type: 'query', sourceUID: source.uid, targetUID: correlation.target.uid }
+      : { ...correlation, type: 'external', sourceUID: source.uid };
 
   return <EditCorrelationForm correlation={corr} onUpdated={onUpdated} readOnly={readOnly} />;
 }
@@ -266,9 +267,7 @@ const getDatasourceCellStyles = (theme: GrafanaTheme2) => ({
 });
 
 const DataSourceCell = memo(
-  function DataSourceCell({
-    cell: { value },
-  }: CellProps<CorrelationData, CorrelationData['source'] | CorrelationData['target']>) {
+  function DataSourceCell({ cell: { value } }: CellProps<CorrelationData, DataSourceInstanceSettings>) {
     const styles = useStyles2(getDatasourceCellStyles);
 
     return (

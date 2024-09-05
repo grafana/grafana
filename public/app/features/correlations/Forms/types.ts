@@ -1,18 +1,28 @@
 import { SupportedTransformationType } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 
-import { CorrelationConfig, CorrelationType } from '../types';
+import { CorrelationConfigExternal, CorrelationConfigQuery, OmitUnion } from '../types';
 
-export interface FormDTO {
+export interface FormExternalDTO {
+  sourceUID: string;
+  label: string;
+  description: string;
+  type: 'external';
+  config: CorrelationConfigExternal;
+}
+
+export interface FormQueryDTO {
   sourceUID: string;
   targetUID: string;
   label: string;
   description: string;
-  type: CorrelationType;
-  config: CorrelationConfig;
+  type: 'query';
+  config: CorrelationConfigQuery;
 }
 
-export type EditFormDTO = Omit<FormDTO, 'targetUID' | 'sourceUID'>;
+export type FormDTO = FormExternalDTO | FormQueryDTO;
+
+export type EditFormDTO = OmitUnion<FormDTO, 'targetUID' | 'sourceUID'>;
 
 export type TransformationDTO = {
   type: SupportedTransformationType;
