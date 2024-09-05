@@ -1,6 +1,7 @@
 package utils_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -161,11 +162,6 @@ func TestMetaAccessor(t *testing.T) {
 				"status": map[string]any{
 					"sloth": "🦥",
 				},
-				"secure": map[string]any{
-					"field": map[string]any{
-						"guid": "TheGUID",
-					},
-				},
 			},
 		}
 		meta, err := utils.MetaAccessor(res)
@@ -251,6 +247,7 @@ func TestMetaAccessor(t *testing.T) {
 		spec, err = meta.GetSpec()
 		require.NoError(t, err)
 		require.Equal(t, res.Spec, spec)
+		require.Equal(t, `{"title":"t2"}`, asJSON(spec, false))
 
 		// Check read/write status
 		status, err := meta.GetStatus()
@@ -261,6 +258,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, res.Status, status)
 		require.Equal(t, "111", res.Status.Title)
+		require.Equal(t, `{"title":"111"}`, asJSON(status, false))
 	})
 
 	t.Run("get and set grafana metadata (TestResource2)", func(t *testing.T) {
@@ -377,4 +375,16 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, obj2.Spec, spec)
 		require.NoError(t, err)
 	})
+}
+
+func asJSON(v any, pretty bool) string {
+	if v == nil {
+		return ""
+	}
+	if pretty {
+		bytes, _ := json.MarshalIndent(v, "", "  ")
+		return string(bytes)
+	}
+	bytes, _ := json.Marshal(v)
+	return string(bytes)
 }
