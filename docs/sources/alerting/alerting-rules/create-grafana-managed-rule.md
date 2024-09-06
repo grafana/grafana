@@ -83,11 +83,8 @@ Grafana-managed rules are the most flexible alert rule type. They allow you to c
 Multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
 
 {{% admonition type="note" %}}
-For Grafana Cloud, there are limits on how many Grafana-managed alert rules you can create. These are as follows:
-
-- Free: 100 alert rules
-- Paid: 2000 alert rules
-  {{% /admonition %}}
+For Grafana Cloud, you can create 100 free Grafana-managed alert rules.
+{{% /admonition %}}
 
 Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
 
@@ -256,7 +253,7 @@ You can configure the alert instance state when its evaluation returns no data:
 | No Data configuration | Description                                                                                                                                                                                                                               |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | No Data               | The default option. Sets alert instance state to `No data`. <br/> The alert rule also creates a new alert instance `DatasourceNoData` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting              | Sets alert instance state to `Alerting`. It waits until the [pending period](ref:pending-period) has finished.                                                                                                                            |
+| Alerting              | Sets alert instance state to `Alerting`. It transitions from `Pending` to `Alerting` after the [pending period](ref:pending-period) has finished.                                                                                         |
 | Normal                | Sets alert instance state to `Normal`.                                                                                                                                                                                                    |
 | Keep Last State       | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state](ref:keep-last-state).                                                                                                  |
 
@@ -265,7 +262,7 @@ You can also configure the alert instance state when its evaluation returns an e
 | Error configuration | Description                                                                                                                                                                                                                            |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Error               | The default option. Sets alert instance state to `Error`. <br/> The alert rule also creates a new alert instance `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
-| Alerting            | Sets alert instance state to `Alerting`. It waits until the [pending period](ref:pending-period) has finished.                                                                                                                         |
+| Alerting            | Sets alert instance state to `Alerting`. It transitions from `Pending` to `Alerting` after the [pending period](ref:pending-period) has finished.                                                                                      |
 | Normal              | Sets alert instance state to `Normal`.                                                                                                                                                                                                 |
 | Keep Last State     | Maintains the alert instance in its last state. Useful for mitigating temporary issues, refer to [Keep last state](ref:keep-last-state).                                                                                               |
 

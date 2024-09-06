@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Email
 title: Configure email for Alerting
-weight: 20
+weight: 0
 ---
 
 # Configure email for Alerting

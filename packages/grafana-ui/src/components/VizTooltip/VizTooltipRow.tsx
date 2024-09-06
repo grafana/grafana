@@ -47,7 +47,7 @@ export const VizTooltipRow = ({
         maxHeight: 55,
         whiteSpace: 'wrap',
         wordBreak: 'break-word',
-        overflowY: 'scroll',
+        overflowY: 'auto',
       }
     : {
         whiteSpace: 'wrap',

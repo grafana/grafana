@@ -35,7 +35,7 @@ labels:
 title: Geomap
 weight: 100
 refs:
-  data-format-supported-by-the-node-graph-visualization:
+  data-format:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/node-graph/#data-api
     - pattern: /docs/grafana-cloud/
@@ -270,8 +270,9 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer](/static/img/docs/geomap-panel/geomap-markers-8-1-0.png)
 
-![Markers Layer Options](/static/img/docs/geomap-panel/geomap-markers-options-8-1-0.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/geomap-markers-options-11-1-0.png" max-width="350px" alt="Markers layer options" >}}
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Size** configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range.
 - **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
 - **Symbol Vertical Align** configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol.
@@ -294,8 +295,9 @@ Similar to `Markers`, you are prompted with various options to determine which d
 
 ![Heatmap Layer](/static/img/docs/geomap-panel/geomap-heatmap-8-1-0.png)
 
-![Heatmap Layer Options](/static/img/docs/geomap-panel/geomap-heatmap-options-8-1-0.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/geomap-heatmap-options-11-1-0.png" max-width="350px" alt="Heatmap layer options" >}}
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Weight values** configure the intensity of the heatmap clusters. `Fixed value` keeps a constant weight value throughout all data points. This value should be in the range of 0~1. Similar to Markers, there is an alternate option in the drop-down to automatically scale the weight values depending on data values.
 - **Radius** configures the size of the heatmap clusters.
 - **Blur** configures the amount of blur on each cluster.
@@ -345,6 +347,7 @@ The Night / Day layer displays night and day regions based on the current time r
 
 ### Options
 
+- **Data** configures the data set for the layer. For more information, refer to [Data](#data).
 - **Show** toggles the time source from panel time range.
 - **Night region color** picks the color for the night region.
 - **Display sun** toggles the sun icon.
@@ -369,6 +372,7 @@ The Route layer renders data points as a route.
 
 ### Options
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Size** sets the route thickness. Fixed value by default. When field data is selected you can set the Min and Max range in which field data can scale.
 - **Color** sets the route color. Set to `Fixed color` by default. You can also tie the color to field data.
 - **Fill opacity** configures the opacity of the route.
@@ -397,6 +401,7 @@ The Photos layer renders a photo at each data point.
 
 ### Options
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Image Source field** allows you to select a string field containing image data in either of the following formats:
   - **Image URLs**
   - **Base64 encoded** - Image binary ("data:image/png;base64,...")
@@ -424,13 +429,14 @@ The Photos layer renders a photo at each data point.
 The Network layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{% /admonition %}}
 
-The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization](ref:data-format-supported-by-the-node-graph-visualization) with the addition of [geospatial data]({{< relref "#location">}}) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
+The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization](ref:data-format) with the addition of [geospatial data](#location-mode) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
 {{< video-embed src="/media/docs/grafana/screen-recording-10-1-geomap-network-layer-from-node-graph.mp4" max-width="750px" caption="Node graph to Geomap network layer" >}}
 
 ### Options
 
+- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Arrow** sets the arrow direction to display for each edge, with forward meaning source to target. Choose from:
   - **None**
   - **Forward**
