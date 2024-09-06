@@ -163,11 +163,12 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
         borderBottom: `1px solid ${theme.colors.border.weak}`,
       },
     }),
-    toggleAll: css({
-      marginRight: '16px',
-    }),
+    toggleAll: css({}),
     toggleAllButton: css({
       width: '100%',
+      border: 0,
+      padding: 0,
+      textAlign: 'left',
     }),
   };
 });

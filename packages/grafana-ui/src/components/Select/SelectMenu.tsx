@@ -9,15 +9,14 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Trans } from '../../utils/i18n';
-import { Button, clearButtonStyles } from '../Button';
+import { clearButtonStyles } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-import { Checkbox } from '../Forms/Checkbox';
 import { Icon } from '../Icon/Icon';
 
 import { getSelectStyles } from './getSelectStyles';
 import { ToggleAllState } from './types';
 
-interface ToggleAllOptions {
+export interface ToggleAllOptions {
   state: ToggleAllState;
   selectAllClicked: () => void;
   selectedCount?: number;
@@ -29,6 +28,7 @@ interface SelectMenuProps {
   innerProps: {};
   selectProps: {
     toggleAllOptions?: ToggleAllOptions;
+    components?: { Option?: (props: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => JSX.Element };
   };
 }
 
@@ -42,13 +42,20 @@ export const SelectMenu = ({
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
-  const { toggleAllOptions } = selectProps;
+  const { toggleAllOptions, components } = selectProps;
+
+  const optionsElement = components?.Option ?? SelectMenuOptions;
 
   return (
     <div {...innerProps} className={styles.menu} style={{ maxHeight }} aria-label="Select options menu">
       <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
         {toggleAllOptions && (
-          <ToggleAllOption state={toggleAllOptions.state} onClick={toggleAllOptions.selectAllClicked}></ToggleAllOption>
+          <ToggleAllOption
+            state={toggleAllOptions.state}
+            optionComponent={optionsElement}
+            selectedCount={toggleAllOptions.selectedCount}
+            onClick={toggleAllOptions.selectAllClicked}
+          ></ToggleAllOption>
         )}
         {children}
       </CustomScrollbar>
@@ -81,6 +88,7 @@ interface VirtualSelectMenuProps<T> {
   maxHeight: number;
   selectProps: {
     toggleAllOptions?: ToggleAllOptions;
+    components?: { Option?: (props: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => JSX.Element };
   };
 }
 
@@ -95,7 +103,9 @@ export const VirtualizedSelectMenu = ({
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const listRef = useRef<List>(null);
-  const { toggleAllOptions } = selectProps;
+  const { toggleAllOptions, components } = selectProps;
+
+  const optionComponent = components?.Option ?? SelectMenuOptions;
 
   // we need to check for option groups (categories)
   // these are top level options with child options
@@ -145,6 +155,7 @@ export const VirtualizedSelectMenu = ({
   if (toggleAllOptions) {
     flattenedChildren.unshift(
       <ToggleAllOption
+        optionComponent={optionComponent}
         state={toggleAllOptions.state}
         selectedCount={toggleAllOptions.selectedCount}
         onClick={toggleAllOptions.selectAllClicked}
@@ -152,7 +163,10 @@ export const VirtualizedSelectMenu = ({
     );
   }
 
-  const longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
+  let longestOption = max(flattenedOptions.map((option) => option.label?.length)) ?? 0;
+  if (toggleAllOptions && longestOption < 12) {
+    longestOption = 12;
+  }
   const widthEstimate =
     longestOption * VIRTUAL_LIST_WIDTH_ESTIMATE_MULTIPLIER + VIRTUAL_LIST_PADDING * 2 + VIRTUAL_LIST_WIDTH_EXTRA;
   const heightEstimate = Math.min(flattenedChildren.length * VIRTUAL_LIST_ITEM_HEIGHT, maxHeight);
@@ -185,6 +199,7 @@ interface SelectMenuOptionProps<T> {
   isDisabled: boolean;
   isFocused: boolean;
   isSelected: boolean;
+  indeterminate?: boolean;
   innerProps: JSX.IntrinsicElements['div'];
   innerRef: RefCallback<HTMLDivElement>;
   renderOptionLabel?: (value: SelectableValue<T>) => JSX.Element;
@@ -195,29 +210,40 @@ const ToggleAllOption = ({
   state,
   onClick,
   selectedCount,
+  optionComponent,
 }: {
   state: ToggleAllState;
   onClick: () => void;
   selectedCount?: number;
+  optionComponent: (props: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => JSX.Element;
 }) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
   return (
-    <Button
-      className={css(clearButtonStyles(theme), styles.option, styles.toggleAllButton, {
+    <button
+      data-testid={selectors.components.Select.toggleAllOptions}
+      className={css(clearButtonStyles(theme), styles.toggleAllButton, {
         height: VIRTUAL_LIST_ITEM_HEIGHT,
       })}
       onClick={onClick}
     >
-      <Checkbox
-        className={styles.toggleAll}
-        checked={state === ToggleAllState.allSelected}
-        indeterminate={state === ToggleAllState.indeterminate}
-      ></Checkbox>
-      <Trans i18nKey="select.select-menu.selected-count">Selected </Trans>
-      {`(${selectedCount ?? 0})`}
-    </Button>
+      {optionComponent({
+        isDisabled: false,
+        isSelected: state === ToggleAllState.allSelected,
+        isFocused: false,
+        data: {},
+        indeterminate: state === ToggleAllState.indeterminate,
+        innerRef: () => {},
+        innerProps: {},
+        children: (
+          <>
+            <Trans i18nKey="select.select-menu.selected-count">Selected </Trans>
+            {`(${selectedCount ?? 0})`}
+          </>
+        ),
+      })}
+    </button>
   );
 };
 
