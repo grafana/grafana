@@ -71,7 +71,6 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     // simple condition actions
     .addCase(resetToSimpleCondition, (state) => {
       state.queries = getDefaultQueries();
-      console.log('resetToSimpleCondition', state.queries);
     })
     .addCase(duplicateQuery, (state, { payload }) => {
       state.queries = addQuery(state.queries, payload);

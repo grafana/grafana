@@ -17,7 +17,7 @@ import {
   expressionTypes,
 } from 'app/features/expressions/types';
 import { useDispatch } from 'app/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { fetchAllPromBuildInfoAction } from '../../../state/actions';
@@ -42,7 +42,9 @@ import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryRe
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import {
   getSimpleConditionFromExpressions,
+  SIMPLE_CONDITION_QUERY_ID,
   SIMPLE_CONDITION_THRESHOLD_ID,
+  SIMPLE_CONFITION_REDUCER_ID,
   SimpleCondition,
   SimpleConditionEditor,
 } from './SimpleCondition';
@@ -66,6 +68,34 @@ import {
   updateExpressionType,
 } from './reducer';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
+
+function areQueriesTransformableToSimpleCondition(
+  dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>>,
+  expressionQueries: ExpressionQuery[]
+) {
+  if (dataQueries.length !== 1) {
+    return false;
+  }
+
+  if (expressionQueries.length !== 2) {
+    return false;
+  }
+
+  const query = dataQueries[0];
+
+  if (query.refId !== SIMPLE_CONDITION_QUERY_ID) {
+    return false;
+  }
+
+  const reduceExpression = expressionQueries.find(
+    (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONFITION_REDUCER_ID
+  );
+  const thresholdExpression = expressionQueries.find(
+    (query) => query.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
+  );
+
+  return reduceExpression && thresholdExpression;
+}
 
 interface Props {
   editingExistingRule: boolean;
@@ -99,8 +129,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     return queries.filter((query) => isExpressionQuery(query.model));
   }, [queries]);
 
-  // simple query mode: todo: maybe rename variables to be more clear that are
-  const [isAdvancedMode, setIsAdvancedMode] = useState(true);
+  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
 
   const expressionQueriesList = useMemo(() => {
     return queries.reduce((acc: ExpressionQuery[], query) => {
@@ -109,7 +138,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }, [queries]);
 
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
-    !isAdvancedMode
+    areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)
       ? getSimpleConditionFromExpressions(expressionQueriesList)
       : {
           whenField: ReducerID.last,
@@ -120,7 +149,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         }
   );
 
-  //----------------------------------------------
+  // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
+  useEffect(() => {
+    if (!isAdvancedMode) {
+      setSimpleCondition(getSimpleConditionFromExpressions(expressionQueriesList));
+    }
+  }, [isAdvancedMode, expressionQueriesList]);
 
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
@@ -264,11 +298,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
 
   // for simple condition mode, when switching to simple mode we need to update the reducer
-  useEffect(() => {
-    if (!isAdvancedMode) {
-      dispatch(resetToSimpleCondition());
-    }
-  }, [isAdvancedMode, dispatch]);
+  // useEffect(() => {
+  //   if (!isAdvancedMode) {
+  //     if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)) {
+  //       dispatch(resetToSimpleCondition());
+  //     }
+  //   }
+  // }, [isAdvancedMode, dispatch]);
 
   useEffect(() => {
     clearPreviewData();
@@ -441,7 +477,17 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       }
       switchMode={
         isGrafanaManagedRuleByType(type)
-          ? { isModeAdvanced: isAdvancedMode, setAdvancedMode: (isAdvanced) => setIsAdvancedMode(isAdvanced) }
+          ? {
+              isModeAdvanced: isAdvancedMode,
+              setAdvancedMode: (isAdvanced) => {
+                if (!isAdvanced) {
+                  if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)) {
+                    dispatch(resetToSimpleCondition());
+                  }
+                }
+                setIsAdvancedMode(isAdvanced);
+              },
+            }
           : undefined
       }
     >
