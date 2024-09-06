@@ -40,14 +40,18 @@ refs:
 
 # Externally shared dashboards
 
-{{< admonition type="warning" >}}
-Sharing your dashboard externally could result in a large number of queries to the data sources used by your dashboard.
-This can be mitigated by using the Enterprise [caching](ref:caching) and/or rate limiting features.
+{{< admonition type="note" >}}
+This feature was previously called **Public dashboards**.
 {{< /admonition >}}
 
 Externally shared dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization.
 
 If you change a dashboard, ensure that you save the changes before sharing.
+
+{{< admonition type="warning" >}}
+Sharing your dashboard externally could result in a large number of queries to the data sources used by your dashboard.
+This can be mitigated by using the Enterprise [caching](ref:caching) and/or rate limiting features.
+{{< /admonition >}}
 
 ## Shared dashboards list
 
@@ -67,11 +71,13 @@ You can also click the name of the dashboard to navigate to the dashboard intern
 
 ## Share externally with specific people
 
-{{< admonition type="note" >}}
+{{< admonition type="note">}}
+This feature was previously called **email sharing**.
+
 Available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud).
 {{< /admonition >}}
 
-To share a dashboard with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the shared dashboard for **30 days**.
+To share a dashboard with specific external users, you can send them a link by email. Use this option when you only want to share your dashboard with specific people. When you share dashboards by email, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the shared dashboard for **30 days**.
 
 When you share a dashboard with an email link, your organization is billed per user, regardless of how many dashboards are shared. Grafana bills monthly per user until access is revoked.
 
@@ -132,7 +138,7 @@ The viewer receives an email with a new one-time use link. This invalidates all 
 
 ### View shared dashboard users
 
-To see a list of users who have accessed your externally shared dashboard by way of email sharing, follow these steps:
+To see a list of users who have accessed your externally shared dashboard by way of an emailed link, follow these steps:
 
 1. Click **Administration** in in the main menu.
 1. Select **Users and access** > **Users**.
