@@ -65,7 +65,7 @@ var _ PermissionRegistry = &permissionRegistry{}
 
 type permissionRegistry struct {
 	actionScopePrefixes map[string]PrefixSet // TODO use thread safe map
-	kindScopePrefix     map[string]string
+	kindScopePrefix     map[string][]string
 	logger              log.Logger
 }
 
@@ -75,25 +75,25 @@ func ProvidePermissionRegistry() PermissionRegistry {
 
 func newPermissionRegistry() *permissionRegistry {
 	// defaultKindScopes maps the most specific accepted scope prefix for a given kind (folders, dashboards, etc)
-	defaultKindScopes := map[string]string{
-		"teams":           "teams:id:",
-		"users":           "users:id:",
-		"datasources":     "datasources:uid:",
-		"dashboards":      "dashboards:uid:",
-		"folders":         "folders:uid:",
-		"annotations":     "annotations:type:",
-		"apikeys":         "apikeys:id:",
-		"orgs":            "orgs:id:",
-		"plugins":         "plugins:id:",
-		"provisioners":    "provisioners:",
-		"reports":         "reports:id:",
-		"permissions":     "permissions:type:",
-		"serviceaccounts": "serviceaccounts:id:",
-		"settings":        "settings:",
-		"global.users":    "global.users:id:",
-		"roles":           "roles:uid:",
-		"services":        "services:",
-		"receivers":       "receivers:uid:",
+	defaultKindScopes := map[string][]string{
+		"teams":           {"teams:id:"},
+		"users":           {"users:id:"},
+		"datasources":     {"datasources:uid:"},
+		"dashboards":      {"dashboards:uid:", "folders:uid"},
+		"folders":         {"folders:uid:"},
+		"annotations":     {"annotations:type:", "dashboards:uid", "folders:uid"},
+		"apikeys":         {"apikeys:id:"},
+		"orgs":            {"orgs:id:"},
+		"plugins":         {"plugins:id:"},
+		"provisioners":    {"provisioners:"},
+		"reports":         {"reports:id:"},
+		"permissions":     {"permissions:type:"},
+		"serviceaccounts": {"serviceaccounts:id:"},
+		"settings":        {"settings:"},
+		"global.users":    {"global.users:id:"},
+		"roles":           {"roles:uid:"},
+		"services":        {"services:"},
+		"receivers":       {"receivers:uid:"},
 	}
 	return &permissionRegistry{
 		actionScopePrefixes: make(map[string]PrefixSet, 200),
@@ -118,13 +118,13 @@ func (pr *permissionRegistry) RegisterPluginScope(scope string) {
 	// If the scope contains an attribute part, register the kind and attribute
 	if len(scopeParts) > 2 {
 		attr := scopeParts[1]
-		pr.kindScopePrefix[kind] = kind + ":" + attr + ":"
+		pr.kindScopePrefix[kind] = []string{kind + ":" + attr + ":"}
 		pr.logger.Debug("registered scope prefix", "kind", kind, "scope_prefix", kind+":"+attr+":")
 		return
 	}
 
 	pr.logger.Debug("registered scope prefix", "kind", kind, "scope_prefix", kind+":")
-	pr.kindScopePrefix[kind] = kind + ":"
+	pr.kindScopePrefix[kind] = []string{kind + ":"}
 }
 
 func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
@@ -140,14 +140,16 @@ func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
 	}
 
 	kind := strings.Split(scope, ":")[0]
-	scopePrefix, ok := pr.kindScopePrefix[kind]
+	scopePrefixes, ok := pr.kindScopePrefix[kind]
 	if !ok {
 		pr.logger.Error("unknown kind: please update `kindScopePrefix` with the correct scope prefix", "kind", kind)
 		return ErrUnknownKind(kind)
 	}
 
 	// Add a new entry in case the scope is not empty
-	pr.actionScopePrefixes[action][scopePrefix] = true
+	for _, prefix := range scopePrefixes {
+		pr.actionScopePrefixes[action][prefix] = true
+	}
 	return nil
 }
 

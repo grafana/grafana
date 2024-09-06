@@ -39,7 +39,8 @@ func Test_permissionRegistry_RegisterPluginScope(t *testing.T) {
 			pr.RegisterPluginScope(tt.scope)
 			got, ok := pr.kindScopePrefix[tt.wantKind]
 			require.True(t, ok)
-			require.Equal(t, tt.wantScope, got)
+			require.Len(t, got, 1)
+			require.Equal(t, tt.wantScope, got[0])
 		})
 	}
 }
@@ -105,6 +106,8 @@ func Test_permissionRegistry_IsPermissionValid(t *testing.T) {
 	pr := newPermissionRegistry()
 	err := pr.RegisterPermission("folders:read", "folders:uid:")
 	require.NoError(t, err)
+	err = pr.RegisterPermission("dashboards:read", "dashboards:uid:")
+	require.NoError(t, err)
 	err = pr.RegisterPermission("test-app.settings:read", "")
 	require.NoError(t, err)
 
@@ -149,6 +152,18 @@ func Test_permissionRegistry_IsPermissionValid(t *testing.T) {
 			action:  "folders:read",
 			scope:   "folders:id:3",
 			wantErr: true,
+		},
+		{
+			name:    "valid dashboards read with dashboard scope",
+			action:  "dashboards:read",
+			scope:   "dashboards:uid:my_team_dash",
+			wantErr: false,
+		},
+		{
+			name:    "valid dashboards read with folder scope",
+			action:  "dashboards:read",
+			scope:   "folders:uid:my_team_folder",
+			wantErr: false,
 		},
 		{
 			name:    "valid app plugin settings read",
