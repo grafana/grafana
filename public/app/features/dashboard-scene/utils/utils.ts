@@ -1,6 +1,7 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  CancelActivationHandler,
   CustomVariable,
   MultiValueVariable,
   SceneDataTransformer,
@@ -18,7 +19,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
@@ -267,20 +267,26 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
 }
 
 /**
- * If the panel is within a repeated row, it must wait until the row resolves the variables.
- * This ensures that the scoped variable for the row is assigned and the panel is initialized with them.
+ * Activates any inactive parents of the scene object.
+ * Useful when rendering a scene object out of context of it's parent
+ * @returns
  */
-export function isWithinUnactivatedRepeatRow(panel: VizPanel): boolean {
-  let row;
+export function activateInActiveParents(so: SceneObject): CancelActivationHandler | undefined {
+  let cancel: CancelActivationHandler | undefined;
+  let parentCancel: CancelActivationHandler | undefined;
 
-  try {
-    row = sceneGraph.getAncestor(panel, SceneGridRow);
-  } catch (err) {
-    return false;
+  if (so.isActive) {
+    return cancel;
   }
 
-  const hasBehavior = !!(row.state.$behaviors && row.state.$behaviors.find((b) => b instanceof RowRepeaterBehavior));
-  const hasVariables = !!(row.state.$variables && row.state.$variables.state.variables.length > 0);
+  if (so.parent) {
+    parentCancel = activateInActiveParents(so.parent);
+  }
 
-  return hasBehavior && !hasVariables;
+  cancel = so.activate();
+
+  return () => {
+    parentCancel?.();
+    cancel();
+  };
 }
