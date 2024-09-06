@@ -4,6 +4,7 @@ import { debounce } from 'lodash';
 import { NavIndex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
+  PanelBuilders,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -20,6 +21,7 @@ import { DashboardGridItem, DashboardGridItemState } from '../scene/DashboardGri
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateInActiveParents, getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
+import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
@@ -32,7 +34,7 @@ export interface PanelEditorState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
-  tableView?: boolean;
+  tableView?: VizPanel;
   pluginLoadError?: boolean;
 }
 
@@ -227,7 +229,25 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public onToggleTableView = () => {
-    this.setState({ tableView: !this.state.tableView });
+    if (this.state.tableView) {
+      this.setState({ tableView: undefined });
+      return;
+    }
+
+    const panel = this.state.panelRef.resolve();
+    const dataProvider = panel.state.$data;
+    if (!dataProvider) {
+      return;
+    }
+
+    this.setState({
+      tableView: PanelBuilders.table()
+        .setTitle('')
+        .setOption('showTypeIcons', true)
+        .setOption('showHeader', true)
+        .setData(new DataProviderSharer({ source: dataProvider.getRef() }))
+        .build(),
+    });
   };
 }
 
