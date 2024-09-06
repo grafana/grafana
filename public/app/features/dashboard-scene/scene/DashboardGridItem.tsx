@@ -41,7 +41,8 @@ export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
   private _prevRepeatValues?: VariableValueSingle[];
-  private _oldBody?: VizPanel;
+  private _prevPanelState: VizPanelState | undefined;
+  private _prevGridItemState: DashboardGridItemState | undefined;
 
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
@@ -54,11 +55,15 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   private _activationHandler() {
     if (this.state.variableName) {
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
-      if (this._oldBody !== this.state.body) {
-        this._prevRepeatValues = undefined;
-      }
-
+      this.clearCachedStateIfBodyOrOptionsChanged();
       this.performRepeat();
+    }
+  }
+
+  private clearCachedStateIfBodyOrOptionsChanged() {
+    if (this._prevGridItemState !== this.state || this._prevPanelState !== this.state.body.state) {
+      console.log('clearCachedStateIfBodyOrOptionsChanged');
+      this._prevRepeatValues = undefined;
     }
   }
 
@@ -115,9 +120,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this.notifyRepeatedPanelsWaitingForVariables(variable);
       return;
     }
-
-    this._oldBody = this.state.body;
-    this._prevRepeatValues = values;
 
     const panelToRepeat = this.state.body;
     const repeatedPanels: VizPanel[] = [];
@@ -178,8 +180,27 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       }
     }
 
+    console.log('performing repeat');
+    this._prevGridItemState = this.state;
+    this._prevPanelState = this.state.body.state;
+    this._prevRepeatValues = values;
+
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
+  }
+
+  public setRepeatByVariable(variableName: string | undefined) {
+    const stateUpdate: Partial<DashboardGridItemState> = { variableName };
+
+    if (variableName && !this.state.repeatDirection) {
+      stateUpdate.repeatDirection = 'h';
+    }
+
+    if (this.getRepeatDirection() === 'h') {
+      stateUpdate.width = 24;
+    }
+
+    this.setState(stateUpdate);
   }
 
   public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {

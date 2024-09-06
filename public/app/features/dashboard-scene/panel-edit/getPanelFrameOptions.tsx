@@ -115,16 +115,7 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
               id="repeat-by-variable-select"
               sceneContext={panel}
               repeat={variableName}
-              onChange={(value?: string) => {
-                const stateUpdate: Partial<DashboardGridItemState> = { variableName: value };
-                if (value && !gridItem.state.repeatDirection) {
-                  stateUpdate.repeatDirection = 'h';
-                }
-                if (gridItem.state.repeatDirection === 'h') {
-                  stateUpdate.width = 24;
-                }
-                gridItem.setState(stateUpdate);
-              }}
+              onChange={(value?: string) => gridItem.setRepeatByVariable(value)}
             />
           );
         },

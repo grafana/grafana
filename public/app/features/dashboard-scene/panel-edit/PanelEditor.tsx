@@ -68,7 +68,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
-    activateInActiveParents(panel);
+    const deactivateParents = activateInActiveParents(panel);
 
     this._initDataPane();
 
@@ -85,6 +85,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         }
       })
     );
+
+    return deactivateParents;
   }
 
   private _detectPanelModelChanges = debounce(() => {
