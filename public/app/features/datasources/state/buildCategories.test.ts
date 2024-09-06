@@ -55,6 +55,6 @@ describe('buildCategories', () => {
     expect(enterprisePluginsCategory.title).toBe('Enterprise plugins');
     expect(enterprisePluginsCategory.plugins.length).toBe(29);
     expect(enterprisePluginsCategory.plugins[0].name).toBe('Adobe Analytics');
-    expect(enterprisePluginsCategory.plugins[enterprisePluginsCategory.plugins.length - 1].name).toBe('Wavefront');
+    expect(enterprisePluginsCategory.plugins[enterprisePluginsCategory.plugins.length - 1].name).toBe('Zendesk');
   });
 });
