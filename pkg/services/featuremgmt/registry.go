@@ -1434,6 +1434,14 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
+		{
+			Name:              "appPlatformAccessTokens",
+			Description:       "Enables the use of access tokens for the App Platform",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 
