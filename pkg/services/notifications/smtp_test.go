@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/textproto"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -300,6 +301,11 @@ func TestSmtpSend(t *testing.T) {
 		time.Sleep(1 * time.Millisecond)
 		messages := srv.MessagesAndPurge()
 		assert.Len(t, messages, 3)
+
+		// sort for test consistency
+		sort.Slice(messages, func(i, j int) bool {
+			return messages[i].RcpttoRequestResponse()[0][0] < messages[j].RcpttoRequestResponse()[0][0]
+		})
 
 		for i, sentMsg := range messages {
 			rcpts := sentMsg.RcpttoRequestResponse()
