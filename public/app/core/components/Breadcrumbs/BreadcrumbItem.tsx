@@ -74,6 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 1,
       minWidth: 0,
       maxWidth: 'max-content',
+      padding: theme.spacing(0.5, 0.5),
 
       // logic for small screens
       // hide any breadcrumbs that aren't the second to last child (the parent)

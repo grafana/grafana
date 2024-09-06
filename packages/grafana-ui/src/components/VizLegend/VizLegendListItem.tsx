@@ -107,6 +107,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: 'inherit',
     padding: 0,
     userSelect: 'text',
+    margin: theme.spacing(0.5, 0),
   }),
   itemDisabled: css({
     label: 'LegendLabelDisabled',
