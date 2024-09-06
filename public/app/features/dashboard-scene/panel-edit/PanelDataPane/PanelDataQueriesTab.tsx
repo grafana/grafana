@@ -8,6 +8,7 @@ import {
   SceneQueryRunner,
   SceneObjectRef,
   VizPanel,
+  SceneObjectState,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
@@ -26,9 +27,9 @@ import { QueryGroupOptions } from 'app/types';
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 
-import { PanelDataPaneTabState, PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
+import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
-interface PanelDataQueriesTabState extends PanelDataPaneTabState {
+interface PanelDataQueriesTabState extends SceneObjectState {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   panelRef: SceneObjectRef<VizPanel>;
@@ -51,7 +52,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 
   public renderTab(props: PanelDataTabHeaderProps) {
-    return <QueriesTab {...props} model={this} />;
+    return <QueriesTab key={this.getTabLabel()} model={this} {...props} />;
   }
 
   private onActivate() {
@@ -379,7 +380,6 @@ function QueriesTab(props: QueriesTabProps) {
 
   return (
     <Tab
-      key={props.key}
       label={model.getTabLabel()}
       icon="database"
       counter={queryRunnerState.queries.length}

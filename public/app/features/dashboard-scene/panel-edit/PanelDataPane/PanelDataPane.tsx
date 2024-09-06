@@ -17,6 +17,7 @@ import { contextSrv } from 'app/core/core';
 import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
+import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
 import { PanelDataPaneTab, TabId } from './types';
@@ -39,7 +40,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
     ];
 
     if (shouldShowAlertingTab(panel.state.pluginId)) {
-      //    tabs.push(new PanelDataAlertingTab(this.panelManager));
+      tabs.push(new PanelDataAlertingTab({ panelRef }));
     }
 
     return new PanelDataPane({
@@ -80,9 +81,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   return (
     <div className={styles.dataPane} data-testid={selectors.components.PanelEditor.DataPane.content}>
       <TabsBar hideBorder={true} className={styles.tabsBar}>
-        {tabs.map((t) =>
-          t.renderTab({ key: t.getTabLabel(), active: t.tabId === tab, onChangeTab: () => model.onChangeTab(t) })
-        )}
+        {tabs.map((t) => t.renderTab({ active: t.tabId === tab, onChangeTab: () => model.onChangeTab(t) }))}
       </TabsBar>
       <CustomScrollbar className={styles.scroll}>
         <TabContent className={styles.tabContent}>

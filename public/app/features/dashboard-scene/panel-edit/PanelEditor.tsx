@@ -15,11 +15,9 @@ import { PanelOptionsPane } from './PanelOptionsPane';
 export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
   isDirty?: boolean;
-  panelId: number;
   optionsPane: PanelOptionsPane;
   dataPane?: PanelDataPane;
   panelRef: SceneObjectRef<VizPanel>;
-  pluginId: string;
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
   tableView?: boolean;
@@ -40,13 +38,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     this._initDataPane();
 
-    // this._subs.add(
-    //   panelManager.subscribeToState((n, p) => {
-    //     if (n.pluginId !== p.pluginId) {
-    //       this._initDataPane(n.pluginId);
-    //     }
-    //   })
-    // );
+    // Listen for panel plugin changes
+    this._subs.add(
+      panel.subscribeToState((n, p) => {
+        if (n.pluginId !== p.pluginId) {
+          this._initDataPane();
+        }
+      })
+    );
 
     // return () => {
     //   if (!this._discardChanges) {
@@ -65,7 +64,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panel = this.getPanel();
     const plugin = panel.getPlugin();
 
-    if (!plugin) {
+    if (!plugin || plugin.meta.id !== panel.state.pluginId) {
       if (retry < 100) {
         setTimeout(() => this._initDataPane(retry + 1), 10);
       } else {

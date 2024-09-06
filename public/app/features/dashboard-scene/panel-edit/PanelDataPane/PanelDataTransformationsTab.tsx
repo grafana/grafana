@@ -11,6 +11,7 @@ import {
   SceneQueryRunner,
   SceneObjectRef,
   VizPanel,
+  SceneObjectState,
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
@@ -19,9 +20,9 @@ import { getQueryRunnerFor } from '../../utils/utils';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { TransformationsDrawer } from './TransformationsDrawer';
-import { PanelDataPaneTabState, PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
+import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
-interface PanelDataTransformationsTabState extends PanelDataPaneTabState {
+interface PanelDataTransformationsTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
 }
 
@@ -37,7 +38,7 @@ export class PanelDataTransformationsTab
   }
 
   public renderTab(props: PanelDataTabHeaderProps) {
-    return <TransformationsTab model={this} {...props} />;
+    return <TransformationsTab key={this.getTabLabel()} model={this} {...props} />;
   }
 
   public getQueryRunner(): SceneQueryRunner {
@@ -209,7 +210,6 @@ function TransformationsTab(props: TransformationsTabProps) {
 
   return (
     <Tab
-      key={props.key}
       label={model.getTabLabel()}
       icon="process"
       counter={transformerState.transformations.length}
