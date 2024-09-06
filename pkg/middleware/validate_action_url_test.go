@@ -42,7 +42,7 @@ func TestMiddlewareValidateActionUrl(t *testing.T) {
 			code:                http.StatusOK,
 		},
 		{
-			name:                "POST action without invalid path",
+			name:                "POST action with invalid path",
 			method:              "POST",
 			path:                "/api/notplugins/org-generic-app",
 			actionsAllowPostURL: "/api/plugins/*",
