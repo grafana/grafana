@@ -8,7 +8,7 @@ require (
 	github.com/grafana/authlib/claims v0.0.0-20240903121118-16441568af1e
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808164224-787abccfbc9e
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0
-	github.com/prometheus/client_golang v1.20.0
+	github.com/prometheus/client_golang v1.20.2
 	github.com/stretchr/testify v1.9.0
 	go.opentelemetry.io/otel/trace v1.29.0
 	gocloud.dev v0.39.0
