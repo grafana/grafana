@@ -23,16 +23,16 @@ import (
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/web"
-
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
-// TODO: this is a temporary hack to make rest.Connecter work with resource level routes
-var pathRewriters = []filters.PathRewriter{
+type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
+
+// PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)
+var PathRewriters = []filters.PathRewriter{
 	{
 		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/)find/(.*)$`),
 		ReplaceFunc: func(matches []string) string {
@@ -53,6 +53,37 @@ var pathRewriters = []filters.PathRewriter{
 	},
 }
 
+func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
+	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
+		requestHandler, err := GetCustomRoutesHandler(
+			delegateHandler,
+			c.LoopbackClientConfig,
+			builders)
+		if err != nil {
+			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
+		}
+
+		// Needs to run last in request chain to function as expected, hence we register it first.
+		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+
+		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
+		handler = filters.WithRequester(handler)
+
+		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
+		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
+		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
+		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
+
+		handler = filters.WithAcceptHeader(handler)
+		handler = filters.WithPathRewriters(handler, PathRewriters)
+		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
+		// Configure filters.WithPanicRecovery to not crash on panic
+		utilruntime.ReallyCrash = false
+
+		return handler
+	}
+}
+
 func SetupConfig(
 	scheme *runtime.Scheme,
 	serverConfig *genericapiserver.RecommendedConfig,
@@ -61,7 +92,7 @@ func SetupConfig(
 	buildVersion string,
 	buildCommit string,
 	buildBranch string,
-	optionalMiddlewares ...web.Middleware,
+	buildHandlerChainFunc func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler,
 ) error {
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
@@ -91,38 +122,10 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
-		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
-		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
-		requestHandler, err := getAPIHandler(
-			delegateHandler,
-			c.LoopbackClientConfig,
-			builders)
-		if err != nil {
-			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
-		}
+	serverConfig.BuildHandlerChainFunc = getDefaultBuildHandlerChainFunc(builders)
 
-		// Needs to run last in request chain to function as expected, hence we register it first.
-		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
-		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
-		handler = filters.WithRequester(handler)
-		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
-
-		// If optional middlewares include auth function, they need to happen before DefaultBuildHandlerChain
-		if len(optionalMiddlewares) > 0 {
-			for _, m := range optionalMiddlewares {
-				handler = m(handler)
-			}
-		}
-
-		handler = filters.WithAcceptHeader(handler)
-		handler = filters.WithPathRewriters(handler, pathRewriters)
-		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
-		// Configure filters.WithPanicRecovery to not crash on panic
-		utilruntime.ReallyCrash = false
-
-		return handler
+	if buildHandlerChainFunc != nil {
+		serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
 	}
 
 	serverConfig.EffectiveVersion = utilversion.DefaultKubeEffectiveVersion()

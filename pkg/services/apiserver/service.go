@@ -336,6 +336,7 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildVersion,
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
+		nil,
 	)
 	if err != nil {
 		return err
