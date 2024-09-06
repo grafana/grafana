@@ -4,6 +4,7 @@ import { ComponentType } from 'react';
 import { Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
+import { GrafanaTheme2 } from '@grafana/data/';
 import { HistoryWrapper, locationService, LocationServiceProvider } from '@grafana/runtime';
 import { GlobalStyles, IconButton, ModalRoot, Stack, useSplitter, useStyles2 } from '@grafana/ui';
 
@@ -73,12 +74,20 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
   primaryProps = alterStyles(primaryProps);
   secondaryProps = alterStyles(secondaryProps);
 
-  const styles = useStyles2(getStyles);
+  // TODO: this should be used to calculate the height of the header but right now results in a error loop when
+  //   navigating to explore "Cannot destructure property 'range' of 'itemState' as it is undefined."
+  // const headerHeight = useChromeHeaderHeight();
+  const styles = useStyles2(getStyles, TOP_BAR_LEVEL_HEIGHT * 2);
   const memoryLocationService = new HistoryWrapper(H.createMemoryHistory({ initialEntries: ['/'] }));
 
   return (
-    <div {...(activePluginId ? containerProps : { className: 'grafana-app' })}>
-      <div {...(activePluginId ? primaryProps : { className: 'grafana-app' })}>
+    // Why do we need these 2 wrappers here? We want for one app case to render very similar as if there was no split
+    // wrapper at all but the split wrapper needs to have these wrappers to attach its container props to. At the same
+    // time we don't want to rerender the main app when going from 2 apps render to single app render which would happen
+    // if we removed the wrappers. So the solution is to keep those 2 divs but make them no actually do anything in
+    // case we are rendering a single app.
+    <div {...(activePluginId ? containerProps : { className: styles.dummyWrapper })}>
+      <div {...(activePluginId ? primaryProps : { className: styles.dummyWrapper })}>
         <RouterWrapper {...props} />
       </div>
       {/* Sidecar */}
@@ -112,13 +121,13 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
   );
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2, headerHeight: number | undefined) => {
   return {
     secondAppWrapper: css({
       label: 'secondAppWrapper',
       display: 'flex',
       height: '100%',
-      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
+      paddingTop: headerHeight || 0,
       flexGrow: 1,
       flexDirection: 'column',
     }),
@@ -127,6 +136,15 @@ const getStyles = () => {
       label: 'secondAppToolbar',
       display: 'flex',
       justifyContent: 'flex-end',
+    }),
+
+    // This is basically the same as grafana-app class. This means the 2 additional wrapper divs that are in between
+    // grafana-app div and the main app component don't actually change anything in the layout.
+    dummyWrapper: css({
+      label: 'dummyWrapper',
+      display: 'flex',
+      height: '100vh',
+      flexDirection: 'column',
     }),
   };
 };
