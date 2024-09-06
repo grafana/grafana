@@ -11,33 +11,33 @@ import { Input, Props as InputProps } from '../Input/Input';
 
 import { getComboboxStyles } from './getComboboxStyles';
 
-export type ComboboxOption = {
+export type ComboboxOption<T extends string | number = string> = {
   label: string;
-  value: string;
+  value: T;
   description?: string;
 };
 
-interface ComboboxProps
+interface ComboboxProps<T extends string | number>
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
-  onChange: (val: ComboboxOption | null) => void;
-  value: string | null;
-  options: ComboboxOption[];
   isClearable?: boolean;
   createCustomValue?: boolean;
+  options: Array<ComboboxOption<T>>;
+  onChange: (option: ComboboxOption<T> | null) => void;
+  value: T | null;
 }
 
-function itemToString(item: ComboboxOption | null) {
-  return item?.label ?? item?.value ?? '';
+function itemToString(item: ComboboxOption<string | number> | null) {
+  return item?.label ?? item?.value.toString() ?? '';
 }
 
-function itemFilter(inputValue: string) {
+function itemFilter<T extends string | number>(inputValue: string) {
   const lowerCasedInputValue = inputValue.toLowerCase();
 
-  return (item: ComboboxOption) => {
+  return (item: ComboboxOption<T>) => {
     return (
       !inputValue ||
       item?.label?.toLowerCase().includes(lowerCasedInputValue) ||
-      item?.value?.toLowerCase().includes(lowerCasedInputValue)
+      item?.value?.toString().toLowerCase().includes(lowerCasedInputValue)
     );
   };
 }
@@ -57,7 +57,7 @@ const WIDTH_MULTIPLIER = 7.3;
  *
  * @alpha
  */
-export const Combobox = ({
+export const Combobox = <T extends string | number>({
   options,
   onChange,
   value,
@@ -65,7 +65,7 @@ export const Combobox = ({
   createCustomValue = false,
   id,
   ...restProps
-}: ComboboxProps) => {
+}: ComboboxProps<T>) => {
   const [items, setItems] = useState(options);
 
   const selectedItemIndex = useMemo(() => {
@@ -89,7 +89,7 @@ export const Combobox = ({
     // Custom value
     if (value !== null) {
       return {
-        label: value,
+        label: value.toString(),
         value,
       };
     }
@@ -135,14 +135,14 @@ export const Combobox = ({
     onInputValueChange: ({ inputValue }) => {
       const filteredItems = options.filter(itemFilter(inputValue));
       if (createCustomValue && inputValue && filteredItems.findIndex((opt) => opt.label === inputValue) === -1) {
-        setItems([
-          ...filteredItems,
-          {
-            label: inputValue,
-            value: inputValue,
-            description: t('combobox.custom-value.create', 'Create custom value'),
-          },
-        ]);
+        const customValueOption: ComboboxOption<T> = {
+          label: inputValue,
+          // @ts-ignore Type casting needed to make this work when T is a number
+          value: inputValue as unknown as T,
+          description: t('combobox.custom-value.create', 'Create custom value'),
+        };
+
+        setItems([...filteredItems, customValueOption]);
         return;
       } else {
         setItems(filteredItems);
@@ -163,7 +163,7 @@ export const Combobox = ({
   });
 
   const onBlur = useCallback(() => {
-    setInputValue(selectedItem?.label ?? value ?? '');
+    setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
 
   // the order of middleware is important!
@@ -284,7 +284,7 @@ export const Combobox = ({
 };
 
 const useDynamicWidth = (
-  items: ComboboxOption[],
+  items: Array<ComboboxOption<string | number>>,
   range: { startIndex: number; endIndex: number } | null,
   setPopoverWidth: { (value: SetStateAction<number | undefined>): void }
 ) => {

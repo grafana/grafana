@@ -143,11 +143,11 @@ export const TimePickerFooter = (props: Props) => {
                   label={t('time-picker.footer.fiscal-year-start', 'Fiscal year start month')}
                 >
                   <Combobox
-                    value={fiscalYearStartMonth?.toString() ?? null}
+                    value={fiscalYearStartMonth ?? null}
                     options={monthOptions}
                     onChange={(value) => {
                       if (onChangeFiscalYearStartMonth) {
-                        onChangeFiscalYearStartMonth(parseInt(value?.value ?? '0', 10));
+                        onChangeFiscalYearStartMonth(value?.value ?? 0);
                       }
                     }}
                   />
