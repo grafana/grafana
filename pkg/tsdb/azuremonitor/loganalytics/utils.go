@@ -46,18 +46,18 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 // 4. the ds toggle is set to true
 func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled bool) (bool, error) {
 	if fromAlert {
-		return false, fmt.Errorf("basic Logs queries cannot be used for alerts")
+		return false, fmt.Errorf("basic logs queries cannot be used for alerts")
 	}
 	if len(resources) != 1 {
 		return false, fmt.Errorf("basic logs queries cannot be run against multiple resources")
 	}
 
 	if !strings.Contains(strings.ToLower(resources[0]), "microsoft.operationalinsights/workspaces") {
-		return false, fmt.Errorf("basic Logs queries may only be run against Log Analytics workspaces")
+		return false, fmt.Errorf("basic logs queries may only be run against Log Analytics workspaces")
 	}
 
 	if !basicLogsEnabled {
-		return false, fmt.Errorf("basic Logs queries may only be run against Log Analytics workspaces")
+		return false, fmt.Errorf("basic logs queries are not enabled")
 	}
 
 	return true, nil

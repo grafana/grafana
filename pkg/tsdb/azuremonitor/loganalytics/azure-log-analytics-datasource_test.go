@@ -89,6 +89,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 		},
 		JSONData: map[string]any{
 			"azureLogAnalyticsSameAs": false,
+			"basicLogsEnabled":        true,
 		},
 	}
 
@@ -100,6 +101,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 	tests := []struct {
 		name                   string
 		fromAlert              bool
+		setBasicLogsEnabled    bool
 		queryModel             backend.DataQuery
 		azureLogAnalyticsQuery *AzureLogAnalyticsQuery
 		Err                    require.ErrorAssertionFunc
@@ -332,8 +334,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name:      "Basic Logs query",
-			fromAlert: false,
+			name:                "Basic Logs query",
+			fromAlert:           false,
+			setBasicLogsEnabled: true,
 			queryModel: backend.DataQuery{
 				JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -377,8 +380,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name:      "Basic Logs query with multiple resources",
-			fromAlert: false,
+			name:                "Basic Logs query with multiple resources",
+			fromAlert:           false,
+			setBasicLogsEnabled: true,
 			queryModel: backend.DataQuery{
 				JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -399,8 +403,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			Err:                    require.Error,
 		},
 		{
-			name:      "Basic Logs query with non LA workspace resources",
-			fromAlert: false,
+			name:                "Basic Logs query with non LA workspace resources",
+			fromAlert:           false,
+			setBasicLogsEnabled: true,
 			queryModel: backend.DataQuery{
 				JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -421,8 +426,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			Err:                    require.Error,
 		},
 		{
-			name:      "Basic Logs query from alerts",
-			fromAlert: true,
+			name:                "Basic Logs query from alerts",
+			fromAlert:           true,
+			setBasicLogsEnabled: true,
 			queryModel: backend.DataQuery{
 				JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -442,6 +448,30 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			azureLogAnalyticsQuery: nil,
 			Err:                    require.Error,
 		},
+		{
+			name:                "Basic Logs query fails if basicLogsEnabled is set to false",
+			fromAlert:           true,
+			setBasicLogsEnabled: false,
+			queryModel: backend.DataQuery{
+				JSON: []byte(fmt.Sprintf(`{
+						"queryType": "Azure Log Analytics",
+						"azureLogAnalytics": {
+							"resources":     ["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1"],
+							"query":        "Perf",
+							"resultFormat": "%s",
+							"dashboardTime": true,
+							"timeColumn":   "TimeGenerated",
+							"basicLogsQuery": true
+						}
+					}`, dataquery.ResultFormatTimeSeries)),
+				RefID:     "A",
+				TimeRange: timeRange,
+				QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
+			},
+			azureLogAnalyticsQuery: nil,
+			Err:                    require.Error,
+		},
+
 		{
 			name:      "Detects App Insights resource queries",
 			fromAlert: false,
