@@ -3452,13 +3452,13 @@ __metadata:
   linkType: soft
 
 "@grafana/e2e-selectors@npm:^11.0.0":
-  version: 11.1.0
-  resolution: "@grafana/e2e-selectors@npm:11.1.0"
+  version: 11.2.0
+  resolution: "@grafana/e2e-selectors@npm:11.2.0"
   dependencies:
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     tslib: "npm:2.6.3"
     typescript: "npm:5.4.5"
-  checksum: 10/010a32e8b562d0da83b008646b9928a96a79957096eed713aa67b227d8ad6055d22cc0ec26f87fd9839cfb28344d0012f49c3c823defc6e91f4ab05ed7d8c465
+  checksum: 10/aec06529dfedcd2611b4a0c25b256fdd860979105a7734309d8a06655c18a5915e7132ed99d110e4742adf904dc483c7bfb20fbda0b5668773a77f607351e49f
   languageName: node
   linkType: hard
 
@@ -3932,9 +3932,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^5.13.0":
-  version: 5.13.0
-  resolution: "@grafana/scenes@npm:5.13.0"
+"@grafana/scenes@npm:5.14.1":
+  version: 5.14.1
+  resolution: "@grafana/scenes@npm:5.14.1"
   dependencies:
     "@floating-ui/react": "npm:0.26.16"
     "@grafana/e2e-selectors": "npm:^11.0.0"
@@ -3951,7 +3951,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/d22cbbc146b26e4d3e9b1f2b873d44e771e7c87b4a211cc61701cbba5460eb0a5f49ba982c4dfff7c86729487712e94340d6cc5b0d6a19483549205dfea1ebe6
+  checksum: 10/0f8bac7829eb87ab1e46eb94ebf73b730468c9a1f946667c567fe40a8d8741af9956a27fa63a82ee79e5dafa72f748bf1332013c439169ea5291a4394cd1abcf
   languageName: node
   linkType: hard
 
@@ -8845,7 +8845,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-virtual@npm:^3.5.1, @tanstack/react-virtual@npm:^3.9.0":
+"@tanstack/react-virtual@npm:^3.5.1":
   version: 3.10.6
   resolution: "@tanstack/react-virtual@npm:3.10.6"
   dependencies:
@@ -8857,10 +8857,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/react-virtual@npm:^3.9.0":
+  version: 3.10.7
+  resolution: "@tanstack/react-virtual@npm:3.10.7"
+  dependencies:
+    "@tanstack/virtual-core": "npm:3.10.7"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 10/cf4324687a3849a981f6e7baad26199fc9419184d69585d9aca35876f9a83a0d9167b31d8d5e74ad739465961eaedc7b5c9177efc62c502adbb7f061be8dc554
+  languageName: node
+  linkType: hard
+
 "@tanstack/virtual-core@npm:3.10.6":
   version: 3.10.6
   resolution: "@tanstack/virtual-core@npm:3.10.6"
   checksum: 10/e8960625cd24a31bc4bace8b9011780ea384811c4205cafc8c076442f85a3af6690c7700f3480524aaad763b1f3a34938386b3bf23d18c10fb5443dec92ec826
+  languageName: node
+  linkType: hard
+
+"@tanstack/virtual-core@npm:3.10.7":
+  version: 3.10.7
+  resolution: "@tanstack/virtual-core@npm:3.10.7"
+  checksum: 10/28aa29e454f2674bd2e3609d2a9ace4ad9913f55b2edd71363b770cde150ffafd67d5fd846cc7d1538b5b0e4e62a1960f253c48c85ad9774692b3be14579eaad
   languageName: node
   linkType: hard
 
@@ -18534,7 +18553,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:^5.13.0"
+    "@grafana/scenes": "npm:5.14.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"

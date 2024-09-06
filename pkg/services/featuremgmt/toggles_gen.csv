@@ -188,3 +188,4 @@ singleTopNav,experimental,@grafana/grafana-frontend-platform,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
+appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,false
