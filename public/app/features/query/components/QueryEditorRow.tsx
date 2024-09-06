@@ -24,14 +24,8 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import {
-  AngularComponent,
-  getAngularLoader,
-  getDataSourceSrv,
-  reportInteraction,
-  usePluginLinks,
-} from '@grafana/runtime';
-import { Badge, ErrorBoundaryAlert, IconButton } from '@grafana/ui';
+import { AngularComponent, getAngularLoader, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { Badge, ErrorBoundaryAlert } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -486,7 +480,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           />
         )}
         {this.renderExtraActions()}
-        <PluginLinks />
         <QueryOperationAction
           title={t('query-operation.header.duplicate-query', 'Duplicate query')}
           icon="copy"
@@ -599,20 +592,6 @@ function notifyAngularQueryEditorsOfData<TQuery extends DataQuery>(
   // Some query controllers listen to data error events and need a digest
   // for some reason this needs to be done in next tick
   setTimeout(editor.digest);
-}
-
-function PluginLinks() {
-  const result = usePluginLinks({ extensionPointId: 'grafana/query-editor-row/actions' });
-  if (result.isLoading || result.links.length === 0) {
-    return null;
-  }
-  return (
-    <>
-      {result.links.map((link) => {
-        return <IconButton key={link.id} name={link.icon!} tooltip={link.title} onClick={link.onClick} type="button" />;
-      })}
-    </>
-  );
 }
 
 export interface AngularQueryComponentScope<TQuery extends DataQuery> {
