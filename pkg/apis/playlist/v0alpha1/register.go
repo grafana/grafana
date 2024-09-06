@@ -15,7 +15,7 @@ const (
 	VERSION       = "v0alpha1"
 	APIVERSION    = GROUP + "/" + VERSION
 	RESOURCE      = "playlists"
-	GROUPRESOURCE = GROUP + "/" + RESOURCE
+	RESOURCEGROUP = RESOURCE + "." + GROUP
 )
 
 var PlaylistResourceInfo = utils.NewResourceInfo(GROUP, VERSION,

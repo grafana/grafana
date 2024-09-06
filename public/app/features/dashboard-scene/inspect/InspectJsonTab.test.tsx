@@ -5,6 +5,8 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  PanelPlugin,
+  PluginType,
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
@@ -16,7 +18,7 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -25,10 +27,33 @@ import { findVizPanelByKey } from '../utils/utils';
 import { InspectJsonTab } from './InspectJsonTab';
 
 standardTransformersRegistry.setInit(getStandardTransformers);
+const panelPlugin: PanelPlugin = new PanelPlugin(() => null);
+panelPlugin.meta = {
+  id: 'table',
+  name: 'Table',
+  sort: 1,
+  type: PluginType.panel,
+  info: {
+    author: {
+      name: 'name',
+    },
+    description: '',
+    links: [],
+    logos: {
+      large: '',
+      small: '',
+    },
+    screenshots: [],
+    updated: '',
+    version: '1.0.',
+  },
+  module: '',
+  baseUrl: '',
+};
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
-  getPanelPluginFromCache: (id: string) => undefined,
+  getPanelPluginFromCache: (id: string) => panelPlugin,
 });
 
 jest.mock('@grafana/runtime', () => ({
@@ -204,7 +229,29 @@ async function buildTestScene() {
 }
 
 async function buildTestSceneWithLibraryPanel() {
-  const panel = vizPanelToPanel(buildTestPanel());
+  const libraryPanel = new VizPanel({
+    title: 'Panel A',
+    pluginId: 'table',
+    key: 'panel-12',
+    $behaviors: [new LibraryPanelBehavior({ title: 'LibraryPanel A title', name: 'LibraryPanel A', uid: '111' })],
+    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    $data: new SceneDataTransformer({
+      transformations: [
+        {
+          id: 'reduce',
+          options: {
+            reducers: ['last'],
+          },
+        },
+      ],
+      $data: new SceneQueryRunner({
+        datasource: { uid: 'abcdef' },
+        queries: [{ refId: 'A' }],
+      }),
+    }),
+  });
+
+  const panel = vizPanelToPanel(libraryPanel.clone({ $behaviors: undefined }));
 
   const libraryPanelState = {
     name: 'LibraryPanel A',
@@ -212,11 +259,20 @@ async function buildTestSceneWithLibraryPanel() {
     uid: '111',
     panelKey: 'panel-22',
     model: panel,
+    type: 'table',
     version: 1,
   };
 
   jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue({ ...libraryPanelState, ...panel });
-  const libraryPanel = new LibraryVizPanel(libraryPanelState);
+
+  const gridItem = new DashboardGridItem({
+    key: 'griditem-1',
+    x: 0,
+    y: 0,
+    width: 10,
+    height: 12,
+    body: libraryPanel,
+  });
 
   const scene = new DashboardScene({
     title: 'hello',
@@ -225,16 +281,7 @@ async function buildTestSceneWithLibraryPanel() {
       canEdit: true,
     },
     body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: libraryPanel,
-        }),
-      ],
+      children: [gridItem],
     }),
   });
 
@@ -243,7 +290,7 @@ async function buildTestSceneWithLibraryPanel() {
   await new Promise((r) => setTimeout(r, 1));
 
   const tab = new InspectJsonTab({
-    panelRef: libraryPanel.state.panel!.getRef(),
+    panelRef: libraryPanel.getRef(),
     onClose: jest.fn(),
   });
 
