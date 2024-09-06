@@ -1,6 +1,6 @@
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -25,7 +25,7 @@ import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../../scene/PanelTimeRange';
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../../utils/utils';
 
 import { PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
@@ -162,7 +162,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   }
 
   public onOpenInspector = () => {
-    // this._panelManager.inspectPanel();
+    const panel = this.state.panelRef.resolve();
+    const panelId = getPanelIdForVizPanel(panel);
+
+    locationService.partial({ inspect: panelId, inspectTab: 'query' });
   };
 
   public onChangeDataSource = async (
