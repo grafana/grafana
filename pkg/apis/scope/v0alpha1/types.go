@@ -26,8 +26,10 @@ type ScopeSpec struct {
 }
 
 type ScopeFilter struct {
-	Key      string         `json:"key"`
-	Value    string         `json:"value"`
+	Key   string `json:"key"`
+	Value string `json:"value"`
+	// Values is used for operators that require multiple values (e.g. one-of and not-one-of).
+	Values   []string       `json:"values,omitempty"`
 	Operator FilterOperator `json:"operator"`
 }
 

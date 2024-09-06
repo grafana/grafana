@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
@@ -76,10 +77,6 @@ func filtersToMatchers(scopeFilters, adhocFilters []ScopeFilter) ([]*labels.Matc
 		if err != nil {
 			return nil, err
 		}
-		if filterMap[filter.Key] != nil &&
-			(filter.Operator == FilterOperatorOneOf || filter.Operator == FilterOperatorNotOneOf) {
-			matcher.Value = filterMap[filter.Key].Value + "|" + matcher.Value
-		}
 		filterMap[filter.Key] = matcher
 	}
 
@@ -108,6 +105,11 @@ func filterToMatcher(f ScopeFilter) (*labels.Matcher, error) {
 		mt = labels.MatchNotRegexp
 	default:
 		return nil, fmt.Errorf("unknown operator %q", f.Operator)
+	}
+	if f.Operator == FilterOperatorOneOf || f.Operator == FilterOperatorNotOneOf {
+		if len(f.Values) > 0 {
+			return labels.NewMatcher(mt, f.Key, strings.Join(f.Values, "|"))
+		}
 	}
 	return labels.NewMatcher(mt, f.Key, f.Value)
 }

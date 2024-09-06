@@ -92,8 +92,7 @@ func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 			name:  "OneOf Operator is combined into a single regex filter",
 			query: `http_requests_total{job="prometheus"}`,
 			scopeFilters: []ScopeFilter{
-				{Key: "status", Value: "404", Operator: FilterOperatorOneOf},
-				{Key: "status", Value: "400", Operator: FilterOperatorOneOf},
+				{Key: "status", Values: []string{"404", "400"}, Operator: FilterOperatorOneOf},
 			},
 			expected:  `http_requests_total{job="prometheus",status=~"404|400"}`,
 			expectErr: false,
