@@ -4,6 +4,7 @@ import { useHistory } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconName, Text, useStyles2 } from '@grafana/ui';
+import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 import { getFirstCompatibleDataSource } from 'app/features/alerting/unified/utils/datasource';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
@@ -58,7 +59,11 @@ export function ConfigureIRM() {
     });
   }, [dataSourceConfigurationData.dataSourceCompatibleWithAlerting]);
 
-  const [essentialsOpen, setEssentialsOpen] = useState(false);
+  // query param 'essentials' is used to open essentials drawer when landing on the page
+  const [queryParams] = useURLSearchParams();
+  const essentialsIsOpenFromUrl = queryParams.get('essentials') === 'open';
+
+  const [essentialsOpen, setEssentialsOpen] = useState(essentialsIsOpenFromUrl);
 
   const handleActionClick = (configID: number, isDone?: boolean) => {
     trackIrmConfigurationTrackerEvent(IRMInteractionNames.ClickDataSources, {
