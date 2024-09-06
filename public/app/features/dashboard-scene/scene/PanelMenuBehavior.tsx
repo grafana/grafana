@@ -145,6 +145,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
+        iconClassName: 'file-copy-alt',
         onClick: () => {
           dashboard.duplicatePanel(panel);
         },
@@ -155,6 +156,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     if (!isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.copy', `Copy`),
+        iconClassName: 'copy',
         onClick: () => {
           dashboard.copyPanel(panel);
         },
@@ -165,6 +167,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
       if (isLibraryPanel(panel)) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+          iconClassName: 'link-broken',
           onClick: () => {
             dashboard.showModal(
               new UnlinkLibraryPanelModal({
@@ -176,6 +179,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
 
         moreSubMenu.push({
           text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
+          iconClassName: 'library-panel',
           onClick: () => {
             dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
           },
@@ -184,6 +188,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         if (config.featureToggles.newDashboardSharingComponent) {
           moreSubMenu.push({
             text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
+            iconClassName: 'plus-square',
             onClick: () => {
               const drawer = new ShareDrawer({
                 shareView: shareDashboardType.libraryPanel,
@@ -211,6 +216,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
 
     moreSubMenu.push({
       text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+      iconClassName: 'bell',
       onClick: (e) => onCreateAlert(panel),
     });
 
@@ -219,6 +225,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         text: panel.state.options.legend.showLegend
           ? t('panel.header-menu.hide-legend', 'Hide legend')
           : t('panel.header-menu.show-legend', 'Show legend'),
+        iconClassName: panel.state.options.legend.showLegend ? 'legend-hide' : 'legend-show',
         onClick: (e) => {
           e.preventDefault();
           toggleVizPanelLegend(panel);
@@ -230,6 +237,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery && !isRepeat) {
       moreSubMenu.push({
         text: t('panel.header-menu.get-help', 'Get help'),
+        iconClassName: 'question-circle',
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
           onInspectPanel(panel, InspectTab.Help);
