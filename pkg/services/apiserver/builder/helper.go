@@ -46,7 +46,7 @@ var pathRewriters = []filters.PathRewriter{
 		},
 	},
 	{
-		Pattern: regexp.MustCompile(`(/apis/identity.grafana.app/v0alpha1/namespaces/.*/display$)`),
+		Pattern: regexp.MustCompile(`(/apis/iam.grafana.app/v0alpha1/namespaces/.*/display$)`),
 		ReplaceFunc: func(matches []string) string {
 			return matches[1] + "/name" // connector requires a name
 		},
@@ -165,7 +165,11 @@ func InstallAPIs(
 
 			// Get the option from custom.ini/command line
 			// when missing this will default to mode zero (legacy only)
-			mode := storageOpts.DualWriterDesiredModes[key]
+			var mode = grafanarest.DualWriterMode(0)
+			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
+			if resourceExists {
+				mode = resourceConfig.DualWriterMode
+			}
 
 			// TODO: inherited context from main Grafana process
 			ctx := context.Background()

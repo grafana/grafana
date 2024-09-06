@@ -79,7 +79,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
     });
   };
 
-  const renderJSON = (data: string) => {
+  const renderJSON = (data = '{}') => {
     try {
       const json = JSON.parse(data);
       return <JSONFormatter json={json} />;
@@ -92,10 +92,20 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
     }
   };
 
+  const shouldRenderJSON =
+    value.options.method !== HttpRequestMethod.GET &&
+    value.options.headers?.some(([name, value]) => name === 'Content-Type' && value === 'application/json');
+
   return (
     <div className={styles.listItem}>
       <Field label="Title">
-        <SuggestionsInput value={value.title} onChange={onTitleChange} suggestions={suggestions} />
+        <SuggestionsInput
+          value={value.title}
+          onChange={onTitleChange}
+          suggestions={suggestions}
+          autoFocus={value.title === ''}
+          placeholder="Action title"
+        />
       </Field>
 
       <InlineFieldRow>
@@ -111,7 +121,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
 
       <InlineFieldRow>
         <InlineField label="URL" labelWidth={LABEL_WIDTH} grow={true}>
-          <SuggestionsInput value={value.options.url} onChange={onUrlChange} suggestions={suggestions} />
+          <SuggestionsInput
+            value={value.options.url}
+            onChange={onUrlChange}
+            suggestions={suggestions}
+            placeholder="URL"
+          />
         </InlineField>
       </InlineFieldRow>
 
@@ -143,8 +158,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions }: Actio
         </Field>
       )}
 
-      <br />
-      {value?.options.method !== HttpRequestMethod.GET && renderJSON(value?.options.body ?? '{}')}
+      {shouldRenderJSON && (
+        <>
+          <br />
+          {renderJSON(value?.options.body)}
+        </>
+      )}
     </div>
   );
 });

@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 
 import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, VariableHide, urlUtil } from '@grafana/data';
-import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
-  getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
   sceneGraph,
@@ -20,6 +19,7 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  UrlSyncManager,
   VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
@@ -160,7 +160,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       })
     );
 
-    const urlState = getUrlSyncManager().getUrlState(this);
+    const urlState = new UrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
     locationService.replace(fullUrl);
   }
@@ -259,9 +259,11 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
-        layout: 'vertical',
+        layout: config.featureToggles.newFiltersUI ? 'combobox' : 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
+        // since we only support prometheus datasources, this is always true
+        supportsMultiValueOperators: true,
       }),
     ],
   });

@@ -97,9 +97,9 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
       loading={isLoading}
       options={options}
       value={value}
-      onChange={(val) => {
-        setValue(val?.value || null);
-        action('onChange')(val);
+      onChange={(opt) => {
+        setValue(opt?.value || null);
+        action('onChange')(opt);
       }}
     />
   );

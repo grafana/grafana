@@ -10,7 +10,7 @@ import {
   RuleIdentifier,
   RuleWithLocation,
 } from 'app/types/unified-alerting';
-import { Annotations, Labels, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { Annotations, Labels, PromRuleType, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
@@ -100,6 +100,28 @@ export function equal(a: RuleIdentifier, b: RuleIdentifier) {
       a.namespace === b.namespace &&
       a.ruleName === b.ruleName &&
       a.ruleHash === b.ruleHash &&
+      a.ruleSourceName === b.ruleSourceName
+    );
+  }
+
+  // It might happen to compare Cloud and Prometheus identifiers for datasources with available Ruler API
+  // It happends when the Ruler API timeouts and the UI cannot create Cloud identifiers, so it creates a Prometheus identifier instead.
+  if (isCloudRuleIdentifier(a) && isPrometheusRuleIdentifier(b)) {
+    return (
+      a.groupName === b.groupName &&
+      a.namespace === b.namespace &&
+      a.ruleName === b.ruleName &&
+      a.rulerRuleHash === b.ruleHash &&
+      a.ruleSourceName === b.ruleSourceName
+    );
+  }
+
+  if (isPrometheusRuleIdentifier(a) && isCloudRuleIdentifier(b)) {
+    return (
+      a.groupName === b.groupName &&
+      a.namespace === b.namespace &&
+      a.ruleName === b.ruleName &&
+      a.ruleHash === b.rulerRuleHash &&
       a.ruleSourceName === b.ruleSourceName
     );
   }
@@ -219,41 +241,61 @@ function hash(value: string): number {
 
 // this is used to identify rules, mimir / loki rules do not have a unique identifier
 export function hashRulerRule(rule: RulerRuleDTO): string {
-  if (isRecordingRulerRule(rule)) {
-    return hash(JSON.stringify([rule.record, rule.expr, hashLabelsOrAnnotations(rule.labels)])).toString();
-  } else if (isAlertingRulerRule(rule)) {
-    return hash(
-      JSON.stringify([
-        rule.alert,
-        rule.expr,
-        hashLabelsOrAnnotations(rule.annotations),
-        hashLabelsOrAnnotations(rule.labels),
-      ])
-    ).toString();
-  } else if (isGrafanaRulerRule(rule)) {
+  if (isGrafanaRulerRule(rule)) {
     return rule.grafana_alert.uid;
-  } else {
-    throw new Error('only recording and alerting ruler rules can be hashed');
   }
+
+  const fingerprint = getRulerRuleFingerprint(rule);
+  return hash(JSON.stringify(fingerprint)).toString();
+}
+
+function getRulerRuleFingerprint(rule: RulerRuleDTO) {
+  if (isRecordingRulerRule(rule)) {
+    return [rule.record, PromRuleType.Recording, hashQuery(rule.expr), hashLabelsOrAnnotations(rule.labels)];
+  }
+  if (isAlertingRulerRule(rule)) {
+    return [
+      rule.alert,
+      PromRuleType.Alerting,
+      hashQuery(rule.expr),
+      hashLabelsOrAnnotations(rule.annotations),
+      hashLabelsOrAnnotations(rule.labels),
+    ];
+  }
+  throw new Error('Only recording and alerting ruler rules can be hashed');
 }
 
 export function hashRule(rule: Rule): string {
+  const fingerprint = getPromRuleFingerprint(rule);
+  return hash(JSON.stringify(fingerprint)).toString();
+}
+
+function getPromRuleFingerprint(rule: Rule) {
   if (isRecordingRule(rule)) {
-    return hash(JSON.stringify([rule.type, rule.query, hashLabelsOrAnnotations(rule.labels)])).toString();
+    return [rule.name, PromRuleType.Recording, hashQuery(rule.query), hashLabelsOrAnnotations(rule.labels)];
   }
-
   if (isAlertingRule(rule)) {
-    return hash(
-      JSON.stringify([
-        rule.type,
-        rule.query,
-        hashLabelsOrAnnotations(rule.annotations),
-        hashLabelsOrAnnotations(rule.labels),
-      ])
-    ).toString();
+    return [
+      rule.name,
+      PromRuleType.Alerting,
+      hashQuery(rule.query),
+      hashLabelsOrAnnotations(rule.annotations),
+      hashLabelsOrAnnotations(rule.labels),
+    ];
   }
+  throw new Error('Only recording and alerting rules can be hashed');
+}
 
-  throw new Error('only recording and alerting rules can be hashed');
+// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
+export function hashQuery(query: string) {
+  // one of them might be wrapped in parens
+  if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
+    query = query.slice(1, -1);
+  }
+  // whitespace could be added or removed
+  query = query.replace(/\s|\n/g, '');
+  // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
+  return query.split('').sort().join('');
 }
 
 export function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {

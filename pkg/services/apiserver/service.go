@@ -263,6 +263,14 @@ func (s *service) start(ctx context.Context) error {
 		return errs[0]
 	}
 
+	// This will check that required feature toggles are enabled for more advanced storage modes
+	// Any required preconditions should be hardcoded here
+	if o.StorageOptions != nil {
+		if err := o.StorageOptions.EnforceFeatureToggleAfterMode1(s.features); err != nil {
+			return err
+		}
+	}
+
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
@@ -290,7 +298,7 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		client := resource.NewLocalResourceStoreClient(server)
+		client := resource.NewLocalResourceClient(server)
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
 			o.RecommendedOptions.Etcd.StorageConfig)
 
@@ -306,7 +314,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 		// Create a client instance
-		client := resource.NewResourceStoreClientGRPC(conn)
+		client := resource.NewResourceClient(conn)
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeLegacy:

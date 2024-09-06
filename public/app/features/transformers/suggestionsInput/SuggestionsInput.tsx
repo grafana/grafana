@@ -26,6 +26,7 @@ interface SuggestionsInputProps {
   width?: number;
   type?: HTMLElementType;
   style?: React.CSSProperties;
+  autoFocus?: boolean;
 }
 
 const getStyles = (theme: GrafanaTheme2, inputHeight: number) => {
@@ -55,6 +56,7 @@ export const SuggestionsInput = ({
   invalid,
   type = HTMLElementType.InputElement,
   style,
+  autoFocus = false,
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
@@ -111,7 +113,7 @@ export const SuggestionsInput = ({
       if (x[startPos - 1] === '$') {
         input.value = x.slice(0, startPos) + item.value + x.slice(curPos);
       } else {
-        input.value = x.slice(0, startPos) + '$' + item.value + x.slice(curPos);
+        input.value = x.slice(0, startPos) + '$' + `{${item.value}}` + x.slice(curPos);
       }
 
       setVariableValue(input.value);
@@ -213,9 +215,13 @@ export const SuggestionsInput = ({
         </div>
       )}
       {type === HTMLElementType.InputElement ? (
-        <Input {...inputProps} ref={handleRef as unknown as React.RefObject<HTMLInputElement>} />
+        <Input {...inputProps} ref={handleRef as unknown as React.RefObject<HTMLInputElement>} autoFocus={autoFocus} />
       ) : (
-        <TextArea {...inputProps} ref={handleRef as unknown as React.RefObject<HTMLTextAreaElement>} />
+        <TextArea
+          {...inputProps}
+          ref={handleRef as unknown as React.RefObject<HTMLTextAreaElement>}
+          autoFocus={autoFocus}
+        />
       )}
     </div>
   );

@@ -1372,6 +1372,16 @@
         },
         "description": "(empty)"
       },
+      "goneError": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorResponseBody"
+            }
+          }
+        },
+        "description": "GoneError is returned when the requested endpoint was removed."
+      },
       "helpFlagResponse": {
         "content": {
           "application/json": {
@@ -1627,16 +1637,6 @@
           }
         },
         "description": "An OKResponse is returned if the request was successful."
-      },
-      "postAPIkeyResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/NewApiKeyResult"
-            }
-          }
-        },
-        "description": "(empty)"
       },
       "postAnnotationResponse": {
         "content": {
@@ -15352,7 +15352,7 @@
     },
     "/auth/keys": {
       "get": {
-        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
+        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.",
         "operationId": "getAPIkeys",
         "parameters": [
           {
@@ -15392,8 +15392,8 @@
         "description": "Will return details of the created API key.",
         "operationId": "addAPIkey",
         "responses": {
-          "301": {
-            "$ref": "#/components/responses/statusMovedPermanently"
+          "410": {
+            "$ref": "#/components/responses/goneError"
           }
         },
         "summary": "Creates an API key.",
@@ -15405,7 +15405,7 @@
     "/auth/keys/{id}": {
       "delete": {
         "deprecated": true,
-        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
+        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/service-accounts/migrate-api-keys/.",
         "operationId": "deleteAPIkey",
         "parameters": [
           {

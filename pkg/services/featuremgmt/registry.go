@@ -1047,8 +1047,9 @@ var (
 		{
 			Name:        "promQLScope",
 			Description: "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Expression:  "true",
 		},
 		{
 			Name:         "sqlExpressions",
@@ -1394,8 +1395,8 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "adhocFilterOneOf",
-			Description: "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
+			Name:        "newFiltersUI",
+			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 		},

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { contentTypeOptions, GrafanaTheme2, VariableSuggestion } from '@grafana/data';
 import { IconButton } from '@grafana/ui/src/components/IconButton/IconButton';
@@ -24,7 +24,18 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
 
   const [paramName, setParamName] = useState('');
   const [paramValue, setParamValue] = useState('');
-  const [contentTypeParamValue, setContentTypeParamValue] = useState(headersContentType ? 'application/json' : '');
+  const [contentTypeParamValue, setContentTypeParamValue] = useState('');
+
+  useEffect(() => {
+    if (contentTypeParamValue !== '') {
+      setContentTypeParamValue(contentTypeParamValue);
+    } else if (headersContentType) {
+      setContentTypeParamValue(headersContentType[1]);
+    }
+  }, [contentTypeParamValue, headersContentType]);
+
+  // forces re-init of first SuggestionsInput(s), since they are stateful and don't respond to 'value' prop changes to be able to clear them :(
+  const [entryKey, setEntryKey] = useState(Math.random().toString());
 
   const changeParamValue = (paramValue: string) => {
     setParamValue(paramValue);
@@ -39,34 +50,34 @@ export const ParamsEditor = ({ value, onChange, suggestions, contentTypeHeader =
     onChange(updatedParams);
   };
 
-  const addParam = (isContentType?: string) => {
+  const addParam = (contentType?: [string, string]) => {
     let newParams: Array<[string, string]>;
-    const contentTypeParamName = 'Content-Type';
 
     if (value) {
-      newParams = value.filter((e) => (e[0] !== isContentType ? contentTypeParamName : paramName));
+      newParams = value.filter((e) => e[0] !== (contentType ? contentType[0] : paramName));
     } else {
       newParams = [];
     }
 
-    newParams.push(isContentType ? [contentTypeParamName, contentTypeParamValue] : [paramName, paramValue]);
+    newParams.push(contentType ?? [paramName, paramValue]);
     newParams.sort((a, b) => a[0].localeCompare(b[0]));
     onChange(newParams);
 
     setParamName('');
     setParamValue('');
+    setEntryKey(Math.random().toString());
   };
 
   const changeContentTypeParamValue = (value: string) => {
     setContentTypeParamValue(value);
-    addParam('Content-Type');
+    addParam(['Content-Type', value]);
   };
 
   const isAddParamsDisabled = paramName === '' || paramValue === '';
 
   return (
     <div>
-      <Stack direction="row">
+      <Stack direction="row" key={entryKey}>
         <SuggestionsInput
           value={paramName}
           onChange={changeParamName}

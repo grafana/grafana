@@ -202,7 +202,7 @@ export interface FeatureToggles {
   prometheusAzureOverrideAudience?: boolean;
   backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
-  adhocFilterOneOf?: boolean;
+  newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
   singleTopNav?: boolean;
   exploreLogsShardSplitting?: boolean;
