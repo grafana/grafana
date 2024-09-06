@@ -33,7 +33,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
@@ -44,11 +44,7 @@ import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
-import {
-  buildGridItemForLibPanel,
-  buildGridItemForPanel,
-  transformSaveModelToScene,
-} from './transformSaveModelToScene';
+import { buildGridItemForPanel, transformSaveModelToScene } from './transformSaveModelToScene';
 import {
   gridItemToPanel,
   gridRowToSaveModel,
@@ -348,33 +344,33 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Library panels', () => {
     it('given a library panel', () => {
-      // Not using buildGridItemFromPanelSchema since it strips options/fieldConfig
-      const libVizPanel = new LibraryVizPanel({
-        name: 'Some lib panel panel',
-        title: 'A panel',
-        uid: 'lib-panel-uid',
-        panelKey: 'lib-panel',
-        panel: new VizPanel({
-          key: 'panel-4',
-          title: 'Panel blahh blah',
-          fieldConfig: {
-            defaults: {},
-            overrides: [],
+      const libVizPanel = new VizPanel({
+        key: 'panel-4',
+        title: 'Panel blahh blah',
+        $behaviors: [
+          new LibraryPanelBehavior({
+            name: 'Some lib panel panel',
+            title: 'A panel',
+            uid: 'lib-panel-uid',
+          }),
+        ],
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        options: {
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'bottom',
+            showLegend: true,
           },
-          options: {
-            legend: {
-              calcs: [],
-              displayMode: 'list',
-              placement: 'bottom',
-              showLegend: true,
-            },
-            tooltip: {
-              maxHeight: 600,
-              mode: 'single',
-              sort: 'none',
-            },
+          tooltip: {
+            maxHeight: 600,
+            mode: 'single',
+            sort: 'none',
           },
-        }),
+        },
       });
 
       const panel = new DashboardGridItem({
@@ -824,32 +820,33 @@ describe('transformSceneToSaveModel', () => {
       it('handles repeated library panels', () => {
         const { scene, repeater } = buildPanelRepeaterScene(
           { variableQueryTime: 0, numberOfOptions: 2 },
-          new LibraryVizPanel({
-            name: 'Some lib panel panel',
-            title: 'A panel',
-            uid: 'lib-panel-uid',
-            panelKey: 'lib-panel',
-            panel: new VizPanel({
-              key: 'panel-4',
-              title: 'Panel blahh blah',
-              fieldConfig: {
-                defaults: {},
-                overrides: [],
+          new VizPanel({
+            key: 'panel-4',
+            title: 'Panel blahh blah',
+            fieldConfig: {
+              defaults: {},
+              overrides: [],
+            },
+            options: {
+              legend: {
+                calcs: [],
+                displayMode: 'list',
+                placement: 'bottom',
+                showLegend: true,
               },
-              options: {
-                legend: {
-                  calcs: [],
-                  displayMode: 'list',
-                  placement: 'bottom',
-                  showLegend: true,
-                },
-                tooltip: {
-                  maxHeight: 600,
-                  mode: 'single',
-                  sort: 'none',
-                },
+              tooltip: {
+                maxHeight: 600,
+                mode: 'single',
+                sort: 'none',
               },
-            }),
+            },
+            $behaviors: [
+              new LibraryPanelBehavior({
+                name: 'Some lib panel panel',
+                title: 'A panel',
+                uid: 'lib-panel-uid',
+              }),
+            ],
           })
         );
 
@@ -1138,9 +1135,5 @@ describe('transformSceneToSaveModel', () => {
 });
 
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>) {
-  if (panel.libraryPanel) {
-    return buildGridItemForLibPanel(new PanelModel(panel))!;
-  }
-
   return buildGridItemForPanel(new PanelModel(panel));
 }
