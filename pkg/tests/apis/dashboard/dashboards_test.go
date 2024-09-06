@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"context"
-	"slices"
 	"strings"
 	"testing"
 
@@ -87,55 +86,16 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 		// require.Len(t, history.Items, 1)
 		// require.Equal(t, created, history.Items[0].GetName())
 
-		//create
-		first, err := client.Resource.Create(context.Background(),
-			helper.LoadYAMLOrJSONFile("testdata/dashboard-test-create.yaml"),
-			metav1.CreateOptions{},
-		)
-		require.NoError(t, err)
-		require.Equal(t, "test", first.GetName())
-		uids := []string{first.GetName()}
+		obj.Object["spec"].(map[string]any)["title"] = "Changed title"
 
-		for i := 0; i < 2; i++ {
-			out, err := client.Resource.Create(context.Background(),
-				helper.LoadYAMLOrJSONFile("testdata/dashboard-generate.yaml"),
-				metav1.CreateOptions{},
-			)
-			require.NoError(t, err)
-			uids = append(uids, out.GetName())
-		}
-		slices.Sort(uids) // make list compare stable
-
-		_, err = client.Resource.Update(context.Background(),
-			helper.LoadYAMLOrJSONFile("testdata/dashboard-test-replace.yaml"),
+		updated, err := client.Resource.Update(context.Background(),
+			obj,
 			metav1.UpdateOptions{},
 		)
 		require.NoError(t, err)
-		// require.Equal(t, first.GetName(), updated.GetName())
-		// require.Equal(t, first.GetUID(), updated.GetUID())
-		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
-		// out := getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
-		// 	Name:     "Test playlist (replaced from k8s; 22m; 1 items; PUT)",
-		// 	Interval: "22m",
-		// })
-		// require.Equal(t, updated.GetResourceVersion(), out.GetResourceVersion())
-
-		// // PATCH :: apply only some fields
-		// updated, err = client.Resource.Apply(context.Background(), "test",
-		// 	helper.LoadYAMLOrJSONFile("testdata/playlist-test-apply.yaml"),
-		// 	metav1.ApplyOptions{
-		// 		Force:        true,
-		// 		FieldManager: "testing",
-		// 	},
-		// )
-		// require.NoError(t, err)
-		// require.Equal(t, first.GetName(), updated.GetName())
-		// require.Equal(t, first.GetUID(), updated.GetUID())
-		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
-		// getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
-		// 	Name:     "Test playlist (apply from k8s; ??m; ?? items; PATCH)",
-		// 	Interval: "22m", // has not changed from previous update
-		// })
+		require.Equal(t, obj.GetName(), updated.GetName())
+		require.Equal(t, obj.GetUID(), updated.GetUID())
+		require.Less(t, obj.GetResourceVersion(), updated.GetResourceVersion())
 
 		// Delete the object
 		err = client.Resource.Delete(ctx, created, metav1.DeleteOptions{})
@@ -170,73 +130,73 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		runDashboardTest(t, helper)
 	})
 
-	// t.Run("with dual writer mode 1", func(t *testing.T) {
-	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction: false, // required for experimental APIs
-	// 		DisableAnonymous:  true,
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-	// 			featuremgmt.FlagKubernetesDashboards,
-	// 		},
-	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-	// 			"dashboards.dashboard.grafana.app": {
-	// 				DualWriterMode: 1,
-	// 			},
-	// 		},
-	// 	})
-	// 	runDashboardTest(t, helper)
-	// })
+	t.Run("with dual writer mode 1", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 1,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
 
-	// t.Run("with dual writer mode 2", func(t *testing.T) {
-	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction: false, // required for experimental APIs
-	// 		DisableAnonymous:  true,
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-	// 			featuremgmt.FlagKubernetesDashboards,
-	// 		},
-	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-	// 			"dashboards.dashboard.grafana.app": {
-	// 				DualWriterMode: 2,
-	// 			},
-	// 		},
-	// 	})
-	// 	runDashboardTest(t, helper)
-	// })
+	t.Run("with dual writer mode 2", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 2,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
 
-	// t.Run("with dual writer mode 3", func(t *testing.T) {
-	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction: false, // required for experimental APIs
-	// 		DisableAnonymous:  true,
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-	// 			featuremgmt.FlagKubernetesDashboards,
-	// 		},
-	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-	// 			"dashboards.dashboard.grafana.app": {
-	// 				DualWriterMode: 3,
-	// 			},
-	// 		},
-	// 	})
-	// 	runDashboardTest(t, helper)
-	// })
+	t.Run("with dual writer mode 3", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 3,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
 
-	// t.Run("with dual writer mode 4", func(t *testing.T) {
-	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction: false, // required for experimental APIs
-	// 		DisableAnonymous:  true,
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-	// 			featuremgmt.FlagKubernetesDashboards,
-	// 		},
-	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-	// 			"dashboards.dashboard.grafana.app": {
-	// 				DualWriterMode: 4,
-	// 			},
-	// 		},
-	// 	})
-	// 	runDashboardTest(t, helper)
-	// })
+	t.Run("with dual writer mode 4", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 4,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
