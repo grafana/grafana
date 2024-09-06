@@ -1133,6 +1133,10 @@
       "label": "Server host",
       "placeholder": "example: 127.0.0.1"
     },
+    "login-form-alert": {
+      "description": "Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.",
+      "title": "Basic login disabled"
+    },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
       "label": "Search filter*",

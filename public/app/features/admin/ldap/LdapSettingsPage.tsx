@@ -218,9 +218,19 @@ export const LdapSettingsPage = () => {
     </Trans>
   );
 
+  const disabledFormAlert = (
+    <Alert title={t('ldap-settings-page.login-form-alert.title', 'Basic login disabled')}>
+      <Trans i18nKey="ldap-settings-page.login-form-alert.description">
+        Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the
+        login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.
+      </Trans>
+    </Alert>
+  );
+
   return (
     <Page navId="authentication" pageNav={pageNav} subTitle={subTitle}>
       <Page.Contents>
+        {config.disableLoginForm && disabledFormAlert}
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)}>
             {isLoading && <Loader />}
