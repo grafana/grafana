@@ -239,13 +239,12 @@ export const Combobox = <T extends string | number>({
         })}
       />
       <div
-        className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
+        className={cx(styles.menu, hasMinHeight && styles.menuHeight, !isOpen && styles.menuClosed)}
         style={{
           ...floatingStyles,
           maxWidth: popoverMaxWidth,
           minWidth: inputRef.current?.offsetWidth,
           width: popoverWidth,
-          display: isOpen ? 'block' : 'none', // Remove empty list box from screen reader when closed
         }}
         {...getMenuProps({ ref: floatingRef })}
       >
