@@ -51,7 +51,7 @@ export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMapp
           {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_id`, { valueAsNumber: true })}
         />
       </Field>
-      { contextSrv.isGrafanaAdmin && (
+      {contextSrv.isGrafanaAdmin && (
         <Field
           htmlFor="grafana-admin"
           label={t('ldap-drawer.group-mapping.grafana-admin.label', 'Grafana Admin')}
