@@ -152,6 +152,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Signature:     string(panel.Signature),
 			Sort:          getPanelSort(panel.ID),
 			Angular:       panel.Angular,
+			SriHashes:     panel.SriHashes,
 		}
 	}
 
@@ -454,6 +455,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Module:                    plugin.Module,
 			BaseURL:                   plugin.BaseURL,
 			Angular:                   plugin.Angular,
+			SriHashes:                 plugin.SriHashes,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 		}
 
@@ -538,6 +540,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					Module:    ds.Module,
 					BaseURL:   ds.BaseURL,
 					Angular:   ds.Angular,
+					SriHashes: ds.SriHashes,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -553,11 +556,12 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 func newAppDTO(plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
 	app := &plugins.AppDTO{
-		ID:      plugin.ID,
-		Version: plugin.Info.Version,
-		Path:    plugin.Module,
-		Preload: false,
-		Angular: plugin.Angular,
+		ID:        plugin.ID,
+		Version:   plugin.Info.Version,
+		Path:      plugin.Module,
+		Preload:   false,
+		Angular:   plugin.Angular,
+		SriHashes: plugin.SriHashes,
 	}
 
 	if settings.Enabled {

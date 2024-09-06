@@ -167,15 +167,17 @@ type Signature struct {
 	Status     SignatureStatus
 	Type       SignatureType
 	SigningOrg string
+	SriHashes  map[string]string
 }
 
 type PluginMetaDTO struct {
 	JSONData
-	Signature                 SignatureStatus `json:"signature"`
-	Module                    string          `json:"module"`
-	BaseURL                   string          `json:"baseUrl"`
-	Angular                   AngularMeta     `json:"angular"`
-	MultiValueFilterOperators bool            `json:"multiValueFilterOperators"`
+	Signature                 SignatureStatus   `json:"signature"`
+	Module                    string            `json:"module"`
+	BaseURL                   string            `json:"baseUrl"`
+	SriHashes                 map[string]string `json:"sriHashes"`
+	Angular                   AngularMeta       `json:"angular"`
+	MultiValueFilterOperators bool              `json:"multiValueFilterOperators"`
 }
 
 type DataSourceDTO struct {
@@ -211,26 +213,28 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID            string   `json:"id"`
-	Name          string   `json:"name"`
-	AliasIDs      []string `json:"aliasIds,omitempty"`
-	Info          Info     `json:"info"`
-	HideFromList  bool     `json:"hideFromList"`
-	Sort          int      `json:"sort"`
-	SkipDataQuery bool     `json:"skipDataQuery"`
-	ReleaseState  string   `json:"state"`
-	BaseURL       string   `json:"baseUrl"`
-	Signature     string   `json:"signature"`
-	Module        string   `json:"module"`
+	ID            string            `json:"id"`
+	Name          string            `json:"name"`
+	AliasIDs      []string          `json:"aliasIds,omitempty"`
+	Info          Info              `json:"info"`
+	HideFromList  bool              `json:"hideFromList"`
+	Sort          int               `json:"sort"`
+	SkipDataQuery bool              `json:"skipDataQuery"`
+	ReleaseState  string            `json:"state"`
+	BaseURL       string            `json:"baseUrl"`
+	Signature     string            `json:"signature"`
+	Module        string            `json:"module"`
+	SriHashes     map[string]string `json:"sriHashes"`
 
 	Angular AngularMeta `json:"angular"`
 }
 
 type AppDTO struct {
-	ID      string `json:"id"`
-	Path    string `json:"path"`
-	Version string `json:"version"`
-	Preload bool   `json:"preload"`
+	ID        string            `json:"id"`
+	Path      string            `json:"path"`
+	Version   string            `json:"version"`
+	Preload   bool              `json:"preload"`
+	SriHashes map[string]string `json:"sriHashes"`
 
 	Angular AngularMeta `json:"angular"`
 }
