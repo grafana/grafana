@@ -1,7 +1,8 @@
 ---
 aliases:
-  - ../../http_api/curl-examples/
-canonical: /docs/grafana/latest/developers/http_api/curl-examples/
+  - ../../../http_api/curl-examples/ # /docs/grafana/<GRAFANA_VERSION>/http_api/curl-examples/
+  - ../../http_api/curl-examples/ # /docs/grafana/<GRAFANA_VERSION>/developers/http_api/curl-examples/
+canonical: /docs/grafana/latest/developers/http_api/examples/curl-examples/
 description: cURL examples
 keywords:
   - grafana
