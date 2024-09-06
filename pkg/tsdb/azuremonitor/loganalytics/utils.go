@@ -57,7 +57,7 @@ func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled
 	}
 
 	if !basicLogsEnabled {
-		return false, fmt.Errorf("basic logs queries are not enabled")
+		return false, fmt.Errorf("basic logs queries are disabled for this data source")
 	}
 
 	return true, nil
