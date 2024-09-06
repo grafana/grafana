@@ -63,6 +63,7 @@ COPY pkg/build/go.* pkg/build/
 COPY pkg/build/wire/go.* pkg/build/wire/
 COPY pkg/promlib/go.* pkg/promlib/
 COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/
+COPY pkg/storage/unified/apistore/go.* pkg/storage/unified/apistore/
 COPY pkg/semconv/go.* pkg/semconv/
 COPY pkg/aggregator/go.* pkg/aggregator/
 

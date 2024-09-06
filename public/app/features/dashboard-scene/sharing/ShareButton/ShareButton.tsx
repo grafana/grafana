@@ -36,7 +36,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
       <Button
         data-testid={newShareButtonSelector.shareLink}
         size="sm"
-        tooltip={t('share-dashboard.share-button-tooltip', 'Copy shortened link')}
+        tooltip={t('share-dashboard.share-button-tooltip', 'Copy link')}
         onClick={buildUrl}
       >
         <Trans i18nKey="share-dashboard.share-button">Share</Trans>

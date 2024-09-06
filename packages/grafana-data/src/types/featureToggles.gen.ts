@@ -45,6 +45,7 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
+  mysqlParseTime?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
@@ -59,7 +60,6 @@ export interface FeatureToggles {
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
   prometheusRunQueriesInParallel?: boolean;
-  prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
@@ -201,5 +201,11 @@ export interface FeatureToggles {
   prometheusAzureOverrideAudience?: boolean;
   backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
-  adhocFilterOneOf?: boolean;
+  newFiltersUI?: boolean;
+  lokiSendDashboardPanelNames?: boolean;
+  singleTopNav?: boolean;
+  exploreLogsShardSplitting?: boolean;
+  exploreLogsAggregatedMetrics?: boolean;
+  exploreLogsLimitedTimeRange?: boolean;
+  appPlatformAccessTokens?: boolean;
 }

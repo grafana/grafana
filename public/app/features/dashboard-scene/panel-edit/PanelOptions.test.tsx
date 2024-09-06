@@ -1,5 +1,6 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
@@ -11,7 +12,7 @@ import { overrideRuleTooltipDescription } from 'app/features/dashboard/component
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 import * as utils from '../utils/utils';
@@ -20,12 +21,6 @@ import { PanelOptions } from './PanelOptions';
 import { VizPanelManager } from './VizPanelManager';
 
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
-
-jest.mock('react-router-dom', () => ({
-  useLocation: () => ({
-    pathname: '',
-  }),
-}));
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
@@ -176,17 +171,19 @@ describe('PanelOptions', () => {
       version: 1,
     };
 
-    const libraryPanel = new LibraryVizPanel({
+    const libraryPanel = new LibraryPanelBehavior({
       isLoaded: true,
       title: libraryPanelModel.title,
       uid: libraryPanelModel.uid,
       name: libraryPanelModel.name,
-      panelKey: panel.state.key!,
-      panel: panel,
       _loadedPanel: libraryPanelModel,
     });
 
-    new DashboardGridItem({ body: libraryPanel });
+    panel.setState({
+      $behaviors: [libraryPanel],
+    });
+
+    new DashboardGridItem({ body: panel });
 
     const { renderResult, vizManager } = setup({ panel: panel });
 
@@ -196,7 +193,7 @@ describe('PanelOptions', () => {
       fireEvent.blur(input, { target: { value: 'new library panel name' } });
     });
 
-    expect((vizManager.state.sourcePanel.resolve().parent as LibraryVizPanel).state.name).toBe(
+    expect((vizManager.state.panel.state.$behaviors![0] as LibraryPanelBehavior).state.name).toBe(
       'new library panel name'
     );
   });

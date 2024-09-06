@@ -52,7 +52,8 @@
       "metadata": {
         "name": "adhocFilterOneOf",
         "resourceVersion": "1723119716623",
-        "creationTimestamp": "2024-08-08T12:21:56Z"
+        "creationTimestamp": "2024-08-08T12:21:56Z",
+        "deletionTimestamp": "2024-09-05T12:30:12Z"
       },
       "spec": {
         "description": "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
@@ -333,6 +334,20 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "appPlatformAccessTokens",
+        "resourceVersion": "1725549369316",
+        "creationTimestamp": "2024-09-05T15:16:09Z"
+      },
+      "spec": {
+        "description": "Enables the use of access tokens for the App Platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
       }
     },
     {
@@ -1048,6 +1063,45 @@
     },
     {
       "metadata": {
+        "name": "exploreLogsAggregatedMetrics",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to query by aggregated metrics",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreLogsLimitedTimeRange",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to limit the time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreLogsShardSplitting",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "exploreMetrics",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-04-09T18:15:18Z",
@@ -1619,6 +1673,7 @@
         "name": "lokiMetricDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-04-13T13:07:08Z",
+        "deletionTimestamp": "2024-08-21T13:49:48Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -1706,6 +1761,21 @@
     },
     {
       "metadata": {
+        "name": "lokiSendDashboardPanelNames",
+        "resourceVersion": "1724089497989",
+        "creationTimestamp": "2024-08-19T17:44:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 17:44:57.989565 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Send dashboard and panel names to Loki when querying",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs"
+      }
+    },
+    {
+      "metadata": {
         "name": "lokiStructuredMetadata",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-11-16T16:06:14Z",
@@ -1775,6 +1845,18 @@
     },
     {
       "metadata": {
+        "name": "mysqlParseTime",
+        "resourceVersion": "1724750152191",
+        "creationTimestamp": "2024-08-27T09:15:52Z"
+      },
+      "spec": {
+        "description": "Ensure the parseTime flag is set for MySQL driver",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
         "name": "nestedFolders",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-10-26T14:15:14Z",
@@ -1814,6 +1896,18 @@
         "codeowner": "@grafana/dashboards-squad",
         "hideFromAdminPage": true,
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "newFiltersUI",
+        "resourceVersion": "1724228641625",
+        "creationTimestamp": "2024-08-21T08:24:01Z"
+      },
+      "spec": {
+        "description": "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
       }
     },
     {
@@ -2109,13 +2203,17 @@
     {
       "metadata": {
         "name": "promQLScope",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-29T20:22:17Z"
+        "resourceVersion": "1724076197892",
+        "creationTimestamp": "2024-01-29T20:22:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 14:03:17.892558375 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "stage": "GA",
+        "codeowner": "@grafana/observability-metrics",
+        "expression": "true"
       }
     },
     {
@@ -2169,6 +2267,7 @@
         "name": "prometheusDataplane",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-03-29T15:26:32Z",
+        "deletionTimestamp": "2024-08-21T13:35:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -2470,6 +2569,19 @@
         "description": "Show warnings when dashboards do not validate against the schema",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
+        "name": "singleTopNav",
+        "resourceVersion": "1724861961030",
+        "creationTimestamp": "2024-08-28T16:19:21Z"
+      },
+      "spec": {
+        "description": "Unifies the top search bar and breadcrumb bar into one",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
       }
     },
     {
