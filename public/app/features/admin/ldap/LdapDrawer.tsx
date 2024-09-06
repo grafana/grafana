@@ -107,11 +107,8 @@ export const LdapDrawerComponent = ({
 
   const onRemoveGroupMapping = (index: number) => {
     const groupMappings = getValues(`${serverConfig}.group_mappings`);
-    setValue(`${serverConfig}.group_mappings`, [
-      ...groupMappings.slice(0, index),
-      ...groupMappings.slice(index + 1),
-    ]);
-  }
+    setValue(`${serverConfig}.group_mappings`, [...groupMappings.slice(0, index), ...groupMappings.slice(index + 1)]);
+  };
 
   return (
     <Drawer title={t('ldap-drawer.title', 'Advanced settings')} onClose={onClose}>
@@ -228,13 +225,8 @@ export const LdapDrawerComponent = ({
           />
         </Field>
         {watch('settings.config.servers.0.group_mappings')?.map((_, i) => {
-          return (
-          <GroupMappingComponent
-            key={i}
-            groupMappingIndex={i}
-            onRemove={() => onRemoveGroupMapping(i)}
-          />
-        )})}
+          return <GroupMappingComponent key={i} groupMappingIndex={i} onRemove={() => onRemoveGroupMapping(i)} />;
+        })}
         <Divider />
         <Button className={styles.button} variant="secondary" icon="plus" onClick={() => onAddGroupMapping()}>
           <Trans i18nKey="ldap-drawer.group-mapping-section.add.button">Add group mapping</Trans>

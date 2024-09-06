@@ -5,7 +5,7 @@ import { Box, Button, Field, Input, RadioButtonGroup, Switch } from '@grafana/ui
 import { t, Trans } from 'app/core/internationalization';
 import { LdapPayload, OrgRole } from 'app/types';
 
-const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map(key => {
+const roleOptions: Array<SelectableValue<string>> = Object.keys(OrgRole).map((key) => {
   return { label: key, value: key };
 });
 
@@ -26,17 +26,14 @@ export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMapp
           'The name of the key used to extract the ID token from the returned OAuth2 token.'
         )}
       >
-        <Input
-          id="group-dn"
-          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.group_dn`)}
-        />
+        <Input id="group-dn" {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.group_dn`)} />
       </Field>
       <Field label={t('ldap-drawer.group-mapping.org-role.label', 'Org role *')}>
         <RadioButtonGroup
           id={`org-role-${groupMappingIndex}`}
           options={roleOptions}
           value={getValues(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_role`)}
-          onChange={v => setValue(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_role`, v)}
+          onChange={(v) => setValue(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_role`, v)}
         />
       </Field>
       <Field
@@ -49,8 +46,8 @@ export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMapp
       >
         <Input
           id="org-id"
-          type='number'
-          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_id`, {valueAsNumber: true})}
+          type="number"
+          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_id`, { valueAsNumber: true })}
         />
       </Field>
       <Field
