@@ -89,7 +89,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 		},
 		JSONData: map[string]any{
 			"azureLogAnalyticsSameAs": false,
-			"basicLogsEnabled":        true,
+			"basicLogsEnabled":        false,
 		},
 	}
 
