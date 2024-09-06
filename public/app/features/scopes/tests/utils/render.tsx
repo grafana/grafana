@@ -1,76 +1,129 @@
 import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
-import {
-  AdHocFiltersVariable,
-  behaviors,
-  GroupByVariable,
-  sceneGraph,
-  SceneGridItem,
-  SceneGridLayout,
-  SceneQueryRunner,
-  SceneTimeRange,
-  SceneVariableSet,
-  VizPanel,
-} from '@grafana/scenes';
+import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
-import { DashboardControls } from 'app/features/dashboard-scene/scene//DashboardControls';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
+import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
-import { ScopesFacade } from '../../ScopesFacadeScene';
 import { scopesDashboardsScene, scopesSelectorScene } from '../../instance';
 import { getInitialDashboardsState } from '../../internal/ScopesDashboardsScene';
 import { initialSelectorState } from '../../internal/ScopesSelectorScene';
 import { DASHBOARDS_OPENED_KEY } from '../../internal/const';
 
-export function buildTestScene(overrides: Partial<DashboardScene> = {}) {
-  return new DashboardScene({
+const getDashboardDTO: (
+  overrideDashboard: Partial<DashboardDataDTO>,
+  overrideMeta: Partial<DashboardMeta>
+) => DashboardDTO = (overrideDashboard, overrideMeta) => ({
+  dashboard: {
+    ...defaultDashboard,
     title: 'hello',
     uid: 'dash-1',
     description: 'hello description',
-    tags: ['tag1', 'tag2'],
-    editable: true,
-    $timeRange: new SceneTimeRange({
-      timeZone: 'browser',
-    }),
-    controls: new DashboardControls({}),
-    $behaviors: [
-      new behaviors.CursorSync({}),
-      new ScopesFacade({
-        handler: (facade) => sceneGraph.getTimeRange(facade).onRefresh(),
-      }),
-    ],
-    $variables: new SceneVariableSet({
-      variables: [
-        new AdHocFiltersVariable({
-          name: 'adhoc',
-          datasource: { uid: 'my-ds-uid' },
-        }),
-        new GroupByVariable({
-          name: 'groupby',
-          datasource: { uid: 'my-ds-uid' },
-        }),
+    templating: {
+      list: [
+        {
+          datasource: {
+            type: 'datasource',
+            uid: 'grafana',
+          },
+          filters: [],
+          name: 'Filters',
+          type: 'adhoc',
+        },
+        {
+          current: {
+            text: [],
+            value: [],
+          },
+          datasource: {
+            type: 'datasource',
+            uid: 'grafana',
+          },
+          description: '',
+          label: 'Group By',
+          name: 'groupBy',
+          type: 'groupby',
+        },
       ],
-    }),
-    body: new SceneGridLayout({
-      children: [
-        new SceneGridItem({
-          key: 'griditem-1',
+    },
+    panels: [
+      {
+        datasource: {
+          type: 'datasource',
+          uid: 'grafana',
+        },
+        fieldConfig: {
+          defaults: {
+            color: {
+              mode: 'thresholds',
+            },
+            custom: {
+              align: 'auto',
+              cellOptions: {
+                type: 'auto',
+              },
+              inspect: false,
+            },
+            mappings: [],
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                {
+                  color: 'green',
+                  value: null,
+                },
+                {
+                  color: 'red',
+                  value: 80,
+                },
+              ],
+            },
+          },
+          overrides: [],
+        },
+        gridPos: {
+          h: 8,
+          w: 12,
           x: 0,
           y: 0,
-          width: 300,
-          height: 300,
-          body: new VizPanel({
-            title: 'Panel A',
-            key: 'panel-1',
-            pluginId: 'table',
-            $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-          }),
-        }),
-      ],
-    }),
-    ...overrides,
-  });
+        },
+        id: 1,
+        options: {
+          cellHeight: 'sm',
+          footer: {
+            countRows: false,
+            fields: '',
+            reducer: ['sum'],
+            show: false,
+          },
+          showHeader: true,
+        },
+        pluginVersion: '11.3.0-pre',
+        targets: [
+          {
+            refId: 'A',
+          },
+        ],
+        title: 'Panel Title',
+        type: 'table',
+      },
+    ],
+    ...overrideDashboard,
+  },
+  meta: {
+    ...overrideMeta,
+  },
+});
+
+export function buildTestScene(
+  overrideDashboard: Partial<DashboardDataDTO> = {},
+  overrideMeta: Partial<DashboardMeta> = {}
+) {
+  const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
+
+  return transformSaveModelToScene(dto);
 }
 
 export function renderDashboard(dashboardScene: DashboardScene) {

@@ -1,4 +1,5 @@
 import { Scope, ScopeDashboardBinding, ScopeNode } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 
 import * as api from '../../internal/api';
 
@@ -371,6 +372,7 @@ export const fetchNodesSpy = jest.spyOn(api, 'fetchNodes');
 export const fetchScopeSpy = jest.spyOn(api, 'fetchScope');
 export const fetchSelectedScopesSpy = jest.spyOn(api, 'fetchSelectedScopes');
 export const fetchDashboardsSpy = jest.spyOn(api, 'fetchDashboards');
+export const locationReloadSpy = jest.spyOn(locationService, 'reload');
 
 export const getMock = jest
   .fn()
