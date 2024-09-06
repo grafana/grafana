@@ -28,6 +28,9 @@ var resourceInfo = notifications.ReceiverResourceInfo
 // AccessControlKey is the label selector key used to return access control metadata during List queries.
 const AccessControlKey = "grafana.com/accessControl"
 
+// InUseKey is the label selector key used to return in-use metadata during List queries.
+const InUseKey = "grafana.com/inUse"
+
 type ReceiverService interface {
 	GetReceiver(ctx context.Context, q ngmodels.GetReceiverQuery, user identity.Requester) (*ngmodels.Receiver, error)
 	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, error)
@@ -37,7 +40,8 @@ type ReceiverService interface {
 }
 
 type MetadataService interface {
-	Access(ctx context.Context, user identity.Requester, receivers ...*ngmodels.Receiver) (map[string]ngmodels.ReceiverPermissionSet, error)
+	AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*ngmodels.Receiver) (map[string]ngmodels.ReceiverPermissionSet, error)
+	InUseMetadata(ctx context.Context, orgID int64, receivers ...*ngmodels.Receiver) (map[string]ngmodels.ReceiverMetadata, error)
 }
 
 type legacyStorage struct {
@@ -93,27 +97,44 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
+	inclusions := metadataOptions(opts)
 	var accesses map[string]ngmodels.ReceiverPermissionSet
-	if shouldIncludeAccessControlMetadata(opts) {
-		accesses, err = s.metadata.Access(ctx, user, res...)
+	if inclusions.AccessControl {
+		accesses, err = s.metadata.AccessControlMetadata(ctx, user, res...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get access control metadata: %w", err)
 		}
 	}
 
-	return convertToK8sResources(orgId, res, accesses, s.namespacer)
+	var metadatas map[string]ngmodels.ReceiverMetadata
+	if inclusions.InUse {
+		metadatas, err = s.metadata.InUseMetadata(ctx, orgId, res...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+		}
+	}
+
+	return convertToK8sResources(orgId, res, accesses, metadatas, s.namespacer)
 }
 
-func shouldIncludeAccessControlMetadata(opts *internalversion.ListOptions) bool {
+type metadataInclusions struct {
+	InUse         bool
+	AccessControl bool
+}
+
+func metadataOptions(opts *internalversion.ListOptions) metadataInclusions {
+	r := metadataInclusions{}
 	if opts.LabelSelector != nil {
 		labelSelectors, _ := opts.LabelSelector.Requirements()
 		for _, req := range labelSelectors {
 			if req.Key() == AccessControlKey {
-				return true
+				r.AccessControl = true
+			} else if req.Key() == InUseKey {
+				r.InUse = true
 			}
 		}
 	}
-	return false
+	return r
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -143,7 +164,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	}
 
 	var access *ngmodels.ReceiverPermissionSet
-	accesses, err := s.metadata.Access(ctx, user, r)
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, r)
 	if err == nil {
 		if a, ok := accesses[r.GetUID()]; ok {
 			access = &a
@@ -152,7 +173,17 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
 	}
 
-	return convertToK8sResource(info.OrgID, r, access, s.namespacer)
+	var metadata *ngmodels.ReceiverMetadata
+	metadatas, err := s.metadata.InUseMetadata(ctx, info.OrgID, r)
+	if err == nil {
+		if m, ok := metadatas[r.GetUID()]; ok {
+			metadata = &m
+		}
+	} else {
+		return nil, fmt.Errorf("failed to get in-use metadata: %w", err)
+	}
+
+	return convertToK8sResource(info.OrgID, r, access, metadata, s.namespacer)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -190,7 +221,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, nil, s.namespacer)
+	return convertToK8sResource(info.OrgID, out, nil, nil, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -242,7 +273,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	r, err := convertToK8sResource(info.OrgID, updated, nil, s.namespacer)
+	r, err := convertToK8sResource(info.OrgID, updated, nil, nil, s.namespacer)
 	return r, false, err
 }
 

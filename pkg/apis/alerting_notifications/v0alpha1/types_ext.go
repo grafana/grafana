@@ -1,6 +1,9 @@
 package v0alpha1
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const InternalPrefix = "grafana.com/"
 const ProvenanceStatusAnnotationKey = InternalPrefix + "provenance"
@@ -53,4 +56,12 @@ func (o *Receiver) SetAccessControl(action string) {
 		o.Annotations = make(map[string]string, 1)
 	}
 	o.Annotations[fmt.Sprintf("%s%s/%s", InternalPrefix, "access", action)] = "true"
+}
+
+func (o *Receiver) SetInUse(routesCnt int, rules []string) {
+	if o.Annotations == nil {
+		o.Annotations = make(map[string]string, 2)
+	}
+	o.Annotations[fmt.Sprintf("%s%s/%s", InternalPrefix, "inUse", "routes")] = fmt.Sprintf("%d", routesCnt)
+	o.Annotations[fmt.Sprintf("%s%s/%s", InternalPrefix, "inUse", "rules")] = strings.Join(rules, ",")
 }
