@@ -14,9 +14,9 @@ import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchAllPromRulesAction } from '../../state/actions';
+import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../../utils/constants';
-import { getAllRulesSourceNames } from '../../utils/datasource';
+import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { NoRulesSplash } from '../rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from '../rules/RuleDetails';
@@ -33,6 +33,9 @@ const VIEWS = {
 
 // make sure we ask for 1 more so we show the "show x more" button
 const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
+
+// TODO: Convert this to a feature toggle
+const lazyRuler = true;
 
 const RuleList = withErrorBoundary(
   () => {
@@ -80,9 +83,14 @@ const RuleList = withErrorBoundary(
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
       if (!loading) {
-        await dispatch(fetchAllPromRulesAction(false));
+        if (lazyRuler) {
+          await dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+          await dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
+        } else {
+          await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+        }
       }
-    }, [loading, dispatch]);
+    }, [loading, limitAlerts, dispatch]);
 
     useEffect(() => {
       trackRuleListNavigation().catch(() => {});
@@ -90,7 +98,12 @@ const RuleList = withErrorBoundary(
 
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
-      dispatch(fetchAllPromRulesAction(false));
+      if (lazyRuler) {
+        dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+        dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
+      } else {
+        dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+      }
     }, [dispatch, limitAlerts]);
     useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
