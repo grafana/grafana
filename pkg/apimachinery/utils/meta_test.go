@@ -154,18 +154,28 @@ func TestMetaAccessor(t *testing.T) {
 	})
 
 	t.Run("get and set grafana metadata (unstructured)", func(t *testing.T) {
+		// Error reading spec+status when missing
 		res := &unstructured.Unstructured{
-			Object: map[string]any{
-				"spec": map[string]any{
-					"hello": "world",
-				},
-				"status": map[string]any{
-					"sloth": "🦥",
-				},
-			},
+			Object: map[string]any{},
 		}
 		meta, err := utils.MetaAccessor(res)
 		require.NoError(t, err)
+		spec, err := meta.GetSpec()
+		require.Error(t, err)
+		require.Nil(t, spec)
+		status, err := meta.GetStatus()
+		require.Error(t, err)
+		require.Nil(t, status)
+
+		// Now set a spec and status
+		res.Object = map[string]any{
+			"spec": map[string]any{
+				"hello": "world",
+			},
+			"status": map[string]any{
+				"sloth": "🦥",
+			},
+		}
 
 		meta.SetOriginInfo(originInfo)
 		meta.SetFolder("folderUID")
@@ -187,7 +197,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, int64(12345), rv)
 
 		// Make sure access to spec works for Unstructured
-		spec, err := meta.GetSpec()
+		spec, err = meta.GetSpec()
 		require.NoError(t, err)
 		require.Equal(t, res.Object["spec"], spec)
 		spec = &map[string]string{"a": "b"}
@@ -198,7 +208,7 @@ func TestMetaAccessor(t *testing.T) {
 		require.Equal(t, res.Object["spec"], spec)
 
 		// Make sure access to spec works for Unstructured
-		status, err := meta.GetStatus()
+		status, err = meta.GetStatus()
 		require.NoError(t, err)
 		require.Equal(t, res.Object["status"], status)
 		status = &map[string]string{"a": "b"}
