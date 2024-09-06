@@ -5,7 +5,7 @@ import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 // import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
-import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
+import { getThresholdItems, getValueMappingItems } from 'app/core/components/TimelineChart/utils';
 interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   colorField?: Field | null;
@@ -45,7 +45,9 @@ export const BarChartLegend = memo(
     // }
 
     const fieldConfig = data[0].fields[0].config;
-    const legendThresholdItems: VizLegendItem[] | undefined = getThresholdItems(fieldConfig, theme);
+    const thresholdItems: VizLegendItem[] | undefined = getThresholdItems(fieldConfig, theme);
+
+    const valueMappingItems: VizLegendItem[] = getValueMappingItems(fieldConfig, theme);
 
     const legendItems = data[0].fields
       .slice(1)
@@ -83,7 +85,8 @@ export const BarChartLegend = memo(
         <VizLegend
           placement={placement}
           items={legendItems}
-          thresholdItems={legendThresholdItems}
+          thresholdItems={thresholdItems}
+          mappingItems={valueMappingItems}
           displayMode={displayMode}
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}

@@ -491,6 +491,50 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   return items;
 }
 
+export function getValueMappingItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
+  const items: VizLegendItem[] = [];
+  const mappings = fieldConfig.mappings;
+  if (!mappings) {
+    return items;
+  }
+
+  for (let mapping of mappings) {
+    const { options, type } = mapping;
+
+    if (type === MappingType.ValueToText) {
+      for (let [label, value] of Object.entries(options)) {
+        const color = value.color;
+        items.push({
+          label: label,
+          color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+          yAxis: 1,
+        });
+      }
+    }
+
+    if (type === MappingType.RangeToText) {
+      const { from, result, to } = options;
+      const { text, color } = result;
+      const label = text ? `${from} - ${to} ${text}` : `${from} - ${to}`;
+
+      items.push({
+        label: label,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
+    }
+
+    // TODO: implement
+    if (type === MappingType.RegexToText) {
+    }
+
+    if (type === MappingType.SpecialValue) {
+    }
+  }
+
+  return items;
+}
+
 export function prepareTimelineLegendItems(
   frames: DataFrame[] | undefined,
   options: VizLegendOptions,
