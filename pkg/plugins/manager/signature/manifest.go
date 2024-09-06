@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -55,6 +56,19 @@ type PluginManifest struct {
 
 func (m *PluginManifest) isV2() bool {
 	return strings.HasPrefix(m.ManifestVersion, "2.")
+}
+
+func (m *PluginManifest) SriHashes() (map[string]string, error) {
+	r := make(map[string]string, len(m.Files))
+	for fn, h := range m.Files {
+		hb, err := hex.DecodeString(h)
+		if err != nil {
+			return nil, fmt.Errorf("hex decode string: %w", err)
+		}
+		hb64 := base64.StdEncoding.EncodeToString(hb)
+		r[fn] = "sha256-" + hb64
+	}
+	return r, nil
 }
 
 type Signature struct {
@@ -231,10 +245,16 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	}
 
 	s.log.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
+	sriHashes, err := manifest.SriHashes()
+	if err != nil {
+		s.log.Warn("Could not calculate SRI hashes, ignoring", "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version, "error", err)
+		sriHashes = nil
+	}
 	return plugins.Signature{
 		Status:     plugins.SignatureStatusValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
+		SriHashes:  sriHashes,
 	}, nil
 }
 
