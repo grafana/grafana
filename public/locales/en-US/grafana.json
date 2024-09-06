@@ -912,7 +912,7 @@
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
       "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
-      "title": "Save dashboard JSON"
+      "title": "Export dashboard JSON"
     },
     "menu": {
       "export-as-json-label": "Export",
@@ -1187,7 +1187,7 @@
   "link": {
     "share": {
       "config-alert-description": "Updating your settings will modify the default copy link to include these changes. Please note that these settings are saved within your current browser scope.",
-      "config-alert-title": "Link configuration",
+      "config-alert-title": "Link settings",
       "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
       "copy-link-button": "Copy link",
       "copy-to-clipboard": "Link copied to clipboard",
@@ -1930,7 +1930,7 @@
       "settings-title": "Settings"
     },
     "configuration": {
-      "display-annotations-description": "Present annotations on this Dashboard",
+      "display-annotations-description": "Present annotations on this dashboard",
       "display-annotations-label": "Display annotations",
       "enable-time-range-description": "Allow people to change time range",
       "enable-time-range-label": "Enable time range",
@@ -1976,7 +1976,7 @@
       "revoke-button": "Revoke",
       "revoke-button-title": "Revoke",
       "success-creation": "Your dashboard is ready for external sharing",
-      "success-share-type-change": "Dashboard access restricted: Only specific people can now access with the link"
+      "success-share-type-change": "Dashboard access updated: Only specific people can now access with the link"
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",
