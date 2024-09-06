@@ -33,7 +33,7 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -58,7 +58,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       if (child instanceof DashboardGridItem) {
         // handle panel repeater scenario
         if (child.state.variableName) {
-          panels = panels.concat(panelRepeaterToPanels(child, state, isSnapshot));
+          panels = panels.concat(panelRepeaterToPanels(child, isSnapshot));
         } else {
           panels.push(gridItemToPanel(child, isSnapshot));
         }
@@ -69,7 +69,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
         if (child.state.key!.indexOf('-clone-') > 0 && !isSnapshot) {
           continue;
         }
-        gridRowToSaveModel(child, panels, state, isSnapshot);
+        gridRowToSaveModel(child, panels, isSnapshot);
       }
     }
   }
@@ -367,12 +367,7 @@ export function panelRepeaterToPanels(repeater: DashboardGridItem, isSnapshot = 
   }
 }
 
-export function gridRowToSaveModel(
-  gridRow: SceneGridRow,
-  panelsArray: Array<Panel | RowPanel>,
-  sceneState?: DashboardSceneState,
-  isSnapshot = false
-) {
+export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Panel | RowPanel>, isSnapshot = false) {
   const collapsed = Boolean(gridRow.state.isCollapsed);
   const rowPanel: RowPanel = {
     type: 'row',

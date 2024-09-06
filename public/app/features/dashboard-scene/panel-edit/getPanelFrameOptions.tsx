@@ -113,7 +113,7 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
           return (
             <RepeatRowSelect2
               id="repeat-by-variable-select"
-              panel={panel}
+              sceneContext={panel}
               repeat={variableName}
               onChange={(value?: string) => {
                 const stateUpdate: Partial<DashboardGridItemState> = { variableName: value };

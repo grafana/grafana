@@ -23,20 +23,16 @@ import { DashboardDataDTO } from 'app/types';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../../utils/utils';
-import { VizPanelManager } from '../VizPanelManager';
 import { testDashboard } from '../testfiles/testDashboard';
 
 import { PanelDataQueriesTab, PanelDataQueriesTabRendered } from './PanelDataQueriesTab';
 
 async function createModelMock() {
-  const panelManager = setupVizPanelManger('panel-1');
-  panelManager.activate();
-  await Promise.resolve();
-  const queryTabModel = new PanelDataQueriesTab(panelManager);
+  const { queriesTab } = await setupScene('panel-1');
 
   // mock queryRunner data state
-  jest.spyOn(queryTabModel.queryRunner, 'state', 'get').mockReturnValue({
-    ...queryTabModel.queryRunner.state,
+  jest.spyOn(queriesTab.queryRunner, 'state', 'get').mockReturnValue({
+    ...queriesTab.queryRunner.state,
     data: {
       state: LoadingState.Done,
       series: [
@@ -52,7 +48,7 @@ async function createModelMock() {
     },
   });
 
-  return queryTabModel;
+  return queriesTab;
 }
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
@@ -245,37 +241,34 @@ jest.mock('@grafana/runtime', () => ({
     defaultDatasource: 'gdev-testdata',
   },
 }));
+
 describe('PanelDataQueriesModel', () => {
   it('can add a new query', async () => {
-    const vizPanelManager = setupVizPanelManger('panel-1');
-    vizPanelManager.activate();
-    await Promise.resolve();
+    const { queriesTab } = await setupScene('panel-1');
 
-    const model = new PanelDataQueriesTab(vizPanelManager);
-    model.addQueryClick();
-    expect(model.queryRunner.state.queries).toHaveLength(2);
-    expect(model.queryRunner.state.queries[1].refId).toBe('B');
-    expect(model.queryRunner.state.queries[1].hide).toBe(false);
-    expect(model.queryRunner.state.queries[1].datasource).toEqual({
+    queriesTab.addQueryClick();
+
+    expect(queriesTab.queryRunner.state.queries).toHaveLength(2);
+    expect(queriesTab.queryRunner.state.queries[1].refId).toBe('B');
+    expect(queriesTab.queryRunner.state.queries[1].hide).toBe(false);
+    expect(queriesTab.queryRunner.state.queries[1].datasource).toEqual({
       type: 'grafana-testdata-datasource',
       uid: 'gdev-testdata',
     });
   });
 
-  it('can add a new query when datasource is mixed', async () => {
-    const vizPanelManager = setupVizPanelManger('panel-7');
-    vizPanelManager.activate();
-    await Promise.resolve();
+  it('Can add a new query when datasource is mixed', async () => {
+    const { queriesTab } = await setupScene('panel-7');
 
-    const model = new PanelDataQueriesTab(vizPanelManager);
-    expect(vizPanelManager.state.datasource?.uid).toBe('-- Mixed --');
-    expect(model.queryRunner.state.datasource?.uid).toBe('-- Mixed --');
-    model.addQueryClick();
+    expect(queriesTab.state.datasource?.uid).toBe('-- Mixed --');
+    expect(queriesTab.queryRunner.state.datasource?.uid).toBe('-- Mixed --');
 
-    expect(model.queryRunner.state.queries).toHaveLength(2);
-    expect(model.queryRunner.state.queries[1].refId).toBe('B');
-    expect(model.queryRunner.state.queries[1].hide).toBe(false);
-    expect(model.queryRunner.state.queries[1].datasource?.uid).toBe('gdev-testdata');
+    queriesTab.addQueryClick();
+
+    expect(queriesTab.queryRunner.state.queries).toHaveLength(2);
+    expect(queriesTab.queryRunner.state.queries[1].refId).toBe('B');
+    expect(queriesTab.queryRunner.state.queries[1].hide).toBe(false);
+    expect(queriesTab.queryRunner.state.queries[1].datasource?.uid).toBe('gdev-testdata');
   });
 });
 
@@ -331,15 +324,18 @@ describe('PanelDataQueriesTab', () => {
   });
 });
 
-const setupVizPanelManger = (panelId: string) => {
+async function setupScene(panelId: string) {
   const scene = transformSaveModelToScene({ dashboard: testDashboard as unknown as DashboardDataDTO, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
-  const vizPanelManager = VizPanelManager.createFor(panel);
+  const queriesTab = new PanelDataQueriesTab({ panelRef: panel.getRef() });
+  queriesTab.activate();
+
+  await Promise.resolve();
 
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
 
-  return vizPanelManager;
-};
+  return { panel, scene, queriesTab };
+}
