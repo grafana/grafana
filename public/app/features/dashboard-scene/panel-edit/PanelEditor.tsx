@@ -14,6 +14,7 @@ import {
 } from '@grafana/scenes';
 import { Panel } from '@grafana/schema/dist/esm/index.gen';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { saveLibPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
@@ -206,8 +207,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public onConfirmSaveLibraryPanel = () => {
-    // this.state.vizManager.commitChanges();
-    // this.state.vizManager.setState({ isDirty: false });
+    saveLibPanel(this.state.panelRef.resolve());
+    this.setState({ isDirty: false });
     locationService.partial({ editPanel: null });
   };
 

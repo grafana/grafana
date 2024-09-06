@@ -31,45 +31,11 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('PanelEditor', () => {
   describe('When closing editor', () => {
-    it('should apply changes automatically', () => {
-      pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
-
-      const panel = new VizPanel({
-        key: 'panel-1',
-        pluginId: 'text',
-      });
-
-      const gridItem = new DashboardGridItem({ body: panel });
-
-      const editScene = buildPanelEditScene(panel);
-      const scene = new DashboardScene({
-        editPanel: editScene,
-        isEditing: true,
-        body: new SceneGridLayout({
-          children: [gridItem],
-        }),
-      });
-
-      const deactivate = activateFullSceneTree(scene);
-
-      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
-
-      deactivate();
-
-      const updatedPanel = gridItem.state.body as VizPanel;
-      expect(updatedPanel?.state.title).toBe('changed title');
-    });
-
     it('should discard changes when unmounted and discard changes is marked as true', () => {
       pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
 
-      const panel = new VizPanel({
-        key: 'panel-1',
-        pluginId: 'text',
-      });
-
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'original title' });
       const gridItem = new DashboardGridItem({ body: panel });
-
       const editScene = buildPanelEditScene(panel);
       const scene = new DashboardScene({
         editPanel: editScene,
@@ -80,26 +46,20 @@ describe('PanelEditor', () => {
       });
 
       const deactivate = activateFullSceneTree(scene);
-
-      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
+      panel.setState({ title: 'changed title' });
 
       editScene.onDiscard();
       deactivate();
 
       const updatedPanel = gridItem.state.body as VizPanel;
-      expect(updatedPanel?.state.title).toBe(panel.state.title);
+      expect(updatedPanel?.state.title).toBe('original title');
     });
 
     it('should discard a newly added panel', () => {
       pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
 
-      const panel = new VizPanel({
-        key: 'panel-1',
-        pluginId: 'text',
-      });
-
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
       const gridItem = new DashboardGridItem({ body: panel });
-
       const editScene = buildPanelEditScene(panel, true);
       const scene = new DashboardScene({
         editPanel: editScene,
@@ -111,7 +71,6 @@ describe('PanelEditor', () => {
 
       editScene.onDiscard();
       const deactivate = activateFullSceneTree(scene);
-
       deactivate();
 
       expect((scene.state.body as SceneGridLayout).state.children.length).toBe(0);
@@ -121,10 +80,8 @@ describe('PanelEditor', () => {
   describe('Handling library panels', () => {
     it('should call the api with the updated panel', async () => {
       pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
-      const panel = new VizPanel({
-        key: 'panel-1',
-        pluginId: 'text',
-      });
+
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
 
       const libraryPanelModel = {
         title: 'title',
@@ -143,12 +100,9 @@ describe('PanelEditor', () => {
         _loadedPanel: libraryPanelModel,
       });
 
-      panel.setState({
-        $behaviors: [libPanelBehavior],
-      });
+      panel.setState({ $behaviors: [libPanelBehavior] });
 
       const gridItem = new DashboardGridItem({ body: panel });
-
       const editScene = buildPanelEditScene(panel);
       const scene = new DashboardScene({
         editPanel: editScene,
@@ -160,18 +114,15 @@ describe('PanelEditor', () => {
 
       activateFullSceneTree(scene);
 
-      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
-      (editScene.state.vizManager.state.panel.state.$behaviors![0] as LibraryPanelBehavior).setState({
-        name: 'changed name',
-      });
+      panel.setState({ title: 'changed title' });
+      libPanelBehavior.setState({ name: 'changed name' });
 
       jest.spyOn(libAPI, 'saveLibPanel').mockImplementation(async (panel) => {
         const updatedPanel = { ...libAPI.libraryVizPanelToSaveModel(panel), version: 2 };
-
         libPanelBehavior.setPanelFromLibPanel(updatedPanel);
       });
 
-      editScene.state.vizManager.commitChanges();
+      editScene.onConfirmSaveLibraryPanel();
 
       await new Promise(process.nextTick); // Wait for mock api to return and update the library panel
       expect(libPanelBehavior.state._loadedPanel?.version).toBe(2);
