@@ -58,6 +58,7 @@ func (m *PluginManifest) isV2() bool {
 	return strings.HasPrefix(m.ManifestVersion, "2.")
 }
 
+// SriHashes returns a map of file names to SRI hashes as expected by the browser.
 func (m *PluginManifest) SriHashes() (map[string]string, error) {
 	r := make(map[string]string, len(m.Files))
 	for fn, h := range m.Files {
