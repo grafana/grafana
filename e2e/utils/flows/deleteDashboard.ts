@@ -29,7 +29,6 @@ export const deleteDashboard = ({ quick = false, title, uid }: DeleteDashboardCo
 
 const quickDelete = (uid: string) => {
   cy.request('DELETE', fromBaseUrl(`/api/dashboards/uid/${uid}`));
-  cy.request('DELETE', fromBaseUrl(`/api/dashboards/uid/${uid}/trash`));
 };
 
 const uiDelete = (uid: string, title: string) => {
