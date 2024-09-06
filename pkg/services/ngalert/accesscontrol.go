@@ -133,9 +133,9 @@ var (
 			DisplayName: "Contact Point Creator",
 			Description: "Create new contact points in Grafana",
 			Group:       AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversCreate},
-			}),
+			},
 		},
 	}
 
@@ -145,7 +145,7 @@ var (
 			DisplayName: "Contact Point Writer",
 			Description: "Create, update, and delete all contact points in Grafana",
 			Group:       AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(receiversCreatorRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingReceiversUpdate, Scope: ac.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversDelete, Scope: ac.ScopeReceiversAll},
 			}),
