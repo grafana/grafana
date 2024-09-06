@@ -31,30 +31,9 @@ import { EmailSharing } from './EmailShare/EmailSharing';
 import { PublicSharing } from './PublicShare/PublicSharing';
 import ShareAlerts from './ShareAlerts';
 import ShareTypeSelect from './ShareTypeSelect';
+import { getAnyOneWithTheLinkShareOption, getOnlySpecificPeopleShareOption } from './utils';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
-
-export const getAnyOneWithTheLinkShareOption = () => {
-  return {
-    label: t('public-dashboard.share-externally.public-share-type-option-label', 'Anyone with the link'),
-    description: t(
-      'public-dashboard.share-externally.public-share-type-option-description',
-      'Anyone with the link can access dashboard'
-    ),
-    value: PublicDashboardShareType.PUBLIC,
-    icon: 'globe',
-  };
-};
-
-const getOnlySpecificPeopleShareOption = () => ({
-  label: t('public-dashboard.share-externally.email-share-type-option-label', 'Only specific people'),
-  description: t(
-    'public-dashboard.share-externally.email-share-type-option-description',
-    'Only people with the link can access dashboard'
-  ),
-  value: PublicDashboardShareType.EMAIL,
-  icon: 'users-alt',
-});
 
 const getShareExternallyOptions = () => {
   return isEmailSharingEnabled()
