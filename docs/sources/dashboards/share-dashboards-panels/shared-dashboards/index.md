@@ -96,6 +96,8 @@ To share a dashboard with specific people, follow these steps:
 1. (Optional) Click **Copy external link** and send the copied URL to any external user.
 1. Click the **X** at the top-right corner to close the share drawer.
 
+Once you've shared a dashboard externally, a **Public** label is displayed in the header of the dashboard.
+
 ### Viewers requesting access
 
 If a viewer without access tries to navigate to the shared dashboard, they'll be asked to request access by providing their email. They'll receive an email with a new one-time use link if the email they provided has already been invited to view the shared dashboard and hasn't been revoked.

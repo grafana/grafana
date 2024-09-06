@@ -113,13 +113,13 @@ To share a customized, direct link to your dashboard within your organization, f
 
 #### Quick-share an internal link
 
-Once you've a customized an internal link, you can share it quickly by following these steps:
+Once you've customized an internal link, you can share it quickly by following these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click the dashboard you want to share.
 1. Click the **Share** button, not the drop-down list icon, to copy a shortened link.
 
-This link has any customizations, like time range locking or theme, that you've previously set.
+This link has any customizations, like time range locking or theme, that you've previously set. These are stored in the browser scope.
 
 ### Share an external link
 
