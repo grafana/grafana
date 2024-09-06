@@ -1,6 +1,7 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  CancelActivationHandler,
   CustomVariable,
   MultiValueVariable,
   SceneDataTransformer,
@@ -263,4 +264,29 @@ export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavio
   }
 
   return undefined;
+}
+
+/**
+ * Activates any inactive parents of the scene object.
+ * Useful when rendering a scene object out of context of it's parent
+ * @returns
+ */
+export function activateInActiveParents(so: SceneObject): CancelActivationHandler | undefined {
+  let cancel: CancelActivationHandler | undefined;
+  let parentCancel: CancelActivationHandler | undefined;
+
+  if (so.isActive) {
+    return cancel;
+  }
+
+  if (so.parent) {
+    parentCancel = activateInActiveParents(so.parent);
+  }
+
+  cancel = so.activate();
+
+  return () => {
+    parentCancel?.();
+    cancel();
+  };
 }

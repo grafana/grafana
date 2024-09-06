@@ -1,12 +1,6 @@
-import {
-  CancelActivationHandler,
-  SceneComponentProps,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+
+import { activateInActiveParents } from '../utils/utils';
 
 interface ViewPanelSceneState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -33,25 +27,5 @@ export class ViewPanelScene extends SceneObjectBase<ViewPanelSceneState> {
     const panel = panelRef.resolve();
 
     return <panel.Component model={panel} />;
-  };
-}
-
-function activateInActiveParents(so: SceneObject): CancelActivationHandler | undefined {
-  let cancel: CancelActivationHandler | undefined;
-  let parentCancel: CancelActivationHandler | undefined;
-
-  if (so.isActive) {
-    return cancel;
-  }
-
-  if (so.parent) {
-    parentCancel = activateInActiveParents(so.parent);
-  }
-
-  cancel = so.activate();
-
-  return () => {
-    parentCancel?.();
-    cancel();
   };
 }
