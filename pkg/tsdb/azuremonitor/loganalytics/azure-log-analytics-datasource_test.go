@@ -83,16 +83,6 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 		t.Errorf("failed to create fake client")
 	}
 
-	dsInfo := types.DatasourceInfo{
-		Services: map[string]types.DatasourceService{
-			"Azure Monitor": {URL: svr.URL, HTTPClient: client},
-		},
-		JSONData: map[string]any{
-			"azureLogAnalyticsSameAs": false,
-			"basicLogsEnabled":        false,
-		},
-	}
-
 	appInsightsRegExp, err := regexp.Compile("(?i)providers/microsoft.insights/components")
 	if err != nil {
 		t.Error("failed to compile reg: %w", err)
@@ -101,7 +91,7 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 	tests := []struct {
 		name                   string
 		fromAlert              bool
-		setBasicLogsEnabled    bool
+		basicLogsEnabled       bool
 		queryModel             backend.DataQuery
 		azureLogAnalyticsQuery *AzureLogAnalyticsQuery
 		Err                    require.ErrorAssertionFunc
@@ -334,9 +324,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name:                "Basic Logs query",
-			fromAlert:           false,
-			setBasicLogsEnabled: true,
+			name:             "Basic Logs query",
+			fromAlert:        false,
+			basicLogsEnabled: true,
 			queryModel: backend.DataQuery{
 				JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -380,9 +370,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			Err: require.NoError,
 		},
 		{
-			name:                "Basic Logs query with multiple resources",
-			fromAlert:           false,
-			setBasicLogsEnabled: true,
+			name:             "Basic Logs query with multiple resources",
+			fromAlert:        false,
+			basicLogsEnabled: true,
 			queryModel: backend.DataQuery{
 				JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -403,9 +393,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			Err:                    require.Error,
 		},
 		{
-			name:                "Basic Logs query with non LA workspace resources",
-			fromAlert:           false,
-			setBasicLogsEnabled: true,
+			name:             "Basic Logs query with non LA workspace resources",
+			fromAlert:        false,
+			basicLogsEnabled: true,
 			queryModel: backend.DataQuery{
 				JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -426,9 +416,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			Err:                    require.Error,
 		},
 		{
-			name:                "Basic Logs query from alerts",
-			fromAlert:           true,
-			setBasicLogsEnabled: true,
+			name:             "Basic Logs query from alerts",
+			fromAlert:        true,
+			basicLogsEnabled: true,
 			queryModel: backend.DataQuery{
 				JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -449,9 +439,9 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 			Err:                    require.Error,
 		},
 		{
-			name:                "Basic Logs query fails if basicLogsEnabled is set to false",
-			fromAlert:           true,
-			setBasicLogsEnabled: false,
+			name:             "Basic Logs query fails if basicLogsEnabled is set to false",
+			fromAlert:        true,
+			basicLogsEnabled: false,
 			queryModel: backend.DataQuery{
 				JSON: []byte(fmt.Sprintf(`{
 						"queryType": "Azure Log Analytics",
@@ -554,6 +544,15 @@ func TestBuildLogAnalyticsQuery(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			dsInfo := types.DatasourceInfo{
+				Services: map[string]types.DatasourceService{
+					"Azure Monitor": {URL: svr.URL, HTTPClient: client},
+				},
+				JSONData: map[string]any{
+					"azureLogAnalyticsSameAs": false,
+					"basicLogsEnabled":        tt.basicLogsEnabled, // Use the value from the current test case
+				},
+			}
 			query, err := buildLogAnalyticsQuery(tt.queryModel, dsInfo, appInsightsRegExp, tt.fromAlert)
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQuery, query); diff != "" {
