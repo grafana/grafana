@@ -5,6 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   useStyles2,
+  Button,
   CollapsableSection,
   Divider,
   Drawer,
@@ -24,6 +25,8 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { LdapPayload, MapKeyCertConfigured } from 'app/types';
+
+import { GroupMappingComponent } from './LdapGroupMapping';
 
 interface Props {
   onClose: () => void;
@@ -89,6 +92,23 @@ export const LdapDrawerComponent = ({
       }
     </Trans>
   );
+
+  const onAddGroupMapping = () => {
+    setValue(`${serverConfig}.group_mappings`, [
+      ...getValues(`${serverConfig}.group_mappings`),
+      {
+        group_dn: '',
+        org_id: 1,
+        org_role: 'Viewer',
+        grafana_admin: false,
+      },
+    ]);
+  };
+
+  const onRemoveGroupMapping = (index: number) => {
+    const groupMappings = getValues(`${serverConfig}.group_mappings`);
+    setValue(`${serverConfig}.group_mappings`, [...groupMappings.slice(0, index), ...groupMappings.slice(index + 1)]);
+  };
 
   return (
     <Drawer title={t('ldap-drawer.title', 'Advanced settings')} onClose={onClose}>
@@ -204,7 +224,13 @@ export const LdapDrawerComponent = ({
             {...register(`${serverConfig}.group_search_filter_user_attribute`)}
           />
         </Field>
+        {watch('settings.config.servers.0.group_mappings')?.map((_, i) => {
+          return <GroupMappingComponent key={i} groupMappingIndex={i} onRemove={() => onRemoveGroupMapping(i)} />;
+        })}
         <Divider />
+        <Button className={styles.button} variant="secondary" icon="plus" onClick={() => onAddGroupMapping()}>
+          <Trans i18nKey="ldap-drawer.group-mapping-section.add.button">Add group mapping</Trans>
+        </Button>
       </CollapsableSection>
       <CollapsableSection
         label={t('ldap-drawer.extra-security-section.label', 'Extra security measures')}
@@ -419,6 +445,9 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     sectionLabel: css({
       fontSize: theme.typography.size.lg,
+    }),
+    button: css({
+      marginBottom: theme.spacing(4),
     }),
   };
 }
