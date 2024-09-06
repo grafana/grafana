@@ -5,7 +5,12 @@ import { Role, OrgRole } from 'app/types';
 
 import { RolePickerInput } from './RolePickerInput';
 import { RolePickerMenu } from './RolePickerMenu';
-import { MENU_MAX_HEIGHT, ROLE_PICKER_MAX_MENU_WIDTH, ROLE_PICKER_WIDTH } from './constants';
+import {
+  MENU_MAX_HEIGHT,
+  ROLE_PICKER_MAX_MENU_WIDTH,
+  ROLE_PICKER_MENU_MAX_WIDTH,
+  ROLE_PICKER_WIDTH,
+} from './constants';
 
 export interface Props {
   basicRole?: OrgRole;
@@ -97,14 +102,11 @@ export const RolePicker = ({
     }
 
     // Check horizontal space
-    if (spaceRight < ROLE_PICKER_MAX_MENU_WIDTH && spaceLeft > spaceRight) {
-      horizontal = right - ROLE_PICKER_MAX_MENU_WIDTH;
+    if (spaceRight < ROLE_PICKER_MENU_MAX_WIDTH && spaceLeft < ROLE_PICKER_MENU_MAX_WIDTH) {
+      horizontal = right - ROLE_PICKER_MENU_MAX_WIDTH;
       menuToLeft = true;
-    }
-
-    // If there's not enough horizontal space on either side, center it
-    if (spaceRight < ROLE_PICKER_MAX_MENU_WIDTH && spaceLeft < ROLE_PICKER_MAX_MENU_WIDTH) {
-      horizontal = Math.max(0, left + (dimensions.width - ROLE_PICKER_MAX_MENU_WIDTH) / 2);
+    } else {
+      horizontal = Math.max(0, left + (dimensions.width - ROLE_PICKER_MENU_MAX_WIDTH) / 2);
     }
 
     // Ensure the menu stays within the viewport
