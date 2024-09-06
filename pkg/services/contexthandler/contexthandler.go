@@ -25,10 +25,11 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, authenticator authn.Authenticator,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:           cfg,
+		tracer:        tracer,
 		authenticator: authenticator,
 	}
 }
@@ -84,7 +85,7 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		ctx, span := tracing.Start(ctx, "Auth - Middleware")
+		_, span := h.tracer.Start(ctx, "Auth - Middleware")
 
 		reqContext := &contextmodel.ReqContext{
 			Context: web.FromContext(ctx),

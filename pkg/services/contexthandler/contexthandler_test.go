@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -25,6 +26,7 @@ func TestContextHandler(t *testing.T) {
 	t.Run("should set auth error if authentication was unsuccessful", func(t *testing.T) {
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
+			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedErr: errors.New("some error")},
 		)
 
@@ -45,6 +47,7 @@ func TestContextHandler(t *testing.T) {
 		id := &authn.Identity{ID: "1", Type: claims.TypeUser, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
+			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: id},
 		)
 
@@ -69,6 +72,7 @@ func TestContextHandler(t *testing.T) {
 		identity := &authn.Identity{ID: "0", Type: claims.TypeAnonymous, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
+			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 		)
 
@@ -89,6 +93,7 @@ func TestContextHandler(t *testing.T) {
 		identity := &authn.Identity{OrgID: 1, AuthenticatedBy: login.RenderModule}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
+			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: identity},
 		)
 
@@ -118,6 +123,7 @@ func TestContextHandler(t *testing.T) {
 
 		handler := contexthandler.ProvideService(
 			cfg,
+			tracing.InitializeTracerForTest(),
 			&authntest.FakeService{ExpectedIdentity: &authn.Identity{}},
 		)
 
@@ -145,6 +151,7 @@ func TestContextHandler(t *testing.T) {
 
 			handler := contexthandler.ProvideService(
 				cfg,
+				tracing.InitializeTracerForTest(),
 				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: i, Type: typ}},
 			)
 
