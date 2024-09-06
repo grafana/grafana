@@ -31,7 +31,7 @@ import (
 
 type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
 
-// TODO: this is a temporary hack to make rest.Connecter work with resource level routes
+// PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)
 var PathRewriters = []filters.PathRewriter{
 	{
 		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/)find/(.*)$`),
