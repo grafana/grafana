@@ -113,7 +113,7 @@ export default function ShareConfiguration() {
                   style={{ flex: 1 }}
                   description={t(
                     'public-dashboard.configuration.display-annotations-description',
-                    'Present annotations on this Dashboard'
+                    'Present annotations on this dashboard'
                   )}
                 >
                   <Trans i18nKey="public-dashboard.configuration.display-annotations-label">Display annotations</Trans>

@@ -19,7 +19,7 @@ export class ExportAsJson extends ShareExportTab {
   static Component = ExportAsJsonRenderer;
 
   public getTabLabel(): string {
-    return t('export.json.title', 'Save dashboard JSON');
+    return t('export.json.title', 'Export dashboard JSON');
   }
 }
 

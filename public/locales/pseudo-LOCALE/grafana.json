@@ -912,7 +912,7 @@
       "download-successful_toast_message": "Ÿőūř ĴŜØŃ ĥäş þęęŉ đőŵŉľőäđęđ",
       "export-externally-label": "Ēχpőřŧ ŧĥę đäşĥþőäřđ ŧő ūşę įŉ äŉőŧĥęř įŉşŧäŉčę",
       "info-text": "Cőpy őř đőŵŉľőäđ ä ĴŜØŃ ƒįľę čőŉŧäįŉįŉģ ŧĥę ĴŜØŃ őƒ yőūř đäşĥþőäřđ",
-      "title": "Ŝävę đäşĥþőäřđ ĴŜØŃ"
+      "title": "Ēχpőřŧ đäşĥþőäřđ ĴŜØŃ"
     },
     "menu": {
       "export-as-json-label": "Ēχpőřŧ",
@@ -1187,7 +1187,7 @@
   "link": {
     "share": {
       "config-alert-description": "Ůpđäŧįŉģ yőūř şęŧŧįŉģş ŵįľľ mőđįƒy ŧĥę đęƒäūľŧ čőpy ľįŉĸ ŧő įŉčľūđę ŧĥęşę čĥäŉģęş. Pľęäşę ŉőŧę ŧĥäŧ ŧĥęşę şęŧŧįŉģş äřę şävęđ ŵįŧĥįŉ yőūř čūřřęŉŧ þřőŵşęř şčőpę.",
-      "config-alert-title": "Ŀįŉĸ čőŉƒįģūřäŧįőŉ",
+      "config-alert-title": "Ŀįŉĸ şęŧŧįŉģş",
       "config-description": "Cřęäŧę ä pęřşőŉäľįžęđ, đįřęčŧ ľįŉĸ ŧő şĥäřę yőūř đäşĥþőäřđ ŵįŧĥįŉ yőūř őřģäŉįžäŧįőŉ, ŵįŧĥ ŧĥę ƒőľľőŵįŉģ čūşŧőmįžäŧįőŉ şęŧŧįŉģş:",
       "copy-link-button": "Cőpy ľįŉĸ",
       "copy-to-clipboard": "Ŀįŉĸ čőpįęđ ŧő čľįpþőäřđ",
@@ -1930,7 +1930,7 @@
       "settings-title": "Ŝęŧŧįŉģş"
     },
     "configuration": {
-      "display-annotations-description": "Přęşęŉŧ äŉŉőŧäŧįőŉş őŉ ŧĥįş Đäşĥþőäřđ",
+      "display-annotations-description": "Přęşęŉŧ äŉŉőŧäŧįőŉş őŉ ŧĥįş đäşĥþőäřđ",
       "display-annotations-label": "Đįşpľäy äŉŉőŧäŧįőŉş",
       "enable-time-range-description": "Åľľőŵ pęőpľę ŧő čĥäŉģę ŧįmę řäŉģę",
       "enable-time-range-label": "Ēŉäþľę ŧįmę řäŉģę",
@@ -1976,7 +1976,7 @@
       "revoke-button": "Ŗęvőĸę",
       "revoke-button-title": "Ŗęvőĸę",
       "success-creation": "Ÿőūř đäşĥþőäřđ įş řęäđy ƒőř ęχŧęřŉäľ şĥäřįŉģ",
-      "success-share-type-change": "Đäşĥþőäřđ äččęşş řęşŧřįčŧęđ: Øŉľy şpęčįƒįč pęőpľę čäŉ ŉőŵ äččęşş ŵįŧĥ ŧĥę ľįŉĸ"
+      "success-share-type-change": "Đäşĥþőäřđ äččęşş ūpđäŧęđ: Øŉľy şpęčįƒįč pęőpľę čäŉ ŉőŵ äččęşş ŵįŧĥ ŧĥę ľįŉĸ"
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "Cőŉŧäčŧ yőūř äđmįŉ ŧő ģęŧ pęřmįşşįőŉ ŧő {{mode}} pūþľįč đäşĥþőäřđş",

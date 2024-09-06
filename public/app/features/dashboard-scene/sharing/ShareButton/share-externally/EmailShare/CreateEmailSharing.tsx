@@ -15,7 +15,7 @@ import { EmailSharingPricingAlert } from '../../../../../dashboard/components/Sh
 import { useShareDrawerContext } from '../../../ShareDrawer/ShareDrawerContext';
 
 export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
-  const { dashboard } = useShareDrawerContext();
+  const { dashboard, onDismiss } = useShareDrawerContext();
   const styles = useStyles2(getStyles);
 
   const [createPublicDashboard, { isLoading, isError }] = useCreatePublicDashboardMutation();
@@ -49,7 +49,7 @@ export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
             <Button type="submit" disabled={!isValid}>
               <Trans i18nKey="public-dashboard.email-sharing.accept-button">Accept</Trans>
             </Button>
-            <Button variant="secondary" onClick={() => dashboard.closeModal()}>
+            <Button variant="secondary" onClick={onDismiss}>
               <Trans i18nKey="public-dashboard.email-sharing.cancel-button">Cancel</Trans>
             </Button>
             {isLoading && <Spinner />}
