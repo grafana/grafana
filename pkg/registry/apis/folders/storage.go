@@ -5,6 +5,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -18,13 +19,14 @@ type storage struct {
 func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, legacy *legacyStorage) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
 
+	resource := folder.FolderResourceInfo
 	store := &genericregistry.Store{
-		NewFunc:                   resourceInfo.NewFunc,
-		NewListFunc:               resourceInfo.NewListFunc,
+		NewFunc:                   resource.NewFunc,
+		NewListFunc:               resource.NewListFunc,
 		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
 		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  resourceInfo.GroupResource(),
+		DefaultQualifiedResource:  resource.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
 		TableConvertor:            legacy.tableConverter,
 

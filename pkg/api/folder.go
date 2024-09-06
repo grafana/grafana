@@ -6,13 +6,22 @@ import (
 	"net/http"
 	"strconv"
 
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	folderalpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	internalfolder "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -23,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -618,4 +628,64 @@ type GetFolderDescendantCountsResponse struct {
 	// The response message
 	// in: body
 	Body folder.DescendantCounts `json:"body"`
+}
+
+type folderK8sHandler struct {
+	namespacer           request.NamespaceMapper
+	gvr                  schema.GroupVersionResource
+	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
+}
+
+//-----------------------------------------------------------------------------------------
+// Folder k8s wrapper functions
+//-----------------------------------------------------------------------------------------
+
+func newFoldeK8sHandler(hs *HTTPServer) *folderK8sHandler {
+	return &folderK8sHandler{
+		gvr:                  folderalpha1.FolderResourceInfo.GroupVersionResource(),
+		namespacer:           request.GetNamespaceMapper(hs.Cfg),
+		clientConfigProvider: hs.clientConfigProvider,
+	}
+}
+
+func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+	cmd := folder.UpdateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+	obj := internalfolder.LegacyUpdateCommandToUnstructured(cmd)
+	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, internalfolder.UnstructuredToLegacyFolderDTO(*out))
+}
+
+//-----------------------------------------------------------------------------------------
+// Utility functions
+//-----------------------------------------------------------------------------------------
+
+func (fk8s *folderK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	dyn, err := dynamic.NewForConfig(fk8s.clientConfigProvider.GetDirectRestConfig(c))
+	if err != nil {
+		c.JsonApiErr(500, "client", err)
+		return nil, false
+	}
+	return dyn.Resource(fk8s.gvr).Namespace(fk8s.namespacer(c.OrgID)), true
+}
+
+func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
+	//nolint:errorlint
+	statusError, ok := err.(*k8serrors.StatusError)
+	if ok {
+		c.JsonApiErr(int(statusError.Status().Code), statusError.Status().Message, err)
+		return
+	}
+	errhttp.Write(c.Req.Context(), err, c.Resp)
 }
