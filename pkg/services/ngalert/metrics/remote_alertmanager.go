@@ -13,6 +13,7 @@ const (
 )
 
 type RemoteAlertmanager struct {
+	ConfigSizeBytes       *prometheus.GaugeVec
 	ConfigSyncErrorsTotal prometheus.Counter
 	ConfigSyncsTotal      prometheus.Counter
 	Info                  *prometheus.GaugeVec
@@ -26,6 +27,10 @@ type RemoteAlertmanager struct {
 
 func NewRemoteAlertmanagerMetrics(r prometheus.Registerer) *RemoteAlertmanager {
 	return &RemoteAlertmanager{
+		ConfigSizeBytes: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
+			Name: "remote_alertmanager_config_size_bytes",
+			Help: "The size of the remote alertmanager configuration in bytes",
+		}, []string{"org"}),
 		ConfigSyncErrorsTotal: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
