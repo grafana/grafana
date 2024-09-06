@@ -2,15 +2,15 @@ import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneObjectBase, SceneObjectRef, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { activateInActiveParents, getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
-import { VizPanelManager, VizPanelManagerState } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
@@ -18,55 +18,64 @@ export interface PanelEditorState extends SceneObjectState {
   panelId: number;
   optionsPane: PanelOptionsPane;
   dataPane?: PanelDataPane;
-  vizManager: VizPanelManager;
+  panelRef: SceneObjectRef<VizPanel>;
+  pluginId: string;
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
+  tableView?: boolean;
+  pluginLoadError?: boolean;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
-  private _initialRepeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
   static Component = PanelEditorRenderer;
-
-  private _discardChanges = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
-
-    const { repeat, repeatDirection, maxPerRow } = state.vizManager.state;
-    this._initialRepeatOptions = {
-      repeat,
-      repeatDirection,
-      maxPerRow,
-    };
-
     this.addActivationHandler(this._activationHandler.bind(this));
   }
 
   private _activationHandler() {
-    const panelManager = this.state.vizManager;
-    const panel = panelManager.state.panel;
+    const panel = this.state.panelRef.resolve();
+    activateInActiveParents(panel);
 
-    this._subs.add(
-      panelManager.subscribeToState((n, p) => {
-        if (n.pluginId !== p.pluginId) {
-          this._initDataPane(n.pluginId);
-        }
-      })
-    );
+    this._initDataPane();
 
-    this._initDataPane(panel.state.pluginId);
+    // this._subs.add(
+    //   panelManager.subscribeToState((n, p) => {
+    //     if (n.pluginId !== p.pluginId) {
+    //       this._initDataPane(n.pluginId);
+    //     }
+    //   })
+    // );
 
-    return () => {
-      if (!this._discardChanges) {
-        this.commitChanges();
-      } else if (this.state.isNewPanel) {
-        getDashboardSceneFor(this).removePanel(panelManager.state.sourcePanel.resolve()!);
-      }
-    };
+    // return () => {
+    //   if (!this._discardChanges) {
+    //     this.commitChanges();
+    //   } else if (this.state.isNewPanel) {
+    //     getDashboardSceneFor(this).removePanel(panelManager.state.sourcePanel.resolve()!);
+    //   }
+    // };
   }
 
-  private _initDataPane(pluginId: string) {
-    const skipDataQuery = config.panels[pluginId]?.skipDataQuery;
+  public getPanel(): VizPanel {
+    return this.state.panelRef?.resolve();
+  }
+
+  private _initDataPane(retry = 0) {
+    const panel = this.getPanel();
+    const plugin = panel.getPlugin();
+
+    if (!plugin) {
+      if (retry < 100) {
+        setTimeout(() => this._initDataPane(retry + 1), 10);
+      } else {
+        this.setState({ pluginLoadError: true });
+      }
+
+      return;
+    }
+
+    const skipDataQuery = plugin.meta.skipDataQuery;
 
     if (skipDataQuery && this.state.dataPane) {
       locationService.partial({ tab: null }, true);
@@ -74,7 +83,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     if (!skipDataQuery && !this.state.dataPane) {
-      this.setState({ dataPane: new PanelDataPane(this.state.vizManager) });
+      this.setState({ dataPane: PanelDataPane.createFor(panel) });
     }
   }
 
@@ -92,53 +101,47 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   public onDiscard = () => {
-    this.state.vizManager.setState({ isDirty: false });
-    this._discardChanges = true;
+    // this.state.vizManager.setState({ isDirty: false });
+    // this._discardChanges = true;
     locationService.partial({ editPanel: null });
   };
 
   public commitChanges() {
-    const dashboard = getDashboardSceneFor(this);
-
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
-    }
-
-    const panelManager = this.state.vizManager;
-    const sourcePanel = panelManager.state.sourcePanel.resolve();
-    const gridItem = sourcePanel!.parent;
-
-    if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('Unsupported scene object type');
-      return;
-    }
-
-    this.commitChangesToSource(gridItem);
+    // const dashboard = getDashboardSceneFor(this);
+    // if (!dashboard.state.isEditing) {
+    //   dashboard.onEnterEditMode();
+    // }
+    // const panelManager = this.state.vizManager;
+    // const sourcePanel = panelManager.state.sourcePanel.resolve();
+    // const gridItem = sourcePanel!.parent;
+    // if (!(gridItem instanceof DashboardGridItem)) {
+    //   console.error('Unsupported scene object type');
+    //   return;
+    // }
+    // this.commitChangesToSource(gridItem);
   }
 
   private commitChangesToSource(gridItem: DashboardGridItem) {
-    let width = gridItem.state.width ?? 1;
-    let height = gridItem.state.height;
-
-    const panelManager = this.state.vizManager;
-    const horizontalToVertical =
-      this._initialRepeatOptions.repeatDirection === 'h' && panelManager.state.repeatDirection === 'v';
-    const verticalToHorizontal =
-      this._initialRepeatOptions.repeatDirection === 'v' && panelManager.state.repeatDirection === 'h';
-    if (horizontalToVertical) {
-      width = Math.floor(width / (gridItem.state.maxPerRow ?? 1));
-    } else if (verticalToHorizontal) {
-      width = 24;
-    }
-
-    gridItem.setState({
-      body: panelManager.state.panel.clone(),
-      repeatDirection: panelManager.state.repeatDirection,
-      variableName: panelManager.state.repeat,
-      maxPerRow: panelManager.state.maxPerRow,
-      width,
-      height,
-    });
+    // let width = gridItem.state.width ?? 1;
+    // let height = gridItem.state.height;
+    // const panelManager = this.state.vizManager;
+    // const horizontalToVertical =
+    //   this._initialRepeatOptions.repeatDirection === 'h' && panelManager.state.repeatDirection === 'v';
+    // const verticalToHorizontal =
+    //   this._initialRepeatOptions.repeatDirection === 'v' && panelManager.state.repeatDirection === 'h';
+    // if (horizontalToVertical) {
+    //   width = Math.floor(width / (gridItem.state.maxPerRow ?? 1));
+    // } else if (verticalToHorizontal) {
+    //   width = 24;
+    // }
+    // gridItem.setState({
+    //   body: panelManager.state.panel.clone(),
+    //   repeatDirection: panelManager.state.repeatDirection,
+    //   variableName: panelManager.state.repeat,
+    //   maxPerRow: panelManager.state.maxPerRow,
+    //   width,
+    //   height,
+    // });
   }
 
   public onSaveLibraryPanel = () => {
@@ -146,8 +149,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public onConfirmSaveLibraryPanel = () => {
-    this.state.vizManager.commitChanges();
-    this.state.vizManager.setState({ isDirty: false });
+    // this.state.vizManager.commitChanges();
+    // this.state.vizManager.setState({ isDirty: false });
     locationService.partial({ editPanel: null });
   };
 
@@ -164,16 +167,25 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public onConfirmUnlinkLibraryPanel = () => {
-    this.state.vizManager.unlinkLibraryPanel();
+    //this.state.vizManager.unlinkLibraryPanel();
     this.setState({ showLibraryPanelUnlinkModal: false });
+  };
+
+  public onToggleTableView = () => {
+    this.setState({ tableView: !this.state.tableView });
   };
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
-    optionsPane: new PanelOptionsPane({}),
-    vizManager: VizPanelManager.createFor(panel),
+    optionsPane: new PanelOptionsPane({
+      panelRef: panel.getRef(),
+      searchQuery: '',
+      listMode: OptionFilter.All,
+    }),
+    panelRef: panel.getRef(),
+    pluginId: panel.state.pluginId,
     isNewPanel,
   });
 }

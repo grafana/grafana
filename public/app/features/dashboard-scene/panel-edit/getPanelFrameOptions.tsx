@@ -1,13 +1,11 @@
-import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { RadioButtonGroup, Select, DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
+import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { VizPanelLinks } from '../scene/PanelLinks';
@@ -15,13 +13,7 @@ import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/tra
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { VizPanelManager, VizPanelManagerState } from './VizPanelManager';
-
-export function getPanelFrameCategory2(
-  vizManager: VizPanelManager,
-  panel: VizPanel,
-  repeat?: string
-): OptionsPaneCategoryDescriptor {
+export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
@@ -39,11 +31,11 @@ export function getPanelFrameCategory2(
         value: panel.state.title,
         popularRank: 1,
         render: function renderTitle() {
-          return <PanelFrameTitle vizManager={vizManager} />;
+          return <PanelFrameTitle panel={panel} />;
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelTitleButton
-            onGenerate={(title) => vizManager.setPanelTitle(title)}
+            onGenerate={(title) => setPanelTitle(panel, title)}
             panel={vizPanelToPanel(panel)}
             dashboard={transformSceneToSaveModel(dashboard)}
           />
@@ -95,73 +87,73 @@ export function getPanelFrameCategory2(
           render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
         })
       )
-    )
-    .addCategory(
-      new OptionsPaneCategoryDescriptor({
-        title: 'Repeat options',
-        id: 'Repeat options',
-        isOpenDefault: false,
-      })
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: 'Repeat by variable',
-            description:
-              'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-            render: function renderRepeatOptions() {
-              return (
-                <RepeatRowSelect2
-                  id="repeat-by-variable-select"
-                  parent={panel}
-                  repeat={repeat}
-                  onChange={(value?: string) => {
-                    const stateUpdate: Partial<VizPanelManagerState> = { repeat: value };
-                    if (value && !vizManager.state.repeatDirection) {
-                      stateUpdate.repeatDirection = 'h';
-                    }
-                    vizManager.setState(stateUpdate);
-                  }}
-                />
-              );
-            },
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: 'Repeat direction',
-            showIf: () => !!vizManager.state.repeat,
-            render: function renderRepeatOptions() {
-              const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
-                { label: 'Horizontal', value: 'h' },
-                { label: 'Vertical', value: 'v' },
-              ];
-
-              return (
-                <RadioButtonGroup
-                  options={directionOptions}
-                  value={vizManager.state.repeatDirection ?? 'h'}
-                  onChange={(value) => vizManager.setState({ repeatDirection: value })}
-                />
-              );
-            },
-          })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: 'Max per row',
-            showIf: () => Boolean(vizManager.state.repeat && vizManager.state.repeatDirection === 'h'),
-            render: function renderOption() {
-              const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
-              return (
-                <Select
-                  options={maxPerRowOptions}
-                  value={vizManager.state.maxPerRow}
-                  onChange={(value) => vizManager.setState({ maxPerRow: value.value })}
-                />
-              );
-            },
-          })
-        )
     );
+  // .addCategory(
+  //   new OptionsPaneCategoryDescriptor({
+  //     title: 'Repeat options',
+  //     id: 'Repeat options',
+  //     isOpenDefault: false,
+  //   })
+  //     .addItem(
+  //       new OptionsPaneItemDescriptor({
+  //         title: 'Repeat by variable',
+  //         description:
+  //           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
+  //         render: function renderRepeatOptions() {
+  //           return (
+  //             <RepeatRowSelect2
+  //               id="repeat-by-variable-select"
+  //               parent={panel}
+  //               repeat={repeat}
+  //               onChange={(value?: string) => {
+  //                 const stateUpdate: Partial<VizPanelManagerState> = { repeat: value };
+  //                 if (value && !vizManager.state.repeatDirection) {
+  //                   stateUpdate.repeatDirection = 'h';
+  //                 }
+  //                 vizManager.setState(stateUpdate);
+  //               }}
+  //             />
+  //           );
+  //         },
+  //       })
+  //     )
+  //     .addItem(
+  //       new OptionsPaneItemDescriptor({
+  //         title: 'Repeat direction',
+  //         showIf: () => !!vizManager.state.repeat,
+  //         render: function renderRepeatOptions() {
+  //           const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
+  //             { label: 'Horizontal', value: 'h' },
+  //             { label: 'Vertical', value: 'v' },
+  //           ];
+
+  //           return (
+  //             <RadioButtonGroup
+  //               options={directionOptions}
+  //               value={vizManager.state.repeatDirection ?? 'h'}
+  //               onChange={(value) => vizManager.setState({ repeatDirection: value })}
+  //             />
+  //           );
+  //         },
+  //       })
+  //     )
+  //     .addItem(
+  //       new OptionsPaneItemDescriptor({
+  //         title: 'Max per row',
+  //         showIf: () => Boolean(vizManager.state.repeat && vizManager.state.repeatDirection === 'h'),
+  //         render: function renderOption() {
+  //           const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
+  //           return (
+  //             <Select
+  //               options={maxPerRowOptions}
+  //               value={vizManager.state.maxPerRow}
+  //               onChange={(value) => vizManager.setState({ maxPerRow: value.value })}
+  //             />
+  //           );
+  //         },
+  //       })
+  //     )
+  // );
 }
 
 interface ScenePanelLinksEditorProps {
@@ -181,14 +173,14 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
   );
 }
 
-function PanelFrameTitle({ vizManager }: { vizManager: VizPanelManager }) {
-  const { title } = vizManager.state.panel.useState();
+function PanelFrameTitle({ panel }: { panel: VizPanel }) {
+  const { title } = panel.useState();
 
   return (
     <Input
       data-testid={selectors.components.PanelEditor.OptionsPane.fieldInput('Title')}
       value={title}
-      onChange={(e) => vizManager.setPanelTitle(e.currentTarget.value)}
+      onChange={(e) => setPanelTitle(panel, e.currentTarget.value)}
     />
   );
 }
@@ -203,4 +195,8 @@ function DescriptionTextArea({ panel }: { panel: VizPanel }) {
       onChange={(e) => panel.setState({ description: e.currentTarget.value })}
     />
   );
+}
+
+function setPanelTitle(panel: VizPanel, title: string) {
+  panel.setState({ title: title, hoverHeader: title === '' });
 }
