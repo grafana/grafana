@@ -188,29 +188,3 @@ export type ReducerType =
   | 'percent_diff'
   | 'percent_diff_abs'
   | 'count_non_null';
-
-// Type guard function to check if a string is a valid ReducerType
-export function isReducerType(value: string): value is ReducerType {
-  return [
-    'avg',
-    'min',
-    'max',
-    'sum',
-    'count',
-    'last',
-    'median',
-    'diff',
-    'diff_abs',
-    'percent_diff',
-    'percent_diff_abs',
-    'count_non_null',
-  ].includes(value);
-}
-
-// Function to get the matching ReducerType
-export function getReducerType(value: string): ReducerType | undefined {
-  if (isReducerType(value)) {
-    return value;
-  }
-  return undefined;
-}

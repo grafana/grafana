@@ -7,13 +7,8 @@ import { GrafanaTheme2, PanelData, ReducerID, SelectableValue } from '@grafana/d
 import { ButtonSelect, InlineField, InlineFieldRow, Input, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
-import {
-  ExpressionQuery,
-  ExpressionQueryType,
-  getReducerType,
-  reducerTypes,
-  thresholdFunctions,
-} from 'app/features/expressions/types';
+import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
+import { getReducerType } from 'app/features/expressions/utils/expressionTypes';
 
 import { ExpressionResult } from '../../expressions/Expression';
 
