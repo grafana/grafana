@@ -56,7 +56,7 @@ func NewAlertmanagerConfigMetrics(r prometheus.Registerer) *AlertmanagerConfigMe
 		}),
 		ConfigSizeBytes: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "alertmanager_config_size_bytes",
-			Help: "The size of the grafana alertmanager configuration file in bytes",
+			Help: "The size of the grafana alertmanager configuration in bytes",
 		}, []string{"org"}),
 	}
 	if r != nil {
