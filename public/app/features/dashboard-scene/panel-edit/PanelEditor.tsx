@@ -164,44 +164,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     locationService.partial({ editPanel: null });
   };
 
-  public commitChanges() {
-    // const dashboard = getDashboardSceneFor(this);
-    // if (!dashboard.state.isEditing) {
-    //   dashboard.onEnterEditMode();
-    // }
-    // const panelManager = this.state.vizManager;
-    // const sourcePanel = panelManager.state.sourcePanel.resolve();
-    // const gridItem = sourcePanel!.parent;
-    // if (!(gridItem instanceof DashboardGridItem)) {
-    //   console.error('Unsupported scene object type');
-    //   return;
-    // }
-    // this.commitChangesToSource(gridItem);
-  }
-
-  private commitChangesToSource(gridItem: DashboardGridItem) {
-    // let width = gridItem.state.width ?? 1;
-    // let height = gridItem.state.height;
-    // const panelManager = this.state.vizManager;
-    // const horizontalToVertical =
-    //   this._initialRepeatOptions.repeatDirection === 'h' && panelManager.state.repeatDirection === 'v';
-    // const verticalToHorizontal =
-    //   this._initialRepeatOptions.repeatDirection === 'v' && panelManager.state.repeatDirection === 'h';
-    // if (horizontalToVertical) {
-    //   width = Math.floor(width / (gridItem.state.maxPerRow ?? 1));
-    // } else if (verticalToHorizontal) {
-    //   width = 24;
-    // }
-    // gridItem.setState({
-    //   body: panelManager.state.panel.clone(),
-    //   repeatDirection: panelManager.state.repeatDirection,
-    //   variableName: panelManager.state.repeat,
-    //   maxPerRow: panelManager.state.maxPerRow,
-    //   width,
-    //   height,
-    // });
-  }
-
   public onSaveLibraryPanel = () => {
     this.setState({ showLibraryPanelSaveModal: true });
   };

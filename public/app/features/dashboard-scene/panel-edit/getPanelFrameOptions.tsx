@@ -120,6 +120,9 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
                 if (value && !gridItem.state.repeatDirection) {
                   stateUpdate.repeatDirection = 'h';
                 }
+                if (gridItem.state.repeatDirection === 'h') {
+                  stateUpdate.width = 24;
+                }
                 gridItem.setState(stateUpdate);
               }}
             />
