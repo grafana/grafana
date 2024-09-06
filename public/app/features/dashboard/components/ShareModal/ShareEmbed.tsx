@@ -70,7 +70,7 @@ export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe
       <Field>
         <Stack gap={1} alignItems="start">
           <Switch
-            label={t('share-modal.embed.time-range', 'Time range')}
+            label={t('share-modal.embed.time-range', 'Lock time range')}
             id="share-current-time-range"
             value={useCurrentTimeRange}
             onChange={onUseCurrentTimeRangeChange}
@@ -81,7 +81,7 @@ export function ShareEmbed({ panel, dashboard, range, onCancelClick, buildIframe
               'Change the current relative time range to an absolute time range'
             )}
           >
-            <Trans i18nKey="embed.share.time-range-label">Time range</Trans>
+            <Trans i18nKey="embed.share.time-range-label">Lock time range</Trans>
           </Label>
         </Stack>
       </Field>
