@@ -2,10 +2,12 @@ package dashboards
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -41,20 +43,7 @@ func TestIntegrationRequiresDevMode(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestIntegrationDashboardsApp(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-		},
-	})
-	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("dashboard.grafana.app/v0alpha1")
-	require.NoError(t, err)
-
+func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("simple crud+list", func(t *testing.T) {
 		ctx := context.Background()
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -98,6 +87,56 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		// require.Len(t, history.Items, 1)
 		// require.Equal(t, created, history.Items[0].GetName())
 
+		//create
+		first, err := client.Resource.Create(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/dashboard-test-create.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "test", first.GetName())
+		uids := []string{first.GetName()}
+
+		for i := 0; i < 2; i++ {
+			out, err := client.Resource.Create(context.Background(),
+				helper.LoadYAMLOrJSONFile("testdata/dashboard-generate.yaml"),
+				metav1.CreateOptions{},
+			)
+			require.NoError(t, err)
+			uids = append(uids, out.GetName())
+		}
+		slices.Sort(uids) // make list compare stable
+
+		_, err = client.Resource.Update(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/dashboard-test-replace.yaml"),
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+		// require.Equal(t, first.GetName(), updated.GetName())
+		// require.Equal(t, first.GetUID(), updated.GetUID())
+		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+		// out := getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
+		// 	Name:     "Test playlist (replaced from k8s; 22m; 1 items; PUT)",
+		// 	Interval: "22m",
+		// })
+		// require.Equal(t, updated.GetResourceVersion(), out.GetResourceVersion())
+
+		// // PATCH :: apply only some fields
+		// updated, err = client.Resource.Apply(context.Background(), "test",
+		// 	helper.LoadYAMLOrJSONFile("testdata/playlist-test-apply.yaml"),
+		// 	metav1.ApplyOptions{
+		// 		Force:        true,
+		// 		FieldManager: "testing",
+		// 	},
+		// )
+		// require.NoError(t, err)
+		// require.Equal(t, first.GetName(), updated.GetName())
+		// require.Equal(t, first.GetUID(), updated.GetUID())
+		// require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
+		// getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
+		// 	Name:     "Test playlist (apply from k8s; ??m; ?? items; PATCH)",
+		// 	Interval: "22m", // has not changed from previous update
+		// })
+
 		// Delete the object
 		err = client.Resource.Delete(ctx, created, metav1.DeleteOptions{})
 		require.NoError(t, err)
@@ -107,6 +146,108 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, rsp.Items)
 	})
+}
+
+func TestIntegrationDashboardsApp(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	t.Run("with dual writer mode 0", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 0,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
+
+	// t.Run("with dual writer mode 1", func(t *testing.T) {
+	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	// 		AppModeProduction: false, // required for experimental APIs
+	// 		DisableAnonymous:  true,
+	// 		EnableFeatureToggles: []string{
+	// 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+	// 			featuremgmt.FlagKubernetesDashboards,
+	// 		},
+	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+	// 			"dashboards.dashboard.grafana.app": {
+	// 				DualWriterMode: 1,
+	// 			},
+	// 		},
+	// 	})
+	// 	runDashboardTest(t, helper)
+	// })
+
+	// t.Run("with dual writer mode 2", func(t *testing.T) {
+	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	// 		AppModeProduction: false, // required for experimental APIs
+	// 		DisableAnonymous:  true,
+	// 		EnableFeatureToggles: []string{
+	// 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+	// 			featuremgmt.FlagKubernetesDashboards,
+	// 		},
+	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+	// 			"dashboards.dashboard.grafana.app": {
+	// 				DualWriterMode: 2,
+	// 			},
+	// 		},
+	// 	})
+	// 	runDashboardTest(t, helper)
+	// })
+
+	// t.Run("with dual writer mode 3", func(t *testing.T) {
+	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	// 		AppModeProduction: false, // required for experimental APIs
+	// 		DisableAnonymous:  true,
+	// 		EnableFeatureToggles: []string{
+	// 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+	// 			featuremgmt.FlagKubernetesDashboards,
+	// 		},
+	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+	// 			"dashboards.dashboard.grafana.app": {
+	// 				DualWriterMode: 3,
+	// 			},
+	// 		},
+	// 	})
+	// 	runDashboardTest(t, helper)
+	// })
+
+	// t.Run("with dual writer mode 4", func(t *testing.T) {
+	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	// 		AppModeProduction: false, // required for experimental APIs
+	// 		DisableAnonymous:  true,
+	// 		EnableFeatureToggles: []string{
+	// 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+	// 			featuremgmt.FlagKubernetesDashboards,
+	// 		},
+	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+	// 			"dashboards.dashboard.grafana.app": {
+	// 				DualWriterMode: 4,
+	// 			},
+	// 		},
+	// 	})
+	// 	runDashboardTest(t, helper)
+	// })
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction: false, // required for experimental APIs
+		DisableAnonymous:  true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+		},
+	})
+
+	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("dashboard.grafana.app/v0alpha1")
+	require.NoError(t, err)
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("dashboard.grafana.app")
