@@ -43,6 +43,7 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 // 1. resource selected is a workspace
 // 2. query is not an alerts query
 // 3. number of selected resources is exactly one
+// 4. the ds toggle is set to true
 func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled bool) (bool, error) {
 	if fromAlert {
 		return false, fmt.Errorf("basic Logs queries cannot be used for alerts")
