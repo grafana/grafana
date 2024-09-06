@@ -122,8 +122,7 @@ func (o *APIServerOptions) Config(tracer tracing.Tracer) (*genericapiserver.Reco
 		setting.BuildVersion,
 		setting.BuildCommit,
 		setting.BuildBranch,
-		o.factory.GetOptionalMiddlewares(tracer),
-		o.factory.GetOptionalMiddlewaresK8sDependent(),
+		o.factory.GetDefaultBuildHandlerChainFunc(tracer, o.builders),
 	)
 	return serverConfig, err
 }
