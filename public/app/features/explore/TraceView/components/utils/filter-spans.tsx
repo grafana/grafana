@@ -90,7 +90,8 @@ export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
     (span.instrumentationLibraryName && isTextInQuery(queryParts, span.instrumentationLibraryName)) ||
     (span.instrumentationLibraryVersion && isTextInQuery(queryParts, span.instrumentationLibraryVersion)) ||
     (span.traceState && isTextInQuery(queryParts, span.traceState)) ||
-    (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
+    (span.logs !== null &&
+      span.logs.some((log) => (log.name && isTextInQuery(queryParts, log.name)) || isTextInKeyValues(log.fields))) ||
     isTextInKeyValues(span.process.tags) ||
     queryParts.some((queryPart) => queryPart === span.spanID);
 

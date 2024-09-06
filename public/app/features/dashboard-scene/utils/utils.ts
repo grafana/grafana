@@ -15,9 +15,10 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
@@ -31,10 +32,6 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
-}
-
-export function getPanelIdForLibraryVizPanel(panel: LibraryVizPanel): number {
-  return parseInt(panel.state.panelKey!.replace('panel-', ''), 10);
 }
 
 /**
@@ -255,9 +252,35 @@ export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
   });
 }
 
-export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined {
-  if (vizPanel.parent instanceof LibraryVizPanel) {
-    return vizPanel.parent;
+export function isLibraryPanel(vizPanel: VizPanel): boolean {
+  return getLibraryPanelBehavior(vizPanel) !== undefined;
+}
+
+export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavior | undefined {
+  const behavior = vizPanel.state.$behaviors?.find((behaviour) => behaviour instanceof LibraryPanelBehavior);
+
+  if (behavior) {
+    return behavior;
   }
-  return;
+
+  return undefined;
+}
+
+/**
+ * If the panel is within a repeated row, it must wait until the row resolves the variables.
+ * This ensures that the scoped variable for the row is assigned and the panel is initialized with them.
+ */
+export function isWithinUnactivatedRepeatRow(panel: VizPanel): boolean {
+  let row;
+
+  try {
+    row = sceneGraph.getAncestor(panel, SceneGridRow);
+  } catch (err) {
+    return false;
+  }
+
+  const hasBehavior = !!(row.state.$behaviors && row.state.$behaviors.find((b) => b instanceof RowRepeaterBehavior));
+  const hasVariables = !!(row.state.$variables && row.state.$variables.state.variables.length > 0);
+
+  return hasBehavior && !hasVariables;
 }
