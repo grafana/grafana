@@ -1144,6 +1144,7 @@
     "empty-state": {
       "message": "No library panels found"
     },
+    "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
