@@ -24,11 +24,12 @@ func NewAlertmanagerMetrics(r prometheus.Registerer) *Alertmanager {
 }
 
 type AlertmanagerConfigMetrics struct {
-	ConfigHash     *prometheus.GaugeVec
-	Matchers       prometheus.Gauge
-	MatchRE        prometheus.Gauge
-	Match          prometheus.Gauge
-	ObjectMatchers prometheus.Gauge
+	ConfigHash      *prometheus.GaugeVec
+	ConfigSizeBytes *prometheus.GaugeVec
+	Matchers        prometheus.Gauge
+	MatchRE         prometheus.Gauge
+	Match           prometheus.Gauge
+	ObjectMatchers  prometheus.Gauge
 }
 
 func NewAlertmanagerConfigMetrics(r prometheus.Registerer) *AlertmanagerConfigMetrics {
@@ -36,6 +37,10 @@ func NewAlertmanagerConfigMetrics(r prometheus.Registerer) *AlertmanagerConfigMe
 		ConfigHash: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Name: "alertmanager_config_hash",
 			Help: "The hash of the Alertmanager configuration.",
+		}, []string{"org"}),
+		ConfigSizeBytes: prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "alertmanager_config_size_bytes",
+			Help: "The size of the grafana alertmanager configuration in bytes",
 		}, []string{"org"}),
 		Matchers: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "alertmanager_config_matchers",
@@ -55,7 +60,7 @@ func NewAlertmanagerConfigMetrics(r prometheus.Registerer) *AlertmanagerConfigMe
 		}),
 	}
 	if r != nil {
-		r.MustRegister(m.ConfigHash, m.Matchers, m.MatchRE, m.Match, m.ObjectMatchers)
+		r.MustRegister(m.ConfigHash, m.ConfigSizeBytes, m.Matchers, m.MatchRE, m.Match, m.ObjectMatchers)
 	}
 	return m
 }
