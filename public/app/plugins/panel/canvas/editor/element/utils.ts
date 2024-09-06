@@ -39,9 +39,10 @@ export const interpolateVariables = (text: string) => {
 };
 
 export const getRequest = (api: APIEditorConfig) => {
-  const requestHeaders: HeadersInit = [];
-  const endpoint = interpolateVariables(getEndpoint(api.endpoint));
+  const endpoint = getEndpoint(interpolateVariables(api.endpoint));
   const url = new URL(endpoint);
+
+  const requestHeaders: Record<string, string> = { 'X-Grafana-Action': '1' };
 
   let request: BackendSrvRequest = {
     url: url.toString(),
@@ -51,24 +52,22 @@ export const getRequest = (api: APIEditorConfig) => {
   };
 
   if (api.headerParams) {
-    api.headerParams.forEach((param) => {
-      requestHeaders.push([interpolateVariables(param[0]), interpolateVariables(param[1])]);
+    api.headerParams.forEach(([name, value]) => {
+      requestHeaders[interpolateVariables(name)] = interpolateVariables(value);
     });
   }
 
   if (api.queryParams) {
-    api.queryParams?.forEach((param) => {
-      url.searchParams.append(interpolateVariables(param[0]), interpolateVariables(param[1]));
+    api.queryParams?.forEach(([name, value]) => {
+      url.searchParams.append(interpolateVariables(name), interpolateVariables(value));
     });
 
     request.url = url.toString();
   }
 
   if (api.method === HttpRequestMethod.POST) {
-    requestHeaders.push(['Content-Type', api.contentType!]);
+    requestHeaders['Content-Type'] = api.contentType!;
   }
-
-  requestHeaders.push(['X-Grafana-Action', '1']);
 
   request.headers = requestHeaders;
 
