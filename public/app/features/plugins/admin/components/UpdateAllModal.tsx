@@ -290,7 +290,6 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
           ? `${t('plugins.catalog.update-all.modal-confirmation', 'Update')} (${selectedPlugins?.size})`
           : t('plugins.catalog.update-all.modal-dismiss', 'Close')
       }
-      confirmButtonVariant="primary"
     />
   );
 };
