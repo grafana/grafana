@@ -1,8 +1,9 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn, StoryObj } from '@storybook/react';
 import { Chance } from 'chance';
-import { ComponentProps, useEffect, useState } from 'react';
+import React, { ComponentProps, useEffect, useState } from 'react';
 
+import { Alert } from '../Alert/Alert';
 import { Field } from '../Forms/Field';
 
 import { Combobox, Option, Value } from './Combobox';
@@ -44,6 +45,7 @@ const meta: Meta<PropsAndCustomArgs> = {
   },
 
   render: (args) => <BasicWithState {...args} />,
+  decorators: [InDevDecorator],
 };
 
 const BasicWithState: StoryFn<typeof Combobox> = (args) => {
@@ -114,4 +116,24 @@ export const ManyOptions: StoryObj<PropsAndCustomArgs> = {
   render: ManyOptionsStory,
 };
 
+export const CustomValue: StoryObj<PropsAndCustomArgs> = {
+  args: {
+    createCustomValue: true,
+  },
+};
+
 export default meta;
+
+function InDevDecorator(Story: React.ElementType) {
+  return (
+    <div>
+      <Alert title="This component is still in development!" severity="info">
+        Combobox is still in development and not able to be used externally.
+        <br />
+        Within the Grafana repo, it can be used by importing it from{' '}
+        <span style={{ fontFamily: 'monospace' }}>@grafana/ui/src/unstable</span>
+      </Alert>
+      <Story />
+    </div>
+  );
+}
