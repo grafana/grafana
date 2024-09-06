@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
 import { Box, Button, Field, Input, RadioButtonGroup, Switch } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
 import { LdapPayload, OrgRole } from 'app/types';
 
@@ -50,19 +51,21 @@ export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMapp
           {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_id`, { valueAsNumber: true })}
         />
       </Field>
-      <Field
-        htmlFor="grafana-admin"
-        label={t('ldap-drawer.group-mapping.grafana-admin.label', 'Grafana Admin')}
-        description={t(
-          'ldap-drawer.group-mapping.grafana-admin.description',
-          'If enabled, all users from this group will be Grafana Admins'
-        )}
-      >
-        <Switch
-          id="grafana-admin"
-          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.grafana_admin`)}
-        />
-      </Field>
+      { contextSrv.isGrafanaAdmin && (
+        <Field
+          htmlFor="grafana-admin"
+          label={t('ldap-drawer.group-mapping.grafana-admin.label', 'Grafana Admin')}
+          description={t(
+            'ldap-drawer.group-mapping.grafana-admin.description',
+            'If enabled, all users from this group will be Grafana Admins'
+          )}
+        >
+          <Switch
+            id="grafana-admin"
+            {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.grafana_admin`)}
+          />
+        </Field>
+      )}
       <Button variant="secondary" fill="outline" icon="trash-alt" onClick={onRemove}>
         <Trans i18nKey="ldap-drawer.group-mapping.remove.button">Remove group mapping</Trans>
       </Button>
