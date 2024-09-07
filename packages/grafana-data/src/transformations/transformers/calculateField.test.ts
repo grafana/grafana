@@ -7,6 +7,7 @@ import { BinaryOperationID } from '../../utils/binaryOperators';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { UnaryOperationID } from '../../utils/unaryOperators';
 import { ReducerID } from '../fieldReducer';
+import { FieldMatcherID } from '../matchers/ids';
 import { transformDataFrame } from '../transformDataFrame';
 
 import {
@@ -203,10 +204,9 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.BinaryOperation,
         binary: {
-          left: '',
+          left: { matcher: { id: FieldMatcherID.byType, options: FieldType.number } },
           operator: BinaryOperationID.Add,
           right: '2',
-          allNumbers: true,
         },
         replaceFields: true,
       },
@@ -237,10 +237,9 @@ describe('calculateField transformer w/ timeseries', () => {
       options: {
         mode: CalculateFieldMode.BinaryOperation,
         binary: {
-          left: '',
+          left: { matcher: { id: FieldMatcherID.byType, options: FieldType.number } },
           operator: BinaryOperationID.Add,
           right: 'C',
-          allNumbers: true,
         },
         replaceFields: true,
       },
