@@ -555,7 +555,7 @@ function findFieldValuesWithNameOrConstant(
     }
   }
 
-  const v = parseFloat(value.fixed);
+  const v = parseFloat(value.fixed ?? ctx.interpolate(value.matcher?.options ?? ''));
   if (!isNaN(v)) {
     return new Array(frame.length).fill(v);
   }
