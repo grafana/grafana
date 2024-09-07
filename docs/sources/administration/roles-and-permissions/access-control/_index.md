@@ -88,6 +88,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#create-a-dashboard-folder
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#create-a-dashboard-folder
+  folder-permissions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#folder-permissions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#folder-permissions
 ---
 
 # Role-based access control (RBAC)
@@ -208,4 +213,4 @@ You can use either of the following methods to create, assign, and manage custom
 
 If you have created a folder with the name `General` or `general`, you cannot manage its permissions with RBAC.
 
-If you set [folder permissions](/docs/grafana/<GRAFANA_VERSION>/administration/user-management/manage-dashboard-permissions/#grant-folder-permissions) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
+If you set [folder permissions](ref:folder-permissions) for a folder named `General` or `general`, the system disregards the folder when RBAC is enabled.
