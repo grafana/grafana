@@ -64,7 +64,7 @@ export interface BinaryOptions {
 }
 
 export interface BinaryValue {
-  fixed: string;
+  fixed?: string;
   matcher?: { id?: FieldMatcherID; options?: string };
 }
 
@@ -157,11 +157,18 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             creator = getUnaryCreator(defaults(options.unary, defaultUnaryOptions), data);
             break;
           case CalculateFieldMode.BinaryOperation:
+            const fieldNames: string[] = [];
+            data.map((frame) => {
+              frame.fields.map((field) => {
+                fieldNames.push(field.name);
+              });
+            });
             const binaryOptions = {
-              ...options.binary,
-              left: options.binary?.left,
-              right: options.binary?.right,
+              left: checkBinaryValueType(options.binary?.left ?? '', fieldNames),
+              operator: options.binary?.operator ?? defaultBinaryOptions.operator,
+              right: checkBinaryValueType(options.binary?.right ?? '', fieldNames),
             };
+            options.binary = binaryOptions;
             if (binaryOptions.left?.matcher?.id && binaryOptions.left?.matcher.id === FieldMatcherID.byType) {
               const fieldType = binaryOptions.left.matcher.options;
               const operator = binaryOperators.getIfExists(binaryOptions.operator);
@@ -579,6 +586,24 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[], ctx: D
     }
     return arr;
   };
+}
+
+export function checkBinaryValueType(value: BinaryValue | string, names: string[]): BinaryValue {
+  // Support old binary value structure
+  if (typeof value === 'string') {
+    if (isNaN(Number(value))) {
+      return { matcher: { id: FieldMatcherID.byName, options: value } };
+    } else {
+      // If it's a number, check if matches name, otherwise store as fixed number value
+      if (names.includes(value)) {
+        return { matcher: { id: FieldMatcherID.byName, options: value } };
+      } else {
+        return { fixed: value };
+      }
+    }
+  }
+  // Pass through new BinaryValue structure
+  return value;
 }
 
 function getUnaryCreator(options: UnaryOptions, allFrames: DataFrame[]): ValuesCreator {

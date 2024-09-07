@@ -4,6 +4,7 @@ import {
   BinaryOptions,
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
+  checkBinaryValueType,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { getFieldTypeIconName, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
@@ -15,6 +16,17 @@ export const BinaryOperationOptionsEditor = (props: {
   names: string[];
 }) => {
   const { options, onChange } = props;
+  const newLeft = checkBinaryValueType(props.options.binary?.left ?? '', props.names);
+  const newRight = checkBinaryValueType(props.options.binary?.right ?? '', props.names);
+  // If there is a change due to migration, update save model
+  if (newLeft !== props.options.binary?.left || newRight !== props.options.binary?.right) {
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.BinaryOperation,
+      binary: { operator: options.binary?.operator!, left: newLeft, right: newRight },
+    });
+  }
+
   const { binary } = options;
 
   let foundLeft = !binary?.left;
@@ -34,7 +46,7 @@ export const BinaryOperationOptionsEditor = (props: {
     if (byNameRight && v === matcherOptionsRight) {
       foundRight = true;
     }
-    return { label: v, value: JSON.stringify({ fixed: '', matcher: { id: FieldMatcherID.byName, options: v } }) };
+    return { label: v, value: JSON.stringify({ matcher: { id: FieldMatcherID.byName, options: v } }) };
   });
 
   // Populate left and right names with missing name only for byName
@@ -52,7 +64,7 @@ export const BinaryOperationOptionsEditor = (props: {
   // Add byTypes to left names ONLY - avoid all number fields operated by all number fields
   leftNames.push({
     label: `All ${FieldType.number} fields`,
-    value: JSON.stringify({ fixed: '', matcher: { id: FieldMatcherID.byType, options: FieldType.number } }),
+    value: JSON.stringify({ matcher: { id: FieldMatcherID.byType, options: FieldType.number } }),
     icon: getFieldTypeIconName(FieldType.number),
   });
 
