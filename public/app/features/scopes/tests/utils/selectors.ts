@@ -58,7 +58,7 @@ export const queryResultApplicationsGrafanaTitle = () =>
 export const getResultApplicationsGrafanaTitle = () =>
   screen.getByTestId(selectors.tree.title('applications-grafana', 'result'));
 export const getResultApplicationsGrafanaSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-grafana', 'result'));
+  screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana', 'result'));
 export const queryPersistedApplicationsGrafanaTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications-grafana', 'persisted'));
 export const queryResultApplicationsMimirTitle = () =>
@@ -66,7 +66,7 @@ export const queryResultApplicationsMimirTitle = () =>
 export const getResultApplicationsMimirTitle = () =>
   screen.getByTestId(selectors.tree.title('applications-mimir', 'result'));
 export const getResultApplicationsMimirSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-mimir', 'result'));
+  screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-mimir', 'result'));
 export const queryPersistedApplicationsMimirTitle = () =>
   screen.queryByTestId(selectors.tree.title('applications-mimir', 'persisted'));
 export const getPersistedApplicationsMimirTitle = () =>

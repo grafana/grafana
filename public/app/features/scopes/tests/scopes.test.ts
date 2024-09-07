@@ -1,5 +1,4 @@
 import { act, cleanup } from '@testing-library/react';
-import userEvent, { UserEvent } from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, setPluginImportUtils } from '@grafana/runtime';
@@ -10,6 +9,22 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from '../instance';
 import { getClosestScopesFacade } from '../utils';
 
+import { clear, click, type } from './utils/actions';
+import {
+  expandDashboardFolder,
+  expectChecked,
+  expectDashboardFolderNotInDocument,
+  expectDashboardInDocument,
+  expectDashboardLength,
+  expectDashboardNotInDocument,
+  expectDisabled,
+  expectInDocument,
+  expectNotInDocument,
+  expectRadioChecked,
+  expectRadioNotChecked,
+  expectTextContent,
+  expectValue,
+} from './utils/assertions';
 import {
   fetchDashboardsSpy,
   fetchNodesSpy,
@@ -21,8 +36,6 @@ import {
 } from './utils/mocks';
 import { buildTestScene, renderDashboard, resetScenes } from './utils/render';
 import {
-  getDashboard,
-  getDashboardFolderExpand,
   getDashboardsExpand,
   getDashboardsSearch,
   getNotFoundForFilter,
@@ -49,9 +62,6 @@ import {
   getSelectorInput,
   getTreeHeadline,
   getTreeSearch,
-  queryAllDashboard,
-  queryDashboard,
-  queryDashboardFolderExpand,
   queryDashboardsContainer,
   queryDashboardsSearch,
   queryPersistedApplicationsGrafanaTitle,
@@ -130,18 +140,12 @@ setPluginImportUtils({
 });
 
 describe('Scopes', () => {
-  let user: UserEvent;
-
-  beforeAll(() => {
-    jest.useFakeTimers({ advanceTimers: 1 });
-    user = userEvent.setup({ advanceTimers: jest.advanceTimersByTimeAsync });
+  beforeEach(() => {
+    jest.useFakeTimers({ advanceTimers: true });
   });
 
   afterEach(async () => {
-    await act(async () => jest.runOnlyPendingTimers());
-  });
-
-  afterAll(() => {
+    await jest.runOnlyPendingTimersAsync();
     jest.useRealTimers();
   });
 
@@ -194,17 +198,10 @@ describe('Scopes', () => {
       });
 
       describe('Tree', () => {
-        it('Navigates through scopes nodes', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsCloudExpand());
-          await user.click(getResultApplicationsExpand());
-        });
-
         it('Fetches scope details on select', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
           expect(fetchScopeSpy).toHaveBeenCalledTimes(1);
         });
 
@@ -215,210 +212,210 @@ describe('Scopes', () => {
               { scopeName: 'mimir', path: [] },
             ])
           );
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          expect(getResultApplicationsGrafanaSelect()).toBeChecked();
-          expect(getResultApplicationsMimirSelect()).toBeChecked();
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          expectChecked(getResultApplicationsGrafanaSelect);
+          expectChecked(getResultApplicationsMimirSelect);
         });
 
         it('Can select scopes from same level', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getResultApplicationsCloudSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getResultApplicationsMimirSelect);
+          await click(getResultApplicationsCloudSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          expect(getSelectorInput().value).toBe('Grafana, Mimir, Cloud');
+          expectValue(getSelectorInput, 'Grafana, Mimir, Cloud');
         });
 
         it('Can select a node from an inner level', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getResultApplicationsCloudExpand());
-          await user.click(getResultApplicationsCloudDevSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getResultApplicationsCloudExpand);
+          await click(getResultApplicationsCloudDevSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          expect(getSelectorInput().value).toBe('Dev');
+          expectValue(getSelectorInput, 'Dev');
         });
 
         it('Can select a node from an upper level', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultCloudSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getResultApplicationsExpand);
+          await click(getResultCloudSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          expect(getSelectorInput().value).toBe('Cloud');
+          expectValue(getSelectorInput, 'Cloud');
         });
 
         it('Respects only one select per container', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultCloudExpand());
-          await user.click(getResultCloudDevRadio());
-          expect(getResultCloudDevRadio().checked).toBe(true);
-          expect(getResultCloudOpsRadio().checked).toBe(false);
+          await click(getSelectorInput);
+          await click(getResultCloudExpand);
+          await click(getResultCloudDevRadio);
+          expectRadioChecked(getResultCloudDevRadio);
+          expectRadioNotChecked(getResultCloudOpsRadio);
 
-          await user.click(getResultCloudOpsRadio());
-          expect(getResultCloudDevRadio().checked).toBe(false);
-          expect(getResultCloudOpsRadio().checked).toBe(true);
+          await click(getResultCloudOpsRadio);
+          expectRadioNotChecked(getResultCloudDevRadio);
+          expectRadioChecked(getResultCloudOpsRadio);
         });
 
         it('Search works', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.type(getTreeSearch(), 'Cloud');
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await type(getTreeSearch, 'Cloud');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
-          expect(queryResultApplicationsGrafanaTitle()).not.toBeInTheDocument();
-          expect(queryResultApplicationsMimirTitle()).not.toBeInTheDocument();
-          expect(getResultApplicationsCloudSelect()).toBeInTheDocument();
+          expectNotInDocument(queryResultApplicationsGrafanaTitle);
+          expectNotInDocument(queryResultApplicationsMimirTitle);
+          expectInDocument(getResultApplicationsCloudSelect);
 
-          await user.clear(getTreeSearch());
+          await clear(getTreeSearch);
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
 
-          await user.type(getTreeSearch(), 'Grafana');
+          await type(getTreeSearch, 'Grafana');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
-          expect(getResultApplicationsGrafanaSelect()).toBeInTheDocument();
-          expect(queryResultApplicationsCloudTitle()).not.toBeInTheDocument();
+          expectInDocument(getResultApplicationsGrafanaSelect);
+          expectNotInDocument(queryResultApplicationsCloudTitle);
         });
 
         it('Opens to a selected scope', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultCloudExpand());
-          await user.click(getSelectorApply());
-          await user.click(getSelectorInput());
-          expect(queryResultApplicationsMimirTitle()).toBeInTheDocument();
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await click(getResultApplicationsExpand);
+          await click(getResultCloudExpand);
+          await click(getSelectorApply);
+          await click(getSelectorInput);
+          expectInDocument(getResultApplicationsMimirTitle);
         });
 
         it('Persists a scope', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.type(getTreeSearch(), 'grafana');
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await type(getTreeSearch, 'grafana');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
-          expect(getPersistedApplicationsMimirTitle()).toBeInTheDocument();
-          expect(queryPersistedApplicationsGrafanaTitle()).not.toBeInTheDocument();
-          expect(queryResultApplicationsMimirTitle()).not.toBeInTheDocument();
-          expect(getResultApplicationsGrafanaTitle()).toBeInTheDocument();
+          expectInDocument(getPersistedApplicationsMimirTitle);
+          expectNotInDocument(queryPersistedApplicationsGrafanaTitle);
+          expectNotInDocument(queryResultApplicationsMimirTitle);
+          expectInDocument(getResultApplicationsGrafanaTitle);
         });
 
         it('Does not persist a retrieved scope', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.type(getTreeSearch(), 'mimir');
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await type(getTreeSearch, 'mimir');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
-          expect(queryPersistedApplicationsMimirTitle()).not.toBeInTheDocument();
-          expect(getResultApplicationsMimirTitle()).toBeInTheDocument();
+          expectNotInDocument(queryPersistedApplicationsMimirTitle);
+          expectInDocument(getResultApplicationsMimirTitle);
         });
 
         it('Removes persisted nodes', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.type(getTreeSearch(), 'grafana');
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await type(getTreeSearch, 'grafana');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
-          await user.clear(getTreeSearch());
+          await clear(getTreeSearch);
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
-          expect(queryPersistedApplicationsMimirTitle()).not.toBeInTheDocument();
-          expect(queryPersistedApplicationsGrafanaTitle()).not.toBeInTheDocument();
-          expect(getResultApplicationsMimirTitle()).toBeInTheDocument();
-          expect(getResultApplicationsGrafanaTitle()).toBeInTheDocument();
+          expectNotInDocument(queryPersistedApplicationsMimirTitle);
+          expectNotInDocument(queryPersistedApplicationsGrafanaTitle);
+          expectInDocument(getResultApplicationsMimirTitle);
+          expectInDocument(getResultApplicationsGrafanaTitle);
         });
 
         it('Persists nodes from search', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.type(getTreeSearch(), 'mimir');
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await type(getTreeSearch, 'mimir');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
-          await user.click(getResultApplicationsMimirSelect());
-          await user.type(getTreeSearch(), 'unknown');
+          await click(getResultApplicationsMimirSelect);
+          await type(getTreeSearch, 'unknown');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(4);
-          expect(getPersistedApplicationsMimirTitle()).toBeInTheDocument();
+          expectInDocument(getPersistedApplicationsMimirTitle);
 
-          await user.clear(getTreeSearch());
+          await clear(getTreeSearch);
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(5);
-          expect(getResultApplicationsMimirTitle()).toBeInTheDocument();
-          expect(getResultApplicationsGrafanaTitle()).toBeInTheDocument();
+          expectInDocument(getResultApplicationsMimirTitle);
+          expectInDocument(getResultApplicationsGrafanaTitle);
         });
 
         it('Selects a persisted scope', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.type(getTreeSearch(), 'grafana');
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await type(getTreeSearch, 'grafana');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          expect(getSelectorInput().value).toBe('Mimir, Grafana');
+          expectValue(getSelectorInput, 'Mimir, Grafana');
         });
 
         it('Deselects a persisted scope', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.type(getTreeSearch(), 'grafana');
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await type(getTreeSearch, 'grafana');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
 
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          expect(getSelectorInput().value).toBe('Mimir, Grafana');
+          expectValue(getSelectorInput, 'Mimir, Grafana');
 
-          await user.click(getSelectorInput());
-          await user.click(getPersistedApplicationsMimirSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getPersistedApplicationsMimirSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          expect(getSelectorInput().value).toBe('Grafana');
+          expectValue(getSelectorInput, 'Grafana');
         });
 
         it('Shows the proper headline', async () => {
-          await user.click(getSelectorInput());
-          expect(getTreeHeadline()).toHaveTextContent('Recommended');
+          await click(getSelectorInput);
+          expectTextContent(getTreeHeadline, 'Recommended');
 
-          await user.type(getTreeSearch(), 'Applications');
+          await type(getTreeSearch, 'Applications');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
-          expect(getTreeHeadline()).toHaveTextContent('Results');
+          expectTextContent(getTreeHeadline, 'Results');
 
-          await user.type(getTreeSearch(), 'unknown');
+          await type(getTreeSearch, 'unknown');
           await jest.runOnlyPendingTimersAsync();
           expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
-          expect(getTreeHeadline()).toHaveTextContent('No results found for your query');
+          expectTextContent(getTreeHeadline, 'No results found for your query');
         });
       });
 
       describe('Selector', () => {
         it('Opens', async () => {
-          await user.click(getSelectorInput());
-          expect(getSelectorApply()).toBeInTheDocument();
+          await click(getSelectorInput);
+          expectInDocument(getSelectorApply);
         });
 
         it('Fetches scope details on save', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultCloudSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultCloudSelect);
+          await click(getSelectorApply);
           expect(fetchSelectedScopesSpy).toHaveBeenCalled();
           expect(getClosestScopesFacade(dashboardScene)?.value).toEqual(
             mocksScopes.filter(({ metadata: { name } }) => name === 'cloud')
@@ -426,281 +423,281 @@ describe('Scopes', () => {
         });
 
         it('Does not save the scopes on close', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultCloudSelect());
-          await user.click(getSelectorCancel());
+          await click(getSelectorInput);
+          await click(getResultCloudSelect);
+          await click(getSelectorCancel);
           expect(fetchSelectedScopesSpy).not.toHaveBeenCalled();
           expect(getClosestScopesFacade(dashboardScene)?.value).toEqual([]);
         });
 
         it('Shows selected scopes', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultCloudSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultCloudSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          expect(getSelectorInput().value).toEqual('Cloud');
+          expectValue(getSelectorInput, 'Cloud');
         });
 
         it('Does not reload the dashboard on scope change', async () => {
-          await user.click(getDashboardsExpand());
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getDashboardsExpand);
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           expect(locationReloadSpy).not.toHaveBeenCalled();
         });
       });
 
       describe('Dashboards list', () => {
         it('Toggles expanded state', async () => {
-          await user.click(getDashboardsExpand());
-          expect(getNotFoundNoScopes()).toBeInTheDocument();
+          await click(getDashboardsExpand);
+          expectInDocument(getNotFoundNoScopes);
         });
 
         it('Does not fetch dashboards list when the list is not expanded', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await click(getSelectorApply);
           expect(fetchDashboardsSpy).not.toHaveBeenCalled();
         });
 
         it('Fetches dashboards list when the list is expanded', async () => {
-          await user.click(getDashboardsExpand());
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getSelectorApply());
+          await click(getDashboardsExpand);
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await click(getSelectorApply);
           expect(fetchDashboardsSpy).toHaveBeenCalled();
         });
 
         it('Fetches dashboards list when the list is expanded after scope selection', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getSelectorApply());
-          await user.click(getDashboardsExpand());
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await click(getSelectorApply);
+          await click(getDashboardsExpand);
           expect(fetchDashboardsSpy).toHaveBeenCalled();
         });
 
         it('Shows dashboards for multiple scopes', async () => {
-          await user.click(getDashboardsExpand());
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getDashboardsExpand);
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          await user.click(getDashboardFolderExpand('General'));
-          await user.click(getDashboardFolderExpand('Observability'));
-          await user.click(getDashboardFolderExpand('Usage'));
-          expect(queryDashboardFolderExpand('Components')).not.toBeInTheDocument();
-          expect(queryDashboardFolderExpand('Investigations')).not.toBeInTheDocument();
-          expect(getDashboard('general-data-sources')).toBeInTheDocument();
-          expect(getDashboard('general-usage')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
-          expect(getDashboard('usage-data-sources')).toBeInTheDocument();
-          expect(getDashboard('usage-stats')).toBeInTheDocument();
-          expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
-          expect(getDashboard('frontend')).toBeInTheDocument();
-          expect(getDashboard('overview')).toBeInTheDocument();
-          expect(getDashboard('stats')).toBeInTheDocument();
-          expect(queryDashboard('multiple3-datasource-errors')).not.toBeInTheDocument();
-          expect(queryDashboard('multiple4-datasource-logs')).not.toBeInTheDocument();
-          expect(queryDashboard('multiple0-ingester')).not.toBeInTheDocument();
-          expect(queryDashboard('multiple1-distributor')).not.toBeInTheDocument();
-          expect(queryDashboard('multiple2-compacter')).not.toBeInTheDocument();
-          expect(queryDashboard('another-stats')).not.toBeInTheDocument();
+          await expandDashboardFolder('General');
+          await expandDashboardFolder('Observability');
+          await expandDashboardFolder('Usage');
+          expectDashboardFolderNotInDocument('Components');
+          expectDashboardFolderNotInDocument('Investigations');
+          expectDashboardInDocument('general-data-sources');
+          expectDashboardInDocument('general-usage');
+          expectDashboardInDocument('observability-backend-errors');
+          expectDashboardInDocument('observability-backend-logs');
+          expectDashboardInDocument('observability-frontend-errors');
+          expectDashboardInDocument('observability-frontend-logs');
+          expectDashboardInDocument('usage-data-sources');
+          expectDashboardInDocument('usage-stats');
+          expectDashboardInDocument('usage-usage-overview');
+          expectDashboardInDocument('frontend');
+          expectDashboardInDocument('overview');
+          expectDashboardInDocument('stats');
+          expectDashboardNotInDocument('multiple3-datasource-errors');
+          expectDashboardNotInDocument('multiple4-datasource-logs');
+          expectDashboardNotInDocument('multiple0-ingester');
+          expectDashboardNotInDocument('multiple1-distributor');
+          expectDashboardNotInDocument('multiple2-compacter');
+          expectDashboardNotInDocument('another-stats');
 
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsMimirSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          await user.click(getDashboardFolderExpand('General'));
-          await user.click(getDashboardFolderExpand('Observability'));
-          await user.click(getDashboardFolderExpand('Usage'));
-          await user.click(getDashboardFolderExpand('Components'));
-          await user.click(getDashboardFolderExpand('Investigations'));
-          expect(getDashboard('general-data-sources')).toBeInTheDocument();
-          expect(getDashboard('general-usage')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
-          expect(getDashboard('usage-data-sources')).toBeInTheDocument();
-          expect(getDashboard('usage-stats')).toBeInTheDocument();
-          expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
-          expect(getDashboard('frontend')).toBeInTheDocument();
-          expect(getDashboard('overview')).toBeInTheDocument();
-          expect(getDashboard('stats')).toBeInTheDocument();
-          expect(queryAllDashboard('multiple3-datasource-errors')).toHaveLength(2);
-          expect(queryAllDashboard('multiple4-datasource-logs')).toHaveLength(2);
-          expect(queryAllDashboard('multiple0-ingester')).toHaveLength(2);
-          expect(queryAllDashboard('multiple1-distributor')).toHaveLength(2);
-          expect(queryAllDashboard('multiple2-compacter')).toHaveLength(2);
-          expect(getDashboard('another-stats')).toBeInTheDocument();
+          await expandDashboardFolder('General');
+          await expandDashboardFolder('Observability');
+          await expandDashboardFolder('Usage');
+          await expandDashboardFolder('Components');
+          await expandDashboardFolder('Investigations');
+          expectDashboardInDocument('general-data-sources');
+          expectDashboardInDocument('general-usage');
+          expectDashboardInDocument('observability-backend-errors');
+          expectDashboardInDocument('observability-backend-logs');
+          expectDashboardInDocument('observability-frontend-errors');
+          expectDashboardInDocument('observability-frontend-logs');
+          expectDashboardInDocument('usage-data-sources');
+          expectDashboardInDocument('usage-stats');
+          expectDashboardInDocument('usage-usage-overview');
+          expectDashboardInDocument('frontend');
+          expectDashboardInDocument('overview');
+          expectDashboardInDocument('stats');
+          expectDashboardLength('multiple3-datasource-errors', 2);
+          expectDashboardLength('multiple4-datasource-logs', 2);
+          expectDashboardLength('multiple0-ingester', 2);
+          expectDashboardLength('multiple1-distributor', 2);
+          expectDashboardLength('multiple2-compacter', 2);
+          expectDashboardInDocument('another-stats');
 
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsMimirSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          await user.click(getDashboardFolderExpand('General'));
-          await user.click(getDashboardFolderExpand('Observability'));
-          await user.click(getDashboardFolderExpand('Usage'));
-          expect(queryDashboardFolderExpand('Components')).not.toBeInTheDocument();
-          expect(queryDashboardFolderExpand('Investigations')).not.toBeInTheDocument();
-          expect(getDashboard('general-data-sources')).toBeInTheDocument();
-          expect(getDashboard('general-usage')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
-          expect(getDashboard('usage-data-sources')).toBeInTheDocument();
-          expect(getDashboard('usage-stats')).toBeInTheDocument();
-          expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
-          expect(getDashboard('frontend')).toBeInTheDocument();
-          expect(getDashboard('overview')).toBeInTheDocument();
-          expect(getDashboard('stats')).toBeInTheDocument();
-          expect(queryDashboard('multiple3-datasource-errors')).not.toBeInTheDocument();
-          expect(queryDashboard('multiple4-datasource-logs')).not.toBeInTheDocument();
-          expect(queryDashboard('multiple0-ingester')).not.toBeInTheDocument();
-          expect(queryDashboard('multiple1-distributor')).not.toBeInTheDocument();
-          expect(queryDashboard('multiple2-compacter')).not.toBeInTheDocument();
-          expect(queryDashboard('another-stats')).not.toBeInTheDocument();
+          await expandDashboardFolder('General');
+          await expandDashboardFolder('Observability');
+          await expandDashboardFolder('Usage');
+          expectDashboardFolderNotInDocument('Components');
+          expectDashboardFolderNotInDocument('Investigations');
+          expectDashboardInDocument('general-data-sources');
+          expectDashboardInDocument('general-usage');
+          expectDashboardInDocument('observability-backend-errors');
+          expectDashboardInDocument('observability-backend-logs');
+          expectDashboardInDocument('observability-frontend-errors');
+          expectDashboardInDocument('observability-frontend-logs');
+          expectDashboardInDocument('usage-data-sources');
+          expectDashboardInDocument('usage-stats');
+          expectDashboardInDocument('usage-usage-overview');
+          expectDashboardInDocument('frontend');
+          expectDashboardInDocument('overview');
+          expectDashboardInDocument('stats');
+          expectDashboardFolderNotInDocument('multiple3-datasource-errors');
+          expectDashboardFolderNotInDocument('multiple4-datasource-logs');
+          expectDashboardFolderNotInDocument('multiple0-ingester');
+          expectDashboardFolderNotInDocument('multiple1-distributor');
+          expectDashboardFolderNotInDocument('multiple2-compacter');
+          expectDashboardFolderNotInDocument('another-stats');
         });
 
         it('Filters the dashboards list for dashboards', async () => {
-          await user.click(getDashboardsExpand());
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getDashboardsExpand);
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          await user.click(getDashboardFolderExpand('General'));
-          await user.click(getDashboardFolderExpand('Observability'));
-          await user.click(getDashboardFolderExpand('Usage'));
-          expect(getDashboard('general-data-sources')).toBeInTheDocument();
-          expect(getDashboard('general-usage')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
-          expect(getDashboard('usage-data-sources')).toBeInTheDocument();
-          expect(getDashboard('usage-stats')).toBeInTheDocument();
-          expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
-          expect(getDashboard('frontend')).toBeInTheDocument();
-          expect(getDashboard('overview')).toBeInTheDocument();
-          expect(getDashboard('stats')).toBeInTheDocument();
+          await expandDashboardFolder('General');
+          await expandDashboardFolder('Observability');
+          await expandDashboardFolder('Usage');
+          expectDashboardInDocument('general-data-sources');
+          expectDashboardInDocument('general-usage');
+          expectDashboardInDocument('observability-backend-errors');
+          expectDashboardInDocument('observability-backend-logs');
+          expectDashboardInDocument('observability-frontend-errors');
+          expectDashboardInDocument('observability-frontend-logs');
+          expectDashboardInDocument('usage-data-sources');
+          expectDashboardInDocument('usage-stats');
+          expectDashboardInDocument('usage-usage-overview');
+          expectDashboardInDocument('frontend');
+          expectDashboardInDocument('overview');
+          expectDashboardInDocument('stats');
 
-          await user.type(getDashboardsSearch(), 'Stats');
+          await type(getDashboardsSearch, 'Stats');
           await jest.runOnlyPendingTimersAsync();
-          expect(queryDashboard('general-data-sources')).not.toBeInTheDocument();
-          expect(queryDashboard('general-usage')).not.toBeInTheDocument();
-          expect(queryDashboard('observability-backend-errors')).not.toBeInTheDocument();
-          expect(queryDashboard('observability-backend-logs')).not.toBeInTheDocument();
-          expect(queryDashboard('observability-frontend-errors')).not.toBeInTheDocument();
-          expect(queryDashboard('observability-frontend-logs')).not.toBeInTheDocument();
-          expect(queryDashboard('usage-data-sources')).not.toBeInTheDocument();
-          expect(getDashboard('usage-stats')).toBeInTheDocument();
-          expect(queryDashboard('usage-usage-overview')).not.toBeInTheDocument();
-          expect(queryDashboard('frontend')).not.toBeInTheDocument();
-          expect(queryDashboard('overview')).not.toBeInTheDocument();
-          expect(getDashboard('stats')).toBeInTheDocument();
+          expectDashboardFolderNotInDocument('general-data-sources');
+          expectDashboardFolderNotInDocument('general-usage');
+          expectDashboardFolderNotInDocument('observability-backend-errors');
+          expectDashboardFolderNotInDocument('observability-backend-logs');
+          expectDashboardFolderNotInDocument('observability-frontend-errors');
+          expectDashboardFolderNotInDocument('observability-frontend-logs');
+          expectDashboardFolderNotInDocument('usage-data-sources');
+          expectDashboardInDocument('usage-stats');
+          expectDashboardFolderNotInDocument('usage-usage-overview');
+          expectDashboardFolderNotInDocument('frontend');
+          expectDashboardFolderNotInDocument('overview');
+          expectDashboardInDocument('stats');
         });
 
         it('Filters the dashboards list for folders', async () => {
-          await user.click(getDashboardsExpand());
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getDashboardsExpand);
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          await user.click(getDashboardFolderExpand('General'));
-          await user.click(getDashboardFolderExpand('Observability'));
-          await user.click(getDashboardFolderExpand('Usage'));
-          expect(getDashboard('general-data-sources')).toBeInTheDocument();
-          expect(getDashboard('general-usage')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-backend-logs')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-errors')).toBeInTheDocument();
-          expect(getDashboard('observability-frontend-logs')).toBeInTheDocument();
-          expect(getDashboard('usage-data-sources')).toBeInTheDocument();
-          expect(getDashboard('usage-stats')).toBeInTheDocument();
-          expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
-          expect(getDashboard('frontend')).toBeInTheDocument();
-          expect(getDashboard('overview')).toBeInTheDocument();
-          expect(getDashboard('stats')).toBeInTheDocument();
+          await expandDashboardFolder('General');
+          await expandDashboardFolder('Observability');
+          await expandDashboardFolder('Usage');
+          expectDashboardInDocument('general-data-sources');
+          expectDashboardInDocument('general-usage');
+          expectDashboardInDocument('observability-backend-errors');
+          expectDashboardInDocument('observability-backend-logs');
+          expectDashboardInDocument('observability-frontend-errors');
+          expectDashboardInDocument('observability-frontend-logs');
+          expectDashboardInDocument('usage-data-sources');
+          expectDashboardInDocument('usage-stats');
+          expectDashboardInDocument('usage-usage-overview');
+          expectDashboardInDocument('frontend');
+          expectDashboardInDocument('overview');
+          expectDashboardInDocument('stats');
 
-          await user.type(getDashboardsSearch(), 'Usage');
+          await type(getDashboardsSearch, 'Usage');
           await jest.runOnlyPendingTimersAsync();
-          expect(queryDashboard('general-data-sources')).not.toBeInTheDocument();
-          expect(getDashboard('general-usage')).toBeInTheDocument();
-          expect(queryDashboard('observability-backend-errors')).not.toBeInTheDocument();
-          expect(queryDashboard('observability-backend-logs')).not.toBeInTheDocument();
-          expect(queryDashboard('observability-frontend-errors')).not.toBeInTheDocument();
-          expect(queryDashboard('observability-frontend-logs')).not.toBeInTheDocument();
-          expect(getDashboard('usage-data-sources')).toBeInTheDocument();
-          expect(getDashboard('usage-stats')).toBeInTheDocument();
-          expect(getDashboard('usage-usage-overview')).toBeInTheDocument();
-          expect(queryDashboard('frontend')).not.toBeInTheDocument();
-          expect(queryDashboard('overview')).not.toBeInTheDocument();
-          expect(queryDashboard('stats')).not.toBeInTheDocument();
+          expectDashboardFolderNotInDocument('general-data-sources');
+          expectDashboardInDocument('general-usage');
+          expectDashboardFolderNotInDocument('observability-backend-errors');
+          expectDashboardFolderNotInDocument('observability-backend-logs');
+          expectDashboardFolderNotInDocument('observability-frontend-errors');
+          expectDashboardFolderNotInDocument('observability-frontend-logs');
+          expectDashboardInDocument('usage-data-sources');
+          expectDashboardInDocument('usage-stats');
+          expectDashboardInDocument('usage-usage-overview');
+          expectDashboardFolderNotInDocument('frontend');
+          expectDashboardFolderNotInDocument('overview');
+          expectDashboardFolderNotInDocument('stats');
         });
 
         it('Deduplicates the dashboards list', async () => {
-          await user.click(getDashboardsExpand());
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsCloudExpand());
-          await user.click(getResultApplicationsCloudDevSelect());
-          await user.click(getResultApplicationsCloudOpsSelect());
-          await user.click(getSelectorApply());
+          await click(getDashboardsExpand);
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsCloudExpand);
+          await click(getResultApplicationsCloudDevSelect);
+          await click(getResultApplicationsCloudOpsSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          await user.click(getDashboardFolderExpand('Cardinality Management'));
-          await user.click(getDashboardFolderExpand('Usage Insights'));
-          expect(queryAllDashboard('cardinality-management-labels')).toHaveLength(1);
-          expect(queryAllDashboard('cardinality-management-metrics')).toHaveLength(1);
-          expect(queryAllDashboard('cardinality-management-overview')).toHaveLength(1);
-          expect(queryAllDashboard('usage-insights-alertmanager')).toHaveLength(1);
-          expect(queryAllDashboard('usage-insights-data-sources')).toHaveLength(1);
-          expect(queryAllDashboard('usage-insights-metrics-ingestion')).toHaveLength(1);
-          expect(queryAllDashboard('usage-insights-overview')).toHaveLength(1);
-          expect(queryAllDashboard('usage-insights-query-errors')).toHaveLength(1);
-          expect(queryAllDashboard('billing-usage')).toHaveLength(1);
+          await expandDashboardFolder('Cardinality Management');
+          await expandDashboardFolder('Usage Insights');
+          expectDashboardLength('cardinality-management-labels', 1);
+          expectDashboardLength('cardinality-management-metrics', 1);
+          expectDashboardLength('cardinality-management-overview', 1);
+          expectDashboardLength('usage-insights-alertmanager', 1);
+          expectDashboardLength('usage-insights-data-sources', 1);
+          expectDashboardLength('usage-insights-metrics-ingestion', 1);
+          expectDashboardLength('usage-insights-overview', 1);
+          expectDashboardLength('usage-insights-query-errors', 1);
+          expectDashboardLength('billing-usage', 1);
         });
 
         it('Shows a proper message when no scopes are selected', async () => {
-          await user.click(getDashboardsExpand());
-          expect(getNotFoundNoScopes()).toBeInTheDocument();
-          expect(queryDashboardsSearch()).not.toBeInTheDocument();
+          await click(getDashboardsExpand);
+          expectInDocument(getNotFoundNoScopes);
+          expectNotInDocument(queryDashboardsSearch);
         });
 
         it('Does not show the input when there are no dashboards found for scope', async () => {
-          await user.click(getDashboardsExpand());
-          await user.click(getSelectorInput());
-          await user.click(getResultCloudSelect());
-          await user.click(getSelectorApply());
+          await click(getDashboardsExpand);
+          await click(getSelectorInput);
+          await click(getResultCloudSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          expect(getNotFoundForScope()).toBeInTheDocument();
-          expect(queryDashboardsSearch()).not.toBeInTheDocument();
+          expectInDocument(getNotFoundForScope);
+          expectNotInDocument(queryDashboardsSearch);
         });
 
         it('Shows the input and a message when there are no dashboards found for filter', async () => {
-          await user.click(getDashboardsExpand());
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getSelectorApply());
+          await click(getDashboardsExpand);
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsMimirSelect);
+          await click(getSelectorApply);
           await jest.runOnlyPendingTimersAsync();
-          await user.type(getDashboardsSearch(), 'unknown');
+          await type(getDashboardsSearch, 'unknown');
           await jest.runOnlyPendingTimersAsync();
-          expect(queryDashboardsSearch()).toBeInTheDocument();
-          expect(getNotFoundForFilter()).toBeInTheDocument();
+          expectInDocument(getDashboardsSearch);
+          expectInDocument(getNotFoundForFilter);
 
-          await user.click(getNotFoundForFilterClear());
-          expect(getDashboardsSearch().value).toBe('');
+          await click(getNotFoundForFilterClear);
+          expectValue(getDashboardsSearch, '');
         });
       });
 
@@ -712,26 +709,26 @@ describe('Scopes', () => {
         });
 
         it('Closes selector on enter', async () => {
-          await user.click(getSelectorInput());
+          await click(getSelectorInput);
           await act(async () => dashboardScene.onEnterEditMode());
-          expect(querySelectorApply()).not.toBeInTheDocument();
+          expectNotInDocument(querySelectorApply);
         });
 
         it('Closes dashboards list on enter', async () => {
-          await user.click(getDashboardsExpand());
+          await click(getDashboardsExpand);
           await act(async () => dashboardScene.onEnterEditMode());
-          expect(queryDashboardsContainer()).not.toBeInTheDocument();
+          expectNotInDocument(queryDashboardsContainer);
         });
 
         it('Does not open selector when view mode is active', async () => {
           await act(async () => dashboardScene.onEnterEditMode());
-          await user.click(getSelectorInput());
-          expect(querySelectorApply()).not.toBeInTheDocument();
+          await click(getSelectorInput);
+          expectNotInDocument(querySelectorApply);
         });
 
         it('Disables the expand button when view mode is active', async () => {
           await act(async () => dashboardScene.onEnterEditMode());
-          expect(getDashboardsExpand()).toBeDisabled();
+          expectDisabled(getDashboardsExpand);
         });
       });
 
@@ -739,48 +736,48 @@ describe('Scopes', () => {
         it('Data requests', async () => {
           const queryRunner = sceneGraph.getQueryController(dashboardScene)!;
 
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
             mocksScopes.filter(({ metadata: { name } }) => name === 'grafana')
           );
 
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsMimirSelect);
+          await click(getSelectorApply);
           expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
             mocksScopes.filter(({ metadata: { name } }) => name === 'grafana' || name === 'mimir')
           );
 
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(
             mocksScopes.filter(({ metadata: { name } }) => name === 'mimir')
           );
         });
 
         it('Filters requests', async () => {
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsExpand());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsExpand);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(
             mocksScopes.filter(({ metadata: { name } }) => name === 'grafana')
           );
 
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsMimirSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsMimirSelect);
+          await click(getSelectorApply);
           expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(
             mocksScopes.filter(({ metadata: { name } }) => name === 'grafana' || name === 'mimir')
           );
 
-          await user.click(getSelectorInput());
-          await user.click(getResultApplicationsGrafanaSelect());
-          await user.click(getSelectorApply());
+          await click(getSelectorInput);
+          await click(getResultApplicationsGrafanaSelect);
+          await click(getSelectorApply);
           expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(
             mocksScopes.filter(({ metadata: { name } }) => name === 'mimir')
           );
@@ -798,11 +795,11 @@ describe('Scopes', () => {
 
         describe('Selector', () => {
           it('Does not reload the dashboard on scopes change', async () => {
-            await user.click(getDashboardsExpand());
-            await user.click(getSelectorInput());
-            await user.click(getResultApplicationsExpand());
-            await user.click(getResultApplicationsGrafanaSelect());
-            await user.click(getSelectorApply());
+            await click(getDashboardsExpand);
+            await click(getSelectorInput);
+            await click(getResultApplicationsExpand);
+            await click(getResultApplicationsGrafanaSelect);
+            await click(getSelectorApply);
             expect(locationReloadSpy).not.toHaveBeenCalled();
           });
         });
@@ -817,11 +814,11 @@ describe('Scopes', () => {
 
         describe('Selector', () => {
           it('Reloads the dashboard on scopes change', async () => {
-            await user.click(getDashboardsExpand());
-            await user.click(getSelectorInput());
-            await user.click(getResultApplicationsExpand());
-            await user.click(getResultApplicationsGrafanaSelect());
-            await user.click(getSelectorApply());
+            await click(getDashboardsExpand);
+            await click(getSelectorInput);
+            await click(getResultApplicationsExpand);
+            await click(getResultApplicationsGrafanaSelect);
+            await click(getSelectorApply);
             expect(locationReloadSpy).toHaveBeenCalled();
           });
         });
