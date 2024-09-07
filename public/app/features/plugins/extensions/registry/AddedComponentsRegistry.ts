@@ -1,7 +1,12 @@
-import { PluginAddedComponentConfig } from '@grafana/data';
+import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
 import { logWarning, wrapWithPluginContext } from '../utils';
-import { extensionPointEndsWithVersion, isExtensionPointIdValid, isReactComponent } from '../validators';
+import {
+  extensionPointEndsWithVersion,
+  isExtensionPointIdValid,
+  isGrafanaCoreExtensionPoint,
+  isReactComponent,
+} from '../validators';
 
 import { PluginExtensionConfigs, Registry, RegistryType } from './Registry';
 
@@ -12,7 +17,10 @@ export type AddedComponentRegistryItem<Props = {}> = {
   component: React.ComponentType<Props>;
 };
 
-export class AddedComponentsRegistry extends Registry<AddedComponentRegistryItem[], PluginAddedComponentConfig> {
+export class AddedComponentsRegistry extends Registry<
+  AddedComponentRegistryItem[],
+  PluginExtensionAddedComponentConfig
+> {
   constructor(initialState: RegistryType<AddedComponentRegistryItem[]> = {}) {
     super({
       initialState,
@@ -21,7 +29,7 @@ export class AddedComponentsRegistry extends Registry<AddedComponentRegistryItem
 
   mapToRegistry(
     registry: RegistryType<AddedComponentRegistryItem[]>,
-    item: PluginExtensionConfigs<PluginAddedComponentConfig>
+    item: PluginExtensionConfigs<PluginExtensionAddedComponentConfig>
   ): RegistryType<AddedComponentRegistryItem[]> {
     const { pluginId, configs } = item;
 
@@ -52,7 +60,7 @@ export class AddedComponentsRegistry extends Registry<AddedComponentRegistryItem
           continue;
         }
 
-        if (!extensionPointEndsWithVersion(extensionPointId)) {
+        if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
           logWarning(
             `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
           );
