@@ -1,4 +1,5 @@
-import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { CancelActivationHandler, SceneGridLayout, VizPanel } from '@grafana/scenes';
 import * as libAPI from 'app/features/library-panels/state/api';
 
@@ -50,10 +51,10 @@ describe('PanelEditor', () => {
     });
 
     it('should discard a newly added panel', () => {
-      const { panelEditor, scene } = setup({ isNewPanel: true });
+      const { panelEditor, dashboard } = setup({ isNewPanel: true });
       panelEditor.onDiscard();
 
-      expect((scene.state.body as SceneGridLayout).state.children.length).toBe(0);
+      expect((dashboard.state.body as SceneGridLayout).state.children.length).toBe(0);
     });
   });
 
@@ -109,7 +110,7 @@ describe('PanelEditor', () => {
 
   describe('Handling library panels', () => {
     it('should call the api with the updated panel', async () => {
-      pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
+      pluginToLoad = getPanelPlugin({ id: 'text', skipDataQuery: true });
 
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
 
@@ -195,83 +196,26 @@ describe('PanelEditor', () => {
 
   describe('PanelDataPane', () => {
     it('should not exist if panel is skipDataQuery', () => {
-      pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
+      const { panelEditor } = setup({ pluginSkipDataQuery: true });
 
-      const panel = new VizPanel({
-        key: 'panel-1',
-        pluginId: 'text',
-      });
-      new DashboardGridItem({
-        body: panel,
-      });
-
-      const editScene = buildPanelEditScene(panel);
-      const scene = new DashboardScene({
-        editPanel: editScene,
-      });
-
-      activateFullSceneTree(scene);
-
-      expect(editScene.state.dataPane).toBeUndefined();
+      expect(panelEditor.state.dataPane).toBeUndefined();
     });
 
     it('should exist if panel is supporting querying', () => {
-      pluginToLoad = getTestPanelPlugin({ id: 'timeseries' });
+      const { panelEditor } = setup({ pluginSkipDataQuery: false });
 
-      const panel = new VizPanel({
-        key: 'panel-1',
-        pluginId: 'timeseries',
-      });
-
-      new DashboardGridItem({
-        body: panel,
-      });
-      const editScene = buildPanelEditScene(panel);
-      const scene = new DashboardScene({
-        editPanel: editScene,
-      });
-
-      activateFullSceneTree(scene);
-      expect(editScene.state.dataPane).toBeDefined();
+      expect(panelEditor.state.dataPane).toBeDefined();
     });
   });
 });
 
-export function getTestPanelPlugin(options: Partial<PanelPluginMeta>): PanelPlugin {
-  const plugin = new PanelPlugin(() => null);
-  plugin.meta = {
-    id: options.id!,
-    type: PluginType.panel,
-    name: options.id!,
-    sort: options.sort || 1,
-    info: {
-      author: {
-        name: options.id + 'name',
-      },
-      description: '',
-      links: [],
-      logos: {
-        large: '',
-        small: '',
-      },
-      screenshots: [],
-      updated: '',
-      version: '1.0.',
-    },
-    hideFromList: options.hideFromList === true,
-    module: options.module ?? '',
-    baseUrl: '',
-    skipDataQuery: options.skipDataQuery ?? false,
-  };
-  return plugin;
-}
-
 interface SetupOptions {
   isNewPanel?: boolean;
+  pluginSkipDataQuery?: boolean;
 }
 
 function setup(options: SetupOptions = {}) {
-  pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
+  pluginToLoad = getPanelPlugin({ id: 'text', skipDataQuery: options.pluginSkipDataQuery });
 
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'original title' });
   const gridItem = new DashboardGridItem({ body: panel });
@@ -288,5 +232,5 @@ function setup(options: SetupOptions = {}) {
 
   deactivate = activateFullSceneTree(dashboard);
 
-  return { scene: dashboard, panel, gridItem, panelEditor };
+  return { dashboard, panel, gridItem, panelEditor };
 }
