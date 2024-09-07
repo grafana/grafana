@@ -19,8 +19,15 @@ import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { getPanelChanges } from '../saving/getDashboardChanges';
 import { DashboardGridItem, DashboardGridItemState } from '../scene/DashboardGridItem';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { activateInActiveParents, getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import {
+  activateInActiveParents,
+  getDashboardSceneFor,
+  getLibraryPanelBehavior,
+  getPanelIdForVizPanel,
+  isLibraryPanel,
+} from '../utils/utils';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -189,7 +196,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public onConfirmUnlinkLibraryPanel = () => {
-    //this.state.vizManager.unlinkLibraryPanel();
+    const libPanelBehavior = getLibraryPanelBehavior(this.getPanel());
+    if (!libPanelBehavior) {
+      return;
+    }
+
+    libPanelBehavior.unlink();
+
     this.setState({ showLibraryPanelUnlinkModal: false });
   };
 

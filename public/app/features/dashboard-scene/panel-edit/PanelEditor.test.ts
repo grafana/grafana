@@ -130,6 +130,37 @@ describe('PanelEditor', () => {
       expect(libPanelBehavior.state.title).toBe('changed title');
       expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
     });
+
+    it('unlinks library panel', () => {
+      const libraryPanelModel = {
+        title: 'title',
+        uid: 'uid',
+        name: 'libraryPanelName',
+        model: {
+          title: 'title',
+          type: 'text',
+        },
+        type: 'panel',
+        version: 1,
+      };
+
+      const libPanelBehavior = new LibraryPanelBehavior({
+        isLoaded: true,
+        title: libraryPanelModel.title,
+        uid: libraryPanelModel.uid,
+        name: libraryPanelModel.name,
+        _loadedPanel: libraryPanelModel,
+      });
+
+      // Just adding an extra stateless behavior to verify unlinking does not remvoe it
+      const otherBehavior = jest.fn();
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [libPanelBehavior, otherBehavior] });
+      const editScene = buildPanelEditScene(panel);
+      editScene.onConfirmUnlinkLibraryPanel();
+
+      expect(panel.state.$behaviors?.length).toBe(1);
+      expect(panel.state.$behaviors![0]).toBe(otherBehavior);
+    });
   });
 
   describe('PanelDataPane', () => {
