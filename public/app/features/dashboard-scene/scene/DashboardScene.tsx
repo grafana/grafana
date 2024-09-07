@@ -251,6 +251,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     };
 
     this._changeTracker.stopTrackingChanges();
+
     this.setState({
       version: result.version,
       isDirty: false,
@@ -265,6 +266,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         isNew: false,
       },
     });
+
+    if (this.state.editPanel) {
+      this.state.editPanel.dashboardSaved();
+    }
 
     this._changeTracker.startTrackingChanges();
   }

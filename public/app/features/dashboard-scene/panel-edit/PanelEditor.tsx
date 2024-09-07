@@ -77,12 +77,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panel = this.state.panelRef.resolve();
     const deactivateParents = activateInActiveParents(panel);
 
+    this._setupChangeDetection();
     this._initDataPane();
-
-    this._subs.add(panel.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange));
-
-    // Repeat options live on the layout element (DashboardGridItem)
-    this._subs.add(this._layoutElement.subscribeToEvent(SceneObjectStateChangedEvent, this._handleStateChange));
 
     // Listen for panel plugin changes
     this._subs.add(
@@ -96,16 +92,35 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     return deactivateParents;
   }
 
-  private _detectPanelModelChanges = debounce(() => {
-    const { hasChanges } = getPanelChanges(this._originalSaveModel, vizPanelToPanel(this.state.panelRef.resolve()));
-    this.setState({ isDirty: hasChanges });
-  }, 250);
+  /**
+   * Useful for testing to turn on debounce
+   */
+  public debounceSaveModelDiff = true;
 
-  private _handleStateChange = (event: SceneObjectStateChangedEvent) => {
-    if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
-      this._detectPanelModelChanges();
-    }
-  };
+  /**
+   * Subscribe to state changes and check if the save model has changed
+   */
+  private _setupChangeDetection() {
+    const panel = this.state.panelRef.resolve();
+    const performSaveModelDiff = () => {
+      const { hasChanges } = getPanelChanges(this._originalSaveModel, vizPanelToPanel(panel));
+      this.setState({ isDirty: hasChanges });
+    };
+
+    const performSaveModelDiffDebounced = this.debounceSaveModelDiff
+      ? debounce(performSaveModelDiff, 250)
+      : performSaveModelDiff;
+
+    const handleStateChange = (event: SceneObjectStateChangedEvent) => {
+      if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+        performSaveModelDiffDebounced();
+      }
+    };
+
+    this._subs.add(panel.subscribeToEvent(SceneObjectStateChangedEvent, handleStateChange));
+    // Repeat options live on the layout element (DashboardGridItem)
+    this._subs.add(this._layoutElement.subscribeToEvent(SceneObjectStateChangedEvent, handleStateChange));
+  }
 
   public getPanel(): VizPanel {
     return this.state.panelRef?.resolve();
@@ -172,6 +187,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // this._discardChanges = true;
     locationService.partial({ editPanel: null });
   };
+
+  public dashboardSaved() {
+    this.setOriginalState(this.state.panelRef);
+    this.setState({ isDirty: false });
+  }
 
   public onSaveLibraryPanel = () => {
     this.setState({ showLibraryPanelSaveModal: true });

@@ -1,5 +1,7 @@
+import { p } from 'msw/lib/core/GraphQLHandler-UgnlXhlx';
+
 import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { CancelActivationHandler, SceneGridLayout, VizPanel } from '@grafana/scenes';
 import * as libAPI from 'app/features/library-panels/state/api';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
@@ -29,51 +31,63 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+let deactivate: CancelActivationHandler | undefined;
+
 describe('PanelEditor', () => {
-  describe('When closing editor', () => {
-    it('should discard changes when unmounted and discard changes is marked as true', () => {
-      pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
-
-      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'original title' });
-      const gridItem = new DashboardGridItem({ body: panel });
-      const editScene = buildPanelEditScene(panel);
-      const scene = new DashboardScene({
-        editPanel: editScene,
-        isEditing: true,
-        body: new SceneGridLayout({
-          children: [gridItem],
-        }),
-      });
-
-      const deactivate = activateFullSceneTree(scene);
-      panel.setState({ title: 'changed title' });
-
-      editScene.onDiscard();
+  afterEach(() => {
+    if (deactivate) {
       deactivate();
+      deactivate = undefined;
+    }
+  });
 
-      const updatedPanel = gridItem.state.body as VizPanel;
-      expect(updatedPanel?.state.title).toBe('original title');
+  describe('When closing editor', () => {
+    it('should discard changes revert all changes', () => {
+      const { panelEditor, panel } = setup();
+
+      panel.setState({ title: 'changed title' });
+      panelEditor.onDiscard();
+
+      expect(panel.state.title).toBe('original title');
     });
 
     it('should discard a newly added panel', () => {
-      pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
-
-      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
-      const gridItem = new DashboardGridItem({ body: panel });
-      const editScene = buildPanelEditScene(panel, true);
-      const scene = new DashboardScene({
-        editPanel: editScene,
-        isEditing: true,
-        body: new SceneGridLayout({
-          children: [gridItem],
-        }),
-      });
-
-      editScene.onDiscard();
-      const deactivate = activateFullSceneTree(scene);
-      deactivate();
+      const { panelEditor, scene } = setup({ isNewPanel: true });
+      panelEditor.onDiscard();
 
       expect((scene.state.body as SceneGridLayout).state.children.length).toBe(0);
+    });
+  });
+
+  describe('When changes are made', () => {
+    it('Should set state to dirty', () => {
+      const { panelEditor, panel } = setup({});
+
+      expect(panelEditor.state.isDirty).toBe(undefined);
+
+      panel.setState({ title: 'changed title' });
+
+      expect(panelEditor.state.isDirty).toBe(true);
+    });
+
+    it('Should reset dirty and orginal state when dashboard is saved', () => {
+      const { panelEditor, panel } = setup({});
+
+      expect(panelEditor.state.isDirty).toBe(undefined);
+
+      panel.setState({ title: 'changed title' });
+
+      panelEditor.dashboardSaved();
+
+      expect(panelEditor.state.isDirty).toBe(false);
+
+      panel.setState({ title: 'changed title 2' });
+
+      expect(panelEditor.state.isDirty).toBe(true);
+
+      // Change back to already saved state
+      panel.setState({ title: 'changed title' });
+      expect(panelEditor.state.isDirty).toBe(false);
     });
   });
 
@@ -234,4 +248,29 @@ export function getTestPanelPlugin(options: Partial<PanelPluginMeta>): PanelPlug
     skipDataQuery: options.skipDataQuery ?? false,
   };
   return plugin;
+}
+
+interface SetupOptions {
+  isNewPanel?: boolean;
+}
+
+function setup(options: SetupOptions = {}) {
+  pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
+
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'original title' });
+  const gridItem = new DashboardGridItem({ body: panel });
+  const panelEditor = buildPanelEditScene(panel, options.isNewPanel);
+  const dashboard = new DashboardScene({
+    editPanel: panelEditor,
+    isEditing: true,
+    body: new SceneGridLayout({
+      children: [gridItem],
+    }),
+  });
+
+  panelEditor.debounceSaveModelDiff = false;
+
+  deactivate = activateFullSceneTree(dashboard);
+
+  return { scene: dashboard, panel, gridItem, panelEditor };
 }

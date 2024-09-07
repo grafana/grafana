@@ -422,7 +422,7 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={editPanel?.onDiscard}
         tooltip={editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
         size="sm"
-        disabled={!isEditedPanelDirty || !isDirty}
+        disabled={!isEditedPanelDirty}
         key="discard"
         fill="outline"
         variant="destructive"
