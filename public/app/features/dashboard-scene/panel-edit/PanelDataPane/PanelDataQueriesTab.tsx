@@ -169,10 +169,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     locationService.partial({ inspect: panelId, inspectTab: 'query' });
   };
 
-  public onChangeDataSource = async (
-    newSettings: DataSourceInstanceSettings,
-    defaultQueries?: DataQuery[] | GrafanaQuery[]
-  ) => {
+  public onChangeDataSource = async (newSettings: DataSourceInstanceSettings, defaultQueries?: SceneDataQuery[]) => {
     const { dsSettings } = this.state;
     const queryRunner = this.queryRunner;
 
@@ -184,10 +181,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
     const queries = defaultQueries || (await updateQueries(nextDS, newSettings.uid, currentQueries, currentDS));
 
-    queryRunner.setState({
-      datasource: getDataSourceRef(newSettings),
-      queries,
-    });
+    queryRunner.setState({ datasource: getDataSourceRef(newSettings), queries });
 
     if (defaultQueries) {
       queryRunner.runQueries();
