@@ -529,7 +529,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           this.setState({
             otelJoinQuery,
             hasOtelResources,
-            isStandardOtel: isStandard && deploymentEnvironments.length > 0,
+            // we handle non-standard data sources by using topk to choose 1 series in the join query
+            isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
             otelTargets: filteredOtelTargets,
             useOtelExperience: true,
           });
