@@ -1,19 +1,11 @@
 import { config } from '@grafana/runtime';
 
 import {
-  applyScopes,
   clearNotFound,
   expandDashboardFolder,
-  expandResultApplications,
-  expandResultApplicationsCloud,
-  openSelector,
   searchDashboards,
-  selectResultApplicationsCloudDev,
-  selectResultApplicationsCloudOps,
-  selectResultApplicationsGrafana,
-  selectResultApplicationsMimir,
-  selectResultCloud,
   toggleDashboards,
+  updateScopes,
 } from './utils/actions';
 import {
   expectDashboardFolderNotInDocument,
@@ -63,37 +55,25 @@ describe('Dashboards list', () => {
   });
 
   it('Does not fetch dashboards list when the list is not expanded', async () => {
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsMimir();
-    await applyScopes();
+    await updateScopes(['mimir']);
     expect(fetchDashboardsSpy).not.toHaveBeenCalled();
   });
 
   it('Fetches dashboards list when the list is expanded', async () => {
     await toggleDashboards();
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsMimir();
-    await applyScopes();
+    await updateScopes(['mimir']);
     expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Fetches dashboards list when the list is expanded after scope selection', async () => {
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsMimir();
-    await applyScopes();
+    await updateScopes(['mimir']);
     await toggleDashboards();
     expect(fetchDashboardsSpy).toHaveBeenCalled();
   });
 
   it('Shows dashboards for multiple scopes', async () => {
     await toggleDashboards();
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsGrafana();
-    await applyScopes();
+    await updateScopes(['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -118,9 +98,7 @@ describe('Dashboards list', () => {
     expectDashboardNotInDocument('multiple2-compacter');
     expectDashboardNotInDocument('another-stats');
 
-    await openSelector();
-    await selectResultApplicationsMimir();
-    await applyScopes();
+    await updateScopes(['grafana', 'mimir']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -145,9 +123,7 @@ describe('Dashboards list', () => {
     expectDashboardLength('multiple2-compacter', 2);
     expectDashboardInDocument('another-stats');
 
-    await openSelector();
-    await selectResultApplicationsMimir();
-    await applyScopes();
+    await updateScopes(['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -175,10 +151,7 @@ describe('Dashboards list', () => {
 
   it('Filters the dashboards list for dashboards', async () => {
     await toggleDashboards();
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsGrafana();
-    await applyScopes();
+    await updateScopes(['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -212,10 +185,7 @@ describe('Dashboards list', () => {
 
   it('Filters the dashboards list for folders', async () => {
     await toggleDashboards();
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsGrafana();
-    await applyScopes();
+    await updateScopes(['grafana']);
     await expandDashboardFolder('General');
     await expandDashboardFolder('Observability');
     await expandDashboardFolder('Usage');
@@ -249,12 +219,7 @@ describe('Dashboards list', () => {
 
   it('Deduplicates the dashboards list', async () => {
     await toggleDashboards();
-    await openSelector();
-    await expandResultApplications();
-    await expandResultApplicationsCloud();
-    await selectResultApplicationsCloudDev();
-    await selectResultApplicationsCloudOps();
-    await applyScopes();
+    await updateScopes(['dev', 'ops']);
     await expandDashboardFolder('Cardinality Management');
     await expandDashboardFolder('Usage Insights');
     expectDashboardLength('cardinality-management-labels', 1);
@@ -276,19 +241,14 @@ describe('Dashboards list', () => {
 
   it('Does not show the input when there are no dashboards found for scope', async () => {
     await toggleDashboards();
-    await openSelector();
-    await selectResultCloud();
-    await applyScopes();
+    await updateScopes(['cloud']);
     expectNoDashboardsForScope();
     expectNoDashboardsSearch();
   });
 
   it('Shows the input and a message when there are no dashboards found for filter', async () => {
     await toggleDashboards();
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsMimir();
-    await applyScopes();
+    await updateScopes(['mimir']);
     await searchDashboards('unknown');
     expectDashboardsSearch();
     expectNoDashboardsForFilter();

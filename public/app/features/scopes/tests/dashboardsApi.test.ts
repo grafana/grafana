@@ -1,15 +1,7 @@
 import { config } from '@grafana/runtime';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
-import {
-  applyScopes,
-  expandResultApplications,
-  getDashboardDTO,
-  openSelector,
-  selectResultApplicationsGrafana,
-  selectResultApplicationsMimir,
-  toggleDashboards,
-} from './utils/actions';
+import { getDashboardDTO, updateScopes } from './utils/actions';
 import { expectNewDashboardDTO, expectOldDashboardDTO } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
@@ -38,12 +30,7 @@ const runTest = async (passScopes: boolean, kubernetesApi: boolean) => {
   config.featureToggles.kubernetesDashboards = kubernetesApi;
   setDashboardAPI(undefined);
   renderDashboard({}, { reloadOnScopesChange: true });
-  await toggleDashboards();
-  await openSelector();
-  await expandResultApplications();
-  await selectResultApplicationsGrafana();
-  await selectResultApplicationsMimir();
-  await applyScopes();
+  await updateScopes(['grafana', 'mimir']);
   await getDashboardDTO();
 
   if (kubernetesApi) {

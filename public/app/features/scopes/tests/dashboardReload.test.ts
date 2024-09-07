@@ -1,12 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import {
-  applyScopes,
-  expandResultApplications,
-  openSelector,
-  selectResultApplicationsGrafana,
-  toggleDashboards,
-} from './utils/actions';
+import { updateScopes } from './utils/actions';
 import { expectDashboardReload, expectNotDashboardReload } from './utils/assertions';
 import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
@@ -41,21 +35,13 @@ describe('Dashboard reload', () => {
 
   it('Does not reload the dashboard without UID', async () => {
     renderDashboard({ uid: undefined }, { reloadOnScopesChange: true });
-    await toggleDashboards();
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsGrafana();
-    await applyScopes();
+    await updateScopes(['grafana']);
     expectNotDashboardReload();
   });
 
   it('Reloads the dashboard with UID', async () => {
     renderDashboard({}, { reloadOnScopesChange: true });
-    await toggleDashboards();
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsGrafana();
-    await applyScopes();
+    await updateScopes(['grafana']);
     expectDashboardReload();
   });
 });

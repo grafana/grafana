@@ -4,15 +4,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 
 import { getClosestScopesFacade } from '../utils';
 
-import {
-  applyScopes,
-  cancelScopes,
-  expandResultApplications,
-  openSelector,
-  selectResultApplicationsGrafana,
-  selectResultApplicationsMimir,
-  selectResultCloud,
-} from './utils/actions';
+import { applyScopes, cancelScopes, openSelector, selectResultCloud, updateScopes } from './utils/actions';
 import { expectNotDashboardReload, expectScopesSelectorValue } from './utils/assertions';
 import { fetchSelectedScopesSpy, getDatasource, getInstanceSettings, getMock, mocksScopes } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
@@ -70,41 +62,29 @@ describe('Selector', () => {
   });
 
   it('Shows selected scopes', async () => {
-    await openSelector();
-    await selectResultCloud();
-    await applyScopes();
-    expectScopesSelectorValue('Cloud');
+    await updateScopes(['grafana']);
+    expectScopesSelectorValue('Grafana');
   });
 
   it('Does not reload the dashboard on scope change', async () => {
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsGrafana();
-    await applyScopes();
+    await updateScopes(['grafana']);
     expectNotDashboardReload();
   });
 
   it('Adds scopes to enrichers', async () => {
     const queryRunner = sceneGraph.getQueryController(dashboardScene)!;
 
-    await openSelector();
-    await expandResultApplications();
-    await selectResultApplicationsGrafana();
-    await applyScopes();
+    await updateScopes(['grafana']);
     let scopes = mocksScopes.filter(({ metadata: { name } }) => name === 'grafana');
     expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(scopes);
     expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(scopes);
 
-    await openSelector();
-    await selectResultApplicationsMimir();
-    await applyScopes();
+    await updateScopes(['grafana', 'mimir']);
     scopes = mocksScopes.filter(({ metadata: { name } }) => name === 'grafana' || name === 'mimir');
     expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(scopes);
     expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(scopes);
 
-    await openSelector();
-    await selectResultApplicationsGrafana();
-    await applyScopes();
+    await updateScopes(['mimir']);
     scopes = mocksScopes.filter(({ metadata: { name } }) => name === 'mimir');
     expect(dashboardScene.enrichDataRequest(queryRunner).scopes).toEqual(scopes);
     expect(dashboardScene.enrichFiltersRequest().scopes).toEqual(scopes);

@@ -21,7 +21,6 @@ import {
   getPersistedApplicationsMimirSelect,
   getResultApplicationsCloudDevSelect,
   getResultApplicationsCloudExpand,
-  getResultApplicationsCloudOpsSelect,
   getResultApplicationsCloudSelect,
   getResultApplicationsExpand,
   getResultApplicationsGrafanaSelect,
@@ -76,7 +75,6 @@ export const selectPersistedApplicationsMimir = async () => click(getPersistedAp
 export const selectResultApplicationsMimir = async () => click(getResultApplicationsMimirSelect);
 export const selectResultApplicationsCloud = async () => click(getResultApplicationsCloudSelect);
 export const selectResultApplicationsCloudDev = async () => click(getResultApplicationsCloudDevSelect);
-export const selectResultApplicationsCloudOps = async () => click(getResultApplicationsCloudOpsSelect);
 export const selectResultCloud = async () => click(getResultCloudSelect);
 export const selectResultCloudDev = async () => click(getResultCloudDevRadio);
 export const selectResultCloudOps = async () => click(getResultCloudOpsRadio);

@@ -75,8 +75,6 @@ export const getResultApplicationsCloudExpand = () =>
   screen.getByTestId(selectors.tree.expand('applications-cloud', 'result'));
 export const getResultApplicationsCloudDevSelect = () =>
   screen.getByTestId(selectors.tree.select('applications-cloud-dev', 'result'));
-export const getResultApplicationsCloudOpsSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-cloud-ops', 'result'));
 
 export const getResultCloudSelect = () => screen.getByTestId(selectors.tree.select('cloud', 'result'));
 export const getResultCloudExpand = () => screen.getByTestId(selectors.tree.expand('cloud', 'result'));
