@@ -36,7 +36,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   manage-rbac-roles-create-custom-roles-using-provisioning:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/#create-custom-roles-using-provisioning

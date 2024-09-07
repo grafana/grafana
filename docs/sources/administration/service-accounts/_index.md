@@ -21,7 +21,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   migrate-api-keys:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/

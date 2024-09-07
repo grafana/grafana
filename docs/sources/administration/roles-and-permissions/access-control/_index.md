@@ -47,17 +47,17 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   alerting:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/alerting-and-irm/alerting/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
   data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/connect-externally-hosted/data-sources/
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/
   roles-and-permissions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/

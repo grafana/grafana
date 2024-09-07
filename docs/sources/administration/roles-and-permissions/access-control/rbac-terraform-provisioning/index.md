@@ -30,17 +30,17 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#create-a-service-account-in-grafana
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/#create-a-service-account-in-grafana
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#create-a-service-account-in-grafana
   service-accounts-assign-roles-to-a-service-account-in-grafana:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#assign-roles-to-a-service-account-in-grafana
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/#assign-roles-to-a-service-account-in-grafana
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#assign-roles-to-a-service-account-in-grafana
   service-accounts-to-add-a-token-to-a-service-account:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#to-add-a-token-to-a-service-account
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/#to-add-a-token-to-a-service-account
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#to-add-a-token-to-a-service-account
 ---
 
 # Provisioning RBAC with Terraform

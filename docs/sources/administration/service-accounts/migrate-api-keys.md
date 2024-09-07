@@ -20,12 +20,12 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
   service-accounts-benefits:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/#service-account-benefits
     - pattern: /docs/grafana-cloud/
-      destination: /docs//grafana-cloud/account-management/authentication-and-permissions/service-accounts/#service-account-benefits
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/#service-account-benefits
   roles-and-permissions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/
