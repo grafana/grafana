@@ -48,7 +48,7 @@ import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { getDeploymentEnvironments, isOtelStandardization, TARGET_INFO_FILTER, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
-import { sortResources } from './otel/util';
+import { sortResources, getOtelJoinQuery, getOtelResourcesObject } from './otel/util';
 import {
   getVariablesWithOtelJoinQueryConstant,
   MetricSelectedEvent,
@@ -60,7 +60,7 @@ import {
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
 } from './shared';
-import { getMetricName, getOtelJoinQuery, getOtelResourcesObject, getTrailFor } from './utils';
+import { getMetricName, getTrailFor } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
