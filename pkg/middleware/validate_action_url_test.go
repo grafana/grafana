@@ -18,6 +18,94 @@ func TestMiddlewareValidateActionUrl(t *testing.T) {
 		code                int
 	}{
 		{
+			name:                "DELETE action with valid path",
+			method:              "DELETE",
+			path:                "/api/plugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "DELETE action with invalid path",
+			method:              "DELETE",
+			path:                "/api/notplugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "GET action with valid path",
+			method:              "GET",
+			path:                "/api/plugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "GET action with invalid path",
+			method:              "GET",
+			path:                "/api/notplugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "GET valid path without header",
+			method:              "GET",
+			path:                "/", // top-level get
+			actionsAllowPostURL: "",
+			addHeader:           false,
+			code:                http.StatusOK,
+		},
+		{
+			name:                "GET valid path with header",
+			method:              "GET",
+			path:                "/", // top-level get
+			actionsAllowPostURL: "",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "HEAD request with header",
+			method:              "HEAD",
+			path:                "/", // top-level
+			actionsAllowPostURL: "",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "OPTIONS request",
+			method:              "OPTIONS",
+			path:                "/", // top-level
+			actionsAllowPostURL: "",
+			addHeader:           false,
+			code:                http.StatusOK,
+		},
+		{
+			name:                "OPTIONS request with header",
+			method:              "OPTIONS",
+			path:                "/", // top-level
+			actionsAllowPostURL: "",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "PATCH request with header",
+			method:              "PATCH",
+			path:                "/", // top-level
+			actionsAllowPostURL: "",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "PATCH request without header",
+			method:              "PATCH",
+			path:                "/", // top-level
+			actionsAllowPostURL: "",
+			addHeader:           false,
+			code:                http.StatusOK,
+		},
+		{
 			name:                "POST without action header",
 			method:              "POST",
 			path:                "/api/plugins/org-generic-app",
@@ -49,11 +137,61 @@ func TestMiddlewareValidateActionUrl(t *testing.T) {
 			addHeader:           true,
 			code:                http.StatusMethodNotAllowed,
 		},
+		{
+			name:                "PUT action with valid path with header",
+			method:              "PUT",
+			path:                "/api/plugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           true,
+			code:                http.StatusOK,
+		},
+		{
+			name:                "PUT action with invalid path",
+			method:              "PUT",
+			path:                "/api/notplugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "PUT action with valid path without header",
+			method:              "PUT",
+			path:                "/api/plugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           false,
+			code:                http.StatusOK,
+		},
+		{
+			name:                "PUT action with invalid path without header",
+			method:              "PUT",
+			path:                "/api/notplugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           false,
+			code:                http.StatusOK,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			middlewareScenario(t, tt.name, func(t *testing.T, sc *scenarioContext) {
-				sc.m.Post(tt.path, sc.defaultHandler)
+				switch tt.method {
+				case "DELETE":
+					sc.m.Delete(tt.path, sc.defaultHandler)
+				case "GET":
+					sc.m.Get(tt.path, sc.defaultHandler)
+				case "HEAD":
+					sc.m.Head(tt.path, sc.defaultHandler)
+				case "OPTIONS":
+					sc.m.Options(tt.path, sc.defaultHandler)
+				case "PATCH":
+					sc.m.Patch(tt.path, sc.defaultHandler)
+				case "POST":
+					sc.m.Post(tt.path, sc.defaultHandler)
+				case "PUT":
+					sc.m.Put(tt.path, sc.defaultHandler)
+				default:
+					// POST for anything else
+					sc.m.Post(tt.path, sc.defaultHandler)
+				}
 				sc.fakeReq(tt.method, tt.path)
 				if tt.addHeader {
 					sc.req.Header.Add("X-Grafana-Action", "1")
