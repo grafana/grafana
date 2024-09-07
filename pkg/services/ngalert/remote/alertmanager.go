@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -269,7 +270,14 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return err
 	}
 
-	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, isDefault)
+	return am.sendConfiguration(
+		ctx,
+		decrypted,
+		config.ConfigurationHash,
+		config.CreatedAt,
+		isDefault,
+		len(config.AlertmanagerConfiguration),
+	)
 }
 
 func (am *Alertmanager) isDefaultConfiguration(cfg *apimodels.PostableUserConfig) (bool, error) {
@@ -295,7 +303,7 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 	return &decrypted, nil
 }
 
-func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error {
+func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool, configSize int) error {
 	am.metrics.ConfigSyncsTotal.Inc()
 	if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
 		ctx,
@@ -309,6 +317,7 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimod
 	}
 	am.metrics.LastConfigSync.SetToCurrentTime()
 	am.lastConfigSync = time.Now()
+	am.metrics.ConfigSizeBytes.WithLabelValues(strconv.FormatInt(am.orgID, 10)).Set(float64(configSize))
 	return nil
 }
 
@@ -349,7 +358,14 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		return err
 	}
 
-	return am.sendConfiguration(ctx, decrypted, hash, time.Now().Unix(), false)
+	return am.sendConfiguration(
+		ctx,
+		decrypted,
+		hash,
+		time.Now().Unix(),
+		false,
+		len(rawCfg),
+	)
 }
 
 // SaveAndApplyDefaultConfig sends the default Grafana Alertmanager configuration to the remote Alertmanager.
@@ -374,6 +390,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		am.defaultConfigHash,
 		time.Now().Unix(),
 		true,
+		len(am.defaultConfig),
 	)
 }
 
