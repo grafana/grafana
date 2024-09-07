@@ -6,7 +6,6 @@ import {
   GetTagResponse,
   GrafanaTheme2,
   MetricFindValue,
-  PageLayoutType,
   RawTimeRange,
   VariableHide,
   urlUtil,
@@ -17,7 +16,6 @@ import {
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
-  getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
   sceneGraph,
@@ -32,11 +30,11 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  UrlSyncManager,
   VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
@@ -60,7 +58,7 @@ import {
   VAR_OTEL_JOIN_QUERY,
   VAR_OTEL_RESOURCES,
 } from './shared';
-import { getMetricName, getTrailFor } from './utils';
+import { getTrailFor } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -88,21 +86,6 @@ export interface DataTrailState extends SceneObjectState {
   metric?: string;
   metricSearch?: string;
 }
-
-// NEXT WORK,
-// - [x] filter for metrics that are related to otel resources
-// - [x] refilter metrics, build layout on change of otel targets
-// - [x] move the toggle into the settings
-// - [x] default to otel experience on if DS has otel resources
-// - [x] sort the labels by blessed list
-// - [x] clear otel filters and otel join query on changing data source
-// - [x] clear state checks like hasOtelResources when data source is changed
-// - [x] refactor otel resource variable to use tagKeys and tagValues on data source
-// - [x] remove filter for label values if selecting the same label name
-// - [x] set the deployment environment variable with correct state (which is text not value?? that's a bug)
-// - [ ] update the url by all the state
-// - [ ] show the labels in the breakdown
-// - [ ] test the limit of a match string when filtering metrics in MetricSelectScene
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
@@ -328,7 +311,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       })
     );
 
-    const urlState = getUrlSyncManager().getUrlState(this);
+    const urlState = new UrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
     locationService.replace(fullUrl);
   }
@@ -584,7 +567,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, settings, metric, useOtelExperience, hasOtelResources } = model.useState();
+    const { controls, topScene, history, settings, useOtelExperience, hasOtelResources } = model.useState();
 
     const chromeHeaderHeight = useChromeHeaderHeight();
     const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
@@ -628,21 +611,19 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     }, [model, hasOtelResources, useOtelExperience]);
 
     return (
-      <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
-        <div className={styles.container}>
-          {showHeaderForFirstTimeUsers && <MetricsHeader />}
-          <history.Component model={history} />
-          {controls && (
-            <div className={styles.controls}>
-              {controls.map((control) => (
-                <control.Component key={control.state.key} model={control} />
-              ))}
-              <settings.Component model={settings} />
-            </div>
-          )}
-          <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
-        </div>
-      </Page>
+      <div className={styles.container}>
+        {showHeaderForFirstTimeUsers && <MetricsHeader />}
+        <history.Component model={history} />
+        {controls && (
+          <div className={styles.controls}>
+            {controls.map((control) => (
+              <control.Component key={control.state.key} model={control} />
+            ))}
+            <settings.Component model={settings} />
+          </div>
+        )}
+        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+      </div>
     );
   };
 }
