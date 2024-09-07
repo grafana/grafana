@@ -1,5 +1,3 @@
-import { p } from 'msw/lib/core/GraphQLHandler-UgnlXhlx';
-
 import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
 import { CancelActivationHandler, SceneGridLayout, VizPanel } from '@grafana/scenes';
 import * as libAPI from 'app/features/library-panels/state/api';
@@ -89,6 +87,24 @@ describe('PanelEditor', () => {
       panel.setState({ title: 'changed title' });
       expect(panelEditor.state.isDirty).toBe(false);
     });
+  });
+
+  describe('When opening a repeated panel', () => {
+    //   it('Should default to the first variable value if panel is repeated', async () => {
+    //     const { scene, panel } = setupTest('panel-10');
+    //     scene.setState({
+    //       $variables: new SceneVariableSet({
+    //         variables: [
+    //           new CustomVariable({ name: 'custom', query: 'A,B,C', value: ['A', 'B', 'C'], text: ['A', 'B', 'C'] }),
+    //         ],
+    //       }),
+    //     });
+    //     scene.setState({ editPanel: buildPanelEditScene(panel) });
+    //     const vizPanelManager = scene.state.editPanel!.state.vizManager;
+    //     vizPanelManager.activate();
+    //     const variable = sceneGraph.lookupVariable('custom', vizPanelManager);
+    //     expect(variable?.getValue()).toBe('A');
+    //   });
   });
 
   describe('Handling library panels', () => {

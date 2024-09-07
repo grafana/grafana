@@ -9,6 +9,7 @@ import {
   SceneObjectRef,
   VizPanel,
   SceneObjectState,
+  SceneDataQuery,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
@@ -242,7 +243,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     dataObj.runQueries();
   };
 
-  public onQueriesChange = (queries: DataQuery[]) => {
+  public onQueriesChange = (queries: SceneDataQuery[]) => {
     const runner = this.queryRunner;
     runner.setState({ queries });
   };
