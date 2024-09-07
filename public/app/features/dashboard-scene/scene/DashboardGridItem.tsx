@@ -62,7 +62,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
 
   private clearCachedStateIfBodyOrOptionsChanged() {
     if (this._prevGridItemState !== this.state || this._prevPanelState !== this.state.body.state) {
-      console.log('clearCachedStateIfBodyOrOptionsChanged');
       this._prevRepeatValues = undefined;
     }
   }
