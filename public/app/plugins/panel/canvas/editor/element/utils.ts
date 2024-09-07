@@ -42,7 +42,7 @@ export const getRequest = (api: APIEditorConfig) => {
   const endpoint = getEndpoint(interpolateVariables(api.endpoint));
   const url = new URL(endpoint);
 
-  const requestHeaders: Record<string, string> = { 'X-Grafana-Action': '1' };
+  const requestHeaders: Record<string, string> = {};
 
   let request: BackendSrvRequest = {
     url: url.toString(),
@@ -69,6 +69,7 @@ export const getRequest = (api: APIEditorConfig) => {
     requestHeaders['Content-Type'] = api.contentType!;
   }
 
+  requestHeaders['X-Grafana-Action'] = '1';
   request.headers = requestHeaders;
 
   return request;
