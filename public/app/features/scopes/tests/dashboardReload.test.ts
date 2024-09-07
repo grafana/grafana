@@ -1,0 +1,61 @@
+import { config } from '@grafana/runtime';
+
+import {
+  applyScopes,
+  expandResultApplications,
+  openSelector,
+  selectResultApplicationsGrafana,
+  toggleDashboards,
+} from './utils/actions';
+import { expectDashboardReload, expectNotDashboardReload } from './utils/assertions';
+import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { renderDashboard, resetScenes } from './utils/render';
+
+jest.mock('@grafana/scenes', () => ({
+  __esModule: true,
+  ...jest.requireActual('@grafana/scenes'),
+  sceneUtils: {
+    ...jest.requireActual('@grafana/scenes').sceneUtils,
+    registerVariableMacro: () => () => undefined,
+  },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  __esModule: true,
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn(),
+  getBackendSrv: () => ({ get: getMock }),
+  getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
+  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+}));
+
+describe('Dashboard reload', () => {
+  beforeAll(() => {
+    config.featureToggles.scopeFilters = true;
+    config.featureToggles.groupByVariable = true;
+  });
+
+  afterEach(async () => {
+    await resetScenes();
+  });
+
+  it('Does not reload the dashboard without UID', async () => {
+    renderDashboard({ uid: undefined }, { reloadOnScopesChange: true });
+    await toggleDashboards();
+    await openSelector();
+    await expandResultApplications();
+    await selectResultApplicationsGrafana();
+    await applyScopes();
+    expectNotDashboardReload();
+  });
+
+  it('Reloads the dashboard with UID', async () => {
+    renderDashboard({}, { reloadOnScopesChange: true });
+    await toggleDashboards();
+    await openSelector();
+    await expandResultApplications();
+    await selectResultApplicationsGrafana();
+    await applyScopes();
+    expectDashboardReload();
+  });
+});

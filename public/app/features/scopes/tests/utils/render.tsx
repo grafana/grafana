@@ -1,16 +1,20 @@
+import { cleanup } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
 import { render } from 'test/test-utils';
 
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { config, setPluginImportUtils } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { transformSaveModelToScene } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
-import { scopesDashboardsScene, scopesSelectorScene } from '../../instance';
+import { initializeScopes, scopesDashboardsScene, scopesSelectorScene } from '../../instance';
 import { getInitialDashboardsState } from '../../internal/ScopesDashboardsScene';
 import { initialSelectorState } from '../../internal/ScopesSelectorScene';
 import { DASHBOARDS_OPENED_KEY } from '../../internal/const';
+
+import { clearMocks } from './actions';
 
 const getDashboardDTO: (
   overrideDashboard: Partial<DashboardDataDTO>,
@@ -117,29 +121,46 @@ const getDashboardDTO: (
   },
 });
 
-export function buildTestScene(
+const panelPlugin = getPanelPlugin({
+  id: 'table',
+  skipDataQuery: true,
+});
+
+config.panels['table'] = panelPlugin.meta;
+
+setPluginImportUtils({
+  importPanelPlugin: () => Promise.resolve(panelPlugin),
+  getPanelPluginFromCache: () => undefined,
+});
+
+export function renderDashboard(
   overrideDashboard: Partial<DashboardDataDTO> = {},
   overrideMeta: Partial<DashboardMeta> = {}
 ) {
+  jest.useFakeTimers({ advanceTimers: true });
+  jest.spyOn(console, 'error').mockImplementation(jest.fn());
+  clearMocks();
+  initializeScopes();
+
   const dto: DashboardDTO = getDashboardDTO(overrideDashboard, overrideMeta);
+  const scene = transformSaveModelToScene(dto);
 
-  return transformSaveModelToScene(dto);
-}
-
-export function renderDashboard(dashboardScene: DashboardScene) {
-  return render(
+  render(
     <KBarProvider>
       <AppChrome>
-        <dashboardScene.Component model={dashboardScene} />
+        <scene.Component model={scene} />
       </AppChrome>
     </KBarProvider>
   );
+
+  return scene;
 }
 
-export function resetScenes() {
+export async function resetScenes() {
+  await jest.runOnlyPendingTimersAsync();
+  jest.useRealTimers();
   scopesSelectorScene?.setState(initialSelectorState);
-
   localStorage.removeItem(DASHBOARDS_OPENED_KEY);
-
   scopesDashboardsScene?.setState(getInitialDashboardsState());
+  cleanup();
 }
