@@ -10,7 +10,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { DashboardGridItem, DashboardGridItemState } from '../scene/DashboardGridItem';
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
