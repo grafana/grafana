@@ -48,12 +48,13 @@ export const MegaMenu = memo(
           if (!item) {
             return acc;
           }
-          acc.push({
+          const newItem = {
             id: item.id,
             text: item.text,
             url: item.url,
             parentItem: { id: 'bookmarks', text: 'Bookmarks' },
-          });
+          };
+          acc.push(enrichWithInteractionTracking(newItem, state.megaMenuDocked));
           return acc;
         }, []);
       }
