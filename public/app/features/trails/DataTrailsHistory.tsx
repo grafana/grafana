@@ -128,14 +128,14 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
       // when removing to none selected because custom variable does not allow this
       if (evt.payload.state.name === VAR_OTEL_DEPLOYMENT_ENV) {
         const otelDepEnvs = this.state.otelDepEnvs;
-        const urlState = getUrlSyncManager().getUrlState(trail);
+        const urlState = sceneUtils.getUrlState(trail);
         this.addTrailStep(trail, 'dep_env', parseDepEnvTooltip(urlState, otelDepEnvs));
         this.setState({ otelDepEnvs });
       }
 
       if (evt.payload.state.name === VAR_OTEL_RESOURCES) {
         const otelResources = this.state.otelResources;
-        const urlState = getUrlSyncManager().getUrlState(trail);
+        const urlState = sceneUtils.getUrlState(trail);
         this.addTrailStep(trail, 'resource', parseOtelResourcesTooltip(urlState, otelResources));
         this.setState({ otelResources });
       }
