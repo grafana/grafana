@@ -220,6 +220,7 @@
       }
     }
   },
+  "Always keep selected metric graph in-view": "Åľŵäyş ĸęęp şęľęčŧęđ męŧřįč ģřäpĥ įŉ-vįęŵ",
   "annotations": {
     "empty-state": {
       "button-title": "Åđđ äŉŉőŧäŧįőŉ qūęřy",
@@ -919,6 +920,7 @@
       "export-as-json-tooltip": "Ēχpőřŧ"
     }
   },
+  "Filter by": "Fįľŧęř þy",
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
@@ -2421,6 +2423,7 @@
     },
     "title": "Přęƒęřęŉčęş"
   },
+  "Show previews of metric graphs": "Ŝĥőŵ přęvįęŵş őƒ męŧřįč ģřäpĥş",
   "silences": {
     "empty-state": {
       "button-title": "Cřęäŧę şįľęŉčę",
@@ -2485,6 +2488,7 @@
       "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy ŧęämş yęŧ"
     }
   },
+  "This switch enables filtering by OTel resources for OTel native data sources": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş.",
   "time-picker": {
     "absolute": {
       "recent-title": "Ŗęčęŉŧľy ūşęđ äþşőľūŧę řäŉģęş",
@@ -2548,7 +2552,7 @@
   "trails": {
     "metric-overview": {
       "description-label": "Đęşčřįpŧįőŉ",
-      "labels-label": "Ŀäþęľş",
+      "labels-label": "{ūşęØŧęľĒχpęřįęŉčę ? 'Męŧřįč äŧŧřįþūŧęş' : 'Ŀäþęľş'}",
       "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
       "type-label": "Ŧypę",
       "unit-label": "Ůŉįŧ",

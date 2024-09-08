@@ -220,6 +220,7 @@
       }
     }
   },
+  "Always keep selected metric graph in-view": "Always keep selected metric graph in-view",
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -919,6 +920,7 @@
       "export-as-json-tooltip": "Export"
     }
   },
+  "Filter by": "Filter by",
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -2421,6 +2423,7 @@
     },
     "title": "Preferences"
   },
+  "Show previews of metric graphs": "Show previews of metric graphs",
   "silences": {
     "empty-state": {
       "button-title": "Create silence",
@@ -2485,6 +2488,7 @@
       "title": "You haven't created any teams yet"
     }
   },
+  "This switch enables filtering by OTel resources for OTel native data sources": "This switch enables filtering by OTel resources for OTel native data sources.",
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
@@ -2548,7 +2552,7 @@
   "trails": {
     "metric-overview": {
       "description-label": "Description",
-      "labels-label": "Labels",
+      "labels-label": "{useOtelExperience ? 'Metric attributes' : 'Labels'}",
       "no-description": "No description available",
       "type-label": "Type",
       "unit-label": "Unit",
