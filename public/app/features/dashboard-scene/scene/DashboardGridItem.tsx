@@ -179,7 +179,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       }
     }
 
-    console.log('performing repeat');
     this._prevGridItemState = this.state;
     this._prevPanelState = this.state.body.state;
     this._prevRepeatValues = values;
