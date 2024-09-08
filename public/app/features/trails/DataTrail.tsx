@@ -44,7 +44,7 @@ import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
-import { getDeploymentEnvironments, isOtelStandardization, TARGET_INFO_FILTER, totalOtelResources } from './otel/api';
+import { getDeploymentEnvironments, TARGET_INFO_FILTER, totalOtelResources } from './otel/api';
 import { OtelResourcesObject, OtelTargetType } from './otel/types';
 import { sortResources, getOtelJoinQuery, getOtelResourcesObject } from './otel/util';
 import {
@@ -179,90 +179,103 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
         const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, this);
         const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, this);
+        const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, this);
 
-        if (timeRange && otelResourcesVariable instanceof AdHocFiltersVariable) {
-          // 2. Set the otelResources adhoc tagKey and tagValues filter functions
-          // get the labels for otel resources
-          // collection of filters for the otel resource variable
-          // filter label names and label values
-          // the first filter is {__name__="target_info"}
-          let filters: AdHocVariableFilter[] = [TARGET_INFO_FILTER];
+        if (
+          timeRange &&
+          otelResourcesVariable instanceof AdHocFiltersVariable &&
+          otelJoinQueryVariable instanceof ConstantVariable &&
+          otelDepEnvVariable instanceof CustomVariable
+        ) {
+          this.updateOtelData(
+            datasourceUid,
+            timeRange,
+            otelDepEnvVariable,
+            otelResourcesVariable,
+            otelJoinQueryVariable
+          );
 
-          // always start with the deployment environment
-          const depEnv = '' + otelDepEnvVariable?.getValue();
+          // // 2. Set the otelResources adhoc tagKey and tagValues filter functions
+          // // get the labels for otel resources
+          // // collection of filters for the otel resource variable
+          // // filter label names and label values
+          // // the first filter is {__name__="target_info"}
+          // let filters: AdHocVariableFilter[] = [TARGET_INFO_FILTER];
 
-          if (depEnv) {
-            // update the operator if more than one
-            const op = depEnv.includes(',') ? '=~' : '=';
-            // the second filter is deployment_environment
-            const filter = {
-              key: 'deployment_environment',
-              value: depEnv.split(',').join('|'),
-              operator: op,
-            };
+          // // always start with the deployment environment
+          // const depEnv = '' + otelDepEnvVariable?.getValue();
 
-            filters.push(filter);
-          }
-          // next we check the otel resources adhoc variable for filters
-          const values = otelResourcesVariable.getValue();
+          // if (depEnv) {
+          //   // update the operator if more than one
+          //   const op = depEnv.includes(',') ? '=~' : '=';
+          //   // the second filter is deployment_environment
+          //   const filter = {
+          //     key: 'deployment_environment',
+          //     value: depEnv.split(',').join('|'),
+          //     operator: op,
+          //   };
 
-          if (values && otelResourcesVariable.state.filters.length > 0) {
-            filters = filters.concat(otelResourcesVariable.state.filters);
-          }
-          // the datasourceHelper will give us access to the
-          // Prometheus functions getTagKeys and getTagValues
-          // because we can access the ds
-          const datasourceHelper = this.datasourceHelper;
-          // now we reset the override tagKeys and tagValues functions of the adhoc variable
-          otelResourcesVariable.setState({
-            getTagKeysProvider: async (
-              variable: AdHocFiltersVariable,
-              currentKey: string | null
-            ): Promise<{
-              replace?: boolean;
-              values: GetTagResponse | MetricFindValue[];
-            }> => {
-              // apply filters here
-              let values = await datasourceHelper.getTagKeys({ filters });
-              values = sortResources(values, filters.map((f) => f.key).concat(currentKey ?? ''));
-              return { replace: true, values };
-            },
-            getTagValuesProvider: async (
-              variable: AdHocFiltersVariable,
-              filter: AdHocVariableFilter
-            ): Promise<{
-              replace?: boolean;
-              values: GetTagResponse | MetricFindValue[];
-            }> => {
-              // apply filters here
-              // remove current selected filter if refiltering
-              filters = filters.filter((f) => f.key !== filter.key);
-              const values = await datasourceHelper.getTagValues({ key: filter.key, filters });
-              return { replace: true, values };
-            },
-            hide: VariableHide.hideLabel,
-          });
+          //   filters.push(filter);
+          // }
+          // // next we check the otel resources adhoc variable for filters
+          // const values = otelResourcesVariable.getValue();
 
-          // 3. Get the otel join query for state and variable
-          // resourcesObject is used to create the otel join query
-          const resourcesObject: OtelResourcesObject = getOtelResourcesObject(this);
-          // otelJoinQuery is used to update the otelJoinVariable appended to queries
-          const otelJoinQuery = getOtelJoinQuery(resourcesObject);
+          // if (values && otelResourcesVariable.state.filters.length > 0) {
+          //   filters = filters.concat(otelResourcesVariable.state.filters);
+          // }
+          // // the datasourceHelper will give us access to the
+          // // Prometheus functions getTagKeys and getTagValues
+          // // because we can access the ds
+          // const datasourceHelper = this.datasourceHelper;
+          // // now we reset the override tagKeys and tagValues functions of the adhoc variable
+          // otelResourcesVariable.setState({
+          //   getTagKeysProvider: async (
+          //     variable: AdHocFiltersVariable,
+          //     currentKey: string | null
+          //   ): Promise<{
+          //     replace?: boolean;
+          //     values: GetTagResponse | MetricFindValue[];
+          //   }> => {
+          //     // apply filters here
+          //     let values = await datasourceHelper.getTagKeys({ filters });
+          //     values = sortResources(values, filters.map((f) => f.key).concat(currentKey ?? ''));
+          //     return { replace: true, values };
+          //   },
+          //   getTagValuesProvider: async (
+          //     variable: AdHocFiltersVariable,
+          //     filter: AdHocVariableFilter
+          //   ): Promise<{
+          //     replace?: boolean;
+          //     values: GetTagResponse | MetricFindValue[];
+          //   }> => {
+          //     // apply filters here
+          //     // remove current selected filter if refiltering
+          //     filters = filters.filter((f) => f.key !== filter.key);
+          //     const values = await datasourceHelper.getTagValues({ key: filter.key, filters });
+          //     return { replace: true, values };
+          //   },
+          //   hide: VariableHide.hideLabel,
+          // });
 
-          // update the otel join query variable too
-          // this variable is accessed by the VAR_OTEL_JOIN_QUERY_EXPR in the query generator files
-          const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, this);
-          if (otelJoinQueryVariable instanceof ConstantVariable) {
-            otelJoinQueryVariable.setState({ value: otelJoinQuery });
-          }
+          // // 3. Get the otel join query for state and variable
+          // // Because we need to define the deployment environment variable
+          // // we also need to update the otel join query state and variable
+          // const resourcesObject: OtelResourcesObject = getOtelResourcesObject(this);
+          // const otelJoinQuery = getOtelJoinQuery(resourcesObject);
 
-          // 4. Update state with the following
-          // - otel join query
-          // - otelTargets used to filter metrics
-          // update the targets used to filter metrics
-          const otelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
-          // otelTargets are used as filtering for metrics by job and instance label combinations
-          this.setState({ otelTargets, otelJoinQuery });
+          // // update the otel join query variable too
+          // otelJoinQueryVariable.setState({ value: otelJoinQuery });
+
+          // // 4. Update state with the following
+          // // - otel join query
+          // // - otelTargets used to filter metrics
+          // // update the targets used to filter metrics
+          // const otelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
+          // // otelTargets are used as filtering for metrics by job and instance label combinations
+          // this.setState({
+          //   otelTargets,
+          //   otelJoinQuery
+          // });
         }
       }
     },
@@ -389,7 +402,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
       const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange);
       const hasOtelResources = otelTargets.job !== '' && otelTargets.instance !== '';
-      const isStandard = await isOtelStandardization(datasourceUid, timeRange);
+      // const isStandard = await isOtelStandardization(datasourceUid, timeRange);
       if (
         otelResourcesVariable instanceof AdHocFiltersVariable &&
         otelDepEnvVariable instanceof CustomVariable &&
@@ -446,124 +459,304 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             hide: VariableHide.dontHide,
           });
 
-          // 2. Set the otelResources adhoc tagKey and tagValues filter functions
-          // get the labels for otel resources
-          // collection of filters for the otel resource variable
-          // filter label names and label values
-          // the first filter is {__name__="target_info"}
-          let filters: AdHocVariableFilter[] = [TARGET_INFO_FILTER];
+          this.updateOtelData(
+            datasourceUid,
+            timeRange,
+            otelDepEnvVariable,
+            otelResourcesVariable,
+            otelJoinQueryVariable,
+            deploymentEnvironments,
+            hasOtelResources
+          );
 
-          // always start with the deployment environment
-          const depEnvValue = '' + otelDepEnvVariable?.getValue();
+          // // 2. Set the otelResources adhoc tagKey and tagValues filter functions
+          // // get the labels for otel resources
+          // // collection of filters for the otel resource variable
+          // // filter label names and label values
+          // // the first filter is {__name__="target_info"}
+          // let filters: AdHocVariableFilter[] = [TARGET_INFO_FILTER];
 
-          if (depEnvValue) {
-            // update the operator if more than one
-            const op = depEnvValue.includes(',') ? '=~' : '=';
-            // the second filter is deployment_environment
-            const filter = {
-              key: 'deployment_environment',
-              value: depEnvValue.split(',').join('|'),
-              operator: op,
-            };
+          // // always start with the deployment environment
+          // const depEnvValue = '' + otelDepEnvVariable?.getValue();
 
-            filters.push(filter);
-          }
-          // next we check the otel resources adhoc variable for filters
-          const values = otelResourcesVariable.getValue();
+          // if (depEnvValue) {
+          //   // update the operator if more than one
+          //   const op = depEnvValue.includes(',') ? '=~' : '=';
+          //   // the second filter is deployment_environment
+          //   const filter = {
+          //     key: 'deployment_environment',
+          //     value: depEnvValue.split(',').join('|'),
+          //     operator: op,
+          //   };
 
-          if (values && otelResourcesVariable.state.filters.length > 0) {
-            filters = filters.concat(otelResourcesVariable.state.filters);
-          }
-          // the datasourceHelper will give us access to the
-          // Prometheus functions getTagKeys and getTagValues
-          // because we can access the ds
-          const datasourceHelper = this.datasourceHelper;
-          // now we reset the override tagKeys and tagValues functions of the adhoc variable
-          otelResourcesVariable.setState({
-            getTagKeysProvider: async (
-              variable: AdHocFiltersVariable,
-              currentKey: string | null
-            ): Promise<{
-              replace?: boolean;
-              values: GetTagResponse | MetricFindValue[];
-            }> => {
-              // apply filters here
-              let values = await datasourceHelper.getTagKeys({ filters });
-              values = sortResources(values, filters.map((f) => f.key).concat(currentKey ?? ''));
-              return { replace: true, values };
-            },
-            getTagValuesProvider: async (
-              variable: AdHocFiltersVariable,
-              filter: AdHocVariableFilter
-            ): Promise<{
-              replace?: boolean;
-              values: GetTagResponse | MetricFindValue[];
-            }> => {
-              // apply filters here
-              // remove current selected filter if refiltering
-              filters = filters.filter((f) => f.key !== filter.key);
-              const values = await datasourceHelper.getTagValues({ key: filter.key, filters });
-              return { replace: true, values };
-            },
-            hide: VariableHide.hideLabel,
-          });
+          //   filters.push(filter);
+          // }
+          // // next we check the otel resources adhoc variable for filters
+          // const values = otelResourcesVariable.getValue();
 
-          // 3. Get the otel join query for state and variable
-          // Because we need to define the deployment environment variable
-          // we also need to update the otel join query state and variable
-          const resourcesObject: OtelResourcesObject = getOtelResourcesObject(this);
-          const otelJoinQuery = getOtelJoinQuery(resourcesObject);
+          // if (values && otelResourcesVariable.state.filters.length > 0) {
+          //   filters = filters.concat(otelResourcesVariable.state.filters);
+          // }
+          // // the datasourceHelper will give us access to the
+          // // Prometheus functions getTagKeys and getTagValues
+          // // because we can access the ds
+          // const datasourceHelper = this.datasourceHelper;
+          // // now we reset the override tagKeys and tagValues functions of the adhoc variable
+          // otelResourcesVariable.setState({
+          //   getTagKeysProvider: async (
+          //     variable: AdHocFiltersVariable,
+          //     currentKey: string | null
+          //   ): Promise<{
+          //     replace?: boolean;
+          //     values: GetTagResponse | MetricFindValue[];
+          //   }> => {
+          //     // apply filters here
+          //     let values = await datasourceHelper.getTagKeys({ filters });
+          //     values = sortResources(values, filters.map((f) => f.key).concat(currentKey ?? ''));
+          //     return { replace: true, values };
+          //   },
+          //   getTagValuesProvider: async (
+          //     variable: AdHocFiltersVariable,
+          //     filter: AdHocVariableFilter
+          //   ): Promise<{
+          //     replace?: boolean;
+          //     values: GetTagResponse | MetricFindValue[];
+          //   }> => {
+          //     // apply filters here
+          //     // remove current selected filter if refiltering
+          //     filters = filters.filter((f) => f.key !== filter.key);
+          //     const values = await datasourceHelper.getTagValues({ key: filter.key, filters });
+          //     return { replace: true, values };
+          //   },
+          //   hide: VariableHide.hideLabel,
+          // });
 
-          // update the otel join query variable too
-          otelJoinQueryVariable.setState({ value: otelJoinQuery });
+          // // 3. Get the otel join query for state and variable
+          // // Because we need to define the deployment environment variable
+          // // we also need to update the otel join query state and variable
+          // const resourcesObject: OtelResourcesObject = getOtelResourcesObject(this);
+          // const otelJoinQuery = getOtelJoinQuery(resourcesObject);
 
-          // 4. Update state with the following
-          // - otel join query
-          // - has otel resources flag
-          // - isStandardOtel flag
-          // - otelTargets used to filter metrics
-          // - and default to useOtelExperience
-          // now we can filter target_info targets by deployment_environment="somevalue"
-          // and use these new targets to reduce the metrics
-          const filteredOtelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
-          this.setState({
-            otelJoinQuery,
-            hasOtelResources,
-            // we handle non-standard data sources by using topk to choose 1 series in the join query
-            isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
-            otelTargets: filteredOtelTargets,
-            useOtelExperience: true,
-          });
+          // // update the otel join query variable too
+          // otelJoinQueryVariable.setState({ value: otelJoinQuery });
+
+          // // 4. Update state with the following
+          // // - otel join query
+          // // - has otel resources flag
+          // // - isStandardOtel flag
+          // // - otelTargets used to filter metrics
+          // // - and default to useOtelExperience
+          // // now we can filter target_info targets by deployment_environment="somevalue"
+          // // and use these new targets to reduce the metrics
+          // const otelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
+          // this.setState({
+          //   otelTargets,
+          //   otelJoinQuery,
+          //   hasOtelResources,
+          //   // we handle non-standard data sources by using topk to choose 1 series in the join query
+          //   isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
+          //   useOtelExperience: true,
+          // });
         } else {
           // reset filters to apply auto, anywhere there are {} characters
-          filtersVariable.setState({
-            addFilterButtonText: 'Add label',
-            label: 'Select label',
-          });
-
-          // if there are no resources reset the otel variables and otel state
-          // or if not standard
-          otelResourcesVariable.setState({
-            defaultKeys: [],
-            hide: VariableHide.hideVariable,
-          });
-
-          otelDepEnvVariable.setState({
-            value: '',
-            hide: VariableHide.hideVariable,
-          });
-
-          otelJoinQueryVariable.setState({ value: '' });
-
-          this.setState({
+          this.resetOtelExperience(
+            otelResourcesVariable,
+            otelDepEnvVariable,
+            otelJoinQueryVariable,
+            filtersVariable,
             hasOtelResources,
-            isStandardOtel: isStandard && deploymentEnvironments.length > 0,
-            useOtelExperience: false,
-            otelTargets: { job: '', instance: '' },
-            otelJoinQuery: '',
-          });
+            deploymentEnvironments
+          );
+          // filtersVariable.setState({
+          //   addFilterButtonText: 'Add label',
+          //   label: 'Select label',
+          // });
+
+          // // if there are no resources reset the otel variables and otel state
+          // // or if not standard
+          // otelResourcesVariable.setState({
+          //   defaultKeys: [],
+          //   hide: VariableHide.hideVariable,
+          // });
+
+          // otelDepEnvVariable.setState({
+          //   value: '',
+          //   hide: VariableHide.hideVariable,
+          // });
+
+          // otelJoinQueryVariable.setState({ value: '' });
+
+          // this.setState({
+          //   hasOtelResources,
+          //   // we handle non-standard data sources by using topk to choose 1 series in the join query
+          //   isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
+          //   useOtelExperience: false,
+          //   otelTargets: { job: '', instance: '' },
+          //   otelJoinQuery: '',
+          // });
         }
       }
+    }
+  }
+
+  async updateOtelData(
+    datasourceUid: string,
+    timeRange: RawTimeRange,
+    otelDepEnvVariable: CustomVariable,
+    otelResourcesVariable: AdHocFiltersVariable,
+    otelJoinQueryVariable: ConstantVariable,
+    deploymentEnvironments?: string[],
+    hasOtelResources?: boolean
+  ) {
+    // 2. Set the otelResources adhoc tagKey and tagValues filter functions
+    // get the labels for otel resources
+    // collection of filters for the otel resource variable
+    // filter label names and label values
+    // the first filter is {__name__="target_info"}
+    let filters: AdHocVariableFilter[] = [TARGET_INFO_FILTER];
+
+    // always start with the deployment environment
+    const depEnvValue = '' + otelDepEnvVariable?.getValue();
+
+    if (depEnvValue) {
+      // update the operator if more than one
+      const op = depEnvValue.includes(',') ? '=~' : '=';
+      // the second filter is deployment_environment
+      const filter = {
+        key: 'deployment_environment',
+        value: depEnvValue.split(',').join('|'),
+        operator: op,
+      };
+
+      filters.push(filter);
+    }
+    // next we check the otel resources adhoc variable for filters
+    const values = otelResourcesVariable.getValue();
+
+    if (values && otelResourcesVariable.state.filters.length > 0) {
+      filters = filters.concat(otelResourcesVariable.state.filters);
+    }
+    // the datasourceHelper will give us access to the
+    // Prometheus functions getTagKeys and getTagValues
+    // because we can access the ds
+    const datasourceHelper = this.datasourceHelper;
+    // now we reset the override tagKeys and tagValues functions of the adhoc variable
+    otelResourcesVariable.setState({
+      getTagKeysProvider: async (
+        variable: AdHocFiltersVariable,
+        currentKey: string | null
+      ): Promise<{
+        replace?: boolean;
+        values: GetTagResponse | MetricFindValue[];
+      }> => {
+        // apply filters here
+        let values = await datasourceHelper.getTagKeys({ filters });
+        values = sortResources(values, filters.map((f) => f.key).concat(currentKey ?? ''));
+        return { replace: true, values };
+      },
+      getTagValuesProvider: async (
+        variable: AdHocFiltersVariable,
+        filter: AdHocVariableFilter
+      ): Promise<{
+        replace?: boolean;
+        values: GetTagResponse | MetricFindValue[];
+      }> => {
+        // apply filters here
+        // remove current selected filter if refiltering
+        filters = filters.filter((f) => f.key !== filter.key);
+        const values = await datasourceHelper.getTagValues({ key: filter.key, filters });
+        return { replace: true, values };
+      },
+      hide: VariableHide.hideLabel,
+    });
+
+    // 3. Get the otel join query for state and variable
+    // Because we need to define the deployment environment variable
+    // we also need to update the otel join query state and variable
+    const resourcesObject: OtelResourcesObject = getOtelResourcesObject(this);
+    const otelJoinQuery = getOtelJoinQuery(resourcesObject);
+
+    // update the otel join query variable too
+    otelJoinQueryVariable.setState({ value: otelJoinQuery });
+
+    // 4. Update state with the following
+    // - otel join query
+    // - has otel resources flag
+    // - isStandardOtel flag
+    // - otelTargets used to filter metrics
+    // - and default to useOtelExperience
+    // now we can filter target_info targets by deployment_environment="somevalue"
+    // and use these new targets to reduce the metrics
+    const otelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
+
+    // we pass in deploymentEnvironments and hasOtelResources on start
+    if (hasOtelResources && deploymentEnvironments) {
+      this.setState({
+        otelTargets,
+        otelJoinQuery,
+        hasOtelResources,
+        // we handle non-standard data sources by using topk to choose 1 series in the join query
+        isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
+        useOtelExperience: true,
+      });
+    } else {
+      // we are updating on variable changes
+      this.setState({
+        otelTargets,
+        otelJoinQuery,
+        // hasOtelResources,
+        // // we handle non-standard data sources by using topk to choose 1 series in the join query
+        // isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
+        // useOtelExperience: true,
+      });
+    }
+  }
+
+  resetOtelExperience(
+    otelResourcesVariable: AdHocFiltersVariable,
+    otelDepEnvVariable: CustomVariable,
+    otelJoinQueryVariable: ConstantVariable,
+    filtersVariable: AdHocFiltersVariable,
+    hasOtelResources?: boolean,
+    deploymentEnvironments?: string[]
+  ) {
+    // reset filters to apply auto, anywhere there are {} characters
+    filtersVariable.setState({
+      addFilterButtonText: 'Add label',
+      label: 'Select label',
+    });
+
+    // if there are no resources reset the otel variables and otel state
+    // or if not standard
+    otelResourcesVariable.setState({
+      defaultKeys: [],
+      hide: VariableHide.hideVariable,
+    });
+
+    otelDepEnvVariable.setState({
+      value: '',
+      hide: VariableHide.hideVariable,
+    });
+
+    otelJoinQueryVariable.setState({ value: '' });
+
+    // full reset when a data source fails the check
+    if (hasOtelResources && deploymentEnvironments) {
+      this.setState({
+        hasOtelResources,
+        // we handle non-standard data sources by using topk to choose 1 series in the join query
+        isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
+        useOtelExperience: false,
+        otelTargets: { job: '', instance: '' },
+        otelJoinQuery: '',
+      });
+    } else {
+      // partial reset when a user turns off the otel experience
+      this.setState({
+        otelTargets: { job: '', instance: '' },
+        // otelResources: [],
+        otelJoinQuery: '',
+      });
     }
   }
 
@@ -581,29 +774,15 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         const otelResourcesVariable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, model);
         const otelDepEnvVariable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, model);
         const otelJoinQueryVariable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, model);
+        const filtersvariable = sceneGraph.lookupVariable(VAR_FILTERS, model);
 
         if (
           otelResourcesVariable instanceof AdHocFiltersVariable &&
           otelDepEnvVariable instanceof CustomVariable &&
-          otelJoinQueryVariable instanceof ConstantVariable
+          otelJoinQueryVariable instanceof ConstantVariable &&
+          filtersvariable instanceof AdHocFiltersVariable
         ) {
-          otelResourcesVariable.setState({
-            defaultKeys: [],
-            hide: VariableHide.hideVariable,
-          });
-
-          otelDepEnvVariable.setState({
-            value: '',
-            hide: VariableHide.hideVariable,
-          });
-
-          otelJoinQueryVariable.setState({ value: '' });
-
-          model.setState({
-            otelTargets: { job: '', instance: '' },
-            // otelResources: [],
-            otelJoinQuery: '',
-          });
+          model.resetOtelExperience(otelResourcesVariable, otelDepEnvVariable, otelJoinQueryVariable, filtersvariable);
         }
       } else {
         // if experience is enabled, check standardization and update the otel variables
