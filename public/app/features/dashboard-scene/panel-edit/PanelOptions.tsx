@@ -24,9 +24,13 @@ interface Props {
 
 export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
+  const layoutElement = panel.parent!;
+  const layoutElementState = layoutElement.useState();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
+  const panelFrameOptions = useMemo(
+    () => getPanelFrameCategory2(panel, layoutElementState),
+    [panel, layoutElementState]
+  );
 
   const visualizationOptions = useMemo(() => {
     const plugin = panel.getPlugin();

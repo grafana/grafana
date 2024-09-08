@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { SceneObjectState, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch, RadioButtonGroup, Select } from '@grafana/ui';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
@@ -16,7 +16,10 @@ import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/tra
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
-export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDescriptor {
+export function getPanelFrameCategory2(
+  panel: VizPanel,
+  layoutElementState: SceneObjectState
+): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
@@ -108,13 +111,11 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
         description:
           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
         render: function renderRepeatOptions() {
-          const { variableName } = gridItem.useState();
-
           return (
             <RepeatRowSelect2
               id="repeat-by-variable-select"
               sceneContext={panel}
-              repeat={variableName}
+              repeat={gridItem.state.variableName}
               onChange={(value?: string) => gridItem.setRepeatByVariable(value)}
             />
           );
@@ -125,11 +126,8 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: 'Repeat direction',
-        // TOOD: Not sure how to support this conditional display, needs a bit of refactor for how options are rendered
-        // showIf: () => !gridItem.state.variableName,
+        showIf: () => Boolean(gridItem.state.variableName),
         render: function renderRepeatOptions() {
-          const { repeatDirection } = gridItem.useState();
-
           const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
             { label: 'Horizontal', value: 'h' },
             { label: 'Vertical', value: 'v' },
@@ -138,7 +136,7 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
           return (
             <RadioButtonGroup
               options={directionOptions}
-              value={repeatDirection ?? 'h'}
+              value={gridItem.state.repeatDirection ?? 'h'}
               onChange={(value) => gridItem.setState({ repeatDirection: value })}
             />
           );
@@ -149,7 +147,7 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
     category.addItem(
       new OptionsPaneItemDescriptor({
         title: 'Max per row',
-        //showIf: () => Boolean(vizManager.state.repeat && vizManager.state.repeatDirection === 'h'),
+        showIf: () => Boolean(gridItem.state.variableName && gridItem.state.repeatDirection === 'h'),
         render: function renderOption() {
           const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
           return (
