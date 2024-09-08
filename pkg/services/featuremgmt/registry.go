@@ -728,6 +728,14 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:            "foldersPlaylists",
+			Description:     "Use the kubernetes API in the frontend for folders, and route /api/folder requests to k8s",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			Expression:      "false",
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:            "datasourceQueryTypes",
 			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
 			Stage:           FeatureStageExperimental,
