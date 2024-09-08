@@ -18,9 +18,9 @@ import {
 } from './shared';
 
 jest.mock('./otel/api', () => ({
-  totalOtelResources: jest.fn(() => Promise.resolve({ job: 'oteldemo', instance: 'instance' })),
-  getDeploymentEnvironments: jest.fn(() => Promise.resolve(['production', 'staging'])),
-  isOtelStandardization: jest.fn(() => Promise.resolve(true)),
+  totalOtelResources: jest.fn(() => ({ job: 'oteldemo', instance: 'instance' })),
+  getDeploymentEnvironments: jest.fn(() => ['production', 'staging']),
+  isOtelStandardization: jest.fn(() => true),
 }));
 
 describe('DataTrail', () => {
