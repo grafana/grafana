@@ -25,6 +25,7 @@ jest.mock('./otel/api', () => ({
 
 describe('DataTrail', () => {
   beforeAll(() => {
+    jest.spyOn(DataTrail.prototype, 'checkDataSourceForOTelResources').mockImplementation(() => Promise.resolve());
     setDataSourceSrv(
       new MockDataSourceSrv({
         prom: mockDataSource({
@@ -33,6 +34,10 @@ describe('DataTrail', () => {
         }),
       })
     );
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   describe('Given starting non-embedded trail with url sync and no url state', () => {
@@ -57,7 +62,6 @@ describe('DataTrail', () => {
 
     beforeEach(() => {
       trail = new DataTrail({});
-      trail.checkDataSourceForOTelResources = jest.fn();
       locationService.push(preTrailUrl);
       activateFullSceneTree(trail);
     });
@@ -505,7 +509,6 @@ describe('DataTrail', () => {
 
     beforeEach(() => {
       trail = new DataTrail({});
-      trail.checkDataSourceForOTelResources = jest.fn();
       locationService.push(preTrailUrl);
       activateFullSceneTree(trail);
       getOtelResourcesVar(trail).setState({ filters: [{ key: 'service_name', operator: '=', value: 'adservice' }] });
