@@ -57,6 +57,7 @@ describe('DataTrail', () => {
 
     beforeEach(() => {
       trail = new DataTrail({});
+      trail.checkDataSourceForOTelResources = jest.fn();
       locationService.push(preTrailUrl);
       activateFullSceneTree(trail);
     });
@@ -504,6 +505,7 @@ describe('DataTrail', () => {
 
     beforeEach(() => {
       trail = new DataTrail({});
+      trail.checkDataSourceForOTelResources = jest.fn();
       locationService.push(preTrailUrl);
       activateFullSceneTree(trail);
       getOtelResourcesVar(trail).setState({ filters: [{ key: 'service_name', operator: '=', value: 'adservice' }] });
