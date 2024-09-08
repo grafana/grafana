@@ -635,7 +635,6 @@ function usePanelEditDirty(panelEditor?: PanelEditor) {
 
       return () => unsub.unsubscribe();
     }
-    setIsDirty(false);
     return;
   }, [panelEditor, isDirty]);
 
