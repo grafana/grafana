@@ -35,7 +35,7 @@ export async function getOtelResources(
   const params: Record<string, string | number> = {
     start,
     end,
-    'match[]': `{__name__="target_info"${matchFilters ? ',' : ''}${matchFilters}}`,
+    'match[]': `{__name__="target_info"${matchFilters ? `,${matchFilters}` : ''}}`,
   };
 
   const response = await getBackendSrv().get<LabelResponse>(url, params, 'explore-metrics-otel-resources');
