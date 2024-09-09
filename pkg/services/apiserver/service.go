@@ -314,7 +314,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 		// Create a client instance
-		client, err := newResourceStoreClient(conn, s.cfg)
+		client, err := newResourceClient(conn, s.cfg)
 		if err != nil {
 			return err
 		}
@@ -543,7 +543,7 @@ func (s *service) running(ctx context.Context) error {
 	return nil
 }
 
-func newResourceStoreClient(conn *grpc.ClientConn, cfg *setting.Cfg) (resource.ResourceStoreClient, error) {
+func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (resource.ResourceStoreClient, error) {
 	if cfg.StackID != "" {
 		return resource.NewResourceClientCloud(conn, cfg)
 	}
