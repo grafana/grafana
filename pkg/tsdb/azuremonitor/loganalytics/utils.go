@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
@@ -46,10 +47,10 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 // 4. the ds toggle is set to true
 func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled bool) (bool, error) {
 	if fromAlert {
-		return false, fmt.Errorf("basic logs queries cannot be used for alerts")
+		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries cannot be used for alerts"), false)
 	}
 	if len(resources) != 1 {
-		return false, fmt.Errorf("basic logs queries cannot be run against multiple resources")
+		return false, errorsource.DownstreamError(fmt.Errorf("basic logs queries cannot be run against multiple resources"), false)
 	}
 
 	if !strings.Contains(strings.ToLower(resources[0]), "microsoft.operationalinsights/workspaces") {
@@ -57,7 +58,7 @@ func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled
 	}
 
 	if !basicLogsEnabled {
-		return false, fmt.Errorf("basic logs queries are disabled for this data source")
+		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries may only be run against Log Analytics workspaces"), false)
 	}
 
 	return true, nil
