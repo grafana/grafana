@@ -198,6 +198,7 @@ Experimental features might be changed or removed without prior notice.
 | `exploreLogsShardSplitting`                 | Used in Explore Logs to split queries into multiple queries based on the number of shards                                                                                                                                                                                         |
 | `exploreLogsAggregatedMetrics`              | Used in Explore Logs to query by aggregated metrics                                                                                                                                                                                                                               |
 | `exploreLogsLimitedTimeRange`               | Used in Explore Logs to limit the time range                                                                                                                                                                                                                                      |
+| `appSidecar`                                | Enable the app sidecar feature that allows rendering 2 apps at the same time                                                                                                                                                                                                      |
 
 ## Development feature toggles
 
