@@ -47,8 +47,8 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 
 	go func() {
 		timer := prometheus.NewTimer(dr.metrics.searchRequestsDuration.WithLabelValues("zanzana"))
-		start := time.Now()
 		defer timer.ObserveDuration()
+		start := time.Now()
 
 		queryZanzana := *query
 		res, err := dr.findDashboardsZanzana(ctx, &queryZanzana)
@@ -57,8 +57,8 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 
 	go func() {
 		timer := prometheus.NewTimer(dr.metrics.searchRequestsDuration.WithLabelValues("grafana"))
-		start := time.Now()
 		defer timer.ObserveDuration()
+		start := time.Now()
 
 		res, err := dr.FindDashboards(ctx, query)
 		result <- searchResult{"grafana", res, err, time.Since(start)}

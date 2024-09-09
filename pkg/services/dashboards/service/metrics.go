@@ -10,6 +10,8 @@ const (
 	metricsSubSystem = "dashboards"
 )
 
+var defaultBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25}
+
 type dashboardsMetrics struct {
 	sharedWithMeFetchDashboardsRequestsDuration *prometheus.HistogramVec
 	searchRequestsDuration                      *prometheus.HistogramVec
@@ -21,7 +23,7 @@ func newDashboardsMetrics(r prometheus.Registerer) *dashboardsMetrics {
 			prometheus.HistogramOpts{
 				Name:      "sharedwithme_fetch_dashboards_duration_seconds",
 				Help:      "Duration of fetching dashboards with permissions directly assigned to user",
-				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+				Buckets:   defaultBuckets,
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
 			},
@@ -31,7 +33,7 @@ func newDashboardsMetrics(r prometheus.Registerer) *dashboardsMetrics {
 			prometheus.HistogramOpts{
 				Name:      "search_dashboards_duration_seconds",
 				Help:      "Duration of dashboards search (by authorization engine)",
-				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+				Buckets:   defaultBuckets,
 				Namespace: metricsNamespace,
 				Subsystem: metricsSubSystem,
 			},
