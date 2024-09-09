@@ -1,5 +1,4 @@
 import { BooleanFieldSettings } from '@react-awesome-query-builder/ui';
-import { capitalize } from 'lodash';
 
 import {
   FieldConfigPropertyItem,
@@ -28,8 +27,6 @@ import {
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
   Action,
-  OneClickMode,
-  SelectFieldConfigSettings,
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/src/field/overrides/processors';
 import { config } from '@grafana/runtime';
@@ -351,38 +348,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  // @TODO Remove after removing the feature flag.
-  const oneClickModeOptions = [
-    { value: OneClickMode.Off, label: capitalize(OneClickMode.Off) },
-    { value: OneClickMode.Link, label: capitalize(OneClickMode.Link) },
-  ];
-
-  let oneClickCategory = 'Data links';
-  let oneClickDescription = 'When enabled, a single click opens the first link';
-
-  if (config.featureToggles.vizActions) {
-    oneClickModeOptions.push({ value: OneClickMode.Action, label: capitalize(OneClickMode.Action) });
-    oneClickCategory += ' and actions';
-    oneClickDescription += ' or action';
-  }
-
-  const oneClickMode: FieldConfigPropertyItem<FieldConfig, OneClickMode, SelectFieldConfigSettings<OneClickMode>> = {
-    id: 'oneClickMode',
-    path: 'oneClickMode',
-    name: 'One-click',
-    editor: standardEditorsRegistry.get('radio').editor,
-    override: standardEditorsRegistry.get('radio').editor,
-    process: (value) => value,
-    settings: {
-      options: oneClickModeOptions,
-    },
-    defaultValue: OneClickMode.Off,
-    shouldApply: () => true,
-    category: [oneClickCategory],
-    description: oneClickDescription,
-    getItemsCount: (value) => (value ? value.length : 0),
-    showIf: () => config.featureToggles.vizActions,
-  };
+  const dataLinksCategory = config.featureToggles.vizActions ? 'Data links and actions' : 'Data links';
 
   const links: FieldConfigPropertyItem<FieldConfig, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
@@ -395,7 +361,7 @@ export const getAllStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
-    category: [oneClickCategory],
+    category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
   };
 
@@ -410,7 +376,7 @@ export const getAllStandardFieldConfigs = () => {
       placeholder: '-',
     },
     shouldApply: () => true,
-    category: [oneClickCategory],
+    category: [dataLinksCategory],
     getItemsCount: (value) => (value ? value.length : 0),
     showIf: () => config.featureToggles.vizActions,
   };
@@ -488,7 +454,6 @@ export const getAllStandardFieldConfigs = () => {
     displayName,
     color,
     noValue,
-    oneClickMode,
     links,
     actions,
     mappings,

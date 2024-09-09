@@ -82,7 +82,7 @@ export const TimeSeriesTooltip = ({
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
-    const actions = getFieldActions(series, field, replaceVariables);
+    const actions = getFieldActions(series, field, replaceVariables!);
 
     footer = <VizTooltipFooter dataLinks={links} actions={actions} annotate={annotate} />;
   }
