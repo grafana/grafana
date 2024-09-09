@@ -172,7 +172,7 @@ type Signature struct {
 
 type PluginMetaDTO struct {
 	JSONData
-	Signature                 SignatureStatus `  json:"signature"`
+	Signature                 SignatureStatus   `json:"signature"`
 	Module                    string            `json:"module"`
 	BaseURL                   string            `json:"baseUrl"`
 	Angular                   AngularMeta       `json:"angular"`
