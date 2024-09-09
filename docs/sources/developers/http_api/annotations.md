@@ -36,6 +36,8 @@ See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanatio
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `annotations:read` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
+{ .no-spacing-list }
+
 **Example Request**:
 
 ```http
@@ -125,6 +127,8 @@ See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanatio
 | Action               | Scope                                                                                                                                                        |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `annotations:create` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+
+{ .no-spacing-list }
 
 **Required JSON Body Fields**
 
@@ -219,6 +223,8 @@ See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanatio
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `annotations:write` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
+{ .no-spacing-list }
+
 **Example Request**:
 
 ```http
@@ -264,6 +270,8 @@ See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanatio
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `annotations:write` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
+{ .no-spacing-list }
+
 **Example Request**:
 
 ```http
@@ -302,6 +310,8 @@ See note in the [introduction]({{< ref "#annotations-api" >}}) for an explanatio
 | Action               | Scope                                                                                                                                                        |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `annotations:delete` | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+
+{ .no-spacing-list }
 
 **Example Request**:
 

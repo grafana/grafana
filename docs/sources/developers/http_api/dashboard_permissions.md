@@ -48,6 +48,8 @@ See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an e
 | ----------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `dashboards.permissions:read` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
+{ .no-spacing-list }
+
 **Example request**:
 
 ```http
@@ -127,6 +129,8 @@ See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an e
 | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | `dashboards.permissions:write` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
+{ .no-spacing-list }
+
 **Example request**:
 
 ```http
@@ -195,6 +199,8 @@ See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an e
 | Action                        | Scope                                                                                                   |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `dashboards.permissions:read` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+
+{ .no-spacing-list }
 
 **Example request**:
 
@@ -278,6 +284,8 @@ See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an e
 | Action                         | Scope                                                                                                   |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | `dashboards.permissions:write` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+
+{ .no-spacing-list }
 
 **Example request**:
 

@@ -48,6 +48,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 | `dashboards:create` | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                   |
 | `dashboards:write`  | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
+{ .no-spacing-list }
+
 **Example Request for new dashboard**:
 
 ```http
@@ -169,6 +171,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 | ----------------- | ------------------------------------------------------------------------------------------------------- |
 | `dashboards:read` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
+{ .no-spacing-list }
+
 **Example Request**:
 
 ```http
@@ -225,6 +229,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 | ------------------- | ------------------------------------------------------------------------------------------------------- |
 | `dashboards:delete` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
+{ .no-spacing-list }
+
 **Example Request**:
 
 ```http
@@ -272,6 +278,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 | ------------------- | ------------------------------------------------------------------------------------------------------- |
 | `dashboards:delete` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
+{ .no-spacing-list }
+
 **Example Request**:
 
 ```http
@@ -318,6 +326,8 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 | Action              | Scope                                                 |
 | ------------------- | ----------------------------------------------------- |
 | `dashboards:create` | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
+
+{ .no-spacing-list }
 
 **Example Request**:
 
