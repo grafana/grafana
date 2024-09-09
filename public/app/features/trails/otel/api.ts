@@ -79,8 +79,19 @@ export async function totalOtelResources(
   let instances: string[] = [];
 
   responseTotal.data.result.forEach((result) => {
-    jobs.push(result.metric.job);
-    instances.push(result.metric.instance);
+    // NOTE: sometimes there are target_info series with
+    // - both job and instance labels
+    // - only job label
+    // - only instance label
+    // Here we make sure either of them are present
+    // because we use this collection to filter metric names
+    if (result.metric.job) {
+      jobs.push(result.metric.job);
+    }
+
+    if (result.metric.instance) {
+      instances.push(result.metric.instance);
+    }
   });
 
   // use these filters to reduce metrics
