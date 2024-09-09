@@ -219,10 +219,10 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 				queryResult.dataResponse.Error = theErr
 				queryResult.dataResponse.ErrorSource = backend.ErrorSourcePlugin
 			} else if theErrString, ok := r.(string); ok {
-        queryResult.dataResponse.Error = errors.New(theErrString)
+				queryResult.dataResponse.Error = errors.New(theErrString)
 				queryResult.dataResponse.ErrorSource = backend.ErrorSourcePlugin
 			} else {
-				queryResult.dataResponse.Error = errors.New("unexpected error - %s", e.userError)
+				queryResult.dataResponse.Error = errors.New(fmt.Sprintf("unexpected error - %s", e.userError))
 				queryResult.dataResponse.ErrorSource = backend.ErrorSourceDownstream
 			}
 			ch <- queryResult
