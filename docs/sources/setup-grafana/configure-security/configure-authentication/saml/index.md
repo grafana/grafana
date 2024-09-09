@@ -241,7 +241,7 @@ This app registration will be used as a Service Account to retrieve more informa
 #### Set up permissions for the application
 
 1. In the overview pane, look for **API permissions** section and select **Add a permission**.
-1. In the **Request API permissions** pane, select **Microsoft Graph**.
+1. In the **Request API permissions** pane, select **Microsoft Graph**, and click **Application permissions**.
 1. In the **Select permissions** pane, under the **GroupMember** section, select **GroupMember.Read.All**.
 1. In the **Select permissions** pane, under the **User** section, select **User.Read**.
 1. Select **Add permissions** at the bottom of the page.

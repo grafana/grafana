@@ -741,7 +741,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 			QueryType: string(dataquery.AzureQueryTypeTraceql),
 		}
 
-		_, err := ds.buildQueries(ctx, []backend.DataQuery{query}, dsInfo, false)
+		_, err := ds.buildQuery(ctx, query, dsInfo, false)
 
 		require.NoError(t, err)
 	})
@@ -761,7 +761,7 @@ func Test_exemplarsFeatureToggle(t *testing.T) {
 			QueryType: string(dataquery.AzureQueryTypeTraceql),
 		}
 
-		_, err := ds.buildQueries(ctx, []backend.DataQuery{query}, dsInfo, false)
+		_, err := ds.buildQuery(ctx, query, dsInfo, false)
 
 		require.Error(t, err, "query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled")
 	})

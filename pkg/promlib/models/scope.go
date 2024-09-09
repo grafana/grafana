@@ -2,11 +2,13 @@ package models
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
+// ApplyFiltersAndGroupBy takes a raw promQL expression, converts the filters into PromQL matchers, and applies these matchers to the parsed expression. It also applies the group by clause to any aggregate expressions in the parsed expression.
 func ApplyFiltersAndGroupBy(rawExpr string, scopeFilters, adHocFilters []ScopeFilter, groupBy []string) (string, error) {
 	expr, err := parser.ParseExpr(rawExpr)
 	if err != nil {
@@ -98,8 +100,17 @@ func filterToMatcher(f ScopeFilter) (*labels.Matcher, error) {
 		mt = labels.MatchRegexp
 	case FilterOperatorRegexNotMatch:
 		mt = labels.MatchNotRegexp
+	case FilterOperatorOneOf:
+		mt = labels.MatchRegexp
+	case FilterOperatorNotOneOf:
+		mt = labels.MatchNotRegexp
 	default:
 		return nil, fmt.Errorf("unknown operator %q", f.Operator)
+	}
+	if f.Operator == FilterOperatorOneOf || f.Operator == FilterOperatorNotOneOf {
+		if len(f.Values) > 0 {
+			return labels.NewMatcher(mt, f.Key, strings.Join(f.Values, "|"))
+		}
 	}
 	return labels.NewMatcher(mt, f.Key, f.Value)
 }
