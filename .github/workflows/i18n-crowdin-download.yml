@@ -14,10 +14,6 @@ jobs:
       pull-requests: write # needed to update PR description, labels, etc
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-
       - name: Generate token
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
@@ -25,9 +21,14 @@ jobs:
           app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
           private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
 
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ steps.generate_token.outputs.token }}
+
       - name: Download sources
         id: crowdin-download
-        uses: crowdin/github-action@v1
+        uses: crowdin/github-action@v2
         with:
           upload_sources: false
           upload_translations: false

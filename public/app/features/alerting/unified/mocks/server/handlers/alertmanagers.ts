@@ -12,8 +12,37 @@ export const grafanaAlertingConfigurationStatusHandler = (
   response = defaultGrafanaAlertingConfigurationStatusResponse
 ) => http.get('/api/v1/ngalert', () => HttpResponse.json(response));
 
+const getInvalidMatcher = (matchers: string[]) => {
+  return matchers.find((matcher) => {
+    const split = matcher.split('=');
+    try {
+      // Try and parse as JSON, as this will fail if
+      // we've failed to wrap the label value in quotes
+      // (e.g. `foo space` can't be parsed, but `"foo space"` can)
+      JSON.parse(split[0]);
+      return false;
+    } catch (e) {
+      return true;
+    }
+  });
+};
+
 export const alertmanagerAlertsListHandler = () =>
-  http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ params }) => {
+  http.get<{ datasourceUid: string }>('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ params, request }) => {
+    const matchers = new URL(request.url).searchParams.getAll('filter');
+
+    const invalidMatcher = getInvalidMatcher(matchers);
+
+    if (invalidMatcher) {
+      return HttpResponse.json(
+        {
+          message: `bad matcher format: ${invalidMatcher}: unable to retrieve alerts`,
+          traceID: '',
+        },
+        { status: 400 }
+      );
+    }
+
     if (params.datasourceUid === MOCK_DATASOURCE_UID_BROKEN_ALERTMANAGER) {
       return HttpResponse.json({ traceId: '' }, { status: 502 });
     }
