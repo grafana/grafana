@@ -4092,7 +4092,6 @@ __metadata:
     "@types/react-color": "npm:3.0.12"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-highlight-words": "npm:0.20.0"
-    "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
     "@types/react-test-renderer": "npm:18.3.0"
     "@types/react-transition-group": "npm:4.4.11"
@@ -4146,7 +4145,7 @@ __metadata:
     react-i18next: "npm:^14.0.0"
     react-inlinesvg: "npm:3.0.2"
     react-loading-skeleton: "npm:3.4.0"
-    react-router-dom: "npm:5.3.3"
+    react-router-dom-v5-compat: "npm:^6.26.1"
     react-select: "npm:5.8.0"
     react-select-event: "npm:^5.1.0"
     react-table: "npm:7.8.0"
@@ -6722,13 +6721,6 @@ __metadata:
     react-redux:
       optional: true
   checksum: 10/6bd1b5b44b12dbd53486c7dd05afc6d4bb7dc341ee3a44b5ed576b814db65babd5f81c5e3878ed5b2791dd4be01d4991e3a88e01ac5af11c260f4b9e4d5c30d9
-  languageName: node
-  linkType: hard
-
-"@remix-run/router@npm:1.14.2":
-  version: 1.14.2
-  resolution: "@remix-run/router@npm:1.14.2"
-  checksum: 10/422844e88b985f1e287301b302c6cf8169c9eea792f80d40464f97b25393bb2e697228ebd7a7b61444d5a51c5873c4a637aad20acde5886a5caf62e833c5ceee
   languageName: node
   linkType: hard
 
@@ -18797,7 +18789,7 @@ __metadata:
     react-responsive-carousel: "npm:^3.2.23"
     react-router: "npm:5.3.3"
     react-router-dom: "npm:5.3.3"
-    react-router-dom-v5-compat: "npm:^6.10.0"
+    react-router-dom-v5-compat: "npm:^6.26.1"
     react-select: "npm:5.8.0"
     react-select-event: "npm:5.5.1"
     react-split-pane: "npm:0.1.92"
@@ -27460,17 +27452,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom-v5-compat@npm:^6.10.0":
-  version: 6.21.3
-  resolution: "react-router-dom-v5-compat@npm:6.21.3"
+"react-router-dom-v5-compat@npm:^6.26.1":
+  version: 6.26.1
+  resolution: "react-router-dom-v5-compat@npm:6.26.1"
   dependencies:
+    "@remix-run/router": "npm:1.19.1"
     history: "npm:^5.3.0"
-    react-router: "npm:6.21.3"
+    react-router: "npm:6.26.1"
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
     react-router-dom: 4 || 5
-  checksum: 10/ed40e3e241a8c2a85aa0a95b52b77b9b9667e3f1a48a8a60e0b33e3c615c3b490b6c3a645ea92efc5783251111d039a5c809b779e1a93b9da23de6e97e4e1bd0
+  checksum: 10/c8249404e0b219ff00797ae0ff8818394a07309b62617a9a4e47d5a8769801098431ceec38eca8c712cbee4a04843326cb2334ed15ea08b7848b5ce5a58ad0a3
   languageName: node
   linkType: hard
 
@@ -27521,17 +27514,6 @@ __metadata:
   peerDependencies:
     react: ">=15"
   checksum: 10/4631eed91020c73950804c7c7454e74b2eb495f803c5ca60c8b5572ca72cc06e336f3b08d9ee3fa730128a52c4d9e16d1aa7e8b7f85560629117e16d99a01cef
-  languageName: node
-  linkType: hard
-
-"react-router@npm:6.21.3":
-  version: 6.21.3
-  resolution: "react-router@npm:6.21.3"
-  dependencies:
-    "@remix-run/router": "npm:1.14.2"
-  peerDependencies:
-    react: ">=16.8"
-  checksum: 10/3d5107cfdb440519d84e6ad6d95454e3bf41ec97677b95f7b2a7f281f8ddf191b765cf1b599ead951f3cd33ed4429f140590d74a01cfdf835dc2f812023a978a
   languageName: node
   linkType: hard
 
