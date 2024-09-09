@@ -64,7 +64,7 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 		Class:         class,
 		FS:            p.FS,
 		BaseURL:       baseURL,
-		SriHashes:     sig.SriHashes,
+		ModuleHash:    sig.ModuleHash,
 		Module:        moduleURL,
 		Signature:     sig.Status,
 		SignatureType: sig.Type,

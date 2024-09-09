@@ -52,9 +52,9 @@ type Plugin struct {
 	Error         *Error
 
 	// SystemJS fields
-	Module    string
-	BaseURL   string
-	SriHashes map[string]string
+	Module     string
+	BaseURL    string
+	ModuleHash string
 
 	Angular AngularMeta
 

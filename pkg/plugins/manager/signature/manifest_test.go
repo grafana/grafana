@@ -875,7 +875,7 @@ syrhBXja
 	require.ErrorIs(t, err, openpgpErrors.ErrKeyRevoked)
 }
 
-func TestSriHashes(t *testing.T) {
+func TestModuleHash(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		m := &PluginManifest{
 			SignatureType: plugins.SignatureTypeGrafana,
@@ -884,12 +884,9 @@ func TestSriHashes(t *testing.T) {
 				"plugin.json": "8753e13da61ea5aca20bf50c7cec6255bf6d1bb0c01640244ffc289c89b6857a",
 			},
 		}
-		sri, err := m.SriHashes()
+		mh, err := m.ModuleHash()
 		require.NoError(t, err)
-		require.Equal(t, map[string]string{
-			"module.js":   "sha256-3fy0SURQZObDnwwgsVvjy2pVg3z0eB3yPQLeAF9DaBE=",
-			"plugin.json": "sha256-h1PhPaYepayiC/UMfOxiVb9tG7DAFkAkT/wonIm2hXo=",
-		}, sri)
+		require.Equal(t, "sha256-3fy0SURQZObDnwwgsVvjy2pVg3z0eB3yPQLeAF9DaBE=", mh)
 	})
 
 	t.Run("MANIFEST.txt", func(t *testing.T) {
@@ -939,20 +936,8 @@ YK47Foq7NA==
 		require.Equal(t, "heywesty-trafficlight-panel", manifest.Plugin)
 		require.Equal(t, "0.4.0", manifest.Version)
 		require.Len(t, manifest.Files, 11)
-		sri, err := manifest.SriHashes()
+		mh, err := manifest.ModuleHash()
 		require.NoError(t, err)
-		require.Equal(t, map[string]string{
-			"CHANGELOG.md": "sha256-ZdGZXCgpkc2jwBicCcK52MejX1QLC6k7UvfQSC4CLlE=",
-			"LICENSE":      "sha256-nPZyBoc0NELFkvHbPVkTZ58Rx1YL+DHEc86cm7CtBLg=",
-			"README.md":    "sha256-p1H5XeFDH1D4IRPzKkPVG9Cdo8oKju7sMOmGIw9HeB8=",
-			"img/logo.svg": "sha256-CpZIQWihHWdx39fPXr/psf9mgr/qPpbSERiz2SQDBYQ=",
-			"img/screenshots/traffic-lights-grid-layout.png":         "sha256-YsS3bhVLb7YBU8yAjYBYR0Ln0v83wDHeXk9GjwwKi94=",
-			"img/screenshots/traffic-lights-single-row.png":          "sha256-o4nbr0zkX/VArsYQvgMkWwDyHzj1+j8V6FvPtItQDaU=",
-			"img/screenshots/traffic-lights-threshold-overrides.png": "sha256-j/BvIL/U/VrN4SZDGYrNuSt36KSml0aOou4SQRMgNB8=",
-			"img/screenshots/traffic-lights.png":                     "sha256-SyI2vIBGN6xEeejR5Y3Z5NisX2HK3by0LGyD+ozPGxg=",
-			"module.js":                                              "sha256-3fy0SURQZObDnwwgsVvjy2pVg3z0eB3yPQLeAF9DaBE=",
-			"module.js.map":                                          "sha256-vTEEGsFVFfiVtbNU9vP/jGBc6noS+FVfKOA/finn2co=",
-			"plugin.json":                                            "sha256-h1PhPaYepayiC/UMfOxiVb9tG7DAFkAkT/wonIm2hXo=",
-		}, sri)
+		require.Equal(t, "sha256-3fy0SURQZObDnwwgsVvjy2pVg3z0eB3yPQLeAF9DaBE=", mh)
 	})
 }

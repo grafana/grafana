@@ -29,9 +29,9 @@ type Plugin struct {
 	Error *plugins.Error
 
 	// SystemJS fields
-	Module    string
-	BaseURL   string
-	SriHashes map[string]string
+	Module     string
+	BaseURL    string
+	ModuleHash string
 
 	Angular plugins.AngularMeta
 
@@ -75,7 +75,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		Error:             p.Error,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
-		SriHashes:         p.SriHashes,
+		ModuleHash:        p.ModuleHash,
 		ExternalService:   p.ExternalService,
 		Angular:           p.Angular,
 	}

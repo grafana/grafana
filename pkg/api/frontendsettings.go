@@ -154,7 +154,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Sort:            getPanelSort(panel.ID),
 			Angular:         panel.Angular,
 			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), panel),
-			SriHashes:       panel.SriHashes,
+			ModuleHash:      panel.ModuleHash,
 		}
 	}
 
@@ -457,7 +457,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Module:                    plugin.Module,
 			BaseURL:                   plugin.BaseURL,
 			Angular:                   plugin.Angular,
-			SriHashes:                 plugin.SriHashes,
+			ModuleHash:                plugin.ModuleHash,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
 		}
@@ -538,12 +538,12 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 				Name:     ds.Name,
 				JSONData: make(map[string]any),
 				PluginMeta: &plugins.PluginMetaDTO{
-					JSONData:  ds.JSONData,
-					Signature: ds.Signature,
-					Module:    ds.Module,
-					BaseURL:   ds.BaseURL,
-					Angular:   ds.Angular,
-					SriHashes: ds.SriHashes,
+					JSONData:   ds.JSONData,
+					Signature:  ds.Signature,
+					Module:     ds.Module,
+					BaseURL:    ds.BaseURL,
+					Angular:    ds.Angular,
+					ModuleHash: ds.ModuleHash,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -565,7 +565,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Preload:         false,
 		Angular:         plugin.Angular,
 		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
-		SriHashes:       plugin.SriHashes,
+		ModuleHash:      plugin.ModuleHash,
 	}
 
 	if settings.Enabled {

@@ -58,18 +58,18 @@ func (m *PluginManifest) isV2() bool {
 	return strings.HasPrefix(m.ManifestVersion, "2.")
 }
 
-// SriHashes returns a map of file names to SRI hashes as expected by the browser.
-func (m *PluginManifest) SriHashes() (map[string]string, error) {
-	r := make(map[string]string, len(m.Files))
-	for fn, h := range m.Files {
-		hb, err := hex.DecodeString(h)
-		if err != nil {
-			return nil, fmt.Errorf("hex decode string: %w", err)
-		}
-		hb64 := base64.StdEncoding.EncodeToString(hb)
-		r[fn] = "sha256-" + hb64
+// ModuleHash returns the SRI hash for the module.js file, as expected by the browser.
+// It returns an empty string if there's no module.js in the manifest.
+func (m *PluginManifest) ModuleHash() (string, error) {
+	moduleHash, ok := m.Files["module.js"]
+	if !ok {
+		return "", nil
 	}
-	return r, nil
+	hb, err := hex.DecodeString(moduleHash)
+	if err != nil {
+		return "", fmt.Errorf("hex decode string: %w", err)
+	}
+	return "sha256-" + base64.StdEncoding.EncodeToString(hb), nil
 }
 
 type Signature struct {
@@ -246,16 +246,16 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	}
 
 	s.log.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
-	sriHashes, err := manifest.SriHashes()
+	moduleHash, err := manifest.ModuleHash()
 	if err != nil {
 		s.log.Warn("Could not calculate SRI hashes, ignoring", "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version, "error", err)
-		sriHashes = nil
+		moduleHash = ""
 	}
 	return plugins.Signature{
 		Status:     plugins.SignatureStatusValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,
-		SriHashes:  sriHashes,
+		ModuleHash: moduleHash,
 	}, nil
 }
 
