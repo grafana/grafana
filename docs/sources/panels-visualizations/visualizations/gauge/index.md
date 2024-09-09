@@ -32,9 +32,10 @@ Gauges are single-value visualizations that allow you to quickly visualize where
 You can use gauges if you need to track:
 
 - Service level objectives (SLOs)
-- How full your gas tank is
-- How fast a vehicle is moving inside the engine speeds limits
-- Body temperature
+- How full a piece of equipment is
+- How fast a vehicle is moving within a set of limits
+- Network latency
+- Equipment state with setpoint and alarm thresholds
 - CPU consumption (0-100%)
 - RAM availability
 
