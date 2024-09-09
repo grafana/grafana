@@ -89,23 +89,28 @@ function ShareSnapshotRenderer({ model }: SceneComponentProps<ShareSnapshot>) {
           disableInputs={step === 2}
           panelRef={panelRef}
         >
-          {step === 1 ? (
-            <CreateSnapshotActions
-              onCreateClick={createSnapshot}
-              isLoading={snapshotResult.loading}
-              onCancelClick={onCancelClick}
-              sharingOptions={snapshotSharingOptions}
-            />
-          ) : (
-            step === 2 &&
-            snapshotResult.value && (
-              <UpsertSnapshotActions
-                url={snapshotResult.value!.url}
-                onDeleteClick={() => setShowDeleteConfirmation(true)}
-                onNewSnapshotClick={reset}
+          <Stack justifyContent="space-between" gap={{ xs: 2 }} direction={{ xs: 'column', xl: 'row' }}>
+            {step === 1 ? (
+              <CreateSnapshotActions
+                onCreateClick={createSnapshot}
+                isLoading={snapshotResult.loading}
+                onCancelClick={onCancelClick}
+                sharingOptions={snapshotSharingOptions}
               />
-            )
-          )}
+            ) : (
+              step === 2 &&
+              snapshotResult.value && (
+                <UpsertSnapshotActions
+                  url={snapshotResult.value!.url}
+                  onDeleteClick={() => setShowDeleteConfirmation(true)}
+                  onNewSnapshotClick={reset}
+                />
+              )
+            )}
+            <TextLink icon="external-link-alt" href="/dashboard/snapshots" external>
+              {t('snapshot.share.view-all-button', 'View all snapshots')}
+            </TextLink>
+          </Stack>
         </UpsertSnapshot>
       </>
     </div>
@@ -123,24 +128,19 @@ const CreateSnapshotActions = ({
   onCancelClick: () => void;
   onCreateClick: (isExternal?: boolean) => void;
 }) => (
-  <Stack justifyContent="space-between" direction={{ xs: 'column', xl: 'row' }}>
-    <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
-      <Button variant="primary" disabled={isLoading} onClick={() => onCreateClick()}>
-        <Trans i18nKey="snapshot.share.local-button">Publish snapshot</Trans>
+  <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
+    <Button variant="primary" disabled={isLoading} onClick={() => onCreateClick()}>
+      <Trans i18nKey="snapshot.share.local-button">Publish snapshot</Trans>
+    </Button>
+    {sharingOptions?.externalEnabled && (
+      <Button variant="secondary" disabled={isLoading} onClick={() => onCreateClick(true)}>
+        {sharingOptions?.externalSnapshotName}
       </Button>
-      {sharingOptions?.externalEnabled && (
-        <Button variant="secondary" disabled={isLoading} onClick={() => onCreateClick(true)}>
-          {sharingOptions?.externalSnapshotName}
-        </Button>
-      )}
-      <Button variant="secondary" fill="outline" onClick={onCancelClick}>
-        <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
-      </Button>
-      {isLoading && <Spinner />}
-    </Stack>
-    <TextLink icon="external-link-alt" href="/dashboard/snapshots">
-      {t('snapshot.share.view-all-button', 'View all snapshots')}
-    </TextLink>
+    )}
+    <Button variant="secondary" fill="outline" onClick={onCancelClick}>
+      <Trans i18nKey="snapshot.share.cancel-button">Cancel</Trans>
+    </Button>
+    {isLoading && <Spinner />}
   </Stack>
 );
 
