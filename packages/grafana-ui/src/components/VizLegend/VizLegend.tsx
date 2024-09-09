@@ -106,33 +106,17 @@ export function VizLegend<T>({
     case LegendDisplayMode.List:
       return (
         <>
-          {/* render series colors if more than one series or no threshold colors */}
-          {/* {(items.length > 1 || !thresholdItems) && ( */}
-          {!thresholdItems && (
-            <VizLegendList<T>
-              className={className}
-              items={items}
-              placement={placement}
-              onLabelMouseOver={onMouseOver}
-              onLabelMouseOut={onMouseOut}
-              onLabelClick={onLegendLabelClick}
-              itemRenderer={itemRenderer}
-              readonly={readonly}
-            />
-          )}
-          {/* render threshold colors if exists */}
-          {thresholdItems && (
-            <VizLegendList<T>
-              className={className}
-              items={thresholdItems}
-              placement={placement}
-              onLabelMouseOver={onMouseOver}
-              onLabelMouseOut={onMouseOut}
-              onLabelClick={onLegendLabelClick}
-              itemRenderer={itemRenderer}
-              readonly={readonly}
-            />
-          )}
+          {/* render threshold colors if From thresholds scheme selected */}
+          <VizLegendList<T>
+            className={className}
+            items={thresholdItems ? thresholdItems : items}
+            placement={placement}
+            onLabelMouseOver={onMouseOver}
+            onLabelMouseOut={onMouseOut}
+            onLabelClick={onLegendLabelClick}
+            itemRenderer={itemRenderer}
+            readonly={readonly}
+          />
           {/* render value mapping colors */}
           {mappingItems && (
             <VizLegendList<T>

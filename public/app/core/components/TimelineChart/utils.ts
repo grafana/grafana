@@ -515,7 +515,7 @@ export function getValueMappingItems(fieldConfig: FieldConfig, theme: GrafanaThe
     if (type === MappingType.RangeToText) {
       const { from, result, to } = options;
       const { text, color } = result;
-      const label = text ? `${from} - ${to} ${text}` : `${from} - ${to}`;
+      const label = text ? `[${from} - ${to}] ${text}` : `[${from} - ${to}]`;
 
       items.push({
         label: label,
@@ -524,11 +524,28 @@ export function getValueMappingItems(fieldConfig: FieldConfig, theme: GrafanaThe
       });
     }
 
-    // TODO: implement
     if (type === MappingType.RegexToText) {
+      const { pattern, result } = options;
+      const { text, color } = result;
+      const label = `${text || pattern}`;
+
+      items.push({
+        label: label,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
     }
 
     if (type === MappingType.SpecialValue) {
+      const { match, result } = options;
+      const { text, color } = result;
+      const label = `${text || match}`;
+
+      items.push({
+        label: label,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
     }
   }
 
