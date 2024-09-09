@@ -208,4 +208,6 @@ export interface FeatureToggles {
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
+  appPlatformAccessTokens?: boolean;
+  appSidecar?: boolean;
 }
