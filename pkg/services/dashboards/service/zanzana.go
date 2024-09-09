@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 )
 
 const (
@@ -105,9 +106,63 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
 
+	var wg sync.WaitGroup
+	resChan := make(chan []string, 2)
+	errChan := make(chan error, 2)
+
+	// For some search types we need dashboards or folders only
+	if query.Type != searchstore.TypeFolder && query.Type != searchstore.TypeAlertFolder {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			dashboardUIDs, err := dr.listResources(ctx, query, zanzana.TypeDashboard)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			resChan <- dashboardUIDs
+			errChan <- nil
+		}()
+	}
+
+	if query.Type != searchstore.TypeDashboard {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			folderUIDs, err := dr.listResources(ctx, query, zanzana.TypeFolder)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			resChan <- folderUIDs
+			errChan <- nil
+		}()
+	}
+
+	wg.Wait()
+	close(resChan)
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	uids := make([]string, 0)
+	for res := range resChan {
+		uids = append(uids, res...)
+	}
+
+	query.DashboardUIDs = append(uids, query.DashboardUIDs...)
+	query.SkipAccessControlFilter = true
+	return dr.dashboardStore.FindDashboards(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) listResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
 	res, err := dr.acService.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		User:     query.SignedInUser.GetUID(),
-		Type:     zanzana.TypeDashboard,
+		Type:     resourceType,
 		Relation: "read",
 	})
 	if err != nil {
@@ -119,18 +174,16 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 		orgId = query.SignedInUser.GetOrgID()
 	}
 	// dashboard:<orgId>-
-	prefix := fmt.Sprintf("%s:%d-", zanzana.TypeDashboard, orgId)
+	prefix := fmt.Sprintf("%s:%d-", resourceType, orgId)
 
-	dashboardUIDs := make([]string, 0)
+	resourceUIDs := make([]string, 0)
 	for _, d := range res.Objects {
 		if uid, found := strings.CutPrefix(d, prefix); found {
-			dashboardUIDs = append(dashboardUIDs, uid)
+			resourceUIDs = append(resourceUIDs, uid)
 		}
 	}
 
-	query.DashboardUIDs = append(dashboardUIDs, query.DashboardUIDs...)
-	query.SkipAccessControlFilter = true
-	return dr.dashboardStore.FindDashboards(ctx, query)
+	return resourceUIDs, nil
 }
 
 func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
