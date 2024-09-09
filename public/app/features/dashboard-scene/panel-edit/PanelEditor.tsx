@@ -73,6 +73,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _activationHandler() {
     const panel = this.state.panelRef.resolve();
+    const layoutElement = panel.parent;
+
+    if (layoutElement instanceof DashboardGridItem) {
+      layoutElement.editingStarted();
+    }
+
     const deactivateParents = activateInActiveParents(panel);
 
     this._setupChangeDetection();
@@ -87,7 +93,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       })
     );
 
-    return deactivateParents;
+    return () => {
+      if (layoutElement instanceof DashboardGridItem) {
+        layoutElement.editingCompleted();
+      }
+      if (deactivateParents) {
+        deactivateParents();
+      }
+    };
   }
 
   /**

@@ -1,6 +1,13 @@
 import { PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { CancelActivationHandler, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import {
+  CancelActivationHandler,
+  CustomVariable,
+  sceneGraph,
+  SceneGridLayout,
+  SceneVariableSet,
+  VizPanel,
+} from '@grafana/scenes';
 import * as libAPI from 'app/features/library-panels/state/api';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
@@ -91,21 +98,11 @@ describe('PanelEditor', () => {
   });
 
   describe('When opening a repeated panel', () => {
-    //   it('Should default to the first variable value if panel is repeated', async () => {
-    //     const { scene, panel } = setupTest('panel-10');
-    //     scene.setState({
-    //       $variables: new SceneVariableSet({
-    //         variables: [
-    //           new CustomVariable({ name: 'custom', query: 'A,B,C', value: ['A', 'B', 'C'], text: ['A', 'B', 'C'] }),
-    //         ],
-    //       }),
-    //     });
-    //     scene.setState({ editPanel: buildPanelEditScene(panel) });
-    //     const vizPanelManager = scene.state.editPanel!.state.vizManager;
-    //     vizPanelManager.activate();
-    //     const variable = sceneGraph.lookupVariable('custom', vizPanelManager);
-    //     expect(variable?.getValue()).toBe('A');
-    //   });
+    it('Should default to the first variable value if panel is repeated', async () => {
+      const { panel } = setup({ repeatByVariable: 'server' });
+      const variable = sceneGraph.lookupVariable('server', panel);
+      expect(variable?.getValue()).toBe('A');
+    });
   });
 
   describe('Handling library panels', () => {
@@ -212,17 +209,30 @@ describe('PanelEditor', () => {
 interface SetupOptions {
   isNewPanel?: boolean;
   pluginSkipDataQuery?: boolean;
+  repeatByVariable?: string;
 }
 
 function setup(options: SetupOptions = {}) {
   pluginToLoad = getPanelPlugin({ id: 'text', skipDataQuery: options.pluginSkipDataQuery });
 
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'original title' });
-  const gridItem = new DashboardGridItem({ body: panel });
+  const gridItem = new DashboardGridItem({ body: panel, variableName: options.repeatByVariable });
+
   const panelEditor = buildPanelEditScene(panel, options.isNewPanel);
   const dashboard = new DashboardScene({
     editPanel: panelEditor,
     isEditing: true,
+    $variables: new SceneVariableSet({
+      variables: [
+        new CustomVariable({
+          name: 'server',
+          query: 'A,B,C',
+          isMulti: true,
+          value: ['A', 'B', 'C'],
+          text: ['A', 'B', 'C'],
+        }),
+      ],
+    }),
     body: new SceneGridLayout({
       children: [gridItem],
     }),

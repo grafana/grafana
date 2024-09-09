@@ -21,7 +21,7 @@ import {
   SceneVariable,
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
@@ -194,11 +194,35 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       stateUpdate.repeatDirection = 'h';
     }
 
-    if (this.getRepeatDirection() === 'h') {
-      stateUpdate.width = 24;
+    if (this.state.body.state.$variables) {
+      this.state.body.setState({ $variables: undefined });
     }
 
     this.setState(stateUpdate);
+  }
+
+  /**
+   * Logic to prep panel for panel edit
+   */
+  public editingStarted() {
+    if (!this.state.variableName) {
+      return;
+    }
+
+    if (this.state.repeatedPanels?.length ?? 0 > 1) {
+      this.state.body.setState({
+        $variables: this.state.repeatedPanels![0].state.$variables?.clone(),
+      });
+    }
+  }
+
+  /**
+   * Going back to dashboards logic
+   */
+  public editingCompleted() {
+    if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
+      this.setState({ width: GRID_COLUMN_COUNT });
+    }
   }
 
   public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
