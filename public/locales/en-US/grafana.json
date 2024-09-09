@@ -912,7 +912,7 @@
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
       "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
-      "title": "Save dashboard JSON"
+      "title": "Export dashboard JSON"
     },
     "menu": {
       "export-as-json-label": "Export",
@@ -921,6 +921,11 @@
   },
   "folder-picker": {
     "loading": "Loading folders..."
+  },
+  "gen-ai": {
+    "apply-suggestion": "Apply",
+    "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
+    "send-custom-feedback": "Send"
   },
   "grafana-ui": {
     "drawer": {
@@ -1005,78 +1010,84 @@
   "ldap-drawer": {
     "attributes-section": {
       "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
-      "email": {
-        "label": "Email"
-      },
+      "email-label": "Email",
       "label": "Attributes",
-      "member-of": {
-        "label": "Member Of"
-      },
-      "name": {
-        "label": "Name"
-      },
-      "surname": {
-        "label": "Surname"
-      },
-      "username": {
-        "label": "Username"
-      }
+      "member-of-label": "Member Of",
+      "name-label": "Name",
+      "surname-label": "Surname",
+      "username-label": "Username"
     },
     "extra-security-section": {
+      "client-cert-label": "Client certificate path",
+      "client-cert-placeholder": "/path/to/client_cert.pem",
+      "client-cert-value-label": "Client certificate content",
+      "client-cert-value-placeholder": "Client certificate content in base64",
+      "client-key-label": "Client key path",
+      "client-key-placeholder": "/path/to/client_key.pem",
+      "client-key-value-label": "Client key content",
+      "client-key-value-placeholder": "Client key content in base64",
+      "encryption-provider-base-64": "Base64-encoded content",
+      "encryption-provider-description": "X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.",
+      "encryption-provider-file-path": "Path to files",
+      "encryption-provider-label": "Encryption key and certificate provision specification.",
       "label": "Extra security measures",
-      "min-tls-version": {
-        "description": "This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.",
-        "label": "Min TLS version"
+      "min-tls-version-description": "This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.",
+      "min-tls-version-label": "Min TLS version",
+      "root-ca-cert-label": "Root CA certificate path",
+      "root-ca-cert-placeholder": "/path/to/root_ca_cert.pem",
+      "root-ca-cert-value-label": "Root CA certificate content",
+      "start-tls-description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
+      "start-tls-label": "Start TLS",
+      "tls-ciphers-description": "List of comma- or space-separated ciphers",
+      "tls-ciphers-label": "TLS ciphers",
+      "tls-ciphers-placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]",
+      "use-ssl-description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
+      "use-ssl-label": "Use SSL",
+      "use-ssl-tooltip": "For a complete list of supported ciphers and TLS versions, refer to: {\n        <TextLink style={{ fontSize: 'inherit' }} href=\"https://go.dev/src/crypto/tls/cipher_suites.go\" external>\n          https://go.dev/src/crypto/tls/cipher_suites.go\n        </TextLink>}"
+    },
+    "group-mapping": {
+      "grafana-admin": {
+        "description": "If enabled, all users from this group will be Grafana Admins",
+        "label": "Grafana Admin"
       },
-      "start-tls": {
-        "description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
-        "label": "Start TLS"
+      "group-dn": {
+        "description": "The name of the key used to extract the ID token from the returned OAuth2 token.",
+        "label": "Group DN"
       },
-      "tls-ciphers": {
-        "description": "List of comma- or space-separated ciphers",
-        "label": "TLS ciphers",
-        "placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]"
+      "org-id": {
+        "description": "The Grafana organization database id. Default org (ID 1) will be used if left out",
+        "label": "Org ID"
       },
-      "use-ssl": {
-        "description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
-        "label": "Use SSL",
-        "tooltip": "For a complete list of supported ciphers and TLS versions, refer to: {\n        <TextLink style={{ fontSize: 'inherit' }} href=\"https://go.dev/src/crypto/tls/cipher_suites.go\" external>\n          https://go.dev/src/crypto/tls/cipher_suites.go\n        </TextLink>}"
+      "org-role": {
+        "label": "Org role *"
+      },
+      "remove": {
+        "button": "Remove group mapping"
       }
     },
     "group-mapping-section": {
+      "add": {
+        "button": "Add group mapping"
+      },
       "description": "Map LDAP groups to Grafana org roles",
-      "group-search-base-dns": {
-        "description": "Separate by commas or spaces",
-        "label": "Group search base DNS"
-      },
-      "group-search-filter": {
-        "description": "Used to filter and identify group entries within the directory",
-        "label": "Group search filter"
-      },
-      "group-search-filter-user-attribute": {
-        "description": "Identifies users within group entries for filtering purposes",
-        "label": "Group name attribute"
-      },
+      "group-search-base-dns-description": "Separate by commas or spaces",
+      "group-search-base-dns-label": "Group search base DNS",
+      "group-search-filter-description": "Used to filter and identify group entries within the directory",
+      "group-search-filter-label": "Group search filter",
+      "group-search-filter-user-attribute-description": "Identifies users within group entries for filtering purposes",
+      "group-search-filter-user-attribute-label": "Group name attribute",
       "label": "Group mapping",
-      "skip-org-role-sync": {
-        "description": "Prevent synchronizing users’ organization roles from your IdP",
-        "label": "Skip organization role sync"
-      }
+      "skip-org-role-sync-description": "Prevent synchronizing users’ organization roles from your IdP",
+      "skip-org-role-sync-label": "Skip organization role sync"
     },
     "misc-section": {
-      "allow-sign-up": {
-        "descrition": "If not enabled, only existing Grafana users can log in using LDAP",
-        "label": "Allow sign up"
-      },
+      "allow-sign-up-descrition": "If not enabled, only existing Grafana users can log in using LDAP",
+      "allow-sign-up-label": "Allow sign up",
       "label": "Misc",
-      "port": {
-        "description": "Default port is 389 without SSL or 636 with SSL",
-        "label": "Port"
-      },
-      "timeout": {
-        "description": "Timeout in seconds for the connection to the LDAP server",
-        "label": "Timeout"
-      }
+      "port-description": "Default port is 389 without SSL or 636 with SSL",
+      "port-label": "Port",
+      "timeout-description": "Timeout in seconds for the connection to the LDAP server",
+      "timeout-label": "Timeout"
     },
     "title": "Advanced settings"
   },
@@ -1122,6 +1133,10 @@
       "label": "Server host",
       "placeholder": "example: 127.0.0.1"
     },
+    "login-form-alert": {
+      "description": "Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.",
+      "title": "Basic login disabled"
+    },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
       "label": "Search filter*",
@@ -1156,6 +1171,7 @@
     "empty-state": {
       "message": "No library panels found"
     },
+    "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
@@ -1175,7 +1191,7 @@
   "link": {
     "share": {
       "config-alert-description": "Updating your settings will modify the default copy link to include these changes. Please note that these settings are saved within your current browser scope.",
-      "config-alert-title": "Link configuration",
+      "config-alert-title": "Link settings",
       "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
       "copy-link-button": "Copy link",
       "copy-to-clipboard": "Link copied to clipboard",
@@ -1918,7 +1934,7 @@
       "settings-title": "Settings"
     },
     "configuration": {
-      "display-annotations-description": "Present annotations on this Dashboard",
+      "display-annotations-description": "Present annotations on this dashboard",
       "display-annotations-label": "Display annotations",
       "enable-time-range-description": "Allow people to change time range",
       "enable-time-range-label": "Enable time range",
@@ -1964,7 +1980,7 @@
       "revoke-button": "Revoke",
       "revoke-button-title": "Revoke",
       "success-creation": "Your dashboard is ready for external sharing",
-      "success-share-type-change": "Dashboard access restricted: Only specific people can now access with the link"
+      "success-share-type-change": "Dashboard access updated: Only specific people can now access with the link"
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",

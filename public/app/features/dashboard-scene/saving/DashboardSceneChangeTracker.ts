@@ -19,7 +19,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, PERSISTED_PROPS } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
@@ -77,16 +77,16 @@ export class DashboardSceneChangeTracker {
     if (payload.changedObject instanceof VizPanelLinks) {
       return true;
     }
-    if (payload.changedObject instanceof LibraryVizPanel) {
-      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
-        return true;
-      }
-    }
     if (payload.changedObject instanceof SceneRefreshPicker) {
       if (
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'intervals') ||
         Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'refresh')
       ) {
+        return true;
+      }
+    }
+    if (payload.changedObject instanceof LibraryPanelBehavior) {
+      if (Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'name')) {
         return true;
       }
     }
@@ -139,10 +139,16 @@ export class DashboardSceneChangeTracker {
   }
 
   private detectSaveModelChanges() {
-    this._changesWorker?.postMessage({
-      changed: transformSceneToSaveModel(this._dashboard),
-      initial: this._dashboard.getInitialSaveModel(),
-    });
+    const changedDashboard = transformSceneToSaveModel(this._dashboard);
+    const initialDashboard = this._dashboard.getInitialSaveModel();
+
+    // Objects must be stringify to ensure they are clonable, so they don't contain functions
+    const changed =
+      typeof changedDashboard === 'object' ? JSON.parse(JSON.stringify(changedDashboard)) : changedDashboard;
+    const initial =
+      typeof initialDashboard === 'object' ? JSON.parse(JSON.stringify(initialDashboard)) : initialDashboard;
+
+    this._changesWorker?.postMessage({ initial, changed });
   }
 
   private hasMetadataChanges() {
