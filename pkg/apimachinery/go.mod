@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/apimachinery
 go 1.23.1
 
 require (
-	github.com/grafana/authlib v0.0.0-20240903121118-16441568af1e // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20240906122029-0100695765b9 // @grafana/identity-access-team
 	github.com/grafana/authlib/claims v0.0.0-20240903121118-16441568af1e // @grafana/identity-access-team
 	github.com/stretchr/testify v1.9.0
 	k8s.io/apimachinery v0.31.0
@@ -32,6 +32,8 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
+	go.opentelemetry.io/otel v1.29.0 // indirect
+	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
