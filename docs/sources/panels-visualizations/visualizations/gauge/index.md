@@ -213,7 +213,7 @@ Adjust the sizes of the gauge text.
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Last, gauge colors and thresholds (the lines outside the circles) of the gauge can be configured as described above.
+Last, gauge colors and thresholds (the outer bar markers) of the gauge can be configured as described above.
 
 ![Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11](/media/docs/grafana/panels-visualizations/screenshot-grafana-12.2-gauge-example8.png 'Gauge viz with multiple rows and columns of numeric values showing all the values and thresholds defined for 0-6-11')
 
