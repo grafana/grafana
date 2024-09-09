@@ -156,7 +156,7 @@ const defaultConfigWithBothTimeIntervalsField: AlertManagerCortexConfig = {
   template_files: {},
 };
 
-const expectedToHaveRedirectedToRoutesRoute = async () =>
+const expectToHaveRedirectedToRoutesRoute = async () =>
   expect(await screen.findByText(indexPageText)).toBeInTheDocument();
 
 const fillOutForm = async ({
@@ -224,7 +224,7 @@ describe('Mute timings', () => {
 
     await saveMuteTiming();
 
-    await expectedToHaveRedirectedToRoutesRoute();
+    await expectToHaveRedirectedToRoutesRoute();
 
     const requests = await capture;
     const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
@@ -251,7 +251,7 @@ describe('Mute timings', () => {
     });
 
     await saveMuteTiming();
-    await expectedToHaveRedirectedToRoutesRoute();
+    await expectToHaveRedirectedToRoutesRoute();
 
     const requests = await capture;
     const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
@@ -278,7 +278,7 @@ describe('Mute timings', () => {
     });
 
     await saveMuteTiming();
-    await expectedToHaveRedirectedToRoutesRoute();
+    await expectToHaveRedirectedToRoutesRoute();
   });
 
   it('prepopulates the form when editing a mute timing', async () => {
@@ -311,7 +311,7 @@ describe('Mute timings', () => {
     await fillOutForm(formValues);
 
     await saveMuteTiming();
-    await expectedToHaveRedirectedToRoutesRoute();
+    await expectToHaveRedirectedToRoutesRoute();
 
     const requests = await capture;
     const alertmanagerUpdate = await getAlertmanagerConfigUpdate(requests);
@@ -347,7 +347,7 @@ describe('Mute timings', () => {
     await fillOutForm({ name: 'Lunch breaks' });
     await saveMuteTiming();
 
-    await expectedToHaveRedirectedToRoutesRoute();
+    await expectToHaveRedirectedToRoutesRoute();
   });
 
   it('shows error when mute timing does not exist', async () => {
@@ -372,7 +372,7 @@ describe('Mute timings', () => {
       await fillOutForm({ name: 'a new mute timing' });
 
       await saveMuteTiming();
-      await expectedToHaveRedirectedToRoutesRoute();
+      await expectToHaveRedirectedToRoutesRoute();
     });
 
     it('shows error when mute timing does not exist', async () => {
@@ -391,7 +391,7 @@ describe('Mute timings', () => {
       });
 
       await saveMuteTiming();
-      await expectedToHaveRedirectedToRoutesRoute();
+      await expectToHaveRedirectedToRoutesRoute();
     });
 
     it('loads view form for provisioned interval', async () => {
