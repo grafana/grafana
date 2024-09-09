@@ -85,6 +85,8 @@ export const ConfigureCorrelationTargetForm = () => {
         {correlationType === 'query' &&
           (() => {
             assertIsQueryTypeError(errors);
+            // the assert above will make sure the form dto, which can be either external or query, is for query
+            // however, the query type has config.target, an object, which doesn't get converted, so we must explicity type it below
             return (
               <>
                 <Controller
