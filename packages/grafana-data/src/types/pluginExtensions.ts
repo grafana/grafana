@@ -75,7 +75,10 @@ export type PluginExtensionAddedComponentConfig<Props = {}> = PluginExtensionCon
   component: React.ComponentType<Props>;
 };
 
-export type PluginAddedLinksConfigureFunc<Context extends object> = (context?: Readonly<Context>) =>
+export type PluginAddedLinksConfigureFunc<Context extends object> = (
+  context: Readonly<Context> | undefined,
+  helpers: PluginExtensionHelpers
+) =>
   | Partial<{
       title: string;
       description: string;
@@ -142,11 +145,27 @@ export type PluginExtensionOpenModalOptions = {
   height?: string | number;
 };
 
+type PluginExtensionHelpers = {
+  /** Checks if the app plugin (that registers the extension) is currently visible (either in the main view or in the side view)
+   * @experimental
+   */
+  isAppOpened: () => boolean;
+};
+
 export type PluginExtensionEventHelpers<Context extends object = object> = {
   context?: Readonly<Context>;
   // Opens a modal dialog and renders the provided React component inside it
   openModal: (options: PluginExtensionOpenModalOptions) => void;
-};
+
+  /** Opens the app plugin (that registers the extensions) in a side view
+   * @experimental
+   */
+  openAppInSideview: (context?: unknown) => void;
+  /** Closes the side view for the app plugin (that registers the extensions) in case it was open
+   * @experimental
+   */
+  closeAppInSideview: () => void;
+} & PluginExtensionHelpers;
 
 // Extension Points & Contexts
 // --------------------------------------------------------

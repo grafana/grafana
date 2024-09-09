@@ -70,7 +70,7 @@ describe('Plugin Extension Validators', () => {
           title: 'Title',
           description: 'Description',
           targets: 'grafana/some-page/extension-point-a',
-          configure: () => {},
+          configure: (_, {}) => {},
         } as PluginExtensionAddedLinkConfig);
       }).not.toThrowError();
     });

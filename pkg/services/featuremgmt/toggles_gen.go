@@ -766,4 +766,8 @@ const (
 	// FlagAppPlatformAccessTokens
 	// Enables the use of access tokens for the App Platform
 	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
+
+	// FlagAppSidecar
+	// Enable the app sidecar feature that allows rendering 2 apps at the same time
+	FlagAppSidecar = "appSidecar"
 )

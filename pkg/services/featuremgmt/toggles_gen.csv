@@ -189,3 +189,4 @@ exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,t
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
 appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,false
+appSidecar,experimental,@grafana/explore-squad,false,false,false

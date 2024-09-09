@@ -60,11 +60,7 @@ export function createUsePluginLinks(registry: AddedLinksRegistry) {
 
         const path = overrides?.path || addedLink.path;
         const extension: PluginExtensionLink = {
-          id: generateExtensionId(pluginId, {
-            ...addedLink,
-            extensionPointId,
-            type: PluginExtensionTypes.link,
-          }),
+          id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
           type: PluginExtensionTypes.link,
           pluginId: pluginId,
           onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, frozenContext),
