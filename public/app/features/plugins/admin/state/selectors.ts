@@ -65,6 +65,16 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
+      // plugins not controlled by the user should not be showed as updatable
+      if (
+        filters.hasUpdate !== undefined &&
+        filters.hasUpdate &&
+        plugin.hasUpdate &&
+        (plugin.isCore || plugin.isManaged || plugin.isProvisioned)
+      ) {
+        return false;
+      }
+
       return true;
     });
   });

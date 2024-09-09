@@ -160,11 +160,12 @@ const ModalBody = ({ plugins, inProgress, selectedPlugins, onCheckboxChange, err
 
 type Props = {
   isOpen: boolean;
+  isLoading: boolean;
   onDismiss: () => void;
   plugins: CatalogPlugin[];
 };
 
-export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
+export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props) => {
   const install = useInstall();
   const { error } = useInstallStatus();
   const [errorMap, setErrorMap] = useState(new Map<string, UpdateError>());
@@ -195,11 +196,11 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
 
   // Initialize the component with all the plugins selected
   useEffect(() => {
-    if (selectedPlugins === undefined && plugins.length > 0) {
+    if (selectedPlugins === undefined && plugins.length > 0 && !isLoading) {
       const initialSelectedPlugins = new Set(plugins.map((plugin) => plugin.id));
       setSelectedPlugins(initialSelectedPlugins);
     }
-  }, [plugins, selectedPlugins]);
+  }, [isLoading, plugins, selectedPlugins]);
 
   // Updates the component state on every error that comes from the store
   useEffect(() => {
