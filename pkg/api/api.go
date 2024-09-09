@@ -445,7 +445,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// Folders
 		// #TODO kubernetes folders: move this to its own function, add back auth part, add other routes
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-			if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
+			if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
 				// Use k8s client to implement legacy API
 				handler := newFolderK8sHandler(hs)
 				folderRoute.Post("/", handler.createFolder)
