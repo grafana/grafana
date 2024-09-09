@@ -352,6 +352,18 @@
     },
     {
       "metadata": {
+        "name": "appSidecar",
+        "resourceVersion": "1722872007883",
+        "creationTimestamp": "2024-08-05T15:33:27Z"
+      },
+      "spec": {
+        "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
+        "stage": "experimental",
+        "codeowner": "@grafana/explore-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "authAPIAccessTokenAuth",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-04-02T15:45:15Z"
@@ -1320,6 +1332,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "groupAttributeSync",
+        "resourceVersion": "1725893018130",
+        "creationTimestamp": "2024-09-09T14:43:38Z"
+      },
+      "spec": {
+        "description": "Enable the groupsync extension for managing Group Attribute Sync feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true
       }
     },
@@ -2817,6 +2842,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "vizActions",
+        "resourceVersion": "1722461779830",
+        "creationTimestamp": "2024-07-31T21:36:19Z"
+      },
+      "spec": {
+        "description": "Allow actions in visualizations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromAdminPage": true
       }
     },
     {

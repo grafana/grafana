@@ -10,13 +10,17 @@ import {
   GrafanaTheme2,
   formattedValueToString,
   getFieldDisplayName,
+  ScopedVars,
+  ValueLinkConfig,
 } from '@grafana/data/src';
+import { ActionModel } from '@grafana/data/src/types/action';
 import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { CloseButton } from '@grafana/ui/src/components/uPlot/plugins/CloseButton';
+import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { getRowIndex } from '../utils';
@@ -83,6 +87,45 @@ export const CanvasTooltip = ({ scene }: Props) => {
     });
   }
 
+  const actions: Array<ActionModel<Field>> = [];
+  const actionLookup = new Set<string>();
+
+  const elementHasActions = (element.options.actions?.length ?? 0) > 0;
+  const frames = scene.data?.series;
+
+  if (elementHasActions && frames) {
+    const defaultField = getActionsDefaultField(element.options.links ?? [], element.options.actions ?? []);
+    const scopedVars: ScopedVars = {
+      __dataContext: {
+        value: {
+          data: frames,
+          field: defaultField,
+          frame: frames[0],
+          frameIndex: 0,
+        },
+      },
+    };
+
+    const config: ValueLinkConfig = { valueRowIndex: getRowIndex(element.data.field, scene) };
+
+    const actionsModel = getActions(
+      frames[0],
+      defaultField,
+      scopedVars,
+      scene.panel.props.replaceVariables!,
+      element.options.actions ?? [],
+      config
+    );
+
+    actionsModel.forEach((action) => {
+      const key = `${action.title}/${Math.random()}`;
+      if (!actionLookup.has(key)) {
+        actions.push(action);
+        actionLookup.add(key);
+      }
+    });
+  }
+
   return (
     <>
       {scene.tooltip?.element && scene.tooltip.anchorPoint && (
@@ -97,7 +140,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
               {scene.tooltip.isOpen && <CloseButton style={{ zIndex: 1 }} onClick={onClose} />}
               <VizTooltipHeader item={headerItem} isPinned={scene.tooltip.isOpen!} />
               {element.data.text && <VizTooltipContent items={contentItems} isPinned={scene.tooltip.isOpen!} />}
-              {links.length > 0 && <VizTooltipFooter dataLinks={links} />}
+              {(links.length > 0 || actions.length > 0) && <VizTooltipFooter dataLinks={links} actions={actions} />}
             </section>
           </VizTooltipContainer>
         </Portal>
