@@ -172,12 +172,13 @@ type Signature struct {
 
 type PluginMetaDTO struct {
 	JSONData
-	Signature                 SignatureStatus   `json:"signature"`
+	Signature                 SignatureStatus `  json:"signature"`
 	Module                    string            `json:"module"`
 	BaseURL                   string            `json:"baseUrl"`
-	SriHashes                 map[string]string `json:"sriHashes"`
 	Angular                   AngularMeta       `json:"angular"`
 	MultiValueFilterOperators bool              `json:"multiValueFilterOperators"`
+	LoadingStrategy           LoadingStrategy   `json:"loadingStrategy"`
+	SriHashes                 map[string]string `json:"sriHashes"`
 }
 
 type DataSourceDTO struct {
@@ -213,30 +214,30 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID            string            `json:"id"`
-	Name          string            `json:"name"`
-	AliasIDs      []string          `json:"aliasIds,omitempty"`
-	Info          Info              `json:"info"`
-	HideFromList  bool              `json:"hideFromList"`
-	Sort          int               `json:"sort"`
-	SkipDataQuery bool              `json:"skipDataQuery"`
-	ReleaseState  string            `json:"state"`
-	BaseURL       string            `json:"baseUrl"`
-	Signature     string            `json:"signature"`
-	Module        string            `json:"module"`
-	SriHashes     map[string]string `json:"sriHashes"`
-
-	Angular AngularMeta `json:"angular"`
+	ID              string            `json:"id"`
+	Name            string            `json:"name"`
+	AliasIDs        []string          `json:"aliasIds,omitempty"`
+	Info            Info              `json:"info"`
+	HideFromList    bool              `json:"hideFromList"`
+	Sort            int               `json:"sort"`
+	SkipDataQuery   bool              `json:"skipDataQuery"`
+	ReleaseState    string            `json:"state"`
+	BaseURL         string            `json:"baseUrl"`
+	Signature       string            `json:"signature"`
+	Module          string            `json:"module"`
+	Angular         AngularMeta       `json:"angular"`
+	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
+	SriHashes       map[string]string `json:"sriHashes"`
 }
 
 type AppDTO struct {
-	ID        string            `json:"id"`
-	Path      string            `json:"path"`
-	Version   string            `json:"version"`
-	Preload   bool              `json:"preload"`
-	SriHashes map[string]string `json:"sriHashes"`
-
-	Angular AngularMeta `json:"angular"`
+	ID              string            `json:"id"`
+	Path            string            `json:"path"`
+	Version         string            `json:"version"`
+	Preload         bool              `json:"preload"`
+	Angular         AngularMeta       `json:"angular"`
+	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
+	SriHashes       map[string]string `json:"sriHashes"`
 }
 
 const (
@@ -255,6 +256,13 @@ type Error struct {
 	SignatureStatus SignatureStatus `json:"status,omitempty"`
 	message         string          `json:"-"`
 }
+
+type LoadingStrategy string
+
+const (
+	LoadingStrategyFetch  LoadingStrategy = "fetch"
+	LoadingStrategyScript LoadingStrategy = "script"
+)
 
 func (e Error) Error() string {
 	if e.message != "" {
