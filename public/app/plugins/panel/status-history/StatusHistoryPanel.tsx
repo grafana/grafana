@@ -130,6 +130,7 @@ export const StatusHistoryPanel = ({
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       withDuration={false}
                       maxHeight={options.tooltip.maxHeight}
+                      replaceVariables={replaceVariables}
                     />
                   );
                 }}
