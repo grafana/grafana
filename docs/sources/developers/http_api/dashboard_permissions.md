@@ -44,9 +44,9 @@ Gets all existing permissions for the dashboard with the given `uid`.
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
-| Action                        | Scope                                 |
-| ----------------------------- | ------------------------------------- |
-| `dashboards.permissions:read` | `dashboards:uid:*`<br>`folders:uid:*` |
+| Action                        | Scope                                                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `dashboards.permissions:read` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
 **Example request**:
 
@@ -123,9 +123,9 @@ Updates permissions for a dashboard. This operation will remove existing permiss
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
-| Action                         | Scope                                 |
-| ------------------------------ | ------------------------------------- |
-| `dashboards.permissions:write` | `dashboards:uid:*`<br>`folders:uid:*` |
+| Action                         | Scope                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `dashboards.permissions:write` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
 **Example request**:
 
@@ -192,9 +192,9 @@ Gets all existing permissions for the dashboard with the given `dashboardId`.
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
-| Action                        | Scope                         |
-| ----------------------------- | ----------------------------- |
-| `dashboards.permissions:read` | `dashboards:*`<br>`folders:*` |
+| Action                        | Scope                                                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `dashboards.permissions:read` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
 **Example request**:
 
@@ -275,9 +275,9 @@ Updates permissions for a dashboard. This operation will remove existing permiss
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
-| Action                         | Scope                         |
-| ------------------------------ | ----------------------------- |
-| `dashboards.permissions:write` | `dashboards:*`<br>`folders:*` |
+| Action                         | Scope                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `dashboards.permissions:write` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
 **Example request**:
 

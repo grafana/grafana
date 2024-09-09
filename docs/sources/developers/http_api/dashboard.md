@@ -43,9 +43,10 @@ Creates a new dashboard or updates an existing dashboard. When updating existing
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
-| Action              | Scope       |
-| ------------------- | ----------- |
-| `dashboards:create` | `folders:*` |
+| Action              | Scope                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| `dashboards:create` | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                   |
+| `dashboards:write`  | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
 **Example Request for new dashboard**:
 
@@ -164,9 +165,9 @@ Will return the dashboard given the dashboard unique identifier (uid). Informati
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
-| Action            | Scope          |
-| ----------------- | -------------- |
-| `dashboards:read` | `dashboards:*` |
+| Action            | Scope                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| `dashboards:read` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
 **Example Request**:
 
@@ -220,9 +221,9 @@ Will delete the dashboard given the specified unique identifier (uid).
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
-| Action              | Scope                         |
-| ------------------- | ----------------------------- |
-| `dashboards:delete` | `dashboards:*`<br>`folders:*` |
+| Action              | Scope                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| `dashboards:delete` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
 **Example Request**:
 
@@ -267,9 +268,9 @@ Will delete permanently the dashboard given the specified unique identifier (uid
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
-| Action              | Scope                         |
-| ------------------- | ----------------------------- |
-| `dashboards:delete` | `dashboards:*`<br>`folders:*` |
+| Action              | Scope                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------- |
+| `dashboards:delete` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
 **Example Request**:
 
@@ -314,9 +315,9 @@ Will restore a deleted dashboard given the specified unique identifier (uid).
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
-| Action              | Scope                         |
-| ------------------- | ----------------------------- |
-| `dashboards:create` | `dashboards:*`<br>`folders:*` |
+| Action              | Scope                                                 |
+| ------------------- | ----------------------------------------------------- |
+| `dashboards:create` | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
 
 **Example Request**:
 
