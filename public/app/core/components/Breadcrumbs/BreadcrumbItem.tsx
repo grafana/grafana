@@ -57,7 +57,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'block',
       textOverflow: 'ellipsis',
       overflow: 'hidden',
-      padding: theme.spacing(0, 0.5),
       whiteSpace: 'nowrap',
       color: theme.colors.text.secondary,
     }),
