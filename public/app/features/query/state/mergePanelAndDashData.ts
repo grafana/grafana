@@ -1,7 +1,7 @@
 import { combineLatest, Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
-import { arrayToDataFrame, DataFrame, DataTopic, PanelData } from '@grafana/data';
+import { arrayToDataFrame, DataFrame, DataTopic, PanelData, PanelPluginDataSupport } from '@grafana/data';
 
 import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 
@@ -15,29 +15,36 @@ function addAnnoDataTopic(annotations: DataFrame[] = []) {
 }
 
 export function mergePanelAndDashData(
+  dataSupport: PanelPluginDataSupport,
   panelObservable: Observable<PanelData>,
   dashObservable: Observable<DashboardQueryRunnerResult>
 ): Observable<PanelData> {
   return combineLatest([panelObservable, dashObservable]).pipe(
     mergeMap((combined) => {
       const [panelData, dashData] = combined;
+      let mergedData = { ...panelData };
 
-      if (Boolean(dashData.annotations?.length) || Boolean(dashData.alertState)) {
-        if (!panelData.annotations) {
-          panelData.annotations = [];
+      // handle annotations
+      if (dataSupport.annotations) {
+        if (Boolean(dashData.annotations?.length)) {
+          if (!panelData.annotations) {
+            panelData.annotations = [];
+          }
+          const annotations = panelData.annotations.concat(arrayToDataFrame(dashData.annotations));
+
+          addAnnoDataTopic(annotations);
+          mergedData = { ...mergedData, annotations };
+        } else {
+          addAnnoDataTopic(panelData.annotations);
         }
-
-        const annotations = panelData.annotations.concat(arrayToDataFrame(dashData.annotations));
-
-        addAnnoDataTopic(annotations);
-
-        const alertState = dashData.alertState;
-        return of({ ...panelData, annotations, alertState });
       }
 
-      addAnnoDataTopic(panelData.annotations);
-
-      return of(panelData);
+      // handle alertStates
+      if (dataSupport.alertStates && Boolean(dashData.alertState)) {
+        const alertState = dashData.alertState;
+        mergedData = { ...mergedData, alertState };
+      }
+      return of(mergedData);
     })
   );
 }
