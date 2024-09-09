@@ -32,11 +32,11 @@ package slugify
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"unicode/utf8"
-
-	"github.com/google/uuid"
 )
 
 var (
@@ -52,7 +52,9 @@ var (
 func Slugify(value string) string {
 	s := simpleSlugger.Slugify(strings.TrimSpace(value))
 	if len(s) > 50 || s == "" {
-		s = uuid.NewSHA1(uuid.NameSpaceOID, []byte(value)).String()
+		h := sha1.New()
+		h.Write([]byte(s))
+		s = hex.EncodeToString(h.Sum(nil))[:7]
 	}
 
 	return s
