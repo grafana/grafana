@@ -1,0 +1,57 @@
+name: Summarize PR for What's new
+
+on:
+  pull_request_target:
+    types: [labeled]
+
+jobs:
+  summarize:
+    if: contains(github.event.pull_request.labels.*.name, 'Add to what\'s new')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          cache: yarn
+          node-version-file: package.json
+
+      - id: summary
+        run: node .github/workflows/scripts/summarize-whats-new.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `### What's new summary
+
+            ${{ steps.summary.outputs.summary }}`;
+
+            const {data: comments} = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const existing = comments.filter((comment) => comment.body.match(new RegExp("^### What's new summary")))
+            if (existing.length > 0) {
+              github.rest.issues.updateComment({
+                comment_id: existing[0].id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              })
+            }
