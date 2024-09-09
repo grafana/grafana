@@ -25,6 +25,13 @@ describe('internationalization constants', () => {
     expect(DEFAULT_LANGUAGE).toBe(ENGLISH_US);
   });
 
+  it('should match a canonical locale definition', () => {
+    for (const lang of LANGUAGES) {
+      const resolved = Intl.getCanonicalLocales(lang.code);
+      expect(lang.code).toEqual(resolved[0]);
+    }
+  });
+
   it('should not have duplicate languages codes', () => {
     const uniqLocales = uniqBy(LANGUAGES, (v) => v.code);
     expect(LANGUAGES).toHaveLength(uniqLocales.length);
