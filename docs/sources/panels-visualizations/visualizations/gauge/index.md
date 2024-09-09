@@ -25,7 +25,7 @@ refs:
 
 # Gauge
 
-Gauges are single-value visualizations that allow you to show where a value falls within a defined range. You can use the visualization to display one or more gauges, each corresponding to a different series, column, or row, with the values bound by minimum and maximum thresholds.
+Gauges are single-value visualizations that allow you to quickly visualize where a value falls within a defined or calculated min and max range. With repeat options, you can display multiple gauges, each corresponding to a different series, column, or row.
 
 {{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="1025px" alt="A gauge visualization">}}
 
