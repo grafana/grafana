@@ -1,14 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { History, Location } from 'history';
-import { type match } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { RouteDescriptor } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { PlaylistEditPage, RouteParams } from './PlaylistEditPage';
+import { PlaylistEditPage } from './PlaylistEditPage';
 import { Playlist } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -27,7 +26,7 @@ async function getTestContext({ name, interval, items, uid }: Partial<Playlist> 
   const playlist = { name, items, interval, uid } as unknown as Playlist;
   const queryParams = {};
   const route = {} as RouteDescriptor;
-  const match = { params: { uid: 'foo' } } as unknown as match<RouteParams>;
+  const match = { isExact: false, path: '', url: '', params: { uid: 'foo' } };
   const location = {} as Location;
   const history = {} as History;
   const getMock = jest.spyOn(backendSrv, 'get');
