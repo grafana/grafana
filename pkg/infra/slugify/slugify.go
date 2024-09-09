@@ -32,11 +32,15 @@ package slugify
 
 import (
 	"bytes"
-	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	// can ignore because we don't need a cryptographically secure hash function
+	// sha1 low chance of collisions and better performance than sha256
+	// nolint:gosec
+	"crypto/sha1"
 )
 
 var (
