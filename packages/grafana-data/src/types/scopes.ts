@@ -17,18 +17,22 @@ export interface ScopeDashboardBinding {
   status: ScopeDashboardBindingStatus;
 }
 
-export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
+export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match' | 'one-of' | 'not-one-of';
 
 export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
   '=': 'equals',
   '!=': 'not-equals',
   '=~': 'regex-match',
   '!~': 'regex-not-match',
+  '=|': 'one-of',
+  '!=|': 'not-one-of',
 };
 
 export interface ScopeSpecFilter {
   key: string;
   value: string;
+  // values is used for operators that support multiple values (e.g. one-of, not-one-of)
+  values?: string[];
   operator: ScopeFilterOperator;
 }
 

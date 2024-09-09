@@ -387,13 +387,28 @@ func schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref common.ReferenceCallback) co
 							Format:  "",
 						},
 					},
+					"values": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"operator": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"equals\"`\n - `\"not-equals\"`\n - `\"regex-match\"`\n - `\"regex-not-match\"`",
+							Description: "Possible enum values:\n - `\"equals\"`\n - `\"not-equals\"`\n - `\"not-one-of\"`\n - `\"one-of\"`\n - `\"regex-match\"`\n - `\"regex-not-match\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"equals", "not-equals", "regex-match", "regex-not-match"},
+							Enum:        []interface{}{"equals", "not-equals", "not-one-of", "one-of", "regex-match", "regex-not-match"},
 						},
 					},
 				},

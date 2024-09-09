@@ -8,7 +8,7 @@
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1715871691891",
+        "resourceVersion": "1725885733879",
         "creationTimestamp": "2024-03-25T13:19:04Z"
       },
       "spec": {
@@ -31,6 +31,13 @@
                   },
                   "value": {
                     "type": "string"
+                  },
+                  "values": {
+                    "description": "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   }
                 },
                 "required": [
@@ -117,6 +124,13 @@
                         },
                         "value": {
                           "type": "string"
+                        },
+                        "values": {
+                          "description": "Values is used for operators that require multiple values (e.g. one-of and not-one-of).",
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
                         }
                       },
                       "required": [

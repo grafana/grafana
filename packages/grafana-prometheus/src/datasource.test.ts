@@ -1275,6 +1275,8 @@ describe('modifyQuery', () => {
           },
           { key: 'reg', value: 'regv', operator: '=~' },
           { key: 'nreg', value: 'nregv', operator: '!~' },
+          { key: 'foo', value: 'bar', operator: '=|' },
+          { key: 'bar', value: 'baz', operator: '!=|' },
         ];
         const expectedScopeFilter: ScopeSpecFilter[] = [
           { key: 'eq', value: 'eqv', operator: 'equals' },
@@ -1285,6 +1287,8 @@ describe('modifyQuery', () => {
           },
           { key: 'reg', value: 'regv', operator: 'regex-match' },
           { key: 'nreg', value: 'nregv', operator: 'regex-not-match' },
+          { key: 'foo', value: 'bar', operator: 'one-of' },
+          { key: 'bar', value: 'baz', operator: 'not-one-of' },
         ];
         const result = ds.generateScopeFilters(adhocFilter);
         result.forEach((r, i) => {
