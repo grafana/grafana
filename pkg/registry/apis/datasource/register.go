@@ -73,6 +73,7 @@ func RegisterAPIService(
 		"grafana-testdata-datasource",
 		"prometheus",
 		"graphite",
+		"example-httpbackend-datasource",
 	}
 
 	for _, ds := range all {
@@ -101,6 +102,11 @@ type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+}
+
+type PluginClientWithConversion interface {
+	PluginClient
+	backend.ConversionHandler
 }
 
 func NewDataSourceAPIBuilder(
@@ -216,6 +222,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	}
 	storage[conn.StoragePath("query")] = &subQueryREST{builder: b}
 	storage[conn.StoragePath("health")] = &subHealthREST{builder: b}
+	storage[conn.StoragePath("query-convert")] = &subQueryConvertREST{builder: b}
 
 	// TODO! only setup this endpoint if it is implemented
 	storage[conn.StoragePath("resource")] = &subResourceREST{builder: b}
