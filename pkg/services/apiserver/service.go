@@ -298,7 +298,7 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		client := resource.NewLocalResourceStoreClient(server)
+		client := resource.NewLocalResourceClient(server)
 		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
 			o.RecommendedOptions.Etcd.StorageConfig)
 
@@ -339,6 +339,7 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildVersion,
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
+		nil,
 	)
 	if err != nil {
 		return err
@@ -544,9 +545,9 @@ func (s *service) running(ctx context.Context) error {
 
 func newResourceStoreClient(conn *grpc.ClientConn, cfg *setting.Cfg) (resource.ResourceStoreClient, error) {
 	if cfg.StackID != "" {
-		return resource.NewResourceStoreClientCloud(conn, cfg)
+		return resource.NewResourceClientCloud(conn, cfg)
 	}
-	return resource.NewResourceStoreClientGRPC(conn)
+	return resource.NewResourceClientGRPC(conn)
 }
 
 func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {

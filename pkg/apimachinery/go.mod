@@ -1,10 +1,10 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.22.4
+go 1.23.1
 
 require (
 	github.com/grafana/authlib v0.0.0-20240903121118-16441568af1e // @grafana/identity-access-team
-	github.com/grafana/authlib/claims v0.0.0-20240830142353-b79220d2bc2e // @grafana/identity-access-team
+	github.com/grafana/authlib/claims v0.0.0-20240903121118-16441568af1e // @grafana/identity-access-team
 	github.com/stretchr/testify v1.9.0
 	k8s.io/apimachinery v0.31.0
 	k8s.io/apiserver v0.31.0
@@ -18,7 +18,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
-	github.com/go-openapi/jsonreference v0.20.4 // indirect
+	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect

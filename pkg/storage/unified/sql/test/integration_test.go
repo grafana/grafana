@@ -357,7 +357,7 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := grpc.NewClient(svc.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		require.NoError(t, err)
-		client, err = resource.NewResourceStoreClientGRPC(conn)
+		client, err = resource.NewResourceClientGRPC(conn)
 		require.NoError(t, err)
 	})
 

@@ -22,7 +22,7 @@ import (
 // TODO(drclau): decide on the audience for the resource store
 const resourceStoreAudience = "resourceStore"
 
-func NewLocalResourceStoreClient(server ResourceStoreServer) ResourceStoreClient {
+func NewLocalResourceClient(server ResourceStoreServer) ResourceStoreClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 
@@ -44,7 +44,7 @@ func NewLocalResourceStoreClient(server ResourceStoreServer) ResourceStoreClient
 	return NewResourceStoreClient(grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor))
 }
 
-func NewResourceStoreClientGRPC(conn *grpc.ClientConn) (ResourceStoreClient, error) {
+func NewResourceClientGRPC(conn *grpc.ClientConn) (ResourceStoreClient, error) {
 	// scenario: remote on-prem
 	clientInt, err := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
@@ -59,7 +59,7 @@ func NewResourceStoreClientGRPC(conn *grpc.ClientConn) (ResourceStoreClient, err
 	return NewResourceStoreClient(grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)), nil
 }
 
-func NewResourceStoreClientCloud(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceStoreClient, error) {
+func NewResourceClientCloud(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceStoreClient, error) {
 	// scenario: remote cloud
 	grpcClientConfig := clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg))
 
