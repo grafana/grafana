@@ -31,6 +31,8 @@ export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
 export interface ScopeSpecFilter {
   key: string;
   value: string;
+  // values is used for operators that support multiple values (e.g. one-of, not-one-of)
+  values?: string[];
   operator: ScopeFilterOperator;
 }
 
