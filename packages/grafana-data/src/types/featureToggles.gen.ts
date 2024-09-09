@@ -209,4 +209,5 @@ export interface FeatureToggles {
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
   appPlatformAccessTokens?: boolean;
+  appSidecar?: boolean;
 }
