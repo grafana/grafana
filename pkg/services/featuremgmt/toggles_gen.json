@@ -2833,6 +2833,20 @@
     },
     {
       "metadata": {
+        "name": "vizActions",
+        "resourceVersion": "1722461779830",
+        "creationTimestamp": "2024-07-31T21:36:19Z"
+      },
+      "spec": {
+        "description": "Allow actions in visualizations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
         "name": "vizAndWidgetSplit",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-27T10:22:13Z"
