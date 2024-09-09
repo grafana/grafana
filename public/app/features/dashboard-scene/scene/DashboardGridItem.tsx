@@ -58,7 +58,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
         this._prevRepeatValues = undefined;
       }
 
-      this._oldBody = this.state.body;
       this.performRepeat();
     }
   }
@@ -117,7 +116,9 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       return;
     }
 
+    this._oldBody = this.state.body;
     this._prevRepeatValues = values;
+
     const panelToRepeat = this.state.body;
     const repeatedPanels: VizPanel[] = [];
 
