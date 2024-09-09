@@ -58,7 +58,7 @@ func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled
 	}
 
 	if !basicLogsEnabled {
-		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this workspace"), false)
+		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this data source"), false)
 	}
 
 	return true, nil
