@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -44,14 +45,18 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
+	ac accesscontrol.AccessControl,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
+	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
+
 	builder := &IdentityAccessManagementAPIBuilder{
-		store: legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
-		sso:   ssoService,
+		store:      store,
+		sso:        ssoService,
+		authorizer: newLegacyAuthorizer(ac, store),
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -61,6 +66,17 @@ func RegisterAPIService(
 func NewAPISevice(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
 	return &IdentityAccessManagementAPIBuilder{
 		store: store,
+		authorizer: authorizer.AuthorizerFunc(
+			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+				user, err := identity.GetRequester(ctx)
+				if err != nil {
+					return authorizer.DecisionDeny, "no identity found", err
+				}
+				if user.GetIsGrafanaAdmin() {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "only grafana admins have access for now", nil
+			}),
 	}
 }
 
@@ -126,16 +142,5 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	// TODO: handle authorization based in entity.
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
-			user, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "no identity found", err
-			}
-			if user.GetIsGrafanaAdmin() {
-				return authorizer.DecisionAllow, "", nil
-			}
-			return authorizer.DecisionDeny, "only grafana admins have access for now", nil
-		})
+	return b.authorizer
 }

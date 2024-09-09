@@ -28,6 +28,8 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
+	// FIXME: document
+	WithoutResolvers() AccessControl
 }
 
 type Service interface {
