@@ -7,7 +7,7 @@ SELECT
   u.updated
   FROM {{ .Ident .UserTable }} as u JOIN {{ .Ident .OrgUserTable }} as o ON u.id = o.user_id
  WHERE o.org_id = {{ .Arg .Query.OrgID }}
-   AND u.is_service_accoun  return nil, nilt
+   AND u.is_service_account
 {{ if .Query.UID }}
    AND u.uid = {{ .Arg .Query.UID }}
 {{ end }}
