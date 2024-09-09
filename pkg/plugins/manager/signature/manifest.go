@@ -248,7 +248,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	s.log.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
 	moduleHash, err := manifest.ModuleHash()
 	if err != nil {
-		s.log.Warn("Could not calculate SRI hashes, ignoring", "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version, "error", err)
+		s.log.Warn("Could not calculate module.js hash for SRI checks, ignoring", "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version, "error", err)
 		moduleHash = ""
 	}
 	return plugins.Signature{
