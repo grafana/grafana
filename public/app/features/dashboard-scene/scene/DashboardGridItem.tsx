@@ -212,7 +212,9 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
     if (this.state.repeatedPanels?.length ?? 0 > 1) {
       this.state.body.setState({
         $variables: this.state.repeatedPanels![0].state.$variables?.clone(),
+        $data: this.state.repeatedPanels![0].state.$data?.clone(),
       });
+      this._prevPanelState = this.state.body.state;
     }
   }
 
