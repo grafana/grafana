@@ -178,7 +178,7 @@ type PluginMetaDTO struct {
 	Angular                   AngularMeta     `json:"angular"`
 	MultiValueFilterOperators bool            `json:"multiValueFilterOperators"`
 	LoadingStrategy           LoadingStrategy `json:"loadingStrategy"`
-	ModuleHash                string          `json:"moduleHash"`
+	ModuleHash                string          `json:"moduleHash,omitempty"`
 }
 
 type DataSourceDTO struct {
@@ -227,7 +227,7 @@ type PanelDTO struct {
 	Module          string          `json:"module"`
 	Angular         AngularMeta     `json:"angular"`
 	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
-	ModuleHash      string          `json:"moduleHash"`
+	ModuleHash      string          `json:"moduleHash,omitempty"`
 }
 
 type AppDTO struct {
@@ -237,7 +237,7 @@ type AppDTO struct {
 	Preload         bool            `json:"preload"`
 	Angular         AngularMeta     `json:"angular"`
 	LoadingStrategy LoadingStrategy `json:"loadingStrategy"`
-	ModuleHash      string          `json:"moduleHash"`
+	ModuleHash      string          `json:"moduleHash,omitempty"`
 }
 
 const (
