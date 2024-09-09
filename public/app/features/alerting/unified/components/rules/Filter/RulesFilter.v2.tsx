@@ -17,6 +17,7 @@ import {
   TabsBar,
   useStyles2,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { PopupCard } from '../../HoverCard';
 import MoreButton from '../../MoreButton';
@@ -66,7 +67,9 @@ export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
 
   return (
     <Stack direction="column" gap={0}>
-      <Label>Search</Label>
+      <Label>
+        <Trans i18nKey="common.search">Search</Trans>
+      </Label>
       <Stack direction="row">
         <Input prefix={filterOptions} />
       </Stack>
@@ -78,17 +81,29 @@ const FilterOptions = () => {
   return (
     <Stack direction="column" alignItems="end" gap={2}>
       <Grid columns={2} gap={2} alignItems="center">
-        <Label>Folder / Namespace</Label>
+        <Label>
+          <Trans i18nKey="alerting.search.property.namespace">Folder / Namespace</Trans>
+        </Label>
         <Select options={[]} onChange={() => {}}></Select>
-        <Label>Alert rule name</Label>
+        <Label>
+          <Trans i18nKey="alerting.search.property.rule-name">Alerting rule name</Trans>
+        </Label>
         <Input />
-        <Label>Evaluation group</Label>
+        <Label>
+          <Trans i18nKey="alerting.search.property.evaluation-group">Evaluation group</Trans>
+        </Label>
         <Input />
-        <Label>Labels</Label>
+        <Label>
+          <Trans i18nKey="alerting.search.property.labels">Labels</Trans>
+        </Label>
         <Input />
-        <Label>Data source</Label>
+        <Label>
+          <Trans i18nKey="alerting.search.property.data-source">Data source</Trans>
+        </Label>
         <Select options={[]} onChange={() => {}}></Select>
-        <Label>State</Label>
+        <Label>
+          <Trans i18nKey="alerting.search.property.state">State</Trans>
+        </Label>
         <RadioButtonGroup
           value={'*'}
           options={[
@@ -98,7 +113,9 @@ const FilterOptions = () => {
             { label: 'Firing', value: 'firing' },
           ]}
         />
-        <Label>Type</Label>
+        <Label>
+          <Trans i18nKey="alerting.search.property.rule-type">Type</Trans>
+        </Label>
         <RadioButtonGroup
           value={'*'}
           options={[
@@ -107,7 +124,9 @@ const FilterOptions = () => {
             { label: 'Recording rule', value: 'recording' },
           ]}
         />
-        <Label>Health</Label>
+        <Label>
+          <Trans i18nKey="alerting.search.property.rule-health">Health</Trans>
+        </Label>
         <RadioButtonGroup
           value={'*'}
           options={[
@@ -119,8 +138,12 @@ const FilterOptions = () => {
         />
       </Grid>
       <Stack direction="row" alignItems="center">
-        <Button variant="secondary">Clear</Button>
-        <Button>Apply</Button>
+        <Button variant="secondary">
+          <Trans i18nKey="common.clear">Clear</Trans>
+        </Button>
+        <Button>
+          <Trans i18nKey="common.apply">Apply</Trans>
+        </Button>
       </Stack>
     </Stack>
   );
@@ -138,7 +161,7 @@ const SavedSearches = () => {
     <>
       <Stack direction="column" gap={2} alignItems="flex-end">
         <Button variant="secondary" size="sm">
-          Save current search
+          <Trans i18nKey="alerting.search.save-query">Save current search</Trans>
         </Button>
         <InteractiveTable<TableColumns>
           columns={[
@@ -157,7 +180,7 @@ const SavedSearches = () => {
               cell: ({ row }) => (
                 <Stack direction="row" alignItems="center">
                   <Button variant="secondary" fill="outline" size="sm" onClick={() => applySearch(row.original.name)}>
-                    Apply
+                    <Trans i18nKey="common.apply">Apply</Trans>
                   </Button>
                   <MoreButton size="sm" fill="outline" />
                 </Stack>
@@ -178,7 +201,9 @@ const SavedSearches = () => {
           ]}
           getRowId={(row) => row.name}
         />
-        <Button variant="secondary">Close</Button>
+        <Button variant="secondary">
+          <Trans i18nKey="common.close">Close</Trans>
+        </Button>
       </Stack>
     </>
   );
