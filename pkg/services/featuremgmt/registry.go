@@ -1448,6 +1448,13 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaExploreSquad,
 		},
+		{
+			Name:         "groupAttributeSync",
+			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
 	}
 )
 
