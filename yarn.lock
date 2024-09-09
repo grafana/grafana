@@ -3932,9 +3932,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:5.14.1":
-  version: 5.14.1
-  resolution: "@grafana/scenes@npm:5.14.1"
+"@grafana/scenes@npm:5.14.2":
+  version: 5.14.2
+  resolution: "@grafana/scenes@npm:5.14.2"
   dependencies:
     "@floating-ui/react": "npm:0.26.16"
     "@grafana/e2e-selectors": "npm:^11.0.0"
@@ -3951,7 +3951,7 @@ __metadata:
     "@grafana/ui": ">=10.4"
     react: ^18.0.0
     react-dom: ^18.0.0
-  checksum: 10/0f8bac7829eb87ab1e46eb94ebf73b730468c9a1f946667c567fe40a8d8741af9956a27fa63a82ee79e5dafa72f748bf1332013c439169ea5291a4394cd1abcf
+  checksum: 10/a466ca17808ba6e196932ba44d27629d43efc6661e53548edcc84b71a4bf8ce1d8426c6407575c2ba3de060d6c38e7f5f63b672d3a39d5d39f3cbeef67a0b062
   languageName: node
   linkType: hard
 
@@ -8837,19 +8837,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-virtual@npm:^3.5.1":
-  version: 3.10.6
-  resolution: "@tanstack/react-virtual@npm:3.10.6"
-  dependencies:
-    "@tanstack/virtual-core": "npm:3.10.6"
-  peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: 10/50624357867ce8eca4084bfe132b73fe7a2e0f9bcb2a7241b16425d58c0f7602c6f889f28d29a9416f7c3ab12d89239da48d0d84ca470ace94f77cf982d6246e
-  languageName: node
-  linkType: hard
-
-"@tanstack/react-virtual@npm:^3.9.0":
+"@tanstack/react-virtual@npm:^3.5.1, @tanstack/react-virtual@npm:^3.9.0":
   version: 3.10.7
   resolution: "@tanstack/react-virtual@npm:3.10.7"
   dependencies:
@@ -8858,13 +8846,6 @@ __metadata:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
   checksum: 10/cf4324687a3849a981f6e7baad26199fc9419184d69585d9aca35876f9a83a0d9167b31d8d5e74ad739465961eaedc7b5c9177efc62c502adbb7f061be8dc554
-  languageName: node
-  linkType: hard
-
-"@tanstack/virtual-core@npm:3.10.6":
-  version: 3.10.6
-  resolution: "@tanstack/virtual-core@npm:3.10.6"
-  checksum: 10/e8960625cd24a31bc4bace8b9011780ea384811c4205cafc8c076442f85a3af6690c7700f3480524aaad763b1f3a34938386b3bf23d18c10fb5443dec92ec826
   languageName: node
   linkType: hard
 
@@ -18545,7 +18526,7 @@ __metadata:
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/saga-icons": "workspace:*"
-    "@grafana/scenes": "npm:5.14.1"
+    "@grafana/scenes": "npm:5.14.2"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
