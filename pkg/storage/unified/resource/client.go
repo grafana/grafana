@@ -44,7 +44,7 @@ func NewLocalResourceClient(server ResourceStoreServer) ResourceStoreClient {
 	return NewResourceStoreClient(grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor))
 }
 
-func NewResourceClientGRPC(conn *grpc.ClientConn) (ResourceStoreClient, error) {
+func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceStoreClient, error) {
 	// scenario: remote on-prem
 	clientInt, err := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
@@ -59,7 +59,7 @@ func NewResourceClientGRPC(conn *grpc.ClientConn) (ResourceStoreClient, error) {
 	return NewResourceStoreClient(grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)), nil
 }
 
-func NewResourceClientCloud(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceStoreClient, error) {
+func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceStoreClient, error) {
 	// scenario: remote cloud
 	grpcClientConfig := clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg))
 

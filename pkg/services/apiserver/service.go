@@ -545,9 +545,9 @@ func (s *service) running(ctx context.Context) error {
 
 func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (resource.ResourceStoreClient, error) {
 	if cfg.StackID != "" {
-		return resource.NewResourceClientCloud(conn, cfg)
+		return resource.NewCloudResourceClient(conn, cfg)
 	}
-	return resource.NewResourceClientGRPC(conn)
+	return resource.NewGRPCResourceClient(conn)
 }
 
 func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {
