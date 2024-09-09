@@ -112,9 +112,7 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>
-                <Trans i18nKey="trails.metric-overview.labels-label">
-                  {useOtelExperience ? 'Metric attributes' : 'Labels'}
-                </Trans>
+                {useOtelExperience ? <Trans i18nKey="">Metric attributes</Trans> : <Trans i18nKey="">Labels</Trans>}
               </Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
               {labelOptions.map((l) => (

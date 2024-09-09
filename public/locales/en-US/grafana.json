@@ -1009,6 +1009,7 @@
       "refresh": "Refresh"
     }
   },
+  "Labels": "Labels",
   "ldap-drawer": {
     "attributes-section": {
       "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
@@ -1237,6 +1238,7 @@
       "older-logs": "Older logs"
     }
   },
+  "Metric attributes": "Metric attributes",
   "migrate-to-cloud": {
     "build-snapshot": {
       "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
@@ -2552,7 +2554,6 @@
   "trails": {
     "metric-overview": {
       "description-label": "Description",
-      "labels-label": "{useOtelExperience ? 'Metric attributes' : 'Labels'}",
       "no-description": "No description available",
       "type-label": "Type",
       "unit-label": "Unit",
