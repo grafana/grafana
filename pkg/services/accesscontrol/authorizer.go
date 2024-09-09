@@ -99,6 +99,24 @@ func (c *LegacyAccessClient) HasAccess(ctx context.Context, id claims.AuthInfo, 
 }
 
 // Compile implements claims.AccessClient.
-func (l *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.AccessRequest) (claims.AccessChecker, error) {
-	panic("unimplemented")
+func (c *LegacyAccessClient) Compile(ctx context.Context, id claims.AuthInfo, req claims.AccessRequest) (claims.AccessChecker, error) {
+	ident, ok := id.(identity.Requester)
+	if !ok {
+		return nil, errors.New("expected identity.Requester for legacy access control")
+	}
+
+	opts, ok := c.opts[req.Resource]
+	if !ok {
+		return nil, fmt.Errorf("unsupported resource: %s", req.Resource)
+	}
+
+	action, ok := opts.Mapping[req.Verb]
+	if !ok {
+		return nil, fmt.Errorf("missing action for %s %s", req.Verb, req.Resource)
+	}
+
+	check := Checker(ident, action)
+	return func(_, name string) bool {
+		return check(fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, name))
+	}, nil
 }

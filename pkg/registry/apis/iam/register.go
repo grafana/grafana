@@ -13,6 +13,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -33,8 +34,9 @@ var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
-	store      legacy.LegacyIdentityStore
-	authorizer authorizer.Authorizer
+	store        legacy.LegacyIdentityStore
+	authorizer   authorizer.Authorizer
+	accessClient claims.AccessClient
 
 	// Not set for multi-tenant deployment for now
 	sso ssosettings.Service
@@ -54,12 +56,13 @@ func RegisterAPIService(
 
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
 	// FIXME: we need to inject client -> store but we also need store -> client..
-	authz, _ := newLegacyAuthorizer(ac, store)
+	authorizer, client := newLegacyAuthorizer(ac, store)
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		store:      store,
-		sso:        ssoService,
-		authorizer: authz,
+		store:        store,
+		sso:          ssoService,
+		authorizer:   authorizer,
+		accessClient: client,
 	}
 	apiregistration.RegisterAPI(builder)
 
@@ -116,7 +119,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
 	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := iamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store)
+	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.accessClient)
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceaccountResource := iamv0.ServiceAccountResourceInfo
