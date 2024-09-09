@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -136,15 +138,16 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 // 3. parses the responses for each query into data frames
 func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-	queries, err := e.buildQueries(ctx, originalQueries, dsInfo, fromAlert)
-	if err != nil {
-		return nil, err
-	}
 
-	for _, query := range queries {
-		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
+	for _, query := range originalQueries {
+		logsQuery, err := e.buildQuery(ctx, query, dsInfo, fromAlert)
 		if err != nil {
-			result.Responses[query.RefID] = backend.DataResponse{Error: err}
+			errorsource.AddErrorToResponse(query.RefID, result, err)
+			continue
+		}
+		res, err := e.executeQuery(ctx, logsQuery, dsInfo, client, url)
+		if err != nil {
+			errorsource.AddErrorToResponse(query.RefID, result, err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -179,6 +182,7 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 
 	if basicLogsQueryFlag {
 		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert); meetsBasicLogsCriteriaErr != nil {
+			// This error is a downstream error
 			return nil, meetsBasicLogsCriteriaErr
 		} else {
 			basicLogsQuery = meetsBasicLogsCriteria
@@ -224,45 +228,52 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	}, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo, fromAlert bool) ([]*AzureLogAnalyticsQuery, error) {
-	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
+func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query backend.DataQuery, dsInfo types.DatasourceInfo, fromAlert bool) (*AzureLogAnalyticsQuery, error) {
+	var azureLogAnalyticsQuery *AzureLogAnalyticsQuery
 	appInsightsRegExp, err := regexp.Compile("(?i)providers/microsoft.insights/components")
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile Application Insights regex")
 	}
 
-	for _, query := range queries {
-		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
-			azureLogAnalyticsQuery, err := buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp, fromAlert)
-			if err != nil {
-				return nil, fmt.Errorf("failed to build azure log analytics query: %w", err)
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
+		azureLogAnalyticsQuery, err = buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp, fromAlert)
+		if err != nil {
+			errorMessage := fmt.Errorf("failed to build azure log analytics query: %w", err)
+			var sourceError errorsource.Error
+			if errors.As(err, &sourceError) {
+				return nil, errorsource.SourceError(sourceError.Source(), errorMessage, false)
 			}
-			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, azureLogAnalyticsQuery)
-		}
-
-		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) || query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
-			if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
-				cfg := backend.GrafanaConfigFromContext(ctx)
-				hasPromExemplarsToggle := cfg.FeatureToggles().IsEnabled("azureMonitorPrometheusExemplars")
-				if !hasPromExemplarsToggle {
-					return nil, fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled")
-				}
-			}
-			azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp, e.Logger)
-			if err != nil {
-				return nil, fmt.Errorf("failed to build azure application insights query: %w", err)
-			}
-			azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, azureAppInsightsQuery)
+			return nil, errorMessage
 		}
 	}
 
-	return azureLogAnalyticsQueries, nil
+	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) || query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+		if query.QueryType == string(dataquery.AzureQueryTypeTraceql) {
+			cfg := backend.GrafanaConfigFromContext(ctx)
+			hasPromExemplarsToggle := cfg.FeatureToggles().IsEnabled("azureMonitorPrometheusExemplars")
+			if !hasPromExemplarsToggle {
+				return nil, errorsource.DownstreamError(fmt.Errorf("query type unsupported as azureMonitorPrometheusExemplars feature toggle is not enabled"), false)
+			}
+		}
+		azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp, e.Logger)
+		if err != nil {
+			errorMessage := fmt.Errorf("failed to build azure application insights query: %w", err)
+			var sourceError errorsource.Error
+			if errors.As(err, &sourceError) {
+				return nil, errorsource.SourceError(sourceError.Source(), errorMessage, false)
+			}
+			return nil, errorMessage
+		}
+		azureLogAnalyticsQuery = azureAppInsightsQuery
+	}
+
+	return azureLogAnalyticsQuery, nil
 }
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return nil, fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials")
+		return nil, errorsource.DownstreamError(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"), false)
 	}
 
 	queryJSONModel := dataquery.AzureMonitorQuery{}
@@ -273,7 +284,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
 		if query.ResultFormat == dataquery.ResultFormatTrace && query.Query == "" {
-			return nil, fmt.Errorf("cannot visualise trace events using the trace visualiser")
+			return nil, errorsource.DownstreamError(fmt.Errorf("cannot visualise trace events using the trace visualiser"), false)
 		}
 	}
 
@@ -294,7 +305,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errorsource.DownstreamError(err, false)
 	}
 
 	defer func() {
@@ -611,7 +622,7 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		}()
 
 		if res.StatusCode/100 != 2 {
-			return AzureCorrelationAPIResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
+			return AzureCorrelationAPIResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
 		}
 		var data AzureCorrelationAPIResponse
 		d := json.NewDecoder(bytes.NewReader(body))
@@ -675,7 +686,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	}()
 
 	if res.StatusCode/100 != 2 {
-		return AzureLogAnalyticsResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
+		return AzureLogAnalyticsResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body)), false)
 	}
 
 	var data AzureLogAnalyticsResponse
