@@ -83,10 +83,18 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 }
 
 func (dr *DashboardServiceImpl) findDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	findDashboards := dr.getFindDashboardsFn(query)
+	return findDashboards(ctx, query)
+}
+
+type findDashboardsFn func(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error)
+
+// getFindDashboardsFn makes a decision which search method should be used
+func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersistedDashboardsQuery) findDashboardsFn {
 	if len(query.Title) > 8 {
-		return dr.findDashboardsZanzanaCheck(ctx, query)
+		return dr.findDashboardsZanzanaCheck
 	}
-	return dr.findDashboardsZanzanaList(ctx, query)
+	return dr.findDashboardsZanzanaList
 }
 
 func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
