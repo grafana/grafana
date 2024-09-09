@@ -131,6 +131,13 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 		return nil, err
 	}
 
+	return dr.checkDashboards(ctx, query, findRes)
+}
+
+func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection) ([]dashboards.DashboardSearchProjection, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.checkDashboards")
+	defer span.End()
+
 	orgId := query.OrgId
 	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
 		orgId = query.SignedInUser.GetOrgID()
@@ -139,8 +146,8 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 	concurrentRequests := dr.cfg.Zanzana.ConcurrentChecks
 	res := make([]dashboards.DashboardSearchProjection, 0)
 	resToCheck := make(chan dashboards.DashboardSearchProjection, concurrentRequests)
-	allowedResults := make(chan dashboards.DashboardSearchProjection, len(findRes))
-	errChan := make(chan error, len(findRes))
+	allowedResults := make(chan dashboards.DashboardSearchProjection, len(searchRes))
+	errChan := make(chan error, len(searchRes))
 	var wg sync.WaitGroup
 	for i := 0; i < int(concurrentRequests); i++ {
 		wg.Add(1)
@@ -171,7 +178,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 		}()
 	}
 
-	for _, r := range findRes {
+	for _, r := range searchRes {
 		resToCheck <- r
 	}
 	close(resToCheck)
