@@ -38,8 +38,8 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
     }
 
     const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
-
     const body = getDefaultVizPanel(dashboard);
+
     body.setState({
       $behaviors: [new LibraryPanelBehavior({ uid: panelInfo.uid, name: panelInfo.name })],
     });

@@ -25,7 +25,7 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { findVizPanelByKey } from '../utils/utils';
+import { findVizPanelByKey, getLibraryPanelBehavior } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
@@ -343,9 +343,8 @@ describe('DashboardScene', () => {
       });
 
       it('A change to any library panel name should set isDirty true', () => {
-        const libraryVizPanel = ((scene.state.body as SceneGridLayout).state.children[4] as DashboardGridItem).state
-          .body;
-        const behavior = libraryVizPanel.state.$behaviors![0] as LibraryPanelBehavior;
+        const panel = findVizPanelByKey(scene, 'panel-5')!;
+        const behavior = getLibraryPanelBehavior(panel)!;
         const prevValue = behavior.state.name;
 
         behavior.setState({ name: 'new name' });
@@ -353,9 +352,9 @@ describe('DashboardScene', () => {
         expect(scene.state.isDirty).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
-        const restoredLibraryVizPanel = ((scene.state.body as SceneGridLayout).state.children[4] as DashboardGridItem)
-          .state.body;
-        const restoredBehavior = restoredLibraryVizPanel.state.$behaviors![0] as LibraryPanelBehavior;
+
+        const restoredPanel = findVizPanelByKey(scene, 'panel-5')!;
+        const restoredBehavior = getLibraryPanelBehavior(restoredPanel)!;
         expect(restoredBehavior.state.name).toBe(prevValue);
       });
 
@@ -462,19 +461,17 @@ describe('DashboardScene', () => {
       it('Should add a new panel to the dashboard', () => {
         const vizPanel = new VizPanel({
           title: 'Panel Title',
-          key: 'panel-5',
+          key: 'panel-55',
           pluginId: 'timeseries',
           $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
         });
 
         scene.addPanel(vizPanel);
 
-        const body = scene.state.body as SceneGridLayout;
-        const gridItem = body.state.children[0] as DashboardGridItem;
+        const panel = findVizPanelByKey(scene, 'panel-55');
 
-        expect(body.state.children.length).toBe(6);
-        expect(gridItem.state.body!.state.key).toBe('panel-5');
-        expect(gridItem.state.y).toBe(0);
+        expect(panel).toBeDefined();
+        expect(panel.state.y).toBe(0);
       });
 
       it('Should create and add a new panel to the dashboard', () => {

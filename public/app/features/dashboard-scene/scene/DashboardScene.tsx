@@ -54,7 +54,6 @@ import { getDashboardUrl, getViewPanelUrl } from '../utils/urlBuilders';
 import {
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
-  forceRenderChildren,
   getClosestVizPanel,
   getDashboardSceneFor,
   getDefaultRow,
@@ -74,6 +73,8 @@ import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DashboardLayoutManager } from './types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 
@@ -95,7 +96,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** @deprecated */
   id?: number | null;
   /** Layout of panels */
-  body: SceneObject;
+  body: DashboardLayoutManager;
   /** NavToolbar actions */
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */
@@ -175,7 +176,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       title: 'Dashboard',
       meta: {},
       editable: true,
-      body: state.body ?? new SceneFlexLayout({ children: [] }),
+      body: state.body ?? DefaultGridLayoutManager.newGrid(),
       links: state.links ?? [],
       ...state,
     });
@@ -235,7 +236,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isEditing: true });
 
     // Propagate change edit mode change to children
-    this.propagateEditModeChange();
+    this.state.body.editModeChanged(true);
 
     // Propagate edit mode to scopes
     this._scopesFacade?.enterReadOnly();
@@ -270,13 +271,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     this.state.editPanel?.dashboardSaved();
     this._changeTracker.startTrackingChanges();
-  }
-
-  private propagateEditModeChange() {
-    if (this.state.body instanceof SceneGridLayout) {
-      this.state.body.setState({ isDraggable: this.state.isEditing, isResizable: this.state.isEditing });
-      forceRenderChildren(this.state.body, true);
-    }
   }
 
   public exitEditMode({ skipConfirm, restoreInitialState }: { skipConfirm: boolean; restoreInitialState?: boolean }) {
@@ -342,7 +336,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     // Disable grid dragging
-    this.propagateEditModeChange();
+    this.state.body.editModeChanged(false);
   }
 
   private cleanupStateFromExplore() {

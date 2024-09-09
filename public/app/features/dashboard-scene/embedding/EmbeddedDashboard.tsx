@@ -42,7 +42,7 @@ interface RendererProps extends EmbeddedDashboardProps {
 
 function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: RendererProps) {
   const [isActive, setIsActive] = useState(false);
-  const { controls, body } = model.useState();
+  const { controls, body: body } = model.useState();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
