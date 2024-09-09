@@ -41,10 +41,11 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 }
 
 // Check whether a query should be handled as basic logs query
-// 2. resource selected is a workspace
-// 3. query is not an alerts query
-// 4. number of selected resources is exactly one
-func meetsBasicLogsCriteria(resources []string, fromAlert bool) (bool, error) {
+// 1. resource selected is a workspace
+// 2. query is not an alerts query
+// 3. number of selected resources is exactly one
+// 4. the ds toggle is set to true
+func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled bool) (bool, error) {
 	if fromAlert {
 		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries cannot be used for alerts"), false)
 	}
@@ -53,7 +54,11 @@ func meetsBasicLogsCriteria(resources []string, fromAlert bool) (bool, error) {
 	}
 
 	if !strings.Contains(strings.ToLower(resources[0]), "microsoft.operationalinsights/workspaces") {
-		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries may only be run against Log Analytics workspaces"), false)
+		return false, errorsource.DownstreamError(fmt.Errorf("basic logs queries may only be run against Log Analytics workspaces"), false)
+	}
+
+	if !basicLogsEnabled {
+		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this data source"), false)
 	}
 
 	return true, nil
