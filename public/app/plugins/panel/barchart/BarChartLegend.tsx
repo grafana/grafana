@@ -1,11 +1,11 @@
 import { memo } from 'react';
 
-import { DataFrame, Field, getFieldSeriesColor, ValueMapping } from '@grafana/data';
+import { DataFrame, Field, getFieldSeriesColor, ThresholdsConfig, ThresholdsMode, ValueMapping } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 // import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
-import { getThresholdItems, getValueMappingItems } from 'app/core/components/TimelineChart/utils';
+import { getThresholdItems2, getValueMappingItems } from 'app/core/components/TimelineChart/utils';
 interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   colorField?: Field | null;
@@ -44,8 +44,35 @@ export const BarChartLegend = memo(
     //   }
     // }
 
+    const thresholdsAbsolute: ThresholdsConfig = { mode: ThresholdsMode.Absolute, steps: [] };
+    const thresholdsPercent: ThresholdsConfig = { mode: ThresholdsMode.Percentage, steps: [] };
+
+    for (let i = 0; i < data[0].fields.length; i++) {
+      const field = data[0].fields[i];
+      // there is no reason to add threshold with only one (Base) step
+      if (field.config.thresholds && field.config.thresholds.steps.length > 1) {
+        if (field.config.thresholds.mode === ThresholdsMode.Absolute) {
+          for (const step of field.config.thresholds.steps) {
+            // TODO: if we have only one base threshold steps, those steps are the same objects in other fields
+            // need to optimize this part
+            if (!thresholdsAbsolute.steps.includes(step)) {
+              thresholdsAbsolute.steps.push(step);
+            }
+          }
+        } else {
+          for (const step of field.config.thresholds.steps) {
+            if (!thresholdsPercent.steps.includes(step)) {
+              thresholdsPercent.steps.push(step);
+            }
+          }
+        }
+      }
+    }
+
     const fieldConfig = data[0].fields[0].config;
-    const thresholdItems: VizLegendItem[] | undefined = getThresholdItems(fieldConfig, theme);
+    const thresholdAbsoluteItems: VizLegendItem[] = getThresholdItems2(fieldConfig, thresholdsAbsolute, theme);
+    const thresholdPercentItems: VizLegendItem[] = getThresholdItems2(fieldConfig, thresholdsPercent, theme);
+    const thresholdItems = [...thresholdAbsoluteItems, ...thresholdPercentItems];
 
     const mappings: ValueMapping[] = [];
     const baseMapping = data[0].fields[0].config.mappings;
