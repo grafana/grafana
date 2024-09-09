@@ -58,7 +58,7 @@ func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled
 	}
 
 	if !basicLogsEnabled {
-		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries may only be run against Log Analytics workspaces"), false)
+		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this workspace"), false)
 	}
 
 	return true, nil
