@@ -15,6 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
+const (
+	maxListQueryLength = 8
+)
+
 type searchResult struct {
 	runner   string
 	result   []dashboards.DashboardSearchProjection
@@ -91,10 +95,10 @@ type findDashboardsFn func(ctx context.Context, query *dashboards.FindPersistedD
 
 // getFindDashboardsFn makes a decision which search method should be used
 func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersistedDashboardsQuery) findDashboardsFn {
-	if len(query.Title) > 8 {
-		return dr.findDashboardsZanzanaCheck
+	if len(query.Title) <= maxListQueryLength {
+		return dr.findDashboardsZanzanaList
 	}
-	return dr.findDashboardsZanzanaList
+	return dr.findDashboardsZanzanaCheck
 }
 
 func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
