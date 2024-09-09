@@ -219,6 +219,7 @@ export const HeatmapPanel = ({
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
                       maxWidth={options.tooltip.maxWidth}
+                      replaceVariables={replaceVariables}
                     />
                   );
                 }}
