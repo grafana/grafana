@@ -3,6 +3,16 @@ package iam
 import (
 	"context"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	common "k8s.io/kube-openapi/pkg/common"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -16,23 +26,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
-	Store      legacy.LegacyIdentityStore
-	SSOService ssosettings.Service
+	store      legacy.LegacyIdentityStore
+	authorizer authorizer.Authorizer
+
+	// Not set for multi-tenant deployment for now
+	sso ssosettings.Service
 }
 
 func RegisterAPIService(
@@ -46,12 +50,18 @@ func RegisterAPIService(
 	}
 
 	builder := &IdentityAccessManagementAPIBuilder{
-		Store:      legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
-		SSOService: ssoService,
+		store: legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
+		sso:   ssoService,
 	}
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
+}
+
+func NewAPISevice(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
+	return &IdentityAccessManagementAPIBuilder{
+		store: store,
+	}
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -80,27 +90,27 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 
 	teamResource := iamv0.TeamResourceInfo
-	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.Store)
-	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.Store)
+	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store)
+	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.Store)
+	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := iamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.Store)
-	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.Store)
+	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store)
+	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceaccountResource := iamv0.ServiceAccountResourceInfo
-	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.Store)
-	storage[serviceaccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.Store)
+	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store)
+	storage[serviceaccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
-	if b.SSOService != nil {
+	if b.sso != nil {
 		ssoResource := iamv0.SSOSettingResourceInfo
-		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.SSOService)
+		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
 	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["display"] = user.NewLegacyDisplayREST(b.Store)
+	storage["display"] = user.NewLegacyDisplayREST(b.store)
 
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
 	return &apiGroupInfo, nil
