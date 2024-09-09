@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../http_api/create-api-tokens-for-org/
-  - ../../tutorials/api_org_token_howto/
-canonical: /docs/grafana/latest/developers/http_api/create-api-tokens-for-org/
+  - ../../../http_api/create-api-tokens-for-org/ # /docs/grafana/<GRAFANA_VERSION>/http_api/create-api-tokens-for-org/
+  - ../../../tutorials/api_org_token_howto/ # /docs/grafana/<GRAFANA_VERSION>/tutorials/api_org_token_howto/
+canonical: /docs/grafana/latest/developers/http_api/examples/create-api-tokens-for-org/
 keywords:
   - grafana
   - tutorials
@@ -15,7 +15,6 @@ labels:
     - enterprise
     - oss
 title: 'API Tutorial: Create Service Account tokens and dashboards for an organization'
-weight: 150
 ---
 
 # Create Service Account tokens and dashboards for an organization

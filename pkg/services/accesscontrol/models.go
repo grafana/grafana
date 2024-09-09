@@ -499,6 +499,8 @@ var (
 		return Scope("settings", "auth."+provider, "*")
 	}
 
+	ScopeSettingsLDAP = Scope("settings", "auth.ldap", "*")
+
 	// Annotation scopes
 	ScopeAnnotationsRoot             = "annotations"
 	ScopeAnnotationsProvider         = NewScopeProvider(ScopeAnnotationsRoot)

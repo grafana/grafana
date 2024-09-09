@@ -916,7 +916,7 @@
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
       "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
-      "title": "Save dashboard JSON"
+      "title": "Export dashboard JSON"
     },
     "menu": {
       "export-as-json-label": "Export",
@@ -1049,7 +1049,30 @@
       "use-ssl-label": "Use SSL",
       "use-ssl-tooltip": "For a complete list of supported ciphers and TLS versions, refer to: {\n        <TextLink style={{ fontSize: 'inherit' }} href=\"https://go.dev/src/crypto/tls/cipher_suites.go\" external>\n          https://go.dev/src/crypto/tls/cipher_suites.go\n        </TextLink>}"
     },
+    "group-mapping": {
+      "grafana-admin": {
+        "description": "If enabled, all users from this group will be Grafana Admins",
+        "label": "Grafana Admin"
+      },
+      "group-dn": {
+        "description": "The name of the key used to extract the ID token from the returned OAuth2 token.",
+        "label": "Group DN"
+      },
+      "org-id": {
+        "description": "The Grafana organization database id. Default org (ID 1) will be used if left out",
+        "label": "Org ID"
+      },
+      "org-role": {
+        "label": "Org role *"
+      },
+      "remove": {
+        "button": "Remove group mapping"
+      }
+    },
     "group-mapping-section": {
+      "add": {
+        "button": "Add group mapping"
+      },
       "description": "Map LDAP groups to Grafana org roles",
       "group-search-base-dns-description": "Separate by commas or spaces",
       "group-search-base-dns-label": "Group search base DNS",
@@ -1114,6 +1137,10 @@
       "label": "Server host",
       "placeholder": "example: 127.0.0.1"
     },
+    "login-form-alert": {
+      "description": "Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.",
+      "title": "Basic login disabled"
+    },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
       "label": "Search filter*",
@@ -1124,7 +1151,7 @@
       "label": "Search base DNS *",
       "placeholder": "example: \"dc=grafana.dc=org\""
     },
-    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our {documentation}.",
+    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><0>documentation</0></2>.",
     "title": "Basic Settings"
   },
   "library-panel": {
@@ -1148,6 +1175,7 @@
     "empty-state": {
       "message": "No library panels found"
     },
+    "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
@@ -1167,7 +1195,7 @@
   "link": {
     "share": {
       "config-alert-description": "Updating your settings will modify the default copy link to include these changes. Please note that these settings are saved within your current browser scope.",
-      "config-alert-title": "Link configuration",
+      "config-alert-title": "Link settings",
       "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
       "copy-link-button": "Copy link",
       "copy-to-clipboard": "Link copied to clipboard",
@@ -1910,7 +1938,7 @@
       "settings-title": "Settings"
     },
     "configuration": {
-      "display-annotations-description": "Present annotations on this Dashboard",
+      "display-annotations-description": "Present annotations on this dashboard",
       "display-annotations-label": "Display annotations",
       "enable-time-range-description": "Allow people to change time range",
       "enable-time-range-label": "Enable time range",
@@ -1956,7 +1984,7 @@
       "revoke-button": "Revoke",
       "revoke-button-title": "Revoke",
       "success-creation": "Your dashboard is ready for external sharing",
-      "success-share-type-change": "Dashboard access restricted: Only specific people can now access with the link"
+      "success-share-type-change": "Dashboard access updated: Only specific people can now access with the link"
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",
