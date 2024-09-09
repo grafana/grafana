@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { DataFrame, Field, getFieldSeriesColor } from '@grafana/data';
+import { DataFrame, Field, getFieldSeriesColor, ValueMapping } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
@@ -47,7 +47,16 @@ export const BarChartLegend = memo(
     const fieldConfig = data[0].fields[0].config;
     const thresholdItems: VizLegendItem[] | undefined = getThresholdItems(fieldConfig, theme);
 
-    const valueMappingItems: VizLegendItem[] = getValueMappingItems(fieldConfig, theme);
+    const mappings: ValueMapping[] = [];
+    const baseMapping = data[0].fields[0].config.mappings;
+    mappings.push(...baseMapping!);
+    for (let i = 1; i < data[0].fields.length; i++) {
+      const mapping = data[0].fields[i].config.mappings!;
+      if (mapping && mapping !== baseMapping) {
+        mappings.push(...mapping);
+      }
+    }
+    const valueMappingItems: VizLegendItem[] = getValueMappingItems(mappings, theme);
 
     const legendItems = data[0].fields
       .slice(1)

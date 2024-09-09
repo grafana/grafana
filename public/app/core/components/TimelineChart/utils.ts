@@ -16,6 +16,7 @@ import {
   TimeRange,
   cacheFieldDisplayNames,
   outerJoinDataFrames,
+  ValueMapping,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -491,9 +492,8 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   return items;
 }
 
-export function getValueMappingItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
+export function getValueMappingItems(mappings: ValueMapping[], theme: GrafanaTheme2): VizLegendItem[] {
   const items: VizLegendItem[] = [];
-  const mappings = fieldConfig.mappings;
   if (!mappings) {
     return items;
   }
