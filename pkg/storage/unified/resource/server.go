@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -24,7 +25,6 @@ type ResourceServer interface {
 	ResourceStoreServer
 	ResourceIndexServer
 	DiagnosticsServer
-	LifecycleHooks
 }
 
 type ListIterator interface {
@@ -120,9 +120,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	// Make this cancelable
-	ctx, cancel := context.WithCancel(identity.WithRequester(context.Background(),
+	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
 		&identity.StaticRequester{
-			Type:           identity.TypeServiceAccount,
+			Type:           claims.TypeServiceAccount,
 			Login:          "watcher", // admin user for watch
 			UserID:         1,
 			IsGrafanaAdmin: true,
@@ -211,7 +211,7 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 // Old value indicates an update -- otherwise a create
-func (s *server) newEvent(ctx context.Context, user identity.Requester, key *ResourceKey, value, oldValue []byte) (*WriteEvent, *ErrorResult) {
+func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *ResourceKey, value, oldValue []byte) (*WriteEvent, *ErrorResult) {
 	tmp := &unstructured.Unstructured{}
 	err := tmp.UnmarshalJSON(value)
 	if err != nil {
@@ -303,8 +303,8 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	}
 
 	rsp := &CreateResponse{}
-	user, err := identity.GetRequester(ctx)
-	if err != nil || user == nil {
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
 		rsp.Error = &ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
@@ -327,6 +327,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		return rsp, nil
 	}
 
+	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -343,8 +344,8 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	}
 
 	rsp := &UpdateResponse{}
-	user, err := identity.GetRequester(ctx)
-	if err != nil || user == nil {
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
 		rsp.Error = &ErrorResult{
 			Message: "no user found in context",
 			Code:    http.StatusUnauthorized,
@@ -374,12 +375,13 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
-		return rsp, err
+		return rsp, nil
 	}
 
 	event.Type = WatchEvent_MODIFIED
 	event.PreviousRV = latest.ResourceVersion
 
+	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -418,12 +420,12 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		Type:       WatchEvent_DELETED,
 		PreviousRV: latest.ResourceVersion,
 	}
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
+	requester, ok := claims.From(ctx)
+	if !ok {
 		return nil, apierrors.NewBadRequest("unable to get user")
 	}
 	marker := &DeletedMarker{}
-	err = json.Unmarshal(latest.Value, marker)
+	err := json.Unmarshal(latest.Value, marker)
 	if err != nil {
 		return nil, apierrors.NewBadRequest(
 			fmt.Sprintf("unable to read previous object, %v", err))

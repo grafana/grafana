@@ -3,13 +3,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+import { Trans } from 'app/core/internationalization';
+import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import {
-  logInfo,
   LogMessages,
+  logInfo,
   trackRulesListViewChange,
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
@@ -18,6 +21,8 @@ import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
+import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { alertStateToReadable } from '../../../utils/rules';
 import { PopupCard } from '../../HoverCard';
 import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
@@ -78,7 +83,9 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   const queryStringKey = `queryString-${filterKey}`;
 
   const searchQueryRef = useRef<HTMLInputElement | null>(null);
-  const { handleSubmit, register, setValue } = useForm<{ searchQuery: string }>({ defaultValues: { searchQuery } });
+  const { handleSubmit, register, setValue } = useForm<{ searchQuery: string }>({
+    defaultValues: { searchQuery },
+  });
   const { ref, ...rest } = register('searchQuery');
 
   useEffect(() => {
@@ -138,7 +145,14 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     trackRulesListViewChange({ view });
   };
 
+  const handleContactPointChange = (contactPoint: string) => {
+    updateFilters({ ...filterState, contactPoint });
+    trackRulesSearchComponentInteraction('contactPoint');
+  };
+
+  const canRenderContactPointSelector = config.featureToggles.alertingSimplifiedRouting ?? false;
   const searchIcon = <Icon name={'search'} />;
+
   return (
     <div className={styles.container}>
       <Stack direction="column" gap={1}>
@@ -221,6 +235,31 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
               onChange={handleRuleHealthChange}
             />
           </div>
+          {canRenderContactPointSelector && (
+            <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
+              <Stack direction="column" gap={0}>
+                <Field
+                  label={
+                    <Label htmlFor="contactPointFilter">
+                      <Trans i18nKey="alerting.contactPointFilter.label">Contact point</Trans>
+                    </Label>
+                  }
+                >
+                  <ContactPointSelector
+                    selectedContactPointName={filterState.contactPoint}
+                    selectProps={{
+                      inputId: 'contactPointFilter',
+                      width: 40,
+                      onChange: (selectValue) => {
+                        handleContactPointChange(selectValue?.value?.name!);
+                      },
+                      isClearable: true,
+                    }}
+                  />
+                </Field>
+              </Stack>
+            </AlertmanagerProvider>
+          )}
           {pluginsFilterEnabled && (
             <div>
               <Label>Plugin rules</Label>
@@ -235,6 +274,7 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
             </div>
           )}
         </Stack>
+
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
             <form
@@ -333,6 +373,7 @@ function SearchQueryHelp() {
         <HelpRow title="Type" expr="type:alerting|recording" />
         <HelpRow title="Health" expr="health:ok|nodata|error" />
         <HelpRow title="Dashboard UID" expr="dashboard:eadde4c7-54e6-4964-85c0-484ab852fd04" />
+        <HelpRow title="Contact point" expr="contactPoint:slack" />
       </div>
     </div>
   );

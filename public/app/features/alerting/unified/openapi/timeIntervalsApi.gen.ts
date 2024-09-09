@@ -42,13 +42,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['TimeInterval'],
       }),
-      readNamespacedTimeInterval: build.query<ReadNamespacedTimeIntervalApiResponse, ReadNamespacedTimeIntervalApiArg>({
-        query: (queryArg) => ({
-          url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/timeintervals/${queryArg.name}`,
-          params: { pretty: queryArg.pretty },
-        }),
-        providesTags: ['TimeInterval'],
-      }),
       replaceNamespacedTimeInterval: build.mutation<
         ReplaceNamespacedTimeIntervalApiResponse,
         ReplaceNamespacedTimeIntervalApiArg
@@ -80,24 +73,6 @@ const injectedRtkApi = api
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
-          },
-        }),
-        invalidatesTags: ['TimeInterval'],
-      }),
-      patchNamespacedTimeInterval: build.mutation<
-        PatchNamespacedTimeIntervalApiResponse,
-        PatchNamespacedTimeIntervalApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/${queryArg['namespace']}/timeintervals/${queryArg.name}`,
-          method: 'PATCH',
-          body: queryArg.ioK8SApimachineryPkgApisMetaV1Patch,
-          params: {
-            pretty: queryArg.pretty,
-            dryRun: queryArg.dryRun,
-            fieldManager: queryArg.fieldManager,
-            fieldValidation: queryArg.fieldValidation,
-            force: queryArg.force,
           },
         }),
         invalidatesTags: ['TimeInterval'],
@@ -171,16 +146,6 @@ export type CreateNamespacedTimeIntervalApiArg = {
   fieldValidation?: string;
   comGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval: ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
 };
-export type ReadNamespacedTimeIntervalApiResponse =
-  /** status 200 OK */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
-export type ReadNamespacedTimeIntervalApiArg = {
-  /** name of the TimeInterval */
-  name: string;
-  /** object name and auth scope, such as for teams and projects */
-  namespace: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-};
 export type ReplaceNamespacedTimeIntervalApiResponse = /** status 200 OK */
   | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval
   | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
@@ -218,26 +183,6 @@ export type DeleteNamespacedTimeIntervalApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
   ioK8SApimachineryPkgApisMetaV1DeleteOptions: IoK8SApimachineryPkgApisMetaV1DeleteOptions;
-};
-export type PatchNamespacedTimeIntervalApiResponse = /** status 200 OK */
-  | ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval
-  | /** status 201 Created */ ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1TimeInterval;
-export type PatchNamespacedTimeIntervalApiArg = {
-  /** name of the TimeInterval */
-  name: string;
-  /** object name and auth scope, such as for teams and projects */
-  namespace: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed */
-  dryRun?: string;
-  /** fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch). */
-  fieldManager?: string;
-  /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
-  fieldValidation?: string;
-  /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
-  force?: boolean;
-  ioK8SApimachineryPkgApisMetaV1Patch: IoK8SApimachineryPkgApisMetaV1Patch;
 };
 export type IoK8SApimachineryPkgApisMetaV1Time = string;
 export type IoK8SApimachineryPkgApisMetaV1FieldsV1 = object;
@@ -429,4 +374,3 @@ export type IoK8SApimachineryPkgApisMetaV1DeleteOptions = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type IoK8SApimachineryPkgApisMetaV1Patch = object;

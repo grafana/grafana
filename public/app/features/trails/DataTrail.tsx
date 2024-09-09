@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 
-import { AdHocVariableFilter, GrafanaTheme2, PageLayoutType, VariableHide, urlUtil } from '@grafana/data';
-import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
+import { AdHocVariableFilter, GrafanaTheme2, urlUtil, VariableHide } from '@grafana/data';
+import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
-  getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
   sceneGraph,
@@ -20,11 +19,11 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  UrlSyncManager,
   VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
@@ -35,7 +34,6 @@ import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
 import { reportChangeInLabelFilters } from './interactions';
 import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
-import { getMetricName } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -160,7 +158,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       })
     );
 
-    const urlState = getUrlSyncManager().getUrlState(this);
+    const urlState = new UrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
     locationService.replace(fullUrl);
   }
@@ -211,27 +209,25 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, settings, metric } = model.useState();
+    const { controls, topScene, history, settings } = model.useState();
     const chromeHeaderHeight = useChromeHeaderHeight();
     const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
-      <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
-        <div className={styles.container}>
-          {showHeaderForFirstTimeUsers && <MetricsHeader />}
-          <history.Component model={history} />
-          {controls && (
-            <div className={styles.controls}>
-              {controls.map((control) => (
-                <control.Component key={control.state.key} model={control} />
-              ))}
-              <settings.Component model={settings} />
-            </div>
-          )}
-          <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
-        </div>
-      </Page>
+      <div className={styles.container}>
+        {showHeaderForFirstTimeUsers && <MetricsHeader />}
+        <history.Component model={history} />
+        {controls && (
+          <div className={styles.controls}>
+            {controls.map((control) => (
+              <control.Component key={control.state.key} model={control} />
+            ))}
+            <settings.Component model={settings} />
+          </div>
+        )}
+        <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
+      </div>
     );
   };
 }
@@ -259,9 +255,11 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
-        layout: 'vertical',
+        layout: config.featureToggles.newFiltersUI ? 'combobox' : 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
+        // since we only support prometheus datasources, this is always true
+        supportsMultiValueOperators: true,
       }),
     ],
   });

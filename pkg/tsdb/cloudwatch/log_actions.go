@@ -17,14 +17,15 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
-
-	"golang.org/x/sync/errgroup"
 )
 
 const (
 	limitExceededException      = "LimitExceededException"
+	throttlingException         = "ThrottlingException"
 	defaultEventLimit           = int64(10)
 	defaultLogGroupLimit        = int64(50)
 	logIdentifierInternal       = "__log__grafana_internal__"
@@ -209,7 +210,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		QueryString: aws.String(modifiedQueryString),
 	}
 
-	if logsQuery.LogGroups != nil && len(logsQuery.LogGroups) > 0 && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
+	if len(logsQuery.LogGroups) > 0 && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
 		var logGroupIdentifiers []string
 		for _, lg := range logsQuery.LogGroups {
 			arn := lg.Arn
@@ -233,6 +234,9 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
 			e.logger.FromContext(ctx).Debug("ExecuteStartQuery limit exceeded", "err", awsErr)
 			err = &AWSError{Code: limitExceededException, Message: err.Error()}
+		} else if errors.As(err, &awsErr) && awsErr.Code() == "ThrottlingException" {
+			e.logger.FromContext(ctx).Debug("ExecuteStartQuery rate exceeded", "err", awsErr)
+			err = &AWSError{Code: throttlingException, Message: err.Error()}
 		}
 		err = errorsource.DownstreamError(err, false)
 	}

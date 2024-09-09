@@ -470,6 +470,26 @@ def build_frontend_step():
         ],
     }
 
+def build_test_plugins_step():
+    """Build the test plugins used in e2e tests
+
+    Returns:
+      Drone step.
+    """
+    return {
+        "name": "build-test-plugins",
+        "image": images["node"],
+        "environment": {
+            "NODE_OPTIONS": "--max_old_space_size=8192",
+        },
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn e2e:plugin:build",
+        ],
+    }
+
 def update_package_json_version():
     """Updates the packages/ to use a version that has the build ID in it: 10.0.0pre -> 10.0.0-5432pre
 
@@ -553,7 +573,7 @@ def test_backend_step():
             # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
             # mime.TypeByExtension function.
             "apk add --update build-base shared-mime-info shared-mime-info-lang",
-            "go list -f '{{.Dir}}/...' -m | xargs go test -tags requires_buildifer -short -covermode=atomic -timeout=5m",
+            "go list -f '{{.Dir}}/...' -m  | xargs go test -short -covermode=atomic -timeout=5m",
         ],
     }
 
@@ -773,6 +793,7 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         "image": images["cypress"],
         "depends_on": [
             "grafana-server",
+            "build-test-plugins",
         ],
         "environment": {
             "HOST": "grafana-server",
@@ -872,6 +893,7 @@ def playwright_e2e_tests_step():
         "image": images["node_deb"],
         "depends_on": [
             "grafana-server",
+            "build-test-plugins",
         ],
         "commands": [
             "npx wait-on@7.0.1 http://$HOST:$PORT",
@@ -1056,7 +1078,7 @@ def mysql_integration_tests_steps(hostname, version):
 def redis_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
+        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1081,7 +1103,7 @@ def remote_alertmanager_integration_tests_steps():
 def memcached_integration_tests_steps():
     cmds = [
         "go clean -testcache",
-        "go list -f '{{.Dir}}/...' -m | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
+        "go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m",
     ]
 
     environment = {
@@ -1244,7 +1266,8 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-def retry_command(command, attempts = 5, delay = 60):
+# This retry will currently continue for 30 minutes until fail, unless successful.
+def retry_command(command, attempts = 60, delay = 30):
     return [
         "for i in $(seq 1 %d); do" % attempts,
         "    if %s; then" % command,

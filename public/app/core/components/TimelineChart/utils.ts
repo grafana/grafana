@@ -435,6 +435,24 @@ export function prepareTimelineFields(
   return { frames };
 }
 
+export function makeFramePerSeries(frames: DataFrame[]) {
+  const outFrames: DataFrame[] = [];
+
+  for (let frame of frames) {
+    const timeFields = frame.fields.filter((field) => field.type === FieldType.time);
+
+    if (timeFields.length > 0) {
+      for (let field of frame.fields) {
+        if (field.type !== FieldType.time) {
+          outFrames.push({ fields: [...timeFields, field], length: frame.length });
+        }
+      }
+    }
+  }
+
+  return outFrames;
+}
+
 export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
   const items: VizLegendItem[] = [];
   const thresholds = fieldConfig.thresholds;

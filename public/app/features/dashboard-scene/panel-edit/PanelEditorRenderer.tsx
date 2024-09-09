@@ -8,7 +8,7 @@ import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
-import { getDashboardSceneFor, getLibraryPanel } from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
 import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
@@ -68,8 +68,8 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { vizManager, dataPane, showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
   const { sourcePanel } = vizManager.useState();
-  const libraryPanel = getLibraryPanel(sourcePanel.resolve());
-  const { controls, scopes } = dashboard.useState();
+  const libraryPanel = getLibraryPanelBehavior(sourcePanel.resolve());
+  const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
@@ -89,16 +89,9 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   }
 
   return (
-    <div
-      className={cx(
-        styles.pageContainer,
-        controls && !scopes && styles.pageContainerWithControls,
-        scopes && styles.pageContainerWithScopes
-      )}
-    >
-      {scopes && <scopes.Component model={scopes} />}
+    <div className={cx(styles.pageContainer, controls && styles.pageContainerWithControls)}>
       {controls && (
-        <div className={cx(styles.controlsWrapper, scopes && styles.controlsWrapperWithScopes)}>
+        <div className={styles.controlsWrapper}>
           <controls.Component model={controls} />
         </div>
       )}
@@ -163,13 +156,6 @@ function getStyles(theme: GrafanaTheme2) {
         "panels"`,
       gridTemplateRows: 'auto 1fr',
     }),
-    pageContainerWithScopes: css({
-      gridTemplateAreas: `
-        "scopes controls"
-        "panels panels"`,
-      gridTemplateColumns: `${theme.spacing(32)} 1fr`,
-      gridTemplateRows: 'auto 1fr',
-    }),
     container: css({
       gridArea: 'panels',
       height: '100%',
@@ -224,9 +210,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 0,
       gridArea: 'controls',
       padding: theme.spacing(2, 0, 2, 2),
-    }),
-    controlsWrapperWithScopes: css({
-      padding: theme.spacing(2, 0),
     }),
     openDataPaneButton: css({
       width: theme.spacing(8),

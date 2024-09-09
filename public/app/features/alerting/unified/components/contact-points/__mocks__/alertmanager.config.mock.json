@@ -96,6 +96,8 @@
         ]
       }
     ],
-    "templates": ["slack-template", "custom-email", "provisioned-template", "template with spaces"]
+    "templates": ["slack-template", "custom-email", "provisioned-template", "template with spaces"],
+    "time_intervals": [],
+    "mute_time_intervals": []
   }
 }

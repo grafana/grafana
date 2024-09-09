@@ -6,6 +6,7 @@
 - [Attribute Groups](#attribute-groups)
   - [grafana.datasource](#grafanadatasource)
     - [grafana.datasource.request](#grafanadatasourcerequest)
+- [k8s](#k8s)
   - [grafana.plugin](#grafanaplugin)
 
 <!-- tocstop -->
@@ -24,6 +25,7 @@ For more information:
 ## Attribute Groups
 
 ### grafana.datasource
+
 <!-- semconv trace.grafana.datasource -->
 | Attribute  | Type | Description  | Examples  | [Requirement Level](https://opentelemetry.io/docs/specs/semconv/general/attribute-requirement-level/) | Stability |
 |---|---|---|---|---|---|
@@ -39,6 +41,13 @@ For more information:
 | `grafana.datasource.request.query_count` | int | The number of queries in the request. | `3` | `Recommended` | ![Stable](https://img.shields.io/badge/-stable-lightgreen) |
 <!-- endsemconv -->
 
+## k8s
+
+<!-- semconv trace.k8s -->
+| Attribute  | Type | Description  | Examples  | [Requirement Level](https://opentelemetry.io/docs/specs/semconv/general/attribute-requirement-level/) | Stability |
+|---|---|---|---|---|---|
+| `k8s.dataplaneservice.name` | string | The name of the DataPlaneService. | `v0alpha1.prometheus.grafana.app` | `Recommended` | ![Stable](https://img.shields.io/badge/-stable-lightgreen) |
+<!-- endsemconv -->
 
 ### grafana.plugin
 
@@ -48,3 +57,4 @@ For more information:
 | `grafana.plugin.id` | string | The plugin ID. | `prometheus`; `loki`; `grafana-github-datasource` | `Recommended` | ![Stable](https://img.shields.io/badge/-stable-lightgreen) |
 | `grafana.plugin.type` | string | The plugin type. | `datasource` | `Recommended` | ![Stable](https://img.shields.io/badge/-stable-lightgreen) |
 <!-- endsemconv -->
+

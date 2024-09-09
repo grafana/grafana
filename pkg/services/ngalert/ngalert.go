@@ -346,6 +346,10 @@ func (ng *AlertNG) init() error {
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
+	if !ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagGrafanaManagedRecordingRules) {
+		// Force-disable the feature if the feature toggle is not on - sets us up for feature toggle removal.
+		ng.Cfg.UnifiedAlerting.RecordingRules.Enabled = false
+	}
 	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
@@ -362,7 +366,7 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
-		FeatureToggles:       ng.FeatureToggles,
+		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
@@ -415,6 +419,7 @@ func (ng *AlertNG) init() error {
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false),
 		configStore,
 		ng.store,
+		ng.store,
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
@@ -422,6 +427,7 @@ func (ng *AlertNG) init() error {
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
 		configStore,
+		ng.store,
 		ng.store,
 		ng.SecretsService,
 		ng.store,
@@ -487,15 +493,16 @@ func (ng *AlertNG) init() error {
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
-	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
+	// if full path to the folder is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
-	bus.AddEventListener(func(ctx context.Context, evt *events.FolderTitleUpdated) error {
-		logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
-		_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
+	bus.AddEventListener(func(ctx context.Context, evt *events.FolderFullPathUpdated) error {
+		logger.Info("Got folder full path updated event. updating rules in the folders", "folderUIDs", evt.UIDs)
+		updatedKeys, err := dbStore.IncreaseVersionForAllRulesInNamespaces(ctx, evt.OrgID, evt.UIDs)
 		if err != nil {
-			logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
+			logger.Error("Failed to update alert rules in the folders after their full paths were changed", "error", err, "folderUIDs", evt.UIDs, "orgID", evt.OrgID)
 			return err
 		}
+		logger.Info("Updated version for alert rules", "keys", updatedKeys)
 		return nil
 	})
 }
@@ -666,7 +673,7 @@ func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVS
 func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+	if settings.Enabled {
 		return writer.NewPrometheusWriter(settings, httpClientProvider, clock, logger, m)
 	}
 

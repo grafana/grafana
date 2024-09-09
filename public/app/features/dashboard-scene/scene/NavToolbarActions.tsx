@@ -24,16 +24,16 @@ import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
-import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
-import { LibraryVizPanel } from './LibraryVizPanel';
 
 interface Props {
   dashboard: DashboardScene;
@@ -314,7 +314,7 @@ export function ToolbarActions({ dashboard }: Props) {
         fill="outline"
         onClick={() => {
           DashboardInteractions.toolbarShareClick();
-          dashboard.showModal(new ShareModal({}));
+          locationService.partial({ shareView: shareDashboardType.link });
         }}
         data-testid={selectors.components.NavToolbar.shareDashboard}
       >
@@ -619,7 +619,7 @@ function useEditingLibraryPanel(panelEditor?: PanelEditor) {
   useEffect(() => {
     if (panelEditor) {
       const unsub = panelEditor.state.vizManager.subscribeToState((vizManagerState) =>
-        setEditingLibraryPanel(vizManagerState.sourcePanel.resolve().parent instanceof LibraryVizPanel)
+        setEditingLibraryPanel(isLibraryPanel(vizManagerState.sourcePanel.resolve()))
       );
       return () => {
         unsub.unsubscribe();

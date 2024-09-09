@@ -17,6 +17,7 @@ import {
   SystemDateFormatSettings,
   getThemeById,
   AngularMeta,
+  PluginLoadingStrategy,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -40,6 +41,12 @@ export type AppPluginConfig = {
   version: string;
   preload: boolean;
   angular: AngularMeta;
+  loadingStrategy: PluginLoadingStrategy;
+};
+
+export type PreinstalledPlugin = {
+  id: string;
+  version: string;
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -124,6 +131,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
   pluginCatalogManagedPlugins: string[] = [];
+  pluginCatalogPreinstalledPlugins: PreinstalledPlugin[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
@@ -263,7 +271,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
 
   // Although most flags can not be changed from the URL in production,
   // some of them are safe (and useful!) to change dynamically from the browser URL
-  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
+  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI', 'dashboardSceneSolo']);
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {

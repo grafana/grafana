@@ -9,7 +9,6 @@ import {
   FunctionCallBody,
   GroupingLabels,
   Identifier,
-  LabelMatcher,
   LabelMatchers,
   LabelName,
   MatchOp,
@@ -19,6 +18,7 @@ import {
   parser,
   PromQL,
   StringLiteral,
+  UnquotedLabelMatcher,
   VectorSelector,
 } from '@prometheus-io/lezer-promql';
 
@@ -33,7 +33,7 @@ type NodeTypeId =
   | typeof FunctionCallBody
   | typeof GroupingLabels
   | typeof Identifier
-  | typeof LabelMatcher
+  | typeof UnquotedLabelMatcher
   | typeof LabelMatchers
   | typeof LabelName
   | typeof PromQL
@@ -178,7 +178,7 @@ const RESOLVERS: Resolver[] = [
     fun: resolveInFunction,
   },
   {
-    path: [StringLiteral, LabelMatcher],
+    path: [StringLiteral, UnquotedLabelMatcher],
     fun: resolveLabelMatcher,
   },
   {
@@ -186,7 +186,7 @@ const RESOLVERS: Resolver[] = [
     fun: resolveTopLevel,
   },
   {
-    path: [ERROR_NODE_NAME, LabelMatcher],
+    path: [ERROR_NODE_NAME, UnquotedLabelMatcher],
     fun: resolveLabelMatcher,
   },
   {
@@ -216,7 +216,7 @@ function getLabelOp(opNode: SyntaxNode): LabelOperator | null {
 }
 
 function getLabel(labelMatcherNode: SyntaxNode, text: string): Label | null {
-  if (labelMatcherNode.type.id !== LabelMatcher) {
+  if (labelMatcherNode.type.id !== UnquotedLabelMatcher) {
     return null;
   }
 
@@ -253,7 +253,7 @@ function getLabels(labelMatchersNode: SyntaxNode, text: string): Label[] {
     return [];
   }
 
-  const labelNodes = labelMatchersNode.getChildren(LabelMatcher);
+  const labelNodes = labelMatchersNode.getChildren(UnquotedLabelMatcher);
   return labelNodes.map((ln) => getLabel(ln, text)).filter(notEmpty);
 }
 
@@ -317,7 +317,7 @@ function resolveLabelMatcher(node: SyntaxNode, text: string, pos: number): Situa
   // - or an error node (like in `{job=^}`)
   const inStringNode = !node.type.isError;
 
-  const parent = walk(node, [['parent', LabelMatcher]]);
+  const parent = walk(node, [['parent', UnquotedLabelMatcher]]);
   if (parent === null) {
     return null;
   }
@@ -387,7 +387,7 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Situatio
 function resolveLabelKeysWithEquals(node: SyntaxNode, text: string, pos: number): Situation | null {
   // next false positive:
   // `something{a="1"^}`
-  const child = walk(node, [['firstChild', LabelMatcher]]);
+  const child = walk(node, [['firstChild', UnquotedLabelMatcher]]);
   if (child !== null) {
     // means the label-matching part contains at least one label already.
     //

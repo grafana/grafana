@@ -5,7 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -21,7 +22,7 @@ func TestPermissionCacheKey(t *testing.T) {
 			signedInUser: &user.SignedInUser{
 				OrgID:        1,
 				UserID:       1,
-				FallbackType: identity.TypeUser,
+				FallbackType: claims.TypeUser,
 			},
 			expected: "rbac-permissions-1-user-1",
 		},
@@ -31,7 +32,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:            1,
 				ApiKeyID:         1,
 				IsServiceAccount: false,
-				FallbackType:     identity.TypeUser,
+				FallbackType:     claims.TypeUser,
 			},
 			expected: "rbac-permissions-1-api-key-1",
 		},
@@ -41,7 +42,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:            1,
 				UserID:           1,
 				IsServiceAccount: true,
-				FallbackType:     identity.TypeUser,
+				FallbackType:     claims.TypeUser,
 			},
 			expected: "rbac-permissions-1-service-account-1",
 		},
@@ -51,7 +52,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:            1,
 				UserID:           -1,
 				IsServiceAccount: true,
-				FallbackType:     identity.TypeUser, // NOTE, this is still a service account!
+				FallbackType:     claims.TypeUser, // NOTE, this is still a service account!
 			},
 			expected: "rbac-permissions-1-service-account--1",
 		},
@@ -60,7 +61,7 @@ func TestPermissionCacheKey(t *testing.T) {
 			signedInUser: &user.SignedInUser{
 				OrgID:        1,
 				OrgRole:      org.RoleNone,
-				FallbackType: identity.TypeUser,
+				FallbackType: claims.TypeUser,
 			},
 			expected: "rbac-permissions-1-user-None",
 		},
@@ -68,7 +69,7 @@ func TestPermissionCacheKey(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, GetPermissionCacheKey(tc.signedInUser))
+			assert.Equal(t, tc.expected, GetUserPermissionCacheKey(tc.signedInUser))
 		})
 	}
 }

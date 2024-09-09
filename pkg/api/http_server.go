@@ -78,6 +78,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -146,6 +147,7 @@ type HTTPServer struct {
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
+	pluginAssets                 *pluginassets.Service
 	SearchService                search.Service
 	ShortURLService              shorturls.Service
 	QueryHistoryService          queryhistory.Service
@@ -202,7 +204,7 @@ type HTTPServer struct {
 	tempUserService      tempUser.Service
 	loginAttemptService  loginAttempt.Service
 	orgService           org.Service
-	teamService          team.Service
+	TeamService          team.Service
 	accesscontrolService accesscontrol.Service
 	annotationsRepo      annotations.Repository
 	tagService           tag.Service
@@ -247,7 +249,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
-	serviceaccountsService serviceaccounts.Service,
+	serviceaccountsService serviceaccounts.Service, pluginAssets *pluginassets.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
@@ -286,6 +288,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
 		pluginDashboardService:       pluginDashboardService,
+		pluginAssets:                 pluginAssets,
 		pluginErrorResolver:          pluginErrorResolver,
 		pluginFileStore:              pluginFileStore,
 		grafanaUpdateChecker:         grafanaUpdateChecker,
@@ -352,7 +355,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		tempUserService:              tempUserService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
-		teamService:                  teamService,
+		TeamService:                  teamService,
 		navTreeService:               navTreeService,
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
@@ -604,6 +607,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")
 
 	if hs.Cfg.ImageUploadProvider == "local" {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
@@ -750,6 +754,12 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 	if hs.Cfg.Env == setting.Dev {
 		headers = func(c *web.Context) {
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+		}
+	}
+
+	if prefix == "mockServiceWorker.js" {
+		headers = func(c *web.Context) {
+			c.Resp.Header().Set("Content-Type", "application/javascript")
 		}
 	}
 
