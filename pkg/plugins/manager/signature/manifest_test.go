@@ -889,6 +889,19 @@ func TestModuleHash(t *testing.T) {
 		require.Equal(t, "sha256-3fy0SURQZObDnwwgsVvjy2pVg3z0eB3yPQLeAF9DaBE=", mh)
 	})
 
+	t.Run("no module.js", func(t *testing.T) {
+		m := &PluginManifest{
+			SignatureType: plugins.SignatureTypeGrafana,
+			Files: map[string]string{
+				"other.js":    "ddfcb449445064e6c39f0c20b15be3cb6a55837cf4781df23d02de005f436811",
+				"plugin.json": "8753e13da61ea5aca20bf50c7cec6255bf6d1bb0c01640244ffc289c89b6857a",
+			},
+		}
+		mh, err := m.ModuleHash()
+		require.NoError(t, err)
+		require.Empty(t, mh)
+	})
+
 	t.Run("MANIFEST.txt", func(t *testing.T) {
 		const txt = `-----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
