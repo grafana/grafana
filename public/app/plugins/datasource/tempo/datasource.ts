@@ -286,18 +286,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
    * Check if streaming for search queries is enabled (and available).
    *
    * We need to check:
-   * - the `traceQLStreaming` feature toggle, to disable streaming if customer support turned off the toggle in the past, which usually means that streaming does not work properly for the customer
-   * - the recently created Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
-   * - whether streaming is actually available based on the Tempo version, just as a sanity check
+   * - the Tempo data source plugin toggle, to disable streaming if the user disabled it in the data source configuration
+   * - if Grafana Live is enabled
    *
    * @return true if streaming for search queries is enabled, false otherwise
    */
   isStreamingSearchEnabled() {
-    return (
-      (config.featureToggles.traceQLStreaming || this.streamingEnabled?.search) &&
-      this.isFeatureAvailable(FeatureName.streaming) &&
-      config.liveEnabled
-    );
+    return this.streamingEnabled?.search && config.liveEnabled;
   }
 
   isTraceQlMetricsQuery(query: string): boolean {
@@ -371,7 +366,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               app: options.app ?? '',
               grafana_version: config.buildInfo.version,
               query: queryValue ?? '',
-              streaming: this.streamingEnabled,
+              streaming: this.isStreamingSearchEnabled(),
             });
             subQueries.push(this.handleTraceQlQuery(options, targets, queryValue));
           }
@@ -405,7 +400,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValueFromFilters ?? '',
-            streaming: this.streamingEnabled,
+            streaming: this.isStreamingSearchEnabled(),
           });
 
           if (this.isStreamingSearchEnabled()) {

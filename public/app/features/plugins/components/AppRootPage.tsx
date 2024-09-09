@@ -33,8 +33,9 @@ import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 interface Props {
   // The ID of the plugin we would like to load and display
   pluginId: string;
-  // The root navModelItem for the plugin (root = lives directly under 'home')
-  pluginNavSection: NavModelItem;
+  // The root navModelItem for the plugin (root = lives directly under 'home'). In case app does not need a nva model,
+  // for example it's in some way embedded or shown in a sideview this can be undefined.
+  pluginNavSection?: NavModelItem;
 }
 
 interface State {
@@ -53,7 +54,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   const { plugin, loading, loadingError, pluginNav } = state;
-  const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
+  const navModel = buildPluginSectionNav(currentUrl, pluginNavSection);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
   const grafanaContext = useGrafana();

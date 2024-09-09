@@ -555,7 +555,9 @@ export {
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
-  type PluginExposedComponentConfig,
+  type PluginExtensionExposedComponentConfig,
+  type PluginExtensionAddedComponentConfig,
+  type PluginExtensionAddedLinkConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -577,6 +579,7 @@ export {
   PluginSignatureType,
   PluginErrorCode,
   PluginIncludeType,
+  PluginLoadingStrategy,
   GrafanaPlugin,
   type PluginError,
   type AngularMeta,

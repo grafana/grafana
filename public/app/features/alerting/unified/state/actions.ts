@@ -334,7 +334,14 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
             );
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
-          thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
+          thunkAPI.dispatch(
+            alertmanagerApi.util.invalidateTags([
+              'AlertmanagerConfiguration',
+              'ContactPoint',
+              'ContactPointsStatus',
+              'Receiver',
+            ])
+          );
           if (redirectPath) {
             const options = new URLSearchParams(redirectSearch ?? '');
             locationService.push(makeAMLink(redirectPath, alertManagerSourceName, options));

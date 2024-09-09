@@ -9,9 +9,23 @@ export function getElementStyles(theme: GrafanaTheme2) {
   const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
 
   return css({
+    '*, *::before, *::after': {
+      boxSizing: 'inherit',
+    },
+
+    // Suppress the focus outline on elements that cannot be accessed via keyboard.
+    // This prevents an unwanted focus outline from appearing around elements that
+    // might still respond to pointer events.
+    //
+    // Credit: https://github.com/suitcss/base
+    "[tabindex='-1']:focus": {
+      outline: 'none !important',
+    },
+
     html: {
       MsOverflowStyle: 'scrollbar',
       WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
+      boxSizing: 'border-box',
       height: '100%',
       fontSize: `${theme.typography.htmlFontSize}px`,
       fontFamily: theme.typography.fontFamily,
@@ -61,6 +75,8 @@ export function getElementStyles(theme: GrafanaTheme2) {
 
     textarea: {
       overflow: 'auto',
+      // Textareas should really only resize vertically so they don't break their (horizontal) containers.
+      resize: 'vertical',
     },
 
     button: {
@@ -70,6 +86,45 @@ export function getElementStyles(theme: GrafanaTheme2) {
       '&:focus': {
         outline: 'none',
       },
+    },
+
+    label: {
+      // Allow labels to use `margin` for spacing.
+      display: 'inline-block',
+    },
+
+    figure: {
+      margin: theme.spacing(0, 0, 2),
+    },
+
+    img: {
+      // By default, `<img>`s are `inline-block`. This assumes that, and vertically
+      // centers them. This won't apply should you reset them to `block` level.
+      verticalAlign: 'middle',
+      // Note: `<img>`s are deliberately not made responsive by default.
+      // For the rationale behind this, see the comments on the `.img-fluid` class.
+    },
+
+    fieldset: {
+      // Chrome and Firefox set a `min-width: min-content;` on fieldsets,
+      // so we reset that to ensure it behaves more like a standard block element.
+      // See https://github.com/twbs/bootstrap/issues/12359.
+      minWidth: 0,
+      // Reset the default outline behavior of fieldsets so they don't affect page layout.
+      padding: 0,
+      margin: 0,
+      border: 0,
+    },
+
+    legend: {
+      // Reset the entire legend element to match the `fieldset`
+      display: 'block',
+      width: '100%',
+      padding: 0,
+      marginBottom: theme.spacing(1),
+      fontSize: theme.spacing(3),
+      lineHeight: 'inherit',
+      border: 0,
     },
 
     // Ex: 14px base font * 85% = about 12px
@@ -193,7 +248,9 @@ export function getElementStyles(theme: GrafanaTheme2) {
       background: theme.colors.warning.main,
     },
 
-    'ul, ol': {
+    'ul, ol, dl': {
+      marginTop: 0,
+      marginBottom: 0,
       padding: 0,
     },
     'ul ul, ul ol, ol ol, ol ul': {
@@ -202,9 +259,9 @@ export function getElementStyles(theme: GrafanaTheme2) {
     li: {
       lineHeight: theme.typography.body.lineHeight,
     },
-
-    dl: {
-      marginBottom: theme.spacing(2),
+    dd: {
+      marginBottom: theme.spacing(1),
+      marginLeft: 0, // Undo browser default
     },
     'dt, dd': {
       lineHeight: theme.typography.body.lineHeight,
@@ -218,8 +275,10 @@ export function getElementStyles(theme: GrafanaTheme2) {
     // 2. Correct font properties not being inherited.
     // 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
     'button, input, optgroup, select, textarea': {
+      borderRadius: theme.shape.radius.default,
       color: 'inherit',
       font: 'inherit',
+      lineHeight: 'inherit',
       margin: 0,
     },
 
@@ -239,6 +298,14 @@ export function getElementStyles(theme: GrafanaTheme2) {
       cursor: 'pointer',
     },
 
+    'input[type="search"]': {
+      // This overrides the extra rounded corners on search inputs in iOS so that our
+      // `.form-control` class can properly style them. Note that this cannot simply
+      // be added to `.form-control` as it's not specific enough. For details, see
+      // https://github.com/twbs/bootstrap/issues/11586.
+      WebkitAppearance: 'none',
+    },
+
     // Remove inner padding and search cancel button in Safari and Chrome on OS X.
     // Safari (but not Chrome) clips the cancel button when the search input has
     // padding (and `textfield` appearance).
@@ -247,12 +314,23 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
 
     table: {
+      // Reset for nesting within parents with `background-color`.
+      backgroundColor: 'transparent',
       borderCollapse: 'collapse',
       borderSpacing: 0,
     },
 
+    caption: {
+      paddingTop: theme.spacing(0.5),
+      paddingBottom: theme.spacing(0.5),
+      color: theme.colors.text.secondary,
+      textAlign: 'left',
+      captionSide: 'bottom',
+    },
+
     th: {
       fontWeight: theme.typography.fontWeightMedium,
+      textAlign: 'left',
     },
 
     'td, th': {
@@ -310,6 +388,33 @@ export function getElementStyles(theme: GrafanaTheme2) {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         pointerEvents: 'none !important' as 'none',
       },
+    },
+
+    // iOS "clickable elements" fix for role="button"
+    //
+    // Fixes "clickability" issue (and more generally, the firing of events such as focus as well)
+    // for traditionally non-focusable elements with role="button"
+    // see https://developer.mozilla.org/en-US/docs/Web/Events/click#Safari_Mobile
+    "[role='button']": {
+      cursor: 'pointer',
+    },
+
+    // Always hide an element with the `hidden` HTML attribute (from PureCSS).
+    '[hidden]': {
+      display: 'none !important',
+    },
+
+    // Avoid 300ms click delay on touch devices that support the `touch-action` CSS property.
+    //
+    // In particular, unlike most other browsers, IE11+Edge on Windows 10 on touch devices and IE Mobile 10-11
+    // DON'T remove the click delay when `<meta name="viewport" content="width=device-width">` is present.
+    // However, they DO support removing the click delay via `touch-action: manipulation`.
+    // See:
+    // * http://v4-alpha.getbootstrap.com/content/reboot/#click-delay-optimization-for-touch
+    // * http://caniuse.com/#feat=css-touch-action
+    // * http://patrickhlauke.github.io/touch/tests/results/#suppressing-300ms-delay
+    "a, area, button, [role='button'], input, label, select, summary, textarea": {
+      touchAction: 'manipulation',
     },
 
     '.text-link': {
