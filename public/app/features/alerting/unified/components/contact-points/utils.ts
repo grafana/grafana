@@ -209,5 +209,17 @@ function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedR
   };
 }
 
-export const showManageContactPointPermissions = (alertmanager: string) =>
-  shouldUseK8sApi(alertmanager) && contextSrv.licensedAccessControlEnabled();
+const getContactPointPermission = (contactPoint: GrafanaManagedContactPoint, permission: string) =>
+  contactPoint.metadata?.annotations?.[`grafana.com/access/${permission}`] === 'true';
+
+export const canEditContactPoint = (contactPoint: GrafanaManagedContactPoint) =>
+  getContactPointPermission(contactPoint, 'canWrite');
+
+export const canAdminContactPoint = (contactPoint: GrafanaManagedContactPoint) =>
+  getContactPointPermission(contactPoint, 'canAdmin');
+
+export const canDeleteContactPoint = (contactPoint: GrafanaManagedContactPoint) =>
+  getContactPointPermission(contactPoint, 'canDelete');
+
+export const showManageContactPointPermissions = (alertmanager: string, contactPoint: GrafanaManagedContactPoint) =>
+  shouldUseK8sApi(alertmanager) && contextSrv.licensedAccessControlEnabled() && canAdminContactPoint(contactPoint);

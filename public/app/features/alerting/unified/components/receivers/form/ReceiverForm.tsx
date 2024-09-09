@@ -46,6 +46,7 @@ interface Props<R extends ChannelValues> {
    */
   disableEditTitle?: boolean;
   contactPointId?: string;
+  canManagePermissions?: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -62,6 +63,7 @@ export function ReceiverForm<R extends ChannelValues>({
   showDefaultRouteWarning,
   disableEditTitle,
   contactPointId,
+  canManagePermissions,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -118,8 +120,6 @@ export function ReceiverForm<R extends ChannelValues>({
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
-  const showManagePermissions = showManageContactPointPermissions(alertManagerSourceName);
-
   return (
     <FormProvider {...formAPI}>
       {showDefaultRouteWarning && (
@@ -133,7 +133,7 @@ export function ReceiverForm<R extends ChannelValues>({
           <h2 className={styles.heading}>
             {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
           </h2>
-          {showManagePermissions && contactPointId && (
+          {canManagePermissions && contactPointId && (
             <ManagePermissions
               resource="receivers"
               resourceId={contactPointId}

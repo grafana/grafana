@@ -17,7 +17,13 @@ import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { UnusedContactPointBadge } from './components/UnusedBadge';
-import { ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
+import {
+  canDeleteContactPoint,
+  canEditContactPoint,
+  canAdminContactPoint,
+  ContactPointWithMetadata,
+  showManageContactPointPermissions,
+} from './utils';
 
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
@@ -43,14 +49,33 @@ export const ContactPointHeader = ({
 
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
-  const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!);
+  const showManagePermissions =
+    canAdminContactPoint(contactPoint) && showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
 
-  const numberOfPolicies = policies.length;
-  const isReferencedByAnyPolicy = numberOfPolicies > 0;
-  const isReferencedByRegularPolicies = policies.some((ref) => ref.route.type !== 'auto-generated');
+  const numberOfPolicies = Number(contactPoint.metadata?.annotations?.['grafana.com/inUse/routes'] ?? policies.length);
 
-  const canEdit = editSupported && editAllowed && !provisioned;
-  const canDelete = deleteSupported && deleteAllowed && !provisioned && !isReferencedByRegularPolicies;
+  const numberOfRules = (contactPoint.metadata?.annotations?.['grafana.com/inUse/rules'] || '')
+    .split(',')
+    .filter(Boolean).length;
+
+  /** Is the contact point referenced by anything such as notification policies or as a simplified routing contact point? */
+  const isReferencedByAnythingElse = numberOfRules + numberOfPolicies > 0;
+  const isReferencedByRegularPolicies =
+    numberOfPolicies > 0 ?? policies.some((ref) => ref.route.type !== 'auto-generated');
+
+  /** Does the current user have permissions to edit the contact point? */
+  const hasAbilityToEdit = canEditContactPoint(contactPoint) || editAllowed;
+  /** Can the contact point be edited via the UI? */
+  const contactPointIsEditable = !provisioned;
+  /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be edited? */
+  const canEdit = editSupported && hasAbilityToEdit && contactPointIsEditable;
+
+  /** Does the current user have permissions to delete the contact point? */
+  const hasAbilityToDelete = canDeleteContactPoint(contactPoint) || deleteAllowed;
+  /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
+  const contactPointIsDeleteable = !provisioned && !isReferencedByRegularPolicies;
+  /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
+  const canBeDeleted = deleteSupported && hasAbilityToDelete && contactPointIsDeleteable;
 
   const menuActions: JSX.Element[] = [];
   if (showManagePermissions) {
@@ -78,12 +103,28 @@ export const ContactPointHeader = ({
   }
 
   if (deleteSupported) {
+    const reasonsDeleteIsDisabled = [
+      !hasAbilityToDelete ? 'You do not have permission to delete this contact point' : '',
+      provisioned ? 'Contact point is provisioned and cannot be deleted via the UI' : '',
+      isReferencedByRegularPolicies ? 'Contact point is referenced by one or more notification policies' : '',
+    ].filter(Boolean);
+
+    const deleteTooltipContent = (
+      <>
+        <div>Contact point cannot be deleted for the following reasons:</div>
+        <br />
+        {reasonsDeleteIsDisabled.map((reason) => (
+          <li key={reason}>{reason}</li>
+        ))}
+      </>
+    );
+
     menuActions.push(
       <ConditionalWrap
         key="delete-contact-point"
-        shouldWrap={!canDelete}
+        shouldWrap={!canBeDeleted}
         wrap={(children) => (
-          <Tooltip content="Contact point is currently in use by one or more notification policies" placement="top">
+          <Tooltip content={deleteTooltipContent} placement="top">
             <span>{children}</span>
           </Tooltip>
         )}
@@ -93,7 +134,7 @@ export const ContactPointHeader = ({
           ariaLabel="delete"
           icon="trash-alt"
           destructive
-          disabled={disabled || !canDelete}
+          disabled={disabled || !canBeDeleted}
           onClick={() => onDelete(contactPoint)}
         />
       </ConditionalWrap>
@@ -116,7 +157,7 @@ export const ContactPointHeader = ({
             {name}
           </Text>
         </Stack>
-        {isReferencedByAnyPolicy && showPolicies && (
+        {numberOfPolicies > 0 && showPolicies && (
           <TextLink
             href={createRelativeUrl('/alerting/routes', { contactPoint: name })}
             variant="bodySmall"
@@ -126,10 +167,20 @@ export const ContactPointHeader = ({
             {referencedByPoliciesText}
           </TextLink>
         )}
+        {numberOfRules > 0 && showPolicies && (
+          <TextLink
+            href={createRelativeUrl('/alerting/list', { search: `contactPoint:"${name}"` })}
+            variant="bodySmall"
+            color="primary"
+            inline={false}
+          >
+            Used by {numberOfRules} alert rules
+          </TextLink>
+        )}
         {provisioned && (
           <ProvisioningBadge tooltip provenance={contactPoint.metadata?.annotations?.[PROVENANCE_ANNOTATION]} />
         )}
-        {!isReferencedByAnyPolicy && showPolicies && <UnusedContactPointBadge />}
+        {!isReferencedByAnythingElse && showPolicies && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
           tooltipPlacement="top"

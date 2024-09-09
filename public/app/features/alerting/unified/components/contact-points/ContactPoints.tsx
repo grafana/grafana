@@ -12,7 +12,9 @@ import {
   TabsBar,
   Text,
 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { AccessControlAction } from 'app/types';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
@@ -42,13 +44,14 @@ const ContactPointsTab = () => {
   const [queryParams] = useURLSearchParams();
 
   const SHOW_POLICIES = true;
+  const SHOW_STATUSES = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
     fetchPolicies: SHOW_POLICIES,
-    fetchStatuses: true,
+    fetchStatuses: SHOW_STATUSES,
   });
-
+  const canCreateContactPoint = contextSrv.hasPermission(AccessControlAction.AlertingReceiversCreate);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
   );
@@ -77,13 +80,13 @@ const ContactPointsTab = () => {
         <ContactPointsFilter />
 
         <Stack direction="row" gap={1}>
-          {addContactPointSupported && (
+          {(canCreateContactPoint || addContactPointSupported) && (
             <LinkButton
               icon="plus"
               aria-label="add contact point"
               variant="primary"
               href="/alerting/notifications/receivers/new"
-              disabled={!addContactPointAllowed}
+              disabled={!(canCreateContactPoint || addContactPointAllowed)}
             >
               Add contact point
             </LinkButton>

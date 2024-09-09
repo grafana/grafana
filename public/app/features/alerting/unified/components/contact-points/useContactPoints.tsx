@@ -140,7 +140,10 @@ const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
       };
     },
   });
-  const k8sResponse = useK8sContactPoints({ namespace }, { skip: skip || !useK8sApi });
+  const k8sResponse = useK8sContactPoints(
+    { namespace, labelSelector: 'grafana.com/accessControl,grafana.com/inUse' },
+    { skip: skip || !useK8sApi }
+  );
 
   return useK8sApi ? k8sResponse : grafanaResponse;
 };
@@ -182,7 +185,7 @@ export const useGrafanaContactPoints = ({
   return useMemo(() => {
     const isLoading = onCallResponse.isLoading || alertNotifiers.isLoading || contactPointsListResponse.isLoading;
 
-    if (isLoading || !contactPointsListResponse.data) {
+    if (isLoading) {
       return {
         ...contactPointsListResponse,
         // If we're inside this block, it means that at least one of the endpoints we care about is still loading,
@@ -198,7 +201,7 @@ export const useGrafanaContactPoints = ({
       status: contactPointsStatusResponse.data,
       notifiers: alertNotifiers.data,
       onCallIntegrations: onCallResponse?.data,
-      contactPoints: contactPointsListResponse.data,
+      contactPoints: contactPointsListResponse.data || [],
       alertmanagerConfiguration: alertmanagerConfigResponse.data,
     });
 
