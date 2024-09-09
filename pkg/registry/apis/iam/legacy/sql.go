@@ -38,6 +38,11 @@ func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStor
 
 type legacySQLStore struct {
 	sql legacysql.LegacyDatabaseProvider
+	ac  claims.AccessClient
+}
+
+func (s *legacySQLStore) WithAccessClient(ac claims.AccessClient) {
+	s.ac = ac
 }
 
 // Templates setup.

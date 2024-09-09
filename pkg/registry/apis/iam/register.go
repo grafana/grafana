@@ -48,15 +48,18 @@ func RegisterAPIService(
 	ac accesscontrol.AccessControl,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis
+		// skip registration unless opting into experimental apis
+		return nil, nil
 	}
 
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
+	// FIXME: we need to inject client -> store but we also need store -> client..
+	authz, _ := newLegacyAuthorizer(ac, store)
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:      store,
 		sso:        ssoService,
-		authorizer: newLegacyAuthorizer(ac, store),
+		authorizer: authz,
 	}
 	apiregistration.RegisterAPI(builder)
 
