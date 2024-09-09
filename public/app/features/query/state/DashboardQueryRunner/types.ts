@@ -13,6 +13,7 @@ export interface DashboardQueryRunnerOptions {
 export interface DashboardQueryRunnerResult {
   annotations: AnnotationEvent[];
   alertState?: AlertStateInfo;
+  correlations?: CorrelationData[];
 }
 
 export interface DashboardQueryRunner {

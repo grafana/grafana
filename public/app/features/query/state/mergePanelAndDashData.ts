@@ -1,7 +1,9 @@
+import { groupBy, mapValues } from 'lodash';
 import { combineLatest, Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
 import { arrayToDataFrame, DataFrame, DataTopic, PanelData, PanelPluginDataSupport } from '@grafana/data';
+import { attachCorrelationsToDataFrames } from 'app/features/correlations/utils';
 
 import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 
@@ -44,6 +46,18 @@ export function mergePanelAndDashData(
         const alertState = dashData.alertState;
         mergedData = { ...mergedData, alertState };
       }
+
+      //handle correlations
+      if (Boolean(dashData.correlations) && panelData?.request?.targets) {
+        const queryRefIdToDataSourceUid = mapValues(groupBy(panelData.request.targets, 'refId'), '0.datasource.uid');
+        const dataFramesWithCorrelations = attachCorrelationsToDataFrames(
+          panelData.series,
+          dashData.correlations!,
+          queryRefIdToDataSourceUid
+        );
+        mergedData = { ...mergedData, series: dataFramesWithCorrelations };
+      }
+
       return of(mergedData);
     })
   );
