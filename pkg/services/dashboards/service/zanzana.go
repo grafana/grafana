@@ -18,6 +18,7 @@ import (
 
 const (
 	maxListQueryLength = 8
+	maxListQueryLimit  = 100
 )
 
 type searchResult struct {
@@ -96,6 +97,15 @@ type findDashboardsFn func(ctx context.Context, query *dashboards.FindPersistedD
 
 // getFindDashboardsFn makes a decision which search method should be used
 func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersistedDashboardsQuery) findDashboardsFn {
+	if query.Limit > 0 && query.Limit < maxListQueryLimit {
+		return dr.findDashboardsZanzanaCheck
+	}
+	if len(query.DashboardUIDs) > 0 && len(query.DashboardUIDs) < maxListQueryLimit {
+		return dr.findDashboardsZanzanaCheck
+	}
+	if len(query.FolderUIDs) > 0 && len(query.FolderUIDs) < maxListQueryLimit {
+		return dr.findDashboardsZanzanaCheck
+	}
 	if len(query.Title) <= maxListQueryLength {
 		return dr.findDashboardsZanzanaList
 	}
