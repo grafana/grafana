@@ -19,9 +19,7 @@ import QueryField from './QueryField';
 import { TimeManagement } from './TimeManagement';
 import { setBasicLogsQuery, setFormatAs, setKustoQuery } from './setQueryValue';
 import useMigrations from './useMigrations';
-import { calculateTimeRange, shouldShowBasicLogsToggle } from './utils';
-
-const MAX_DATA_RETENTION_DAYS = 8; // limit is only for basic logs
+import { shouldShowBasicLogsToggle } from './utils';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -52,7 +50,6 @@ const LogsQueryEditor = ({
   const [showBasicLogsToggle, setShowBasicLogsToggle] = useState<boolean>(
     shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)
   );
-  const [showDataRetentionWarning, setShowDataRetentionWarning] = useState<boolean>(false);
   const [dataIngestedWarning, setDataIngestedWarning] = useState<React.ReactNode | null>(null);
   const templateSrv = getTemplateSrv();
   const from = templateSrv?.replace('$__from');
@@ -95,17 +92,6 @@ const LogsQueryEditor = ({
       onChange(setKustoQuery(updatedBasicLogsQuery, ''));
     }
   }, [basicLogsEnabled, onChange, query, showBasicLogsToggle]);
-
-  useEffect(() => {
-    const timeRange = calculateTimeRange(parseInt(from, 10), parseInt(to, 10));
-    // Basic logs data retention is fixed at 8 days
-    // need to add this check to make user aware of this limitation in case they have selected a longer time range
-    if (showBasicLogsToggle && query.azureLogAnalytics?.basicLogsQuery && timeRange > MAX_DATA_RETENTION_DAYS) {
-      setShowDataRetentionWarning(true);
-    } else {
-      setShowDataRetentionWarning(false);
-    }
-  }, [query.azureLogAnalytics?.basicLogsQuery, showBasicLogsToggle, from, to]);
 
   useEffect(() => {
     const getBasicLogsUsage = async (query: AzureMonitorQuery) => {
@@ -247,13 +233,6 @@ const LogsQueryEditor = ({
           </EditorFieldGroup>
         </EditorRow>
       </EditorRows>
-      {showDataRetentionWarning && (
-        <Alert severity="warning" title="Basic Logs data retention">
-          <Text>
-            Data retention for Basic Logs is fixed at eight days. You will only see data within this timeframe.
-          </Text>
-        </Alert>
-      )}
     </span>
   );
 };
