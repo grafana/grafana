@@ -774,4 +774,8 @@ const (
 	// FlagAppSidecar
 	// Enable the app sidecar feature that allows rendering 2 apps at the same time
 	FlagAppSidecar = "appSidecar"
+
+	// FlagGroupAttributeSync
+	// Enable the groupsync extension for managing Group Attribute Sync feature
+	FlagGroupAttributeSync = "groupAttributeSync"
 )

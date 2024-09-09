@@ -191,3 +191,4 @@ exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,fals
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
 appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,false
 appSidecar,experimental,@grafana/explore-squad,false,false,false
+groupAttributeSync,experimental,@grafana/identity-access-team,false,false,false

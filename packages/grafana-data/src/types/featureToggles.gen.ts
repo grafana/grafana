@@ -210,4 +210,5 @@ export interface FeatureToggles {
   exploreLogsLimitedTimeRange?: boolean;
   appPlatformAccessTokens?: boolean;
   appSidecar?: boolean;
+  groupAttributeSync?: boolean;
 }
