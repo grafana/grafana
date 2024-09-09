@@ -187,3 +187,153 @@ func TestService(t *testing.T) {
 		})
 	}
 }
+
+func TestService_ChildPlugins(t *testing.T) {
+	type expected struct {
+		module  string
+		baseURL string
+		relURL  string
+	}
+
+	tcs := []struct {
+		name       string
+		cfg        *config.PluginManagementCfg
+		pluginInfo func() PluginInfo
+		expected   expected
+	}{
+		{
+			name: "Local FS external plugin",
+			cfg:  &config.PluginManagementCfg{},
+			pluginInfo: func() PluginInfo {
+				return NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassExternal, plugins.NewLocalFS("/plugins/parent"), nil)
+			},
+			expected: expected{
+				module:  "public/plugins/parent/module.js",
+				baseURL: "public/plugins/parent",
+				relURL:  "public/plugins/parent/path/to/file.txt",
+			},
+		},
+		{
+			name: "Local FS external plugin with child",
+			cfg:  &config.PluginManagementCfg{},
+			pluginInfo: func() PluginInfo {
+				parentInfo := NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassExternal, plugins.NewLocalFS("/plugins/parent"), nil)
+				childInfo := NewPluginInfo(plugins.JSONData{ID: "child", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassExternal, plugins.NewLocalFS("/plugins/parent/child"), &parentInfo)
+				return childInfo
+			},
+			expected: expected{
+				module:  "public/plugins/parent/child/module.js",
+				baseURL: "public/plugins/parent/child",
+				relURL:  "public/plugins/parent/child/path/to/file.txt",
+			},
+		},
+		{
+			name: "Local FS core plugin",
+			cfg:  &config.PluginManagementCfg{},
+			pluginInfo: func() PluginInfo {
+				return NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassCore, plugins.NewLocalFS("/plugins/parent"), nil)
+			},
+			expected: expected{
+				module:  "core:plugin/parent",
+				baseURL: "public/app/plugins/parent",
+				relURL:  "public/app/plugins/parent/path/to/file.txt",
+			},
+		},
+		{
+			name: "Externally-built Local FS core plugin",
+			cfg:  &config.PluginManagementCfg{},
+			pluginInfo: func() PluginInfo {
+				return NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassCore, plugins.NewLocalFS("/plugins/parent/dist"), nil)
+			},
+			expected: expected{
+				module:  "public/plugins/parent/module.js",
+				baseURL: "public/app/plugins/parent",
+				relURL:  "public/app/plugins/parent/path/to/file.txt",
+			},
+		},
+		{
+			name: "CDN Class plugin",
+			cfg: &config.PluginManagementCfg{
+				PluginsCDNURLTemplate: "https://cdn.example.com",
+			},
+			pluginInfo: func() PluginInfo {
+				return NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassCDN, pluginFS("https://cdn.example.com/plugins/parent"), nil)
+			},
+			expected: expected{
+				module:  "https://cdn.example.com/plugins/parent/module.js",
+				baseURL: "https://cdn.example.com/plugins/parent",
+				relURL:  "https://cdn.example.com/plugins/parent/path/to/file.txt",
+			},
+		},
+		{
+			name: "CDN Class plugin with child",
+			cfg: &config.PluginManagementCfg{
+				PluginsCDNURLTemplate: "https://cdn.example.com",
+			},
+			pluginInfo: func() PluginInfo {
+				// Note: fake plugin FS is the most convenient way to mock the plugin FS for CDN plugins
+				parentInfo := NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassCDN, pluginFS("https://cdn.example.com/parent"), nil)
+				childInfo := NewPluginInfo(plugins.JSONData{ID: "child", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassCDN, pluginFS("https://cdn.example.com/parent/some/other/dir/child"), &parentInfo)
+				return childInfo
+			},
+			expected: expected{
+				module:  "https://cdn.example.com/parent/some/other/dir/child/module.js",
+				baseURL: "https://cdn.example.com/parent/some/other/dir/child",
+				relURL:  "https://cdn.example.com/parent/some/other/dir/child/path/to/file.txt",
+			},
+		},
+		{
+			name: "CDN supported plugin",
+			cfg: &config.PluginManagementCfg{
+				PluginsCDNURLTemplate: "https://cdn.example.com",
+				PluginSettings: map[string]map[string]string{
+					"parent": {"cdn": "true"},
+				},
+			},
+			pluginInfo: func() PluginInfo {
+				return NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassExternal, plugins.NewLocalFS("/plugins/parent"), nil)
+			},
+			expected: expected{
+				module:  "https://cdn.example.com/parent/1.0.0/public/plugins/parent/module.js",
+				baseURL: "https://cdn.example.com/parent/1.0.0/public/plugins/parent",
+				relURL:  "https://cdn.example.com/parent/1.0.0/public/plugins/parent/path/to/file.txt",
+			},
+		},
+		{
+			name: "CDN supported plugin with child",
+			cfg: &config.PluginManagementCfg{
+				PluginsCDNURLTemplate: "https://cdn.example.com",
+				PluginSettings: map[string]map[string]string{
+					"parent": {"cdn": "true"},
+				},
+			},
+			pluginInfo: func() PluginInfo {
+				parentInfo := NewPluginInfo(plugins.JSONData{ID: "parent", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassExternal, plugins.NewLocalFS("/plugins/parent"), nil)
+				childInfo := NewPluginInfo(plugins.JSONData{ID: "child", Info: plugins.Info{Version: "1.0.0"}}, plugins.ClassExternal, plugins.NewLocalFS("/plugins/parent/child"), &parentInfo)
+				return childInfo
+			},
+			expected: expected{
+				module:  "https://cdn.example.com/parent/1.0.0/public/plugins/parent/child/module.js",
+				baseURL: "https://cdn.example.com/parent/1.0.0/public/plugins/parent/child",
+				relURL:  "https://cdn.example.com/parent/1.0.0/public/plugins/parent/child/path/to/file.txt",
+			},
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := ProvideService(tc.cfg, pluginscdn.ProvideService(tc.cfg))
+
+			module, err := svc.Module(tc.pluginInfo())
+			require.NoError(t, err)
+			require.Equal(t, tc.expected.module, module)
+
+			baseURL, err := svc.Base(tc.pluginInfo())
+			require.NoError(t, err)
+			require.Equal(t, tc.expected.baseURL, baseURL)
+
+			relURL, err := svc.RelativeURL(tc.pluginInfo(), "path/to/file.txt")
+			require.NoError(t, err)
+			require.Equal(t, tc.expected.relURL, relURL)
+		})
+	}
+}

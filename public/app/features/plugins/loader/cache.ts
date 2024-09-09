@@ -1,22 +1,26 @@
+import { PluginLoadingStrategy } from '@grafana/data';
+
 import { clearPluginSettingsCache } from '../pluginSettings';
 
 import { CACHE_INITIALISED_AT } from './constants';
 
-const cache: Record<string, CacheablePlugin> = {};
+const cache: Record<string, CachedPlugin> = {};
 
 type CacheablePlugin = {
-  pluginId: string;
+  path: string;
   version: string;
-  isAngular?: boolean;
+  loadingStrategy: PluginLoadingStrategy;
 };
 
-export function registerPluginInCache({ pluginId, version, isAngular }: CacheablePlugin): void {
-  const key = pluginId;
+type CachedPlugin = Omit<CacheablePlugin, 'path'>;
+
+export function registerPluginInCache({ path, version, loadingStrategy }: CacheablePlugin): void {
+  const key = extractCacheKeyFromPath(path);
+
   if (key && !cache[key]) {
     cache[key] = {
       version: encodeURI(version),
-      isAngular,
-      pluginId,
+      loadingStrategy,
     };
   }
 }
@@ -39,12 +43,18 @@ export function resolveWithCache(url: string, defaultBust = CACHE_INITIALISED_AT
   return `${url}?_cache=${bust}`;
 }
 
-export function getPluginFromCache(path: string): CacheablePlugin | undefined {
+export function getPluginFromCache(path: string): CachedPlugin | undefined {
   const key = getCacheKey(path);
   if (!key) {
     return;
   }
   return cache[key];
+}
+
+export function extractCacheKeyFromPath(path: string) {
+  const regex = /\/?public\/plugins\/([^\/]+)\//;
+  const match = path.match(regex);
+  return match ? match[1] : null;
 }
 
 function getCacheKey(address: string): string | undefined {

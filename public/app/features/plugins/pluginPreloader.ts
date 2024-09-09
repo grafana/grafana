@@ -5,7 +5,7 @@ import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 
 import { PluginExtensionRegistries } from './extensions/registry/types';
-import * as pluginLoader from './plugin_loader';
+import { importPluginModule } from './plugin_loader';
 
 export type PluginPreloadResult = {
   pluginId: string;
@@ -48,14 +48,15 @@ export async function preloadPlugins(
 }
 
 async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
-  const { path, version, id: pluginId } = config;
+  const { path, version, id: pluginId, loadingStrategy } = config;
   try {
     startMeasure(`frontend_plugin_preload_${pluginId}`);
-    const { plugin } = await pluginLoader.importPluginModule({
+    const { plugin } = await importPluginModule({
       path,
       version,
       isAngular: config.angular.detected,
       pluginId,
+      loadingStrategy,
     });
     const { exposedComponentConfigs = [], addedComponentConfigs = [], addedLinkConfigs = [] } = plugin;
 

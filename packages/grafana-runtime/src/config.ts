@@ -17,6 +17,7 @@ import {
   SystemDateFormatSettings,
   getThemeById,
   AngularMeta,
+  PluginLoadingStrategy,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -40,6 +41,7 @@ export type AppPluginConfig = {
   version: string;
   preload: boolean;
   angular: AngularMeta;
+  loadingStrategy: PluginLoadingStrategy;
 };
 
 export type PreinstalledPlugin = {

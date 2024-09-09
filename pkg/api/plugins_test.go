@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -817,6 +818,7 @@ func Test_PluginsSettings(t *testing.T) {
 					Version: "1.0.0",
 				},
 				SecureJsonFields: map[string]bool{},
+				LoadingStrategy:  plugins.LoadingStrategyScript,
 			},
 		},
 		{
@@ -841,6 +843,8 @@ func Test_PluginsSettings(t *testing.T) {
 						ErrorCode: tc.errCode,
 					})
 				}
+				pluginCDN := pluginscdn.ProvideService(&config.PluginManagementCfg{})
+				hs.pluginAssets = pluginassets.ProvideService(hs.Cfg, pluginCDN)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				var err error
 				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
