@@ -10,6 +10,17 @@ labels:
 menuTitle: RBAC permissions, actions, and scopes
 title: Grafana RBAC permissions, actions, and scopes
 weight: 80
+refs:
+  rbac-grafana-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-grafana-provisioning/
+  rbac-fixed-roles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/#fixed-roles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/#fixed-roles
 ---
 
 # RBAC permissions, actions, and scopes
@@ -20,7 +31,7 @@ Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/g
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resources on which they can perform those actions.
 
-To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/#fixed-roles).
+To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
 
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
@@ -238,7 +249,7 @@ The following list contains role-based access control scopes.
 | <ul><li>`permissions:type:delegate`</li><ul>                         | The scope is only applicable for roles associated with the Access Control itself and indicates that you can delegate your permissions only, or a subset of it, by creating a new role or making an assignment.                                     |
 | <ul><li>`permissions:type:escalate`</li><ul>                         | The scope is required to trigger the reset of basic roles permissions. It indicates that users might acquire additional permissions they did not previously have.                                                                                  |
 | <ul><li>`plugins:*`</li><li>`plugins:id:*`</li></ul>                 | Restrict an action to a set of plugins. For example, `plugins:id:grafana-oncall-app` matches Grafana OnCall plugin, and `plugins:*` matches all plugins.                                                                                           |
-| <ul><li>`provisioners:*`</li><ul>                                    | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner]({{< relref "./rbac-grafana-provisioning/" >}}).           |
+| <ul><li>`provisioners:*`</li><ul>                                    | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner](ref:rbac-grafana-provisioning).           |
 | <ul><li>`reports:*`</li><li>`reports:id:*`</li></ul>                 | Restrict an action to a set of reports. For example, `reports:*` matches any report and `reports:id:1` matches the report whose ID is `1`.                                                                                                         |
 | <ul><li>`roles:*`</li><li>`roles:uid:*`</li></ul>                    | Restrict an action to a set of roles. For example, `roles:*` matches any role and `roles:uid:randomuid` matches only the role whose UID is `randomuid`.                                                                                            |
 | <ul><li>`services:accesscontrol`</li><ul>                            | Restrict an action to target only the role-based access control service. You can use this in conjunction with the `status:accesscontrol` actions.                                                                                                  |

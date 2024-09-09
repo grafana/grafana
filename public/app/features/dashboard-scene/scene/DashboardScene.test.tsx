@@ -785,6 +785,22 @@ describe('DashboardScene', () => {
         expect(libVizPanel.state.key).toBe('panel-7');
       });
 
+      it('Should deep clone data provider when duplicating a panel', () => {
+        const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body;
+        scene.duplicatePanel(vizPanel as VizPanel);
+
+        const panelQueries = (
+          ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body.state.$data?.state
+            .$data as SceneQueryRunner
+        ).state.queries;
+        const duplicatedPanelQueries = (
+          ((scene.state.body as SceneGridLayout).state.children[5] as DashboardGridItem).state.body.state.$data?.state
+            .$data as SceneQueryRunner
+        ).state.queries;
+
+        expect(panelQueries[0]).not.toBe(duplicatedPanelQueries[0]);
+      });
+
       it('Should duplicate a repeated panel', () => {
         const scene = buildTestScene({
           body: new SceneGridLayout({
@@ -1225,7 +1241,10 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             }),
             $data: new SceneDataTransformer({
               transformations: [],
-              $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+              $data: new SceneQueryRunner({
+                key: 'data-query-runner',
+                queries: [{ refId: 'A', target: 'aliasByMetric(carbon.**)' }],
+              }),
             }),
           }),
         }),
