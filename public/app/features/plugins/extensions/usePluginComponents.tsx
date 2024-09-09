@@ -19,16 +19,10 @@ export function createUsePluginComponents(registry: AddedComponentsRegistry) {
     const registry = useObservable(observableRegistry);
 
     return useMemo(() => {
-      if (!registry || !registry[extensionPointId]) {
-        return {
-          isLoading: false,
-          components: [],
-        };
-      }
       const components: Array<React.ComponentType<Props>> = [];
-      const registryItems = registry[extensionPointId];
       const extensionsByPlugin: Record<string, number> = {};
-      for (const registryItem of registryItems) {
+
+      for (const registryItem of registry?.[extensionPointId] ?? []) {
         const { pluginId } = registryItem;
 
         // Only limit if the `limitPerPlugin` is set
