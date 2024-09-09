@@ -352,6 +352,18 @@
     },
     {
       "metadata": {
+        "name": "appSidecar",
+        "resourceVersion": "1722872007883",
+        "creationTimestamp": "2024-08-05T15:33:27Z"
+      },
+      "spec": {
+        "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
+        "stage": "experimental",
+        "codeowner": "@grafana/explore-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "authAPIAccessTokenAuth",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-04-02T15:45:15Z"

@@ -12,6 +12,7 @@ export type UsePluginExtensions<T = PluginExtension> = (
 
 export type GetPluginExtensionsOptions = {
   extensionPointId: string;
+  // Make sure this object is properly memoized and not mutated.
   context?: object | Record<string | symbol, unknown>;
   limitPerPlugin?: number;
 };
