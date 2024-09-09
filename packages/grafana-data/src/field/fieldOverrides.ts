@@ -607,7 +607,7 @@ export function useFieldOverrides(
 /**
  * Clones the existing dataContext or creates a new one
  */
-function getFieldDataContextClone(frame: DataFrame, field: Field, fieldScopedVars: ScopedVars) {
+export function getFieldDataContextClone(frame: DataFrame, field: Field, fieldScopedVars: ScopedVars) {
   if (fieldScopedVars?.__dataContext) {
     return {
       value: {
