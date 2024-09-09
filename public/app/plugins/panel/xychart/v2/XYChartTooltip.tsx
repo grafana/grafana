@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-import { DataFrame } from '@grafana/data';
+import { DataFrame, InterpolateFunction } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -8,7 +8,7 @@ import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizToolt
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 
-import { getDataLinks } from '../../status-history/utils';
+import { getDataLinks, getFieldActions } from '../../status-history/utils';
 import { getStyles } from '../../timeseries/TimeSeriesTooltip';
 
 import { XYSeries } from './types2';
@@ -21,6 +21,7 @@ export interface Props {
   dismiss: () => void;
   data: DataFrame[];
   xySeries: XYSeries[];
+  replaceVariables: InterpolateFunction;
 }
 
 function stripSeriesName(fieldName: string, seriesName: string) {
@@ -31,7 +32,7 @@ function stripSeriesName(fieldName: string, seriesName: string) {
   return fieldName;
 }
 
-export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, isPinned }: Props) => {
+export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, isPinned, replaceVariables }: Props) => {
   const styles = useStyles2(getStyles);
 
   const rowIndex = dataIdxs.find((idx) => idx !== null)!;
@@ -97,8 +98,9 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
 
   if (isPinned && seriesIdx != null) {
     const links = getDataLinks(yField, rowIndex);
+    const actions = getFieldActions(data[0], yField, replaceVariables);
 
-    footer = <VizTooltipFooter dataLinks={links} />;
+    footer = <VizTooltipFooter dataLinks={links} actions={actions} />;
   }
 
   return (
