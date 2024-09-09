@@ -310,6 +310,7 @@ func createDashboard(t *testing.T, sqlStore db.ReplDB, user user.SignedInUser, d
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 		nil,
+		actest.FakeService{},
 	)
 	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -394,6 +395,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 		nil,
+		actest.FakeService{},
 	)
 	require.NoError(t, svcErr)
 	guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
@@ -454,8 +456,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
 			features, folderPermissions, dashboardPermissions, ac,
-			foldertest.NewFakeService(),
-			nil,
+			foldertest.NewFakeService(), nil, actest.FakeService{},
 		)
 		require.NoError(t, dashSvcErr)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService)

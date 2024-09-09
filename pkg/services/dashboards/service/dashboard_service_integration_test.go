@@ -875,6 +875,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			ac,
 			foldertest.NewFakeService(),
 			nil,
+			actest.FakeService{},
 		)
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
@@ -940,6 +941,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 		nil,
+		actest.FakeService{},
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -964,6 +966,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 		nil,
+		actest.FakeService{},
 	)
 	require.NoError(t, err)
 	_, err = service.SaveDashboard(context.Background(), &dto, false)
@@ -1007,6 +1010,7 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 		nil,
+		actest.FakeService{},
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -1057,6 +1061,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.ReplDB)
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
 		nil,
+		actest.FakeService{},
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
