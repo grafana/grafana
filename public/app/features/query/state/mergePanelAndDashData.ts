@@ -27,13 +27,13 @@ export function mergePanelAndDashData(
       // handle annotations
       if (dataSupport.annotations) {
         if (Boolean(dashData.annotations?.length)) {
-          if (!panelData.annotations) {
-            panelData.annotations = [];
+          if (!mergedData.annotations) {
+            mergedData = { ...mergedData, annotations: [] };
           }
-          const annotations = panelData.annotations.concat(arrayToDataFrame(dashData.annotations));
+          const mergedAnnotations = mergedData.annotations!.concat(arrayToDataFrame(dashData.annotations));
 
-          addAnnoDataTopic(annotations);
-          mergedData = { ...mergedData, annotations };
+          addAnnoDataTopic(mergedAnnotations);
+          mergedData = { ...mergedData, annotations: mergedAnnotations };
         } else {
           addAnnoDataTopic(panelData.annotations);
         }
