@@ -12,19 +12,29 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
+	foldersvc "github.com/grafana/grafana/pkg/services/folder"
 )
 
-func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) unstructured.Unstructured {
+func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructured.Unstructured {
 	// #TODO add other fields
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]interface{}{
-				"title": cmd.Title,
+				"title": cmd.NewTitle,
 			},
 		},
 	}
 	obj.SetName(cmd.UID)
 	return obj
+}
+
+func UnstructuredToLegacyFolder(item unstructured.Unstructured) *foldersvc.Folder {
+	spec := item.Object["spec"].(map[string]any)
+	return &foldersvc.Folder{
+		UID:   item.GetName(),
+		Title: spec["title"].(string),
+		// #TODO add other fields
+	}
 }
 
 func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) *dtos.Folder {
