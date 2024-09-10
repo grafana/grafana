@@ -126,6 +126,12 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 }
 
 func TestCalculate(t *testing.T) {
+	parentDir, err := filepath.Abs("../")
+	if err != nil {
+		t.Errorf("could not construct absolute path of current dir")
+		return
+	}
+
 	t.Run("Validate root URL against App URL for non-private plugin if is specified in manifest", func(t *testing.T) {
 		tcs := []struct {
 			appURL            string
@@ -145,12 +151,6 @@ func TestCalculate(t *testing.T) {
 					Status: plugins.SignatureStatusInvalid,
 				},
 			},
-		}
-
-		parentDir, err := filepath.Abs("../")
-		if err != nil {
-			t.Errorf("could not construct absolute path of current dir")
-			return
 		}
 
 		for _, tc := range tcs {
@@ -272,6 +272,129 @@ func TestCalculate(t *testing.T) {
 					Type:       plugins.SignatureTypeGrafana,
 					SigningOrg: "Grafana Labs",
 				}, sig)
+			})
+		}
+	})
+
+	t.Run("ModuleHash", func(t *testing.T) {
+		validFoundPlugin := plugins.FoundPlugin{
+			JSONData: plugins.JSONData{
+				ID: "test-datasource",
+				Info: plugins.Info{
+					Version: "1.0.0",
+				},
+			},
+			FS: mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-with-module-js")),
+		}
+		const validModuleHash = "sha256-WJG1tSLV3whtD/CxEPvZ0hu0/HFjrzTQgoai6Eb2vgM="
+
+		pluginSourceExternal := fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.ClassExternal
+			},
+		}
+
+		pluginSourceCDN := fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.ClassCDN
+			},
+			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
+				return plugins.Signature{Status: plugins.SignatureStatusValid}, true
+			},
+		}
+
+		for _, tc := range []struct {
+			name         string
+			foundPlugin  plugins.FoundPlugin
+			pluginSource fakes.FakePluginSource
+			expSignature plugins.Signature
+		}{
+			{
+				name:         "should populate from MODULE.txt",
+				foundPlugin:  validFoundPlugin,
+				pluginSource: pluginSourceExternal,
+				expSignature: plugins.Signature{
+					Status:     plugins.SignatureStatusValid,
+					Type:       plugins.SignatureTypePrivate,
+					SigningOrg: "giuseppeguerra",
+					ModuleHash: validModuleHash,
+				},
+			},
+			{
+				// This test case covers the scenario where a plugin is provisioned from CDN
+				// (no files on disk at all, loaded entirely from the network)
+				name:         "should populate from MODULE.txt when class is CDN and DefaultSignature is provided",
+				foundPlugin:  validFoundPlugin,
+				pluginSource: pluginSourceCDN,
+				expSignature: plugins.Signature{
+					Status:     plugins.SignatureStatusValid,
+					Type:       "",
+					SigningOrg: "",
+					ModuleHash: validModuleHash,
+				},
+			},
+			{
+				name: "should not populate if not present in MODULE.txt",
+				foundPlugin: plugins.FoundPlugin{
+					JSONData: plugins.JSONData{
+						ID: "test-app",
+						Info: plugins.Info{
+							Version: "1.0.0",
+						},
+					},
+					FS: mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/test-app")),
+				},
+				pluginSource: pluginSourceExternal,
+				expSignature: plugins.Signature{
+					Status:     plugins.SignatureStatusValid,
+					Type:       plugins.SignatureTypeGrafana,
+					SigningOrg: "Grafana Labs",
+
+					// testdata/test-app contains a valid MODULE.txt, but with no module.js entry,
+					// so ModuleHash should be empty.
+					ModuleHash: "",
+				},
+			},
+			{
+				name: "should not populate if MODULE.txt is not present",
+				foundPlugin: plugins.FoundPlugin{
+					JSONData: plugins.JSONData{
+						ID:   "test-datasource",
+						Info: plugins.Info{},
+					},
+					FS: mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource")),
+				},
+				pluginSource: pluginSourceExternal,
+				expSignature: plugins.Signature{
+					Status:     plugins.SignatureStatusUnsigned,
+					ModuleHash: "",
+				},
+			},
+			{
+				name: "should not populate if MODULE.txt is not present but module.js is present",
+				foundPlugin: plugins.FoundPlugin{
+					JSONData: plugins.JSONData{
+						ID: "test-datasource",
+						Info: plugins.Info{
+							Version: "1.0.0",
+						},
+					},
+					FS: mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-with-module-js")),
+				},
+				pluginSource: pluginSourceExternal,
+				expSignature: plugins.Signature{
+					Status:     plugins.SignatureStatusUnsigned,
+					ModuleHash: "",
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				s := ProvideService(&config.PluginManagementCfg{
+					GrafanaAppURL: "http://127.0.0.1:3000",
+				}, statickey.New())
+				sig, err := s.Calculate(context.Background(), &tc.pluginSource, tc.foundPlugin)
+				require.NoError(t, err)
+				require.Equal(t, tc.expSignature, sig)
 			})
 		}
 	})
