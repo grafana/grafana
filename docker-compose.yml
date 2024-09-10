@@ -5,7 +5,7 @@ services:
     container_name: pmm-server
     # Temporary till we have arm builds
     platform: linux/amd64
-    image: perconalab/pmm-server:3-dev-container
+    image: ${PMM_SERVER_IMAGE:-perconalab/pmm-server:3-dev-container}
     volumes:
       - "./:/workspace"
       - "./public:/usr/share/grafana/public"
@@ -16,8 +16,8 @@ services:
     environment:
       - PMM_DEBUG=1
       - PERCONA_PORTAL_URL=https://portal-dev.percona.com
-      - PERCONA_TEST_PLATFORM_ADDRESS=https://check-dev.percona.com:443
-      - PERCONA_TEST_PLATFORM_PUBLIC_KEY=RWTkF7Snv08FCboTne4djQfN5qbrLfAjb8SY3/wwEP+X5nUrkxCEvUDJ
+      - PMM_DEV_PERCONA_PLATFORM_ADDRESS=https://check-dev.percona.com:443
+      - PMM_DEV_PERCONA_PLATFORM_PUBLIC_KEY=RWTkF7Snv08FCboTne4djQfN5qbrLfAjb8SY3/wwEP+X5nUrkxCEvUDJ
 
   mysql:
     image: percona:5.7.30

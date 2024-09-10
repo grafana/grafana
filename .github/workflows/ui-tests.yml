@@ -68,6 +68,10 @@ jobs:
         working-directory: ./pmm-ui-tests
         run: npm install
 
+      - name: install playwright
+        working-directory: ./pmm-ui-tests
+        run: npx playwright install
+
       - name: Run UI tests
         working-directory: ./pmm-ui-tests
         run: npm run e2e:grafana-pr
