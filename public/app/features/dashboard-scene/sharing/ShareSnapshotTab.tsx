@@ -90,7 +90,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
   }
 
   public onSnasphotNameChange = (snapshotName: string) => {
-    this.setState({ snapshotName: snapshotName.trim() });
+    this.setState({ snapshotName });
   };
 
   public onExpireChange = (option: number) => {
@@ -105,7 +105,7 @@ export class ShareSnapshotTab extends SceneObjectBase<ShareSnapshotTabState> imp
     const saveModel = transformSceneToSaveModel(dashboardRef.resolve(), true);
 
     return trimDashboardForSnapshot(
-      this.state.snapshotName || '',
+      this.state.snapshotName.trim() || '',
       timeRange.state.value,
       saveModel,
       panelRef?.resolve()

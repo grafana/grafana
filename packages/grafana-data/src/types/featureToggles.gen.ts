@@ -115,6 +115,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -210,4 +211,5 @@ export interface FeatureToggles {
   exploreLogsLimitedTimeRange?: boolean;
   appPlatformAccessTokens?: boolean;
   appSidecar?: boolean;
+  groupAttributeSync?: boolean;
 }
