@@ -104,21 +104,40 @@ export function VizLegend<T>({
         />
       );
     case LegendDisplayMode.List:
+      const isThresholdsEnabled = thresholdItems && thresholdItems.length > 1;
+      const isValueMappingEnabled = mappingItems && mappingItems.length > 0;
       return (
         <>
+          {/* render items when single series and there is no thresholds and no value mappings
+           * render items when multi series and there is no thresholds
+           */}
+          {!isThresholdsEnabled && (!isValueMappingEnabled || items.length > 1) && (
+            <VizLegendList<T>
+              className={className}
+              items={items}
+              placement={placement}
+              onLabelMouseOver={onMouseOver}
+              onLabelMouseOut={onMouseOut}
+              onLabelClick={onLegendLabelClick}
+              itemRenderer={itemRenderer}
+              readonly={readonly}
+            />
+          )}
           {/* render threshold colors if From thresholds scheme selected */}
-          <VizLegendList<T>
-            className={className}
-            items={thresholdItems && thresholdItems.length > 1 ? thresholdItems : items}
-            placement={placement}
-            onLabelMouseOver={onMouseOver}
-            onLabelMouseOut={onMouseOut}
-            onLabelClick={onLegendLabelClick}
-            itemRenderer={itemRenderer}
-            readonly={readonly}
-          />
+          {isThresholdsEnabled && (
+            <VizLegendList<T>
+              className={className}
+              items={thresholdItems}
+              placement={placement}
+              onLabelMouseOver={onMouseOver}
+              onLabelMouseOut={onMouseOut}
+              onLabelClick={onLegendLabelClick}
+              itemRenderer={itemRenderer}
+              readonly={readonly}
+            />
+          )}
           {/* render value mapping colors */}
-          {mappingItems && (
+          {isValueMappingEnabled && (
             <VizLegendList<T>
               className={className}
               items={mappingItems}

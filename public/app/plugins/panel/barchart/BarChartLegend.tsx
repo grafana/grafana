@@ -34,7 +34,7 @@ export const BarChartLegend = memo(
     const fieldConfig = data[0].fields[0].config;
     const colorMode = fieldConfig.color?.mode;
 
-    let thresholdItems: VizLegendItem[] = [];
+    const thresholdItems: VizLegendItem[] = [];
     if (colorMode === FieldColorModeId.Thresholds) {
       for (let i = 0; i < data[0].fields.length; i++) {
         const thresholds = data[0].fields[i].config.thresholds;
