@@ -334,7 +334,7 @@ func TestCalculate(t *testing.T) {
 				},
 			},
 			{
-				name: "should not populate if not present in MODULE.txt",
+				name: "should not populate if module.js is not present in MODULE.txt",
 				foundPlugin: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID: "test-app",
@@ -349,9 +349,6 @@ func TestCalculate(t *testing.T) {
 					Status:     plugins.SignatureStatusValid,
 					Type:       plugins.SignatureTypeGrafana,
 					SigningOrg: "Grafana Labs",
-
-					// testdata/test-app contains a valid MODULE.txt, but with no module.js entry,
-					// so ModuleHash should be empty.
 					ModuleHash: "",
 				},
 			},
