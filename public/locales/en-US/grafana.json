@@ -1109,7 +1109,6 @@
       "discard-success": "LDAP settings discarded",
       "error-fetching": "Error fetching LDAP settings",
       "error-saving": "Error saving LDAP settings",
-      "error-update": "Error updating LDAP settings",
       "error-validate-form": "Error validating LDAP settings",
       "feature-flag-disabled": "This page is only accessible by enabling the <1>ssoSettingsLDAP</1> feature flag.",
       "saved": "LDAP settings saved"
