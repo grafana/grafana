@@ -76,6 +76,7 @@
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/alerting_notifications @grafana/grafana-app-platform-squad @grafana/alerting-backend @grafana/alerting-frontend
+/pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/cmd/ @grafana/grafana-backend-group
 /pkg/cmd/grafana/apiserver @grafana/grafana-app-platform-squad
@@ -403,12 +404,16 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
+/public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
+
+
 /public/app/core/history/ @grafana/explore-squad
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
 /public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
 
+/public/app/features/actions/ @grafana/dataviz-squad
 /public/app/features/auth-config/ @grafana/identity-squad
 /public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/api-keys/ @grafana/identity-squad
@@ -662,6 +667,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/registry/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
+/pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
@@ -694,7 +700,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/community-release.yml @grafana/grafana-release-guild
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
-/.github/workflows/auto-triager.yml @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @grafana/grafana-release-guild

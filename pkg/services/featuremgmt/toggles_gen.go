@@ -87,6 +87,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagVizActions
+	// Allow actions in visualizations
+	FlagVizActions = "vizActions"
+
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -390,6 +394,10 @@ const (
 	// FlagKubernetesDashboards
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
+
+	// FlagKubernetesFolders
+	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
+	FlagKubernetesFolders = "kubernetesFolders"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -739,10 +747,6 @@ const (
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
 
-	// FlagAdhocFilterOneOf
-	// Exposes a new &#39;one of&#39; operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.
-	FlagAdhocFilterOneOf = "adhocFilterOneOf"
-
 	// FlagNewFiltersUI
 	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
 	FlagNewFiltersUI = "newFiltersUI"
@@ -770,4 +774,16 @@ const (
 	// FlagHomeSetupGuide
 	// Used in Home for users who want to return to the onboarding flow
 	FlagHomeSetupGuide = "homeSetupGuide"
+	
+	// FlagAppPlatformAccessTokens
+	// Enables the use of access tokens for the App Platform
+	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
+
+	// FlagAppSidecar
+	// Enable the app sidecar feature that allows rendering 2 apps at the same time
+	FlagAppSidecar = "appSidecar"
+
+	// FlagGroupAttributeSync
+	// Enable the groupsync extension for managing Group Attribute Sync feature
+	FlagGroupAttributeSync = "groupAttributeSync"
 )
