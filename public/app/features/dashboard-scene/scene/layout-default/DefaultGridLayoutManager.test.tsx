@@ -152,6 +152,15 @@ describe('DefaultGridLayoutManager', () => {
 
       expect(grid.state.children.length).toBe(2);
     });
+
+    it('Should remove an empty row from the layout', () => {
+      const row = new SceneGridRow({ key: 'panel-1' });
+      const { manager, grid } = setup({ gridItems: [row] });
+
+      manager.removeRow(row);
+
+      expect(grid.state.children.length).toBe(0);
+    });
   });
 });
 
@@ -202,7 +211,7 @@ function setup(options?: TestOptions) {
   ];
 
   const grid = new SceneGridLayout({ children: gridItems });
-  const manager = new DefaultGridLayoutManager({ layout: grid });
+  const manager = new DefaultGridLayoutManager({ grid: grid });
 
   return { manager, grid };
 }

@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
-  SceneFlexLayout,
   sceneGraph,
   SceneGridLayout,
   SceneGridRow,
@@ -574,38 +573,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public pastePanel() {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
     const jsonData = store.get(LS_PANEL_COPY_KEY);
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
     const gridItem = buildGridItemForPanel(panelModel);
-
-    const sceneGridLayout = this.state.body;
-
-    if (!(gridItem instanceof DashboardGridItem)) {
-      throw new Error('Cannot paste invalid grid item');
-    }
-
     const panelId = dashboardSceneGraph.getNextPanelId(this);
+    const panel = gridItem.state.body;
 
-    gridItem.state.body.setState({
-      key: getVizPanelKeyForPanelId(panelId),
-    });
+    panel.setState({ key: getVizPanelKeyForPanelId(panelId) });
 
-    gridItem.setState({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      key: `grid-item-${panelId}`,
-    });
-
-    sceneGridLayout.setState({
-      children: [gridItem, ...sceneGridLayout.state.children],
-    });
+    this.state.body.addPanel(panel);
 
     store.delete(LS_PANEL_COPY_KEY);
   }

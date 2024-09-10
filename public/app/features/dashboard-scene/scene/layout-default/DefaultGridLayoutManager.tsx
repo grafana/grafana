@@ -22,7 +22,7 @@ import { RowActions } from '../row-actions/RowActions';
 import { DashboardLayoutManager, DashboardLayoutElement } from '../types';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
-  layout: SceneGridLayout;
+  grid: SceneGridLayout;
 }
 
 /**
@@ -33,16 +33,16 @@ export class DefaultGridLayoutManager
   implements DashboardLayoutManager
 {
   public editModeChanged(isEditing: boolean): void {
-    this.state.layout.setState({ isDraggable: isEditing, isResizable: isEditing });
-    forceRenderChildren(this.state.layout, true);
+    this.state.grid.setState({ isDraggable: isEditing, isResizable: isEditing });
+    forceRenderChildren(this.state.grid, true);
   }
 
   /**
    * Removes the first panel
    */
   public cleanUpStateFromExplore(): void {
-    this.state.layout.setState({
-      children: this.state.layout.state.children.slice(1),
+    this.state.grid.setState({
+      children: this.state.grid.state.children.slice(1),
     });
   }
 
@@ -57,8 +57,8 @@ export class DefaultGridLayoutManager
       key: `grid-item-${panelId}`,
     });
 
-    this.state.layout.setState({
-      children: [newGridItem, ...this.state.layout.state.children],
+    this.state.grid.setState({
+      children: [newGridItem, ...this.state.grid.state.children],
     });
   }
 
@@ -74,7 +74,7 @@ export class DefaultGridLayoutManager
       y: 0,
     });
 
-    const sceneGridLayout = this.state.layout;
+    const sceneGridLayout = this.state.grid;
 
     // find all panels until the first row and put them into the newly created row. If there are no other rows,
     // add all panels to the row. If there are no panels just create an empty row
@@ -98,7 +98,7 @@ export class DefaultGridLayoutManager
    * @param removePanels
    */
   public removeRow(row: SceneGridRow, removePanels = false) {
-    const sceneGridLayout = this.state.layout;
+    const sceneGridLayout = this.state.grid;
 
     const children = sceneGridLayout.state.children.filter((child) => child.state.key !== row.state.key);
 
@@ -118,7 +118,7 @@ export class DefaultGridLayoutManager
    * @returns
    */
   public removeElement(element: DashboardLayoutElement) {
-    const layout = this.state.layout;
+    const layout = this.state.grid;
 
     let row: SceneGridRow | undefined;
 
@@ -134,7 +134,7 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    this.state.layout.setState({
+    this.state.grid.setState({
       children: layout.state.children.filter((child) => child !== element),
     });
   }
@@ -188,7 +188,7 @@ export class DefaultGridLayoutManager
       body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
     });
 
-    const layout = this.state.layout;
+    const layout = this.state.grid;
 
     if (element.parent instanceof SceneGridRow) {
       const row = element.parent;
@@ -207,7 +207,7 @@ export class DefaultGridLayoutManager
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
-    this.state.layout.forEachChild((child) => {
+    this.state.grid.forEachChild((child) => {
       if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow)) {
         throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
       }
@@ -233,7 +233,7 @@ export class DefaultGridLayoutManager
   public getNextPanelId(): number {
     let max = 0;
 
-    for (const child of this.state.layout.state.children) {
+    for (const child of this.state.grid.state.children) {
       if (child instanceof DashboardGridItem) {
         const vizPanel = child.state.body;
 
@@ -305,7 +305,7 @@ export class DefaultGridLayoutManager
     }
 
     return new DefaultGridLayoutManager({
-      layout: new SceneGridLayout({
+      grid: new SceneGridLayout({
         children: children,
         isDraggable: false,
         isResizable: false,
@@ -314,6 +314,6 @@ export class DefaultGridLayoutManager
   }
 
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
-    return <model.state.layout.Component model={model.state.layout} />;
+    return <model.state.grid.Component model={model.state.grid} />;
   };
 }

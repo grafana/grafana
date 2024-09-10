@@ -223,7 +223,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     uid: oldModel.uid,
     version: oldModel.version,
     body: new DefaultGridLayoutManager({
-      layout: new SceneGridLayout({
+      grid: new SceneGridLayout({
         isLazy: dto.preload ? false : true,
         children: createSceneObjectsForPanels(oldModel.panels),
         $behaviors: [trackIfEmpty],

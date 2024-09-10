@@ -96,7 +96,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
       ],
     }),
     body: new DefaultGridLayoutManager({
-      layout: new SceneGridLayout({
+      grid: new SceneGridLayout({
         children: [
           new DashboardGridItem({
             key: 'griditem-1',
