@@ -366,7 +366,11 @@
     },
     "save": "Ŝävę"
   },
-  "complete": "čőmpľęŧę",
+  "configuration-tracker": {
+    "config-card": {
+      "complete": "čőmpľęŧę"
+    }
+  },
   "connections": {
     "connect-data": {
       "category-header-label": "Đäŧä şőūřčęş",
@@ -378,7 +382,6 @@
       "placeholder": "Ŝęäřčĥ äľľ"
     }
   },
-  "Copy to Clipboard": "Cőpy ŧő Cľįpþőäřđ",
   "correlations": {
     "add-new": "Åđđ ŉęŵ",
     "alert": {
@@ -945,6 +948,9 @@
     },
     "spinner": {
       "aria-label": "Ŀőäđįŉģ"
+    },
+    "table": {
+      "copy": "Cőpy ŧő Cľįpþőäřđ"
     }
   },
   "graph": {
