@@ -65,6 +65,10 @@ type Dialect interface {
 
 	// CurrentEpoch returns the current epoch value for the database in microseconds.
 	CurrentEpoch() string
+
+	// Greatest returns the function name to use for the greatest value of a list
+	// of expressions.
+	Greatest(string, string) string
 }
 
 // RowLockingClause represents a row-locking clause in a SELECT statement.

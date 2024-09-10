@@ -402,6 +402,53 @@ func (_c *WithResults_GetScanDest_Call[T]) RunAndReturn(run func() []interface{}
 	return _c
 }
 
+// Greatest provides a mock function with given fields: _a0, _a1
+func (_m *WithResults[T]) Greatest(_a0 string, _a1 string) string {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Greatest")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, string) string); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// WithResults_Greatest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Greatest'
+type WithResults_Greatest_Call[T interface{}] struct {
+	*mock.Call
+}
+
+// Greatest is a helper method to define mock.On call
+//   - _a0 string
+//   - _a1 string
+func (_e *WithResults_Expecter[T]) Greatest(_a0 interface{}, _a1 interface{}) *WithResults_Greatest_Call[T] {
+	return &WithResults_Greatest_Call[T]{Call: _e.mock.On("Greatest", _a0, _a1)}
+}
+
+func (_c *WithResults_Greatest_Call[T]) Run(run func(_a0 string, _a1 string)) *WithResults_Greatest_Call[T] {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *WithResults_Greatest_Call[T]) Return(_a0 string) *WithResults_Greatest_Call[T] {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *WithResults_Greatest_Call[T]) RunAndReturn(run func(string, string) string) *WithResults_Greatest_Call[T] {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Ident provides a mock function with given fields: _a0
 func (_m *WithResults[T]) Ident(_a0 string) (string, error) {
 	ret := _m.Called(_a0)

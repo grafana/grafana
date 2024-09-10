@@ -610,7 +610,6 @@ func fetchLatestRV(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialec
 func (b *backend) poll(ctx context.Context, grp string, res string, since int64, stream chan<- *resource.WrittenEvent) (int64, error) {
 	ctx, span := b.tracer.Start(ctx, trace_prefix+"poll")
 	defer span.End()
-
 	var records []*historyPollResponse
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
@@ -665,14 +664,21 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
 	// 1. Increase the resource version to the current epoch with microseconds precision.
 	// This is an update statement that will lock to row and prevent concurrent updates until the transaction is committed.
-
-	_, err = dbutil.Exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
+	out, err := dbutil.Exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
 		SQLTemplate:     sqltemplate.New(d),
 		Group:           key.Group,
 		Resource:        key.Resource,
 		resourceVersion: new(resourceVersion),
 	})
-	if errors.Is(err, sql.ErrNoRows) {
+	if err != nil {
+		return 0, fmt.Errorf("increase resource version: %w", err)
+	}
+	rows, err := out.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("get rows affected: %w", err)
+	}
+
+	if rows == 0 {
 		// if there wasn't a row associated with the given resource, we create one with
 		// version 2 to match the etcd behavior.
 		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
@@ -683,9 +689,6 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 		}); err != nil {
 			return 0, fmt.Errorf("insert into resource_version: %w", err)
 		}
-		return 2, nil
-	} else if err != nil {
-		return 0, fmt.Errorf("increase resource version: %w", err)
 	}
 
 	// Fetch the new resource version
@@ -696,26 +699,7 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 		resourceVersion: new(resourceVersion),
 	})
 
-	if errors.Is(err, sql.ErrNoRows) {
-		// if there wasn't a row associated with the given resource, we create a new one.
-		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
-			SQLTemplate: sqltemplate.New(d),
-			Group:       key.Group,
-			Resource:    key.Resource,
-		}); err != nil {
-			return 0, fmt.Errorf("ins resource_version: %w", err)
-		}
-		// Fetch the new resource version
-		res, err = dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
-			SQLTemplate:     sqltemplate.New(d),
-			Group:           key.Group,
-			Resource:        key.Resource,
-			resourceVersion: new(resourceVersion),
-		})
-		if err != nil {
-			return 0, fmt.Errorf("could not fetch the new resource version: %w", err)
-		}
-	} else if err != nil {
+	if err != nil {
 		return 0, fmt.Errorf("could not fetch resource version: %w", err)
 	}
 

@@ -402,6 +402,53 @@ func (_c *SQLTemplate_GetScanDest_Call) RunAndReturn(run func() []interface{}) *
 	return _c
 }
 
+// Greatest provides a mock function with given fields: _a0, _a1
+func (_m *SQLTemplate) Greatest(_a0 string, _a1 string) string {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Greatest")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func(string, string) string); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// SQLTemplate_Greatest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Greatest'
+type SQLTemplate_Greatest_Call struct {
+	*mock.Call
+}
+
+// Greatest is a helper method to define mock.On call
+//   - _a0 string
+//   - _a1 string
+func (_e *SQLTemplate_Expecter) Greatest(_a0 interface{}, _a1 interface{}) *SQLTemplate_Greatest_Call {
+	return &SQLTemplate_Greatest_Call{Call: _e.mock.On("Greatest", _a0, _a1)}
+}
+
+func (_c *SQLTemplate_Greatest_Call) Run(run func(_a0 string, _a1 string)) *SQLTemplate_Greatest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *SQLTemplate_Greatest_Call) Return(_a0 string) *SQLTemplate_Greatest_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *SQLTemplate_Greatest_Call) RunAndReturn(run func(string, string) string) *SQLTemplate_Greatest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Ident provides a mock function with given fields: _a0
 func (_m *SQLTemplate) Ident(_a0 string) (string, error) {
 	ret := _m.Called(_a0)
