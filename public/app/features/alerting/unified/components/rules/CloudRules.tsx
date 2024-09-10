@@ -57,7 +57,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
           <Text element="h2" variant="h5">
-            <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed rules</Trans>
+            <Trans i18nKey="alerting.list-view.section.dataSourceManaged.title">Data source-managed</Trans>
           </Text>
           {dataSourcesLoading.length ? (
             <LoadingPlaceholder

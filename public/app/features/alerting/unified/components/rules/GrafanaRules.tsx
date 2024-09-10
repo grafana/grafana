@@ -64,7 +64,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
           <Text element="h2" variant="h5">
-            <Trans i18nKey="alerting.list-view.section.grafanaManaged.title">Grafana-managed rules</Trans>
+            <Trans i18nKey="alerting.list-view.section.grafanaManaged.title">Grafana-managed</Trans>
           </Text>
           {loading ? (
             <LoadingPlaceholder

@@ -126,13 +126,13 @@
     "list-view": {
       "section": {
         "dataSourceManaged": {
-          "title": "Đäŧä şőūřčę-mäŉäģęđ řūľęş"
+          "title": "Đäŧä şőūřčę-mäŉäģęđ"
         },
         "grafanaManaged": {
           "export-rules": "Ēχpőřŧ řūľęş",
           "loading": "Ŀőäđįŉģ...",
           "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
-          "title": "Ğřäƒäŉä-mäŉäģęđ řūľęş"
+          "title": "Ğřäƒäŉä-mäŉäģęđ"
         }
       }
     },
