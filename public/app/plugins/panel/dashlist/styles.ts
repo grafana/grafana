@@ -44,9 +44,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     dashlistLinkBody: css({
       flexGrow: 1,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      padding: theme.spacing(0.25, 0.5),
     }),
     dashlistItem: css({
       position: 'relative',
