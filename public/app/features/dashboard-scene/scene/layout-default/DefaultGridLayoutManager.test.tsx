@@ -1,5 +1,6 @@
 import { SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
+import { findVizPanelByKey } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
@@ -7,8 +8,8 @@ import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 describe('DefaultGridLayoutManager', () => {
   describe('getVizPanels', () => {
     it('Should return all panels', () => {
-      const layout = setup();
-      const vizPanels = layout.getVizPanels();
+      const { manager } = setup();
+      const vizPanels = manager.getVizPanels();
 
       expect(vizPanels.length).toBe(4);
       expect(vizPanels[0].state.title).toBe('Panel A');
@@ -18,23 +19,23 @@ describe('DefaultGridLayoutManager', () => {
     });
 
     it('Should return an empty array when scene has no panels', () => {
-      const layout = setup({ gridItems: [] });
-      const vizPanels = layout.getVizPanels();
+      const { manager } = setup({ gridItems: [] });
+      const vizPanels = manager.getVizPanels();
       expect(vizPanels.length).toBe(0);
     });
   });
 
   describe('getNextPanelId', () => {
     it('should get next panel id in a simple 3 panel layout', () => {
-      const layout = setup();
-      const id = layout.getNextPanelId();
+      const { manager } = setup();
+      const id = manager.getNextPanelId();
 
-      expect(id).toBe(3);
+      expect(id).toBe(4);
     });
 
     it('should return 1 if no panels are found', () => {
-      const layout = setup({ gridItems: [] });
-      const id = layout.getNextPanelId();
+      const { manager } = setup({ gridItems: [] });
+      const id = manager.getNextPanelId();
 
       expect(id).toBe(1);
     });
@@ -42,13 +43,76 @@ describe('DefaultGridLayoutManager', () => {
 
   describe('removeElement', () => {
     it('should remove element', () => {
-      const layout = setup();
+      const { manager, grid } = setup();
 
-      expect(layout.state.layout.state.children.length).toBe(3);
+      expect(grid.state.children.length).toBe(3);
 
-      layout.removeElement(layout.state.layout.state.children[0] as DashboardGridItem);
+      manager.removeElement(grid.state.children[0] as DashboardGridItem);
 
-      expect(layout.state.layout.state.children.length).toBe(2);
+      expect(grid.state.children.length).toBe(2);
+    });
+  });
+
+  describe('addPanel', () => {
+    it('Should add a new panel', () => {
+      const { manager, grid } = setup();
+
+      const vizPanel = new VizPanel({
+        title: 'Panel Title',
+        key: 'panel-55',
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+      });
+
+      manager.addPanel(vizPanel);
+
+      const panel = findVizPanelByKey(manager, 'panel-55')!;
+      const gridItem = panel.parent as DashboardGridItem;
+
+      expect(panel).toBeDefined();
+      expect(gridItem.state.y).toBe(0);
+    });
+  });
+
+  describe('addNewRow', () => {
+    it('Should create and add a new row to the dashboard', () => {
+      const { manager, grid } = setup();
+      const row = manager.addNewRow();
+
+      expect(grid.state.children.length).toBe(2);
+      expect(row.state.key).toBe('panel-4');
+      expect(row.state.children[0].state.key).toBe('griditem-1');
+      expect(row.state.children[1].state.key).toBe('griditem-2');
+    });
+
+    it('Should create a row and add all panels in the dashboard under it', () => {
+      const { manager, grid } = setup({
+        gridItems: [
+          new DashboardGridItem({
+            key: 'griditem-1',
+            x: 0,
+            body: new VizPanel({
+              title: 'Panel A',
+              key: 'panel-1',
+              pluginId: 'table',
+              $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+            }),
+          }),
+          new DashboardGridItem({
+            key: 'griditem-2',
+            body: new VizPanel({
+              title: 'Panel B',
+              key: 'panel-2',
+              pluginId: 'table',
+            }),
+          }),
+        ],
+      });
+
+      const row = manager.addNewRow();
+
+      expect(grid.state.children.length).toBe(1);
+      expect(row.state.children.length).toBe(2);
     });
   });
 });
@@ -70,6 +134,7 @@ function setup(options?: TestOptions) {
       }),
     }),
     new DashboardGridItem({
+      key: 'griditem-2',
       body: new VizPanel({
         title: 'Panel B',
         key: 'panel-2',
@@ -77,7 +142,7 @@ function setup(options?: TestOptions) {
       }),
     }),
     new SceneGridRow({
-      key: 'key',
+      key: 'panel-3',
       title: 'row',
       children: [
         new DashboardGridItem({
@@ -98,9 +163,8 @@ function setup(options?: TestOptions) {
     }),
   ];
 
-  const layout = new DefaultGridLayoutManager({
-    layout: new SceneGridLayout({ children: gridItems }),
-  });
+  const grid = new SceneGridLayout({ children: gridItems });
+  const manager = new DefaultGridLayoutManager({ layout: grid });
 
-  return layout;
+  return { manager, grid };
 }

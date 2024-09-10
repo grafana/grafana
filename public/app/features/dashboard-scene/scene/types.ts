@@ -33,6 +33,14 @@ export interface DashboardLayoutManager extends SceneObject {
    */
   duplicateElement(element: DashboardLayoutElement): void;
   /**
+   * Adds a new panel to the layout
+   */
+  addPanel(panel: VizPanel): void;
+  /**
+   * Add row
+   */
+  addNewRow(): void;
+  /**
    * getVizPanels
    */
   getVizPanels(): VizPanel[];

@@ -4,25 +4,21 @@ import {
   SceneObjectBase,
   SceneGridRow,
   VizPanel,
-  SceneObject,
   sceneGraph,
   sceneUtils,
   SceneComponentProps,
-  SceneGridItemLike,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import {
   forceRenderChildren,
-  getDashboardSceneFor,
-  getDefaultRow,
-  getDefaultVizPanel,
   getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
+import { RowActions } from '../row-actions/RowActions';
 import { DashboardLayoutManager, DashboardLayoutElement } from '../types';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
@@ -50,12 +46,33 @@ export class DefaultGridLayoutManager
     });
   }
 
+  public addPanel(vizPanel: VizPanel): void {
+    const panelId = getPanelIdForVizPanel(vizPanel);
+    const newGridItem = new DashboardGridItem({
+      height: NEW_PANEL_HEIGHT,
+      width: NEW_PANEL_WIDTH,
+      x: 0,
+      y: 0,
+      body: vizPanel,
+      key: `grid-item-${panelId}`,
+    });
+
+    this.state.layout.setState({
+      children: [newGridItem, ...this.state.layout.state.children],
+    });
+  }
+
   /**
    * Adds a new emtpy row
    */
-  public addNewRow() {
-    const dashboard = getDashboardSceneFor(this);
-    const row = getDefaultRow(dashboard);
+  public addNewRow(): SceneGridRow {
+    const id = this.getNextPanelId();
+    const row = new SceneGridRow({
+      key: getVizPanelKeyForPanelId(id),
+      title: 'Row title',
+      actions: new RowActions({}),
+      y: 0,
+    });
 
     const sceneGridLayout = this.state.layout;
 
@@ -67,12 +84,12 @@ export class DefaultGridLayoutManager
       .map((child) => child.clone());
 
     if (rowChildren) {
-      row.setState({
-        children: rowChildren,
-      });
+      row.setState({ children: rowChildren });
     }
 
     sceneGridLayout.setState({ children: [row, ...sceneGridLayout.state.children] });
+
+    return row;
   }
 
   /**
@@ -93,27 +110,6 @@ export class DefaultGridLayoutManager
     }
 
     sceneGridLayout.setState({ children });
-  }
-
-  public addNewPanel(): VizPanel {
-    const vizPanel = getDefaultVizPanel(getDashboardSceneFor(this));
-    const sceneGridLayout = this.state.layout;
-
-    const panelId = getPanelIdForVizPanel(vizPanel);
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: vizPanel,
-      key: `grid-item-${panelId}`,
-    });
-
-    sceneGridLayout.setState({
-      children: [newGridItem, ...sceneGridLayout.state.children],
-    });
-
-    return vizPanel;
   }
 
   /**

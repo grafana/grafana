@@ -6,7 +6,6 @@ import {
   MultiValueVariable,
   SceneDataTransformer,
   sceneGraph,
-  SceneGridRow,
   SceneObject,
   SceneQueryRunner,
   VizPanel,
@@ -19,7 +18,6 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
-import { RowActions } from '../scene/row-actions/RowActions';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 
@@ -238,17 +236,6 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
       }),
       transformations: [],
     }),
-  });
-}
-
-export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
-  const id = dashboardSceneGraph.getNextPanelId(dashboard);
-
-  return new SceneGridRow({
-    key: getVizPanelKeyForPanelId(id),
-    title: 'Row title',
-    actions: new RowActions({}),
-    y: 0,
   });
 }
 

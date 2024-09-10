@@ -56,7 +56,6 @@ import {
   NEW_PANEL_WIDTH,
   getClosestVizPanel,
   getDashboardSceneFor,
-  getDefaultRow,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
   getQueryRunnerFor,
@@ -461,31 +460,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
-  public addRow(row: SceneGridRow) {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    // find all panels until the first row and put them into the newly created row. If there are no other rows,
-    // add all panels to the row. If there are no panels just create an empty row
-    const indexTillNextRow = sceneGridLayout.state.children.findIndex((child) => child instanceof SceneGridRow);
-    const rowChildren = sceneGridLayout.state.children
-      .splice(0, indexTillNextRow === -1 ? sceneGridLayout.state.children.length : indexTillNextRow)
-      .map((child) => child.clone());
-
-    if (rowChildren) {
-      row.setState({
-        children: rowChildren,
-      });
-    }
-
-    sceneGridLayout.setState({
-      children: [row, ...sceneGridLayout.state.children],
-    });
-  }
-
   public removeRow(row: SceneGridRow, removePanels = false) {
     if (!(this.state.body instanceof SceneGridLayout)) {
       throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
@@ -506,25 +480,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public addPanel(vizPanel: VizPanel): void {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    const panelId = getPanelIdForVizPanel(vizPanel);
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: vizPanel,
-      key: `grid-item-${panelId}`,
-    });
-
-    sceneGridLayout.setState({
-      children: [newGridItem, ...sceneGridLayout.state.children],
-    });
+    this.state.body.addPanel(vizPanel);
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
@@ -734,11 +690,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewRow() {
-    const row = getDefaultRow(this);
-
-    this.addRow(row);
-
-    return getPanelIdForVizPanel(row);
+    this.state.body.addNewRow();
   }
 
   public onCreateNewPanel(): VizPanel {

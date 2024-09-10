@@ -458,47 +458,15 @@ describe('DashboardScene', () => {
         }).toThrow('Trying to add a panel in a layout that is not SceneGridLayout');
       });
 
-      it('Should add a new panel to the dashboard', () => {
-        const vizPanel = new VizPanel({
-          title: 'Panel Title',
-          key: 'panel-55',
-          pluginId: 'timeseries',
-          $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-        });
-
-        scene.addPanel(vizPanel);
-
-        const panel = findVizPanelByKey(scene, 'panel-55');
-
-        expect(panel).toBeDefined();
-        expect(panel.state.y).toBe(0);
-      });
-
       it('Should create and add a new panel to the dashboard', () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
 
-        scene.onCreateNewPanel();
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridItem = body.state.children[0] as DashboardGridItem;
+        const panel = scene.onCreateNewPanel();
 
         expect(scene.state.isEditing).toBe(true);
-        expect(body.state.children.length).toBe(6);
-        expect(gridItem.state.body!.state.key).toBe('panel-7');
-      });
-
-      it('Should create and add a new row to the dashboard', () => {
-        scene.onCreateNewRow();
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridRow = body.state.children[0] as SceneGridRow;
-
-        expect(scene.state.isEditing).toBe(true);
-        expect(body.state.children.length).toBe(4);
-        expect(gridRow.state.key).toBe('panel-7');
-        expect(gridRow.state.children[0].state.key).toBe('griditem-1');
-        expect(gridRow.state.children[1].state.key).toBe('griditem-2');
+        expect(scene.state.body.getVizPanels().length).toBe(6);
+        expect(panel.state.key).toBe('panel-7');
       });
 
       it('Should create a row and add all panels in the dashboard under it', () => {
@@ -701,11 +669,10 @@ describe('DashboardScene', () => {
       });
 
       it('Should remove a panel', () => {
-        const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body;
-        scene.removePanel(vizPanel as VizPanel);
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        scene.removePanel(panel);
 
-        const body = scene.state.body as SceneGridLayout;
-        expect(body.state.children.length).toBe(4);
+        expect(findVizPanelByKey(scene, 'panel-1')).toBeUndefined();
       });
 
       it('Should remove a panel within a row', () => {
