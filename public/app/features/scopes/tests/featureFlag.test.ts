@@ -5,15 +5,6 @@ import { scopesSelectorScene } from '../instance';
 import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard } from './utils/render';
 
-jest.mock('@grafana/scenes', () => ({
-  __esModule: true,
-  ...jest.requireActual('@grafana/scenes'),
-  sceneUtils: {
-    ...jest.requireActual('@grafana/scenes').sceneUtils,
-    registerVariableMacro: () => () => undefined,
-  },
-}));
-
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),

@@ -5,15 +5,6 @@ import { expectDashboardReload, expectNotDashboardReload } from './utils/asserti
 import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 
-jest.mock('@grafana/scenes', () => ({
-  __esModule: true,
-  ...jest.requireActual('@grafana/scenes'),
-  sceneUtils: {
-    ...jest.requireActual('@grafana/scenes').sceneUtils,
-    registerVariableMacro: () => () => undefined,
-  },
-}));
-
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
