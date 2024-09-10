@@ -42,6 +42,7 @@ export type AppPluginConfig = {
   preload: boolean;
   angular: AngularMeta;
   loadingStrategy: PluginLoadingStrategy;
+  moduleHash?: string;
 };
 
 export type PreinstalledPlugin = {

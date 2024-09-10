@@ -73,12 +73,14 @@ export async function importPluginModule({
   loadingStrategy,
   version,
   isAngular,
+  moduleHash,
 }: {
   path: string;
   pluginId: string;
   loadingStrategy: PluginLoadingStrategy;
   version?: string;
   isAngular?: boolean;
+  moduleHash?: string;
 }): Promise<System.Module> {
   if (version) {
     registerPluginInCache({ path, version, loadingStrategy });
@@ -94,7 +96,19 @@ export async function importPluginModule({
     }
   }
 
-  let modulePath = resolveModulePath(path);
+  const modulePath = resolveModulePath(path);
+  const resolvedModule = System.resolve(modulePath);
+  // @ts-expect-error - waiting on https://github.com/DefinitelyTyped/DefinitelyTyped/pull/70465
+  const integrityMap = System.getImportMap().integrity;
+
+  if (moduleHash && !integrityMap[resolvedModule]) {
+    SystemJS.addImportMap({
+      // @ts-expect-error - waiting on https://github.com/DefinitelyTyped/DefinitelyTyped/pull/70465
+      integrity: {
+        [resolvedModule]: moduleHash,
+      },
+    });
+  }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
   if (await isFrontendSandboxSupported({ isAngular, pluginId })) {
@@ -113,6 +127,7 @@ export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<Gene
     isAngular,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
+    moduleHash: meta.moduleHash,
   }).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin: GenericDataSourcePlugin = pluginExports.plugin;
@@ -144,6 +159,7 @@ export function importAppPlugin(meta: PluginMeta): Promise<AppPlugin> {
     isAngular,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
+    moduleHash: meta.moduleHash,
   }).then((pluginExports) => {
     const plugin: AppPlugin = pluginExports.plugin ? pluginExports.plugin : new AppPlugin();
     plugin.init(meta);
