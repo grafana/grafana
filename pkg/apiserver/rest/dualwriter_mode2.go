@@ -2,7 +2,6 @@ package rest
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
@@ -328,11 +326,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
 	}
 	return res, created, err
-}
-
-func (d *DualWriterMode2) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	d.Log.Error(errors.New("Watch not implemented in mode 2"), "Watch not implemented in mode 2")
-	return nil, nil
 }
 
 func (d *DualWriterMode2) Destroy() {
