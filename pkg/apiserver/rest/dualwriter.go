@@ -143,6 +143,9 @@ type updateWrapper struct {
 // May return nil, or a preconditions object containing nil fields,
 // if no preconditions can be determined from the updated object.
 func (u *updateWrapper) Preconditions() *metav1.Preconditions {
+	if u.upstream == nil {
+		return nil
+	}
 	return u.upstream.Preconditions()
 }
 
