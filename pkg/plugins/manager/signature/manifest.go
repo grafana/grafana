@@ -122,34 +122,18 @@ func (s *Signature) readPluginManifest(ctx context.Context, body []byte) (*Plugi
 	return &manifest, nil
 }
 
-func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
-	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
-		return defaultSignature, nil
-	}
-	fsFiles, err := plugin.FS.Files()
-	if err != nil {
-		return plugins.Signature{}, fmt.Errorf("files: %w", err)
-	}
-	if len(fsFiles) == 0 {
-		s.log.Warn("No plugin file information in directory", "pluginId", plugin.JSONData.ID)
-		return plugins.Signature{
-			Status: plugins.SignatureStatusInvalid,
-		}, nil
-	}
+var (
+	errSignatureTypeUnsigned = errors.New("plugin is unsigned")
+	errSignatureTypeInvalid  = errors.New("signature is invalid")
+)
 
-	f, err := plugin.FS.Open("MANIFEST.txt")
+func (s *Signature) readPluginManifestFromFS(ctx context.Context, pfs plugins.FS) (*PluginManifest, error) {
+	f, err := pfs.Open("MANIFEST.txt")
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
-			s.log.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "error", err)
-			return plugins.Signature{
-				Status: plugins.SignatureStatusUnsigned,
-			}, nil
+			return nil, fmt.Errorf("%w: could not find a MANIFEST.txt", errSignatureTypeUnsigned)
 		}
-
-		s.log.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "error", err)
-		return plugins.Signature{
-			Status: plugins.SignatureStatusInvalid,
-		}, nil
+		return nil, fmt.Errorf("%w: could not open MANIFEST.txt: %w", errSignatureTypeInvalid, err)
 	}
 	defer func() {
 		if f == nil {
@@ -162,21 +146,59 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	byteValue, err := io.ReadAll(f)
 	if err != nil || len(byteValue) < 10 {
-		s.log.Debug("MANIFEST.TXT is invalid", "id", plugin.JSONData.ID)
-		return plugins.Signature{
-			Status: plugins.SignatureStatusUnsigned,
-		}, nil
+		return nil, fmt.Errorf("%w: MANIFEST.txt is invalid", errSignatureTypeUnsigned)
 	}
 
 	manifest, err := s.readPluginManifest(ctx, byteValue)
 	if err != nil {
-		s.log.Warn("Plugin signature invalid", "id", plugin.JSONData.ID, "error", err)
+		return nil, fmt.Errorf("%w: %w", errSignatureTypeInvalid, err)
+	}
+	return manifest, nil
+}
+
+func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
+	manifest, err := s.readPluginManifestFromFS(ctx, plugin.FS)
+	switch {
+	case errors.Is(err, errSignatureTypeUnsigned):
+		s.log.Warn("Plugin is unsigned", "id", plugin.JSONData.ID, "err", err)
+		return plugins.Signature{
+			Status: plugins.SignatureStatusUnsigned,
+		}, nil
+	case errors.Is(err, errSignatureTypeInvalid):
+		s.log.Warn("Plugin signature is invalid", "id", plugin.JSONData.ID, "err", err)
+		return plugins.Signature{
+			Status: plugins.SignatureStatusInvalid,
+		}, nil
+	case err != nil:
+		return plugins.Signature{}, err
+	}
+
+	if !manifest.isV2() {
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
 		}, nil
 	}
 
-	if !manifest.isV2() {
+	// Always try to calculate module.js hash for SRI checks
+	moduleHash, err := manifest.ModuleHash()
+	if err != nil {
+		s.log.Warn("Could not calculate module.js hash for SRI checks, ignoring", "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version, "error", err)
+		moduleHash = ""
+	}
+
+	// Simplified signature checks (default signature, cdn)
+	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
+		defaultSignature.ModuleHash = moduleHash
+		return defaultSignature, nil
+	}
+
+	// Proper signature checks
+	fsFiles, err := plugin.FS.Files()
+	if err != nil {
+		return plugins.Signature{}, fmt.Errorf("files: %w", err)
+	}
+	if len(fsFiles) == 0 {
+		s.log.Warn("No plugin file information in directory", "pluginId", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
 		}, nil
@@ -246,11 +268,6 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	}
 
 	s.log.Debug("Plugin signature valid", "id", plugin.JSONData.ID)
-	moduleHash, err := manifest.ModuleHash()
-	if err != nil {
-		s.log.Warn("Could not calculate module.js hash for SRI checks, ignoring", "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version, "error", err)
-		moduleHash = ""
-	}
 	return plugins.Signature{
 		Status:     plugins.SignatureStatusValid,
 		Type:       manifest.SignatureType,
