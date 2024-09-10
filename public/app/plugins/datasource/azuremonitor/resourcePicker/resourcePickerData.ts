@@ -358,7 +358,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     const subscriptions = await this.getSubscriptions();
     reportInteraction('grafana_ds_azuremonitor_subscriptions_loaded', { subscriptions: subscriptions.length });
 
-    let supportedMetricNamespaces: Set<string> = new Set(...[resourceTypes.map((namespace) => `"${namespace}"`)]);
+    let supportedMetricNamespaces: Set<string> = new Set();
     // We make use of these three regions as they *should* contain every possible namespace
     const regions = ['westeurope', 'eastus', 'japaneast'];
     const getNamespacesForRegion = async (region: string) => {
@@ -385,6 +385,11 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
       );
     }
+
+    resourceTypes.forEach((namespace) => {
+      supportedMetricNamespaces.add(`"${namespace}"`);
+    });
+
     this.supportedMetricNamespaces = Array.from(supportedMetricNamespaces).join(',');
   }
 
