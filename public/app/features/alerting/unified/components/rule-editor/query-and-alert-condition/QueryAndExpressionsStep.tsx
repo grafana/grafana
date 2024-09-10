@@ -15,6 +15,7 @@ import {
   ExpressionQuery,
   ExpressionQueryType,
   expressionTypes,
+  ReducerMode,
 } from 'app/features/expressions/types';
 import { useDispatch } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -69,7 +70,7 @@ import {
 } from './reducer';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
 
-function areQueriesTransformableToSimpleCondition(
+export function areQueriesTransformableToSimpleCondition(
   dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>>,
   expressionQueries: ExpressionQuery[]
 ) {
@@ -90,11 +91,14 @@ function areQueriesTransformableToSimpleCondition(
   const reduceExpression = expressionQueries.find(
     (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONFITION_REDUCER_ID
   );
+  const reduceOk = reduceExpression && reduceExpression.settings?.mode === ReducerMode.Strict;
   const thresholdExpression = expressionQueries.find(
     (query) => query.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
+  const conditions = thresholdExpression?.conditions ?? [];
+  const thresholdOk = thresholdExpression && conditions[0]?.unloadEvaluator === undefined;
 
-  return reduceExpression && thresholdExpression;
+  return reduceOk && thresholdOk;
 }
 
 interface Props {
