@@ -265,6 +265,14 @@ var (
 				Action: ActionSettingsWrite,
 				Scope:  ScopeSettingsOAuth("generic_oauth"),
 			},
+			{
+				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsOAuth("ldap"),
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsOAuth("ldap"),
+			},
 		},
 	}
 
