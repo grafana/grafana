@@ -44,6 +44,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(source).toContain('var pluginPath = "/public/plugins/";');
     });
   });
+
   describe('decorateSystemJSResolve', () => {
     it('removes legacy wildcard from resolved url', () => {
       const id = '/public/plugins/my-datasource/styles.css!';

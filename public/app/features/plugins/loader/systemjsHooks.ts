@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { resolveWithCache } from './cache';
@@ -83,7 +85,10 @@ function getBackWardsCompatibleUrl(url: string) {
   return hasValidFileExtension ? url : url + '.js';
 }
 
-function getLoadPluginCssUrl(path: string) {
+// This function takes the path used in loadPluginCss and attempts to resolve it
+// by checking the SystemJS entries for a matching pluginId then using that entry to find the baseUrl.
+// If no match is found then it returns a fallback attempt at a relative path.
+export function getLoadPluginCssUrl(path: string) {
   const pluginId = path.split('/')[1];
   let url = '';
   for (const [moduleId] of SystemJS.entries()) {
@@ -95,7 +100,7 @@ function getLoadPluginCssUrl(path: string) {
 
   const index = url.lastIndexOf('/plugins');
   if (index === -1) {
-    return url;
+    return `${config.appSubUrl ?? ''}/public/${path}`;
   }
   const baseUrl = url.substring(0, index);
   return `${baseUrl}/${path}`;
