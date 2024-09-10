@@ -287,15 +287,8 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		log.Info("object not found for update, creating one")
 	}
 
-	// obj can be populated in case it's found or empty in case it's not found
-	updated, err := objInfo.UpdatedObject(ctx, foundObj)
-	if err != nil {
-		log.WithValues("object", updated).Error(err, "could not update or create object")
-		return nil, false, err
-	}
-
 	startLegacy := time.Now()
-	obj, created, err := d.Legacy.Update(ctx, name, &updateWrapper{upstream: objInfo, updated: updated}, createValidation, updateValidation, forceAllowCreate, options)
+	obj, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
 		log.WithValues("object", obj).Error(err, "could not update in legacy storage")
 		d.recordLegacyDuration(true, mode2Str, d.resource, "update", startLegacy)
@@ -309,15 +302,20 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		if err != nil {
 			return obj, false, err
 		}
-
-		objInfo = &updateWrapper{
-			upstream: objInfo,
-			updated:  obj,
+	} else {
+		acc, err := meta.Accessor(obj)
+		if err != nil {
+			return obj, false, err
 		}
+		acc.SetResourceVersion("")
+		acc.SetUID("")
+		forceAllowCreate = true
 	}
 
 	startStorage := time.Now()
-	res, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	res, created, err := d.Storage.Update(ctx, name, &updateWrapper{
+		updated: obj, // use the objected returned from legacy
+	}, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
 		log.WithValues("object", res).Error(err, "could not update in storage")
 		d.recordStorageDuration(true, mode2Str, d.resource, "update", startStorage)

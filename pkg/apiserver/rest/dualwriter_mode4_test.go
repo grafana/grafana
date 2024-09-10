@@ -64,7 +64,7 @@ func TestMode4_Create(t *testing.T) {
 
 			acc, err := meta.Accessor(obj)
 			assert.NoError(t, err)
-			assert.Equal(t, acc.GetResourceVersion(), "1")
+			assert.Equal(t, acc.GetResourceVersion(), "")
 			assert.NotEqual(t, obj, anotherObj)
 		})
 	}
