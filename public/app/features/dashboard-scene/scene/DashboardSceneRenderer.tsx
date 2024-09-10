@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { SceneComponentProps, VizPanel, VizPanelState } from '@grafana/scenes';
+import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
@@ -16,7 +16,6 @@ import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecatio
 import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
-import { LibraryVizPanel } from './LibraryVizPanel';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
@@ -64,13 +63,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       return null;
     }
     const shouldShowAutoMigrateLink = panels.some((panel) => {
-      if (panel instanceof LibraryVizPanel) {
-        const pluginId = panel.state.panel?.state.pluginId;
-        if (!pluginId) {
-          return false;
-        }
-        return explicitlyControlledMigrationPanels.includes(pluginId);
-      } else if (panel instanceof VizPanel) {
+      if (panel instanceof VizPanel) {
         return explicitlyControlledMigrationPanels.includes(panel.state.pluginId);
       }
       return false;

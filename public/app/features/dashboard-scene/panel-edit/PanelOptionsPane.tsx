@@ -12,7 +12,7 @@ import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPlugi
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 
-import { isPanelAngularPlugin } from '../scene/AngularDeprecation';
+import { isGridPanelAngularPlugin } from '../scene/AngularDeprecation';
 
 import { PanelEditor } from './PanelEditor';
 import { PanelOptions } from './PanelOptions';
@@ -58,7 +58,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { pluginId, panel } = vizManager.useState();
     const { data } = sceneGraph.getData(vizManager.state.panel).useState();
     const styles = useStyles2(getStyles);
-    const isAngularPanel = isPanelAngularPlugin(panel);
+    const isAngularPanel = isGridPanelAngularPlugin(panel);
     return (
       <>
         {!isVizPickerOpen && (

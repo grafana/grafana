@@ -9,8 +9,6 @@ import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angu
 
 import { getQueryRunnerFor } from '../utils/utils';
 
-import { LibraryVizPanel } from './LibraryVizPanel';
-
 export class AngularDeprecation extends SceneObjectBase {
   static Component = AngularDeprecationRenderer;
 
@@ -47,7 +45,7 @@ function AngularDeprecationRenderer({ model }: SceneComponentProps<AngularDeprec
 
   const showAngularNotice = shouldShowAngularNotice(panel);
   if (showAngularNotice) {
-    const pluginTypeNotice = getPluginTypeNotice(isPanelAngularDatasource(panel), isPanelAngularPlugin(panel));
+    const pluginTypeNotice = getPluginTypeNotice(isGridPanelAngularDatasource(panel), isGridPanelAngularPlugin(panel));
     const message = `This ${pluginTypeNotice} requires Angular (deprecated).`;
     const angularNoticeTooltip = (
       <Tooltip content={message}>
@@ -71,37 +69,24 @@ export function getPluginTypeNotice(isAngularDatasource: boolean, isAngularPanel
   return 'panel or data source';
 }
 
-export function isPanelAngularPlugin(panel: VizPanel) {
-  return (
-    (config.panels[panel.state.pluginId]?.angular?.detected ||
-      explicitlyControlledMigrationPanels.includes(panel.state.pluginId)) &&
-    !config.panels[panel.state.pluginId]?.angular?.hideDeprecation
-  );
-}
-
-export function isPanelAngularDatasource(panel: VizPanel) {
-  const queryRunner = getQueryRunnerFor(panel);
-  const datasource = queryRunner?.state.datasource;
-
-  return datasource?.uid ? isAngularDatasourcePluginAndNotHidden(datasource?.uid) : false;
-}
-
 export function isGridPanelAngularPlugin(gridItem: SceneGridItemLike) {
   //check if panel is library panel
-  if (gridItem instanceof LibraryVizPanel && gridItem.parent instanceof VizPanel) {
-    return gridItem.parent ? isPanelAngularPlugin(gridItem.parent) : false;
-  } else if (gridItem instanceof VizPanel) {
-    return isPanelAngularPlugin(gridItem);
+  if (gridItem instanceof VizPanel) {
+    return (
+      (config.panels[gridItem.state.pluginId]?.angular?.detected ||
+        explicitlyControlledMigrationPanels.includes(gridItem.state.pluginId)) &&
+      !config.panels[gridItem.state.pluginId]?.angular?.hideDeprecation
+    );
   }
   return false;
 }
 
 export function isGridPanelAngularDatasource(gridItem: SceneGridItemLike) {
-  //check if panel is library panel
-  if (gridItem instanceof LibraryVizPanel && gridItem.parent instanceof VizPanel) {
-    return gridItem.parent ? isPanelAngularDatasource(gridItem.parent) : false;
-  } else if (gridItem instanceof VizPanel) {
-    return isPanelAngularDatasource(gridItem);
+  if (gridItem instanceof VizPanel) {
+    const queryRunner = getQueryRunnerFor(gridItem);
+    const datasource = queryRunner?.state.datasource;
+
+    return datasource?.uid ? isAngularDatasourcePluginAndNotHidden(datasource?.uid) : false;
   }
   return false;
 }
@@ -109,7 +94,7 @@ export function isGridPanelAngularDatasource(gridItem: SceneGridItemLike) {
 export function shouldShowAngularNotice(panel: VizPanel) {
   return (
     (config.featureToggles.angularDeprecationUI ?? false) &&
-    (isPanelAngularDatasource(panel) || isPanelAngularPlugin(panel))
+    (isGridPanelAngularDatasource(panel) || isGridPanelAngularPlugin(panel))
   );
 }
 
