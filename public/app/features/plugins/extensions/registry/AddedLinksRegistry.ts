@@ -1,3 +1,5 @@
+import { ReplaySubject } from 'rxjs';
+
 import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
@@ -25,10 +27,13 @@ export type AddedLinkRegistryItem<Context extends object = object> = {
 };
 
 export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], PluginExtensionAddedLinkConfig> {
-  constructor(initialState: RegistryType<AddedLinkRegistryItem[]> = {}) {
-    super({
-      initialState,
-    });
+  constructor(
+    options: {
+      registrySubject?: ReplaySubject<RegistryType<AddedLinkRegistryItem[]>>;
+      initialState?: RegistryType<AddedLinkRegistryItem[]>;
+    } = {}
+  ) {
+    super(options);
   }
 
   mapToRegistry(
@@ -94,5 +99,12 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
     }
 
     return registry;
+  }
+
+  // Returns a read-only version of the registry.
+  readOnly() {
+    return new AddedLinksRegistry({
+      registrySubject: this.registrySubject,
+    });
   }
 }

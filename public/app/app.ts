@@ -84,10 +84,11 @@ import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { setupPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
-import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
-import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
+import { PluginExtensionRegistries } from './features/plugins/extensions/registry/types';
+import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
+import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
-import { createUsePluginLinks } from './features/plugins/extensions/usePluginLinks';
+import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -124,6 +125,7 @@ if (process.env.NODE_ENV === 'development') {
 
 export class GrafanaApp {
   context!: GrafanaContextType;
+  pluginExtensionsRegistries!: PluginExtensionRegistries;
 
   async init() {
     try {
@@ -210,7 +212,7 @@ export class GrafanaApp {
       initWindowRuntime();
 
       // Initialize plugin extensions
-      const pluginExtensionsRegistries = setupPluginExtensionRegistries();
+      this.pluginExtensionsRegistries = setupPluginExtensionRegistries();
 
       if (contextSrv.user.orgRole !== '') {
         // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
@@ -219,15 +221,15 @@ export class GrafanaApp {
         const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
         const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
 
-        preloadPlugins(appPlugins, pluginExtensionsRegistries);
-        await preloadPlugins(awaitedAppPlugins, pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
+        preloadPlugins(appPlugins, this.pluginExtensionsRegistries);
+        await preloadPlugins(awaitedAppPlugins, this.pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
       }
 
-      setPluginLinksHook(createUsePluginLinks(pluginExtensionsRegistries.addedLinksRegistry));
-      setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionsRegistries));
-      setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
-      setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
-      setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
+      setPluginExtensionGetter(createPluginExtensionsGetter(this.pluginExtensionsRegistries));
+      setPluginExtensionsHook(createUsePluginExtensions(this.pluginExtensionsRegistries));
+      setPluginLinksHook(usePluginLinks);
+      setPluginComponentHook(usePluginComponent);
+      setPluginComponentsHook(usePluginComponents);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

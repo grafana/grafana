@@ -19,6 +19,7 @@ import { sidecarService } from './core/services/SidecarService';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { ExperimentalSplitPaneRouterWrapper, RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
@@ -110,15 +111,17 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
               >
                 <GlobalStyles />
                 <SidecarContext.Provider value={sidecarService}>
-                  <div className="grafana-app">
-                    {config.featureToggles.appSidecar ? (
-                      <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                    ) : (
-                      <RouterWrapper {...routerWrapperProps} />
-                    )}
-                    <LiveConnectionWarning />
-                    <PortalContainer />
-                  </div>
+                  <ExtensionRegistriesProvider registries={app.pluginExtensionsRegistries}>
+                    <div className="grafana-app">
+                      {config.featureToggles.appSidecar ? (
+                        <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                      ) : (
+                        <RouterWrapper {...routerWrapperProps} />
+                      )}
+                      <LiveConnectionWarning />
+                      <PortalContainer />
+                    </div>
+                  </ExtensionRegistriesProvider>
                 </SidecarContext.Provider>
               </KBarProvider>
             </ThemeProvider>
