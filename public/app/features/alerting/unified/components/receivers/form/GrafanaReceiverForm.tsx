@@ -87,23 +87,27 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
 
-    if (editMode) {
-      if (useK8sAPI && contactPoint && contactPoint.id) {
-        await updateContactPoint.execute({
-          contactPoint: newReceiver,
-          id: contactPoint.id,
-          resourceVersion: contactPoint?.metadata?.resourceVersion,
-        });
-      } else if (contactPoint) {
-        await updateContactPoint.execute({
-          contactPoint: newReceiver,
-          originalName: contactPoint.name,
-        });
+    try {
+      if (editMode) {
+        if (useK8sAPI && contactPoint && contactPoint.id) {
+          await updateContactPoint.execute({
+            contactPoint: newReceiver,
+            id: contactPoint.id,
+            resourceVersion: contactPoint?.metadata?.resourceVersion,
+          });
+        } else if (contactPoint) {
+          await updateContactPoint.execute({
+            contactPoint: newReceiver,
+            originalName: contactPoint.name,
+          });
+        }
+      } else {
+        await createContactPoint.execute({ contactPoint: newReceiver });
       }
-    } else {
-      await createContactPoint.execute({ contactPoint: newReceiver });
+      locationService.push('/alerting/notifications');
+    } catch (error) {
+      // React form validation will handle this for us
     }
-    locationService.push('/alerting/notifications');
   };
 
   const onTestChannel = (values: GrafanaChannelValues) => {

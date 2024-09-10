@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
@@ -9,8 +10,11 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types';
 
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
+import { grantUserPermissions } from '../../../mocks';
+import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
 
@@ -33,11 +37,18 @@ const ui = {
 };
 
 describe('GrafanaReceiverForm', () => {
+  beforeEach(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+    ]);
+  });
+
   describe('OnCall contact point', () => {
     it('OnCall contact point should be disabled if OnCall integration is not enabled', async () => {
       disablePlugin(SupportedPlugin.OnCall);
 
-      render(<GrafanaReceiverForm />);
+      renderForm(<GrafanaReceiverForm />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -57,7 +68,7 @@ describe('GrafanaReceiverForm', () => {
         { display_name: 'apac-oncall', value: 'apac-oncall', integration_url: 'https://apac.oncall.example.com' },
       ]);
 
-      const { user } = render(<GrafanaReceiverForm />);
+      const { user } = renderForm(<GrafanaReceiverForm />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -109,7 +120,7 @@ describe('GrafanaReceiverForm', () => {
         )
       );
 
-      render(<GrafanaReceiverForm contactPoint={amConfig.alertmanager_config.receivers![0]} />);
+      renderForm(<GrafanaReceiverForm contactPoint={amConfig.alertmanager_config.receivers![0]} />);
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
@@ -118,6 +129,14 @@ describe('GrafanaReceiverForm', () => {
     });
   });
 });
+
+function renderForm(component: ReactNode) {
+  return render(
+    <AlertmanagerProvider accessType="notification" alertmanagerSourceName="grafana">
+      {component}
+    </AlertmanagerProvider>
+  );
+}
 
 function getAmCortexConfig(configure: (builder: AlertmanagerConfigBuilder) => void): AlertManagerCortexConfig {
   const configBuilder = new AlertmanagerConfigBuilder();
