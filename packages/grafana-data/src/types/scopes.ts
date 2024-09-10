@@ -1,7 +1,10 @@
 export interface ScopeDashboardBindingSpec {
   dashboard: string;
-  dashboardTitle: string;
   scope: string;
+}
+
+export interface ScopeDashboardBindingStatus {
+  dashboardTitle: string;
   groups?: string[];
 }
 
@@ -11,20 +14,25 @@ export interface ScopeDashboardBinding {
     name: string;
   };
   spec: ScopeDashboardBindingSpec;
+  status: ScopeDashboardBindingStatus;
 }
 
-export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
+export type ScopeFilterOperator = 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match' | 'one-of' | 'not-one-of';
 
 export const scopeFilterOperatorMap: Record<string, ScopeFilterOperator> = {
   '=': 'equals',
   '!=': 'not-equals',
   '=~': 'regex-match',
   '!~': 'regex-not-match',
+  '=|': 'one-of',
+  '!=|': 'not-one-of',
 };
 
 export interface ScopeSpecFilter {
   key: string;
   value: string;
+  // values is used for operators that support multiple values (e.g. one-of, not-one-of)
+  values?: string[];
   operator: ScopeFilterOperator;
 }
 

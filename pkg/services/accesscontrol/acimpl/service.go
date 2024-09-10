@@ -242,38 +242,40 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedUserPermissions")
 	defer span.End()
 
-	permissions := []accesscontrol.Permission{}
 	cacheKey := accesscontrol.GetUserPermissionCacheKey(user)
 	if cachedPermissions, ok := s.cache.Get(cacheKey); ok {
 		return cachedPermissions.([]accesscontrol.Permission), nil
 	}
 
-	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options, permissions)
+	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
 	if err != nil {
 		return nil, err
 	}
 
-	permissions, err = s.getCachedTeamsPermissions(ctx, user, options, permissions)
+	teamsPermissions, err := s.getCachedTeamsPermissions(ctx, user, options)
+	if err != nil {
+		return nil, err
+	}
+	permissions = append(permissions, teamsPermissions...)
+
+	userManagedPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
 	if err != nil {
 		return nil, err
 	}
 
-	userPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
-	if err != nil {
-		return nil, err
-	}
-
-	permissions = append(permissions, userPermissions...)
+	permissions = append(permissions, userManagedPermissions...)
 	s.cache.Set(cacheKey, permissions, cacheTTL)
 	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
 }
 
-func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options, permissions []accesscontrol.Permission) ([]accesscontrol.Permission, error) {
+func (s *Service) getCachedBasicRolesPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedBasicRolesPermissions")
 	defer span.End()
 
+	// Viewer role has ~30 permissions, so we can pre-allocate memory
+	permissions := make([]accesscontrol.Permission, 0, 50)
 	basicRoles := accesscontrol.GetOrgRoles(user)
 	span.SetAttributes(attribute.Int("roles", len(basicRoles)))
 	for _, role := range basicRoles {
@@ -337,22 +339,20 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 	return permissions, nil
 }
 
-func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options, permissions []accesscontrol.Permission) ([]accesscontrol.Permission, error) {
+func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedTeamsPermissions")
 	defer span.End()
 
 	teams := user.GetTeams()
 	orgID := user.GetOrgID()
-	miss := teams
-	compositeKey := accesscontrol.GetTeamPermissionCompositeCacheKey(teams, orgID)
+	if len(teams) == 0 {
+		return []accesscontrol.Permission{}, nil
+	}
+
+	miss := make([]int64, 0)
+	permissions := make([]accesscontrol.Permission, 0)
 
 	if !options.ReloadCache {
-		teamsPermissions, ok := s.cache.Get(compositeKey)
-		if ok {
-			return teamsPermissions.([]accesscontrol.Permission), nil
-		}
-
-		miss = make([]int64, 0)
 		for _, teamID := range teams {
 			key := accesscontrol.GetTeamPermissionCacheKey(teamID, orgID)
 			teamPermissions, ok := s.cache.Get(key)
@@ -364,6 +364,9 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 				miss = append(miss, teamID)
 			}
 		}
+	} else {
+		// reload cache and fetch all teams permissions
+		miss = teams
 	}
 
 	if len(miss) > 0 {
@@ -381,7 +384,6 @@ func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.R
 			permissions = append(permissions, teamPermissions...)
 		}
 	}
-	s.cache.Set(compositeKey, permissions, cacheTTL)
 
 	return permissions, nil
 }
@@ -420,7 +422,9 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 		}
 
 		for i := range r.Role.Permissions {
-			s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope)
+			if err := s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope); err != nil {
+				return err
+			}
 		}
 
 		s.registrations.Append(r)
@@ -478,7 +482,9 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 		for i := range r.Role.Permissions {
 			// Register plugin actions and their possible scopes for permission validation
 			s.permRegistry.RegisterPluginScope(r.Role.Permissions[i].Scope)
-			s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope)
+			if err := s.permRegistry.RegisterPermission(r.Role.Permissions[i].Action, r.Role.Permissions[i].Scope); err != nil {
+				return err
+			}
 		}
 
 		s.log.Debug("Registering plugin role", "role", r.Role.Name)

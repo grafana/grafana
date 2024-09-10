@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,10 +15,10 @@ const (
 	VERSION       = "v0alpha1"
 	APIVERSION    = GROUP + "/" + VERSION
 	RESOURCE      = "playlists"
-	GROUPRESOURCE = GROUP + "/" + RESOURCE
+	RESOURCEGROUP = RESOURCE + "." + GROUP
 )
 
-var PlaylistResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var PlaylistResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	RESOURCE, "playlist", "Playlist",
 	func() runtime.Object { return &Playlist{} },
 	func() runtime.Object { return &PlaylistList{} },

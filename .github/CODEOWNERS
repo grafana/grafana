@@ -36,7 +36,7 @@
 /docs/                                                                            @grafana/docs-tooling
 
 /docs/.codespellignore                                                            @grafana/docs-tooling
-/docs/sources/                                                                    @Eve832
+/docs/sources/                                                                    @irenerl24
 
 /docs/sources/administration/                                                     @jdbaldry
 /docs/sources/alerting/                                                           @brendamuir
@@ -76,6 +76,7 @@
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/alerting_notifications @grafana/grafana-app-platform-squad @grafana/alerting-backend @grafana/alerting-frontend
+/pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/cmd/ @grafana/grafana-backend-group
 /pkg/cmd/grafana/apiserver @grafana/grafana-app-platform-squad
@@ -115,7 +116,7 @@
 /pkg/services/annotations/ @grafana/grafana-search-and-storage
 /pkg/services/apikey/ @grafana/identity-squad
 /pkg/services/cleanup/ @grafana/grafana-backend-group
-/pkg/services/contexthandler/ @grafana/grafana-backend-group
+/pkg/services/contexthandler/ @grafana/grafana-backend-group @grafana/grafana-app-platform-squad
 /pkg/services/correlations/ @grafana/explore-squad
 /pkg/services/dashboardimport/ @grafana/grafana-backend-group
 /pkg/services/dashboards/ @grafana/grafana-app-platform-squad
@@ -320,7 +321,7 @@
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e/plugin-e2e/plugin-e2e-api-tests/ @grafana/plugins-platform-frontend
-/e2e/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend 
+/e2e/test-plugins/grafana-extensionstest-app/ @grafana/plugins-platform-frontend
 
 # Packages
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
@@ -369,6 +370,7 @@
 /package.json @grafana/frontend-ops
 /nx.json @grafana/frontend-ops
 /project.json @grafana/frontend-ops
+/.nxignore @grafana/frontend-ops
 /tsconfig.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
@@ -402,13 +404,16 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimeSeries/ @grafana/dataviz-squad
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
+/public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
+
+
 /public/app/core/history/ @grafana/explore-squad
-/public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
 
 # Temp owners until Enterprise team takes over
 /public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
 
+/public/app/features/actions/ @grafana/dataviz-squad
 /public/app/features/auth-config/ @grafana/identity-squad
 /public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/api-keys/ @grafana/identity-squad
@@ -502,6 +507,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/lib/ @grafana/grafana-frontend-platform
 /public/lib/monaco-languages/kusto.ts @grafana/partner-datasources
 /public/maps/ @ryantxu
+/public/mockServiceWorker.js @grafana/frontend-ops
 /public/robots.txt @grafana/frontend-ops
 /public/fonts/ @grafana/grafana-frontend-platform
 /public/sass/ @grafana/grafana-frontend-platform
@@ -661,6 +667,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/registry/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
+/pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code

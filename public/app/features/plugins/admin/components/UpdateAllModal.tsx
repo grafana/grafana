@@ -218,14 +218,24 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
     }
   }, [error, errorMap, inProgress, selectedPlugins]);
 
-  const onConfirm = () => {
+  const onConfirm = async () => {
     if (!inProgress) {
       setInProgress(true);
-      plugins.forEach((plugin) => {
-        if (selectedPlugins?.has(plugin.id)) {
-          install(plugin.id, plugin.latestVersion, true);
+
+      // in cloud the requests need to be sync
+      if (config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) {
+        for (let plugin of plugins) {
+          if (selectedPlugins?.has(plugin.id)) {
+            await install(plugin.id, plugin.latestVersion, true);
+          }
         }
-      });
+      } else {
+        plugins.forEach((plugin) => {
+          if (selectedPlugins?.has(plugin.id)) {
+            install(plugin.id, plugin.latestVersion, true);
+          }
+        });
+      }
     }
   };
 

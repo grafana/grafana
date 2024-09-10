@@ -137,6 +137,7 @@ export enum FieldConfigProperty {
   Unit = 'unit',
   Min = 'min',
   Max = 'max',
+  FieldMinMax = 'fieldMinMax',
   Decimals = 'decimals',
   DisplayName = 'displayName',
   NoValue = 'noValue',

@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"sync"
@@ -77,9 +78,8 @@ func ProvideService(
 		folderService:                folderService,
 	}
 
-	err := s.setDashboardProvisioner()
-	if err != nil {
-		return nil, fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	if err := s.setDashboardProvisioner(); err != nil {
+		return nil, err
 	}
 
 	return s, nil
@@ -106,25 +106,14 @@ type ProvisioningService interface {
 	GetAllowUIUpdatesFromConfig(name string) bool
 }
 
-// Add a public constructor for overriding service to be able to instantiate OSS as fallback
-func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
-	logger := log.New("provisioning")
-	return &ProvisioningServiceImpl{
-		log:                     logger,
-		newDashboardProvisioner: dashboards.New,
-		provisionDatasources:    datasources.Provision,
-		provisionPlugins:        plugins.Provision,
-	}
-}
-
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
 	searchService searchV2.SearchService,
-) *ProvisioningServiceImpl {
-	return &ProvisioningServiceImpl{
+) (*ProvisioningServiceImpl, error) {
+	s := &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionDatasources:    provisionDatasources,
@@ -132,6 +121,12 @@ func newProvisioningServiceImpl(
 		Cfg:                     setting.NewCfg(),
 		searchService:           searchService,
 	}
+
+	if err := s.setDashboardProvisioner(); err != nil {
+		return nil, err
+	}
+
+	return s, nil
 }
 
 type ProvisioningServiceImpl struct {
@@ -187,6 +182,11 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	err := ps.ProvisionDashboards(ctx)
 	if err != nil {
 		ps.log.Error("Failed to provision dashboard", "error", err)
+		// Consider the allow list of errors for which running the provisioning service should not
+		// fail. For now this includes only dashboards.ErrGetOrCreateFolder.
+		if !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
+			return err
+		}
 	}
 	if ps.dashboardProvisioner.HasDashboardSources() {
 		ps.searchService.TriggerReIndex()
@@ -235,13 +235,18 @@ func (ps *ProvisioningServiceImpl) ProvisionPlugins(ctx context.Context) error {
 }
 
 func (ps *ProvisioningServiceImpl) ProvisionDashboards(ctx context.Context) error {
+	err := ps.setDashboardProvisioner()
+	if err != nil {
+		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+
 	ps.mutex.Lock()
 	defer ps.mutex.Unlock()
 
 	ps.cancelPolling()
 	ps.dashboardProvisioner.CleanUpOrphanedDashboards(ctx)
 
-	err := ps.dashboardProvisioner.Provision(ctx)
+	err = ps.dashboardProvisioner.Provision(ctx)
 	if err != nil {
 		// If we fail to provision with the new provisioner, the mutex will unlock and the polling will restart with the
 		// old provisioner as we did not switch them yet.
