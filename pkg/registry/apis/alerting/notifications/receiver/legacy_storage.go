@@ -25,9 +25,6 @@ var (
 
 var resourceInfo = notifications.ReceiverResourceInfo
 
-// AccessControlKey is the label selector key used to return access control metadata during List queries.
-const AccessControlKey = "grafana.com/accessControl"
-
 type ReceiverService interface {
 	GetReceiver(ctx context.Context, q ngmodels.GetReceiverQuery, user identity.Requester) (*ngmodels.Receiver, error)
 	GetReceivers(ctx context.Context, q ngmodels.GetReceiversQuery, user identity.Requester) ([]*ngmodels.Receiver, error)
@@ -93,27 +90,12 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	var accesses map[string]ngmodels.ReceiverPermissionSet
-	if shouldIncludeAccessControlMetadata(opts) {
-		accesses, err = s.metadata.Access(ctx, user, res...)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get access control metadata: %w", err)
-		}
+	accesses, err := s.metadata.Access(ctx, user, res...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
 	}
 
 	return convertToK8sResources(orgId, res, accesses, s.namespacer, opts.FieldSelector)
-}
-
-func shouldIncludeAccessControlMetadata(opts *internalversion.ListOptions) bool {
-	if opts.LabelSelector != nil {
-		labelSelectors, _ := opts.LabelSelector.Requirements()
-		for _, req := range labelSelectors {
-			if req.Key() == AccessControlKey {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
