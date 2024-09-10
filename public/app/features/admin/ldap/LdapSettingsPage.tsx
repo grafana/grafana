@@ -167,6 +167,7 @@ export const LdapSettingsPage = () => {
         type: AppEvents.alertSuccess.name,
         payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
       });
+      reset(await getSettings());
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
