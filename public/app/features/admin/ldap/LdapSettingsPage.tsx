@@ -96,15 +96,7 @@ export const LdapSettingsPage = () => {
 
   useEffect(() => {
     async function init() {
-      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
-      if (!payload || !payload.settings || !payload.settings.config) {
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
-        });
-        return;
-      }
-
+      const payload = await getSettings();
       const serverConfig = payload.settings.config.servers[0];
       setMapKeyCertConfigured({
         rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
@@ -132,6 +124,30 @@ export const LdapSettingsPage = () => {
         </Trans>
       </Alert>
     );
+  }
+
+  /**
+   * Fetches the settings from the backend
+   * @returns Promise<LdapPayload>
+   */
+  const getSettings = async () => {
+    try {
+      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
+      if (!payload || !payload.settings || !payload.settings.config) {
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
+        });
+        return emptySettings;
+      }
+      return payload;
+    } catch (error) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
+      });
+      return emptySettings;
+    }
   }
 
   /**
@@ -180,14 +196,7 @@ export const LdapSettingsPage = () => {
     try {
       setIsLoading(true);
       await getBackendSrv().delete('/api/v1/sso-settings/ldap');
-      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
-      if (!payload || !payload.settings || !payload.settings.config) {
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: [t('ldap-settings-page.alert.error-update', 'Error updating LDAP settings')],
-        });
-        return;
-      }
+      const payload = await getSettings();
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: [t('ldap-settings-page.alert.discard-success', 'LDAP settings discarded')],
