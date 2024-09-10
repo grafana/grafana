@@ -75,7 +75,7 @@ func (f FakeAccessControl) Evaluate(ctx context.Context, user identity.Requester
 func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 }
 
-func (f *FakeAccessControl) WithoutResolvers() accesscontrol.AccessControl {
+func (f FakeAccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return f
 }
 
