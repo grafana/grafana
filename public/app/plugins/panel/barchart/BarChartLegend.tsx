@@ -1,6 +1,14 @@
 import { memo } from 'react';
 
-import { DataFrame, Field, getFieldSeriesColor, ThresholdsConfig, ThresholdsMode, ValueMapping } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldColorModeId,
+  getFieldSeriesColor,
+  ThresholdsConfig,
+  ThresholdsMode,
+  ValueMapping,
+} from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
@@ -44,41 +52,48 @@ export const BarChartLegend = memo(
     //   }
     // }
 
-    const thresholdsAbsolute: ThresholdsConfig = { mode: ThresholdsMode.Absolute, steps: [] };
-    const thresholdsPercent: ThresholdsConfig = { mode: ThresholdsMode.Percentage, steps: [] };
+    const fieldConfig = data[0].fields[0].config;
+    const colorMode = fieldConfig.color?.mode;
 
-    for (let i = 0; i < data[0].fields.length; i++) {
-      const field = data[0].fields[i];
-      // there is no reason to add threshold with only one (Base) step
-      if (field.config.thresholds && field.config.thresholds.steps.length > 1) {
-        if (field.config.thresholds.mode === ThresholdsMode.Absolute) {
-          for (const step of field.config.thresholds.steps) {
-            // TODO: if we have only one base threshold steps, those steps are the same objects in other fields
-            // need to optimize this part
-            if (!thresholdsAbsolute.steps.includes(step)) {
-              thresholdsAbsolute.steps.push(step);
+    let thresholdItems: VizLegendItem[] | undefined = undefined;
+    if (colorMode === FieldColorModeId.Thresholds) {
+      const thresholdsAbsolute: ThresholdsConfig = { mode: ThresholdsMode.Absolute, steps: [] };
+      const thresholdsPercent: ThresholdsConfig = { mode: ThresholdsMode.Percentage, steps: [] };
+
+      for (let i = 0; i < data[0].fields.length; i++) {
+        const field = data[0].fields[i];
+        // there is no reason to add threshold with only one (Base) step
+        if (field.config.thresholds && field.config.thresholds.steps.length > 1) {
+          if (field.config.thresholds.mode === ThresholdsMode.Absolute) {
+            for (const step of field.config.thresholds.steps) {
+              // TODO: if we have only one base threshold steps, those steps are the same objects in other fields
+              // need to optimize this part
+              if (!thresholdsAbsolute.steps.includes(step)) {
+                thresholdsAbsolute.steps.push(step);
+              }
             }
-          }
-        } else {
-          for (const step of field.config.thresholds.steps) {
-            if (!thresholdsPercent.steps.includes(step)) {
-              thresholdsPercent.steps.push(step);
+          } else {
+            for (const step of field.config.thresholds.steps) {
+              if (!thresholdsPercent.steps.includes(step)) {
+                thresholdsPercent.steps.push(step);
+              }
             }
           }
         }
       }
-    }
 
-    const fieldConfig = data[0].fields[0].config;
-    const thresholdAbsoluteItems: VizLegendItem[] = getThresholdItems2(fieldConfig, thresholdsAbsolute, theme);
-    const thresholdPercentItems: VizLegendItem[] = getThresholdItems2(fieldConfig, thresholdsPercent, theme);
-    const thresholdItems = [...thresholdAbsoluteItems, ...thresholdPercentItems];
+      const thresholdAbsoluteItems: VizLegendItem[] = getThresholdItems2(fieldConfig, thresholdsAbsolute, theme);
+      const thresholdPercentItems: VizLegendItem[] = getThresholdItems2(fieldConfig, thresholdsPercent, theme);
+      thresholdItems = [...thresholdAbsoluteItems, ...thresholdPercentItems];
+    }
 
     const mappings: ValueMapping[] = [];
     const baseMapping = data[0].fields[0].config.mappings;
-    mappings.push(...baseMapping!);
+    if (baseMapping) {
+      mappings.push(...baseMapping);
+    }
     for (let i = 1; i < data[0].fields.length; i++) {
-      const mapping = data[0].fields[i].config.mappings!;
+      const mapping = data[0].fields[i].config.mappings;
       if (mapping && mapping !== baseMapping) {
         mappings.push(...mapping);
       }
