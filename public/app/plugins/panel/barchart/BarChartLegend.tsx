@@ -1,19 +1,11 @@
 import { memo } from 'react';
 
-import {
-  DataFrame,
-  Field,
-  FieldColorModeId,
-  getFieldSeriesColor,
-  ThresholdsConfig,
-  ThresholdsMode,
-  ValueMapping,
-} from '@grafana/data';
+import { DataFrame, Field, FieldColorModeId, getFieldSeriesColor, ValueMapping } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
 // import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
-import { getThresholdItems2, getValueMappingItems } from 'app/core/components/TimelineChart/utils';
+import { getThresholdItems, getValueMappingItems } from 'app/core/components/TimelineChart/utils';
 interface BarChartLegend2Props extends VizLegendOptions, Omit<VizLayoutLegendProps, 'children'> {
   data: DataFrame[];
   colorField?: Field | null;
@@ -40,48 +32,25 @@ export const BarChartLegend = memo(
   ({ data, placement, calcs, displayMode, colorField, ...vizLayoutLegendProps }: BarChartLegend2Props) => {
     const theme = useTheme2();
 
-    // if (colorField != null) {
-    //   const items = getFieldLegendItem([colorField], theme);
-
-    //   if (items?.length) {
-    //     return (
-    //       <VizLayout.Legend placement={placement}>
-    //         <VizLegend placement={placement} items={items} displayMode={displayMode} />
-    //       </VizLayout.Legend>
-    //     );
-    //   }
-    // }
-
     const fieldConfig = data[0].fields[0].config;
     const colorMode = fieldConfig.color?.mode;
 
-    let thresholdItems: VizLegendItem[] | undefined = undefined;
-    // calculate threshold items only if color mode is set to Thresholds
+    let thresholdItems: VizLegendItem[] = [];
     if (colorMode === FieldColorModeId.Thresholds) {
-      const thresholdsAbsolute: ThresholdsConfig = { mode: ThresholdsMode.Absolute, steps: [] };
-      const thresholdsPercent: ThresholdsConfig = { mode: ThresholdsMode.Percentage, steps: [] };
-
       for (let i = 0; i < data[0].fields.length; i++) {
         const thresholds = data[0].fields[i].config.thresholds;
-
-        // in case of multiple fields, each field has same thresholds config as in first field (data[0].field[0].config),
-        // so we need to avoid duplicates;
-        // it is the same object, so we can compare by reference;
-        // i !== 0 is needed to add thresholds from the first field
         if (thresholds) {
+          // in case of multiple fields, each field has same thresholds config as in first field (data[0].field[0].config),
+          // so we need to avoid duplicates;
+          // it is the same object, so we can compare by reference;
+          // i !== 0 is needed to add thresholds from the first field
           if ((i === 0 || fieldConfig.thresholds !== thresholds) && thresholds.steps.length > 1) {
-            if (thresholds.mode === ThresholdsMode.Absolute) {
-              thresholdsAbsolute.steps.push(...thresholds.steps);
-            } else {
-              thresholdsPercent.steps.push(...thresholds.steps);
-            }
+            const config = data[0].fields[i].config;
+            const items = getThresholdItems(config, theme);
+            thresholdItems.push(...items);
           }
         }
       }
-
-      const thresholdAbsoluteItems: VizLegendItem[] = getThresholdItems2(fieldConfig, thresholdsAbsolute, theme);
-      const thresholdPercentItems: VizLegendItem[] = getThresholdItems2(fieldConfig, thresholdsPercent, theme);
-      thresholdItems = [...thresholdAbsoluteItems, ...thresholdPercentItems];
     }
 
     const mappings: ValueMapping[] = [];

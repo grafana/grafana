@@ -109,7 +109,7 @@ export function VizLegend<T>({
           {/* render threshold colors if From thresholds scheme selected */}
           <VizLegendList<T>
             className={className}
-            items={thresholdItems ? thresholdItems : items}
+            items={thresholdItems && thresholdItems.length > 1 ? thresholdItems : items}
             placement={placement}
             onLabelMouseOver={onMouseOver}
             onLabelMouseOut={onMouseOut}

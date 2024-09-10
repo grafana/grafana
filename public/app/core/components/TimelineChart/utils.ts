@@ -17,7 +17,6 @@ import {
   cacheFieldDisplayNames,
   outerJoinDataFrames,
   ValueMapping,
-  ThresholdsConfig,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -458,48 +457,6 @@ export function makeFramePerSeries(frames: DataFrame[]) {
 export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
   const items: VizLegendItem[] = [];
   const thresholds = fieldConfig.thresholds;
-  if (!thresholds || !thresholds.steps.length) {
-    return items;
-  }
-
-  const steps = thresholds.steps;
-  const getDisplay = getValueFormat(
-    thresholds.mode === ThresholdsMode.Percentage ? 'percent' : (fieldConfig.unit ?? '')
-  );
-
-  // `undefined` value for decimals will use `auto`
-  const format = (value: number) => formattedValueToString(getDisplay(value, fieldConfig.decimals ?? undefined));
-
-  for (let i = 0; i < steps.length; i++) {
-    let step = steps[i];
-    let value = step.value;
-    let pre = '';
-    let suf = '';
-
-    if (value === -Infinity && i < steps.length - 1) {
-      value = steps[i + 1].value;
-      pre = '< ';
-    } else {
-      suf = '+';
-    }
-
-    items.push({
-      label: `${pre}${format(value)}${suf}`,
-      color: theme.visualization.getColorByName(step.color),
-      yAxis: 1,
-    });
-  }
-
-  return items;
-}
-
-export function getThresholdItems2(
-  fieldConfig: FieldConfig,
-  thresholds: ThresholdsConfig,
-  theme: GrafanaTheme2
-): VizLegendItem[] {
-  const items: VizLegendItem[] = [];
-  // const thresholds = fieldConfig.thresholds;
   if (!thresholds || !thresholds.steps.length) {
     return items;
   }
