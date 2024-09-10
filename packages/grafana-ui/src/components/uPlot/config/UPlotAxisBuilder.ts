@@ -43,6 +43,15 @@ export interface AxisProps {
 }
 
 export const UPLOT_AXIS_FONT_SIZE = 12;
+
+// for panels with small heights, we increase tick density by reducing the minumum tick spacing
+// all values in CSS pixels
+const Y_TICK_SPACING_PANEL_HEIGHT = 150;
+const Y_TICK_SPACING_NORMAL = 30;
+const Y_TICK_SPACING_SMALL = 15;
+
+const X_TICK_SPACING_NORMAL = 40;
+
 const labelPad = 8;
 
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
@@ -62,20 +71,18 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     // for axis left & right
     if (axis.side !== 2 || !scale) {
-      return 30;
+      return plotDim <= Y_TICK_SPACING_PANEL_HEIGHT ? Y_TICK_SPACING_SMALL : Y_TICK_SPACING_NORMAL;
     }
 
-    const defaultSpacing = 40;
-
     if (scale.time) {
-      const maxTicks = plotDim / defaultSpacing;
+      const maxTicks = plotDim / X_TICK_SPACING_NORMAL;
       const increment = (scaleMax - scaleMin) / maxTicks;
-      const sample = formatTime(self, [scaleMin], axisIdx, defaultSpacing, increment);
+      const sample = formatTime(self, [scaleMin], axisIdx, X_TICK_SPACING_NORMAL, increment);
       const width = measureText(sample[0], UPLOT_AXIS_FONT_SIZE).width + 18;
       return width;
     }
 
-    return defaultSpacing;
+    return X_TICK_SPACING_NORMAL;
   }
 
   /** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
