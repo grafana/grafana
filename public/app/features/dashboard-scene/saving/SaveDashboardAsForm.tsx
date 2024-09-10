@@ -82,7 +82,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     }
     return (
       <>
-        {error && (
+        {error && formValuesMatchContentSent && (
           <Alert title="Failed to save dashboard" severity="error">
             {error.message && <p>{error.message}</p>}
           </Alert>
