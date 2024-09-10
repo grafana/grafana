@@ -366,7 +366,11 @@
     },
     "save": "Save"
   },
-  "complete": "complete",
+  "configuration-tracker": {
+    "config-card": {
+      "complete": "complete"
+    }
+  },
   "connections": {
     "connect-data": {
       "category-header-label": "Data sources",
@@ -378,7 +382,6 @@
       "placeholder": "Search all"
     }
   },
-  "Copy to Clipboard": "Copy to Clipboard",
   "correlations": {
     "add-new": "Add new",
     "alert": {
@@ -945,6 +948,9 @@
     },
     "spinner": {
       "aria-label": "Loading"
+    },
+    "table": {
+      "copy": "Copy to Clipboard"
     }
   },
   "graph": {
