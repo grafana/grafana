@@ -46,21 +46,26 @@ func (m *LoggerMiddleware) logRequest(ctx context.Context, pCtx backend.PluginCo
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
-	status, err := fn(ctx)
+	ctxLogger := m.logger.FromContext(ctx)
+	logFunc := ctxLogger.Info
+
 	logParams := []any{
-		"status", status.String(),
-		"duration", time.Since(start),
 		"eventName", "grafana-data-egress",
 		"time_before_plugin_request", timeBeforePluginRequest,
 		"target", m.pluginTarget(ctx, pCtx),
 	}
+
+	logFunc("Plugin Request Started", logParams...)
+
+	status, err := fn(ctx)
+
+	logParams = append(logParams, "status", status.String(), "duration", time.Since(start))
+
 	if err != nil {
 		logParams = append(logParams, "error", err)
 	}
 	logParams = append(logParams, "statusSource", pluginrequestmeta.StatusSourceFromContext(ctx))
 
-	ctxLogger := m.logger.FromContext(ctx)
-	logFunc := ctxLogger.Info
 	if status > instrumentationutils.RequestStatusOK {
 		logFunc = ctxLogger.Error
 	}
