@@ -198,7 +198,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 
 	// setup guide
 	children = append(children, &navtree.NavLink{
-		Id:         "setup-guide",
+		Id:         "home-setup-guide",
 		Text:       "Setup guide",
 		Url:        homeUrl + "/setup-guide",
 		SortWeight: navtree.WeightHome,

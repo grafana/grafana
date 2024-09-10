@@ -1357,6 +1357,19 @@
     },
     {
       "metadata": {
+        "name": "homeSetupGuide",
+        "resourceVersion": "1725983192781",
+        "creationTimestamp": "2024-09-10T15:46:32Z"
+      },
+      "spec": {
+        "description": "Used in Home for users who want to return to the onboarding flow",
+        "stage": "experimental",
+        "codeowner": "@grafana/growth-and-onboarding",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "idForwarding",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-09-25T15:21:28Z",

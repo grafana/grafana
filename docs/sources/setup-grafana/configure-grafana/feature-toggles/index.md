@@ -199,6 +199,7 @@ Experimental features might be changed or removed without prior notice.
 | `exploreLogsShardSplitting`                 | Used in Explore Logs to split queries into multiple queries based on the number of shards                                                                                                                                                                                         |
 | `exploreLogsAggregatedMetrics`              | Used in Explore Logs to query by aggregated metrics                                                                                                                                                                                                                               |
 | `exploreLogsLimitedTimeRange`               | Used in Explore Logs to limit the time range                                                                                                                                                                                                                                      |
+| `homeSetupGuide`                            | Used in Home for users who want to return to the onboarding flow                                                                                                                                                                                                                  |
 
 ## Development feature toggles
 

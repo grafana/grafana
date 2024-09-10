@@ -766,4 +766,8 @@ const (
 	// FlagExploreLogsLimitedTimeRange
 	// Used in Explore Logs to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
+
+	// FlagHomeSetupGuide
+	// Used in Home for users who want to return to the onboarding flow
+	FlagHomeSetupGuide = "homeSetupGuide"
 )
