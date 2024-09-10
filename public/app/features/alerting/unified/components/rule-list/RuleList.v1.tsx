@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
@@ -35,7 +36,7 @@ const VIEWS = {
 const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 
 // TODO: Convert this to a feature toggle
-const lazyRuler = true;
+const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary;
 
 const RuleList = withErrorBoundary(
   () => {
@@ -83,7 +84,7 @@ const RuleList = withErrorBoundary(
     // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
     const [_, fetchRules] = useAsyncFn(async () => {
       if (!loading) {
-        if (lazyRuler) {
+        if (prometheusRulesPrimary) {
           await dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
           await dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
         } else {
@@ -98,7 +99,7 @@ const RuleList = withErrorBoundary(
 
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
-      if (lazyRuler) {
+      if (prometheusRulesPrimary) {
         dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
         dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
       } else {

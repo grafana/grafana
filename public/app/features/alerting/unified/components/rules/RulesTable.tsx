@@ -1,8 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Tooltip, LoadingPlaceholder, Pagination } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { useStyles2, Tooltip, Pagination } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -14,7 +16,7 @@ import { useHasRuler } from '../../hooks/useHasRuler';
 import { usePagination } from '../../hooks/usePagination';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
-import { getRulesSourceName } from '../../utils/datasource';
+import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { getRulePluginOrigin, isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
@@ -42,6 +44,10 @@ interface Props {
   className?: string;
 }
 
+const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary;
+
+const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
+const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 export const RulesTable = ({
   rules,
   className,
@@ -54,44 +60,11 @@ export const RulesTable = ({
   const styles = useStyles2(getStyles);
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
-  const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
-  const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-
-  const [fetchRulerRuleGroup, { isLoading: isLoadingRulerGroup }] = useLazyGetRuleGroupForNamespaceQuery();
-  const [fetchDsFeatures] = useLazyDiscoverDsFeaturesQuery();
-
   const { pageItems, page, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
-  const [actions, { result: rulesWithRulerDefinitions }] = useAsync(async () => {
-    const result = Promise.all(
-      pageItems.map(async (rule) => {
-        const dsFeatures = await fetchDsFeatures({
-          rulesSourceName: getRulesSourceName(rule.namespace.rulesSource),
-        }).unwrap();
+  const { result: rulesWithRulerDefinitions, status: rulerRulesLoadingStatus } = useLazyLoadRulerRules(pageItems);
 
-        if (dsFeatures.rulerConfig) {
-          // RTK Query should handle caching and deduplication for us
-          const rulerRuleGroup = await fetchRulerRuleGroup(
-            {
-              namespace: rule.namespace.name,
-              group: rule.group.name,
-              rulerConfig: dsFeatures.rulerConfig,
-            },
-            true
-          ).unwrap();
-
-          attachRulerRuleToCombinedRule(rule, rulerRuleGroup);
-        }
-
-        return rule;
-      })
-    );
-    return result;
-  }, pageItems);
-
-  useEffect(() => {
-    actions.execute();
-  }, [pageItems, actions]);
+  const isLoadingRulerGroup = rulerRulesLoadingStatus === 'loading';
 
   const items = useMemo((): RuleTableItemProps[] => {
     return rulesWithRulerDefinitions.map((rule, ruleIdx) => {
@@ -120,10 +93,64 @@ export const RulesTable = ({
         // pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
         // paginationStyles={styles.pagination}
       />
-      <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
+      <Pagination
+        currentPage={page}
+        numberOfPages={numberOfPages}
+        onNavigate={onPageChange}
+        hideWhenSinglePage
+        className={styles.pagination}
+      />
     </div>
   );
 };
+
+/**
+ * This hook is used to lazy load the Ruler rule for each rule.
+ * If the `prometheusRulesPrimary` feature flag is enabled, the hook will fetch the Ruler rule counterpart for each Prometheus rule.
+ * If the `prometheusRulesPrimary` feature flag is disabled, the hook will return the rules as is.
+ * @param rules Combined rules with or without Ruler rule property
+ * @returns Combined rules enriched with Ruler rule property
+ */
+function useLazyLoadRulerRules(rules: CombinedRule[]) {
+  const [fetchRulerRuleGroup] = useLazyGetRuleGroupForNamespaceQuery();
+  const [fetchDsFeatures] = useLazyDiscoverDsFeaturesQuery();
+
+  const [actions, state] = useAsync(async () => {
+    const result = Promise.all(
+      rules.map(async (rule) => {
+        const dsFeatures = await fetchDsFeatures({
+          rulesSourceName: getRulesSourceName(rule.namespace.rulesSource),
+        }).unwrap();
+
+        // Due to lack of ruleUid and folderUid in Prometheus rules we cannot do the lazy load for GMA
+        if (dsFeatures.rulerConfig && rule.namespace.rulesSource !== GRAFANA_RULES_SOURCE_NAME) {
+          // RTK Query should handle caching and deduplication for us
+          const rulerRuleGroup = await fetchRulerRuleGroup(
+            {
+              namespace: rule.namespace.name,
+              group: rule.group.name,
+              rulerConfig: dsFeatures.rulerConfig,
+            },
+            true
+          ).unwrap();
+
+          attachRulerRuleToCombinedRule(rule, rulerRuleGroup);
+        }
+
+        return rule;
+      })
+    );
+    return result;
+  }, rules);
+
+  useEffect(() => {
+    if (prometheusRulesPrimary) {
+      actions.execute();
+    }
+  }, [rules, actions]);
+
+  return state;
+}
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapperMargin: css({
@@ -138,6 +165,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     width: 'auto',
     borderRadius: theme.shape.radius.default,
   }),
+  skeletonWrapper: css({
+    flex: 1,
+  }),
   pagination: css({
     display: 'flex',
     margin: 0,
@@ -147,6 +177,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     borderLeft: `1px solid ${theme.colors.border.medium}`,
     borderRight: `1px solid ${theme.colors.border.medium}`,
     borderBottom: `1px solid ${theme.colors.border.medium}`,
+    float: 'none',
   }),
 });
 
@@ -277,10 +308,11 @@ function RuleStateCell({ rule }: { rule: CombinedRule }) {
 
 // TODO This component itself should load the ruler rule
 function RuleActionsCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadingRuler: boolean }) {
+  const styles = useStyles2(getStyles);
   const { isDeleting, isCreating } = useRuleStatus(rule);
 
   if (isLoadingRuler) {
-    return <LoadingPlaceholder text="Loading actions..." />;
+    return <Skeleton containerClassName={styles.skeletonWrapper} />;
   }
 
   return (
