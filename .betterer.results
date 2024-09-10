@@ -6257,8 +6257,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/components/SimulationSchemaForm.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/components/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./StreamingClientEditor\`)", "0"],
@@ -6267,9 +6266,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/grafana-testdata-datasource/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/grafana-testdata-datasource/runStreams.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/grafana-testdata-datasource/webpack.config.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`config\`)", "0"]
@@ -6319,7 +6315,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/plugins/datasource/graphite/components/MetricTankMetaInspector.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"],
       [0, 0, 0, "Styles should be written using objects.", "3"],
@@ -6328,8 +6324,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"],
       [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"]
+      [0, 0, 0, "Styles should be written using objects.", "9"]
     ],
     "public/app/plugins/datasource/graphite/components/TagsSection.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -6372,8 +6367,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "30"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "29"]
     ],
     "public/app/plugins/datasource/graphite/gfunc.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -6396,14 +6390,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
+      [0, 0, 0, "Do not use any type assertions.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Do not use any type assertions.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "19"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "16"]
     ],
     "public/app/plugins/datasource/graphite/lexer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6472,10 +6463,7 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/influxdb/influx_query_model.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/influxdb/influx_series.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6489,17 +6477,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"]
-    ],
-    "public/app/plugins/datasource/influxdb/migrations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
     "public/app/plugins/datasource/influxdb/query_part.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6515,8 +6493,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "13"]
     ],
     "public/app/plugins/datasource/influxdb/response_parser.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6629,9 +6606,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "1"],
       [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
-    "public/app/plugins/datasource/loki/streaming.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/loki/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`LokiQueryDirection\`)", "0"],
       [0, 0, 0, "Do not re-export imported variable (\`LokiQueryType\`)", "1"],
@@ -6667,9 +6641,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"]
-    ],
-    "public/app/plugins/datasource/opentsdb/migrations.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/parca/QueryEditor/LabelsEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
