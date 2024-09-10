@@ -1853,10 +1853,12 @@
     },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "Contact Grafana Labs",
+        "customLinks": "Custom links: ",
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
-        "reportAbuse": "Report Abuse",
+        "reportAbuse": "Report Abuse ",
         "signature": "Signature",
         "status": "Status",
         "updatedAt": "Last updated: ",

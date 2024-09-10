@@ -1853,10 +1853,12 @@
     },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "Cőŉŧäčŧ Ğřäƒäŉä Ŀäþş",
+        "customLinks": "Cūşŧőm ľįŉĸş: ",
         "dependencies": "Đępęŉđęŉčįęş",
         "downloads": "Đőŵŉľőäđş",
         "from": "Fřőm",
-        "reportAbuse": "Ŗępőřŧ Åþūşę",
+        "reportAbuse": "Ŗępőřŧ Åþūşę ",
         "signature": "Ŝįģŉäŧūřę",
         "status": "Ŝŧäŧūş",
         "updatedAt": "Ŀäşŧ ūpđäŧęđ: ",
