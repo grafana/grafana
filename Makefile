@@ -162,7 +162,7 @@ run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
 
 run-local-env:               ## Start local frontend with pmm-server:dev-latest
 	yarn dev
-	docker-compose up -d
+	docker compose up -d
 
 ##@ Testing
 
