@@ -64,7 +64,7 @@ function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
 
   return (
     <Drawer title={activeShare.getTabLabel()} onClose={model.onDismiss} size="md">
-      <ShareDrawerContext.Provider value={{ dashboard }}>
+      <ShareDrawerContext.Provider value={{ dashboard, onDismiss: model.onDismiss }}>
         {<activeShare.Component model={activeShare} />}
       </ShareDrawerContext.Provider>
     </Drawer>

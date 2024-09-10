@@ -426,7 +426,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 		span.SetStatus(codes.Error, "rule evaluation failed")
 		span.RecordError(err)
 	} else {
-		logger.Debug("Alert rule evaluated", "results", results, "duration", dur)
+		logger.Debug("Alert rule evaluated", "results", len(results), "duration", dur)
 		span.AddEvent("rule evaluated", trace.WithAttributes(
 			attribute.Int64("results", int64(len(results))),
 		))

@@ -48,7 +48,7 @@ func newQueryREST(builder *QueryAPIBuilder) *queryREST {
 }
 
 func (r *queryREST) New() runtime.Object {
-	// This is added as the "ResponseType" regarless what ProducesObject() says :)
+	// This is added as the "ResponseType" regardless what ProducesObject() says :)
 	return &query.QueryDataResponse{}
 }
 
@@ -134,6 +134,10 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			return
 		}
 
+		for i := range req.Requests {
+			req.Requests[i].Headers = ExtractKnownHeaders(httpreq.Header)
+		}
+
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
@@ -192,11 +196,14 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	// Add user headers... here or in client.QueryData
-	client, err := b.client.GetDataSourceClient(ctx, v0alpha1.DataSourceRef{
-		Type: req.PluginId,
-		UID:  req.UID,
-	})
+	client, err := b.client.GetDataSourceClient(
+		ctx,
+		v0alpha1.DataSourceRef{
+			Type: req.PluginId,
+			UID:  req.UID,
+		},
+		req.Headers,
+	)
 	if err != nil {
 		return nil, err
 	}

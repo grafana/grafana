@@ -43,7 +43,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       testId: newShareButtonSelector.shareInternally,
       icon: 'building',
       label: t('share-dashboard.menu.share-internally-title', 'Share internally'),
-      description: t('share-dashboard.menu.share-internally-description', 'Advanced settings'),
+      description: t('share-dashboard.menu.share-internally-description', 'Link settings'),
       renderCondition: true,
       onClick: () => onMenuItemClick(shareDashboardType.link),
     });
