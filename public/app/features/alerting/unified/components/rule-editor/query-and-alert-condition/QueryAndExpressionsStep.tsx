@@ -112,7 +112,7 @@ export function areQueriesTransformableToSimpleCondition(
   const conditions = thresholdExpression?.conditions ?? [];
   const thresholdOk = thresholdExpression && conditions[0]?.unloadEvaluator === undefined;
 
-  return reduceOk && thresholdOk;
+  return Boolean(reduceOk && thresholdOk);
 }
 
 interface Props {

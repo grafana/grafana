@@ -38,7 +38,7 @@ describe('areQueriesTransformableToSimpleCondition', () => {
   });
   it('should return false if expressionQueries length is not 2', () => {
     const dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [dataQuery];
-    const result = areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries);
+    const result = areQueriesTransformableToSimpleCondition(dataQueries, []);
     expect(result).toBe(false);
   });
 
