@@ -5,37 +5,34 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	goruntime "runtime"
-	"runtime/debug"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/openapi"
+	utilversion "k8s.io/apiserver/pkg/util/version"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/web"
-
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
-// TODO: this is a temporary hack to make rest.Connecter work with resource level routes
-var pathRewriters = []filters.PathRewriter{
+type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
+
+// PathRewriters is a temporary hack to make rest.Connecter work with resource level routes (TODO)
+var PathRewriters = []filters.PathRewriter{
 	{
 		Pattern: regexp.MustCompile(`(/apis/scope.grafana.app/v0alpha1/namespaces/.*/)find/(.*)$`),
 		ReplaceFunc: func(matches []string) string {
@@ -48,6 +45,43 @@ var pathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
+	{
+		Pattern: regexp.MustCompile(`(/apis/iam.grafana.app/v0alpha1/namespaces/.*/display$)`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "/name" // connector requires a name
+		},
+	},
+}
+
+func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
+	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
+		requestHandler, err := GetCustomRoutesHandler(
+			delegateHandler,
+			c.LoopbackClientConfig,
+			builders)
+		if err != nil {
+			panic(fmt.Sprintf("could not build the request handler for specified API builders: %s", err.Error()))
+		}
+
+		// Needs to run last in request chain to function as expected, hence we register it first.
+		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
+
+		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
+		handler = filters.WithRequester(handler)
+
+		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
+		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
+		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
+		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
+
+		handler = filters.WithAcceptHeader(handler)
+		handler = filters.WithPathRewriters(handler, PathRewriters)
+		handler = k8stracing.WithTracing(handler, c.TracerProvider, "KubernetesAPI")
+		// Configure filters.WithPanicRecovery to not crash on panic
+		utilruntime.ReallyCrash = false
+
+		return handler
+	}
 }
 
 func SetupConfig(
@@ -58,7 +92,7 @@ func SetupConfig(
 	buildVersion string,
 	buildCommit string,
 	buildBranch string,
-	optionalMiddlewares ...web.Middleware,
+	buildHandlerChainFunc func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler,
 ) error {
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
@@ -88,61 +122,28 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
-		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
-		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
-		requestHandler, err := getAPIHandler(
-			delegateHandler,
-			c.LoopbackClientConfig,
-			builders)
-		if err != nil {
-			panic(fmt.Sprintf("could not build handler chain func: %s", err.Error()))
-		}
+	serverConfig.BuildHandlerChainFunc = getDefaultBuildHandlerChainFunc(builders)
 
-		// Needs to run last in request chain to function as expected, hence we register it first.
-		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
-		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
-		handler = filters.WithRequester(handler)
-		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
-
-		// If optional middlewares include auth function, they need to happen before DefaultBuildHandlerChain
-		if len(optionalMiddlewares) > 0 {
-			for _, m := range optionalMiddlewares {
-				handler = m(handler)
-			}
-		}
-
-		handler = filters.WithAcceptHeader(handler)
-		handler = filters.WithPathRewriters(handler, pathRewriters)
-		handler = k8stracing.WithTracing(handler, serverConfig.TracerProvider, "KubernetesAPI")
-		// Configure filters.WithPanicRecovery to not crash on panic
-		utilruntime.ReallyCrash = false
-
-		return handler
+	if buildHandlerChainFunc != nil {
+		serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc
 	}
 
-	k8sVersion, err := getK8sApiserverVersion()
-	if err != nil {
-		return err
-	}
-	before, after, _ := strings.Cut(buildVersion, ".")
-	serverConfig.Version = &version.Info{
-		Major:        before,
-		Minor:        after,
-		GoVersion:    goruntime.Version(),
-		Platform:     fmt.Sprintf("%s/%s", goruntime.GOOS, goruntime.GOARCH),
-		Compiler:     goruntime.Compiler,
-		GitTreeState: buildBranch,
-		GitCommit:    buildCommit,
-		BuildDate:    time.Unix(buildTimestamp, 0).UTC().Format(time.DateTime),
-		GitVersion:   k8sVersion,
-	}
+	serverConfig.EffectiveVersion = utilversion.DefaultKubeEffectiveVersion()
+
 	return nil
 }
 
 type ServerLockService interface {
 	LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
+}
+
+func getRequestInfo(gr schema.GroupResource, namespaceMapper request.NamespaceMapper) *k8srequest.RequestInfo {
+	return &k8srequest.RequestInfo{
+		APIGroup:  gr.Group,
+		Resource:  gr.Resource,
+		Name:      "",
+		Namespace: namespaceMapper(int64(1)),
+	}
 }
 
 func InstallAPIs(
@@ -153,6 +154,7 @@ func InstallAPIs(
 	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
 	reg prometheus.Registerer,
+	namespaceMapper request.NamespaceMapper,
 	kvStore grafanarest.NamespacedKVStore,
 	serverLock ServerLockService,
 ) error {
@@ -166,11 +168,18 @@ func InstallAPIs(
 
 			// Get the option from custom.ini/command line
 			// when missing this will default to mode zero (legacy only)
-			mode := storageOpts.DualWriterDesiredModes[key]
+			var mode = grafanarest.DualWriterMode(0)
+			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
+			if resourceExists {
+				mode = resourceConfig.DualWriterMode
+			}
+
+			// TODO: inherited context from main Grafana process
+			ctx := context.Background()
 
 			// Moving from one version to the next can only happen after the previous step has
 			// successfully synchronized.
-			currentMode, err := grafanarest.SetDualWritingMode(context.Background(), kvStore, legacy, storage, key, mode, reg)
+			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, legacy, storage, key, mode, reg, serverLock, getRequestInfo(gr, namespaceMapper))
 			if err != nil {
 				return nil, err
 			}
@@ -180,6 +189,10 @@ func InstallAPIs(
 			case grafanarest.Mode4:
 				return storage, nil
 			default:
+			}
+
+			if storageOpts.DualWriterDataSyncJobEnabled[key] {
+				grafanarest.StartPeriodicDataSyncer(ctx, currentMode, legacy, storage, key, reg, serverLock, getRequestInfo(gr, namespaceMapper))
 			}
 			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
 		}
@@ -199,34 +212,4 @@ func InstallAPIs(
 		}
 	}
 	return nil
-}
-
-// find the k8s version according to build info
-func getK8sApiserverVersion() (string, error) {
-	bi, ok := debug.ReadBuildInfo()
-	if !ok {
-		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
-	}
-
-	if len(bi.Deps) == 0 {
-		return "v?.?", nil // this is normal while debugging
-	}
-
-	for _, dep := range bi.Deps {
-		if dep.Path == "k8s.io/apiserver" {
-			if !semver.IsValid(dep.Version) {
-				return "", fmt.Errorf("invalid semantic version for k8s.io/apiserver")
-			}
-			// v0 => v1
-			majorVersion := strings.TrimPrefix(semver.Major(dep.Version), "v")
-			majorInt, err := strconv.Atoi(majorVersion)
-			if err != nil {
-				return "", fmt.Errorf("could not convert majorVersion to int. majorVersion: %s", majorVersion)
-			}
-			newMajor := fmt.Sprintf("v%d", majorInt+1)
-			return strings.Replace(dep.Version, semver.Major(dep.Version), newMajor, 1), nil
-		}
-	}
-
-	return "", fmt.Errorf("could not find k8s.io/apiserver in build info")
 }

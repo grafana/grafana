@@ -25,11 +25,10 @@ import { ContactPoint } from './ContactPoint';
 import { NotificationTemplates } from './NotificationTemplates';
 import { ContactPointsFilter } from './components/ContactPointsFilter';
 import { GlobalConfigAlert } from './components/GlobalConfigAlert';
-import { useDeleteContactPointModal } from './components/Modals';
-import { useContactPointsWithStatus, useDeleteContactPoint } from './useContactPoints';
+import { useContactPointsWithStatus } from './useContactPoints';
 import { useContactPointsSearch } from './useContactPointsSearch';
 import { ALL_CONTACT_POINTS, useExportContactPoint } from './useExportContactPoint';
-import { ContactPointWithMetadata, isProvisioned } from './utils';
+import { ContactPointWithMetadata } from './utils';
 
 export enum ActiveTab {
   ContactPoints = 'contact_points',
@@ -42,8 +41,12 @@ const ContactPointsTab = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [queryParams] = useURLSearchParams();
 
-  let { isLoading, error, contactPoints } = useContactPointsWithStatus();
-  const [deleteTrigger, deleteRequestState] = useDeleteContactPoint();
+  const { isLoading, error, contactPoints } = useContactPointsWithStatus({
+    alertmanager: selectedAlertmanager!,
+    fetchPolicies: true,
+    fetchStatuses: true,
+  });
+
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
   );
@@ -51,7 +54,6 @@ const ContactPointsTab = () => {
     AlertmanagerAction.ExportContactPoint
   );
 
-  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, deleteRequestState.isLoading);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
   const search = queryParams.get('search');
@@ -97,16 +99,9 @@ const ContactPointsTab = () => {
           )}
         </Stack>
       </Stack>
-      <ContactPointsList
-        contactPoints={contactPoints}
-        search={search}
-        pageSize={DEFAULT_PAGE_SIZE}
-        onDelete={(name) => showDeleteModal(name)}
-        disabled={deleteRequestState.isLoading}
-      />
+      <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
-      {DeleteModal}
       {ExportDrawer}
     </>
   );
@@ -160,7 +155,9 @@ const ContactPointsPageContents = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [activeTab, setActiveTab] = useTabQueryParam();
 
-  let { contactPoints } = useContactPointsWithStatus();
+  const { contactPoints } = useContactPointsWithStatus({
+    alertmanager: selectedAlertmanager!,
+  });
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
@@ -196,39 +193,18 @@ const ContactPointsPageContents = () => {
 interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
   search?: string | null;
-  disabled?: boolean;
-  onDelete: (name: string) => void;
   pageSize?: number;
 }
 
-const ContactPointsList = ({
-  contactPoints,
-  disabled = false,
-  search,
-  pageSize = DEFAULT_PAGE_SIZE,
-  onDelete,
-}: ContactPointsListProps) => {
+const ContactPointsList = ({ contactPoints, search, pageSize = DEFAULT_PAGE_SIZE }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
 
   return (
     <>
       {pageItems.map((contactPoint, index) => {
-        const provisioned = isProvisioned(contactPoint);
-        const policies = contactPoint.policies ?? [];
         const key = `${contactPoint.name}-${index}`;
-
-        return (
-          <ContactPoint
-            key={key}
-            name={contactPoint.name}
-            disabled={disabled}
-            onDelete={onDelete}
-            receivers={contactPoint.grafana_managed_receiver_configs}
-            provisioned={provisioned}
-            policies={policies}
-          />
-        );
+        return <ContactPoint key={key} contactPoint={contactPoint} />;
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>

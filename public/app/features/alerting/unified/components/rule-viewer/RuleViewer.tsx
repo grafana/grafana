@@ -265,7 +265,7 @@ export const isErrorHealth = (health?: RuleHealth) => health === 'error' || heal
 
 export function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
-  const tabFromQuery = queryParams['tab'];
+  const tabFromQuery = queryParams.tab;
 
   const activeTab = isValidTab(tabFromQuery) ? tabFromQuery : ActiveTab.Query;
 

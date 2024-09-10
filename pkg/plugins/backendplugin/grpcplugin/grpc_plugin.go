@@ -20,6 +20,7 @@ type pluginClient interface {
 	backend.QueryDataHandler
 	backend.CallResourceHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 	backend.StreamHandler
 }
 
@@ -217,10 +218,10 @@ func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.Admis
 	return pluginClient.MutateAdmission(ctx, request)
 }
 
-func (p *grpcPlugin) ConvertObject(ctx context.Context, request *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (p *grpcPlugin) ConvertObjects(ctx context.Context, request *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
 		return nil, plugins.ErrPluginUnavailable
 	}
-	return pluginClient.ConvertObject(ctx, request)
+	return pluginClient.ConvertObjects(ctx, request)
 }

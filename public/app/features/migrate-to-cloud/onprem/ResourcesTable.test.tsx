@@ -99,7 +99,7 @@ describe('ResourcesTable', () => {
     expect(screen.getByText('Uploaded to cloud')).toBeInTheDocument();
   });
 
-  it('renders the success error correctly', () => {
+  it('renders the error status correctly', () => {
     const resources = [
       wellFormedDatasourceMigrationItem(1, {
         refId: datasourceA.uid,
@@ -112,12 +112,43 @@ describe('ResourcesTable', () => {
     expect(screen.getByText('Error')).toBeInTheDocument();
   });
 
-  it("shows a details button when there's an error description", () => {
+  it("shows a details button when there's an error message", () => {
     const resources = [
       wellFormedDatasourceMigrationItem(1, {
         refId: datasourceA.uid,
         status: 'ERROR',
-        error: 'Some error',
+        message: 'Some error',
+      }),
+    ];
+
+    render({ resources });
+
+    expect(
+      screen.getByRole('button', {
+        name: 'Details',
+      })
+    ).toBeInTheDocument();
+  });
+
+  it('renders the warning status correctly', () => {
+    const resources = [
+      wellFormedDatasourceMigrationItem(1, {
+        refId: datasourceA.uid,
+        status: 'WARNING',
+      }),
+    ];
+
+    render({ resources });
+
+    expect(screen.getByText('Uploaded with warning')).toBeInTheDocument();
+  });
+
+  it("shows a details button when there's a warning message", () => {
+    const resources = [
+      wellFormedDatasourceMigrationItem(1, {
+        refId: datasourceA.uid,
+        status: 'WARNING',
+        message: 'Some warning',
       }),
     ];
 

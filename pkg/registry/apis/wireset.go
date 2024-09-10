@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
-	"github.com/grafana/grafana/pkg/registry/apis/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
@@ -33,10 +33,11 @@ var WireSet = wire.NewSet(
 	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
-	identity.RegisterAPIService,
+	iam.RegisterAPIService,
 	peakq.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
 	scope.RegisterAPIService,
 	notifications.RegisterAPIService,
+	//sso.RegisterAPIService,
 )

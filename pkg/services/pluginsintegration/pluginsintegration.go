@@ -43,10 +43,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -124,6 +126,8 @@ var WireSet = wire.NewSet(
 	pluginexternal.ProvideService,
 	plugincontext.ProvideBaseService,
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
+	plugininstaller.ProvideService,
+	pluginassets.ProvideService,
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -173,7 +177,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	}
 
 	if cfg.PluginLogBackendRequests {
-		middlewares = append(middlewares, clientmiddleware.NewLoggerMiddleware(log.New("plugin.instrumentation")))
+		middlewares = append(middlewares, clientmiddleware.NewLoggerMiddleware(log.New("plugin.instrumentation"), registry))
 	}
 
 	skipCookiesNames := []string{cfg.LoginCookieName}
@@ -185,11 +189,8 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewResourceResponseMiddleware(),
 		clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features),
+		clientmiddleware.NewForwardIDMiddleware(),
 	)
-
-	if features.IsEnabledGlobally(featuremgmt.FlagIdForwarding) {
-		middlewares = append(middlewares, clientmiddleware.NewForwardIDMiddleware())
-	}
 
 	if cfg.SendUserHeader {
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())

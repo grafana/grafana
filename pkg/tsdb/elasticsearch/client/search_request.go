@@ -12,6 +12,15 @@ const (
 	HighlightPostTagsString = "@/HIGHLIGHT@"
 	HighlightFragmentSize   = 2147483647
 	DefaultGeoHashPrecision = 3
+
+	termsOrderTerm = "_term"
+)
+
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "asc"
+	SortOrderDesc SortOrder = "desc"
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
@@ -78,13 +87,6 @@ func (b *SearchRequestBuilder) Size(size int) *SearchRequestBuilder {
 	b.size = size
 	return b
 }
-
-type SortOrder string
-
-const (
-	SortOrderAsc  SortOrder = "asc"
-	SortOrderDesc SortOrder = "desc"
-)
 
 // Sort adds a "asc" | "desc" sort to the search request
 func (b *SearchRequestBuilder) Sort(order SortOrder, field string, unmappedType string) *SearchRequestBuilder {
@@ -385,8 +387,6 @@ func (b *aggBuilderImpl) DateHistogram(key, field string, fn func(a *DateHistogr
 
 	return b
 }
-
-const termsOrderTerm = "_term"
 
 func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &TermsAggregation{

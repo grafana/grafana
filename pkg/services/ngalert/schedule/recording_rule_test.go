@@ -19,11 +19,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -154,8 +153,10 @@ func TestRecordingRule(t *testing.T) {
 }
 
 func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
-	ft := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
-	return newRecordingRule(context.Background(), models.AlertRuleKey{}, 0, nil, nil, ft, log.NewNopLogger(), nil, nil, writer.FakeWriter{})
+	st := setting.RecordingRuleSettings{
+		Enabled: true,
+	}
+	return newRecordingRule(context.Background(), models.AlertRuleKey{}, 0, nil, nil, st, log.NewNopLogger(), nil, nil, writer.FakeWriter{}, nil, nil)
 }
 
 func TestRecordingRule_Integration(t *testing.T) {
@@ -532,7 +533,7 @@ func withQueryForHealth(health string) models.AlertRuleMutator {
 func setupWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer) *writer.PrometheusWriter {
 	provider := testClientProvider{}
 	m := metrics.NewNGAlert(reg)
-	wr, err := writer.NewPrometheusWriter(target.ClientSettings(), provider, clock.NewMock(), tracing.InitializeTracerForTest(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
+	wr, err := writer.NewPrometheusWriter(target.ClientSettings(), provider, clock.NewMock(), log.NewNopLogger(), m.GetRemoteWriterMetrics())
 	require.NoError(t, err)
 	return wr
 }

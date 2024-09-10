@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var (
@@ -25,7 +23,7 @@ var (
 )
 
 type featuresStorage struct {
-	resource       *common.ResourceInfo
+	resource       *utils.ResourceInfo
 	tableConverter rest.TableConvertor
 	features       *v0alpha1.FeatureList
 	featuresOnce   sync.Once
@@ -36,25 +34,8 @@ type featuresStorage struct {
 func NewFeaturesStorage() *featuresStorage {
 	resourceInfo := v0alpha1.FeatureResourceInfo
 	return &featuresStorage{
-		resource: &resourceInfo,
-		tableConverter: gapiutil.NewTableConverter(
-			resourceInfo.GroupResource(),
-			[]metav1.TableColumnDefinition{
-				{Name: "Name", Type: "string", Format: "name"},
-				{Name: "Stage", Type: "string", Format: "string", Description: "Where is the flag in the dev cycle"},
-				{Name: "Owner", Type: "string", Format: "string", Description: "Which team owns the feature"},
-			},
-			func(obj any) ([]interface{}, error) {
-				r, ok := obj.(*v0alpha1.Feature)
-				if ok {
-					return []interface{}{
-						r.Name,
-						r.Spec.Stage,
-						r.Spec.Owner,
-					}, nil
-				}
-				return nil, fmt.Errorf("expected resource or info")
-			}),
+		resource:       &resourceInfo,
+		tableConverter: resourceInfo.TableConverter(),
 	}
 }
 

@@ -40,7 +40,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const loading = prom.loading || ruler.loading;
   const hasResult = !!prom.result || !!ruler.result;
 
-  const wantsListView = queryParams['view'] === 'list';
+  const wantsListView = queryParams.view === 'list';
   const namespacesFormat = wantsListView ? flattenGrafanaManagedRules(namespaces) : namespaces;
 
   const groupsWithNamespaces = useCombinedGroupNamespace(namespacesFormat);

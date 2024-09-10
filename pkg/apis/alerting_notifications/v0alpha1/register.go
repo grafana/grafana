@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 )
 
@@ -24,15 +24,48 @@ const (
 )
 
 var (
-	TimeIntervalResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	TimeIntervalResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		"timeintervals", "timeinterval", "TimeInterval",
 		func() runtime.Object { return &TimeInterval{} },
 		func() runtime.Object { return &TimeIntervalList{} },
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				// {Name: "Intervals", Type: "string", Format: "string", Description: "The display name"},
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				r, ok := obj.(*TimeInterval)
+				if ok {
+					return []interface{}{
+						r.Name,
+						// r.Spec, //TODO implement formatting for Spec, same as UI?
+					}, nil
+				}
+				return nil, fmt.Errorf("expected resource or info")
+			},
+		},
 	)
-	ReceiverResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	ReceiverResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		"receivers", "receiver", "Receiver",
 		func() runtime.Object { return &Receiver{} },
 		func() runtime.Object { return &ReceiverList{} },
+		utils.TableColumns{
+			Definition: []metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Title", Type: "string", Format: "string", Description: "The receiver name"}, // TODO: Add integration types.
+			},
+			Reader: func(obj any) ([]interface{}, error) {
+				r, ok := obj.(*Receiver)
+				if ok {
+					return []interface{}{
+						r.Name,
+						r.Spec.Title,
+						// r.Spec, //TODO implement formatting for Spec, same as UI?
+					}, nil
+				}
+				return nil, fmt.Errorf("expected resource or info")
+			},
+		},
 	)
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}

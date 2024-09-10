@@ -25,7 +25,7 @@ export const group2: RulerRuleGroupDTO = {
 export const group3: RulerRuleGroupDTO = {
   name: GROUP_3,
   interval: '1m',
-  rules: [mockRulerAlertingRule()],
+  rules: [mockRulerAlertingRule({ alert: 'rule 3' }), mockRulerAlertingRule({ alert: 'rule 4' })],
 };
 
 export const group4: RulerRuleGroupDTO = {

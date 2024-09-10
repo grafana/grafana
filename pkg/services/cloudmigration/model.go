@@ -88,6 +88,7 @@ type ItemStatus string
 
 const (
 	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusWarning ItemStatus = "WARNING"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
 )

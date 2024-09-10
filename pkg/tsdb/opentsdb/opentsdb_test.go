@@ -43,9 +43,9 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		[
 			{
 				"metric": "test",
-				"dps": {
-					"1405544146": 50.0
-				},
+				"dps": [
+					[1405544146, 50.0]
+				],
 				"tags" : {
 					"env": "prod",
 					"app": "grafana"
@@ -54,12 +54,17 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		]`
 
 		testFrame := data.NewFrame("test",
-			data.NewField("time", nil, []time.Time{
+			data.NewField("Time", nil, []time.Time{
 				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
 			}),
 			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
 				50}),
 		)
+		testFrame.Meta = &data.FrameMeta{
+			Type:        data.FrameTypeTimeSeriesMulti,
+			TypeVersion: data.FrameTypeVersion{0, 1},
+		}
+		testFrame.RefID = "A"
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200
@@ -80,9 +85,9 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		[
 			{
 				"metric": "test",
-				"dps": {
-					"1405544146": 50.0
-				},
+				"dps": [
+					[1405544146, 50.0]
+				],
 				"tags" : {
 					"env": "prod",
 					"app": "grafana"
@@ -91,12 +96,17 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		]`
 
 		testFrame := data.NewFrame("test",
-			data.NewField("time", nil, []time.Time{
+			data.NewField("Time", nil, []time.Time{
 				time.Date(2014, 7, 16, 20, 55, 46, 0, time.UTC),
 			}),
 			data.NewField("value", map[string]string{"env": "prod", "app": "grafana"}, []float64{
 				50}),
 		)
+		testFrame.Meta = &data.FrameMeta{
+			Type:        data.FrameTypeTimeSeriesMulti,
+			TypeVersion: data.FrameTypeVersion{0, 1},
+		}
+		testFrame.RefID = myRefid
 
 		resp := http.Response{Body: io.NopCloser(strings.NewReader(response))}
 		resp.StatusCode = 200

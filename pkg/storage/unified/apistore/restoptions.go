@@ -50,7 +50,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 		return nil, err
 	}
 	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceStoreClient(server),
+		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
 	), nil
 }
@@ -84,12 +84,14 @@ func NewRESTOptionsGetterForFile(path string,
 		return nil, err
 	}
 	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceStoreClient(server),
+		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
 	), nil
 }
 
-func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+// TODO: The RESTOptionsGetter interface added a new example object parameter to help determine the default
+// storage version for a resource. This is not currently used in this implementation.
+func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runtime.Object) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
 		Config: storagebackend.Config{
 			Type:                      "resource",
