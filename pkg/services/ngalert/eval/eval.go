@@ -793,7 +793,7 @@ func isScalarInstantVector(f *data.Frame) bool {
 	if len(f.Fields) != 2 {
 		return false
 	}
-	if f.Fields[0].Len() > 1 || f.Fields[0].Type() != data.FieldTypeNullableTime {
+	if f.Fields[0].Len() > 1 || (f.Fields[0].Type() != data.FieldTypeNullableTime && f.Fields[0].Type() != data.FieldTypeTime) {
 		return false
 	}
 	if f.Fields[1].Len() > 1 || f.Fields[1].Type() != data.FieldTypeNullableFloat64 {
