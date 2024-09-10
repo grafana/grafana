@@ -182,12 +182,22 @@ func (ctx *Context) QueryInt(name string) int {
 	return n
 }
 
+// QueryIntWithDefault returns query result in int type, including a default when the query param is not a valid int.
+func (ctx *Context) QueryIntWithDefault(name string, d int) int {
+	n, err := strconv.Atoi(ctx.Query(name))
+	if err != nil {
+		return d
+	}
+	return n
+}
+
 // QueryInt64 returns query result in int64 type.
 func (ctx *Context) QueryInt64(name string) int64 {
 	n, _ := strconv.ParseInt(ctx.Query(name), 10, 64)
 	return n
 }
 
+// QueryInt64WithDefault returns query result in int64 type, including a default when the query param is not a valid int64.
 func (ctx *Context) QueryInt64WithDefault(name string, d int64) int64 {
 	n, err := strconv.ParseInt(ctx.Query(name), 10, 64)
 	if err != nil {
