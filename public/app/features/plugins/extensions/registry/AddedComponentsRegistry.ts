@@ -39,43 +39,43 @@ export class AddedComponentsRegistry extends Registry<
     const { pluginId, configs } = item;
 
     for (const config of configs) {
-      const log = this.logger.child({
+      const configLog = this.logger.child({
         description: config.description,
         title: config.title,
         pluginId,
       });
 
       if (!isReactComponent(config.component)) {
-        log.warning(
-          `Could not register added component with title '${config.title}'. Reason: The provided component is not a valid React component.`
+        configLog.error(
+          `Could not register added component. Reason: The provided component is not a valid React component.`
         );
         continue;
       }
 
       if (!config.title) {
-        log.warning(`Could not register added component with title '${config.title}'. Reason: Title is missing.`);
+        configLog.error(`Could not register added component. Reason: Title is missing.`);
         continue;
       }
 
       if (!config.description) {
-        log.warning(`Could not register added component with title '${config.title}'. Reason: Description is missing.`);
+        configLog.error(`Could not register added component. Reason: Description is missing.`);
         continue;
       }
 
       const extensionPointIds = Array.isArray(config.targets) ? config.targets : [config.targets];
       for (const extensionPointId of extensionPointIds) {
-        const pointIdLog = log.child({ id: extensionPointId });
+        const pointIdLog = configLog.child({ id: extensionPointId });
 
         if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
           pointIdLog.warning(
-            `Could not register added component with id '${extensionPointId}'. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id or grafana. e.g '<grafana|myorg-basic-app>/my-component-id/v1'.`
+            `Could not register added component. Reason: The component id does not match the id naming convention. Id should be prefixed with plugin id or grafana. e.g '<grafana|myorg-basic-app>/my-component-id/v1'.`
           );
           continue;
         }
 
         if (!isGrafanaCoreExtensionPoint(extensionPointId) && !extensionPointEndsWithVersion(extensionPointId)) {
           pointIdLog.warning(
-            `Added component with id '${extensionPointId}' does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
+            `Added component does not match the convention. It's recommended to suffix the id with the component version. e.g 'myorg-basic-app/my-component-id/v1'.`
           );
         }
 
@@ -85,6 +85,8 @@ export class AddedComponentsRegistry extends Registry<
           description: config.description,
           title: config.title,
         };
+
+        pointIdLog.debug('Successfully added component');
 
         if (!(extensionPointId in registry)) {
           registry[extensionPointId] = [result];

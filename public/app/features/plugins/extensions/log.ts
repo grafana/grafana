@@ -12,15 +12,11 @@ enum LogLevel {
 
 export type LogItem = {
   level: LogLevel;
-  ts: number;
-  obj: Record<string, unknown>;
+  timestamp: number;
+  labels: Record<string | symbol, unknown>;
   message: string;
   id: string;
 };
-
-type LogEntry = string;
-// type LogEntry = { entry: string; labels: Labels };
-// type LogEntry = Record<string | symbol, string | symbol | number | boolean | object>;
 
 const channelName = 'ui-extension-logs';
 
@@ -34,39 +30,40 @@ export class ExtensionsLog {
     this.channel = new BroadcastChannel(channelName);
   }
 
-  info(entry: LogEntry): void {
-    this.log(LogLevel.info, entry);
+  info(message: string, labels?: LogItem['labels']): void {
+    this.log(LogLevel.info, message, labels);
   }
 
-  warning(entry: LogEntry): void {
-    this.log(LogLevel.warning, entry);
+  warning(message: string, labels?: LogItem['labels']): void {
+    this.log(LogLevel.warning, message, labels);
   }
 
-  error(entry: LogEntry): void {
-    this.log(LogLevel.error, entry);
+  error(message: string, labels?: LogItem['labels']): void {
+    this.log(LogLevel.error, message, labels);
   }
 
-  debug(entry: LogEntry): void {
-    this.log(LogLevel.debug, entry);
+  debug(message: string, labels?: LogItem['labels']): void {
+    this.log(LogLevel.debug, message, labels);
   }
 
-  trace(entry: LogEntry): void {
-    this.log(LogLevel.trace, entry);
+  trace(message: string, labels?: LogItem['labels']): void {
+    this.log(LogLevel.trace, message, labels);
   }
 
-  fatal(entry: LogEntry): void {
-    this.log(LogLevel.fatal, entry);
+  fatal(message: string, labels?: LogItem['labels']): void {
+    this.log(LogLevel.fatal, message, labels);
   }
 
-  private log(level: LogLevel, entry: LogEntry): void {
+  private log(level: LogLevel, message: string, labels?: LogItem['labels']): void {
     const item: LogItem = {
       level: level,
-      obj: {
+      labels: {
+        ...labels,
         ...this.baseLabels,
       },
-      ts: Date.now(),
+      timestamp: Date.now(),
       id: nanoid(),
-      message: entry,
+      message: message,
     };
 
     this.channel.postMessage(item);

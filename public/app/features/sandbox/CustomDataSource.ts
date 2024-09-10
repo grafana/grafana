@@ -2,6 +2,7 @@ import { map, Observable } from 'rxjs';
 
 import {
   CircularDataFrame,
+  DataFrameType,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -31,24 +32,21 @@ export class MyCustomDS extends RuntimeDataSource {
     });
 
     frame.refId = query.refId;
-    frame.addField({ name: 'time', type: FieldType.time });
+    frame.addField({ name: 'timestamp', type: FieldType.time });
     frame.addField({ name: 'body', type: FieldType.string });
     frame.addField({ name: 'severity', type: FieldType.string });
     frame.addField({ name: 'id', type: FieldType.string });
     frame.addField({ name: 'labels', type: FieldType.other });
-    if (!frame.meta) {
-      frame.meta = {};
-    }
-    frame.meta.type = DataFrameType.LogLines;
+    frame.meta = { ...frame.meta, type: DataFrameType.LogLines };
 
     return this.extensionsLog.asObservable().pipe(
       map((item: LogItem) => {
         frame.add({
-          time: item.ts,
+          timestamp: item.timestamp,
           body: item.message,
-          severity: String(item.level),
+          severity: item.level,
           id: item.id,
-          labels: item.obj,
+          labels: item.labels,
         });
 
         return {
