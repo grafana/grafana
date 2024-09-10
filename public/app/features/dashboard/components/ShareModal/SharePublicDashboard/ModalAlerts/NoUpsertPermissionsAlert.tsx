@@ -20,7 +20,6 @@ export const NoUpsertPermissionsAlert = ({ mode }: { mode: 'create' | 'edit' }) 
 
   return (
     <Alert severity="warning" title={title} data-testid={selectors.NoUpsertPermissionsWarningAlert} bottomSpacing={0}>
-      {' '}
       {config.featureToggles.newDashboardSharingComponent ? (
         <Trans i18nKey="public-dashboard.share-externally.no-upsert-perm-alert-desc">
           Contact your admin to get permission to {{ mode }} shared dashboards
