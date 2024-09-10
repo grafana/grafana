@@ -19,6 +19,7 @@ import { Trans } from 'app/core/internationalization';
 import { fuzzySearch } from '../services/search';
 import { sortSeries } from '../services/sorting';
 
+import { BreakdownSearchReset } from './BreakdownSearchScene';
 import { getLabelValue } from './SortByScene';
 import { findSceneObjectsByType } from './utils';
 
@@ -150,9 +151,7 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
   };
 
   public clearFilter = () => {
-    // FIXME implement the event
-    // this.publishEvent(new BreakdownSearchReset(), true);
-    console.log('clear filter....');
+    this.publishEvent(new BreakdownSearchReset(), true);
   };
 
   public static Component = ({ model }: SceneComponentProps<SceneByFrameRepeater>) => {

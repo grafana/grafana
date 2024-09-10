@@ -39,7 +39,7 @@ import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared'
 import { getColorByIndex, getTrailFor } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
-import { BreakdownSearchScene } from './BreakdownSearchScene';
+import { BreakdownSearchReset, BreakdownSearchScene } from './BreakdownSearchScene';
 import { ByFrameRepeater } from './ByFrameRepeater';
 import { LayoutSwitcher } from './LayoutSwitcher';
 import { SortByScene, SortCriteriaChanged } from './SortByScene';
@@ -96,6 +96,11 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
       }
     });
 
+    this._subs.add(
+      this.subscribeToEvent(BreakdownSearchReset, () => {
+        this.state.search.clearValueFilter();
+      })
+    );
     this._subs.add(this.subscribeToEvent(SortCriteriaChanged, this.handleSortByChange));
 
     const metricScene = sceneGraph.getAncestor(this, MetricScene);
