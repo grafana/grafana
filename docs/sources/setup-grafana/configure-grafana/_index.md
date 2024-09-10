@@ -1911,9 +1911,7 @@ The grafana_net config is still accepted and parsed to grafana_com config.
 ### url
 
 Default is https://grafana.com.
-
 The default authentication identity provider for Grafana Cloud.
-
 
 <hr>
 
