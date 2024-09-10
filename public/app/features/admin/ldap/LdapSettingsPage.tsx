@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv, getAppEvents } from '@grafana/runtime';
-import { useStyles2, Alert, Box, Button, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
+import { useStyles2, Alert, Box, Button, Field, IconButton, Input, LinkButton, Menu, Stack, Text, TextLink, Dropdown } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -90,7 +90,7 @@ export const LdapSettingsPage = () => {
   });
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
-  const { getValues, handleSubmit, register, reset } = methods;
+  const { getValues, handleSubmit, register, reset, watch } = methods;
 
   const styles = useStyles2(getStyles);
 
@@ -338,7 +338,25 @@ export const LdapSettingsPage = () => {
                     </Button>
                     <LinkButton href="/admin/authentication" variant="secondary">
                       <Trans i18nKey="ldap-settings-page.buttons-section.discard.button">Discard</Trans>
-                    </Button>
+                    </LinkButton>
+                    <Dropdown overlay={(
+                      <Menu>
+                        <Menu.Item
+                          label="Reset to default values"
+                          icon="history-alt"
+                          onClick={discardForm}
+                        />
+                      </Menu>
+                    )} placement='bottom-start'>
+                      <IconButton
+                        tooltip="More actions"
+                        title="More actions"
+                        size="md"
+                        variant="secondary"
+                        name="ellipsis-v"
+                        hidden={watch('source') === 'system'}
+                      />
+                    </Dropdown>
                   </Stack>
                 </Box>
               </section>
