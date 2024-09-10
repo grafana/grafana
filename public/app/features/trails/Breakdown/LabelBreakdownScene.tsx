@@ -256,10 +256,15 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
                 <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
               </Field>
             )}
-            <Field label="Search" className={styles.searchField}>
-              <search.Component model={search} />
-            </Field>
-            {value !== ALL_VARIABLE_VALUE && <sortBy.Component model={sortBy} />}
+
+            {value !== ALL_VARIABLE_VALUE && (
+              <>
+                <Field label="Search" className={styles.searchField}>
+                  <search.Component model={search} />
+                </Field>
+                <sortBy.Component model={sortBy} />
+              </>
+            )}
             {body instanceof LayoutSwitcher && (
               <Field label="View">
                 <body.Selector model={body} />
@@ -293,8 +298,9 @@ function getStyles(theme: GrafanaTheme2) {
     controls: css({
       flexGrow: 0,
       display: 'flex',
-      alignItems: 'flex-start',
+      alignItems: 'flex-end',
       gap: theme.spacing(2),
+      justifyContent: 'space-between',
     }),
   };
 }
