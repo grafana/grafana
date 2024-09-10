@@ -43,15 +43,7 @@ const getScene = () => {
         }),
       ],
     }),
-    controls: [
-      new SceneControlsSpacer(),
-      new SceneTimePicker({ isOnCanvas: true }),
-      new SceneRefreshPicker({
-        intervals: ['5s', '1m', '1h'],
-        isOnCanvas: true,
-        refresh: 'auto',
-      }),
-    ],
+    controls: [],
   });
 };
 
