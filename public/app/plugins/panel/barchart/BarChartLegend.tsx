@@ -43,7 +43,7 @@ export const BarChartLegend = memo(
           // in case of multiple fields, each field has same thresholds config as in first field (data[0].field[0].config),
           // so we need to avoid duplicates;
           // it is the same object, so we can compare by reference;
-          // i !== 0 is needed to add thresholds from the first field
+          // i === 0 is needed to add thresholds from the first field
           if ((i === 0 || fieldConfig.thresholds !== thresholds) && thresholds.steps.length > 1) {
             const config = data[0].fields[i].config;
             const items = getThresholdItems(config, theme);
@@ -54,14 +54,12 @@ export const BarChartLegend = memo(
     }
 
     const mappings: ValueMapping[] = [];
-    const baseMapping = data[0].fields[0].config.mappings;
-    if (baseMapping) {
-      mappings.push(...baseMapping);
-    }
-    for (let i = 1; i < data[0].fields.length; i++) {
+    for (let i = 0; i < data[0].fields.length; i++) {
       const mapping = data[0].fields[i].config.mappings;
-      if (mapping && mapping !== baseMapping) {
-        mappings.push(...mapping);
+      if (mapping) {
+        if (i === 0 || fieldConfig.mappings !== mapping) {
+          mappings.push(...mapping);
+        }
       }
     }
     const valueMappingItems: VizLegendItem[] = getValueMappingItems(mappings, theme);
