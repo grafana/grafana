@@ -19,6 +19,7 @@ autoMigrateStatPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateXYChartPanel,GA,@grafana/dataviz-squad,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
+vizActions,experimental,@grafana/dataviz-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
@@ -95,6 +96,7 @@ transformationsVariableSupport,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
+kubernetesFolders,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -189,3 +191,5 @@ exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,t
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
 appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,false
+appSidecar,experimental,@grafana/explore-squad,false,false,false
+groupAttributeSync,experimental,@grafana/identity-access-team,false,false,false

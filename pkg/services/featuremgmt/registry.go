@@ -166,6 +166,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "vizActions",
+			Description:       "Allow actions in visualizations",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaDatavizSquad,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			Stage:           FeatureStageExperimental,
@@ -726,6 +734,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "kubernetesFolders",
+			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:            "datasourceQueryTypes",
@@ -1433,6 +1447,19 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:        "appSidecar",
+			Description: "Enable the app sidecar feature that allows rendering 2 apps at the same time",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaExploreSquad,
+		},
+		{
+			Name:         "groupAttributeSync",
+			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
 		},
 	}
 )

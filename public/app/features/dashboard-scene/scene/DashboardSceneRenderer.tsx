@@ -132,7 +132,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
       label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(0, 2),
+      padding: theme.spacing(0.5, 2),
       flexBasis: '100%',
       gridArea: 'panels',
       flexGrow: 1,
