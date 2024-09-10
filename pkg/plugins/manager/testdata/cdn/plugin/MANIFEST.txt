@@ -1,0 +1,31 @@
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "grafana",
+  "signedByOrg": "grafana",
+  "signedByOrgName": "Grafana Labs",
+  "rootUrls": [
+    "http://127.0.0.1:3000/"
+  ],
+  "plugin": "grafana-worldmap-panel",
+  "version": "0.3.3",
+  "time": 1725964255738,
+  "keyId": "7e4d0c6a708866e7",
+  "files": {
+    "plugin.json": "f2f30ae32f620a4fab4ecf5ec1d4dc8acbb76f6ab9a553d4079f9ae5ab39e5d0"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.11
+Comment: https://openpgpjs.org
+
+wrkEARMKAAYFAmbgH+AAIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
+cIhm5yPBAgkBPfFpRp45//Ie+JE0rQnKOOfCASxtyJPTJ/L66yIIrfk4IvpL
+UU2qbHwL9FMdr7/9UmBf4K8fXAFpWqxq7awdA5MCCQDUbIPC2guJvs7rPIeb
+nJo3fv6iPRccRBGmQH236aEvi6nE7aPq+cu8Kb6PJ3d/4vSKC2EkSeWtSSvg
+jjcRsJ0f/g==
+=ym90
+-----END PGP SIGNATURE-----
