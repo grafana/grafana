@@ -5,7 +5,7 @@ import { AccessControlAction } from 'app/types';
 
 import { evaluateAccess } from './unified/utils/access-control';
 
-const CONTACT_POINTS_PERMISSIONS = [
+const PERMISSIONS_RECEIVERS = [
   AccessControlAction.AlertingReceiversCreate,
   AccessControlAction.AlertingReceiversRead,
   AccessControlAction.AlertingReceiversWrite,
@@ -96,10 +96,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        // RBAC permissions
-        AccessControlAction.AlertingReceiversCreate,
-        AccessControlAction.AlertingReceiversRead,
-        AccessControlAction.AlertingReceiversWrite,
+        ...PERMISSIONS_RECEIVERS,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
@@ -120,7 +117,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalWrite,
-        ...CONTACT_POINTS_PERMISSIONS,
+        ...PERMISSIONS_RECEIVERS,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
@@ -133,7 +130,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingNotificationsExternalWrite,
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...CONTACT_POINTS_PERMISSIONS,
+        ...PERMISSIONS_RECEIVERS,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
