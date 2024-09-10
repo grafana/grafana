@@ -44,7 +44,7 @@ jobs:
           fi
   auto-triage:
     needs: [main, config]
-    if: needs.config.outputs.has-secrets
+    if: needs.config.outputs.has-secrets && (github.event.issue.author_association == 'NONE' || github.event.issue.author_association == 'FIRST_TIMER' || github.event.issue.author_association == 'FIRST_TIME_CONTRIBUTOR')
     runs-on: ubuntu-latest
     steps:
       - name: "Generate token"
