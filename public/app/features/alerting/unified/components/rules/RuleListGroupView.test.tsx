@@ -16,8 +16,8 @@ import { RuleListGroupView } from './RuleListGroupView';
 jest.spyOn(analytics, 'logInfo');
 
 const ui = {
-  grafanaRulesHeading: byRole('heading', { name: 'Grafana' }),
-  cloudRulesHeading: byRole('heading', { name: 'Mimir / Cortex / Loki' }),
+  grafanaRulesHeading: byRole('heading', { name: 'Grafana-managed' }),
+  cloudRulesHeading: byRole('heading', { name: 'Data source-managed' }),
 };
 
 setPluginExtensionsHook(() => ({
