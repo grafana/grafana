@@ -424,7 +424,7 @@ function joinInner(tables: AlignedData[]): Array<Array<string | number | null | 
 
   // Check if joinedTables is empty before transposing. No need to transpose if there are no joined tables.
   if (joinedTables.length === 0) {
-    let fieldCount = tables.reduce((count, table) => count + (table.length - 1), 1);
+    const fieldCount = tables.reduce((count, table) => count + (table.length - 1), 1);
     return Array.from({ length: fieldCount }, () => []);
   }
 
