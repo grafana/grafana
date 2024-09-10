@@ -1213,4 +1213,21 @@ describe('Prometheus Result Transformer', () => {
       expect(transformedTableDataFrames[1].meta?.executedQueryString).toEqual(executedQueryForRefB);
     });
   });
+
+  it("transforms dataFrame and retains time field's `config.interval`", () => {
+    const df = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2, 3], config: { interval: 1 } },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [5, 10, 5],
+        },
+      ],
+    });
+
+    const tableDf = transformDFToTable([df])[0];
+    expect(tableDf.fields[0].config.interval).toEqual(1);
+  });
 });
