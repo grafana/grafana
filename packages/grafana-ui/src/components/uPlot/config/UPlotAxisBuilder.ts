@@ -62,6 +62,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     // for axis left & right
     if (axis.side !== 2 || !scale) {
+      if (plotDim <= 150) {
+        return 15;
+      }
+
       return 30;
     }
 
