@@ -2188,6 +2188,18 @@
     },
     {
       "metadata": {
+        "name": "pluginsFilesystemSriChecks",
+        "resourceVersion": "1725972790378",
+        "creationTimestamp": "2024-09-10T12:53:10Z"
+      },
+      "spec": {
+        "description": "Enables SRI checks for plugin assets loaded from the filesystem",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsFrontendSandbox",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-05T08:51:36Z"

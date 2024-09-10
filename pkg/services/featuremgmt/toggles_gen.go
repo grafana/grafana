@@ -778,4 +778,8 @@ const (
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
+
+	// FlagPluginsFilesystemSriChecks
+	// Enables SRI checks for plugin assets loaded from the filesystem
+	FlagPluginsFilesystemSriChecks = "pluginsFilesystemSriChecks"
 )

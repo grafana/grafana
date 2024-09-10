@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
 var (
@@ -75,27 +76,30 @@ func (m *PluginManifest) ModuleHash() (string, error) {
 type Signature struct {
 	kr  plugins.KeyRetriever
 	cfg *config.PluginManagementCfg
+	cdn *pluginscdn.Service
 	log log.Logger
 }
 
 var _ plugins.SignatureCalculator = &Signature{}
 
-func ProvideService(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever) *Signature {
-	return NewCalculator(cfg, kr)
+func ProvideService(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever, cdn *pluginscdn.Service) *Signature {
+	return NewCalculator(cfg, kr, cdn)
 }
 
-func NewCalculator(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever) *Signature {
+func NewCalculator(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever, cdn *pluginscdn.Service) *Signature {
 	return &Signature{
 		kr:  kr,
 		cfg: cfg,
+		cdn: cdn,
 		log: log.New("plugins.signature"),
 	}
 }
 
-func DefaultCalculator(cfg *config.PluginManagementCfg) *Signature {
+func DefaultCalculator(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) *Signature {
 	return &Signature{
 		kr:  statickey.New(),
 		cfg: cfg,
+		cdn: cdn,
 		log: log.New("plugins.signature"),
 	}
 }
@@ -185,11 +189,15 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		}, nil
 	}
 
-	// Always try to calculate module.js hash for SRI checks
-	moduleHash, err := manifest.ModuleHash()
-	if err != nil {
-		s.log.Warn("Could not calculate module.js hash for SRI checks, ignoring", "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version, "error", err)
-		moduleHash = ""
+	// Try to calculate module.js hash for SRI checks.
+	// Do not calculate the hash for filesystem plugins, unless the corresponding feature toggle is enabled.
+	var moduleHash string
+	if s.cdn.PluginSupported(plugin.JSONData.ID) || s.cfg.Features.PluginSriChecksEnabled {
+		moduleHash, err = manifest.ModuleHash()
+		if err != nil {
+			s.log.Warn("Could not calculate module.js hash for SRI checks, ignoring", "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version, "error", err)
+			moduleHash = ""
+		}
 	}
 
 	if hasDefaultSignature {

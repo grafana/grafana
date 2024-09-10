@@ -1455,6 +1455,12 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 		},
+		{
+			Name:        "pluginsFilesystemSriChecks",
+			Description: "Enables SRI checks for plugin assets loaded from the filesystem",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
 	}
 )
 

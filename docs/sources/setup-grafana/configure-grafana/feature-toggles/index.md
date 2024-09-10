@@ -200,6 +200,7 @@ Experimental features might be changed or removed without prior notice.
 | `exploreLogsAggregatedMetrics`              | Used in Explore Logs to query by aggregated metrics                                                                                                                                                                                                                               |
 | `exploreLogsLimitedTimeRange`               | Used in Explore Logs to limit the time range                                                                                                                                                                                                                                      |
 | `appSidecar`                                | Enable the app sidecar feature that allows rendering 2 apps at the same time                                                                                                                                                                                                      |
+| `pluginsFilesystemSriChecks`                | Enables SRI checks for plugin assets loaded from the filesystem                                                                                                                                                                                                                   |
 
 ## Development feature toggles
 

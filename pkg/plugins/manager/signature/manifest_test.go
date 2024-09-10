@@ -17,7 +17,17 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+func provideDefaultTestService() *Signature {
+	return provideTestServiceWithConfig(&config.PluginManagementCfg{})
+}
+
+func provideTestServiceWithConfig(cfg *config.PluginManagementCfg) *Signature {
+	return ProvideService(cfg, statickey.New(), pluginscdn.ProvideService(cfg))
+}
 
 func TestReadPluginManifest(t *testing.T) {
 	txt := `-----BEGIN PGP SIGNED MESSAGE-----
@@ -52,7 +62,7 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		s := ProvideService(&config.PluginManagementCfg{}, statickey.New())
+		s := provideDefaultTestService()
 		manifest, err := s.readPluginManifest(context.Background(), []byte(txt))
 
 		require.NoError(t, err)
@@ -68,8 +78,8 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 	})
 
 	t.Run("invalid manifest", func(t *testing.T) {
+		s := provideDefaultTestService()
 		modified := strings.ReplaceAll(txt, "README.md", "xxxxxxxxxx")
-		s := ProvideService(&config.PluginManagementCfg{}, statickey.New())
 		_, err := s.readPluginManifest(context.Background(), []byte(modified))
 		require.Error(t, err)
 	})
@@ -107,7 +117,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
-		s := ProvideService(&config.PluginManagementCfg{}, statickey.New())
+		s := provideDefaultTestService()
 		manifest, err := s.readPluginManifest(context.Background(), []byte(txt))
 
 		require.NoError(t, err)
@@ -155,7 +165,7 @@ func TestCalculate(t *testing.T) {
 
 		for _, tc := range tcs {
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			s := ProvideService(&config.PluginManagementCfg{GrafanaAppURL: tc.appURL}, statickey.New())
+			s := provideTestServiceWithConfig(&config.PluginManagementCfg{GrafanaAppURL: tc.appURL})
 			sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.ClassExternal
@@ -183,7 +193,7 @@ func TestCalculate(t *testing.T) {
 		basePath := "../testdata/renderer-added-file/plugin"
 
 		runningWindows = true
-		s := ProvideService(&config.PluginManagementCfg{}, statickey.New())
+		s := provideDefaultTestService()
 		sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -247,7 +257,7 @@ func TestCalculate(t *testing.T) {
 				toSlash = tc.platform.toSlashFunc()
 				fromSlash = tc.platform.fromSlashFunc()
 
-				s := ProvideService(&config.PluginManagementCfg{}, statickey.New())
+				s := provideDefaultTestService()
 				pfs, err := tc.fsFactory()
 				require.NoError(t, err)
 				pfs, err = newPathSeparatorOverrideFS(string(tc.platform.separator), pfs)
@@ -304,13 +314,16 @@ func TestCalculate(t *testing.T) {
 		}
 
 		for _, tc := range []struct {
-			name         string
-			foundPlugin  plugins.FoundPlugin
-			pluginSource fakes.FakePluginSource
-			expSignature plugins.Signature
+			name           string
+			features       config.Features
+			pluginSettings setting.PluginSettings
+			foundPlugin    plugins.FoundPlugin
+			pluginSource   fakes.FakePluginSource
+			expSignature   plugins.Signature
 		}{
 			{
-				name:         "should populate from MODULE.txt",
+				name:         "should populate from MODULE.txt if feature toggle is enabled",
+				features:     config.Features{PluginSriChecksEnabled: true},
 				foundPlugin:  validFoundPlugin,
 				pluginSource: pluginSourceExternal,
 				expSignature: plugins.Signature{
@@ -321,9 +334,21 @@ func TestCalculate(t *testing.T) {
 				},
 			},
 			{
+				name:         "should not populate from MODULE.txt if feature toggle is disabled",
+				features:     config.Features{PluginSriChecksEnabled: false},
+				foundPlugin:  validFoundPlugin,
+				pluginSource: pluginSourceExternal,
+				expSignature: plugins.Signature{
+					Status:     plugins.SignatureStatusValid,
+					Type:       plugins.SignatureTypePrivate,
+					SigningOrg: "giuseppeguerra",
+				},
+			},
+			{
 				// This test case covers the scenario where a plugin is provisioned from CDN
 				// (no files on disk at all, loaded entirely from the network)
 				name:         "should populate from MODULE.txt when class is CDN and DefaultSignature is provided",
+				features:     config.Features{PluginSriChecksEnabled: true},
 				foundPlugin:  validFoundPlugin,
 				pluginSource: pluginSourceCDN,
 				expSignature: plugins.Signature{
@@ -334,7 +359,25 @@ func TestCalculate(t *testing.T) {
 				},
 			},
 			{
-				name: "should not populate if module.js is not present in MODULE.txt",
+				name:     "should populate from MODULE.txt when CDN is enabled and feature toggle is disabled",
+				features: config.Features{PluginSriChecksEnabled: false},
+				pluginSettings: setting.PluginSettings{
+					validFoundPlugin.JSONData.ID: map[string]string{
+						"cdn": "true",
+					},
+				},
+				foundPlugin:  validFoundPlugin,
+				pluginSource: pluginSourceCDN,
+				expSignature: plugins.Signature{
+					Status:     plugins.SignatureStatusValid,
+					Type:       "",
+					SigningOrg: "",
+					ModuleHash: validModuleHash,
+				},
+			},
+			{
+				name:     "should not populate if module.js is not present in MODULE.txt",
+				features: config.Features{PluginSriChecksEnabled: true},
 				foundPlugin: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID: "test-app",
@@ -353,7 +396,8 @@ func TestCalculate(t *testing.T) {
 				},
 			},
 			{
-				name: "should not populate if MODULE.txt is not present",
+				name:     "should not populate if MODULE.txt is not present",
+				features: config.Features{PluginSriChecksEnabled: true},
 				foundPlugin: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID:   "test-datasource",
@@ -368,7 +412,8 @@ func TestCalculate(t *testing.T) {
 				},
 			},
 			{
-				name: "should not populate if MODULE.txt is not present but module.js is present",
+				name:     "should not populate if MODULE.txt is not present but module.js is present",
+				features: config.Features{PluginSriChecksEnabled: true},
 				foundPlugin: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID: "test-datasource",
@@ -386,9 +431,12 @@ func TestCalculate(t *testing.T) {
 			},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
-				s := ProvideService(&config.PluginManagementCfg{
-					GrafanaAppURL: "http://127.0.0.1:3000",
-				}, statickey.New())
+				s := provideTestServiceWithConfig(&config.PluginManagementCfg{
+					GrafanaAppURL:         "http://127.0.0.1:3000",
+					Features:              tc.features,
+					PluginSettings:        tc.pluginSettings,
+					PluginsCDNURLTemplate: "https://cdn.example.com",
+				})
 				sig, err := s.Calculate(context.Background(), &tc.pluginSource, tc.foundPlugin)
 				require.NoError(t, err)
 				require.Equal(t, tc.expSignature, sig)
@@ -841,7 +889,7 @@ func Test_validateManifest(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			s := ProvideService(&config.PluginManagementCfg{}, statickey.New())
+			s := provideDefaultTestService()
 			err := s.validateManifest(context.Background(), *tc.manifest, nil)
 			require.Errorf(t, err, tc.expectedErr)
 		})
@@ -937,7 +985,7 @@ pHo=
 }
 
 func Test_VerifyRevokedKey(t *testing.T) {
-	s := ProvideService(&config.PluginManagementCfg{}, &revokedKeyProvider{})
+	s := ProvideService(&config.PluginManagementCfg{}, &revokedKeyProvider{}, pluginscdn.ProvideService(&config.PluginManagementCfg{}))
 	m := createV2Manifest(t)
 	txt := `-----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
@@ -1061,7 +1109,7 @@ YK47Foq7NA==
 =VibA
 -----END PGP SIGNATURE-----
 `
-		s := ProvideService(&config.PluginManagementCfg{}, statickey.New())
+		s := provideDefaultTestService()
 		manifest, err := s.readPluginManifest(context.Background(), []byte(txt))
 
 		require.NoError(t, err)
