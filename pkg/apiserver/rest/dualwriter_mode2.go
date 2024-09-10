@@ -331,8 +331,9 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 }
 
 func (d *DualWriterMode2) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	d.Log.Error(errors.New("Watch not implemented in mode 2"), "Watch not implemented in mode 2")
-	return nil, nil
+	err := errors.New("Watch not implemented in mode 2")
+	d.Log.Error(err, err.Error())
+	return nil, err
 }
 
 func (d *DualWriterMode2) Destroy() {
