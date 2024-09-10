@@ -18751,7 +18751,7 @@ __metadata:
     rc-slider: "npm:11.1.5"
     rc-time-picker: "npm:3.7.3"
     rc-tree: "npm:5.8.8"
-    re-resizable: "npm:6.9.17"
+    re-resizable: "npm:6.9.18"
     react: "npm:18.2.0"
     react-diff-viewer: "npm:^3.1.1"
     react-dom: "npm:18.2.0"
@@ -26816,13 +26816,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"re-resizable@npm:6.9.17":
-  version: 6.9.17
-  resolution: "re-resizable@npm:6.9.17"
+"re-resizable@npm:6.9.18":
+  version: 6.9.18
+  resolution: "re-resizable@npm:6.9.18"
   peerDependencies:
     react: ^16.13.1 || ^17.0.0 || ^18.0.0
     react-dom: ^16.13.1 || ^17.0.0 || ^18.0.0
-  checksum: 10/768c3a0fe39d6916caf4e003240d326d62c4d7512c7d3115cc2a98085416fdba80097afdbb93df57b69543c41ce56b33589f2fea6987cd5149faa83cf11c8ba1
+  checksum: 10/cdb2ee8544a2b30053af5cc74ccf56e8d3e470e8e0ed8572424049297cf234d002870dd56c13ce352f222d0dbbc53830c6d07d2cabc83b7aa0311a21361160bf
   languageName: node
   linkType: hard
 
