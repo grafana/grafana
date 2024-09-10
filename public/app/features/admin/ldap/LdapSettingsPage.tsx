@@ -30,6 +30,8 @@ const pageNav: NavModelItem = {
   id: 'LDAP',
 };
 
+const serverConfig = 'settings.config.servers.0';
+
 const emptySettings: LdapPayload = {
   id: '',
   provider: '',
@@ -90,7 +92,7 @@ export const LdapSettingsPage = () => {
   });
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
-  const { getValues, handleSubmit, register, reset } = methods;
+  const { getValues, handleSubmit, register, reset, setValue, watch } = methods;
 
   const styles = useStyles2(getStyles);
 
@@ -249,7 +251,7 @@ export const LdapSettingsPage = () => {
                     id="host"
                     placeholder={t('ldap-settings-page.host.placeholder', 'example: 127.0.0.1')}
                     type="text"
-                    {...register('settings.config.servers.0.host', { required: true })}
+                    {...register(`${serverConfig}.host`, { required: true })}
                   />
                 </Field>
                 <Field
@@ -263,14 +265,14 @@ export const LdapSettingsPage = () => {
                     id="bind-dn"
                     placeholder={t('ldap-settings-page.bind-dn.placeholder', 'example: cn=admin,dc=grafana,dc=org')}
                     type="text"
-                    {...register('settings.config.servers.0.bind_dn')}
+                    {...register(`${serverConfig}.bind_dn`)}
                   />
                 </Field>
                 <Field label={t('ldap-settings-page.bind-password.label', 'Bind password')}>
                   <Input
                     id="bind-password"
                     type="text"
-                    {...register('settings.config.servers.0.bind_password', { required: false })}
+                    {...register(`${serverConfig}.bind_password`, { required: false })}
                   />
                 </Field>
                 <Field
@@ -284,21 +286,24 @@ export const LdapSettingsPage = () => {
                     id="search_filter"
                     placeholder={t('ldap-settings-page.search_filter.placeholder', 'example: cn=%s')}
                     type="text"
-                    {...register('settings.config.servers.0.search_filter', { required: true })}
+                    {...register(`${serverConfig}.search_filter`, { required: true })}
                   />
                 </Field>
                 <Field
                   label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS *')}
                   description={t(
                     'ldap-settings-page.search-base-dns.description',
-                    'An array of base dns to search through; separate by commas or spaces.'
+                    'An array of base dns to search through; separate by spaces.'
                   )}
                 >
                   <Input
                     id="search-base-dns"
                     placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: "dc=grafana.dc=org"')}
                     type="text"
-                    {...register('settings.config.servers.0.search_base_dns', { required: true })}
+                    value={watch(`${serverConfig}.search_base_dns`).join(' ')}
+                    onChange={({ currentTarget: { value } }) =>
+                      setValue(`${serverConfig}.search_base_dns`, value.split(' '))
+                    }
                   />
                 </Field>
                 <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
