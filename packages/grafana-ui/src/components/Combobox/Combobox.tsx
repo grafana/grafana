@@ -64,6 +64,7 @@ export const Combobox = <T extends string | number>({
   isClearable = false,
   createCustomValue = false,
   id,
+  'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
   const [items, setItems] = useState(options);
@@ -167,15 +168,6 @@ export const Combobox = <T extends string | number>({
     },
   });
 
-  const getActiveItemId = useCallback(
-    (activeIndex: number) => {
-      return `${id}-option-${activeIndex}`;
-    },
-    [id]
-  );
-
-  const activeItemId = useMemo(() => getActiveItemId(highlightedIndex), [highlightedIndex, getActiveItemId]);
-
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
@@ -250,7 +242,7 @@ export const Combobox = <T extends string | number>({
            */
           onChange: () => {},
           onBlur,
-          'aria-activedescendant': isOpen && highlightedIndex > -1 ? activeItemId : undefined,
+          'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
         })}
       />
       <div
@@ -263,6 +255,7 @@ export const Combobox = <T extends string | number>({
         }}
         {...getMenuProps({
           ref: floatingRef,
+          'aria-labelledby': ariaLabelledBy,
         })}
       >
         {isOpen && (
@@ -284,7 +277,6 @@ export const Combobox = <T extends string | number>({
                   {...getItemProps({
                     item: items[virtualRow.index],
                     index: virtualRow.index,
-                    id: getActiveItemId(virtualRow.index),
                   })}
                 >
                   <div className={styles.optionBody}>
