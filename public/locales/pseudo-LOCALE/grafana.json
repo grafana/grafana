@@ -123,11 +123,18 @@
     "contactPointFilter": {
       "label": "Cőŉŧäčŧ pőįŉŧ"
     },
-    "grafana-rules": {
-      "export-rules": "Ēχpőřŧ řūľęş",
-      "loading": "Ŀőäđįŉģ...",
-      "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
-      "title": "Ğřäƒäŉä"
+    "list-view": {
+      "section": {
+        "dataSourceManaged": {
+          "title": "Đäŧä şőūřčę-mäŉäģęđ"
+        },
+        "grafanaManaged": {
+          "export-rules": "Ēχpőřŧ řūľęş",
+          "loading": "Ŀőäđįŉģ...",
+          "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
+          "title": "Ğřäƒäŉä-mäŉäģęđ"
+        }
+      }
     },
     "mute_timings": {
       "error-loading": {
