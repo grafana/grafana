@@ -641,6 +641,8 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	if hs.Cfg.EnforceDomain {
 		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
+	// handle action urls
+	m.UseMiddleware(middleware.ValidateActionUrl(hs.Cfg, hs.log))
 
 	m.Use(middleware.HandleNoCacheHeaders)
 
