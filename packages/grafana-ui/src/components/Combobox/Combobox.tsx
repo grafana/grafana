@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { SetStateAction, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -99,9 +99,6 @@ export const Combobox = <T extends string | number>({
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
 
-  const menuId = `downshift-${useId().replace(/:/g, '_')}-menu`;
-  const labelId = `downshift-${useId().replace(/:/g, '_')}-label`;
-
   const styles = useStyles2(getComboboxStyles);
   const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
   const [popoverWidth, setPopoverWidth] = useState<number | undefined>(undefined);
@@ -126,8 +123,6 @@ export const Combobox = <T extends string | number>({
     closeMenu,
     selectItem,
   } = useCombobox({
-    menuId,
-    labelId,
     inputId: id,
     items,
     itemToString,
@@ -166,6 +161,15 @@ export const Combobox = <T extends string | number>({
       }
     },
   });
+
+  const getActiveItemId = useCallback(
+    (activeIndex: number) => {
+      return `${id}-option-${activeIndex}`;
+    },
+    [id]
+  );
+
+  const activeItemId = useMemo(() => getActiveItemId(highlightedIndex), [highlightedIndex, getActiveItemId]);
 
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
@@ -241,6 +245,7 @@ export const Combobox = <T extends string | number>({
            */
           onChange: () => {},
           onBlur,
+          'aria-activedescendant': isOpen && highlightedIndex > -1 ? activeItemId : undefined,
         })}
       />
       <div
@@ -251,7 +256,9 @@ export const Combobox = <T extends string | number>({
           minWidth: inputRef.current?.offsetWidth,
           width: popoverWidth,
         }}
-        {...getMenuProps({ ref: floatingRef })}
+        {...getMenuProps({
+          ref: floatingRef,
+        })}
       >
         {isOpen && (
           <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
@@ -269,7 +276,11 @@ export const Combobox = <T extends string | number>({
                     height: virtualRow.size,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
-                  {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
+                  {...getItemProps({
+                    item: items[virtualRow.index],
+                    index: virtualRow.index,
+                    id: getActiveItemId(virtualRow.index),
+                  })}
                 >
                   <div className={styles.optionBody}>
                     <span className={styles.optionLabel}>{items[virtualRow.index].label}</span>
