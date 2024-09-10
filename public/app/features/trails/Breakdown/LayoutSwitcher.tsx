@@ -8,12 +8,12 @@ import {
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
-import { Field, RadioButtonGroup } from '@grafana/ui';
+import { RadioButtonGroup } from '@grafana/ui';
 
 import { reportExploreMetrics } from '../interactions';
 import { MakeOptional, TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
 
-import { isBreakdownLayoutType, BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
+import { BreakdownLayoutChangeCallback, BreakdownLayoutType, isBreakdownLayoutType } from './types';
 
 export interface LayoutSwitcherState extends SceneObjectState {
   activeBreakdownLayout: BreakdownLayoutType;
@@ -50,13 +50,11 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
     const { activeBreakdownLayout, breakdownLayoutOptions } = model.useState();
 
     return (
-      <Field>
-        <RadioButtonGroup
-          options={breakdownLayoutOptions}
-          value={activeBreakdownLayout}
-          onChange={model.onLayoutChange}
-        />
-      </Field>
+      <RadioButtonGroup
+        options={breakdownLayoutOptions}
+        value={activeBreakdownLayout}
+        onChange={model.onLayoutChange}
+      />
     );
   }
 

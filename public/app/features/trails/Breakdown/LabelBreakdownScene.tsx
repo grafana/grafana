@@ -24,6 +24,7 @@ import {
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Field } from '@grafana/ui/';
 import { Trans } from 'app/core/internationalization';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
@@ -246,15 +247,19 @@ export class LabelBreakdownScene extends SceneObjectBase<LabelBreakdownSceneStat
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
           <div className={styles.controls}>
             {!loading && labels.length && (
-              <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
+              <Field label="By label">
+                <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
+              </Field>
             )}
-            {value !== ALL_VARIABLE_VALUE && (
-              <>
-                <search.Component model={search} />
-                <sortBy.Component model={sortBy} />
-              </>
+            <Field label="Search" className={styles.searchField}>
+              <search.Component model={search} />
+            </Field>
+            {value !== ALL_VARIABLE_VALUE && <sortBy.Component model={sortBy} />}
+            {body instanceof LayoutSwitcher && (
+              <Field label="View">
+                <body.Selector model={body} />
+              </Field>
             )}
-            {body instanceof LayoutSwitcher && <body.Selector model={body} />}
           </div>
           <div className={styles.content}>{body && <body.Component model={body} />}</div>
         </StatusWrapper>
@@ -277,12 +282,14 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       paddingTop: theme.spacing(0),
     }),
+    searchField: css({
+      flexGrow: 1,
+    }),
     controls: css({
       flexGrow: 0,
       display: 'flex',
       alignItems: 'flex-start',
       gap: theme.spacing(2),
-      justifyContent: 'space-between',
     }),
   };
 }

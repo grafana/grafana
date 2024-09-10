@@ -1,7 +1,11 @@
-import { BusEventBase, DataFrame, ReducerID, SelectableValue } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { InlineField, Select } from '@grafana/ui';
+import { css } from '@emotion/css';
 
+import { BusEventBase, DataFrame, GrafanaTheme2, ReducerID, SelectableValue } from '@grafana/data';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { IconButton, Select } from '@grafana/ui';
+import { Field, useStyles2 } from '@grafana/ui/';
+
+import { Trans } from '../../../core/internationalization';
 import { getLabelValueFromDataFrame } from '../services/levels';
 import { getSortByPreference, setSortByPreference } from '../services/store';
 
@@ -68,28 +72,45 @@ export class SortByScene extends SceneObjectBase<SortBySceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<SortByScene>) => {
+    const styles = useStyles2(getStyles);
     const { sortBy } = model.useState();
     const group = model.sortingOptions.find((group) => group.options.find((option) => option.value === sortBy));
     const value = group?.options.find((option) => option.value === sortBy);
     return (
-      <>
-        <InlineField
-          label="Sort by"
-          htmlFor="sort-by-criteria"
-          tooltip="Sorts by a calculation based on time series values. Defaults to standard deviation."
-        >
-          <Select
-            value={value}
-            width={20}
-            isSearchable={true}
-            options={model.sortingOptions}
-            placeholder={'Choose criteria'}
-            onChange={model.onCriteriaChange}
-            inputId="sort-by-criteria"
-          />
-        </InlineField>
-      </>
+      <Field
+        htmlFor="sort-by-criteria"
+        label={
+          <div className={styles.sortByTooltip}>
+            <Trans i18nKey="explore-metrics.breakdown.sortBy">Sort by</Trans>
+            <IconButton
+              name={'info-circle'}
+              size="sm"
+              variant={'secondary'}
+              tooltip="Sorts by a calculation based on time series values. Defaults to standard deviation."
+            />
+          </div>
+        }
+      >
+        <Select
+          value={value}
+          width={20}
+          isSearchable={true}
+          options={model.sortingOptions}
+          placeholder={'Choose criteria'}
+          onChange={model.onCriteriaChange}
+          inputId="sort-by-criteria"
+        />
+      </Field>
     );
+  };
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    sortByTooltip: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+    }),
   };
 }
 
