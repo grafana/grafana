@@ -366,7 +366,11 @@
     },
     "save": "Enregistrer"
   },
-  "complete": "",
+  "configuration-tracker": {
+    "config-card": {
+      "complete": ""
+    }
+  },
   "connections": {
     "connect-data": {
       "category-header-label": "Sources de données",
@@ -607,12 +611,13 @@
       "title": "Annotations"
     },
     "dashboard-delete-button": "",
-    "dashboard-delete-modal": {
+    "delete-modal": {
       "confirmation-text": "",
       "delete-button": "",
-      "text": "",
       "title": ""
     },
+    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-text": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Actualisation automatique",
@@ -920,6 +925,11 @@
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
+  "gen-ai": {
+    "apply-suggestion": "",
+    "incomplete-request-error": "",
+    "send-custom-feedback": ""
+  },
   "grafana-ui": {
     "drawer": {
       "close": "Fermer"
@@ -938,6 +948,9 @@
     },
     "spinner": {
       "aria-label": ""
+    },
+    "table": {
+      "copy": ""
     }
   },
   "graph": {
@@ -1003,78 +1016,84 @@
   "ldap-drawer": {
     "attributes-section": {
       "description": "",
-      "email": {
-        "label": ""
-      },
+      "email-label": "",
       "label": "",
-      "member-of": {
-        "label": ""
-      },
-      "name": {
-        "label": ""
-      },
-      "surname": {
-        "label": ""
-      },
-      "username": {
-        "label": ""
-      }
+      "member-of-label": "",
+      "name-label": "",
+      "surname-label": "",
+      "username-label": ""
     },
     "extra-security-section": {
+      "client-cert-label": "",
+      "client-cert-placeholder": "",
+      "client-cert-value-label": "",
+      "client-cert-value-placeholder": "",
+      "client-key-label": "",
+      "client-key-placeholder": "",
+      "client-key-value-label": "",
+      "client-key-value-placeholder": "",
+      "encryption-provider-base-64": "",
+      "encryption-provider-description": "",
+      "encryption-provider-file-path": "",
+      "encryption-provider-label": "",
       "label": "",
-      "min-tls-version": {
+      "min-tls-version-description": "",
+      "min-tls-version-label": "",
+      "root-ca-cert-label": "",
+      "root-ca-cert-placeholder": "",
+      "root-ca-cert-value-label": "",
+      "start-tls-description": "",
+      "start-tls-label": "",
+      "tls-ciphers-description": "",
+      "tls-ciphers-label": "",
+      "tls-ciphers-placeholder": "",
+      "use-ssl-description": "",
+      "use-ssl-label": "",
+      "use-ssl-tooltip": ""
+    },
+    "group-mapping": {
+      "grafana-admin": {
         "description": "",
         "label": ""
       },
-      "start-tls": {
+      "group-dn": {
         "description": "",
         "label": ""
       },
-      "tls-ciphers": {
+      "org-id": {
         "description": "",
-        "label": "",
-        "placeholder": ""
+        "label": ""
       },
-      "use-ssl": {
-        "description": "",
-        "label": "",
-        "tooltip": ""
+      "org-role": {
+        "label": ""
+      },
+      "remove": {
+        "button": ""
       }
     },
     "group-mapping-section": {
+      "add": {
+        "button": ""
+      },
       "description": "",
-      "group-search-base-dns": {
-        "description": "",
-        "label": ""
-      },
-      "group-search-filter": {
-        "description": "",
-        "label": ""
-      },
-      "group-search-filter-user-attribute": {
-        "description": "",
-        "label": ""
-      },
+      "group-search-base-dns-description": "",
+      "group-search-base-dns-label": "",
+      "group-search-filter-description": "",
+      "group-search-filter-label": "",
+      "group-search-filter-user-attribute-description": "",
+      "group-search-filter-user-attribute-label": "",
       "label": "",
-      "skip-org-role-sync": {
-        "description": "",
-        "label": ""
-      }
+      "skip-org-role-sync-description": "",
+      "skip-org-role-sync-label": ""
     },
     "misc-section": {
-      "allow-sign-up": {
-        "descrition": "",
-        "label": ""
-      },
+      "allow-sign-up-descrition": "",
+      "allow-sign-up-label": "",
       "label": "",
-      "port": {
-        "description": "",
-        "label": ""
-      },
-      "timeout": {
-        "description": "",
-        "label": ""
-      }
+      "port-description": "",
+      "port-label": "",
+      "timeout-description": "",
+      "timeout-label": ""
     },
     "title": ""
   },
@@ -1120,6 +1139,10 @@
       "label": "",
       "placeholder": ""
     },
+    "login-form-alert": {
+      "description": "",
+      "title": ""
+    },
     "search_filter": {
       "description": "",
       "label": "",
@@ -1154,6 +1177,7 @@
     "empty-state": {
       "message": ""
     },
+    "loading-panel-text": "",
     "modal": {
       "button-cancel": "",
       "button-view-panel1": "Voir le panneau dans {{label}}...",
@@ -1691,7 +1715,7 @@
       "title": "SLO"
     },
     "snapshots": {
-      "subtitle": "Représentations interactives, accessibles au public et ponctuelles des tableaux de bord",
+      "subtitle": "",
       "title": "Instantanés"
     },
     "starred": {
@@ -1925,6 +1949,7 @@
       "success-resume": "",
       "success-update": "",
       "success-update-old": "",
+      "time-range-label": "",
       "time-range-tooltip": ""
     },
     "create-page": {
@@ -2258,8 +2283,8 @@
     "embed": {
       "copy": "Copier dans le presse-papiers",
       "html": "Intégrer du HTML",
-      "html-description": "Le code HTML ci-dessous peut être copié et inclus dans une autre page Web. Sauf si l'accès anonyme est activé, l'utilisateur qui consulte cette page doit être connecté à Grafana pour que le graphique charge.",
-      "info": "Générer du HTML pour intégrer un iframe avec ce panneau.",
+      "html-description": "",
+      "info": "",
       "time-range": ""
     },
     "export": {
