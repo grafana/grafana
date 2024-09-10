@@ -218,6 +218,12 @@
       "update-rule": {
         "success": "Rule updated successfully"
       }
+    },
+    "simpleCondition": {
+      "alertCondition": "Alert condition",
+      "ofQuery": {
+        "To": "TO"
+      }
     }
   },
   "annotations": {

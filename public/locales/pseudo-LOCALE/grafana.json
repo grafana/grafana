@@ -218,6 +218,12 @@
       "update-rule": {
         "success": "Ŗūľę ūpđäŧęđ şūččęşşƒūľľy"
       }
+    },
+    "simpleCondition": {
+      "alertCondition": "Åľęřŧ čőŉđįŧįőŉ",
+      "ofQuery": {
+        "To": "ŦØ"
+      }
     }
   },
   "annotations": {
