@@ -65,7 +65,7 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
-      // plugins not controlled by the user should not be showed as updatable
+      // plugins not controlled by the user should not be shown as updatable
       if (
         filters.hasUpdate !== undefined &&
         filters.hasUpdate &&
