@@ -48,6 +48,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         description,
         title,
         pluginId,
+        onClick: typeof onClick,
       });
 
       if (!title) {
