@@ -1,5 +1,5 @@
 import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
-import { Stack, Text, LinkButton, Box } from '@grafana/ui';
+import { Stack, Text, LinkButton, Box, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
@@ -42,9 +42,9 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
               <Trans i18nKey="plugins.details.labels.links">Links </Trans>
             </Text>
             {plugin.details.links.map((link, index) => (
-              <LinkButton key={index} href={link.url} variant="secondary" fill="solid">
+              <TextLink key={index} href={link.url} external>
                 {link.name}
-              </LinkButton>
+              </TextLink>
             ))}
           </Stack>
         </Box>
