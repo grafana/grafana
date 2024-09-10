@@ -1,5 +1,5 @@
 import { BusEventWithPayload, RegistryItem } from '@grafana/data';
-import { SceneObject } from '@grafana/scenes';
+import { SceneObject, VizPanel } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 /**
@@ -32,6 +32,10 @@ export interface DashboardLayoutManager extends SceneObject {
    * @param element
    */
   duplicateElement(element: DashboardLayoutElement): void;
+  /**
+   * getVizPanels
+   */
+  getVizPanels(): VizPanel[];
   /**
    * Turn into a save model
    * @param saveModel

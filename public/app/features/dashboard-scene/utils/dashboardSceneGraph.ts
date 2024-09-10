@@ -28,29 +28,7 @@ function getPanelLinks(panel: VizPanel) {
 }
 
 function getVizPanels(scene: DashboardScene): VizPanel[] {
-  const panels: VizPanel[] = [];
-
-  scene.state.body.forEachChild((child) => {
-    if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow)) {
-      throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
-    }
-
-    if (child instanceof DashboardGridItem) {
-      if (child.state.body instanceof VizPanel) {
-        panels.push(child.state.body);
-      }
-    } else if (child instanceof SceneGridRow) {
-      child.forEachChild((child) => {
-        if (child instanceof DashboardGridItem) {
-          if (child.state.body instanceof VizPanel) {
-            panels.push(child.state.body);
-          }
-        }
-      });
-    }
-  });
-
-  return panels;
+  return scene.state.body.getVizPanels();
 }
 
 function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {

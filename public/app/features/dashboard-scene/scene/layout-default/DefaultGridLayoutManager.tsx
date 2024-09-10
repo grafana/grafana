@@ -9,10 +9,8 @@ import {
   sceneUtils,
   SceneComponentProps,
 } from '@grafana/scenes';
-import { Button } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
-import { DashboardInteractions } from '../../utils/interactions';
 import {
   forceRenderChildren,
   getDashboardSceneFor,
@@ -24,7 +22,7 @@ import {
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
-import { DashboardLayoutManager, DashboardLayoutElement, LayoutRegistryItem, LayoutEditorProps } from '../types';
+import { DashboardLayoutManager, DashboardLayoutElement } from '../types';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   layout: SceneGridLayout;
@@ -225,6 +223,32 @@ export class DefaultGridLayoutManager
     });
   }
 
+  public getVizPanels(): VizPanel[] {
+    const panels: VizPanel[] = [];
+
+    this.state.layout.forEachChild((child) => {
+      if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow)) {
+        throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
+      }
+
+      if (child instanceof DashboardGridItem) {
+        if (child.state.body instanceof VizPanel) {
+          panels.push(child.state.body);
+        }
+      } else if (child instanceof SceneGridRow) {
+        child.forEachChild((child) => {
+          if (child instanceof DashboardGridItem) {
+            if (child.state.body instanceof VizPanel) {
+              panels.push(child.state.body);
+            }
+          }
+        });
+      }
+    });
+
+    return panels;
+  }
+
   public getNextPanelId(): number {
     let max = 0;
 
@@ -272,10 +296,36 @@ export class DefaultGridLayoutManager
    * For simple test grids
    * @param panels
    */
-  public static newGrid(panels: VizPanel[] = []): DefaultGridLayoutManager {
+  public static fromVizPanels(panels: VizPanel[] = []): DefaultGridLayoutManager {
+    const children: DashboardGridItem[] = [];
+    const panelHeight = 10;
+    const panelWidth = GRID_COLUMN_COUNT / 3;
+    let currentY = 0;
+    let currentX = 0;
+
+    for (let panel of panels) {
+      children.push(
+        new DashboardGridItem({
+          key: `griditem-${getPanelIdForVizPanel(panel)}`,
+          x: currentX,
+          y: currentY,
+          width: panelWidth,
+          height: panelHeight,
+          body: panel,
+        })
+      );
+
+      currentX += panelWidth;
+
+      if (currentX + panelWidth >= GRID_COLUMN_COUNT) {
+        currentX = 0;
+        currentY += panelHeight;
+      }
+    }
+
     return new DefaultGridLayoutManager({
       layout: new SceneGridLayout({
-        children: panels.map((p) => new DashboardGridItem({ body: p })),
+        children: children,
         isDraggable: false,
         isResizable: false,
       }),

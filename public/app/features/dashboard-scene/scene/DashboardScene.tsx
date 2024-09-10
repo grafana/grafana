@@ -176,7 +176,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       title: 'Dashboard',
       meta: {},
       editable: true,
-      body: state.body ?? DefaultGridLayoutManager.newGrid(),
+      body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
     });
