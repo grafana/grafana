@@ -209,9 +209,16 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/access/groupsync',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "GroupSync" */ 'app/extensions/groupsync/GroupSyncEditor')
-      ),
+      roles: () =>
+        contextSrv.evaluatePermission([
+          AccessControlAction.GroupSyncMappingsRead,
+          AccessControlAction.GroupSyncMappingsWrite,
+        ]),
+      component: config.featureToggles.groupAttributeSync
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "GroupSync" */ 'app/extensions/groupsync/GroupSyncEditor')
+          )
+        : () => <Redirect to="/admin" />,
     },
     {
       path: '/org',
