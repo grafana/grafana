@@ -3,7 +3,6 @@ package loki
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"math/rand"
 	"net/url"
 	"strconv"
@@ -28,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -572,19 +573,21 @@ func TestBuildTransition(t *testing.T) {
 	})
 }
 
-func createTestLokiStore(t *testing.T, sql db.DB, client lokiQueryClient) *LokiHistorianStore {
+func createTestLokiStore(t *testing.T, sql *sqlstore.ReplStore, client lokiQueryClient) *LokiHistorianStore {
 	t.Helper()
+	ruleStore := store.SetupStoreForTesting(t, sql)
 
 	return &LokiHistorianStore{
-		client: client,
-		db:     sql,
-		log:    log.NewNopLogger(),
+		client:    client,
+		db:        sql,
+		log:       log.NewNopLogger(),
+		ruleStore: ruleStore,
 	}
 }
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRule(t *testing.T, sql db.DB, title string, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
+func createAlertRule(t *testing.T, sql *sqlstore.ReplStore, title string, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	if generator == nil {
@@ -592,7 +595,7 @@ func createAlertRule(t *testing.T, sql db.DB, title string, generator *ngmodels.
 		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(nil, nil), g.WithOrgID(1))
 	}
 
-	rule := generator.GenerateRef()
+	rule := generator.Generate()
 	// ensure rule has correct values
 	if rule.Title != title {
 		rule.Title = title
@@ -601,32 +604,17 @@ func createAlertRule(t *testing.T, sql db.DB, title string, generator *ngmodels.
 	rule.DashboardUID = nil
 	rule.PanelID = nil
 
-	err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Table(ngmodels.AlertRule{}).InsertOne(rule)
-		if err != nil {
-			return err
-		}
-
-		dbRule := &ngmodels.AlertRule{}
-		exist, err := sess.Table(ngmodels.AlertRule{}).ID(rule.ID).Get(dbRule)
-		if err != nil {
-			return err
-		}
-		if !exist {
-			return errors.New("cannot read inserted record")
-		}
-		rule = dbRule
-
-		return nil
-	})
+	ruleStore := store.SetupStoreForTesting(t, sql)
+	ids, err := ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{rule})
 	require.NoError(t, err)
-
-	return rule
+	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
+	require.NoError(t, err)
+	return result
 }
 
 // createAlertRuleFromDashboard creates an alert rule with a linked dashboard and panel in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboard dashboards.Dashboard, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
+func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.ReplStore, title string, dashboard dashboards.Dashboard, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	panelID := new(int64)
@@ -637,7 +625,7 @@ func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboa
 		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(&dashboard.UID, panelID), g.WithOrgID(1))
 	}
 
-	rule := generator.GenerateRef()
+	rule := generator.Generate()
 	// ensure rule has correct values
 	if rule.Title != title {
 		rule.Title = title
@@ -648,28 +636,12 @@ func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboa
 	if rule.PanelID == nil || (rule.PanelID != nil && *rule.PanelID != *panelID) {
 		rule.PanelID = panelID
 	}
-
-	err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Table(ngmodels.AlertRule{}).InsertOne(rule)
-		if err != nil {
-			return err
-		}
-
-		dbRule := &ngmodels.AlertRule{}
-		exist, err := sess.Table(ngmodels.AlertRule{}).ID(rule.ID).Get(dbRule)
-		if err != nil {
-			return err
-		}
-		if !exist {
-			return errors.New("cannot read inserted record")
-		}
-		rule = dbRule
-
-		return nil
-	})
+	ruleStore := store.SetupStoreForTesting(t, sql)
+	ids, err := ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{rule})
 	require.NoError(t, err)
-
-	return rule
+	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
+	require.NoError(t, err)
+	return result
 }
 
 func ruleMetaFromRule(t *testing.T, rule *ngmodels.AlertRule) historymodel.RuleMeta {

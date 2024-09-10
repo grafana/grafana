@@ -108,6 +108,28 @@ func (st DBstore) GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAler
 	return result, err
 }
 
+// GetRuleByID retrieves models.AlertRule by ID.
+// It returns models.ErrAlertRuleNotFound if no alert rule is found for the provided ID.
+func (st DBstore) GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (result *ngmodels.AlertRule, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		alertRule := alertRule{OrgID: query.OrgID, ID: query.ID}
+		has, err := sess.Get(&alertRule)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return ngmodels.ErrAlertRuleNotFound
+		}
+		r, err := alertRuleToModelsAlertRule(alertRule, st.Logger)
+		if err != nil {
+			return fmt.Errorf("failed to convert alert rule: %w", err)
+		}
+		result = &r
+		return nil
+	})
+	return result, err
+}
+
 // GetAlertRulesGroupByRuleUID is a handler for retrieving a group of alert rules from that database by UID and organisation ID of one of rules that belong to that group.
 func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) (result []*ngmodels.AlertRule, err error) {
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
