@@ -118,6 +118,7 @@ func NewDualWriter(
 	case Mode0:
 		return legacy
 	case Mode1:
+		// read and write only from legacy storage
 		return newDualWriterMode1(legacy, storage, metrics, resource)
 	case Mode2:
 		// write to both, read from storage but use legacy as backup
@@ -128,7 +129,6 @@ func NewDualWriter(
 	case Mode4:
 		return storage
 	default:
-		// Read+write to legacy, async write to storage
 		return newDualWriterMode1(legacy, storage, metrics, resource)
 	}
 }
