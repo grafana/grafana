@@ -78,17 +78,15 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       return Y_TICK_SPACING_NORMAL;
     }
 
-    const defaultSpacing = X_TICK_SPACING_NORMAL;
-
     if (scale.time) {
-      const maxTicks = plotDim / defaultSpacing;
+      const maxTicks = plotDim / X_TICK_SPACING_NORMAL;
       const increment = (scaleMax - scaleMin) / maxTicks;
-      const sample = formatTime(self, [scaleMin], axisIdx, defaultSpacing, increment);
+      const sample = formatTime(self, [scaleMin], axisIdx, X_TICK_SPACING_NORMAL, increment);
       const width = measureText(sample[0], UPLOT_AXIS_FONT_SIZE).width + 18;
       return width;
     }
 
-    return defaultSpacing;
+    return X_TICK_SPACING_NORMAL;
   }
 
   /** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
