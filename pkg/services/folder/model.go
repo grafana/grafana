@@ -217,3 +217,27 @@ type GetDescendantCountsQuery struct {
 }
 
 type DescendantCounts map[string]int64
+
+type FolderDTO struct {
+	// Unique playlist identifier. Generated on creation, either by the
+	// creator of the playlist of by the application.
+	Uid string `json:"uid" db:"uid"`
+
+	// Title of the folder.
+	Title string `json:"title"`
+
+	// Description of the folder.
+	Description string `json:"description"`
+
+	// Returned for k8s
+	CreatedAt int64 `json:"-" db:"created_at"`
+
+	// Returned for k8s
+	UpdatedAt int64 `json:"-" db:"updated_at"`
+
+	// Returned for k8s
+	OrgID int64 `json:"-" db:"org_id"`
+
+	// Returned for k8s and added as an annotation
+	Id int64 `json:"-" db:"id"`
+}

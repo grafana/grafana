@@ -47,9 +47,12 @@ func RegisterAPIService(cfg *setting.Cfg,
 	accessControl accesscontrol.AccessControl,
 	registerer prometheus.Registerer,
 ) *FolderAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
-	}
+	/*
+		TODO: Maicon
+		if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+			return nil // skip registration unless opting into experimental apis
+		}
+	*/
 
 	builder := &FolderAPIBuilder{
 		gv:            resourceInfo.GroupVersion(),
