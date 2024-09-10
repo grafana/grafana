@@ -3,12 +3,19 @@ import { Fragment, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
+import {
+  ANNOTATION_INUSE_ROUTES,
+  ANNOTATION_INUSE_RULES,
+  canAdminEntity,
+  canDeleteEntity,
+  canEditEntity,
+} from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { createRelativeUrl } from '../../utils/url';
@@ -17,27 +24,15 @@ import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { UnusedContactPointBadge } from './components/UnusedBadge';
-import {
-  canDeleteContactPoint,
-  canEditContactPoint,
-  canAdminContactPoint,
-  ContactPointWithMetadata,
-  showManageContactPointPermissions,
-} from './utils';
+import { ContactPointWithMetadata, showManageContactPointPermissions } from './utils';
 
 interface ContactPointHeaderProps {
   contactPoint: ContactPointWithMetadata;
   disabled?: boolean;
   onDelete: (contactPoint: ContactPointWithMetadata) => void;
-  showPolicies?: boolean;
 }
 
-export const ContactPointHeader = ({
-  contactPoint,
-  disabled = false,
-  onDelete,
-  showPolicies = true,
-}: ContactPointHeaderProps) => {
+export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }: ContactPointHeaderProps) => {
   const { name, id, provisioned, policies = [] } = contactPoint;
   const styles = useStyles2(getStyles);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
@@ -46,34 +41,40 @@ export const ContactPointHeader = ({
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
   const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
-
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
   const showManagePermissions =
-    canAdminContactPoint(contactPoint) && showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
+    canAdminEntity(contactPoint) && showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
 
-  const numberOfPolicies = Number(contactPoint.metadata?.annotations?.['grafana.com/inUse/routes'] ?? policies.length);
+  const regularPolicyReferences = policies.filter((ref) => ref.route.type !== 'auto-generated');
 
-  const numberOfRules = (contactPoint.metadata?.annotations?.['grafana.com/inUse/rules'] || '')
+  /**
+   * Number of (regular) policies that reference this contact point -
+   * either taken from the annotations (k8s) or from the alertmanager config
+   */
+  const numberOfPolicies = Number(
+    contactPoint.metadata?.annotations?.[ANNOTATION_INUSE_ROUTES] ?? regularPolicyReferences.length
+  );
+
+  /** Number of rules that use this contact point for simplified routing */
+  const numberOfRules = (contactPoint.metadata?.annotations?.[ANNOTATION_INUSE_RULES] || '')
     .split(',')
     .filter(Boolean).length;
 
   /** Is the contact point referenced by anything such as notification policies or as a simplified routing contact point? */
-  const isReferencedByAnythingElse = numberOfRules + numberOfPolicies > 0;
-  const isReferencedByRegularPolicies =
-    numberOfPolicies > 0 ?? policies.some((ref) => ref.route.type !== 'auto-generated');
+  const isReferencedByAnything = numberOfRules + numberOfPolicies > 0;
 
   /** Does the current user have permissions to edit the contact point? */
-  const hasAbilityToEdit = canEditContactPoint(contactPoint) || editAllowed;
+  const hasAbilityToEdit = canEditEntity(contactPoint) || editAllowed;
   /** Can the contact point be edited via the UI? */
   const contactPointIsEditable = !provisioned;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be edited? */
   const canEdit = editSupported && hasAbilityToEdit && contactPointIsEditable;
 
   /** Does the current user have permissions to delete the contact point? */
-  const hasAbilityToDelete = canDeleteContactPoint(contactPoint) || deleteAllowed;
+  const hasAbilityToDelete = canDeleteEntity(contactPoint) || deleteAllowed;
   /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
-  const contactPointIsDeleteable = !provisioned && !isReferencedByRegularPolicies;
+  const contactPointIsDeleteable = !provisioned && !isReferencedByAnything;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
   const canBeDeleted = deleteSupported && hasAbilityToDelete && contactPointIsDeleteable;
 
@@ -103,15 +104,35 @@ export const ContactPointHeader = ({
   }
 
   if (deleteSupported) {
+    const cannotDeleteNoPermissions = t(
+      'alerting.contact-points.delete-reasons.no-permissions',
+      'You do not have the required permission to delete this contact point'
+    );
+    const cannotDeleteProvisioned = t(
+      'alerting.contact-points.delete-reasons.provisioned',
+      'Contact point is provisioned and cannot be deleted via the UI'
+    );
+    const cannotDeletePolicies = t(
+      'alerting.contact-points.delete-reasons.policies',
+      'Contact point is referenced by one or more notification policies'
+    );
+    const cannotDeleteRules = t(
+      'alerting.contact-points.delete-reasons.rules',
+      'Contact point is referenced by one or more alert rules'
+    );
+
     const reasonsDeleteIsDisabled = [
-      !hasAbilityToDelete ? 'You do not have permission to delete this contact point' : '',
-      provisioned ? 'Contact point is provisioned and cannot be deleted via the UI' : '',
-      isReferencedByRegularPolicies ? 'Contact point is referenced by one or more notification policies' : '',
+      !hasAbilityToDelete ? cannotDeleteNoPermissions : '',
+      provisioned ? cannotDeleteProvisioned : '',
+      numberOfPolicies ? cannotDeletePolicies : '',
+      numberOfRules ? cannotDeleteRules : '',
     ].filter(Boolean);
 
     const deleteTooltipContent = (
       <>
-        <div>Contact point cannot be deleted for the following reasons:</div>
+        <Trans i18nKey="alerting.contact-points.delete-reasons.heading">
+          Contact point cannot be deleted for the following reasons:
+        </Trans>
         <br />
         {reasonsDeleteIsDisabled.map((reason) => (
           <li key={reason}>{reason}</li>
@@ -145,6 +166,10 @@ export const ContactPointHeader = ({
     count: numberOfPolicies,
   });
 
+  const referencedByRulesText = t('alerting.contact-points.used-by-rules', 'Used by {{ count }} alert rule', {
+    count: numberOfRules,
+  });
+
   // TOOD: Tidy up/consolidate logic for working out id for contact point. This requires some unravelling of
   // existing types so its clearer where the ID has come from
   const urlId = id || name;
@@ -157,7 +182,7 @@ export const ContactPointHeader = ({
             {name}
           </Text>
         </Stack>
-        {numberOfPolicies > 0 && showPolicies && (
+        {numberOfPolicies > 0 && (
           <TextLink
             href={createRelativeUrl('/alerting/routes', { contactPoint: name })}
             variant="bodySmall"
@@ -167,20 +192,20 @@ export const ContactPointHeader = ({
             {referencedByPoliciesText}
           </TextLink>
         )}
-        {numberOfRules > 0 && showPolicies && (
+        {numberOfRules > 0 && (
           <TextLink
             href={createRelativeUrl('/alerting/list', { search: `contactPoint:"${name}"` })}
             variant="bodySmall"
             color="primary"
             inline={false}
           >
-            Used by {numberOfRules} alert rules
+            {referencedByRulesText}
           </TextLink>
         )}
         {provisioned && (
           <ProvisioningBadge tooltip provenance={contactPoint.metadata?.annotations?.[PROVENANCE_ANNOTATION]} />
         )}
-        {!isReferencedByAnythingElse && showPolicies && <UnusedContactPointBadge />}
+        {!isReferencedByAnything && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
           tooltipPlacement="top"

@@ -3,7 +3,8 @@ import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
+import { canAdminEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedContactPoint,
@@ -209,17 +210,5 @@ function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedR
   };
 }
 
-const getContactPointPermission = (contactPoint: GrafanaManagedContactPoint, permission: string) =>
-  contactPoint.metadata?.annotations?.[`grafana.com/access/${permission}`] === 'true';
-
-export const canEditContactPoint = (contactPoint: GrafanaManagedContactPoint) =>
-  getContactPointPermission(contactPoint, 'canWrite');
-
-export const canAdminContactPoint = (contactPoint: GrafanaManagedContactPoint) =>
-  getContactPointPermission(contactPoint, 'canAdmin');
-
-export const canDeleteContactPoint = (contactPoint: GrafanaManagedContactPoint) =>
-  getContactPointPermission(contactPoint, 'canDelete');
-
 export const showManageContactPointPermissions = (alertmanager: string, contactPoint: GrafanaManagedContactPoint) =>
-  shouldUseK8sApi(alertmanager) && contextSrv.licensedAccessControlEnabled() && canAdminContactPoint(contactPoint);
+  shouldUseK8sApi(alertmanager) && contextSrv.licensedAccessControlEnabled() && canAdminEntity(contactPoint);

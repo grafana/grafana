@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 
@@ -30,3 +31,27 @@ type Entity = {
  */
 export const isK8sEntityProvisioned = (item: Entity) =>
   item.metadata.annotations?.[PROVENANCE_ANNOTATION] !== PROVENANCE_NONE;
+
+type EntityToCheck = {
+  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
+};
+
+/**
+ * Different permissions that we expect to see in the k8s metadata annotations
+ * under the `grafana.com/access/` key
+ * */
+type K8sPermission = 'canWrite' | 'canAdmin' | 'canDelete';
+
+const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
+
+const getContactPointPermission = (k8sEntity: EntityToCheck, permission: K8sPermission) =>
+  k8sEntity.metadata?.annotations?.[ANNOTATION_PREFIX_ACCESS + permission] === 'true';
+
+export const canEditEntity = (k8sEntity: EntityToCheck) => getContactPointPermission(k8sEntity, 'canWrite');
+
+export const canAdminEntity = (k8sEntity: EntityToCheck) => getContactPointPermission(k8sEntity, 'canAdmin');
+
+export const canDeleteEntity = (k8sEntity: EntityToCheck) => getContactPointPermission(k8sEntity, 'canDelete');
+
+export const ANNOTATION_INUSE_ROUTES = 'grafana.com/inUse/routes';
+export const ANNOTATION_INUSE_RULES = 'grafana.com/inUse/rules';

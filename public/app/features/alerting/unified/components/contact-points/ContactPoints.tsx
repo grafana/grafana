@@ -13,6 +13,7 @@ import {
   Text,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types';
 
@@ -43,13 +44,15 @@ const ContactPointsTab = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const [queryParams] = useURLSearchParams();
 
-  const SHOW_POLICIES = true;
-  const SHOW_STATUSES = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
+  // If we're using the K8S API, then we don't need to fetch the policies info within the hook,
+  // as we get metadata about this from the API
+  const fetchPolicies = !shouldUseK8sApi(selectedAlertmanager!);
+  const fetchStatuses = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
-    fetchPolicies: SHOW_POLICIES,
-    fetchStatuses: SHOW_STATUSES,
+    fetchPolicies,
+    fetchStatuses: fetchStatuses,
   });
   const canCreateContactPoint = contextSrv.hasPermission(AccessControlAction.AlertingReceiversCreate);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
@@ -104,12 +107,7 @@ const ContactPointsTab = () => {
           )}
         </Stack>
       </Stack>
-      <ContactPointsList
-        showPolicies={SHOW_POLICIES}
-        contactPoints={contactPoints}
-        search={search}
-        pageSize={DEFAULT_PAGE_SIZE}
-      />
+      <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
       {ExportDrawer}
@@ -205,7 +203,6 @@ interface ContactPointsListProps {
   search?: string | null;
   disabled?: boolean;
   pageSize?: number;
-  showPolicies?: boolean;
 }
 
 const ContactPointsList = ({
@@ -213,7 +210,6 @@ const ContactPointsList = ({
   disabled = false,
   search,
   pageSize = DEFAULT_PAGE_SIZE,
-  showPolicies,
 }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
@@ -222,7 +218,7 @@ const ContactPointsList = ({
     <>
       {pageItems.map((contactPoint, index) => {
         const key = `${contactPoint.name}-${index}`;
-        return <ContactPoint key={key} contactPoint={contactPoint} disabled={disabled} showPolicies={showPolicies} />;
+        return <ContactPoint key={key} contactPoint={contactPoint} disabled={disabled} />;
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>

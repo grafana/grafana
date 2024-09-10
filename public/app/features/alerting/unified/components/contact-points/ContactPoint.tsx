@@ -24,16 +24,9 @@ import { ContactPointWithMetadata, getReceiverDescription, ReceiverConfigWithMet
 interface ContactPointProps {
   disabled?: boolean;
   contactPoint: ContactPointWithMetadata;
-  /**
-   * Should we show the number of referenced policies by a given contact point?
-   *
-   * Useful to hide the count when the user might not have access to the policies
-   * (and to prevent us from showing "Unused")
-   */
-  showPolicies?: boolean;
 }
 
-export const ContactPoint = ({ disabled = false, contactPoint, showPolicies }: ContactPointProps) => {
+export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointProps) => {
   const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
   const { selectedAlertmanager } = useAlertmanager();
@@ -47,7 +40,6 @@ export const ContactPoint = ({ disabled = false, contactPoint, showPolicies }: C
     <div className={styles.contactPointWrapper} data-testid="contact-point">
       <Stack direction="column" gap={0}>
         <ContactPointHeader
-          showPolicies={showPolicies}
           contactPoint={contactPoint}
           disabled={disabled}
           onDelete={(contactPointToDelete) =>
