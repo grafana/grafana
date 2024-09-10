@@ -428,7 +428,7 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should make the plugin context available for the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent);
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
 
       render(<Component />);
 
@@ -438,7 +438,7 @@ describe('Plugin Extensions / Utils', () => {
 
     it('should pass the properties into the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
-      const Component = wrapWithPluginContext(pluginId, ExampleComponent);
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
 
       render(<Component audience="folks" />);
 

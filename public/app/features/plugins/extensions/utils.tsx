@@ -25,7 +25,7 @@ import { sidecarService } from 'app/core/services/SidecarService';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { log } from './log';
+import { ExtensionsLog, log } from './log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
 
@@ -57,7 +57,11 @@ export function createOpenModalFunction(pluginId: string): PluginExtensionEventH
 
     appEvents.publish(
       new ShowModalReactEvent({
-        component: wrapWithPluginContext<ModalWrapperProps>(pluginId, getModalWrapper({ title, body, width, height })),
+        component: wrapWithPluginContext<ModalWrapperProps>(
+          pluginId,
+          getModalWrapper({ title, body, width, height }),
+          log
+        ),
       })
     );
   };
@@ -67,7 +71,7 @@ type ModalWrapperProps = {
   onDismiss: () => void;
 };
 
-export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>) => {
+export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>, log: ExtensionsLog) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
     const {
       error,

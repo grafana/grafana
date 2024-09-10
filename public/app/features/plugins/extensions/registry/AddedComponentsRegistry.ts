@@ -81,7 +81,7 @@ export class AddedComponentsRegistry extends Registry<
 
         const result = {
           pluginId,
-          component: wrapWithPluginContext(pluginId, config.component),
+          component: wrapWithPluginContext(pluginId, config.component, pointIdLog),
           description: config.description,
           title: config.title,
         };
