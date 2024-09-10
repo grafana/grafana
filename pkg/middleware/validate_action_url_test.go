@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -169,6 +170,22 @@ func TestMiddlewareValidateActionUrl(t *testing.T) {
 			addHeader:           false,
 			code:                http.StatusOK,
 		},
+		{
+			name:                "CONNECT unknown verb with header",
+			method:              "CONNECT",
+			path:                "/api/notplugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           true,
+			code:                http.StatusMethodNotAllowed,
+		},
+		{
+			name:                "CONNECT unknown verb without header",
+			method:              "CONNECT",
+			path:                "/api/notplugins/org-generic-app",
+			actionsAllowPostURL: "/api/plugins/*",
+			addHeader:           false,
+			code:                http.StatusNotFound,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -189,8 +206,11 @@ func TestMiddlewareValidateActionUrl(t *testing.T) {
 				case "PUT":
 					sc.m.Put(tt.path, sc.defaultHandler)
 				default:
-					// POST for anything else
-					sc.m.Post(tt.path, sc.defaultHandler)
+					// anything else is an error
+					anError := fmt.Errorf("unknown verb: %s", tt.method)
+					if assert.Errorf(t, anError, "unknown verb: %s", tt.method) {
+						assert.Contains(t, anError.Error(), "unknown verb")
+					}
 				}
 				sc.fakeReq(tt.method, tt.path)
 				if tt.addHeader {
