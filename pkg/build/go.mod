@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/build
 
-go 1.23.0
+go 1.23.1
 
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
@@ -36,16 +36,16 @@ require (
 	go.opentelemetry.io/otel v1.29.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.29.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/crypto v0.26.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/mod v0.18.0 // @grafana/grafana-backend-group
-	golang.org/x/net v0.28.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/crypto v0.27.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/mod v0.19.0 // @grafana/grafana-backend-group
+	golang.org/x/net v0.29.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.22.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.8.0 // indirect; @grafana/alerting-backend
-	golang.org/x/text v0.17.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/text v0.18.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/tools v0.22.0 // indirect; @grafana/grafana-as-code
+	golang.org/x/tools v0.23.0 // indirect; @grafana/grafana-as-code
 	google.golang.org/api v0.191.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.65.0 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.66.0 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.34.2 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )
@@ -85,7 +85,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.53.0 // indirect
 	go.opentelemetry.io/otel/metric v1.29.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
-	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
 	google.golang.org/genproto v0.0.0-20240812133136-8ffd90a71988 // indirect; @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20240822170219-fc7c04adadcd // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240814211410-ddb44dafa142 // indirect
@@ -116,7 +116,7 @@ require (
 	go.opentelemetry.io/otel/log v0.2.0-alpha // indirect
 	go.opentelemetry.io/otel/sdk/log v0.2.0-alpha // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
-	golang.org/x/exp v0.0.0-20240416160154-fe59bbe5cc7f // indirect
+	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
 
