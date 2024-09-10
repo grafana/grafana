@@ -39,7 +39,7 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
         <Box padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column" gap={2}>
             <Text color="secondary">
-              <Trans i18nKey="plugins.details.labels.customLinks">Custom links: </Trans>
+              <Trans i18nKey="plugins.details.labels.links">Links </Trans>
             </Text>
             {plugin.details.links.map((link, index) => (
               <LinkButton key={index} href={link.url} variant="secondary" fill="solid">
