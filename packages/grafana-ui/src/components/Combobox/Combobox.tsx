@@ -99,8 +99,8 @@ export const Combobox = <T extends string | number>({
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
 
-  const menuId = `downshift-${useId().replace(/:/g, '_')}-menu`;
-  const labelId = `downshift-${useId().replace(/:/g, '_')}-label`;
+  const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
+  const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
 
   const styles = useStyles2(getComboboxStyles);
   const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
