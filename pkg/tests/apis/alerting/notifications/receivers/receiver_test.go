@@ -934,6 +934,98 @@ func TestIntegrationCRUD(t *testing.T) {
 	})
 }
 
+func TestIntegrationReceiverListSelector(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
+
+	require.NoError(t, err)
+	recv1 := &v0alpha1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.ReceiverSpec{
+			Title: "test-receiver-1",
+			Integrations: []v0alpha1.Integration{
+				createIntegration(t, "email"),
+			},
+		},
+	}
+	recv1, err = adminClient.Create(ctx, recv1, v1.CreateOptions{})
+	require.NoError(t, err)
+
+	recv2 := &v0alpha1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.ReceiverSpec{
+			Title: "test-receiver-2",
+			Integrations: []v0alpha1.Integration{
+				createIntegration(t, "email"),
+			},
+		},
+	}
+	recv2, err = adminClient.Create(ctx, recv2, v1.CreateOptions{})
+	require.NoError(t, err)
+
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	require.NoError(t, err)
+	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
+		UID: *recv2.Spec.Integrations[0].Uid,
+	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
+	recv2, err = adminClient.Get(ctx, recv2.Name, v1.GetOptions{})
+
+	require.NoError(t, err)
+
+	receivers, err := adminClient.List(ctx, v1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, receivers.Items, 3) // Includes default.
+
+	t.Run("should filter by receiver name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "spec.title=" + recv1.Spec.Title,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, recv1.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by metadata name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "metadata.name=" + recv2.Name,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, recv2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by multiple filters", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", recv2.Name, "API"),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, recv2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should be empty when filter does not match", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", recv2.Name, "unknown"),
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
+	})
+}
+
 func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
