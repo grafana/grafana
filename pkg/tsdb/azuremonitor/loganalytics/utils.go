@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
@@ -40,19 +41,24 @@ func AddConfigLinks(frame data.Frame, dl string, title *string) data.Frame {
 }
 
 // Check whether a query should be handled as basic logs query
-// 2. resource selected is a workspace
-// 3. query is not an alerts query
-// 4. number of selected resources is exactly one
-func meetsBasicLogsCriteria(resources []string, fromAlert bool) (bool, error) {
+// 1. resource selected is a workspace
+// 2. query is not an alerts query
+// 3. number of selected resources is exactly one
+// 4. the ds toggle is set to true
+func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled bool) (bool, error) {
 	if fromAlert {
-		return false, fmt.Errorf("basic Logs queries cannot be used for alerts")
+		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries cannot be used for alerts"), false)
 	}
 	if len(resources) != 1 {
-		return false, fmt.Errorf("basic logs queries cannot be run against multiple resources")
+		return false, errorsource.DownstreamError(fmt.Errorf("basic logs queries cannot be run against multiple resources"), false)
 	}
 
 	if !strings.Contains(strings.ToLower(resources[0]), "microsoft.operationalinsights/workspaces") {
-		return false, fmt.Errorf("basic Logs queries may only be run against Log Analytics workspaces")
+		return false, errorsource.DownstreamError(fmt.Errorf("basic logs queries may only be run against Log Analytics workspaces"), false)
+	}
+
+	if !basicLogsEnabled {
+		return false, errorsource.DownstreamError(fmt.Errorf("basic Logs queries are disabled for this data source"), false)
 	}
 
 	return true, nil

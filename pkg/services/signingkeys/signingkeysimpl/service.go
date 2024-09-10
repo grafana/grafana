@@ -155,13 +155,13 @@ func (s *Service) getPrivateKey(ctx context.Context, keyID string) (crypto.Signe
 		return nil, err
 	}
 
-	singer, err := s.decodePrivateKey(ctx, key.PrivateKey)
+	signer, err := s.decodePrivateKey(ctx, key.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	s.localCache.Set(keyID, singer, privateKeyTTL)
-	return singer, nil
+	s.localCache.Set(keyID, signer, privateKeyTTL)
+	return signer, nil
 }
 
 func (s *Service) addPrivateKey(ctx context.Context, keyID string, alg jose.SignatureAlgorithm, force bool) (crypto.Signer, error) {
