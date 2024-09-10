@@ -291,6 +291,8 @@ export const Pages = {
       container: 'data-testid share externally drawer container',
       copyUrlButton: 'data-testid share externally copy url button',
       shareTypeSelect: 'data-testid share externally share type select',
+      PublicAlert: 'data-testid public share alert',
+      EmailSharingAlert: 'data-testid email share alert',
     },
     ShareSnapshot: {
       container: 'data-testid share snapshot drawer container',
