@@ -93,6 +93,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#folder-permissions
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/dashboards/manage-dashboards/#folder-permissions
+  migrate-api-keys:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/migrate-api-keys/
 ---
 
 # Role-based access control (RBAC)
@@ -172,7 +177,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 
 - [Alerting](ref:alerting)
 - [Annotations](ref:dashboards-annotate-visualizations)
-- [API keys](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/migrate-api-keys/)
+- [API keys](ref:migrate-api-keys)
 - [Dashboards and folders](ref:dashboards)
 - [Data sources](ref:data-sources)
 - [Explore](/docs/grafana/<GRAFANA_VERSION>/explore/)
