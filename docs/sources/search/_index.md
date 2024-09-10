@@ -28,7 +28,7 @@ The search is:
 
 - Real-time
 - _Not_ case sensitive
-- Functional across stored _and_ file based dashboards.
+- Functional across stored _and_ file based dashboards and folders.
 
 {{% admonition type="note" %}}
 You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard or folder.
