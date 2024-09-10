@@ -43,10 +43,6 @@ export interface DynamicTableProps<T = unknown> {
   onCollapse?: (item: DynamicTableItemProps<T>) => void;
   onExpand?: (item: DynamicTableItemProps<T>) => void;
   isExpanded?: (item: DynamicTableItemProps<T>) => boolean;
-
-  // Invoked for each item when rendering. When pagination is enabled it is invoked only for current page items.
-  onItemRender?: (item: DynamicTableItemProps<T>, index: number) => void;
-
   renderExpandedContent?: (
     item: DynamicTableItemProps<T>,
     index: number,
@@ -74,7 +70,6 @@ export const DynamicTable = <T extends object>({
   testIdGenerator,
   pagination,
   paginationStyles,
-  onItemRender,
   // render a cell BEFORE expand icon for header/ each row.
   // currently use by RuleList to render guidelines
   renderPrefixCell,
@@ -106,12 +101,6 @@ export const DynamicTable = <T extends object>({
 
   const itemsPerPage = pagination?.itemsPerPage ?? items.length;
   const { page, numberOfPages, onPageChange, pageItems } = usePagination(items, 1, itemsPerPage);
-
-  useEffect(() => {
-    if (onItemRender) {
-      pageItems.forEach((item, index) => onItemRender(item, index));
-    }
-  }, [pageItems, onItemRender]);
 
   return (
     <>
