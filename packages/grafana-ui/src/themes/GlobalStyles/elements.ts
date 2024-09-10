@@ -275,7 +275,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
     // 2. Correct font properties not being inherited.
     // 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
     'button, input, optgroup, select, textarea': {
-      borderRadius: theme.shape.radius.default,
+      borderRadius: 0,
       color: 'inherit',
       font: 'inherit',
       lineHeight: 'inherit',

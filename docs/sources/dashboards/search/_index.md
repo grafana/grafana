@@ -11,11 +11,13 @@ labels:
 menutitle: Search
 title: Search
 weight: 80
+aliases:
+  - ../search/ # /docs/grafana/latest/search/
 ---
 
 # Search dashboards
 
-You can search for dashboards by dashboard name and by panel title. When you search for dashboards, the system returns all dashboards available within the Grafana instance, even if you do not have permission to view the contents of the dashboard.
+You can search for dashboards by dashboard name and by panel title. When you search for dashboards, the system returns all dashboards available within the Grafana instance, even if you don't have permission to view the contents of the dashboard.
 
 ## Search dashboards using dashboard name
 
@@ -83,7 +85,7 @@ To filter dashboard search result by a tag, complete one of the following steps:
 
   You can continue filtering by clicking additional tags.
 
-- To see a list of all available tags, click the **Filter by tags** dropdown menu and select a tag.
+- To see a list of all available tags, click the **Filter by tags** drop-down menu and select a tag.
 
   All tags will be shown, and when you select a tag, the dashboard search will be instantly filtered.
 
