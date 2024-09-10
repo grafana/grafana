@@ -9,13 +9,14 @@ import {
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
+  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
   VizPanelMenu,
 } from '@grafana/scenes';
 
-import { getMultiVariableValues } from '../utils/utils';
+import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
@@ -42,6 +43,22 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     super(state);
 
     this.addActivationHandler(() => this._activationHandler());
+  }
+
+  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
+    const rows = this._getRows(this._getLayout(), this._getRow());
+    for (const row of rows) {
+      for (const gridItem of row.state.children) {
+        if (!(gridItem instanceof DashboardGridItem)) {
+          continue;
+        }
+
+        const queryRunner = getQueryRunnerFor(gridItem.state.body);
+        if (queryRunner) {
+          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
+        }
+      }
+    }
   }
 
   private _activationHandler() {
@@ -88,6 +105,15 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     return () => {
       sub.unsubscribe();
     };
+  }
+
+  private _getRows(layout: SceneGridLayout, rowToRepeat: SceneGridRow): SceneGridRow[] {
+    const clonedRows: SceneGridRow[] = layout.state.children.filter(
+      (child): child is SceneGridRow =>
+        !!(child instanceof SceneGridRow && child.state.key?.includes(`${rowToRepeat.state.key}-clone-`))
+    );
+
+    return [rowToRepeat, ...clonedRows];
   }
 
   private _getRow(): SceneGridRow {

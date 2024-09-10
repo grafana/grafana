@@ -937,6 +937,10 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
           if (behavior.isWaitingForVariables || (behavior.state.variableName === variable.state.name && hasChanged)) {
             behavior.performRepeat();
           }
+
+          if (!behavior.isWaitingForVariables && behavior.state.variableName === variable.state.name) {
+            behavior.notifyRepeatedPanelsWaitingForVariables(variable);
+          }
         }
       }
     }
