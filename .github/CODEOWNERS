@@ -413,6 +413,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Temp owners until Enterprise team takes over
 /public/app/features/migrate-to-cloud @grafana/grafana-frontend-platform
 
+/public/app/features/actions/ @grafana/dataviz-squad
 /public/app/features/auth-config/ @grafana/identity-squad
 /public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/api-keys/ @grafana/identity-squad
@@ -699,7 +700,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/community-release.yml @grafana/grafana-release-guild
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
-/.github/workflows/auto-triager.yml @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @grafana/grafana-release-guild

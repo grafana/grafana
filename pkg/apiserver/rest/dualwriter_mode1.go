@@ -283,8 +283,9 @@ func (d *DualWriterMode1) Destroy() {
 }
 
 func (d *DualWriterMode1) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	d.Log.Error(errors.New("Watch not implemented in mode 1"), "Watch not implemented in mode 1")
-	return nil, nil
+	err := errors.New("Watch not implemented in mode 1")
+	d.Log.Error(err, err.Error())
+	return nil, err
 }
 
 func (d *DualWriterMode1) GetSingularName() string {

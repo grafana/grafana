@@ -1350,6 +1350,19 @@
     },
     {
       "metadata": {
+        "name": "groupAttributeSync",
+        "resourceVersion": "1725893018130",
+        "creationTimestamp": "2024-09-09T14:43:38Z"
+      },
+      "spec": {
+        "description": "Enable the groupsync extension for managing Group Attribute Sync feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "groupByVariable",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-02-14T17:18:04Z"
@@ -1517,6 +1530,21 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesFolders",
+        "resourceVersion": "1725863636605",
+        "creationTimestamp": "2024-09-09T06:29:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-09 06:33:56.605329 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
@@ -2842,6 +2870,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "vizActions",
+        "resourceVersion": "1722461779830",
+        "creationTimestamp": "2024-07-31T21:36:19Z"
+      },
+      "spec": {
+        "description": "Allow actions in visualizations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromAdminPage": true
       }
     },
     {
