@@ -2044,13 +2044,16 @@
       "copy-link-button": "Cőpy ęχŧęřŉäľ ľįŉĸ",
       "email-share-type-option-description": "Øŉľy pęőpľę ŵįŧĥ ŧĥę ľįŉĸ čäŉ äččęşş đäşĥþőäřđ",
       "email-share-type-option-label": "Øŉľy şpęčįƒįč pęőpľę",
+      "no-upsert-perm-alert-desc": "Cőŉŧäčŧ yőūř äđmįŉ ŧő ģęŧ pęřmįşşįőŉ ŧő {{mode}} şĥäřęđ đäşĥþőäřđş",
+      "no-upsert-perm-alert-title": "Ÿőū đőŉ’ŧ ĥävę pęřmįşşįőŉ ŧő {{ mode }} ä şĥäřęđ đäşĥþőäřđ",
       "pause-access-button": "Päūşę äččęşş",
       "pause-access-tooltip": "Päūşįŉģ ŵįľľ ŧęmpőřäřįľy đįşäþľę äččęşş ŧő ŧĥįş đäşĥþőäřđ ƒőř äľľ ūşęřş",
       "public-share-type-option-description": "Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ čäŉ äččęşş đäşĥþőäřđ",
       "public-share-type-option-label": "Åŉyőŉę ŵįŧĥ ŧĥę ľįŉĸ",
       "resume-access-button": "Ŗęşūmę äččęşş",
       "revoke-access-button": "Ŗęvőĸę äččęşş",
-      "revoke-access-description": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş äččęşş? Ŧĥę đäşĥþőäřđ čäŉ ŉő ľőŉģęř þę şĥäřęđ."
+      "revoke-access-description": "Åřę yőū şūřę yőū ŵäŉŧ ŧő řęvőĸę ŧĥįş äččęşş? Ŧĥę đäşĥþőäřđ čäŉ ŉő ľőŉģęř þę şĥäřęđ.",
+      "unsupported-data-source-alert-desc": "Ŧĥęřę äřę đäŧä şőūřčęş įŉ ŧĥįş đäşĥþőäřđ ŧĥäŧ äřę ūŉşūppőřŧęđ ƒőř şĥäřęđ đäşĥþőäřđş. Päŉęľş ŧĥäŧ ūşę ŧĥęşę đäŧä şőūřčęş mäy ŉőŧ ƒūŉčŧįőŉ přőpęřľy: {{unsupportedDataSources}}."
     },
     "sharing": {
       "success-creation": "Đäşĥþőäřđ įş pūþľįč!"
