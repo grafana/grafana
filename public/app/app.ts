@@ -65,6 +65,7 @@ import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
+import { DashboardBenchmarkBackend } from './core/services/echo/backends/DashboardBenchmarkBackend';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backend';
@@ -107,7 +108,6 @@ import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
-import { DashboardBenchmarkBackend } from './core/services/echo/backends/DashboardBenchmarkBackend';
 
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
