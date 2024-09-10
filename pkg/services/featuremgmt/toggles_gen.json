@@ -1521,6 +1521,21 @@
     },
     {
       "metadata": {
+        "name": "kubernetesFolders",
+        "resourceVersion": "1725863636605",
+        "creationTimestamp": "2024-09-09T06:29:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-09 06:33:56.605329 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesPlaylists",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-10-05T19:00:36Z",

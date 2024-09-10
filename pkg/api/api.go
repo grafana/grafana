@@ -443,25 +443,35 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealthWithUID))
 
 		// Folders
+		// #TODO kubernetes folders: move this to its own function, add back auth part, add other routes
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-			idScope := dashboards.ScopeFoldersProvider.GetResourceScope(ac.Parameter(":id"))
-			uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":uid"))
-			folderRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
-			folderRoute.Get("/id/:id", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
-			folderRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
-
-			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-				folderUidRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
-				folderUidRoute.Put("/", authorize(ac.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
-				folderUidRoute.Post("/move", authorize(ac.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
-				folderUidRoute.Delete("/", authorize(ac.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
-				folderUidRoute.Get("/counts", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
-
-				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-					folderPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
-					folderPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
+			if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
+				// Use k8s client to implement legacy API
+				handler := newFolderK8sHandler(hs)
+				folderRoute.Post("/", handler.createFolder)
+				folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+					folderUidRoute.Get("/", handler.getFolder)
 				})
-			})
+			} else {
+				idScope := dashboards.ScopeFoldersProvider.GetResourceScope(ac.Parameter(":id"))
+				uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":uid"))
+				folderRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
+				folderRoute.Get("/id/:id", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
+				folderRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
+
+				folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+					folderUidRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
+					folderUidRoute.Put("/", authorize(ac.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
+					folderUidRoute.Post("/move", authorize(ac.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
+					folderUidRoute.Delete("/", authorize(ac.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
+					folderUidRoute.Get("/counts", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
+
+					folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
+						folderPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
+						folderPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
+					})
+				})
+			}
 		})
 
 		// Dashboard

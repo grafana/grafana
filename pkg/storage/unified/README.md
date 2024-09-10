@@ -13,7 +13,7 @@ There are 2 main tables, the `resource` table stores a "current" view of the obj
 
 ## Running Unified Storage
 
-### Baseline configuration
+### Playlists: baseline configuration
 
 The minimum config settings required are:
 
@@ -33,6 +33,32 @@ kubernetesPlaylists = true
 ; use unified storage for k8s apiserver
 storage_type = unified
 ```
+
+### Folders: baseline configuration
+
+NOTE: allowing folders to be backed by Unified Storage is under development and so are these instructions. 
+
+The minimum config settings required are:
+
+```ini
+; need to specify target here for override to work later
+target = all
+
+[server]
+; https is required for kubectl
+protocol = https
+
+[feature_toggles]
+; store folders in k8s
+kubernetesFolders = true
+grafanaAPIServerWithExperimentalAPIs = true
+
+[grafana-apiserver]
+; use unified storage for k8s apiserver
+storage_type = unified
+```
+
+### Setting up a kubeconfig 
 
 With this configuration, you can run everything in-process. Run the Grafana backend with:
 
@@ -74,6 +100,8 @@ Where `<username>` and `<password>` are credentials for basic auth against Grafa
     username: admin
     password: admin
 ```
+
+### Playlists: interacting with the k8s API
 
 In this mode, you can interact with the k8s api. Make sure you are in the directory where you created `grafana.kubeconfig`. Then run:
 ```sh
@@ -131,6 +159,32 @@ kubectl --kubeconfig=./grafana.kubeconfig patch playlist <NAME> --patch-file pla
 ```
 
 In the example, `<NAME>` would be `u394j4d3-s63j-2d74-g8hf-958773jtybf2`.
+
+### Folders: interacting with the k8s API
+
+Make sure you are in the directory where you created `grafana.kubeconfig`. Then run:
+```sh
+kubectl --kubeconfig=./grafana.kubeconfig get folder
+```
+
+If this is your first time running the command, a successful response would be:
+```sh
+No resources found in default namespace.
+```
+
+To create a folder, create a file `folder-generate.yaml`:
+```yaml
+apiVersion: folder.grafana.app/v0alpha1
+kind: Folder
+metadata:
+  generateName: x # anything is ok here... except yes or true -- they become boolean!
+spec:
+  title: Example folder
+```
+then run:
+```sh
+kubectl --kubeconfig=./grafana.kubeconfig create -f folder-generate.yaml
+```
 
 ### Use a separate database
 
