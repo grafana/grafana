@@ -194,23 +194,25 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 			homeUrl = homePage
 		}
 	}
-	var children []*navtree.NavLink
-
-	// setup guide
-	children = append(children, &navtree.NavLink{
-		Id:         "home-setup-guide",
-		Text:       "Setup guide",
-		Url:        homeUrl + "/setup-guide",
-		SortWeight: navtree.WeightHome,
-	})
 
 	homeNode := &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",
 		Url:        homeUrl,
 		Icon:       "home-alt",
-		Children:   children,
 		SortWeight: navtree.WeightHome,
+	}
+	ctx := c.Req.Context()
+	if s.features.IsEnabled(ctx, featuremgmt.FlagHomeSetupGuide) {
+		var children []*navtree.NavLink
+		// setup guide
+		children = append(children, &navtree.NavLink{
+			Id:         "home-setup-guide",
+			Text:       "Setup guide",
+			Url:        homeUrl + "/setup-guide",
+			SortWeight: navtree.WeightHome,
+		})
+		homeNode.Children = children
 	}
 	return homeNode
 }
