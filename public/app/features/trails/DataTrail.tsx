@@ -347,11 +347,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           // The work flow for OTel begins with users selecting a deployment environment
           const defaultDepEnv = options[0].value; // usually production
           // On starting the explore metrics workflow, the custom variable has no value
-          // even if there is state, the value is not filled in,
-          // only the text is filled in, so we check for the intial text, 'All'
-          const isIntitialCustomVariable = otelDepEnvVariable.state.text === 'All';
-          // the state is only present in the variable text
-          const depEnvInitialValue = isIntitialCustomVariable ? defaultDepEnv : otelDepEnvVariable.state.text;
+          // Even if there is state, the value is always ''
+          // The only reference to state values are in the text
+          const otelDepEnvValue = otelDepEnvVariable.state.text;
+
+          // TypeScript issue: VariableValue is either a string or array but does not have any string or array methods on it to check that it is empty
+          const notInitialvalue = otelDepEnvValue !== '' && otelDepEnvValue.toLocaleString() !== '';
+
+          const depEnvInitialValue = notInitialvalue ? otelDepEnvValue : defaultDepEnv;
 
           otelDepEnvVariable?.setState({
             // cannot have an undefined custom value
@@ -647,9 +650,6 @@ function getVariableSet(
         value: undefined,
         placeholder: 'Select',
         isMulti: true,
-        includeAll: true,
-        defaultToAll: false,
-        noValueOnClear: true,
       }),
       new AdHocFiltersVariable({
         name: VAR_OTEL_RESOURCES,
