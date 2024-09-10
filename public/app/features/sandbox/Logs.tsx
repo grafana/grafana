@@ -3,12 +3,9 @@ import { useMemo } from 'react';
 import {
   EmbeddedScene,
   PanelBuilders,
-  SceneControlsSpacer,
   SceneFlexItem,
   SceneFlexLayout,
   SceneQueryRunner,
-  SceneRefreshPicker,
-  SceneTimePicker,
   SceneTimeRange,
   sceneUtils,
 } from '@grafana/scenes';
