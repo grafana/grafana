@@ -82,10 +82,10 @@ export default function ShareTypeSelect({
           className={styles.select}
         />
       ) : (
-        <>
+        <Stack gap={1} alignItems="center">
           {toIconName(anyOneWithTheLinkOpt.icon) && <Icon name={toIconName(anyOneWithTheLinkOpt.icon)!} />}
           <Text>{anyOneWithTheLinkOpt.label}</Text>
-        </>
+        </Stack>
       )}
     </div>
   );
