@@ -5,6 +5,7 @@ import alertmanagerConfig from 'app/features/alerting/unified/components/contact
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { ANNOTATION_PREFIX_ACCESS } from 'app/features/alerting/unified/utils/k8s/utils';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 const config: AlertManagerCortexConfig = alertmanagerConfig;
@@ -20,7 +21,12 @@ const mappedReceivers =
       metadata: {
         // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
         uid: camelCase(contactPoint.name),
-        annotations: { [PROVENANCE_ANNOTATION]: provenance },
+        annotations: {
+          [PROVENANCE_ANNOTATION]: provenance,
+          [`${ANNOTATION_PREFIX_ACCESS}/canAdmin`]: 'true',
+          [`${ANNOTATION_PREFIX_ACCESS}/canWrite`]: 'true',
+          [`${ANNOTATION_PREFIX_ACCESS}/canDelete`]: 'true',
+        },
       },
       spec: {
         title: contactPoint.name,

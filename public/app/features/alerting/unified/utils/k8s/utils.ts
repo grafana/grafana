@@ -42,7 +42,7 @@ type EntityToCheck = {
  * */
 type K8sPermission = 'canWrite' | 'canAdmin' | 'canDelete';
 
-const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
+export const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
 
 const getContactPointPermission = (k8sEntity: EntityToCheck, permission: K8sPermission) =>
   k8sEntity.metadata?.annotations?.[ANNOTATION_PREFIX_ACCESS + permission] === 'true';
