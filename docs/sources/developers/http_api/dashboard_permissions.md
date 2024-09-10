@@ -44,11 +44,12 @@ Gets all existing permissions for the dashboard with the given `uid`.
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
+<!-- prettier-ignore-start -->
 | Action                        | Scope                                                                                                   |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `dashboards.permissions:read` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
-
 { .no-spacing-list }
+<!-- prettier-ignore-end -->
 
 **Example request**:
 
@@ -125,11 +126,12 @@ Updates permissions for a dashboard. This operation will remove existing permiss
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
+<!-- prettier-ignore-start -->
 | Action                         | Scope                                                                                                   |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | `dashboards.permissions:write` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
-
 { .no-spacing-list }
+<!-- prettier-ignore-end -->
 
 **Example request**:
 
@@ -196,11 +198,12 @@ Gets all existing permissions for the dashboard with the given `dashboardId`.
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
+<!-- prettier-ignore-start -->
 | Action                        | Scope                                                                                                   |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `dashboards.permissions:read` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
-
 { .no-spacing-list }
+<!-- prettier-ignore-end -->
 
 **Example request**:
 
@@ -281,11 +284,12 @@ Updates permissions for a dashboard. This operation will remove existing permiss
 
 See note in the [introduction]({{< ref "#dashboard-permission-api" >}}) for an explanation.
 
+<!-- prettier-ignore-start -->
 | Action                         | Scope                                                                                                   |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
 | `dashboards.permissions:write` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
-
 { .no-spacing-list }
+<!-- prettier-ignore-end -->
 
 **Example request**:
 
