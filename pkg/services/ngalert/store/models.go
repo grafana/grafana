@@ -25,7 +25,7 @@ type alertRule struct {
 	Annotations          string
 	Labels               string
 	IsPaused             bool
-	NotificationSettings string `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
+	NotificationSettings string `xorm:"notification_settings"`
 }
 
 func (a alertRule) TableName() string {
@@ -58,7 +58,7 @@ type alertRuleVersion struct {
 	Annotations          string
 	Labels               string
 	IsPaused             bool
-	NotificationSettings string `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
+	NotificationSettings string `xorm:"notification_settings"`
 }
 
 func (a alertRuleVersion) TableName() string {
