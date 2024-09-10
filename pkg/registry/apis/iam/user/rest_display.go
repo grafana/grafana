@@ -98,14 +98,17 @@ func (r *LegacyDisplayREST) Connect(ctx context.Context, name string, _ runtime.
 		}
 		for _, user := range users.Users {
 			disp := iamv0.IdentityDisplay{
-				IdentityType: claims.TypeUser,
-				Display:      user.NameOrFallback(),
-				UID:          user.UID,
+				Identity: iamv0.IdentityRef{
+					Type: claims.TypeUser,
+					Name: user.UID,
+				},
+				DisplayName: user.NameOrFallback(),
+				InternalID:  user.ID,
 			}
 			if user.IsServiceAccount {
-				disp.IdentityType = claims.TypeServiceAccount
+				disp.Identity.Type = claims.TypeServiceAccount
 			}
-			disp.AvatarURL = dtos.GetGravatarUrlWithDefault(fakeCfgForGravatar, user.Email, disp.Display)
+			disp.AvatarURL = dtos.GetGravatarUrlWithDefault(fakeCfgForGravatar, user.Email, disp.DisplayName)
 			rsp.Display = append(rsp.Display, disp)
 		}
 
@@ -146,25 +149,30 @@ func parseKeys(req []string) dispKeys {
 			switch t {
 			case claims.TypeAnonymous:
 				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
-					IdentityType: t,
-					Display:      "Anonymous",
-					AvatarURL:    dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
+					Identity: iamv0.IdentityRef{
+						Type: t,
+					},
+					DisplayName: "Anonymous",
+					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
 			case claims.TypeAPIKey:
 				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
-					IdentityType: t,
-					UID:          key,
-					Display:      "API Key",
-					AvatarURL:    dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
+					Identity: iamv0.IdentityRef{
+						Type: t,
+						Name: key,
+					},
+					DisplayName: "API Key",
+					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
 			case claims.TypeProvisioning:
 				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
-					IdentityType: t,
-					UID:          "Provisioning",
-					Display:      "Provisioning",
-					AvatarURL:    dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
+					Identity: iamv0.IdentityRef{
+						Type: t,
+					},
+					DisplayName: "Provisioning",
+					AvatarURL:   dtos.GetGravatarUrl(fakeCfgForGravatar, string(t)),
 				})
 				continue
 			default:
@@ -177,9 +185,11 @@ func parseKeys(req []string) dispKeys {
 		if err == nil {
 			if id == 0 {
 				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
-					IdentityType: claims.TypeUser,
-					UID:          key,
-					Display:      "System admin",
+					Identity: iamv0.IdentityRef{
+						Type: claims.TypeUser,
+						Name: key,
+					},
+					DisplayName: "System admin",
 				})
 				continue
 			}

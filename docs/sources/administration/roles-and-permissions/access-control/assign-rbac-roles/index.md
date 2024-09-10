@@ -11,12 +11,38 @@ labels:
 menuTitle: Assign RBAC roles
 title: Assign Grafana RBAC roles
 weight: 40
+refs:
+  custom-role-actions-scopes:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
+  rbac-grafana-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-grafana-provisioning/
+  manage-rbac-roles-create-custom-roles-using-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles/#create-custom-roles-using-provisioning
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/manage-rbac-roles/#create-custom-roles-using-provisioning
+  plan-rbac-rollout-strategy:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/plan-rbac-rollout-strategy/
+  rbac-role-definitions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
 ---
 
 # Assign RBAC roles
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 In this topic you'll learn how to use the role picker, provisioning, and the HTTP API to assign fixed and custom roles to users and teams.
@@ -34,10 +60,10 @@ In both cases, the assignment applies only to the user, team or service account 
 
 **Before you begin:**
 
-- [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy/" >}}).
+- [Plan your RBAC rollout strategy](ref:plan-rbac-rollout-strategy).
 - Identify the fixed roles that you want to assign to the user, team or service account.
 
-  For more information about available fixed roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions/" >}}).
+  For more information about available fixed roles, refer to [RBAC role definitions](ref:rbac-role-definitions).
 
 - Ensure that your own user account has the correct permissions:
   - If you are assigning permissions to a user, team or service account within an organization, you must have organization administrator or server administrator permissions.
@@ -52,7 +78,7 @@ In both cases, the assignment applies only to the user, team or service account 
 1. Sign in to Grafana.
 2. Switch to the organization that contains the user, team or service account.
 
-   For more information about switching organizations, refer to [Switch organizations]({{< relref "../../../user-management/user-preferences/_index.md#switch-organizations" >}}).
+   For more information about switching organizations, refer to [Switch organizations](/docs/grafana/<GRAFANA_VERSION>/administration/user-management/user-preferences/#switch-organizations).
 
 3. In the left-side menu, click **Administration**, **Users and access**, and then **Users**, **Teams**, or **Service accounts**.
 4. In the **Role** column, select the fixed role that you want to assign to the user, team, or service account.
@@ -73,8 +99,8 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 **Before you begin:**
 
-- Refer to [Role provisioning]({{< relref "./rbac-grafana-provisioning/" >}})
-- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams]({{< relref "../../../team-management/" >}})
+- Refer to [Role provisioning](ref:rbac-grafana-provisioning)
+- Ensure that the team to which you are adding the fixed role exists. For more information about creating teams, refer to [Manage teams](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/)
 
 **To assign a role to a team:**
 
@@ -82,25 +108,25 @@ Instead of using the Grafana role picker, you can use file-based provisioning to
 
 1. Refer to the following table to add attributes and values.
 
-   | Attribute                | Description                                                                                                                                                                                                    |
-   | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `roles`                  | Enter the custom role or custom roles you want to create/update.                                                                                                                                               |
-   | `roles > name`           | Enter the name of the custom role.                                                                                                                                                                             |
-   | `roles > version`        | Enter the custom role version number. Role assignments are independent of the role version number.                                                                                                             |
-   | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                                                                                                           |
-   | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes/" >}}) |
-   | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                                                                                                               |
-   | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                                         |
-   | `teams > name`           | Enter the name of the team.                                                                                                                                                                                    |
-   | `teams > roles`          | Enter the custom or fixed role or roles that you want to grant to the team.                                                                                                                                    |
-   | `teams > roles > name`   | Enter the name of the role.                                                                                                                                                                                    |
-   | `teams > roles > global` | Enter `true`, or specify `orgId` of the role you want to assign to the team. Fixed roles are global.                                                                                                           |
+   | Attribute                | Description                                                                                                                                                                                    |
+   | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `roles`                  | Enter the custom role or custom roles you want to create/update.                                                                                                                               |
+   | `roles > name`           | Enter the name of the custom role.                                                                                                                                                             |
+   | `roles > version`        | Enter the custom role version number. Role assignments are independent of the role version number.                                                                                             |
+   | `roles > global`         | Enter `true`. You can specify the `orgId` otherwise.                                                                                                                                           |
+   | `roles > permissions`    | Enter the permissions `action` and `scope` values. For more information about permissions actions and scopes, refer to [RBAC permissions, actions, and scopes](ref:custom-role-actions-scopes) |
+   | `teams`                  | Enter the team or teams to which you are adding the custom role.                                                                                                                               |
+   | `teams > orgId`          | Because teams belong to organizations, you must add the `orgId` value.                                                                                                                         |
+   | `teams > name`           | Enter the name of the team.                                                                                                                                                                    |
+   | `teams > roles`          | Enter the custom or fixed role or roles that you want to grant to the team.                                                                                                                    |
+   | `teams > roles > name`   | Enter the name of the role.                                                                                                                                                                    |
+   | `teams > roles > global` | Enter `true`, or specify `orgId` of the role you want to assign to the team. Fixed roles are global.                                                                                           |
 
-   For more information about managing custom roles, refer to [Create custom roles using provisioning]({{< relref "./manage-rbac-roles/#create-custom-roles-using-provisioning" >}}).
+   For more information about managing custom roles, refer to [Create custom roles using provisioning](ref:manage-rbac-roles-create-custom-roles-using-provisioning).
 
 1. Reload the provisioning configuration file.
 
-   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations]({{< relref "../../../../developers/http_api/admin/#reload-provisioning-configurations" >}}).
+   For more information about reloading the provisioning configuration at runtime, refer to [Reload provisioning configurations](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin/#reload-provisioning-configurations).
 
 The following example creates the `custom:users:writer` role and assigns it to the `user writers` and `user admins` teams along with the `fixed:users:writer` role:
 

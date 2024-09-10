@@ -137,7 +137,7 @@ var TeamBindingResourceInfo = utils.NewResourceInfo(
 			}
 			return []interface{}{
 				m.Name,
-				m.Spec.TeamRef.Name,
+				m.Spec.Team.Name,
 				m.CreationTimestamp.UTC().Format(time.RFC3339),
 			}, nil
 		},
