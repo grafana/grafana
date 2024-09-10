@@ -6,7 +6,19 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { getDefaultRelativeTimeRange, GrafanaTheme2, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Dropdown, Field, Icon, Menu, MenuItem, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  ConfirmModal,
+  Dropdown,
+  Field,
+  Icon,
+  Menu,
+  MenuItem,
+  Stack,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
@@ -91,7 +103,9 @@ export function areQueriesTransformableToSimpleCondition(
   const reduceExpression = expressionQueries.find(
     (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONFITION_REDUCER_ID
   );
-  const reduceOk = reduceExpression && reduceExpression.settings?.mode === ReducerMode.Strict;
+  const reduceOk =
+    reduceExpression &&
+    (reduceExpression.settings?.mode === ReducerMode.Strict || reduceExpression.settings?.mode === undefined);
   const thresholdExpression = expressionQueries.find(
     (query) => query.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
@@ -146,6 +160,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       return isExpressionQuery(query.model) ? acc.concat(query.model) : acc;
     }, []);
   }, [queries]);
+  const [showResetModeModal, setShowResetModal] = useState(false);
 
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
     isGrafanaAlertingType && areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)
@@ -461,198 +476,216 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     return null;
   }
   return (
-    <RuleEditorSection
-      stepNo={2}
-      title={sectionTitle}
-      fullWidth={true}
-      description={
-        <Stack direction="row" gap={0.5} alignItems="center">
-          <Text variant="bodySmall" color="secondary">
-            {helpLabel}
-          </Text>
-          <NeedHelpInfo
-            contentText={helpContent}
-            externalLink={helpLink}
-            linkText={'Read more on our documentation website'}
-            title={helpLabel}
-          />
-        </Stack>
-      }
-      switchMode={
-        isGrafanaManagedRuleByType(type)
-          ? {
-              isModeAdvanced: isAdvancedMode,
-              setAdvancedMode: (isAdvanced) => {
-                if (!isAdvanced) {
-                  if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)) {
-                    dispatch(resetToSimpleCondition());
+    <>
+      <RuleEditorSection
+        stepNo={2}
+        title={sectionTitle}
+        fullWidth={true}
+        description={
+          <Stack direction="row" gap={0.5} alignItems="center">
+            <Text variant="bodySmall" color="secondary">
+              {helpLabel}
+            </Text>
+            <NeedHelpInfo
+              contentText={helpContent}
+              externalLink={helpLink}
+              linkText={'Read more on our documentation website'}
+              title={helpLabel}
+            />
+          </Stack>
+        }
+        switchMode={
+          isGrafanaManagedRuleByType(type)
+            ? {
+                isModeAdvanced: isAdvancedMode,
+                setAdvancedMode: (isAdvanced) => {
+                  if (!isAdvanced) {
+                    if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)) {
+                      setShowResetModal(true);
+                      return;
+                    }
                   }
-                }
-                setIsAdvancedMode(isAdvanced);
-              },
-            }
-          : undefined
-      }
-    >
-      {/* This is the cloud data source selector */}
-      {isDataSourceManagedRuleByType(type) && (
-        <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
-      )}
+                  setIsAdvancedMode(isAdvanced);
+                },
+              }
+            : undefined
+        }
+      >
+        {/* This is the cloud data source selector */}
+        {isDataSourceManagedRuleByType(type) && (
+          <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
+        )}
 
-      {/* This is the PromQL Editor for recording rules */}
-      {isRecordingRuleType && dataSourceName && (
-        <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-          <RecordingRuleEditor
-            dataSourceName={dataSourceName}
-            queries={queries}
-            runQueries={() => runQueriesPreview()}
-            onChangeQuery={onChangeRecordingRulesQueries}
-            panelData={queryPreviewData}
-          />
-        </Field>
-      )}
-
-      {/* This is the PromQL Editor for Cloud rules */}
-      {isCloudAlertRuleType && dataSourceName && (
-        <Stack direction="column">
+        {/* This is the PromQL Editor for recording rules */}
+        {isRecordingRuleType && dataSourceName && (
           <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-            <Controller
-              name="expression"
-              render={({ field: { ref, ...field } }) => {
-                return (
-                  <ExpressionEditor
-                    {...field}
-                    dataSourceName={dataSourceName}
-                    showPreviewAlertsButton={!isRecordingRuleType}
-                    onChange={onChangeExpression}
-                  />
-                );
-              }}
-              control={control}
-              rules={{
-                required: { value: true, message: 'A valid expression is required' },
-              }}
+            <RecordingRuleEditor
+              dataSourceName={dataSourceName}
+              queries={queries}
+              runQueries={() => runQueriesPreview()}
+              onChangeQuery={onChangeRecordingRulesQueries}
+              panelData={queryPreviewData}
             />
           </Field>
-          <SmartAlertTypeDetector
-            editingExistingRule={editingExistingRule}
-            queries={queries}
-            rulesSourcesWithRuler={rulesSourcesWithRuler}
-            onClickSwitch={onClickSwitch}
-          />
-        </Stack>
-      )}
+        )}
 
-      {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
-      {isGrafanaManagedRuleByType(type) && (
-        <Stack direction="column">
-          {/* Data Queries */}
-          <QueryEditor
-            queries={dataQueries}
-            expressions={expressionQueries}
-            onRunQueries={() => runQueriesPreview()}
-            onChangeQueries={onChangeQueries}
-            onDuplicateQuery={onDuplicateQuery}
-            panelData={queryPreviewData}
-            condition={condition}
-            onSetCondition={handleSetCondition}
-            isAdvancedMode={isAdvancedMode}
-          />
-          {isAdvancedMode && (
-            <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
-              <Button
-                type="button"
-                onClick={() => {
-                  dispatch(addNewDataQuery());
+        {/* This is the PromQL Editor for Cloud rules */}
+        {isCloudAlertRuleType && dataSourceName && (
+          <Stack direction="column">
+            <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+              <Controller
+                name="expression"
+                render={({ field: { ref, ...field } }) => {
+                  return (
+                    <ExpressionEditor
+                      {...field}
+                      dataSourceName={dataSourceName}
+                      showPreviewAlertsButton={!isRecordingRuleType}
+                      onChange={onChangeExpression}
+                    />
+                  );
                 }}
-                variant="secondary"
-                data-testid={selectors.components.QueryTab.addQuery}
-                disabled={noCompatibleDataSources}
-                className={styles.addQueryButton}
-              >
-                Add query
-              </Button>
-            </Tooltip>
-          )}
-          {/* We only show Switch for Grafana managed alerts */}
-          {isGrafanaAlertingType && isAdvancedMode && (
+                control={control}
+                rules={{
+                  required: { value: true, message: 'A valid expression is required' },
+                }}
+              />
+            </Field>
             <SmartAlertTypeDetector
               editingExistingRule={editingExistingRule}
-              rulesSourcesWithRuler={rulesSourcesWithRuler}
               queries={queries}
+              rulesSourcesWithRuler={rulesSourcesWithRuler}
               onClickSwitch={onClickSwitch}
             />
-          )}
-          {/* Expression Queries */}
-          {isAdvancedMode && (
-            <>
-              <Stack direction="column" gap={0}>
-                <Text element="h5">Expressions</Text>
-                <Text variant="bodySmall" color="secondary">
-                  Manipulate data returned from queries with math and other operations.
-                </Text>
-              </Stack>
+          </Stack>
+        )}
 
-              <ExpressionsEditor
-                queries={queries}
-                panelData={queryPreviewData}
-                condition={condition}
-                onSetCondition={handleSetCondition}
-                onRemoveExpression={(refId) => {
-                  dispatch(removeExpression(refId));
-                }}
-                onUpdateRefId={onUpdateRefId}
-                onUpdateExpressionType={(refId, type) => {
-                  dispatch(updateExpressionType({ refId, type }));
-                }}
-                onUpdateQueryExpression={(model) => {
-                  dispatch(updateExpression(model));
-                }}
-              />
-            </>
-          )}
-          {/* action buttons */}
+        {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
+        {isGrafanaManagedRuleByType(type) && (
           <Stack direction="column">
-            {!isAdvancedMode && (
-              <SimpleConditionEditor
-                simpleCondition={simpleCondition}
-                onChange={setSimpleCondition}
-                expressionQueriesList={expressionQueriesList}
-                dispatch={dispatch}
-                previewData={queryPreviewData[condition ?? '']}
+            {/* Data Queries */}
+            <QueryEditor
+              queries={dataQueries}
+              expressions={expressionQueries}
+              onRunQueries={() => runQueriesPreview()}
+              onChangeQueries={onChangeQueries}
+              onDuplicateQuery={onDuplicateQuery}
+              panelData={queryPreviewData}
+              condition={condition}
+              onSetCondition={handleSetCondition}
+              isAdvancedMode={isAdvancedMode}
+            />
+            {isAdvancedMode && (
+              <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    dispatch(addNewDataQuery());
+                  }}
+                  variant="secondary"
+                  data-testid={selectors.components.QueryTab.addQuery}
+                  disabled={noCompatibleDataSources}
+                  className={styles.addQueryButton}
+                >
+                  Add query
+                </Button>
+              </Tooltip>
+            )}
+            {/* We only show Switch for Grafana managed alerts */}
+            {isGrafanaAlertingType && isAdvancedMode && (
+              <SmartAlertTypeDetector
+                editingExistingRule={editingExistingRule}
+                rulesSourcesWithRuler={rulesSourcesWithRuler}
+                queries={queries}
+                onClickSwitch={onClickSwitch}
               />
             )}
-            <Stack direction="row">
-              {isAdvancedMode && config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
+            {/* Expression Queries */}
+            {isAdvancedMode && (
+              <>
+                <Stack direction="column" gap={0}>
+                  <Text element="h5">Expressions</Text>
+                  <Text variant="bodySmall" color="secondary">
+                    Manipulate data returned from queries with math and other operations.
+                  </Text>
+                </Stack>
 
-              {isPreviewLoading && (
-                <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
-                  Cancel
-                </Button>
+                <ExpressionsEditor
+                  queries={queries}
+                  panelData={queryPreviewData}
+                  condition={condition}
+                  onSetCondition={handleSetCondition}
+                  onRemoveExpression={(refId) => {
+                    dispatch(removeExpression(refId));
+                  }}
+                  onUpdateRefId={onUpdateRefId}
+                  onUpdateExpressionType={(refId, type) => {
+                    dispatch(updateExpressionType({ refId, type }));
+                  }}
+                  onUpdateQueryExpression={(model) => {
+                    dispatch(updateExpression(model));
+                  }}
+                />
+              </>
+            )}
+            {/* action buttons */}
+            <Stack direction="column">
+              {!isAdvancedMode && (
+                <SimpleConditionEditor
+                  simpleCondition={simpleCondition}
+                  onChange={setSimpleCondition}
+                  expressionQueriesList={expressionQueriesList}
+                  dispatch={dispatch}
+                  previewData={queryPreviewData[condition ?? '']}
+                />
               )}
-              {!isPreviewLoading && (
-                <Button
-                  data-testid={selectors.components.AlertRules.previewButton}
-                  icon="sync"
-                  type="button"
-                  onClick={() => runQueriesPreview()}
-                  disabled={emptyQueries}
-                >
-                  Preview
-                </Button>
-              )}
+              <Stack direction="row">
+                {isAdvancedMode && config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
+
+                {isPreviewLoading && (
+                  <Button icon="spinner" type="button" variant="destructive" onClick={cancelQueries}>
+                    Cancel
+                  </Button>
+                )}
+                {!isPreviewLoading && (
+                  <Button
+                    data-testid={selectors.components.AlertRules.previewButton}
+                    icon="sync"
+                    type="button"
+                    onClick={() => runQueriesPreview()}
+                    disabled={emptyQueries}
+                  >
+                    Preview
+                  </Button>
+                )}
+              </Stack>
             </Stack>
-          </Stack>
 
-          {/* No Queries */}
-          {emptyQueries && (
-            <Alert title="No queries or expressions have been configured" severity="warning">
-              Create at least one query or expression to be alerted on
-            </Alert>
-          )}
-        </Stack>
-      )}
-    </RuleEditorSection>
+            {/* No Queries */}
+            {emptyQueries && (
+              <Alert title="No queries or expressions have been configured" severity="warning">
+                Create at least one query or expression to be alerted on
+              </Alert>
+            )}
+          </Stack>
+        )}
+      </RuleEditorSection>
+
+      <ConfirmModal
+        isOpen={showResetModeModal}
+        title="Switching to simple mode"
+        body="Is not possible to convert the existing query and expressions to simple mode. 
+          If you continue, the current queries and expressions will be lost. Are you sure you want to switch to simple mode?"
+        confirmText="Yes"
+        icon="exclamation-triangle"
+        onConfirm={() => {
+          setIsAdvancedMode(false);
+          setShowResetModal(false);
+          dispatch(resetToSimpleCondition());
+        }}
+        onDismiss={() => setShowResetModal(false)}
+      />
+    </>
   );
 };
 
