@@ -130,6 +130,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   } = useFormContext<RuleFormValues>();
 
   const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading, clearPreviewData } = useAlertQueryRunner();
+  const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
 
   const initialState = {
     queries: getValues('queries'),
@@ -153,7 +154,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isRecordingRuleType = isCloudRecordingRuleByType(type);
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
 
-  const [isAdvancedMode, setIsAdvancedMode] = useState(isGrafanaAlertingType ? false : true);
+  const [isAdvancedMode, setIsAdvancedMode] = useState(isGrafanaAlertingType && isSwitchModeEnabled ? false : true);
 
   const expressionQueriesList = useMemo(() => {
     return queries.reduce((acc: ExpressionQuery[], query) => {
@@ -495,7 +496,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           </Stack>
         }
         switchMode={
-          isGrafanaManagedRuleByType(type)
+          isGrafanaManagedRuleByType(type) && isSwitchModeEnabled
             ? {
                 isModeAdvanced: isAdvancedMode,
                 setAdvancedMode: (isAdvanced) => {

@@ -782,4 +782,8 @@ const (
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
+
+	// FlagAlertingQueryAndExpressionsStepMode
+	// Enables step mode for alerting queries and expressions
+	FlagAlertingQueryAndExpressionsStepMode = "alertingQueryAndExpressionsStepMode"
 )

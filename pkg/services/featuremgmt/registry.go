@@ -1461,6 +1461,13 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 		},
+		{
+			Name:         "alertingQueryAndExpressionsStepMode",
+			Description:  "Enables step mode for alerting queries and expressions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
 	}
 )
 
