@@ -54,7 +54,7 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
           {topScene instanceof MetricScene && (
             <div className={styles.options}>
               <div>
-                <Trans>Always keep selected metric graph in-view</Trans>
+                <Trans i18nKey="">Always keep selected metric graph in-view</Trans>
               </div>
               <Switch value={stickyMainGraph} onChange={model.onToggleStickyMainGraph} />
             </div>
@@ -62,7 +62,7 @@ export class DataTrailSettings extends SceneObjectBase<DataTrailSettingsState> {
           {topScene instanceof MetricSelectScene && (
             <div className={styles.options}>
               <div>
-                <Trans>Show previews of metric graphs</Trans>
+                <Trans i18nKey="">Show previews of metric graphs</Trans>
               </div>
               <Switch value={showPreviews} onChange={model.onTogglePreviews} />
             </div>
