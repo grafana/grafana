@@ -39,6 +39,18 @@ describe('DefaultGridLayoutManager', () => {
       expect(id).toBe(1);
     });
   });
+
+  describe('removeElement', () => {
+    it('should remove element', () => {
+      const layout = setup();
+
+      expect(layout.state.layout.state.children.length).toBe(3);
+
+      layout.removeElement(layout.state.layout.state.children[0] as DashboardGridItem);
+
+      expect(layout.state.layout.state.children.length).toBe(2);
+    });
+  });
 });
 
 interface TestOptions {

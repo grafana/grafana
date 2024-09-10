@@ -74,7 +74,7 @@ import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { DashboardLayoutManager } from './types';
+import { DashboardLayoutManager, isDashboardLayoutElement } from './types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 
@@ -674,45 +674,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public removePanel(panel: VizPanel) {
-    const panels: SceneObject[] = [];
-    const key = panel.parent?.state.key;
+    const layoutElement = panel.parent!;
 
-    if (!key) {
-      return;
-    }
-
-    let row: SceneGridRow | undefined;
-
-    try {
-      row = sceneGraph.getAncestor(panel, SceneGridRow);
-    } catch {
-      row = undefined;
-    }
-
-    if (row) {
-      row.state.children.forEach((child: SceneObject) => {
-        if (child.state.key !== key) {
-          panels.push(child);
-        }
-      });
-
-      row.setState({ children: panels });
-
-      this.state.body.forceRender();
-
-      return;
-    }
-
-    this.state.body.forEachChild((child: SceneObject) => {
-      if (child.state.key !== key) {
-        panels.push(child);
-      }
-    });
-
-    const layout = this.state.body;
-
-    if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
-      layout.setState({ children: panels });
+    if (isDashboardLayoutElement(layoutElement)) {
+      this.state.body.removeElement(layoutElement);
     }
   }
 

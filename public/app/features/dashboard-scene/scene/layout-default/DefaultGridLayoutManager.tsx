@@ -8,6 +8,7 @@ import {
   sceneGraph,
   sceneUtils,
   SceneComponentProps,
+  SceneGridItemLike,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
@@ -121,13 +122,7 @@ export class DefaultGridLayoutManager
    * @returns
    */
   public removeElement(element: DashboardLayoutElement) {
-    const panels: SceneObject[] = [];
-
-    //const key = panel.parent instanceof LibraryVizPanel ? panel.parent.parent?.state.key : panel.parent?.state.key;
-
-    // if (!key) {
-    //   return;
-    // }
+    const layout = this.state.layout;
 
     let row: SceneGridRow | undefined;
 
@@ -138,24 +133,14 @@ export class DefaultGridLayoutManager
     }
 
     if (row) {
-      row.state.children.forEach((child: SceneObject) => {
-        if (child !== element) {
-          panels.push(child);
-        }
-      });
-
-      row.setState({ children: panels });
-      this.state.layout.forceRender();
+      row.setState({ children: row.state.children.filter((child) => child !== element) });
+      layout.forceRender();
       return;
     }
 
-    this.state.layout.forEachChild((child: SceneObject) => {
-      if (child !== element) {
-        panels.push(child);
-      }
+    this.state.layout.setState({
+      children: layout.state.children.filter((child) => child !== element),
     });
-
-    this.state.layout.setState({ children: panels });
   }
 
   public duplicateElement(element: DashboardLayoutElement): void {

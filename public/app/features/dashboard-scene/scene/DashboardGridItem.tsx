@@ -26,7 +26,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core
 import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
-import { DashboardRepeatsProcessedEvent } from './types';
+import { DashboardLayoutElement, DashboardRepeatsProcessedEvent } from './types';
 
 export interface DashboardGridItemState extends SceneGridItemStateLike {
   body: VizPanel;
@@ -39,7 +39,10 @@ export interface DashboardGridItemState extends SceneGridItemStateLike {
 
 export type RepeatDirection = 'v' | 'h';
 
-export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
+export class DashboardGridItem
+  extends SceneObjectBase<DashboardGridItemState>
+  implements SceneGridItemLike, DashboardLayoutElement
+{
   private _prevRepeatValues?: VariableValueSingle[];
 
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
@@ -244,6 +247,11 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   public isRepeated() {
     return this.state.variableName !== undefined;
   }
+
+  /**
+   * DashboardLayoutElement interface implementation
+   */
+  public isDashboardLayoutElement: true = true;
 
   public static Component = ({ model }: SceneComponentProps<DashboardGridItem>) => {
     const { repeatedPanels, itemHeight, variableName, body } = model.useState();
