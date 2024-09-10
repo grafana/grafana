@@ -99,7 +99,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.size.md,
       border: '1px solid transparent',
 
-      '&:hover': {
+      '&:hover, &:focus': {
         position: 'relative',
       },
 
@@ -157,7 +157,6 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
         color: theme.colors.primary.contrastText,
         fontWeight: theme.typography.fontWeightMedium,
         background: theme.colors.primary.main,
-        boxShadow: 'none',
         border: '0px',
       },
 
