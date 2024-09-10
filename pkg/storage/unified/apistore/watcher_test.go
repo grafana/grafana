@@ -48,6 +48,7 @@ type setupOptions struct {
 	prefix         string
 	resourcePrefix string
 	groupResource  schema.GroupResource
+	idToken        string
 }
 
 type setupOption func(*setupOptions, testing.TB)
