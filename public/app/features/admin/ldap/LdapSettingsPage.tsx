@@ -5,7 +5,21 @@ import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv, getAppEvents } from '@grafana/runtime';
-import { useStyles2, Alert, Box, Button, Field, IconButton, Input, LinkButton, Menu, Stack, Text, TextLink, Dropdown } from '@grafana/ui';
+import {
+  useStyles2,
+  Alert,
+  Box,
+  Button,
+  Field,
+  IconButton,
+  Input,
+  LinkButton,
+  Menu,
+  Stack,
+  Text,
+  TextLink,
+  Dropdown,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -148,7 +162,7 @@ export const LdapSettingsPage = () => {
       });
       return emptySettings;
     }
-  }
+  };
 
   /**
    * Save payload to the backend
@@ -339,15 +353,14 @@ export const LdapSettingsPage = () => {
                     <LinkButton href="/admin/authentication" variant="secondary">
                       <Trans i18nKey="ldap-settings-page.buttons-section.discard.button">Discard</Trans>
                     </LinkButton>
-                    <Dropdown overlay={(
-                      <Menu>
-                        <Menu.Item
-                          label="Reset to default values"
-                          icon="history-alt"
-                          onClick={discardForm}
-                        />
-                      </Menu>
-                    )} placement='bottom-start'>
+                    <Dropdown
+                      overlay={
+                        <Menu>
+                          <Menu.Item label="Reset to default values" icon="history-alt" onClick={discardForm} />
+                        </Menu>
+                      }
+                      placement="bottom-start"
+                    >
                       <IconButton
                         tooltip="More actions"
                         title="More actions"
