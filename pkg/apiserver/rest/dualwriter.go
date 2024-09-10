@@ -206,7 +206,7 @@ func SetDualWritingMode(
 
 	if !valid && ok {
 		// Only log if "ok" because initially all instances will have mode unset for playlists.
-		klog.Info("invalid dual writing mode for %s mode: %v", entity, m)
+		klog.Infof("invalid dual writing mode for %s mode: %v", entity, m)
 	}
 
 	if !valid || !ok {
