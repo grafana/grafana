@@ -5,7 +5,21 @@ import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv, getAppEvents } from '@grafana/runtime';
-import { useStyles2, Alert, Box, Button, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
+import {
+  useStyles2,
+  Alert,
+  Box,
+  Button,
+  Field,
+  IconButton,
+  Input,
+  LinkButton,
+  Menu,
+  Stack,
+  Text,
+  TextLink,
+  Dropdown,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -98,26 +112,16 @@ export const LdapSettingsPage = () => {
 
   useEffect(() => {
     async function init() {
-      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
-      if (!payload || !payload.settings || !payload.settings.config) {
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
-        });
-        return;
-      }
-
-      if (payload.settings.config.servers && payload.settings.config.servers.length > 0) {
-        const serverConfig = payload.settings.config.servers[0];
-        setMapKeyCertConfigured({
-          rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
-          clientCertValue: serverConfig.client_cert_value !== '',
-          clientKeyCertValue: serverConfig.client_key_value !== '',
-          rootCaCertPath: serverConfig.root_ca_cert !== '',
-          clientCertPath: serverConfig.client_cert !== '',
-          clientKeyCertPath: serverConfig.client_key !== '',
-        });
-      }
+      const payload = await getSettings();
+      const serverConfig = payload.settings.config.servers[0];
+      setMapKeyCertConfigured({
+        rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
+        clientCertValue: serverConfig.client_cert_value !== '',
+        clientKeyCertValue: serverConfig.client_key_value !== '',
+        rootCaCertPath: serverConfig.root_ca_cert !== '',
+        clientCertPath: serverConfig.client_cert !== '',
+        clientKeyCertPath: serverConfig.client_key !== '',
+      });
 
       reset(payload);
       setIsLoading(false);
@@ -139,6 +143,30 @@ export const LdapSettingsPage = () => {
   }
 
   /**
+   * Fetches the settings from the backend
+   * @returns Promise<LdapPayload>
+   */
+  const getSettings = async () => {
+    try {
+      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
+      if (!payload || !payload.settings || !payload.settings.config) {
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
+        });
+        return emptySettings;
+      }
+      return payload;
+    } catch (error) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
+      });
+      return emptySettings;
+    }
+  };
+
+  /**
    * Save payload to the backend
    * @param payload LdapPayload
    */
@@ -155,6 +183,7 @@ export const LdapSettingsPage = () => {
         type: AppEvents.alertSuccess.name,
         payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
       });
+      reset(await getSettings());
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -184,14 +213,7 @@ export const LdapSettingsPage = () => {
     try {
       setIsLoading(true);
       await getBackendSrv().delete('/api/v1/sso-settings/ldap');
-      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
-      if (!payload || !payload.settings || !payload.settings.config) {
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: [t('ldap-settings-page.alert.error-update', 'Error updating LDAP settings')],
-        });
-        return;
-      }
+      const payload = await getSettings();
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: [t('ldap-settings-page.alert.discard-success', 'LDAP settings discarded')],
@@ -325,17 +347,34 @@ export const LdapSettingsPage = () => {
                     </Button>
                   </Stack>
                 </Box>
-                <Box display={'flex'} gap={2} marginTop={5}>
-                  <Stack alignItems={'center'} gap={2}>
-                    <Button type={'submit'}>
+                <Box display="flex" gap={2} marginTop={5}>
+                  <Stack alignItems="center" gap={2}>
+                    <Button type="submit">
                       <Trans i18nKey="ldap-settings-page.buttons-section.save-and-enable.button">Save and enable</Trans>
                     </Button>
                     <Button variant="secondary" onClick={saveForm}>
                       <Trans i18nKey="ldap-settings-page.buttons-section.save.button">Save</Trans>
                     </Button>
-                    <Button variant="secondary" onClick={discardForm}>
+                    <LinkButton href="/admin/authentication" variant="secondary">
                       <Trans i18nKey="ldap-settings-page.buttons-section.discard.button">Discard</Trans>
-                    </Button>
+                    </LinkButton>
+                    <Dropdown
+                      overlay={
+                        <Menu>
+                          <Menu.Item label="Reset to default values" icon="history-alt" onClick={discardForm} />
+                        </Menu>
+                      }
+                      placement="bottom-start"
+                    >
+                      <IconButton
+                        tooltip="More actions"
+                        title="More actions"
+                        size="md"
+                        variant="secondary"
+                        name="ellipsis-v"
+                        hidden={watch('source') === 'system'}
+                      />
+                    </Dropdown>
                   </Stack>
                 </Box>
               </section>
