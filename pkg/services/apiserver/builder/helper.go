@@ -199,12 +199,12 @@ func InstallAPIs(
 			}
 
 			if storageOpts.DualWriterDataSyncJobEnabled[key] {
-				grafanarest.StartPeriodicDataSyncer(ctx, currentMode, legacy, storage, key, reg, serverLock, gr)
+				grafanarest.StartPeriodicDataSyncer(ctx, currentMode, legacy, storage, key, reg, serverLock, requestInfo)
 			}
 
 			// when unable to use
 			if currentMode != mode {
-				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, requestInfo.)
+				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 			}
 			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
 		}
