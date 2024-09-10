@@ -51,6 +51,7 @@ const Y_TICK_SPACING_NORMAL = 30;
 const Y_TICK_SPACING_SMALL = 15;
 
 const X_TICK_SPACING_NORMAL = 40;
+const X_TICK_VALUE_GAP = 18;
 
 const labelPad = 8;
 
@@ -139,7 +140,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       space:
         space ??
         ((self, axisIdx, scaleMin, scaleMax, plotDim) => {
-          return calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim);
+          return calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim, formatValue);
         }),
       filter,
       incrs,
@@ -225,7 +226,14 @@ export function formatTime(
 }
 
 /* Minimum grid & tick spacing in CSS pixels */
-function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, plotDim: number): number {
+function calculateSpace(
+  self: uPlot,
+  axisIdx: number,
+  scaleMin: number,
+  scaleMax: number,
+  plotDim: number,
+  formatValue?: (value: unknown) => string
+): number {
   const axis = self.axes[axisIdx];
   const scale = self.scales[axis.scale!];
 
@@ -234,15 +242,22 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
     return plotDim <= Y_TICK_SPACING_PANEL_HEIGHT ? Y_TICK_SPACING_SMALL : Y_TICK_SPACING_NORMAL;
   }
 
+  const maxTicks = plotDim / X_TICK_SPACING_NORMAL;
+  const increment = (scaleMax - scaleMin) / maxTicks;
+
+  let sample = '';
+
   if (scale.time) {
-    const maxTicks = plotDim / X_TICK_SPACING_NORMAL;
-    const increment = (scaleMax - scaleMin) / maxTicks;
-    const sample = formatTime(self, [scaleMin], axisIdx, X_TICK_SPACING_NORMAL, increment);
-    const width = measureText(sample[0], UPLOT_AXIS_FONT_SIZE).width + 18;
-    return width;
+    sample = formatTime(self, [scaleMin], axisIdx, X_TICK_SPACING_NORMAL, increment)[0];
+  } else if (formatValue != null) {
+    sample = formatValue(scaleMin);
+  } else {
+    return X_TICK_SPACING_NORMAL;
   }
 
-  return X_TICK_SPACING_NORMAL;
+  const valueWidth = measureText(sample, UPLOT_AXIS_FONT_SIZE).width;
+
+  return valueWidth + X_TICK_VALUE_GAP;
 }
 
 /** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
