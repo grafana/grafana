@@ -1,9 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Select } from '../Select/Select';
+import { Combobox, ComboboxOption } from '../Combobox/Combobox';
 
 export interface Props {
   onChange: (weekStart: string) => void;
@@ -16,7 +15,7 @@ export interface Props {
 }
 
 export type WeekStart = 'saturday' | 'sunday' | 'monday';
-const weekStarts: Array<SelectableValue<WeekStart | ''>> = [
+const weekStarts: ComboboxOption[] = [
   { value: '', label: 'Default' },
   { value: 'saturday', label: 'Saturday' },
   { value: 'sunday', label: 'Sunday' },
@@ -39,21 +38,22 @@ export const WeekStartPicker = (props: Props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
 
   const onChangeWeekStart = useCallback(
-    (selectable: SelectableValue<string>) => {
-      if (selectable.value !== undefined) {
+    (selectable: ComboboxOption | null) => {
+      if (selectable && selectable.value !== undefined) {
         onChange(selectable.value);
       }
     },
     [onChange]
   );
 
+  const selected = useMemo(() => weekStarts.find((item) => item.value === value)?.value ?? null, [value]);
+
   return (
-    <Select
-      inputId={inputId}
-      value={weekStarts.find((item) => item.value === value)?.value}
+    <Combobox
+      id={inputId}
+      value={selected}
       placeholder={selectors.components.WeekStartPicker.placeholder}
       autoFocus={autoFocus}
-      openMenuOnFocus={true}
       width={width}
       options={weekStarts}
       onChange={onChangeWeekStart}

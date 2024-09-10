@@ -1,10 +1,10 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { Combobox, Option } from './Combobox';
+import { Combobox, ComboboxOption } from './Combobox';
 
 // Mock data for the Combobox options
-const options: Option[] = [
+const options: ComboboxOption[] = [
   { label: 'Option 1', value: '1' },
   { label: 'Option 2', value: '2' },
   { label: 'Option 3', value: '3', description: 'This is option 3' },
@@ -73,9 +73,10 @@ describe('Combobox', () => {
     const input = screen.getByRole('combobox');
     await userEvent.click(input);
 
-    await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}');
-    expect(onChangeHandler).toHaveBeenCalledWith(options[1]);
-    expect(screen.queryByDisplayValue('Option 2')).toBeInTheDocument();
+    await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // Focus is at index 0 to start with
+
+    expect(onChangeHandler).toHaveBeenCalledWith(options[2]);
+    expect(screen.queryByDisplayValue('Option 3')).toBeInTheDocument();
   });
 
   it('clears selected value', async () => {
@@ -90,5 +91,45 @@ describe('Combobox', () => {
 
     expect(onChangeHandler).toHaveBeenCalledWith(null);
     expect(screen.queryByDisplayValue('Option 2')).not.toBeInTheDocument();
+  });
+
+  describe('create custom value', () => {
+    it('should allow creating a custom value', async () => {
+      const onChangeHandler = jest.fn();
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
+      const input = screen.getByRole('combobox');
+      await userEvent.type(input, 'custom value');
+      await userEvent.keyboard('{Enter}');
+
+      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
+      expect(onChangeHandler).toHaveBeenCalledWith(
+        expect.objectContaining({ label: 'custom value', value: 'custom value' })
+      );
+    });
+
+    it('should proivde custom string when all options are numbers', async () => {
+      const options = [
+        { label: '1', value: 1 },
+        { label: '2', value: 2 },
+        { label: '3', value: 3 },
+      ];
+
+      const onChangeHandler = jest.fn();
+
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} createCustomValue />);
+      const input = screen.getByRole('combobox');
+
+      await userEvent.type(input, 'custom value');
+      await userEvent.keyboard('{Enter}');
+
+      expect(screen.getByDisplayValue('custom value')).toBeInTheDocument();
+      expect(typeof onChangeHandler.mock.calls[0][0].value === 'string').toBeTruthy();
+      expect(typeof onChangeHandler.mock.calls[0][0].value === 'number').toBeFalsy();
+
+      await userEvent.click(input);
+      await userEvent.keyboard('{Enter}'); // Select 1 as the first option
+      expect(typeof onChangeHandler.mock.calls[1][0].value === 'string').toBeFalsy();
+      expect(typeof onChangeHandler.mock.calls[1][0].value === 'number').toBeTruthy();
+    });
   });
 });
