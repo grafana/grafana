@@ -138,29 +138,6 @@ type ReceiverAccess[T models.Identified] struct {
 // NewReceiverAccess creates a new ReceiverAccess service. If includeProvisioningActions is true, the service will include
 // permissions specific to the provisioning API.
 func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvisioningActions bool) *ReceiverAccess[T] {
-	// If this service is meant for the provisioning API, we include the provisioning actions as possible permissions.
-	// TODO: Improve this monkey patching.
-	readRedactedReceiversPreConditionsEval := readRedactedReceiversPreConditionsEval
-	readDecryptedReceiversPreConditionsEval := readDecryptedReceiversPreConditionsEval
-	readRedactedReceiverEval := readRedactedReceiverEval
-	readDecryptedReceiverEval := readDecryptedReceiverEval
-	readRedactedAllReceiversEval := readRedactedAllReceiversEval
-	readDecryptedAllReceiversEval := readDecryptedAllReceiversEval
-	if includeProvisioningActions {
-		readRedactedReceiversPreConditionsEval = ac.EvalAny(provisioningExtraReadRedactedPermissions, readRedactedReceiversPreConditionsEval)
-		readDecryptedReceiversPreConditionsEval = ac.EvalAny(provisioningExtraReadDecryptedPermissions, readDecryptedReceiversPreConditionsEval)
-
-		readRedactedReceiverEval = func(uid string) ac.Evaluator {
-			return ac.EvalAny(provisioningExtraReadRedactedPermissions, readRedactedReceiverEval(uid))
-		}
-		readDecryptedReceiverEval = func(uid string) ac.Evaluator {
-			return ac.EvalAny(provisioningExtraReadDecryptedPermissions, readDecryptedReceiverEval(uid))
-		}
-
-		readRedactedAllReceiversEval = ac.EvalAny(provisioningExtraReadRedactedPermissions, readRedactedAllReceiversEval)
-		readDecryptedAllReceiversEval = ac.EvalAny(provisioningExtraReadDecryptedPermissions, readDecryptedAllReceiversEval)
-	}
-
 	rcvAccess := &ReceiverAccess[T]{
 		read: actionAccess[T]{
 			genericService: genericService{
@@ -192,11 +169,11 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			},
 			resource:      "receiver",
 			action:        "create",
-			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversEval),
+			authorizeSome: createReceiversEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversEval)
+				return createReceiversEval
 			},
-			authorizeAll: ac.EvalAll(readRedactedReceiversPreConditionsEval, createReceiversEval),
+			authorizeAll: createReceiversEval,
 		},
 		update: actionAccess[T]{
 			genericService: genericService{
@@ -204,11 +181,11 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			},
 			resource:      "receiver",
 			action:        "update",
-			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, updateReceiversPreConditionsEval),
+			authorizeSome: updateReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return ac.EvalAll(readRedactedReceiverEval(receiver.GetUID()), updateReceiverEval(receiver.GetUID()))
+				return updateReceiverEval(receiver.GetUID())
 			},
-			authorizeAll: ac.EvalAll(readRedactedAllReceiversEval, updateAllReceiversEval),
+			authorizeAll: updateAllReceiversEval,
 		},
 		delete: actionAccess[T]{
 			genericService: genericService{
@@ -216,15 +193,53 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			},
 			resource:      "receiver",
 			action:        "delete",
-			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, deleteReceiversPreConditionsEval),
+			authorizeSome: deleteReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return ac.EvalAll(readRedactedReceiverEval(receiver.GetUID()), deleteReceiverEval(receiver.GetUID()))
+				return deleteReceiverEval(receiver.GetUID())
 			},
-			authorizeAll: ac.EvalAll(readRedactedAllReceiversEval, deleteAllReceiversEval),
+			authorizeAll: deleteAllReceiversEval,
 		},
 	}
 
+	// If this service is meant for the provisioning API, we include the provisioning actions as possible permissions.
+	if includeProvisioningActions {
+		extendAccessControl(&rcvAccess.read, ac.EvalAny, actionAccess[T]{
+			authorizeSome: provisioningExtraReadRedactedPermissions,
+			authorizeAll:  provisioningExtraReadRedactedPermissions,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return provisioningExtraReadRedactedPermissions
+			},
+		})
+		extendAccessControl(&rcvAccess.readDecrypted, ac.EvalAny, actionAccess[T]{
+			authorizeSome: provisioningExtraReadDecryptedPermissions,
+			authorizeAll:  provisioningExtraReadDecryptedPermissions,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return provisioningExtraReadDecryptedPermissions
+			},
+		})
+	}
+
+	// Write and delete permissions should require read permissions.
+	extendAccessControl(&rcvAccess.update, ac.EvalAll, rcvAccess.read)
+	extendAccessControl(&rcvAccess.delete, ac.EvalAll, rcvAccess.read)
+
 	return rcvAccess
+}
+
+// extendAccessControl extends the access control of base with the extension. The operator function is used to combine
+// the authorization evaluators.
+func extendAccessControl[T models.Identified](base *actionAccess[T], operator func(evaluator ...ac.Evaluator) ac.Evaluator, extension actionAccess[T]) {
+	// Prevent infinite recursion.
+	baseSome := base.authorizeSome
+	baseAll := base.authorizeAll
+	baseOne := base.authorizeOne
+
+	// Extend the access control of base with the extension.
+	base.authorizeSome = operator(extension.authorizeSome, baseSome)
+	base.authorizeAll = operator(extension.authorizeAll, baseAll)
+	base.authorizeOne = func(receiver models.Identified) ac.Evaluator {
+		return operator(extension.authorizeOne(receiver), baseOne(receiver))
+	}
 }
 
 // HasList checks if user has access to list redacted receivers. Returns false if user does not have access.
