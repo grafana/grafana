@@ -63,9 +63,9 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		dbrule := &models.AlertRule{}
+		dbrule := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbrule)
+			exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
 			return err
 		})
@@ -86,9 +86,9 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		dbrule := &models.AlertRule{}
+		dbrule := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbrule)
+			exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
 			return err
 		})
@@ -157,16 +157,16 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		})
 		require.NoError(t, err)
 
-		dbrule1 := &models.AlertRule{}
-		dbrule2 := &models.AlertRule{}
+		dbrule1 := &alertRule{}
+		dbrule2 := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule1.ID).Get(dbrule1)
+			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule2.ID).Get(dbrule2)
+			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
 			if err != nil {
 				return err
 			}
@@ -204,23 +204,23 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		})
 		require.NoError(t, err)
 
-		dbrule1 := &models.AlertRule{}
-		dbrule2 := &models.AlertRule{}
-		dbrule3 := &models.AlertRule{}
+		dbrule1 := &alertRule{}
+		dbrule2 := &alertRule{}
+		dbrule3 := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule1.ID).Get(dbrule1)
+			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule2.ID).Get(dbrule2)
+			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule2.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule3.ID).Get(dbrule3)
+			exist, err = sess.Table(alertRule{}).ID(rule3.ID).Get(dbrule3)
 			if err != nil {
 				return err
 			}
@@ -253,16 +253,16 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		})
 		require.NoError(t, err)
 
-		dbrule1 := &models.AlertRule{}
-		dbrule2 := &models.AlertRule{}
+		dbrule1 := &alertRule{}
+		dbrule2 := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule1.ID).Get(dbrule1)
+			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule2.ID).Get(dbrule2)
+			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
 			if err != nil {
 				return err
 			}
@@ -306,30 +306,30 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		})
 		require.NoError(t, err)
 
-		dbrule1 := &models.AlertRule{}
-		dbrule2 := &models.AlertRule{}
-		dbrule3 := &models.AlertRule{}
-		dbrule4 := &models.AlertRule{}
+		dbrule1 := &alertRule{}
+		dbrule2 := &alertRule{}
+		dbrule3 := &alertRule{}
+		dbrule4 := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule1.ID).Get(dbrule1)
+			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule2.ID).Get(dbrule2)
+			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule2.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule3.ID).Get(dbrule3)
+			exist, err = sess.Table(alertRule{}).ID(rule3.ID).Get(dbrule3)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule3.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule4.ID).Get(dbrule4)
+			exist, err = sess.Table(alertRule{}).ID(rule4.ID).Get(dbrule4)
 			if err != nil {
 				return err
 			}
@@ -379,6 +379,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	sqlStore := db.InitTestReplDB(t)
 	store := &DBstore{
+		Logger:         &logtest.Fake{},
 		SQLStore:       sqlStore,
 		Cfg:            cfg.UnifiedAlerting,
 		FolderService:  setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
@@ -1299,7 +1300,7 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval)).With(gen.WithOrgID(orgID))
 
-	alertRules := []*models.AlertRule{}
+	alertRules := make([]*models.AlertRule, 0, 5)
 	for i := 0; i < 5; i++ {
 		alertRules = append(alertRules, createRule(t, store, gen))
 	}
@@ -1311,9 +1312,9 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 
 	requireAlertRuleVersion := func(t *testing.T, ruleID int64, orgID int64, expectedVersion int64) {
 		t.Helper()
-		dbrule := &models.AlertRule{}
+		dbrule := &alertRule{}
 		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(ruleID).Get(dbrule)
+			exist, err := sess.Table(alertRule{}).ID(ruleID).Get(dbrule)
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", ruleID))
 			return err
 		})
@@ -1342,24 +1343,25 @@ func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerat
 		generator = models.RuleGen.With(models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
 	}
 	rule := generator.GenerateRef()
-	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
+	converted, err := alertRuleFromModelsAlertRule(*rule)
+	require.NoError(t, err)
+	err = store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		converted.ID = 0
+		_, err := sess.Table(alertRule{}).InsertOne(&converted)
 		if err != nil {
 			return err
 		}
-		dbRule := &models.AlertRule{}
-		exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbRule)
+		dbRule := &alertRule{}
+		exist, err := sess.Table(alertRule{}).ID(converted.ID).Get(dbRule)
 		if err != nil {
 			return err
 		}
 		if !exist {
 			return errors.New("cannot read inserted record")
 		}
-		rule = dbRule
-
-		require.NoError(t, err)
-
-		return nil
+		r, err := alertRuleToModelsAlertRule(*dbRule, &logtest.Fake{})
+		rule = &r
+		return err
 	})
 	require.NoError(t, err)
 
