@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { useChromeHeaderHeight, config } from '@grafana/runtime';
+import { useChromeHeaderHeight } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
@@ -92,7 +92,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 }
 
 function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
-  const canvasContentSpacing = config.featureToggles.bodyScrolling ? theme.spacing(0.5, 2) : theme.spacing(0.25, 2);
   return {
     pageContainer: css({
       display: 'grid',
@@ -133,7 +132,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
       label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
-      padding: canvasContentSpacing,
+      padding: theme.spacing(0.5, 2),
       flexBasis: '100%',
       gridArea: 'panels',
       flexGrow: 1,
