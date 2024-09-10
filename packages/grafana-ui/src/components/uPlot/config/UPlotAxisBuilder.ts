@@ -71,11 +71,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     // for axis left & right
     if (axis.side !== 2 || !scale) {
-      if (plotDim <= Y_TICK_SPACING_PANEL_HEIGHT) {
-        return Y_TICK_SPACING_SMALL;
-      }
-
-      return Y_TICK_SPACING_NORMAL;
+      return plotDim <= Y_TICK_SPACING_PANEL_HEIGHT ? Y_TICK_SPACING_SMALL : Y_TICK_SPACING_NORMAL;
     }
 
     if (scale.time) {
