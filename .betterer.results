@@ -6828,15 +6828,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`CandlestickFieldMap\`)", "6"],
       [0, 0, 0, "Do not re-export imported variable (\`FieldConfig\`)", "7"]
     ],
-    "public/app/plugins/panel/dashlist/styles.ts:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"]
-    ],
     "public/app/plugins/panel/datagrid/utils.ts:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
