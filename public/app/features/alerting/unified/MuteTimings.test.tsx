@@ -4,6 +4,7 @@ import { Route } from 'react-router';
 import { render, within, userEvent, screen } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
+import { config } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   setAlertmanagerConfig,
@@ -16,7 +17,6 @@ import {
   TIME_INTERVAL_NAME_FILE_PROVISIONED,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/utils/alerting-test-utils';
 import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -360,7 +360,9 @@ describe('Mute timings', () => {
   });
 
   describe('alertingApiServer feature toggle', () => {
-    testWithFeatureToggles(['alertingApiServer']);
+    beforeEach(() => {
+      config.featureToggles.alertingApiServer = true;
+    });
 
     it('allows creation of new mute timings', async () => {
       renderMuteTimings({
