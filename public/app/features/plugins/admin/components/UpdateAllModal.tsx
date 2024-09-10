@@ -266,6 +266,8 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
     }
   };
 
+  const pluginsSelected = selectedPlugins?.size || 0;
+
   return (
     <ConfirmModal
       isOpen={isOpen}
@@ -281,10 +283,10 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       }
       onConfirm={installsRemaining > 0 ? onConfirm : onDismissClick}
       onDismiss={onDismissClick}
-      disabled={selectedPlugins?.size === 0 || inProgress}
+      disabled={pluginsSelected === 0 || inProgress}
       confirmText={
         installsRemaining > 0
-          ? `${t('plugins.catalog.update-all.modal-confirmation', 'Update')} (${selectedPlugins?.size})`
+          ? `${t('plugins.catalog.update-all.modal-confirmation', 'Update')} (${pluginsSelected})`
           : t('plugins.catalog.update-all.modal-dismiss', 'Close')
       }
     />

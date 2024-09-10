@@ -70,7 +70,7 @@ export const selectPlugins = (filters: PluginFilters) =>
         filters.hasUpdate !== undefined &&
         filters.hasUpdate &&
         plugin.hasUpdate &&
-        (plugin.isCore || plugin.isManaged || plugin.isProvisioned)
+        (plugin.isCore || plugin.isManaged || plugin.isProvisioned || plugin.isUpdatingFromInstance)
       ) {
         return false;
       }
