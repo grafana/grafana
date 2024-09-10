@@ -3,7 +3,7 @@ import { ReactElement, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { locationSearchToObject } from '@grafana/runtime';
 import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
@@ -94,10 +94,8 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     </Button>
   );
 
-  const hideUpdateAllButton = config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall;
-
   return (
-    <Page navModel={navModel} actions={hideUpdateAllButton ? undefined : updateAll} subTitle={subTitle}>
+    <Page navModel={navModel} actions={updateAll} subTitle={subTitle}>
       <Page.Contents>
         <HorizontalGroup wrap>
           <Field label="Search">
