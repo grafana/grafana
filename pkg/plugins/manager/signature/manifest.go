@@ -157,6 +157,12 @@ func (s *Signature) readPluginManifestFromFS(ctx context.Context, pfs plugins.FS
 }
 
 func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plugin plugins.FoundPlugin) (plugins.Signature, error) {
+	defaultSignature, hasDefaultSignature := src.DefaultSignature(ctx)
+	if hasDefaultSignature && defaultSignature.Status.IsInternal() {
+		// Ignore any kind of signature check for internal plugins
+		return defaultSignature, nil
+	}
+
 	manifest, err := s.readPluginManifestFromFS(ctx, plugin.FS)
 	switch {
 	case errors.Is(err, errSignatureTypeUnsigned):
@@ -186,8 +192,9 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		moduleHash = ""
 	}
 
-	// Simplified signature checks (default signature, cdn)
-	if defaultSignature, exists := src.DefaultSignature(ctx); exists {
+	if hasDefaultSignature {
+		// If we have a default signature, we can skip the rest of the checks
+		// and simply add the module hash to the default signature.
 		defaultSignature.ModuleHash = moduleHash
 		return defaultSignature, nil
 	}
