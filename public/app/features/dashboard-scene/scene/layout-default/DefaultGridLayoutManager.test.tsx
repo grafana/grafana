@@ -114,6 +114,44 @@ describe('DefaultGridLayoutManager', () => {
       expect(grid.state.children.length).toBe(1);
       expect(row.state.children.length).toBe(2);
     });
+
+    it('Should create and add two new rows, but the second has no children', () => {
+      const { manager, grid } = setup();
+      const row1 = manager.addNewRow();
+      const row2 = manager.addNewRow();
+
+      expect(grid.state.children.length).toBe(3);
+      expect(row1.state.children.length).toBe(2);
+      expect(row2.state.children.length).toBe(0);
+    });
+
+    it('Should create an empty row when nothing else in dashboard', () => {
+      const { manager, grid } = setup({ gridItems: [] });
+      const row = manager.addNewRow();
+
+      expect(grid.state.children.length).toBe(1);
+      expect(row.state.children.length).toBe(0);
+    });
+  });
+
+  describe('Remove row', () => {
+    it('Should remove a row and move its children to the grid layout', () => {
+      const { manager, grid } = setup();
+      const row = grid.state.children[2] as SceneGridRow;
+
+      manager.removeRow(row);
+
+      expect(grid.state.children.length).toBe(4);
+    });
+
+    it('Should remove a row and its children', () => {
+      const { manager, grid } = setup();
+      const row = grid.state.children[2] as SceneGridRow;
+
+      manager.removeRow(row, true);
+
+      expect(grid.state.children.length).toBe(2);
+    });
   });
 });
 

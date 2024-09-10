@@ -460,25 +460,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
-  public removeRow(row: SceneGridRow, removePanels = false) {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    const children = sceneGridLayout.state.children.filter((child) => child.state.key !== row.state.key);
-
-    if (!removePanels) {
-      const rowChildren = row.state.children.map((child) => child.clone());
-      const indexOfRow = sceneGridLayout.state.children.findIndex((child) => child.state.key === row.state.key);
-
-      children.splice(indexOfRow, 0, ...rowChildren);
-    }
-
-    sceneGridLayout.setState({ children });
-  }
-
   public addPanel(vizPanel: VizPanel): void {
     this.state.body.addPanel(vizPanel);
   }
