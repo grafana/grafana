@@ -2257,6 +2257,11 @@
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ ƒőľđęřş"
     }
   },
+  "select": {
+    "select-menu": {
+      "selected-count": "Ŝęľęčŧęđ "
+    }
+  },
   "service-accounts": {
     "empty-state": {
       "button-title": "Åđđ şęřvįčę äččőūŉŧ",

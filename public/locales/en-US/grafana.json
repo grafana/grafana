@@ -2257,6 +2257,11 @@
       "placeholder": "Search for dashboards and folders"
     }
   },
+  "select": {
+    "select-menu": {
+      "selected-count": "Selected "
+    }
+  },
   "service-accounts": {
     "empty-state": {
       "button-title": "Add service account",
