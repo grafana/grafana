@@ -107,15 +107,17 @@ export const LdapSettingsPage = () => {
         return;
       }
 
-      const serverConfig = payload.settings.config.servers[0];
-      setMapKeyCertConfigured({
-        rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
-        clientCertValue: serverConfig.client_cert_value !== '',
-        clientKeyCertValue: serverConfig.client_key_value !== '',
-        rootCaCertPath: serverConfig.root_ca_cert !== '',
-        clientCertPath: serverConfig.client_cert !== '',
-        clientKeyCertPath: serverConfig.client_key !== '',
-      });
+      if (payload.settings.config.servers && payload.settings.config.servers.length > 0) {
+        const serverConfig = payload.settings.config.servers[0];
+        setMapKeyCertConfigured({
+          rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
+          clientCertValue: serverConfig.client_cert_value !== '',
+          clientKeyCertValue: serverConfig.client_key_value !== '',
+          rootCaCertPath: serverConfig.root_ca_cert !== '',
+          clientCertPath: serverConfig.client_cert !== '',
+          clientKeyCertPath: serverConfig.client_key !== '',
+        });
+      }
 
       reset(payload);
       setIsLoading(false);
@@ -300,7 +302,7 @@ export const LdapSettingsPage = () => {
                     id="search-base-dns"
                     placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: "dc=grafana.dc=org"')}
                     type="text"
-                    value={watch(`${serverConfig}.search_base_dns`).join(' ')}
+                    value={watch(`${serverConfig}.search_base_dns`, []).join(' ')}
                     onChange={({ currentTarget: { value } }) =>
                       setValue(`${serverConfig}.search_base_dns`, value.split(' '))
                     }
