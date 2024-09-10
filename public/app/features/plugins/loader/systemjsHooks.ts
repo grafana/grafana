@@ -88,8 +88,8 @@ function getBackWardsCompatibleUrl(url: string) {
 // This function takes the path used in loadPluginCss and attempts to resolve it
 // by checking the SystemJS entries for a matching pluginId then using that entry to find the baseUrl.
 // If no match is found then it returns a fallback attempt at a relative path.
-export function getLoadPluginCssUrl(path: string) {
-  const pluginId = path.split('/')[1];
+export function getLoadPluginCssUrl(id: string) {
+  const pluginId = id.split('/')[1];
   let url = '';
   for (const [moduleId] of SystemJS.entries()) {
     if (moduleId.includes(pluginId)) {
@@ -100,8 +100,8 @@ export function getLoadPluginCssUrl(path: string) {
 
   const index = url.lastIndexOf('/plugins');
   if (index === -1) {
-    return `${config.appSubUrl ?? ''}/public/${path}`;
+    return `${config.appSubUrl ?? ''}/public/${id}`;
   }
   const baseUrl = url.substring(0, index);
-  return `${baseUrl}/${path}`;
+  return `${baseUrl}/${id}`;
 }
