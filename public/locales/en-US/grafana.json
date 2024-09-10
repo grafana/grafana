@@ -123,11 +123,18 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
-    "grafana-rules": {
-      "export-rules": "Export rules",
-      "loading": "Loading...",
-      "new-recording-rule": "New recording rule",
-      "title": "Grafana"
+    "list-view": {
+      "section": {
+        "dataSourceManaged": {
+          "title": "Data source-managed"
+        },
+        "grafanaManaged": {
+          "export-rules": "Export rules",
+          "loading": "Loading...",
+          "new-recording-rule": "New recording rule",
+          "title": "Grafana-managed"
+        }
+      }
     },
     "mute_timings": {
       "error-loading": {
@@ -1109,7 +1116,6 @@
       "discard-success": "LDAP settings discarded",
       "error-fetching": "Error fetching LDAP settings",
       "error-saving": "Error saving LDAP settings",
-      "error-update": "Error updating LDAP settings",
       "error-validate-form": "Error validating LDAP settings",
       "feature-flag-disabled": "This page is only accessible by enabling the <1>ssoSettingsLDAP</1> feature flag.",
       "saved": "LDAP settings saved"
@@ -2249,6 +2255,11 @@
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
       "placeholder": "Search for dashboards and folders"
+    }
+  },
+  "select": {
+    "select-menu": {
+      "selected-count": "Selected "
     }
   },
   "service-accounts": {

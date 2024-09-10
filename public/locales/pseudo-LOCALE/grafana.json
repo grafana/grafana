@@ -123,11 +123,18 @@
     "contactPointFilter": {
       "label": "Cőŉŧäčŧ pőįŉŧ"
     },
-    "grafana-rules": {
-      "export-rules": "Ēχpőřŧ řūľęş",
-      "loading": "Ŀőäđįŉģ...",
-      "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
-      "title": "Ğřäƒäŉä"
+    "list-view": {
+      "section": {
+        "dataSourceManaged": {
+          "title": "Đäŧä şőūřčę-mäŉäģęđ"
+        },
+        "grafanaManaged": {
+          "export-rules": "Ēχpőřŧ řūľęş",
+          "loading": "Ŀőäđįŉģ...",
+          "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
+          "title": "Ğřäƒäŉä-mäŉäģęđ"
+        }
+      }
     },
     "mute_timings": {
       "error-loading": {
@@ -1109,7 +1116,6 @@
       "discard-success": "ĿĐÅP şęŧŧįŉģş đįşčäřđęđ",
       "error-fetching": "Ēřřőř ƒęŧčĥįŉģ ĿĐÅP şęŧŧįŉģş",
       "error-saving": "Ēřřőř şävįŉģ ĿĐÅP şęŧŧįŉģş",
-      "error-update": "Ēřřőř ūpđäŧįŉģ ĿĐÅP şęŧŧįŉģş",
       "error-validate-form": "Ēřřőř väľįđäŧįŉģ ĿĐÅP şęŧŧįŉģş",
       "feature-flag-disabled": "Ŧĥįş päģę įş őŉľy äččęşşįþľę þy ęŉäþľįŉģ ŧĥę <1>şşőŜęŧŧįŉģşĿĐÅP</1> ƒęäŧūřę ƒľäģ.",
       "saved": "ĿĐÅP şęŧŧįŉģş şävęđ"
@@ -2249,6 +2255,11 @@
     "search-input": {
       "include-panels-placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş, ƒőľđęřş, äŉđ päŉęľş",
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ ƒőľđęřş"
+    }
+  },
+  "select": {
+    "select-menu": {
+      "selected-count": "Ŝęľęčŧęđ "
     }
   },
   "service-accounts": {
