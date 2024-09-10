@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -19,10 +19,8 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   UserActionEvent,
-  sceneGraph,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ScopesFacade } from 'app/features/scopes';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -32,6 +30,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -245,14 +244,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
-      new ScopesFacade({
-        handler: (facade) => {
-          if (oldModel.meta.reloadOnScopesChange && oldModel.uid) {
-            locationService.reload();
-          } else {
-            sceneGraph.getTimeRange(facade).onRefresh();
-          }
-        },
+      new DashboardScopesFacade({
+        reloadOnScopesChange: oldModel.meta.reloadOnScopesChange,
+        uid: oldModel.uid,
       }),
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
