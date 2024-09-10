@@ -128,10 +128,6 @@ func (pr *permissionRegistry) RegisterPluginScope(scope string) {
 }
 
 func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
-	if _, ok := pr.actionScopePrefixes[action]; ok {
-		// action already registered
-		return nil
-	}
 	pr.actionScopePrefixes[action] = PrefixSet{}
 
 	if scope == "" {
