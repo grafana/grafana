@@ -56,27 +56,24 @@ export const BarChartLegend = memo(
     const colorMode = fieldConfig.color?.mode;
 
     let thresholdItems: VizLegendItem[] | undefined = undefined;
+    // calculate threshold items only if color mode is set to Thresholds
     if (colorMode === FieldColorModeId.Thresholds) {
       const thresholdsAbsolute: ThresholdsConfig = { mode: ThresholdsMode.Absolute, steps: [] };
       const thresholdsPercent: ThresholdsConfig = { mode: ThresholdsMode.Percentage, steps: [] };
 
       for (let i = 0; i < data[0].fields.length; i++) {
-        const field = data[0].fields[i];
-        // there is no reason to add threshold with only one (Base) step
-        if (field.config.thresholds && field.config.thresholds.steps.length > 1) {
-          if (field.config.thresholds.mode === ThresholdsMode.Absolute) {
-            for (const step of field.config.thresholds.steps) {
-              // TODO: if we have only one base threshold steps, those steps are the same objects in other fields
-              // need to optimize this part
-              if (!thresholdsAbsolute.steps.includes(step)) {
-                thresholdsAbsolute.steps.push(step);
-              }
-            }
-          } else {
-            for (const step of field.config.thresholds.steps) {
-              if (!thresholdsPercent.steps.includes(step)) {
-                thresholdsPercent.steps.push(step);
-              }
+        const thresholds = data[0].fields[i].config.thresholds;
+
+        // in case of multiple fields, each field has same thresholds config as in first field (data[0].field[0].config),
+        // so we need to avoid duplicates;
+        // it is the same object, so we can compare by reference;
+        // i !== 0 is needed to add thresholds from the first field
+        if (thresholds) {
+          if ((i === 0 || fieldConfig.thresholds !== thresholds) && thresholds.steps.length > 1) {
+            if (thresholds.mode === ThresholdsMode.Absolute) {
+              thresholdsAbsolute.steps.push(...thresholds.steps);
+            } else {
+              thresholdsPercent.steps.push(...thresholds.steps);
             }
           }
         }
