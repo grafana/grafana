@@ -415,10 +415,10 @@ describe('QueryCache: Prometheus', function () {
 
     const secondMergedLength = secondQueryResult[0].fields[0].values.length;
 
-    // Since the step is 15s, and the request was 30 seconds later, we should have 2 extra frames, but we should evict the first two, so we should get the same length
-    expect(firstMergedLength).toEqual(secondMergedLength);
-    expect(firstQueryResult[0].fields[0].values[2]).toEqual(secondQueryResult[0].fields[0].values[0]);
-    expect(firstQueryResult[0].fields[0].values[0] + 30000).toEqual(secondQueryResult[0].fields[0].values[0]);
+    // Since the step is 15s, and the request was 30 seconds later, we should have 2 extra frames, but we should evict the first one so we keep one datapoint before the new from so the first datapoint in view connects to the y-axis
+    expect(firstMergedLength + 1).toEqual(secondMergedLength);
+    expect(firstQueryResult[0].fields[0].values[1]).toEqual(secondQueryResult[0].fields[0].values[0]);
+    expect(firstQueryResult[0].fields[0].values[0] + 30000).toEqual(secondQueryResult[0].fields[0].values[1]);
 
     cache.set(targetIdentity, `'1=1'|${interval}|${JSON.stringify(thirdRange.raw)}`);
 
@@ -438,7 +438,9 @@ describe('QueryCache: Prometheus', function () {
 
     const cachedAfterThird = storage.cache.get(targetIdentity);
     const storageLengthAfterThirdQuery = cachedAfterThird?.frames[0].fields[0].values.length;
-    expect(storageLengthAfterThirdQuery).toEqual(20);
+
+    // Should have the 20 data points in the viz, plus one extra
+    expect(storageLengthAfterThirdQuery).toEqual(21);
   });
 
   it('Will build signature using target overrides', () => {

@@ -9,6 +9,7 @@ import {
   incrRoundDn,
   isValidDuration,
   parseDuration,
+  rangeUtil,
   Table,
   trimTable,
 } from '@grafana/data';
@@ -176,6 +177,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
       let outFrames: DataFrame[] = [];
 
+      // each query
       respByTarget.forEach((respFrames, targIdent) => {
         let cachedFrames = (targIdent ? this.cache.get(targIdent)?.frames : null) ?? [];
 
@@ -216,11 +218,25 @@ export class QueryCache<T extends SupportedQueryTypes> {
         // trim all frames to in-view range, evict those that end up with 0 length
         let nonEmptyCachedFrames: DataFrame[] = [];
 
+        // series within a query
         cachedFrames.forEach((frame) => {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           let table: Table = frame.fields.map((field) => field.values) as Table;
 
-          let trimmed = trimTable(table, newFrom, newTo);
+          // Warning! logic specific to prometheus.
+          const target = request.targets.find((t) => t.refId === respFrames[0].refId);
+
+          // @todo needs unit testing
+          let dataPointStep = request.intervalMs;
+          if (target?.interval) {
+            const minStepMs = rangeUtil.intervalToMs(target.interval);
+            if (minStepMs > request.intervalMs) {
+              dataPointStep = minStepMs;
+            }
+          }
+
+          // query interval is greater than request.intervalMs, use query interval to make sure we've always got one datapoint outside the panel viewport
+          let trimmed = trimTable(table, newFrom - dataPointStep, newTo);
 
           if (trimmed[0].length > 0) {
             for (let i = 0; i < trimmed.length; i++) {
