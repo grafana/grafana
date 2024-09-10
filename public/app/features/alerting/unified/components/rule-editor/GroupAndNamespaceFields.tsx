@@ -1,11 +1,15 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Field, useStyles2, VirtualizedSelect } from '@grafana/ui';
+import { RuleNamespace } from 'app/types/unified-alerting';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
+import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { RuleFormValues } from '../../types/rule-form';
 
 interface Props {
@@ -112,26 +116,59 @@ const getStyle = (theme: GrafanaTheme2) => ({
   }),
 });
 
-const { usePrometheusRuleNamespacesQuery } = alertRuleApi;
+const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery } = alertRuleApi;
+const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 
 // TODO Depending on the Ruler API preference, we should use the Ruler API if feasible
 function useNamespaceGroupOptions(rulesSourceName: string) {
-  const { data = [], isLoading } = usePrometheusRuleNamespacesQuery({ ruleSourceName: rulesSourceName });
+  const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery({ rulesSourceName });
+
+  const [fetchRulerRules, { data: rulerRules = {}, isLoading: isRulerRulesLoading }] = useLazyRulerRulesQuery();
+  const { data: promNamespaces = [], isLoading: isPrometheusRulesLoading } = usePrometheusRuleNamespacesQuery(
+    { ruleSourceName: rulesSourceName },
+    { skip: prometheusRulesPrimary }
+  );
+
+  useEffect(() => {
+    if (features?.rulerConfig && !prometheusRulesPrimary) {
+      fetchRulerRules({ rulerConfig: features.rulerConfig });
+    }
+  }, [features?.rulerConfig, fetchRulerRules]);
 
   const namespaceGroups = useMemo(() => {
-    if (isLoading) {
+    if (isPrometheusRulesLoading || isRulerRulesLoading) {
       return new Map<string, string[]>();
     }
 
-    const groups = new Map<string, string[]>();
-    data.forEach((namespace) => {
-      groups.set(
-        namespace.name,
-        namespace.groups.map((group) => group.name)
-      );
-    });
-    return groups;
-  }, [data, isLoading]);
+    if (prometheusRulesPrimary) {
+      return promNamespacesToNamespaceGroups(promNamespaces);
+    }
 
-  return { namespaceGroups, isLoading };
+    return rulerRulesToNamespaceGroups(rulerRules);
+  }, [promNamespaces, rulerRules, isPrometheusRulesLoading, isRulerRulesLoading]);
+
+  return { namespaceGroups, isLoading: isPrometheusRulesLoading || isRulerRulesLoading || isFeaturesLoading };
+}
+
+function promNamespacesToNamespaceGroups(promNamespaces: RuleNamespace[]) {
+  const groups = new Map<string, string[]>();
+  promNamespaces.forEach((namespace) => {
+    groups.set(
+      namespace.name,
+      namespace.groups.map((group) => group.name)
+    );
+  });
+  return groups;
+}
+
+function rulerRulesToNamespaceGroups(rulerConfig: RulerRulesConfigDTO) {
+  const result = new Map<string, string[]>();
+  Object.entries(rulerConfig).forEach(([namespace, groups]) => {
+    result.set(
+      namespace,
+      groups.map((group) => group.name)
+    );
+  });
+  return result;
 }
