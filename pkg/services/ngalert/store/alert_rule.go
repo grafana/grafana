@@ -120,11 +120,12 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 			return err
 		}
 		// MySQL by default compares strings without case-sensitivity, make sure we keep the case-sensitive comparison.
-		var groupName string
+		var groupName, namespaceUID string
 		// find the rule, which group we fetch
 		for _, rule := range rules {
 			if rule.UID == query.UID {
 				groupName = rule.RuleGroup
+				namespaceUID = rule.NamespaceUID
 				break
 			}
 		}
@@ -132,7 +133,7 @@ func (st DBstore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmode
 		// MySQL (and potentially other databases) can use case-insensitive comparison.
 		// This code makes sure we return groups that only exactly match the filter.
 		for _, rule := range rules {
-			if rule.RuleGroup != groupName {
+			if rule.RuleGroup != groupName || rule.NamespaceUID != namespaceUID {
 				continue
 			}
 			convert, err := alertRuleToModelsAlertRule(rule, st.Logger)
