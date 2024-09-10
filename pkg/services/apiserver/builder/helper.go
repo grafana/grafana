@@ -21,6 +21,7 @@ import (
 	utilversion "k8s.io/apiserver/pkg/util/version"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	k8stracing "k8s.io/component-base/tracing"
+	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
@@ -174,25 +175,36 @@ func InstallAPIs(
 				mode = resourceConfig.DualWriterMode
 			}
 
+			// Force using storage only -- regardless of internal synchronization state
+			if mode == grafanarest.Mode5 {
+				return storage, nil
+			}
+
 			// TODO: inherited context from main Grafana process
 			ctx := context.Background()
 
 			// Moving from one version to the next can only happen after the previous step has
 			// successfully synchronized.
-			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, legacy, storage, key, mode, reg, serverLock, getRequestInfo(gr, namespaceMapper))
+			requestInfo := getRequestInfo(gr, namespaceMapper)
+			currentMode, err := grafanarest.SetDualWritingMode(ctx, kvStore, legacy, storage, key, mode, reg, serverLock, requestInfo)
 			if err != nil {
 				return nil, err
 			}
 			switch currentMode {
 			case grafanarest.Mode0:
 				return legacy, nil
-			case grafanarest.Mode4:
+			case grafanarest.Mode4, grafanarest.Mode5:
 				return storage, nil
 			default:
 			}
 
 			if storageOpts.DualWriterDataSyncJobEnabled[key] {
-				grafanarest.StartPeriodicDataSyncer(ctx, currentMode, legacy, storage, key, reg, serverLock, getRequestInfo(gr, namespaceMapper))
+				grafanarest.StartPeriodicDataSyncer(ctx, currentMode, legacy, storage, key, reg, serverLock, requestInfo)
+			}
+
+			// when unable to use
+			if currentMode != mode {
+				klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
 			}
 			return grafanarest.NewDualWriter(currentMode, legacy, storage, reg, key), nil
 		}
