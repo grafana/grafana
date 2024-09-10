@@ -133,7 +133,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     return queries.filter((query) => isExpressionQuery(query.model));
   }, [queries]);
 
-  const [isAdvancedMode, setIsAdvancedMode] = useState(false);
+  const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
+
+  const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
+  const isRecordingRuleType = isCloudRecordingRuleByType(type);
+  const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
+
+  const [isAdvancedMode, setIsAdvancedMode] = useState(isGrafanaAlertingType ? false : true);
 
   const expressionQueriesList = useMemo(() => {
     return queries.reduce((acc: ExpressionQuery[], query) => {
@@ -142,7 +148,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }, [queries]);
 
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
-    areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)
+    isGrafanaAlertingType && areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)
       ? getSimpleConditionFromExpressions(expressionQueriesList)
       : {
           whenField: ReducerID.last,
@@ -159,12 +165,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setSimpleCondition(getSimpleConditionFromExpressions(expressionQueriesList));
     }
   }, [isAdvancedMode, expressionQueriesList]);
-
-  const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
-
-  const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
-  const isRecordingRuleType = isCloudRecordingRuleByType(type);
-  const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
 
   const dispatchReduxAction = useDispatch();
   useEffect(() => {
@@ -183,7 +183,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // we need to be sure the condition is set once we swhitch to simple mode
       if (!isAdvancedMode) {
         setValue('condition', SIMPLE_CONDITION_THRESHOLD_ID);
-        console.log('queries', getValues('queries'));
         runQueries(getValues('queries'), SIMPLE_CONDITION_THRESHOLD_ID);
       } else {
         runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
