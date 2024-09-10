@@ -323,7 +323,7 @@ func TestCalculate(t *testing.T) {
 		}{
 			{
 				name:         "should populate from MODULE.txt if feature toggle is enabled",
-				features:     config.Features{PluginSriChecksEnabled: true},
+				features:     config.Features{FilesystemSriChecksEnabled: true},
 				foundPlugin:  validFoundPlugin,
 				pluginSource: pluginSourceExternal,
 				expSignature: plugins.Signature{
@@ -335,7 +335,7 @@ func TestCalculate(t *testing.T) {
 			},
 			{
 				name:         "should not populate from MODULE.txt if feature toggle is disabled",
-				features:     config.Features{PluginSriChecksEnabled: false},
+				features:     config.Features{FilesystemSriChecksEnabled: false},
 				foundPlugin:  validFoundPlugin,
 				pluginSource: pluginSourceExternal,
 				expSignature: plugins.Signature{
@@ -348,7 +348,7 @@ func TestCalculate(t *testing.T) {
 				// This test case covers the scenario where a plugin is provisioned from CDN
 				// (no files on disk at all, loaded entirely from the network)
 				name:         "should populate from MODULE.txt when class is CDN and DefaultSignature is provided",
-				features:     config.Features{PluginSriChecksEnabled: true},
+				features:     config.Features{FilesystemSriChecksEnabled: true},
 				foundPlugin:  validFoundPlugin,
 				pluginSource: pluginSourceCDN,
 				expSignature: plugins.Signature{
@@ -360,7 +360,7 @@ func TestCalculate(t *testing.T) {
 			},
 			{
 				name:     "should populate from MODULE.txt when CDN is enabled and feature toggle is disabled",
-				features: config.Features{PluginSriChecksEnabled: false},
+				features: config.Features{FilesystemSriChecksEnabled: false},
 				pluginSettings: setting.PluginSettings{
 					validFoundPlugin.JSONData.ID: map[string]string{
 						"cdn": "true",
@@ -377,7 +377,7 @@ func TestCalculate(t *testing.T) {
 			},
 			{
 				name:     "should not populate if module.js is not present in MODULE.txt",
-				features: config.Features{PluginSriChecksEnabled: true},
+				features: config.Features{FilesystemSriChecksEnabled: true},
 				foundPlugin: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID: "test-app",
@@ -397,7 +397,7 @@ func TestCalculate(t *testing.T) {
 			},
 			{
 				name:     "should not populate if MODULE.txt is not present",
-				features: config.Features{PluginSriChecksEnabled: true},
+				features: config.Features{FilesystemSriChecksEnabled: true},
 				foundPlugin: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID:   "test-datasource",
@@ -413,7 +413,7 @@ func TestCalculate(t *testing.T) {
 			},
 			{
 				name:     "should not populate if MODULE.txt is not present but module.js is present",
-				features: config.Features{PluginSriChecksEnabled: true},
+				features: config.Features{FilesystemSriChecksEnabled: true},
 				foundPlugin: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID: "test-datasource",

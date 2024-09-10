@@ -192,7 +192,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	// Try to calculate module.js hash for SRI checks.
 	// Do not calculate the hash for filesystem plugins, unless the corresponding feature toggle is enabled.
 	var moduleHash string
-	if s.cdn.PluginSupported(plugin.JSONData.ID) || s.cfg.Features.PluginSriChecksEnabled {
+	if s.cdn.PluginSupported(plugin.JSONData.ID) || s.cfg.Features.FilesystemSriChecksEnabled {
 		moduleHash, err = manifest.ModuleHash()
 		if err != nil {
 			s.log.Warn("Could not calculate module.js hash for SRI checks, ignoring", "plugin", plugin.JSONData.ID, "version", plugin.JSONData.Info.Version, "error", err)
