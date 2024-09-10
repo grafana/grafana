@@ -7,7 +7,7 @@ import {
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import {
-  canEditContactPoint,
+  canEditEntity,
   showManageContactPointPermissions,
 } from 'app/features/alerting/unified/components/contact-points/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -127,7 +127,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   };
 
   const isEditable = Boolean(
-    (!readOnly || (contactPoint && canEditContactPoint(contactPoint))) && !contactPoint?.provisioned
+    (!readOnly || (contactPoint && canEditEntity(contactPoint))) && !contactPoint?.provisioned
   );
   const isTestable = !readOnly;
 
