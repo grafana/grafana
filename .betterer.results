@@ -5386,9 +5386,6 @@ exports[`better eslint`] = {
     "public/app/features/trails/Breakdown/AddToFiltersGraphAction.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
     ],
-    "public/app/features/trails/Breakdown/BreakdownScene.tsx:5381": [
-      [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"]
-    ],
     "public/app/features/trails/Breakdown/utils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
