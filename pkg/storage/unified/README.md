@@ -49,8 +49,8 @@ target = all
 protocol = https
 
 [feature_toggles]
-; store playlists in k8s
-kubernetesPlaylists = true
+; store folders in k8s
+kubernetesFolders = true
 grafanaAPIServerWithExperimentalAPIs = true
 
 [grafana-apiserver]
