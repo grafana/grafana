@@ -1,14 +1,14 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
-import { comboboxMockSetup } from '@grafana/ui/src/unstable';
 
 import SharedPreferences from './SharedPreferences';
 
 const selectComboboxOptionInTest = async (input: HTMLElement, optionOrOptions: string) => {
-  userEvent.click(input);
+  await userEvent.click(input);
   const option = await screen.findByRole('option', { name: optionOrOptions });
   await userEvent.click(option);
 };
@@ -121,8 +121,7 @@ describe('SharedPreferences', () => {
       configurable: true,
       value: { reload: mockReload },
     });
-
-    comboboxMockSetup();
+    comboboxTestSetup();
   });
 
   afterAll(() => {
