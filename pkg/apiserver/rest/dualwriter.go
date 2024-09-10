@@ -111,12 +111,12 @@ func NewDualWriter(
 	storage Storage,
 	reg prometheus.Registerer,
 	resource string,
-) DualWriter {
+) Storage {
 	metrics := &dualWriterMetrics{}
 	metrics.init(reg)
 	switch mode {
-	// It is not possible to initialize a mode 0 dual writer. Mode 0 represents
-	// writing to legacy storage without Unified Storage enabled.
+	case Mode0:
+		return legacy
 	case Mode1:
 		// read and write only from legacy storage
 		return newDualWriterMode1(legacy, storage, metrics, resource)
@@ -127,8 +127,7 @@ func NewDualWriter(
 		// write to both, read from storage only
 		return newDualWriterMode3(legacy, storage, metrics, resource)
 	case Mode4:
-		// read and write only from storage
-		return newDualWriterMode4(legacy, storage, metrics, resource)
+		return storage
 	default:
 		return newDualWriterMode1(legacy, storage, metrics, resource)
 	}
@@ -143,6 +142,9 @@ type updateWrapper struct {
 // May return nil, or a preconditions object containing nil fields,
 // if no preconditions can be determined from the updated object.
 func (u *updateWrapper) Preconditions() *metav1.Preconditions {
+	if u.upstream == nil {
+		return nil
+	}
 	return u.upstream.Preconditions()
 }
 

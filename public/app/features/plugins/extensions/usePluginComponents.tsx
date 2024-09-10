@@ -6,42 +6,39 @@ import {
   UsePluginComponentsResult,
 } from '@grafana/runtime/src/services/pluginExtensions/getPluginExtensions';
 
-import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
+import { useAddedComponentsRegistry } from './ExtensionRegistriesContext';
 
 // Returns an array of component extensions for the given extension point
-export function createUsePluginComponents(registry: AddedComponentsRegistry) {
-  const observableRegistry = registry.asObservable();
+export function usePluginComponents<Props extends object = {}>({
+  limitPerPlugin,
+  extensionPointId,
+}: UsePluginComponentOptions): UsePluginComponentsResult<Props> {
+  const registry = useAddedComponentsRegistry();
+  const registryState = useObservable(registry.asObservable());
 
-  return function usePluginComponents<Props extends object = {}>({
-    limitPerPlugin,
-    extensionPointId,
-  }: UsePluginComponentOptions): UsePluginComponentsResult<Props> {
-    const registry = useObservable(observableRegistry);
+  return useMemo(() => {
+    const components: Array<React.ComponentType<Props>> = [];
+    const extensionsByPlugin: Record<string, number> = {};
 
-    return useMemo(() => {
-      const components: Array<React.ComponentType<Props>> = [];
-      const extensionsByPlugin: Record<string, number> = {};
+    for (const registryItem of registryState?.[extensionPointId] ?? []) {
+      const { pluginId } = registryItem;
 
-      for (const registryItem of registry?.[extensionPointId] ?? []) {
-        const { pluginId } = registryItem;
-
-        // Only limit if the `limitPerPlugin` is set
-        if (limitPerPlugin && extensionsByPlugin[pluginId] >= limitPerPlugin) {
-          continue;
-        }
-
-        if (extensionsByPlugin[pluginId] === undefined) {
-          extensionsByPlugin[pluginId] = 0;
-        }
-
-        components.push(registryItem.component as React.ComponentType<Props>);
-        extensionsByPlugin[pluginId] += 1;
+      // Only limit if the `limitPerPlugin` is set
+      if (limitPerPlugin && extensionsByPlugin[pluginId] >= limitPerPlugin) {
+        continue;
       }
 
-      return {
-        isLoading: false,
-        components,
-      };
-    }, [extensionPointId, limitPerPlugin, registry]);
-  };
+      if (extensionsByPlugin[pluginId] === undefined) {
+        extensionsByPlugin[pluginId] = 0;
+      }
+
+      components.push(registryItem.component as React.ComponentType<Props>);
+      extensionsByPlugin[pluginId] += 1;
+    }
+
+    return {
+      isLoading: false,
+      components,
+    };
+  }, [extensionPointId, limitPerPlugin, registryState]);
 }

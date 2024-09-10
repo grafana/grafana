@@ -211,7 +211,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'dashboards/snapshots':
       return t(
         'nav.snapshots.subtitle',
-        'Interactive, publically available, point-in-time representations of dashboards'
+        'Interactive, publically available, point-in-time representations of dashboards and panels'
       );
     case 'dashboards/public':
       return config.featureToggles.newDashboardSharingComponent
