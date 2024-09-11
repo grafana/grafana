@@ -38,6 +38,7 @@ export interface FeatureToggles {
   autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
+  vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
@@ -45,6 +46,7 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
+  mysqlParseTime?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   alertingBacktesting?: boolean;
@@ -59,7 +61,6 @@ export interface FeatureToggles {
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
   prometheusRunQueriesInParallel?: boolean;
-  prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
   dataplaneFrontendFallback?: boolean;
@@ -114,6 +115,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -199,7 +201,16 @@ export interface FeatureToggles {
   bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
+  alertingFilterV2?: boolean;
   backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
-  adhocFilterOneOf?: boolean;
+  newFiltersUI?: boolean;
+  lokiSendDashboardPanelNames?: boolean;
+  singleTopNav?: boolean;
+  exploreLogsShardSplitting?: boolean;
+  exploreLogsAggregatedMetrics?: boolean;
+  exploreLogsLimitedTimeRange?: boolean;
+  appPlatformAccessTokens?: boolean;
+  appSidecar?: boolean;
+  groupAttributeSync?: boolean;
 }

@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useChromeHeaderHeight } from '@grafana/runtime';
@@ -132,7 +132,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number | undefined) {
       label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(0, 2),
+      padding: theme.spacing(0.5, 2),
       flexBasis: '100%',
       gridArea: 'panels',
       flexGrow: 1,

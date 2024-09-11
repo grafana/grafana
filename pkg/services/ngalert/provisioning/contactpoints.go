@@ -40,7 +40,7 @@ type ContactPointService struct {
 }
 
 type receiverService interface {
-	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]apimodels.GettableApiReceiver, error)
+	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
 }
 
 func NewContactPointService(store alertmanagerConfigStore, encryptionService secrets.Service,
@@ -79,23 +79,21 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	if err != nil {
 		return nil, convertRecSvcErr(err)
 	}
-	grafanaReceivers := []*apimodels.GettableGrafanaReceiver{}
 	if q.Name != "" && len(res) > 0 {
-		grafanaReceivers = res[0].GettableGrafanaReceivers.GrafanaManagedReceivers // we only expect one receiver group
-	} else {
-		for _, r := range res {
-			grafanaReceivers = append(grafanaReceivers, r.GettableGrafanaReceivers.GrafanaManagedReceivers...)
-		}
+		res = []*models.Receiver{res[0]} // we only expect one receiver group
 	}
 
-	contactPoints := make([]apimodels.EmbeddedContactPoint, len(grafanaReceivers))
-	for i, gr := range grafanaReceivers {
-		contactPoint, err := GettableGrafanaReceiverToEmbeddedContactPoint(gr)
-		if err != nil {
-			return nil, err
+	contactPoints := make([]apimodels.EmbeddedContactPoint, 0, len(res))
+	for _, recv := range res {
+		for _, gr := range recv.Integrations {
+			if !q.Decrypt {
+				// Provisioning API redacts by default.
+				gr.Redact(func(value string) string {
+					return apimodels.RedactedValue
+				})
+			}
+			contactPoints = append(contactPoints, GrafanaIntegrationConfigToEmbeddedContactPoint(gr, recv.Provenance))
 		}
-
-		contactPoints[i] = contactPoint
 	}
 
 	sort.SliceStable(contactPoints, func(i, j int) bool {
@@ -428,7 +426,7 @@ groupLoop:
 				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
 				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
 				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
-					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
+					legacy_storage.RenameReceiverInRoute(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
 					renamedReceiver = receiverGroup.Name
@@ -476,38 +474,12 @@ groupLoop:
 	return configModified, renamedReceiver
 }
 
-func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {
-	if len(routes) == 0 {
-		return
-	}
-	for _, route := range routes {
-		if route.Receiver == oldName {
-			route.Receiver = newName
-		}
-		replaceReferences(oldName, newName, route.Routes...)
-	}
-}
-
 func ValidateContactPoint(ctx context.Context, e apimodels.EmbeddedContactPoint, decryptFunc alertingNotify.GetDecryptedValueFn) error {
-	if e.Type == "" {
-		return fmt.Errorf("type should not be an empty string")
-	}
-	if e.Settings == nil {
-		return fmt.Errorf("settings should not be empty")
-	}
 	integration, err := EmbeddedContactPointToGrafanaIntegrationConfig(e)
 	if err != nil {
 		return err
 	}
-	_, err = alertingNotify.BuildReceiverConfiguration(ctx, &alertingNotify.APIReceiver{
-		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
-			Integrations: []*alertingNotify.GrafanaIntegrationConfig{&integration},
-		},
-	}, decryptFunc)
-	if err != nil {
-		return err
-	}
-	return nil
+	return models.ValidateIntegration(ctx, integration, decryptFunc)
 }
 
 // RemoveSecretsForContactPoint removes all secrets from the contact point's settings and returns them as a map. Returns error if contact point type is not known.
@@ -518,37 +490,62 @@ func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string
 		return nil, err
 	}
 	for _, secretKey := range secretKeys {
-		foundSecretKey, secretValue, err := getCaseInsensitive(e.Settings, secretKey)
+		secretValue, err := extractCaseInsensitive(e.Settings, secretKey)
 		if err != nil {
 			return nil, err
 		}
-		e.Settings.Del(foundSecretKey)
+		if secretValue == "" {
+			continue
+		}
 		s[secretKey] = secretValue
 	}
 	return s, nil
 }
 
-// getCaseInsensitive returns the value of the specified key, preferring an exact match but accepting a case-insensitive match.
+// extractCaseInsensitive returns the value of the specified key, preferring an exact match but accepting a case-insensitive match.
 // If no key matches, the second return value is an empty string.
-func getCaseInsensitive(jsonObj *simplejson.Json, key string) (string, string, error) {
-	// Check for an exact key match first.
-	if value, ok := jsonObj.CheckGet(key); ok {
-		return key, value.MustString(), nil
+func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error) {
+	if key == "" {
+		return "", nil
 	}
-
-	// If no exact match is found, look for a case-insensitive match.
-	settingsMap, err := jsonObj.Map()
-	if err != nil {
-		return "", "", err
-	}
-
-	for k, v := range settingsMap {
-		if strings.EqualFold(k, key) {
-			return k, v.(string), nil
+	path := strings.Split(key, ".")
+	getNodeCaseInsensitive := func(n *simplejson.Json, field string) (string, *simplejson.Json, error) {
+		// Check for an exact key match first.
+		if value, ok := n.CheckGet(field); ok {
+			return field, value, nil
 		}
+
+		// If no exact match is found, look for a case-insensitive match.
+		settingsMap, err := n.Map()
+		if err != nil {
+			return "", nil, err
+		}
+
+		for k := range settingsMap {
+			if strings.EqualFold(k, field) {
+				return k, n.GetPath(k), nil
+			}
+		}
+		return "", nil, nil
 	}
 
-	return key, "", nil
+	node := jsonObj
+	for idx, segment := range path {
+		_, value, err := getNodeCaseInsensitive(node, segment)
+		if err != nil {
+			return "", err
+		}
+		if value == nil {
+			return "", nil
+		}
+		if idx == len(path)-1 {
+			resultValue := value.MustString()
+			node.Del(segment)
+			return resultValue, nil
+		}
+		node = value
+	}
+	return "", nil
 }
 
 // convertRecSvcErr converts errors from notifier.ReceiverService to errors expected from ContactPointService.

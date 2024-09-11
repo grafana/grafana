@@ -53,7 +53,7 @@
     "react-use": "17.5.1",
     "react-virtualized-auto-sizer": "1.0.24",
     "tinycolor2": "1.6.0",
-    "tslib": "2.6.3"
+    "tslib": "2.7.0"
   },
   "devDependencies": {
     "@babel/core": "7.25.2",
@@ -68,7 +68,7 @@
     "@types/d3": "^7",
     "@types/jest": "^29.5.4",
     "@types/lodash": "4.17.7",
-    "@types/node": "20.14.14",
+    "@types/node": "20.16.5",
     "@types/react": "18.3.3",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/tinycolor2": "1.4.6",
@@ -80,7 +80,7 @@
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
-    "ts-jest": "29.2.4",
+    "ts-jest": "29.2.5",
     "ts-node": "10.9.2",
     "typescript": "5.5.4"
   },
