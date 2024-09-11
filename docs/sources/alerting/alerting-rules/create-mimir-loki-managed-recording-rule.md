@@ -70,12 +70,14 @@ To configure data-source managed recording rules, complete the following steps.
 
 #### Enter recording rule name
 
-   The recording rule name must be a Prometheus metric name and contain no whitespace.
+The recording rule name must be a Prometheus metric name and contain no whitespace.
 
 #### Define recording rule
-  Select your data source and enter a query.
+
+Select your data source and enter a query.
 
 #### Add namespace and group
+
 1. From the **Namespace** dropdown, select an existing rule namespace or add a new one.
 
    Namespaces can contain one or more rule groups and only have an organizational purpose.
@@ -117,9 +119,9 @@ Define a query to get the data you want to measure and a condition that needs to
 1. From the **Options** dropdown, specify a time range.
 
 {{< admonition type="note" >}}
-   Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
+Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
 
-   It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
 {{< /admonition >}}
 
 1. Add a query.
