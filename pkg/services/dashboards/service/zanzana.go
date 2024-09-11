@@ -18,7 +18,7 @@ import (
 
 const (
 	maxListQueryLength = 8
-	maxListQueryLimit  = 100
+	maxListQueryLimit  = 50
 	defaultQueryLimit  = 1000
 )
 
@@ -75,6 +75,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 	if second.err != nil {
 		dr.log.Error("zanzana search failed", "error", second.err)
 	} else if len(first.result) != len(second.result) {
+		dr.metrics.searchRequestStatusTotal.WithLabelValues("error").Inc()
 		dr.log.Warn(
 			"zanzana search result does not match grafana",
 			"grafana_result_len", len(first.result),
@@ -83,6 +84,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 			"zanzana_duration", second.duration,
 		)
 	} else {
+		dr.metrics.searchRequestStatusTotal.WithLabelValues("success").Inc()
 		dr.log.Debug("zanzana search is correct", "result_len", len(first.result), "grafana_duration", first.duration, "zanzana_duration", second.duration)
 	}
 

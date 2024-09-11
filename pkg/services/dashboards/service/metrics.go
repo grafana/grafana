@@ -15,6 +15,7 @@ var defaultBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10,
 type dashboardsMetrics struct {
 	sharedWithMeFetchDashboardsRequestsDuration *prometheus.HistogramVec
 	searchRequestsDuration                      *prometheus.HistogramVec
+	searchRequestStatusTotal                    *prometheus.CounterVec
 }
 
 func newDashboardsMetrics(r prometheus.Registerer) *dashboardsMetrics {
@@ -38,6 +39,16 @@ func newDashboardsMetrics(r prometheus.Registerer) *dashboardsMetrics {
 				Subsystem: metricsSubSystem,
 			},
 			[]string{"engine"},
+		),
+
+		searchRequestStatusTotal: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Name:      "search_dashboards_status_total",
+				Help:      "Search status (success or error) for zanzana",
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubSystem,
+			},
+			[]string{"status"},
 		),
 	}
 }
