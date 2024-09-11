@@ -201,6 +201,7 @@ export interface FeatureToggles {
   bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
+  alertingFilterV2?: boolean;
   backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;

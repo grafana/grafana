@@ -164,6 +164,19 @@
     },
     {
       "metadata": {
+        "name": "alertingFilterV2",
+        "resourceVersion": "1723028774805",
+        "creationTimestamp": "2024-08-07T11:06:14Z"
+      },
+      "spec": {
+        "description": "Enable the new alerting search experience",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingInsights",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2023-09-14T12:58:04Z",

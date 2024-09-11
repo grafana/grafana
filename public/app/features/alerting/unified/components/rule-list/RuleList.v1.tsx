@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { urlUtil } from '@grafana/data';
+import { Button, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
@@ -18,13 +17,13 @@ import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../../utils/constants';
 import { getAllRulesSourceNames } from '../../utils/datasource';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import RulesFilter from '../rules/Filter/RulesFilter';
 import { NoRulesSplash } from '../rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from '../rules/RuleDetails';
 import { RuleListErrors } from '../rules/RuleListErrors';
 import { RuleListGroupView } from '../rules/RuleListGroupView';
 import { RuleListStateView } from '../rules/RuleListStateView';
 import { RuleStats } from '../rules/RuleStats';
-import RulesFilter from '../rules/RulesFilter';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -37,7 +36,6 @@ const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 const RuleList = withErrorBoundary(
   () => {
     const dispatch = useDispatch();
-    const styles = useStyles2(getStyles);
     const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
     const [expandAll, setExpandAll] = useState(false);
 
@@ -106,26 +104,20 @@ const RuleList = withErrorBoundary(
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
         <RuleListErrors />
-        <RulesFilter onFilterCleared={onFilterCleared} />
+        <RulesFilter onClear={onFilterCleared} />
         {hasAlertRulesCreated && (
-          <>
-            <div className={styles.break} />
-            <div className={styles.buttonsContainer}>
-              <div className={styles.statsContainer}>
-                {view === 'groups' && hasActiveFilters && (
-                  <Button
-                    className={styles.expandAllButton}
-                    icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
-                    variant="secondary"
-                    onClick={() => setExpandAll(!expandAll)}
-                  >
-                    {expandAll ? 'Collapse all' : 'Expand all'}
-                  </Button>
-                )}
-                <RuleStats namespaces={filteredNamespaces} />
-              </div>
-            </div>
-          </>
+          <Stack direction="row" alignItems="center">
+            {view === 'groups' && hasActiveFilters && (
+              <Button
+                icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
+                variant="secondary"
+                onClick={() => setExpandAll(!expandAll)}
+              >
+                {expandAll ? 'Collapse all' : 'Expand all'}
+              </Button>
+            )}
+            <RuleStats namespaces={filteredNamespaces} />
+          </Stack>
         )}
         {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
         {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
@@ -134,28 +126,6 @@ const RuleList = withErrorBoundary(
   },
   { style: 'page' }
 );
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  break: css({
-    width: '100%',
-    height: 0,
-    marginBottom: theme.spacing(2),
-    borderBottom: `solid 1px ${theme.colors.border.medium}`,
-  }),
-  buttonsContainer: css({
-    marginBottom: theme.spacing(2),
-    display: 'flex',
-    justifyContent: 'space-between',
-  }),
-  statsContainer: css({
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  }),
-  expandAllButton: css({
-    marginRight: theme.spacing(1),
-  }),
-});
 
 export default RuleList;
 

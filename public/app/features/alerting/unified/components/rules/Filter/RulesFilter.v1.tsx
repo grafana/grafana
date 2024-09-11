@@ -16,17 +16,16 @@ import {
   trackRulesListViewChange,
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
-} from '../../Analytics';
-import { useRulesFilter } from '../../hooks/useFilteredRules';
-import { useURLSearchParams } from '../../hooks/useURLSearchParams';
-import { useAlertingHomePageExtensions } from '../../plugins/useAlertingHomePageExtensions';
-import { RuleHealth } from '../../search/rulesSearchParser';
-import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { alertStateToReadable } from '../../utils/rules';
-import { HoverCard } from '../HoverCard';
-
-import { MultipleDataSourcePicker } from './MultipleDataSourcePicker';
+} from '../../../Analytics';
+import { useRulesFilter } from '../../../hooks/useFilteredRules';
+import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
+import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
+import { RuleHealth } from '../../../search/rulesSearchParser';
+import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { alertStateToReadable } from '../../../utils/rules';
+import { PopupCard } from '../../HoverCard';
+import { MultipleDataSourcePicker } from '../MultipleDataSourcePicker';
 
 const ViewOptions: SelectableValue[] = [
   {
@@ -64,7 +63,7 @@ const RuleHealthOptions: SelectableValue[] = [
 ];
 
 interface RulesFilerProps {
-  onFilterCleared?: () => void;
+  onClear?: () => void;
 }
 
 const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
@@ -72,7 +71,7 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
   value,
 }));
 
-const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => {
+const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
   const [queryParams, updateQueryParams] = useURLSearchParams();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
@@ -136,7 +135,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
 
   const handleClearFiltersClick = () => {
     setSearchQuery(undefined);
-    onFilterCleared();
+    onClear();
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
@@ -291,9 +290,9 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                   <Label htmlFor="rulesSearchInput">
                     <Stack gap={0.5} alignItems="center">
                       <span>Search</span>
-                      <HoverCard content={<SearchQueryHelp />}>
+                      <PopupCard content={<SearchQueryHelp />}>
                         <Icon name="info-circle" size="sm" tabIndex={0} title="Search help" />
-                      </HoverCard>
+                      </PopupCard>
                     </Stack>
                   </Label>
                 }
