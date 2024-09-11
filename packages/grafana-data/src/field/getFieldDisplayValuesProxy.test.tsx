@@ -95,7 +95,7 @@ describe('getFieldDisplayValuesProxy', () => {
 
   it('should fall back to matching by name in non-primary frame', () => {
     const frameA = toDataFrame({ fields: [...shortTimeField, { name: 'foo', values: [1, 2, 3] }] });
-    const frameB = toDataFrame({ fields: [...shortTimeField, { name: 'bar', values: [4,5,6] }] });
+    const frameB = toDataFrame({ fields: [...shortTimeField, { name: 'bar', values: [4, 5, 6] }] });
 
     const p = getFieldDisplayValuesProxy({
       frame: frameA,

@@ -8,10 +8,9 @@ import { formattedValueToString } from '../valueFormats/valueFormats';
 import { getDisplayProcessor } from './displayProcessor';
 
 function matchFieldByName(fields: Field[], key: string | symbol) {
-  // try to match by name from primary frame
   return fields.find(
     (f) =>
-      // 1. Match the name
+      // 1. Match by name
       key === f.name ||
       // 2. Match by displayName
       key === f.config.displayName ||
