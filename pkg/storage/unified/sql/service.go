@@ -20,11 +20,14 @@ import (
 )
 
 var (
-	_ Service = (*service)(nil)
+	_ UnifiedStorageGrpcService = (*service)(nil)
 )
 
-type Service interface {
+type UnifiedStorageGrpcService interface {
 	services.NamedService
+
+	// Return the address where this service is running
+	GetAddress() string
 }
 
 type service struct {
@@ -45,12 +48,12 @@ type service struct {
 	log log.Logger
 }
 
-func ProvideService(
+func ProvideUnifiedStorageGrpcService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	log log.Logger,
-) (*service, error) {
+) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
 		return nil, err
