@@ -2292,8 +2292,8 @@ github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkr
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.247.0 h1:QOxVw3sgaPaxR3odu9DSRNGdCknyAuMWl0hDhaF91OA=
-github.com/grafana/grafana-plugin-sdk-go v0.247.0/go.mod h1:sEi0wRVTvpxyB0KaMNbhPM74OnDMwVpah97usm6QXEM=
+github.com/grafana/grafana-plugin-sdk-go v0.248.0 h1:wXseE6exRWfjUlqDr/ArocK1EPm8x/mhBdtL0AlIa5M=
+github.com/grafana/grafana-plugin-sdk-go v0.248.0/go.mod h1:sEi0wRVTvpxyB0KaMNbhPM74OnDMwVpah97usm6QXEM=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2 h1:2H9x4q53pkfUGtSNYD1qSBpNnxrFgylof/TYADb5xMI=
 github.com/grafana/grafana/pkg/aggregator v0.0.0-20240813192817-1b0e6b5c09b2/go.mod h1:gBLBniiSUQvyt4LRrpIeysj8Many0DV+hdUKifRE0Ec=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240821155123-6891eb1d35da h1:2E3c/I3ayAy4Z1GwIPqXNZcpUccRapE1aBXA1ho4g7o=
