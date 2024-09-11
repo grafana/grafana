@@ -1,4 +1,4 @@
-import { isArray, omit, pick, isNil, omitBy } from 'lodash';
+import { get, has, isArray, isNil, omit, omitBy, reduce } from 'lodash';
 
 import {
   AlertManagerCortexConfig,
@@ -8,7 +8,7 @@ import {
   Receiver,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { CloudNotifierType, NotifierDTO, NotifierType } from 'app/types';
+import { CloudNotifierType, NotificationChannelOption, NotifierDTO, NotifierType } from 'app/types';
 
 import {
   CloudChannelConfig,
@@ -210,19 +210,37 @@ function grafanaChannelConfigToFormChannelValues(
     disableResolveMessage: channel.disableResolveMessage,
   };
 
-  // work around https://github.com/grafana/alerting-squad/issues/100
-  notifier?.options.forEach((option) => {
-    if (option.secure && values.secureSettings[option.propertyName]) {
-      delete values.settings[option.propertyName];
-      values.secureFields[option.propertyName] = true;
-    }
-    if (option.secure && values.settings[option.propertyName]) {
-      values.secureSettings[option.propertyName] = values.settings[option.propertyName];
-      delete values.settings[option.propertyName];
-    }
-  });
-
   return values;
+}
+
+/**
+ * Recursively find all keys that should be marked a secure fields, using JSONpath for nested fields.
+ */
+export function getSecureFieldNames(notifier: NotifierDTO): string[] {
+  // eg. ['foo', 'bar.baz']
+  const secureFieldPaths: string[] = [];
+
+  // we'll pass in the prefix for each iteration so we can track the JSON path
+  function findSecureOptions(options: NotificationChannelOption[], prefix?: string) {
+    for (const option of options) {
+      const key = prefix ? `${prefix}.${option.propertyName}` : option.propertyName;
+
+      // if the field is a subform, recurse
+      if (option.subformOptions) {
+        findSecureOptions(option.subformOptions, key);
+        continue;
+      }
+
+      if (option.secure) {
+        secureFieldPaths.push(key);
+        continue;
+      }
+    }
+  }
+
+  findSecureOptions(notifier.options);
+
+  return secureFieldPaths;
 }
 
 export function formChannelValuesToGrafanaChannelConfig(
@@ -245,13 +263,21 @@ export function formChannelValuesToGrafanaChannelConfig(
   };
 
   // find all secure field definitions
-  const secureFieldNames: string[] =
-    notifier?.options.filter((option) => option.secure).map((option) => option.propertyName) ?? [];
+  const secureFieldNames = notifier ? getSecureFieldNames(notifier) : [];
 
   // we make sure all fields that are marked as "secure" will be moved to "SecureSettings" instead of "settings"
-  const shouldBeSecure = pick(channel.settings, secureFieldNames);
+  const secureSettings = reduce(
+    secureFieldNames,
+    (acc: Record<string, unknown> = {}, key) => {
+      // the value for secure settings can come from either the "settings" (accidental) or "secureFields" if editing an existing receiver
+      acc[key] = get(channel.settings, key) ?? get(values.secureFields, key);
+      return acc;
+    },
+    {}
+  );
+
   channel.secureSettings = {
-    ...shouldBeSecure,
+    ...secureSettings,
     ...channel.secureSettings,
   };
 
@@ -291,7 +317,7 @@ export function omitEmptyValues<T>(obj: T): T {
 // Will remove empty ('', null, undefined) object properties unless they were previously defined.
 // existing is a map of property names that were previously defined.
 export function omitEmptyUnlessExisting(settings = {}, existing = {}): Record<string, unknown> {
-  return omitBy(settings, (value, key) => isUnacceptableValue(value) && !(key in existing));
+  return omitBy(settings, (value, key) => isUnacceptableValue(value) && !has(existing, key));
 }
 
 export function omitTemporaryIdentifiers<T>(object: Readonly<T>): T {

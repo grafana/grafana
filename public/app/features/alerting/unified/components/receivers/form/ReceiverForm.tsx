@@ -93,6 +93,17 @@ export function ReceiverForm<R extends ChannelValues>({
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
+    values.items.forEach((item) => {
+      if (item.secureFields) {
+        // omit secure fields with boolean value as BE expects not touched fields to be omitted: https://github.com/grafana/grafana/pull/71307
+        Object.keys(item.secureFields).forEach((key) => {
+          if (item.secureFields[key] === true || item.secureFields[key] === false) {
+            delete item.secureFields[key];
+          }
+        });
+      }
+    });
+
     try {
       await onSubmit({
         ...values,

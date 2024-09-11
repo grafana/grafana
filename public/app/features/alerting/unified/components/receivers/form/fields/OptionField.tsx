@@ -4,8 +4,8 @@ import { FC, useEffect } from 'react';
 import { Controller, DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Checkbox, Field, Input, RadioButtonList, Select, TextArea, useStyles2 } from '@grafana/ui';
-import { NotificationChannelOption } from 'app/types';
+import { Checkbox, Field, Input, RadioButtonList, SecretInput, Select, TextArea, useStyles2 } from '@grafana/ui';
+import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
 import { StringArrayInput } from './StringArrayInput';
@@ -16,16 +16,21 @@ import { WrapWithTemplateSelection } from './TemplateSelector';
 interface Props {
   defaultValue: any;
   option: NotificationChannelOption;
+  // this is defined if the option is rendered inside a subform
+  parentOption?: NotificationChannelOption;
   invalid?: boolean;
   pathPrefix: string;
   pathSuffix?: string;
   error?: FieldError | DeepMap<any, FieldError>;
   readOnly?: boolean;
   customValidator?: (value: string) => boolean | string | Promise<boolean | string>;
+  onResetSecureField?: (propertyName: string) => void;
+  secureFields?: NotificationChannelSecureFields;
 }
 
 export const OptionField: FC<Props> = ({
   option,
+  parentOption,
   invalid,
   pathPrefix,
   pathSuffix = '',
@@ -33,13 +38,16 @@ export const OptionField: FC<Props> = ({
   defaultValue,
   readOnly = false,
   customValidator,
+  onResetSecureField,
+  secureFields = {},
 }) => {
   const optionPath = `${pathPrefix}${pathSuffix}`;
-  const isSecure = pathSuffix === 'secureSettings.';
 
   if (option.element === 'subform') {
     return (
       <SubformField
+        secureFields={secureFields}
+        onResetSecureField={onResetSecureField}
         readOnly={readOnly}
         defaultValue={defaultValue}
         option={option}
@@ -75,14 +83,16 @@ export const OptionField: FC<Props> = ({
         pathPrefix={optionPath}
         readOnly={readOnly}
         pathIndex={pathPrefix}
+        parentOption={parentOption}
         customValidator={customValidator}
-        isSecure={isSecure}
+        onResetSecureField={onResetSecureField}
+        secureFields={secureFields}
       />
     </Field>
   );
 };
 
-const OptionInput: FC<Props & { id: string; pathIndex?: string; isSecure?: boolean }> = ({
+const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   option,
   invalid,
   id,
@@ -90,18 +100,17 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string; isSecure?: boole
   pathIndex = '',
   readOnly = false,
   customValidator,
-  isSecure,
+  onResetSecureField,
+  secureFields = {},
+  parentOption,
 }) => {
   const styles = useStyles2(getStyles);
   const { control, register, unregister, getValues, setValue } = useFormContext();
-  const name = `${pathPrefix}${option.propertyName}`;
 
-  useEffect(() => {
-    // Remove the value of secure fields so it doesn't show the incorrect value when clearing the field
-    if (isSecure) {
-      setValue(name, null);
-    }
-  }, [isSecure, name, setValue]);
+  const name = `${pathPrefix}${option.propertyName}`;
+  const nestedKey = parentOption ? `${parentOption.propertyName}.${option.propertyName}` : option.propertyName;
+
+  const isEncryptedInput = secureFields?.[nestedKey];
 
   // workaround for https://github.com/react-hook-form/react-hook-form/issues/4993#issuecomment-829012506
   useEffect(
@@ -138,22 +147,26 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string; isSecure?: boole
           name={name}
           onSelectTemplate={onSelectTemplate}
         >
-          <Input
-            id={id}
-            readOnly={readOnly || useTemplates || determineReadOnly(option, getValues, pathIndex)}
-            invalid={invalid}
-            type={option.inputType}
-            {...register(name, {
-              required: determineRequired(option, getValues, pathIndex),
-              validate: {
-                validationRule: (v) =>
-                  option.validationRule ? validateOption(v, option.validationRule, option.required) : true,
-                customValidator: (v) => (customValidator ? customValidator(v) : true),
-              },
-              setValueAs: option.setValueAs,
-            })}
-            placeholder={option.placeholder}
-          />
+          {isEncryptedInput ? (
+            <SecretInput onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
+          ) : (
+            <Input
+              id={id}
+              readOnly={readOnly || useTemplates || determineReadOnly(option, getValues, pathIndex)}
+              invalid={invalid}
+              type={option.inputType}
+              {...register(name, {
+                required: determineRequired(option, getValues, pathIndex),
+                validate: {
+                  validationRule: (v) =>
+                    option.validationRule ? validateOption(v, option.validationRule, option.required) : true,
+                  customValidator: (v) => (customValidator ? customValidator(v) : true),
+                },
+                setValueAs: option.setValueAs,
+              })}
+              placeholder={option.placeholder}
+            />
+          )}
         </WrapWithTemplateSelection>
       );
 

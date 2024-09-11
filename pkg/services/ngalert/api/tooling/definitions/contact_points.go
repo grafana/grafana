@@ -183,11 +183,11 @@ type SensugoIntegration struct {
 }
 
 type SigV4Config struct {
-	Region    string `json:"region,omitempty" yaml:"region,omitempty" hcl:"region"`
-	AccessKey string `json:"access_key,omitempty" yaml:"access_key,omitempty" hcl:"access_key"`
-	SecretKey string `json:"secret_key,omitempty" yaml:"secret_key,omitempty" hcl:"secret_key"`
-	Profile   string `json:"profile,omitempty" yaml:"profile,omitempty" hcl:"profile"`
-	RoleARN   string `json:"role_arn,omitempty" yaml:"role_arn,omitempty" hcl:"role_arn"`
+	Region    *string `json:"region,omitempty" yaml:"region,omitempty" hcl:"region"`
+	AccessKey *Secret `json:"access_key,omitempty" yaml:"access_key,omitempty" hcl:"access_key"`
+	SecretKey *Secret `json:"secret_key,omitempty" yaml:"secret_key,omitempty" hcl:"secret_key"`
+	Profile   *string `json:"profile,omitempty" yaml:"profile,omitempty" hcl:"profile"`
+	RoleARN   *string `json:"role_arn,omitempty" yaml:"role_arn,omitempty" hcl:"role_arn"`
 }
 
 type SnsIntegration struct {
