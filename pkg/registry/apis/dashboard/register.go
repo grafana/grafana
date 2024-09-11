@@ -30,7 +30,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
-var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder      = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIClientConsumer    = (*DashboardsAPIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor = (*DashboardsAPIBuilder)(nil)
+)
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
@@ -96,6 +100,11 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
+}
+
+func (b *DashboardsAPIBuilder) InitAPIClients(clients builder.APIClients) error {
+	b.log.Info("I")
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {

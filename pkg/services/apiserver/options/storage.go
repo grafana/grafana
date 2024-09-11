@@ -22,11 +22,19 @@ const (
 	StorageTypeUnifiedGrpc StorageType = "unified-grpc"
 )
 
-type StorageOptions struct {
-	StorageType                  StorageType
-	DataPath                     string
-	Address                      string
-	UnifiedStorageConfig         map[string]setting.UnifiedStorageConfig
+type StorageOptions struct { // The desired storage type
+	StorageType StorageType
+
+	// For unified-grpc, the address is required
+	Address string
+
+	// For file storage, this is the requested path
+	DataPath string
+
+	// {resource}.{group} = 1|2|3|4
+	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
+
+	// TODO... this will be moved to UnifiedStorageConfig
 	DualWriterDataSyncJobEnabled map[string]bool
 }
 

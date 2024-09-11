@@ -284,6 +284,10 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
 
+	clients := builder.APIClients{
+		Access: nil, // sometime soon!
+	}
+
 	switch o.StorageOptions.StorageType {
 	case grafanaapiserveroptions.StorageTypeEtcd:
 		if err := o.RecommendedOptions.Etcd.Validate(); len(err) > 0 {
@@ -298,8 +302,8 @@ func (s *service) start(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		client := resource.NewLocalResourceClient(server)
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client,
+		clients.Resource = resource.NewLocalResourceClient(server)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(clients.Resource,
 			o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeUnifiedGrpc:
@@ -314,8 +318,9 @@ func (s *service) start(ctx context.Context) error {
 		}
 
 		// Create a client instance
-		client := resource.NewResourceClient(conn)
-		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(client, o.RecommendedOptions.Etcd.StorageConfig)
+		clients.Resource = resource.NewResourceClient(conn)
+		serverConfig.Config.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(
+			clients.Resource, o.RecommendedOptions.Etcd.StorageConfig)
 
 	case grafanaapiserveroptions.StorageTypeLegacy:
 		fallthrough
@@ -349,9 +354,13 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
+	err = builder.InstallAPIs(Scheme, Codecs, server, clients,
+		serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
-		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"), s.serverLockService,
+		s.metrics,
+		request.GetNamespaceMapper(s.cfg),
+		kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
+		s.serverLockService,
 	)
 	if err != nil {
 		return err

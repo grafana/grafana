@@ -151,6 +151,7 @@ func InstallAPIs(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	server *genericapiserver.GenericAPIServer,
+	clients APIClients,
 	optsGetter generic.RESTOptionsGetter,
 	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
@@ -211,6 +212,14 @@ func InstallAPIs(
 	}
 
 	for _, b := range builders {
+		// Register the client
+		c, ok := b.(APIClientConsumer)
+		if ok {
+			err := c.InitAPIClients(clients)
+			if err != nil {
+				return err
+			}
+		}
 		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
 		if err != nil {
 			return err

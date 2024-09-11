@@ -12,7 +12,9 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/authlib/claims"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // TODO: this (or something like it) belongs in grafana-app-sdk,
@@ -42,6 +44,16 @@ type APIGroupBuilder interface {
 	// Standard namespace checking will happen before this is called, specifically
 	// the namespace must matches an org|stack that the user belongs to
 	GetAuthorizer() authorizer.Authorizer
+}
+
+type APIClients struct {
+	Access   claims.AccessClient
+	Resource resource.ResourceClient
+}
+
+// Builders that implement ClientConsumer are passed clients before `GetAPIGroupInfo` is called
+type APIClientConsumer interface {
+	InitAPIClients(clients APIClients) error
 }
 
 // Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly
