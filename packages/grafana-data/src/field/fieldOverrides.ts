@@ -31,7 +31,9 @@ import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { locationUtil } from '../utils/location';
 
 import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
+import { getTransformationVars } from './correlationsUtils';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -102,6 +104,12 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   return options.data.map((originalFrame, index) => {
     // Need to define this new frame here as it's passed to the getLinkSupplier function inside the fields loop
     const newFrame: DataFrame = { ...originalFrame };
+
+    let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = getFieldDisplayValuesProxy({
+      frame: originalFrame,
+      rowIndex: index,
+    });
+
     // Copy fields
     newFrame.fields = newFrame.fields.map((field) => {
       return {
@@ -111,6 +119,16 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           ...field.state,
         },
       };
+    });
+
+    let fieldVars: ScopedVars = {};
+
+    originalFrame.fields.forEach((f) => {
+      if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
+        fieldVars[f.name] = {
+          value: fieldDisplayValuesProxy[f.name],
+        };
+      }
     });
 
     for (const field of newFrame.fields) {
@@ -126,6 +144,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           },
         },
       };
+
+      field.state!.scopedVars = { ...field.state!.scopedVars, ...fieldVars };
 
       const context = {
         field: field,
@@ -441,10 +461,38 @@ export const getLinksSupplier =
       return [];
     }
 
+    console.log('getLinksSupplier', field);
+
     const linkModels = field.config.links.map((link: DataLink) => {
       const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
+
+      let transformationScopedVars = {};
+
+      if (link.meta?.transformations) {
+        link.meta?.transformations.forEach((transformation) => {
+          let fieldValue;
+          //const rowValue = config.valueRowIndex !== undefined ? field.values[config.valueRowIndex] : config.calculatedValue !== undefined ? config.calculatedValue : undefined;
+          if (config.valueRowIndex !== undefined) {
+            if (transformation.field) {
+              const transformField = frame?.fields.find((field) => field.name === transformation.field);
+              fieldValue = transformField?.values[config.valueRowIndex];
+            } else {
+              fieldValue = field.values[config.valueRowIndex];
+            }
+          } else if (config.calculatedValue) {
+            fieldValue = config.calculatedValue;
+          }
+
+          transformationScopedVars = {
+            ...transformationScopedVars,
+            ...getTransformationVars(transformation, fieldValue, field.name),
+          };
+        });
+      }
+
       const dataLinkScopedVars = {
         ...fieldScopedVars,
+        ...transformationScopedVars,
         __dataContext: dataContext,
       };
 
