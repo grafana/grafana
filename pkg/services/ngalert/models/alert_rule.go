@@ -636,7 +636,7 @@ type GetAlertRuleByUIDQuery struct {
 	OrgID int64
 }
 
-// GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by ID and organisation ID.
+// GetAlertRuleByIDQuery is the query for retrieving/deleting an alert rule by ID and organisation ID.
 type GetAlertRuleByIDQuery struct {
 	ID    int64
 	OrgID int64
