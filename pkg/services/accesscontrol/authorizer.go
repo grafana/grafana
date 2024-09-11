@@ -27,7 +27,7 @@ func (r ResourceResolverFunc) Resolve(ctx context.Context, ns claims.NamespaceIn
 type ResourceAuthorizerOptions struct {
 	// Resource is the resource name in plural.
 	Resource string
-	// Attr is attribute used for resource scope. It's usally 'id' or 'uid'
+	// Attr is attribute used for resource scope. It's usually 'id' or 'uid'
 	// depending on what is stored for the resource.
 	Attr string
 	// Mapping is used to translate k8s verb to rbac action.
