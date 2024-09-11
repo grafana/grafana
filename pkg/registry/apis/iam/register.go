@@ -55,7 +55,6 @@ func RegisterAPIService(
 	}
 
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
-	// FIXME: we need to inject client -> store but we also need store -> client..
 	authorizer, client := newLegacyAuthorizer(ac, store)
 
 	builder := &IdentityAccessManagementAPIBuilder{

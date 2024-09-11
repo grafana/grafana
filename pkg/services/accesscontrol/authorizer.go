@@ -9,10 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
+// ResourceResolver is called before authorization is performed.
+// It can be used to translate resoruce name into one or more valid scopes that
+// will be used for authorization. If more than one scopes are returned from a resolver
+// only one needs to match to allow call to be authorized.
 type ResourceResolver interface {
 	Resolve(ctx context.Context, ns claims.NamespaceInfo, name string) ([]string, error)
 }
 
+// ResourceResolverFunc is an adapter so that functions can implement ResourceResolver.
 type ResourceResolverFunc func(ctx context.Context, ns claims.NamespaceInfo, name string) ([]string, error)
 
 func (r ResourceResolverFunc) Resolve(ctx context.Context, ns claims.NamespaceInfo, name string) ([]string, error) {
@@ -22,11 +27,15 @@ func (r ResourceResolverFunc) Resolve(ctx context.Context, ns claims.NamespaceIn
 type ResourceAuthorizerOptions struct {
 	// Resource is the resource name in plural.
 	Resource string
-	// Attr is attribute used for resource scope.
+	// Attr is attribute used for resource scope. It's usally 'id' or 'uid'
+	// depending on what is stored for the resource.
 	Attr string
 	// Mapping is used to translate k8s verb to rbac action.
+	// Key is the desired verb and value the rbac action it should be translated into.
 	Mapping map[string]string
 	// Resolver if passed can translate into one or more scopes used to authorize resource.
+	// This is useful when stored scopes are based on something else than k8s name or
+	// for resources that inherit permission from folder.
 	Resolver ResourceResolver
 }
 
@@ -59,7 +68,7 @@ func (c *LegacyAccessClient) HasAccess(ctx context.Context, id claims.AuthInfo, 
 
 	opts, ok := c.opts[req.Resource]
 	if !ok {
-		// FIXME: how should be handle this
+		// For now we fallback to grafana admin if no options are found for resource.
 		if ident.GetIsGrafanaAdmin() {
 			return true, nil
 		}

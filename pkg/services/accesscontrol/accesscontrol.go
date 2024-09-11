@@ -28,7 +28,9 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
-	// FIXME: document
+	// WithoutResolvers copies AccessControl without any configured resolvers.
+	// This is useful when we don't want to reuse any pre-configured resolvers
+	// for a authorization call.
 	WithoutResolvers() AccessControl
 }
 

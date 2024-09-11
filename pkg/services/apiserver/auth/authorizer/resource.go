@@ -25,7 +25,6 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 
 	ident, ok := claims.From(ctx)
 	if !ok {
-		// FIXME return error or proper reason
 		return authorizer.DecisionDeny, "", errors.New("no identity found for request")
 	}
 
