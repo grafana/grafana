@@ -180,6 +180,10 @@ _Generally available in all editions of Grafana_
 
 Explore now supports forward direction search for Loki logs searches. This allows users to seamlessly browse logs in a time range in forward chronological order (for example, tracing a specific user's actions using logs).
 
+{{< figure src="/static/img/logs/forward_search.png" alt="Explore logs with the Direction option selected" caption-align="left" >}}
+
+To use this feature, select **Forward** for the **Direction** option. Note that in the screenshot above, logs are rendered beginning from the starting time period of the query, not the end.
+
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/)
 
 ## Data sources

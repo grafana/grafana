@@ -16,6 +16,7 @@ type Plugin struct {
 	Class plugins.Class
 
 	// App fields
+	Parent          *ParentPlugin
 	IncludedInAppID string
 	DefaultNavURL   string
 	Pinned          bool
@@ -59,7 +60,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		supportsStreaming = true
 	}
 
-	return Plugin{
+	dto := Plugin{
 		fs:                p.FS,
 		supportsStreaming: supportsStreaming,
 		Class:             p.Class,
@@ -76,4 +77,14 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		ExternalService:   p.ExternalService,
 		Angular:           p.Angular,
 	}
+
+	if p.Parent != nil {
+		dto.Parent = &ParentPlugin{ID: p.Parent.ID}
+	}
+
+	return dto
+}
+
+type ParentPlugin struct {
+	ID string
 }

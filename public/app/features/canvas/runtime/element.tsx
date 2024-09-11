@@ -2,7 +2,7 @@ import * as React from 'react';
 import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
-import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ValueLinkConfig } from '@grafana/data';
+import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ScopedVars, ValueLinkConfig } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
@@ -15,6 +15,7 @@ import {
 } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
+import { getActions, getActionsDefaultField } from '../../actions/utils';
 import { CanvasElementItem, CanvasElementOptions } from '../element';
 import { canvasElementRegistry } from '../registry';
 
@@ -379,7 +380,7 @@ export class ElementState implements LayerElement {
       const defaultField = {
         name: 'Default field',
         type: FieldType.string,
-        config: { links: this.options.links ?? [] },
+        config: { links: this.options.links ?? [], actions: this.options.actions ?? [] },
         values: [],
       };
 
@@ -597,11 +598,21 @@ export class ElementState implements LayerElement {
 
     const shouldHandleOneClickLink =
       this.options.oneClickMode === OneClickMode.Link && this.options.links && this.options.links.length > 0;
+
+    const shouldHandleOneClickAction =
+      this.options.oneClickMode === OneClickMode.Action && this.options.actions && this.options.actions.length > 0;
+
     if (shouldHandleOneClickLink && this.div) {
       const primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         this.div.style.cursor = 'pointer';
         this.div.title = `Navigate to ${primaryDataLink.title === '' ? 'data link' : primaryDataLink.title}`;
+      }
+    } else if (shouldHandleOneClickAction && this.div) {
+      const primaryAction = this.getPrimaryAction();
+      if (primaryAction) {
+        this.div.style.cursor = 'pointer';
+        this.div.title = primaryAction.title;
       }
     }
   };
@@ -610,6 +621,38 @@ export class ElementState implements LayerElement {
     if (this.getLinks) {
       const links = this.getLinks({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
       return links[0];
+    }
+
+    return undefined;
+  };
+
+  getPrimaryAction = () => {
+    const config: ValueLinkConfig = { valueRowIndex: getRowIndex(this.data.field, this.getScene()!) };
+    const actionsDefaultFieldConfig = { links: this.options.links ?? [], actions: this.options.actions ?? [] };
+    const frames = this.getScene()?.data?.series;
+
+    if (frames) {
+      const defaultField = getActionsDefaultField(actionsDefaultFieldConfig.links, actionsDefaultFieldConfig.actions);
+      const scopedVars: ScopedVars = {
+        __dataContext: {
+          value: {
+            data: frames,
+            field: defaultField,
+            frame: frames[0],
+            frameIndex: 0,
+          },
+        },
+      };
+
+      const actions = getActions(
+        frames[0],
+        defaultField,
+        scopedVars,
+        this.getScene()?.panel.props.replaceVariables!,
+        actionsDefaultFieldConfig.actions,
+        config
+      );
+      return actions[0];
     }
 
     return undefined;
@@ -645,6 +688,11 @@ export class ElementState implements LayerElement {
       let primaryDataLink = this.getPrimaryDataLink();
       if (primaryDataLink) {
         window.open(primaryDataLink.href, primaryDataLink.target);
+      }
+    } else if (this.options.oneClickMode === OneClickMode.Action) {
+      let primaryAction = this.getPrimaryAction();
+      if (primaryAction && primaryAction.onClick) {
+        primaryAction.onClick(event);
       }
     } else {
       this.handleTooltip(event);
