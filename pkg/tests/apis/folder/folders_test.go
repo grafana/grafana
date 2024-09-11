@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"slices"
 
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
@@ -244,6 +246,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
 	t.Run("Check folder CRUD (just create for now) in legacy API appears in k8s apis", func(t *testing.T) {
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			// #TODO: figure out permissions topic
 			User: helper.Org1.Admin,
 			GVR:  gvr,
 		})
@@ -288,5 +291,79 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.NoError(t, err)
 		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 	})
+
+	t.Run("Do CRUD (just CR for now) via k8s (and check that legacy api still works)", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			// #TODO: figure out permissions topic
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		// Create the folder "test"
+		first, err := client.Resource.Create(context.Background(),
+			helper.LoadYAMLOrJSONFile("testdata/folder-test-create.yaml"),
+			metav1.CreateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, "test", first.GetName())
+		uids := []string{first.GetName()}
+
+		// Create (with name generation) two folders
+		for i := 0; i < 2; i++ {
+			out, err := client.Resource.Create(context.Background(),
+				helper.LoadYAMLOrJSONFile("testdata/folder-generate.yaml"),
+				metav1.CreateOptions{},
+			)
+			require.NoError(t, err)
+			uids = append(uids, out.GetName())
+		}
+		slices.Sort(uids) // make list compare stable
+
+		// Check all playlists
+		for _, uid := range uids {
+			getFromBothAPIs(t, helper, client, uid, nil)
+		}
+	})
 	return helper
+}
+
+// This does a get with both k8s and legacy API, and verifies the results are the same
+func getFromBothAPIs(t *testing.T,
+	helper *apis.K8sTestHelper,
+	client *apis.K8sResourceClient,
+	uid string,
+	// Optionally match some expect some values
+	expect *folder.Folder,
+) *unstructured.Unstructured {
+	t.Helper()
+
+	found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, uid, found.GetName())
+
+	dto := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodGet,
+		Path:   "/api/folders/" + uid,
+	}, &folder.Folder{}).Result
+	require.NotNil(t, dto)
+	require.Equal(t, uid, dto.UID)
+
+	spec, ok := found.Object["spec"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, dto.UID, found.GetName())
+	require.Equal(t, dto.Title, spec["title"])
+	// #TODO add checks for other fields
+
+	if expect != nil {
+		if expect.Title != "" {
+			require.Equal(t, expect.Title, dto.Title)
+			require.Equal(t, expect.Title, spec["title"])
+		}
+		if expect.UID != "" {
+			require.Equal(t, expect.UID, dto.UID)
+			require.Equal(t, expect.UID, found.GetName())
+		}
+	}
+	return found
 }
