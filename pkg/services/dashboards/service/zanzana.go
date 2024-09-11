@@ -211,8 +211,12 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
-
 	query.Limit = queryLimit
+
+	if len(findRes) > maxListQueryLimit {
+		return dr.findDashboardsZanzanaList(ctx, query)
+	}
+
 	return dr.checkDashboards(ctx, query, findRes)
 }
 
