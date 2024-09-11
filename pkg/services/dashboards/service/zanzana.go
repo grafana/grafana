@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -170,7 +170,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 }
 
 func (dr *DashboardServiceImpl) listResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
-	res, err := dr.ac.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+	res, err := dr.ac.ListObjects(ctx, accesscontrol.ListObjectsRequest{
 		User:     query.SignedInUser.GetUID(),
 		Type:     resourceType,
 		Relation: "read",
@@ -187,7 +187,7 @@ func (dr *DashboardServiceImpl) listResources(ctx context.Context, query *dashbo
 	prefix := fmt.Sprintf("%s:%d-", resourceType, orgId)
 
 	resourceUIDs := make([]string, 0)
-	for _, d := range res.Objects {
+	for _, d := range res {
 		if uid, found := strings.CutPrefix(d, prefix); found {
 			resourceUIDs = append(resourceUIDs, uid)
 		}
@@ -234,19 +234,17 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 					objectType = zanzana.TypeFolder
 				}
 				object := zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10))
-				key := &openfgav1.CheckRequestTupleKey{
+				req := accesscontrol.CheckRequest{
 					User:     query.SignedInUser.GetUID(),
 					Relation: "read",
 					Object:   object,
 				}
 
-				checkRes, err := dr.ac.Check(ctx, &openfgav1.CheckRequest{
-					TupleKey: key,
-				})
+				allowed, err := dr.ac.Check(ctx, req)
 				if err != nil {
 					errChan <- err
 					dr.log.Error("error checking access", "error", err)
-				} else if checkRes.Allowed {
+				} else if allowed {
 					allowedResults <- d
 				}
 			}

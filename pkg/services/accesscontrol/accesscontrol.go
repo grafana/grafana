@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/grafana/authlib/claims"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -29,8 +28,8 @@ type AccessControl interface {
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
 
-	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
-	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
+	Check(ctx context.Context, req CheckRequest) (bool, error)
+	ListObjects(ctx context.Context, req ListObjectsRequest) ([]string, error)
 }
 
 type Service interface {
@@ -60,9 +59,6 @@ type Service interface {
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
 	// SyncUserRoles adds provided roles to user
 	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
-}
-
-type ZanzanaChecker interface {
 }
 
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/

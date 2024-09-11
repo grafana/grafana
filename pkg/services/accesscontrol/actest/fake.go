@@ -3,8 +3,6 @@ package actest
 import (
 	"context"
 
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -77,11 +75,11 @@ func (f FakeAccessControl) Evaluate(ctx context.Context, user identity.Requester
 func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 }
 
-func (f FakeAccessControl) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
-	return nil, nil
+func (f FakeAccessControl) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, error) {
+	return false, nil
 }
 
-func (f FakeAccessControl) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+func (f FakeAccessControl) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
 	return nil, nil
 }
 
