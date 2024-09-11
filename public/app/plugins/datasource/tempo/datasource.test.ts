@@ -75,7 +75,7 @@ describe('Tempo data source', () => {
     const range = {
       from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
       to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-      raw: { from: '15m', to: 'now' },
+      raw: { from: 'now-15m', to: 'now' },
     };
     const traceqlQuery = {
       targets: [{ refId: 'refid1', queryType: 'traceql', query: '{}' }],
@@ -112,7 +112,7 @@ describe('Tempo data source', () => {
       config.liveEnabled = true;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
       expect(request).toHaveBeenCalledTimes(0);
     });
 
@@ -120,7 +120,7 @@ describe('Tempo data source', () => {
       config.liveEnabled = false;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
       expect(request).toHaveBeenCalledTimes(1);
     });
 
@@ -128,8 +128,8 @@ describe('Tempo data source', () => {
       config.liveEnabled = false;
       const ds = new TempoDatasource(defaultSettings, templateSrv);
       await lastValueFrom(ds.query(traceqlSearchQuery as DataQueryRequest<TempoQuery>));
-      expect(handleStreamingSearch).toHaveBeenCalledTimes(2);
-      expect(request).toHaveBeenCalledTimes(2);
+      expect(handleStreamingSearch).toHaveBeenCalledTimes(1);
+      expect(request).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -170,6 +170,16 @@ describe('Tempo data source', () => {
             valueType: 'string',
           },
         ],
+        groupBy: [
+          {
+            id: 'groupBy1',
+            tag: '$interpolationVar',
+          },
+          {
+            id: 'groupBy2',
+            tag: '$interpolationVar',
+          },
+        ],
       };
     }
     let templateSrv: TemplateSrv;
@@ -202,6 +212,8 @@ describe('Tempo data source', () => {
       expect(queries[0].filters[0].value).toBe(textWithPipe);
       expect(queries[0].filters[1].value).toBe(text);
       expect(queries[0].filters[1].tag).toBe(text);
+      expect(queries[0].groupBy?.[0].tag).toBe(text);
+      expect(queries[0].groupBy?.[1].tag).toBe(text);
     });
 
     it('when applying template variables', async () => {
@@ -214,6 +226,8 @@ describe('Tempo data source', () => {
       expect(resp.filters[0].value).toBe(textWithPipe);
       expect(resp.filters[1].value).toBe(scopedText);
       expect(resp.filters[1].tag).toBe(scopedText);
+      expect(resp.groupBy?.[0].tag).toBe(scopedText);
+      expect(resp.groupBy?.[1].tag).toBe(scopedText);
     });
 
     it('when serviceMapQuery is an array', async () => {
@@ -351,9 +365,14 @@ describe('Tempo data source', () => {
   describe('test the testDatasource function', () => {
     it('should return a success msg if response.ok is true', async () => {
       mockObservable = () => of({ ok: true });
+      const handleStreamingSearch = jest
+        .spyOn(TempoDatasource.prototype, 'handleStreamingSearch')
+        .mockImplementation(() => of({ data: [] }));
+
       const ds = new TempoDatasource(defaultSettings);
       const response = await ds.testDatasource();
       expect(response.status).toBe('success');
+      expect(handleStreamingSearch).toHaveBeenCalled();
     });
   });
 
@@ -372,6 +391,12 @@ describe('Tempo data source', () => {
       jsonData: { traceQuery: { timeShiftEnabled: true, spanStartTimeShift: '2m', spanEndTimeShift: '4m' } },
     });
 
+    const range = {
+      from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+      to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+      raw: { from: 'now-15m', to: 'now' },
+    };
+
     const request = ds.traceIdQueryRequest(
       {
         requestId: 'test',
@@ -382,17 +407,17 @@ describe('Tempo data source', () => {
         timezone: '',
         app: '',
         startTime: 0,
-        range: {
-          from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
-          to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-          raw: { from: '15m', to: 'now' },
-        },
+        range,
       },
       [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
     );
 
-    expect(request.range.from.unix()).toBe(dateTime(new Date(2022, 8, 13, 15, 58, 0, 0)).unix());
-    expect(request.range.to.unix()).toBe(dateTime(new Date(2022, 8, 13, 16, 19, 0, 0)).unix());
+    expect(request.range.from.valueOf()).toBe(new Date(2022, 8, 13, 15, 58, 0, 0).valueOf());
+    expect(request.range.to.valueOf()).toBe(new Date(2022, 8, 13, 16, 19, 0, 0).valueOf());
+
+    // Making sure we don't modify the original range
+    expect(range.from.valueOf()).toBe(new Date(2022, 8, 13, 16, 0, 0, 0).valueOf());
+    expect(range.to.valueOf()).toBe(new Date(2022, 8, 13, 16, 15, 0, 0).valueOf());
   });
 
   it('should not include time shift when querying for traceID and time shift config is off', () => {
@@ -414,7 +439,7 @@ describe('Tempo data source', () => {
         range: {
           from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
           to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
-          raw: { from: '15m', to: 'now' },
+          raw: { from: 'now-15m', to: 'now' },
         },
       },
       [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
@@ -710,12 +735,14 @@ describe('Tempo service graph view', () => {
       '/actuator/health/**',
       '$type + [test]|HTTP POST - post',
       'server.cluster.local:9090^/sample.test(.*)?',
+      'test\\path',
     ];
     let escaped = getEscapedSpanNames(spanNames);
     expect(escaped).toEqual([
       '/actuator/health/\\\\*\\\\*',
       '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
       'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
+      'test\\\\\\\\path',
     ]);
   });
 
@@ -1241,6 +1268,9 @@ export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   jsonData: {
     nodeGraph: {
       enabled: true,
+    },
+    streamingEnabled: {
+      search: true,
     },
   },
   readOnly: false,

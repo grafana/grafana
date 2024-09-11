@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func TestService(t *testing.T) {
@@ -138,7 +138,7 @@ func TestDSQueryError(t *testing.T) {
 		cfg:          setting.NewCfg(),
 		dataService:  me,
 		pCtxProvider: pCtxProvider,
-		features:     &featuremgmt.FeatureManager{},
+		features:     featuremgmt.WithFeatures(),
 		tracer:       tracing.InitializeTracerForTest(),
 		metrics:      newMetrics(nil),
 	}

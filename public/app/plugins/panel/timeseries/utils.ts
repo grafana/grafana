@@ -14,6 +14,8 @@ import { nullToValue } from '@grafana/data/src/transformations/transformers/null
 import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
 import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
 
+import { HeatmapTooltip } from '../heatmap/panelcfg.gen';
+
 type ScaleKey = string;
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
@@ -263,6 +265,6 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
 }
 
-export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions) => {
+export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions | HeatmapTooltip) => {
   return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
 };

@@ -1,17 +1,14 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { Select, SelectCommonProps, Text, Stack } from '@grafana/ui';
+import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
-import {
-  RECEIVER_META_KEY,
-  RECEIVER_PLUGIN_META_KEY,
-  useContactPointsWithStatus,
-} from '../contact-points/useContactPoints';
+import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from '../contact-points/constants';
+import { useContactPointsWithStatus } from '../contact-points/useContactPoints';
 import { ReceiverConfigWithMetadata } from '../contact-points/utils';
 
 export const ContactPointSelector = (props: SelectCommonProps<string>) => {
-  const { contactPoints, isLoading, error } = useContactPointsWithStatus();
+  const { selectedAlertmanager } = useAlertmanager();
+  const { contactPoints, isLoading, error } = useContactPointsWithStatus({ alertmanager: selectedAlertmanager! });
 
   // TODO error handling
   if (error) {

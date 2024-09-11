@@ -163,7 +163,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       ticks: Object.assign(
         {
           show: true,
-          stroke: border?.show ? color ?? theme.colors.text.primary : gridColor,
+          stroke: border?.show ? (color ?? theme.colors.text.primary) : gridColor,
           width: 1 / devicePixelRatio,
           size: 4,
         },
@@ -231,7 +231,8 @@ export function formatTime(
   foundSpace: number,
   foundIncr: number
 ): string[] {
-  const timeZone = (self.axes[axisIdx] as any).timeZone;
+  const axis = self.axes[axisIdx];
+  const timeZone = 'timeZone' in axis && typeof axis.timeZone === 'string' ? axis.timeZone : undefined;
   const scale = self.scales.x;
   const range = (scale?.max ?? 0) - (scale?.min ?? 0);
   const yearRoundedToDay = Math.round(timeUnitSize.year / timeUnitSize.day) * timeUnitSize.day;

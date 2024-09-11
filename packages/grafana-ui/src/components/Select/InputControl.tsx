@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import { forwardRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -16,7 +16,7 @@ interface InputControlProps {
   innerProps: JSX.IntrinsicElements['div'];
 }
 
-export const InputControl = React.forwardRef<HTMLDivElement, React.PropsWithChildren<InputControlProps>>(
+export const InputControl = forwardRef<HTMLDivElement, React.PropsWithChildren<InputControlProps>>(
   function InputControl({ focused, invalid, disabled, children, innerProps, prefix, ...otherProps }, ref) {
     const styles = useStyles2(getInputControlStyles, invalid, !!prefix);
 

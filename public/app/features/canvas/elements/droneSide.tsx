@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, OneClickMode } from '@grafana/data';
 import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions';
@@ -92,7 +91,10 @@ export const droneSideItem: CanvasElementItem = {
       height: options?.placement?.height ?? 26,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
+    links: options?.links ?? [],
   }),
 
   // Called when data changes
@@ -120,6 +122,8 @@ export const droneSideItem: CanvasElementItem = {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   droneSide: css({
+    // TODO: figure out what styles to apply when prefers-reduced-motion is set
+    // eslint-disable-next-line @grafana/no-unreduced-motion
     transition: 'transform 0.4s',
   }),
 });

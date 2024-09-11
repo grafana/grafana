@@ -1,7 +1,11 @@
-﻿import React, { PropsWithChildren, useLayoutEffect, useRef } from 'react';
+import { css, cx } from '@emotion/css';
+import { PropsWithChildren, useLayoutEffect, useRef } from 'react';
+import * as React from 'react';
 import ReactDOM from 'react-dom';
 
-import { useTheme2 } from '../../themes';
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2, useTheme2 } from '../../themes';
 
 interface Props {
   className?: string;
@@ -9,7 +13,7 @@ interface Props {
   forwardedRef?: React.ForwardedRef<HTMLDivElement>;
 }
 
-export function Portal(props: PropsWithChildren<Props>): JSX.Element {
+export function Portal(props: PropsWithChildren<Props>) {
   const { children, className, root, forwardedRef } = props;
   const theme = useTheme2();
   const node = useRef<HTMLDivElement | null>(null);
@@ -46,8 +50,26 @@ export function getPortalContainer() {
 
 /** @internal */
 export function PortalContainer() {
-  return <div id="grafana-portal-container" />;
+  const styles = useStyles2(getStyles);
+  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
+  return (
+    <div
+      id="grafana-portal-container"
+      className={cx({
+        [styles.grafanaPortalContainer]: isBodyScrolling,
+      })}
+    />
+  );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  grafanaPortalContainer: css({
+    position: 'fixed',
+    top: 0,
+    width: '100%',
+    zIndex: theme.zIndex.portal,
+  }),
+});
 
 export const RefForwardingPortal = React.forwardRef<HTMLDivElement, Props>((props, ref) => {
   return <Portal {...props} forwardedRef={ref} />;

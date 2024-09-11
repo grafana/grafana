@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';

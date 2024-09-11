@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/folder"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -29,7 +30,8 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 		UID:   util.GenerateShortUID(),
 		Title: "Folder" + util.GenerateShortUID(),
 	}
-	rules := models.GenerateAlertRules(5, models.AlertRuleGen(models.WithOrgID(orgID), models.WithNamespace(folder)))
+	gen := models.RuleGen
+	rules := gen.With(gen.WithOrgID(orgID), gen.WithNamespace(folder)).GenerateManyRef(5)
 
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	db := fakes.NewRuleStore(t)
@@ -61,12 +63,14 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid backend", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "invalid-backend",
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.ErrorContains(t, err, "unrecognized")
 	})
@@ -74,13 +78,15 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid multi-backend primary", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled:      true,
 			Backend:      "multiple",
 			MultiPrimary: "invalid-backend",
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -89,14 +95,16 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("fail initialization if invalid multi-backend secondary", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled:          true,
 			Backend:          "multiple",
 			MultiPrimary:     "annotations",
 			MultiSecondaries: []string{"annotations", "invalid-backend"},
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		_, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.ErrorContains(t, err, "multi-backend target")
 		require.ErrorContains(t, err, "unrecognized")
@@ -105,6 +113,7 @@ func TestConfigureHistorianBackend(t *testing.T) {
 	t.Run("do not fail initialization if pinging Loki fails", func(t *testing.T) {
 		met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "loki",
@@ -112,8 +121,9 @@ func TestConfigureHistorianBackend(t *testing.T) {
 			LokiReadURL:  "http://gone.invalid",
 			LokiWriteURL: "http://gone.invalid",
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -123,12 +133,14 @@ func TestConfigureHistorianBackend(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
 		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: true,
 			Backend: "annotations",
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)
@@ -145,11 +157,13 @@ grafana_alerting_state_history_info{backend="annotations"} 1
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
 		logger := log.NewNopLogger()
+		tracer := tracing.InitializeTracerForTest()
 		cfg := setting.UnifiedAlertingStateHistorySettings{
 			Enabled: false,
 		}
+		ac := &acfakes.FakeRuleService{}
 
-		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger)
+		h, err := configureHistorianBackend(context.Background(), cfg, nil, nil, nil, met, logger, tracer, ac)
 
 		require.NotNil(t, h)
 		require.NoError(t, err)

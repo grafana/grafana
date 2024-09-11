@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
@@ -76,6 +75,7 @@ it('creates new visualization when clicked Add visualization', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
   expect(locationService.partial).toHaveBeenCalled();
+  expect(locationService.partial).toHaveBeenCalledWith({ editPanel: undefined, firstPanel: true });
   expect(onCreateNewPanel).toHaveBeenCalled();
 });
 

@@ -8,7 +8,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -23,12 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -677,12 +676,12 @@ const (
 
 func TestGetQueryDataResponse(t *testing.T) {
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	service, sqlStore := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
+	service, sqlStore, _ := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 	fakeQueryService := &query.FakeQueryService{}
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
 	service.QueryDataService = fakeQueryService
 
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, service.cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	publicDashboardQueryDTO := PublicDashboardQueryDTO{
@@ -739,7 +738,7 @@ func TestFindAnnotations(t *testing.T) {
 			Return(&PublicDashboard{Uid: "uid1", IsEnabled: true}, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboards.NewDashboard("dash1"), nil)
-		service, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, nil)
+		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, nil)
 
 		reqDTO := AnnotationsQueryDTO{
 			From: 1,
@@ -792,7 +791,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
-		service, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -849,7 +848,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
-		service, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -918,7 +917,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 
-		service, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
@@ -958,7 +957,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
-		service, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, nil)
+		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, nil)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -988,7 +987,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
-		service, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, nil)
+		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, nil)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -1020,7 +1019,7 @@ func TestFindAnnotations(t *testing.T) {
 		fakeDashboardService := &dashboards.FakeDashboardService{}
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 
-		service, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -1061,7 +1060,7 @@ func TestFindAnnotations(t *testing.T) {
 			},
 		}, nil).Maybe()
 
-		service, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
+		service, _, _ := newPublicDashboardServiceImpl(t, fakeStore, fakeDashboardService, annotationsRepo)
 
 		items, err := service.FindAnnotations(context.Background(), AnnotationsQueryDTO{}, "abc123")
 
@@ -1084,8 +1083,8 @@ func TestFindAnnotations(t *testing.T) {
 }
 
 func TestGetMetricRequest(t *testing.T) {
-	service, sqlStore := newPublicDashboardServiceImpl(t, nil, nil, nil)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, nil, nil)
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 
@@ -1165,9 +1164,9 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 
 func TestBuildMetricRequest(t *testing.T) {
 	fakeDashboardService := &dashboards.FakeDashboardService{}
-	service, sqlStore := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
+	service, sqlStore, cfg := newPublicDashboardServiceImpl(t, nil, fakeDashboardService, nil)
 
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore.DB()), quotatest.New(false, nil))
 	require.NoError(t, err)
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
@@ -1320,8 +1319,8 @@ func TestBuildMetricRequest(t *testing.T) {
 }
 
 func TestBuildAnonymousUser(t *testing.T) {
-	sqlStore := db.InitTestDB(t)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	sqlStore, cfg := db.InitTestReplDBWithCfg(t)
+	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, "", true, []map[string]interface{}{}, nil)
 	features := featuremgmt.WithFeatures()
@@ -1616,8 +1615,8 @@ func TestBuildTimeSettings(t *testing.T) {
 	fakeNow := time.Date(2018, 12, 9, 20, 30, 0, 0, fakeTimezone)
 
 	// stub time range construction to have a fixed time.Now and be able to tests relative time ranges
-	NewDataTimeRange = func(from, to string) legacydata.DataTimeRange {
-		return legacydata.DataTimeRange{
+	NewTimeRange = func(from, to string) gtime.TimeRange {
+		return gtime.TimeRange{
 			From: from,
 			To:   to,
 			Now:  fakeNow,

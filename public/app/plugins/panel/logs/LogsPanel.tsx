@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
 
 import {
   CoreApp,
@@ -29,15 +30,41 @@ import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
 import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
 
-import { Options } from './types';
+import {
+  isIsFilterLabelActive,
+  isOnClickFilterLabel,
+  isOnClickFilterOutLabel,
+  isOnClickFilterOutString,
+  isOnClickFilterString,
+  Options,
+} from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
 
-interface LogsPanelProps extends PanelProps<Options> {}
+interface LogsPanelProps extends PanelProps<Options> {
+  /**
+   * Adds a key => value filter to the query referenced by the provided DataFrame refId. Used by Log details and Logs table.
+   * onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+   *
+   * Adds a negative key => value filter to the query referenced by the provided DataFrame refId. Used by Log details and Logs table.
+   * onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+   *
+   * Adds a string filter to the query referenced by the provided DataFrame refId. Used by the Logs popover menu.
+   * onClickFilterOutString?: (value: string, refId?: string) => void;
+   *
+   * Removes a string filter to the query referenced by the provided DataFrame refId. Used by the Logs popover menu.
+   * onClickFilterString?: (value: string, refId?: string) => void;
+   *
+   * Determines if a given key => value filter is active in a given query. Used by Log details.
+   * isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+   */
+}
 interface LogsPermalinkUrlState {
   logs?: {
     id?: string;
   };
 }
+
+const noCommonLabels: Labels = {};
 
 export const LogsPanel = ({
   data,
@@ -53,6 +80,11 @@ export const LogsPanel = ({
     dedupStrategy,
     enableLogDetails,
     showLogContextToggle,
+    onClickFilterLabel,
+    onClickFilterOutLabel,
+    onClickFilterOutString,
+    onClickFilterString,
+    isFilterLabelActive,
   },
   id,
 }: LogsPanelProps) => {
@@ -66,7 +98,7 @@ export const LogsPanel = ({
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
   let closeCallback = useRef<() => void>();
 
-  const { eventBus } = usePanelContext();
+  const { eventBus, onAddAdHocFilter } = usePanelContext();
   const onLogRowHover = useCallback(
     (row?: LogRowModel) => {
       if (!row) {
@@ -218,6 +250,28 @@ export const LogsPanel = ({
     [scrollElement]
   );
 
+  const handleOnClickFilterLabel = useCallback(
+    (key: string, value: string) => {
+      onAddAdHocFilter?.({
+        key,
+        value,
+        operator: '=',
+      });
+    },
+    [onAddAdHocFilter]
+  );
+
+  const handleOnClickFilterOutLabel = useCallback(
+    (key: string, value: string) => {
+      onAddAdHocFilter?.({
+        key,
+        value,
+        operator: '!=',
+      });
+    },
+    [onAddAdHocFilter]
+  );
+
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
@@ -225,9 +279,16 @@ export const LogsPanel = ({
   const renderCommonLabels = () => (
     <div className={cx(style.labelContainer, isAscending && style.labelContainerAscending)}>
       <span className={style.label}>Common labels:</span>
-      <LogLabels labels={commonLabels ? (commonLabels.value as Labels) : { labels: '(no common labels)' }} />
+      <LogLabels
+        labels={typeof commonLabels?.value === 'object' ? commonLabels?.value : noCommonLabels}
+        emptyMessage="(no common labels)"
+      />
     </div>
   );
+
+  // Passing callbacks control the display of the filtering buttons. We want to pass it only if onAddAdHocFilter is defined.
+  const defaultOnClickFilterLabel = onAddAdHocFilter ? handleOnClickFilterLabel : undefined;
+  const defaultOnClickFilterOutLabel = onAddAdHocFilter ? handleOnClickFilterOutLabel : undefined;
 
   return (
     <>
@@ -270,6 +331,17 @@ export const LogsPanel = ({
             onLogRowHover={onLogRowHover}
             app={CoreApp.Dashboard}
             onOpenContext={onOpenContext}
+            onClickFilterLabel={
+              isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
+            }
+            onClickFilterOutLabel={
+              isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel
+            }
+            onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
+            onClickFilterOutString={
+              isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
+            }
+            isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
           />
           {showCommonLabels && isAscending && renderCommonLabels()}
         </div>

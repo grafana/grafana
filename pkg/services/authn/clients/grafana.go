@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/mail"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -104,12 +105,12 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 		return nil, errInvalidPassword.Errorf("invalid password")
 	}
 
-	signedInUser, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{OrgID: r.OrgID, UserID: usr.ID})
-	if err != nil {
-		return nil, err
-	}
-
-	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: true}, login.PasswordAuthModule), nil
+	return &authn.Identity{
+		ID:              identity.NewTypedID(identity.TypeUser, usr.ID),
+		OrgID:           r.OrgID,
+		ClientParams:    authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
+		AuthenticatedBy: login.PasswordAuthModule,
+	}, nil
 }
 
 func comparePassword(password, salt, hash string) bool {

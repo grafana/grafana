@@ -1,4 +1,4 @@
-import React, { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 
 import { DataFrame, SelectableValue, standardTransformersRegistry } from '@grafana/data';
 import { IconButton } from '@grafana/ui';

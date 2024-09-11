@@ -10,11 +10,19 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "11.0.0";
+export const pluginVersion = "11.2.0";
 
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
   enableLogDetails: boolean;
+  isFilterLabelActive?: unknown;
+  /**
+   * TODO: figure out how to define callbacks
+   */
+  onClickFilterLabel?: unknown;
+  onClickFilterOutLabel?: unknown;
+  onClickFilterOutString?: unknown;
+  onClickFilterString?: unknown;
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
   showLabels: boolean;

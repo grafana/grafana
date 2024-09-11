@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -47,14 +47,9 @@ func (api *API) getDashboardHelper(ctx context.Context, orgID int64, id int64, u
 }
 
 func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
-		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
-	}
-
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Invalid user ID", err)
+		return response.Error(http.StatusBadRequest, "Only users and service accounts get starred dashboards", nil)
 	}
 
 	query := star.GetUserStarsQuery{
@@ -101,17 +96,12 @@ func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (api *API) StarDashboard(c *contextmodel.ReqContext) response.Response {
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
-	userID, err := identity.IntIdentifier(namespace, identifier)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Invalid user ID", err)
-	}
-	idString := web.Params(c.Req)[":id"]
-	id, err := strconv.ParseInt(idString, 10, 64)
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
@@ -146,18 +136,12 @@ func (api *API) StarDashboardByUID(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
 		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
-	userID, err := identity.IntIdentifier(namespace, identifier)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Invalid user ID", err)
-	}
-
 	dash, rsp := api.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
-
 	if rsp != nil {
 		return rsp
 	}
@@ -193,14 +177,9 @@ func (api *API) UnstarDashboard(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
-		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
-	}
-
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Invalid user ID", err)
+		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
 	cmd := star.UnstarDashboardCommand{UserID: userID, DashboardID: id}
@@ -233,14 +212,9 @@ func (api *API) UnstarDashboardByUID(c *contextmodel.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceServiceAccount {
-		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
-	}
-
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Invalid user ID", err)
+		return response.Error(http.StatusBadRequest, "Only users and service accounts can star dashboards", nil)
 	}
 
 	dash, rsp := api.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)

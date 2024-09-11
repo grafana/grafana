@@ -2,6 +2,10 @@ package setting
 
 import "time"
 
+const (
+	extJWTAccessTokenExpectAudience = "grafana"
+)
+
 type AuthJWTSettings struct {
 	// JWT Auth
 	Enabled                 bool
@@ -23,6 +27,24 @@ type AuthJWTSettings struct {
 	GroupsAttributePath     string
 	EmailAttributePath      string
 	UsernameAttributePath   string
+}
+
+type ExtJWTSettings struct {
+	Enabled      bool
+	ExpectIssuer string
+	JWKSUrl      string
+	Audiences    []string
+}
+
+func (cfg *Cfg) readAuthExtJWTSettings() {
+	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
+	jwtSettings := ExtJWTSettings{}
+	jwtSettings.Enabled = authExtendedJWT.Key("enabled").MustBool(false)
+	jwtSettings.JWKSUrl = authExtendedJWT.Key("jwks_url").MustString("")
+	// for Grafana, this is hard coded, but we leave it as a configurable param for other use-cases
+	jwtSettings.Audiences = []string{extJWTAccessTokenExpectAudience}
+
+	cfg.ExtJWTAuth = jwtSettings
 }
 
 func (cfg *Cfg) readAuthJWTSettings() {

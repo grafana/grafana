@@ -126,7 +126,8 @@ func Test_getOrCreate(t *testing.T) {
 	l := log.New("test")
 	c := newCache()
 
-	generateRule := models.AlertRuleGen(models.WithNotEmptyLabels(5, "rule-"))
+	gen := models.RuleGen
+	generateRule := gen.With(gen.WithNotEmptyLabels(5, "rule-")).GenerateRef
 
 	t.Run("should combine all labels", func(t *testing.T) {
 		rule := generateRule()
@@ -235,34 +236,6 @@ func Test_getOrCreate(t *testing.T) {
 		for key, expected := range result.Instance {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
-	})
-
-	t.Run("expected Reduce and Math expression values", func(t *testing.T) {
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-			Values: map[string]eval.NumberValueCapture{
-				"A": {Var: "A", Value: util.Pointer(1.0)},
-				"B": {Var: "B", Value: util.Pointer(2.0)},
-			},
-		}
-		rule := generateRule()
-
-		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
-		assert.Equal(t, map[string]float64{"A": 1, "B": 2}, state.Values)
-	})
-
-	t.Run("expected Classic Condition values", func(t *testing.T) {
-		result := eval.Result{
-			Instance: models.GenerateAlertLabels(5, "result-"),
-			Values: map[string]eval.NumberValueCapture{
-				"B0": {Var: "B", Value: util.Pointer(1.0)},
-				"B1": {Var: "B", Value: util.Pointer(2.0)},
-			},
-		}
-		rule := generateRule()
-
-		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
-		assert.Equal(t, map[string]float64{"B0": 1, "B1": 2}, state.Values)
 	})
 
 	t.Run("when result labels collide with system labels from LabelsUserCannotSpecify", func(t *testing.T) {

@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 
 import { Collapse, Field, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
@@ -87,7 +87,7 @@ export const AmRootRouteForm = ({
       </Field>
       <Field
         label="Group by"
-        description="Group alerts when you receive a notification based on labels."
+        description="Combine multiple alerts into a single notification by grouping them by the same label values."
         data-testid="am-group-select"
       >
         <Controller
@@ -119,7 +119,7 @@ export const AmRootRouteForm = ({
         <div className={styles.timingFormContainer}>
           <Field
             label="Group wait"
-            description="The waiting time until the initial notification is sent for a new group created by an incoming alert. Default 30 seconds."
+            description="The waiting time before sending the first notification for a new group of alerts. Default 30 seconds."
             invalid={!!errors.groupWaitValue}
             error={errors.groupWaitValue?.message}
             data-testid="am-group-wait"
@@ -133,7 +133,7 @@ export const AmRootRouteForm = ({
           </Field>
           <Field
             label="Group interval"
-            description="The waiting time to send a batch of new alerts for that group after the first notification was sent. Default 5 minutes."
+            description="The wait time before sending a notification about changes in the alert group after the first notification has been sent. Default is 5 minutes."
             invalid={!!errors.groupIntervalValue}
             error={errors.groupIntervalValue?.message}
             data-testid="am-group-interval"
@@ -147,7 +147,7 @@ export const AmRootRouteForm = ({
           </Field>
           <Field
             label="Repeat interval"
-            description="The waiting time to resend an alert after they have successfully been sent. Default 4 hours. Should be a multiple of Group interval."
+            description="The wait time before resending a notification that has already been sent successfully. Default is 4 hours. Should be a multiple of Group interval."
             invalid={!!errors.repeatIntervalValue}
             error={errors.repeatIntervalValue?.message}
             data-testid="am-repeat-interval"

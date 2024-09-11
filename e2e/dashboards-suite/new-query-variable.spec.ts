@@ -108,7 +108,7 @@ describe('Variables - Query - Add variable', () => {
       .should('have.length', 4)
       .eq(3)
       .within(() => {
-        cy.get('.variable-link-wrapper').should('be.visible').click();
+        e2e.components.Variables.variableLinkWrapper().should('be.visible').click();
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {
@@ -168,7 +168,7 @@ describe('Variables - Query - Add variable', () => {
       .should('have.length', 4)
       .eq(3)
       .within(() => {
-        cy.get('.variable-link-wrapper').should('be.visible').click();
+        e2e.components.Variables.variableLinkWrapper().should('be.visible').click();
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -39,6 +40,8 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const styles = useStyles2(getStyles);
   const [searchState, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
+  const location = useLocation();
+  const search = useMemo(() => new URLSearchParams(location.search), [location.search]);
 
   useEffect(() => {
     stateManager.initStateFromUrl(folderUID);
@@ -51,6 +54,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       })
     );
   }, [dispatch, folderUID, stateManager]);
+
+  // Trigger search when "starred" query param changes
+  useEffect(() => {
+    stateManager.onSetStarred(search.has('starred'));
+  }, [search, stateManager]);
 
   useEffect(() => {
     // Clear the search results when we leave SearchView to prevent old results flashing
@@ -122,20 +130,34 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       }
     >
       <Page.Contents className={styles.pageContents}>
-        <FilterInput
-          placeholder={getSearchPlaceholder(searchState.includePanels)}
-          value={searchState.query}
-          escapeRegex={false}
-          onChange={(e) => stateManager.onQueryChange(e)}
-        />
+        <div>
+          <FilterInput
+            placeholder={getSearchPlaceholder(searchState.includePanels)}
+            value={searchState.query}
+            escapeRegex={false}
+            onChange={(e) => stateManager.onQueryChange(e)}
+          />
+        </div>
 
-        {hasSelection ? <BrowseActions /> : <BrowseFilters />}
+        {hasSelection ? (
+          <BrowseActions />
+        ) : (
+          <div className={styles.filters}>
+            <BrowseFilters />
+          </div>
+        )}
 
         <div className={styles.subView}>
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView canSelect={canSelect} width={width} height={height} />
+                <SearchView
+                  canSelect={canSelect}
+                  width={width}
+                  height={height}
+                  searchState={searchState}
+                  searchStateManager={stateManager}
+                />
               ) : (
                 <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
               )
@@ -149,15 +171,23 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pageContents: css({
-    display: 'grid',
-    gridTemplateRows: 'auto auto 1fr',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
     height: '100%',
-    rowGap: theme.spacing(1),
   }),
 
   // AutoSizer needs an element to measure the full height available
   subView: css({
     height: '100%',
+  }),
+
+  filters: css({
+    display: 'none',
+
+    [theme.breakpoints.up('md')]: {
+      display: 'block',
+    },
   }),
 });
 

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -13,8 +12,8 @@ export const ActionButton = ({ className, ...restProps }: Props) => {
 };
 
 export const getStyle = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    height: 24px;
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
+  wrapper: css({
+    height: '24px',
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });

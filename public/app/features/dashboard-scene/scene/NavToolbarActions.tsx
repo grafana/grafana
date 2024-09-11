@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
+import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import {
@@ -17,12 +18,15 @@ import {
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
-import { PanelEditor } from '../panel-edit/PanelEditor';
+import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
+import ExportButton from '../sharing/ExportButton/ExportButton';
+import ShareButton from '../sharing/ShareButton/ShareButton';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
@@ -36,7 +40,9 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const actions = <ToolbarActions dashboard={dashboard} />;
+  const id = useId();
+
+  const actions = <ToolbarActions dashboard={dashboard} key={id} />;
   return <AppChromeUpdate actions={actions} />;
 });
 
@@ -46,17 +52,7 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const {
-    isEditing,
-    viewPanelScene,
-    isDirty,
-    uid,
-    meta,
-    editview,
-    editPanel,
-    editable,
-    hasCopiedPanel: copiedPanel,
-  } = dashboard.useState();
+  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, editable } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const [isAddPanelMenuOpen, setIsAddPanelMenuOpen] = useState(false);
 
@@ -67,7 +63,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = useVizManagerDirty(editPanel);
   const isEditingLibraryPanel = useEditingLibraryPanel(editPanel);
-  const hasCopiedPanel = Boolean(copiedPanel);
+  const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
   const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
@@ -138,7 +134,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: meta.isSnapshot && !isEditing,
+    condition: meta.isSnapshot && !meta.dashboardNotFound && !isEditing,
     render: () => (
       <GoToSnapshotOriginButton
         key="go-to-snapshot-origin"
@@ -169,9 +165,9 @@ export function ToolbarActions({ dashboard }: Props) {
               testId={selectors.pages.AddDashboard.itemButton('Add new visualization menu item')}
               label={t('dashboard.add-menu.visualization', 'Visualization')}
               onClick={() => {
-                const id = dashboard.onCreateNewPanel();
+                const vizPanel = dashboard.onCreateNewPanel();
                 DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
-                locationService.partial({ editPanel: id });
+                dashboard.setState({ editPanel: buildPanelEditScene(vizPanel, true) });
               }}
             />
             <Menu.Item
@@ -305,9 +301,10 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
+  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && !isEditing && !meta.isSnapshot && !isPlaying,
+    condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
     render: () => (
       <Button
         key="share-dashboard-button"
@@ -317,7 +314,7 @@ export function ToolbarActions({ dashboard }: Props) {
         fill="outline"
         onClick={() => {
           DashboardInteractions.toolbarShareClick();
-          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
+          dashboard.showModal(new ShareModal({}));
         }}
         data-testid={selectors.components.NavToolbar.shareDashboard}
       >
@@ -337,7 +334,7 @@ export function ToolbarActions({ dashboard }: Props) {
         tooltip="Enter edit mode"
         key="edit"
         className={styles.buttonWithExtraMargin}
-        variant="primary"
+        variant={config.featureToggles.newDashboardSharingComponent ? 'secondary' : 'primary'}
         size="sm"
         data-testid={selectors.components.NavToolbar.editDashboard.editButton}
       >
@@ -365,6 +362,18 @@ export function ToolbarActions({ dashboard }: Props) {
         Make editable
       </Button>
     ),
+  });
+
+  toolbarActions.push({
+    group: 'new-share-dashboard-buttons',
+    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
+  });
+
+  toolbarActions.push({
+    group: 'new-share-dashboard-buttons',
+    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+    render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
   });
 
   toolbarActions.push({
@@ -407,11 +416,11 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !meta.isNew && !isViewingPanel,
+    condition: isEditingPanel && !isEditingLibraryPanel && !editview && !isViewingPanel,
     render: () => (
       <Button
         onClick={editPanel?.onDiscard}
-        tooltip="Discard panel changes"
+        tooltip={editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
         size="sm"
         disabled={!isEditedPanelDirty || !isDirty}
         key="discard"
@@ -419,7 +428,7 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="destructive"
         data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
       >
-        Discard panel changes
+        {editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
       </Button>
     ),
   });
@@ -487,7 +496,6 @@ export function ToolbarActions({ dashboard }: Props) {
         return (
           <Button
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
             className={styles.buttonWithExtraMargin}
@@ -507,7 +515,6 @@ export function ToolbarActions({ dashboard }: Props) {
         return (
           <Button
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
             className={styles.buttonWithExtraMargin}
@@ -528,7 +535,6 @@ export function ToolbarActions({ dashboard }: Props) {
             label="Save"
             icon="save"
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
           />
@@ -536,7 +542,6 @@ export function ToolbarActions({ dashboard }: Props) {
             label="Save as copy"
             icon="copy"
             onClick={() => {
-              DashboardInteractions.toolbarSaveAsClick();
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
           />
@@ -547,7 +552,6 @@ export function ToolbarActions({ dashboard }: Props) {
         <ButtonGroup className={styles.buttonWithExtraMargin} key="save">
           <Button
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
             tooltip="Save changes"
@@ -558,7 +562,12 @@ export function ToolbarActions({ dashboard }: Props) {
             Save dashboard
           </Button>
           <Dropdown overlay={menu}>
-            <Button icon="angle-down" variant={isDirty ? 'primary' : 'secondary'} size="sm" />
+            <Button
+              aria-label="More save options"
+              icon="angle-down"
+              variant={isDirty ? 'primary' : 'secondary'}
+              size="sm"
+            />
           </Dropdown>
         </ButtonGroup>
       );

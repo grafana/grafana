@@ -28,4 +28,3 @@ by the `devenv` target.
 - [openldap](./openldap)
 - [openldap-multiple](./openldap-multiple)
 - [prometheus_basic_auth_proxy](./prometheus_basic_auth_proxy)
-- [saml](./saml)

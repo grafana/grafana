@@ -12,13 +12,19 @@ keywords:
 menuTitle: Configure Loki
 title: Configure the Loki data source
 weight: 200
+refs:
+  log-details:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
 ---
 
 # Loki data source
 
 Grafana ships with built-in support for [Loki](/docs/loki/latest/), an open-source log aggregation system by Grafana Labs. If you are new to Loki the following documentation will help you get started:
 
-- [Getting started](/docs/loki/latest/getting-started/)
+- [Getting started](/docs/loki/latest/get-started/)
 - [Best practices](/docs/loki/latest/best-practices/#best-practices)
 
 ## Configure the Loki data source
@@ -94,7 +100,7 @@ To troubleshoot configuration and other issues, check the log file located at `/
 Derived Fields are used to extract new fields from your logs and create a link from the value of the field.
 
 For example, you can link to your tracing backend directly from your logs, or link to a user profile page if the log line contains a corresponding `userId`.
-These links appear in the [log details][].
+These links appear in the [log details](ref:log-details).
 
 You can add multiple derived fields.
 
@@ -132,8 +138,3 @@ Select **Show example log message** to display a text area where you can enter a
 The new field with the link shown in log details:
 
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
-
-{{% docs/reference %}}
-[log details]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#labels-and-detected-fields"
-[log details]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#labels-and-detected-fields"
-{{% /docs/reference %}}

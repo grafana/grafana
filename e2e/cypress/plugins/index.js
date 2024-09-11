@@ -4,11 +4,16 @@ const path = require('path');
 const benchmarkPlugin = require('./benchmark');
 const extendConfig = require('./extendConfig');
 const readProvisions = require('./readProvisions');
+const smtpTester = require('./smtpTester');
 const typescriptPreprocessor = require('./typescriptPreprocessor');
 
 module.exports = (on, config) => {
   if (config.env['BENCHMARK_PLUGIN_ENABLED'] === true) {
     benchmarkPlugin.initialize(on, config);
+  }
+
+  if (config.env['SMTP_PLUGIN_ENABLED'] === true) {
+    smtpTester.initialize(on, config);
   }
 
   on('file:preprocessor', typescriptPreprocessor);

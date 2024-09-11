@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LibraryPanel } from '@grafana/schema';
@@ -35,7 +35,7 @@ export function ImportDashboardLibraryPanelsList({
             const libraryPanelIndex = `elements[${index}]`;
             const libraryPanel =
               input.state === LibraryPanelInputState.New
-                ? { ...input.model, meta: { ...input.model.meta, folderName: folderName ?? 'General' } }
+                ? { ...input.model, meta: { ...input.model.meta, folderName: folderName ?? 'Dashboards' } }
                 : { ...input.model };
 
             return (

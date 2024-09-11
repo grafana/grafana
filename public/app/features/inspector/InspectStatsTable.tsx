@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import {
   FieldType,
@@ -27,7 +26,7 @@ export const InspectStatsTable = ({ timeZone, name, stats }: InspectStatsTablePr
 
   return (
     <div className={styles.wrapper}>
-      <div className="section-heading">{name}</div>
+      <div className={styles.heading}>{name}</div>
       <table className="filter-table width-30">
         <tbody>
           {stats.map((stat, index) => {
@@ -57,10 +56,14 @@ function formatStat(stat: QueryResultMetaStat, timeZone: TimeZone, theme: Grafan
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    padding-bottom: ${theme.spacing(2)};
-  `,
-  cell: css`
-    text-align: right;
-  `,
+  heading: css({
+    fontSize: theme.typography.body.fontSize,
+    marginBottom: theme.spacing(1),
+  }),
+  wrapper: css({
+    paddingBottom: theme.spacing(2),
+  }),
+  cell: css({
+    textAlign: 'right',
+  }),
 });

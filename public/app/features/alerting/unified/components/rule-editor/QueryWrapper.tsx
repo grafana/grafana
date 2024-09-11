@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
+import * as React from 'react';
 
 import {
   CoreApp,
@@ -164,14 +165,7 @@ export const QueryWrapper = ({
           hideHideQueryButton={true}
         />
       </div>
-      {showVizualisation && (
-        <VizWrapper
-          data={data}
-          thresholds={thresholds}
-          thresholdsType={thresholdsType}
-          onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
-        />
-      )}
+      {showVizualisation && <VizWrapper data={data} thresholds={thresholds} thresholdsType={thresholdsType} />}
     </Stack>
   );
 };
@@ -264,22 +258,22 @@ export function MinIntervalOption({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    label: AlertingQueryWrapper;
-    margin-bottom: ${theme.spacing(1)};
-    border: 1px solid ${theme.colors.border.weak};
-    border-radius: ${theme.shape.radius.default};
+  wrapper: css({
+    label: 'AlertingQueryWrapper',
+    marginBottom: theme.spacing(1),
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
 
-    button {
-      overflow: visible;
-    }
-  `,
-  dsTooltip: css`
-    display: flex;
-    align-items: center;
-    &:hover {
-      opacity: 0.85;
-      cursor: pointer;
-    }
-  `,
+    button: {
+      overflow: 'visible',
+    },
+  }),
+  dsTooltip: css({
+    display: 'flex',
+    alignItems: 'center',
+    '&:hover': {
+      opacity: 0.85,
+      cursor: 'pointer',
+    },
+  }),
 });

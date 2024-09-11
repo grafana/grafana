@@ -63,7 +63,7 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
   const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};
 
   if (options.updateQuery) {
-    for (const key of Object.keys(options.updateQuery)) {
+    for (const key in options.updateQuery) {
       // removing params with null | undefined
       if (options.updateQuery[key] === null || options.updateQuery[key] === undefined) {
         delete params[key];
@@ -83,11 +83,14 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 }
 
 export function getViewPanelUrl(vizPanel: VizPanel) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { viewPanel: vizPanel.state.key });
+  return locationUtil.getUrlForPartial(locationService.getLocation(), {
+    viewPanel: vizPanel.state.key,
+    editPanel: undefined,
+  });
 }
 
 export function getEditPanelUrl(panelId: number) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId });
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });
 }
 
 export function getInspectUrl(vizPanel: VizPanel, inspectTab?: InspectTab) {

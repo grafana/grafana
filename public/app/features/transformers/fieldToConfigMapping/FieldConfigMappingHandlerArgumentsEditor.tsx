@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { ColorPicker, Input } from '@grafana/ui';
 
 import { HandlerArguments } from './fieldToConfigMapping';

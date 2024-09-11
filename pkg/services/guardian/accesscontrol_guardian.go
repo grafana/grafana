@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -309,13 +309,12 @@ func (a *accessControlFolderGuardian) CanCreate(folderID int64, isFolder bool) (
 
 func (a *accessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
-	namespaceID, userID := a.user.GetNamespacedID()
 	if err != nil {
 		id := 0
 		if a.dashboard != nil {
 			id = int(a.dashboard.ID)
 		}
-		a.log.Debug("Failed to evaluate access control to dashboard", "error", err, "namespaceID", namespaceID, "userId", userID, "id", id)
+		a.log.Debug("Failed to evaluate access control to dashboard", "error", err, "identity", a.user.GetID(), "id", id)
 	}
 
 	if !ok && err == nil {
@@ -323,7 +322,7 @@ func (a *accessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evalua
 		if a.dashboard != nil {
 			id = int(a.dashboard.ID)
 		}
-		a.log.Debug("Access denied to dashboard", "namespaceID", namespaceID, "userId", userID, "id", id, "permissions", evaluator.GoString())
+		a.log.Debug("Access denied to dashboard", "identity", a.user.GetID(), "id", id, "permissions", evaluator.GoString())
 	}
 
 	return ok, err
@@ -331,7 +330,6 @@ func (a *accessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evalua
 
 func (a *accessControlFolderGuardian) evaluate(evaluator accesscontrol.Evaluator) (bool, error) {
 	ok, err := a.ac.Evaluate(a.ctx, a.user, evaluator)
-	namespaceID, userID := a.user.GetNamespacedID()
 	if err != nil {
 		uid := ""
 		orgID := 0
@@ -339,7 +337,7 @@ func (a *accessControlFolderGuardian) evaluate(evaluator accesscontrol.Evaluator
 			uid = a.folder.UID
 			orgID = int(a.folder.OrgID)
 		}
-		a.log.Debug("Failed to evaluate access control to folder", "error", err, "namespaceID", namespaceID, "userId", userID, "orgID", orgID, "uid", uid)
+		a.log.Debug("Failed to evaluate access control to folder", "error", err, "identity", a.user.GetID(), "orgID", orgID, "uid", uid)
 	}
 
 	if !ok && err == nil {
@@ -349,7 +347,7 @@ func (a *accessControlFolderGuardian) evaluate(evaluator accesscontrol.Evaluator
 			uid = a.folder.UID
 			orgID = int(a.folder.OrgID)
 		}
-		a.log.Debug("Access denied to folder", "namespaceID", namespaceID, "userId", userID, "orgID", orgID, "uid", uid, "permissions", evaluator.GoString())
+		a.log.Debug("Access denied to folder", "identity", a.user.GetID(), "identity", a.user.GetID(), "orgID", orgID, "uid", uid, "permissions", evaluator.GoString())
 	}
 
 	return ok, err

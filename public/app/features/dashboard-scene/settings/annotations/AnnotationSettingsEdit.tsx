@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
+import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -13,18 +14,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
-import {
-  Button,
-  Checkbox,
-  Field,
-  FieldSet,
-  HorizontalGroup,
-  Input,
-  MultiSelect,
-  Select,
-  useStyles2,
-  Stack,
-} from '@grafana/ui';
+import { Button, Checkbox, Field, FieldSet, Input, MultiSelect, Select, useStyles2, Stack } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -215,9 +205,9 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
           />
         </Field>
         <Field label="Color" description="Color to use for the annotation event markers">
-          <HorizontalGroup>
+          <Stack>
             <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
-          </HorizontalGroup>
+          </Stack>
         </Field>
         <Field label="Show in" data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
           <>

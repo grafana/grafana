@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/api"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
@@ -109,12 +109,9 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		req.FolderUid = folder.UID
 	}
 
-	namespaceID, identifier := req.User.GetNamespacedID()
-	userID := int64(0)
-
-	switch namespaceID {
-	case identity.NamespaceUser, identity.NamespaceServiceAccount:
-		userID, _ = identity.IntIdentifier(namespaceID, identifier)
+	var userID int64
+	if id, err := identity.UserIdentifier(req.User.GetID()); err == nil {
+		userID = id
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{

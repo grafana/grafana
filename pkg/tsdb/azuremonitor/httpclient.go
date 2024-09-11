@@ -39,6 +39,8 @@ func newHTTPClient(ctx context.Context, route types.AzRoute, model types.Datasou
 
 		authOpts := azhttpclient.NewAuthOptions(azureSettings)
 		authOpts.AllowUserIdentity()
+		// Allows requests from the same identity but different Grafana users to be identified as such by the server
+		authOpts.AddRateLimitSession(true)
 		authOpts.Scopes(route.Scopes)
 		azhttpclient.AddAzureAuthentication(&clientOpts, authOpts, model.Credentials)
 	}

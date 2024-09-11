@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { TimeRange } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
@@ -9,7 +7,7 @@ import { buildParams, shareDashboardType } from 'app/features/dashboard/componen
 import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { getDashboardUrl } from '../utils/urlBuilders';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { SceneShareTabState } from './types';
 
@@ -31,10 +29,10 @@ export class SharePanelEmbedTab extends SceneObjectBase<SharePanelEmbedTabState>
 }
 
 function SharePanelEmbedTabRenderer({ model }: SceneComponentProps<SharePanelEmbedTab>) {
-  const { panelRef, dashboardRef } = model.useState();
+  const { panelRef } = model.useState();
   const p = panelRef.resolve();
 
-  const dash = dashboardRef.resolve();
+  const dash = getDashboardSceneFor(model);
   const { uid: dashUid } = dash.useState();
   const id = getPanelIdForVizPanel(p);
   const timeRangeState = sceneGraph.getTimeRange(p);

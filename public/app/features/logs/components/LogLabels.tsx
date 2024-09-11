@@ -1,47 +1,88 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import { memo, forwardRef, useMemo } from 'react';
 
 import { GrafanaTheme2, Labels } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 
 // Levels are already encoded in color, filename is a Loki-ism
 const HIDDEN_LABELS = ['level', 'lvl', 'filename'];
 
 interface Props {
   labels: Labels;
+  emptyMessage?: string;
 }
 
-export const LogLabels = ({ labels }: Props) => {
+export const LogLabels = memo(({ labels, emptyMessage }: Props) => {
   const styles = useStyles2(getStyles);
-  const displayLabels = Object.keys(labels).filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label));
+  const displayLabels = useMemo(
+    () =>
+      Object.keys(labels)
+        .filter((label) => !label.startsWith('_') && !HIDDEN_LABELS.includes(label))
+        .sort(),
+    [labels]
+  );
 
-  if (displayLabels.length === 0) {
+  if (displayLabels.length === 0 && emptyMessage) {
     return (
       <span className={cx([styles.logsLabels])}>
-        <span className={cx([styles.logsLabel])}>(no unique labels)</span>
+        <span className={cx([styles.logsLabel])}>{emptyMessage}</span>
       </span>
     );
   }
 
   return (
     <span className={cx([styles.logsLabels])}>
-      {displayLabels.sort().map((label) => {
+      {displayLabels.map((label) => {
         const value = labels[label];
         if (!value) {
           return;
         }
-        const tooltip = `${label}: ${value}`;
+        const labelValue = `${label}=${value}`;
         return (
-          <span key={label} className={cx([styles.logsLabel])}>
-            <span className={cx([styles.logsLabelValue])} title={tooltip}>
-              {value}
-            </span>
-          </span>
+          <Tooltip content={labelValue} key={label} placement="top">
+            <LogLabel styles={styles}>{labelValue}</LogLabel>
+          </Tooltip>
         );
       })}
     </span>
   );
-};
+});
+LogLabels.displayName = 'LogLabels';
+
+interface LogLabelsArrayProps {
+  labels: string[];
+}
+
+export const LogLabelsList = memo(({ labels }: LogLabelsArrayProps) => {
+  const styles = useStyles2(getStyles);
+  return (
+    <span className={cx([styles.logsLabels])}>
+      {labels.map((label) => (
+        <LogLabel key={label} styles={styles} tooltip={label}>
+          {label}
+        </LogLabel>
+      ))}
+    </span>
+  );
+});
+LogLabelsList.displayName = 'LogLabelsList';
+
+interface LogLabelProps {
+  styles: Record<string, string>;
+  tooltip?: string;
+  children: JSX.Element | string;
+}
+
+const LogLabel = forwardRef<HTMLSpanElement, LogLabelProps>(({ styles, tooltip, children }: LogLabelProps, ref) => {
+  return (
+    <span className={cx([styles.logsLabel])} ref={ref}>
+      <span className={cx([styles.logsLabelValue])} title={tooltip}>
+        {children}
+      </span>
+    </span>
+  );
+});
+LogLabel.displayName = 'LogLabel';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -263,6 +263,13 @@ const MonacoQueryField = ({
             },
             'isEditorFocused' + id
           );
+
+          // Fixes Monaco capturing the search key binding and displaying a useless search box within the Editor.
+          // See https://github.com/grafana/grafana/issues/85850
+          monaco.editor.addKeybindingRule({
+            keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF,
+            command: null,
+          });
 
           editor.onDidFocusEditorText(() => {
             isEditorFocused.set(true);

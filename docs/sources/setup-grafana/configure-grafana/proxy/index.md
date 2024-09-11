@@ -9,11 +9,11 @@ labels:
     - enterprise
     - oss
 menuTitle: Configure data source proxy
-title: Configure a data source connection proxy
+title: Configure a data source SOCKS5 connection proxy
 weight: 1110
 ---
 
-# Configure a data source connection proxy
+# Configure a data source SOCKS5 connection proxy
 
 Grafana provides support for proxying data source connections through a Secure Socks5 Tunnel. This enables you to securely connect to data sources hosted in a different network than Grafana.
 

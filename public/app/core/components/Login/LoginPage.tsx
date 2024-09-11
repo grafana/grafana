@@ -1,11 +1,10 @@
 // Libraries
 import { css } from '@emotion/css';
-import React from 'react';
 
 // Components
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -47,7 +46,7 @@ export const LoginPage = () => {
 
               {!disableLoginForm && (
                 <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>
-                  <HorizontalGroup justify="flex-end">
+                  <Stack justifyContent="flex-end">
                     {!config.auth.disableLogin && (
                       <LinkButton
                         className={styles.forgottenPassword}
@@ -57,7 +56,7 @@ export const LoginPage = () => {
                         <Trans i18nKey="login.forgot-password">Forgot your password?</Trans>
                       </LinkButton>
                     )}
-                  </HorizontalGroup>
+                  </Stack>
                 </LoginForm>
               )}
               <LoginServiceButtons />

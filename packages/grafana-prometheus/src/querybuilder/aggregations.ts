@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/aggregations.ts
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
@@ -15,6 +16,7 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     ...createAggregationOperation(PromOperationId.Min),
     ...createAggregationOperation(PromOperationId.Max),
     ...createAggregationOperation(PromOperationId.Count),
+    ...createAggregationOperation(PromOperationId.Group),
     ...createAggregationOperationWithParam(PromOperationId.TopK, {
       params: [{ name: 'K-value', type: 'number' }],
       defaultParams: [5],
@@ -26,6 +28,10 @@ export function getAggregationOperations(): QueryBuilderOperationDef[] {
     ...createAggregationOperationWithParam(PromOperationId.CountValues, {
       params: [{ name: 'Identifier', type: 'string' }],
       defaultParams: ['count'],
+    }),
+    ...createAggregationOperationWithParam(PromOperationId.Quantile, {
+      params: [{ name: 'Value', type: 'number' }],
+      defaultParams: [1],
     }),
     createAggregationOverTime(PromOperationId.SumOverTime),
     createAggregationOverTime(PromOperationId.AvgOverTime),

@@ -1,6 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
@@ -597,7 +596,7 @@ describe('Table', () => {
 
   describe('when mounted with nested data', () => {
     beforeEach(() => {
-      const nestedFrame = (idx: number) =>
+      const createNestedFrame = (idx: number) =>
         applyOverrides(
           toDataFrame({
             name: `nested_frame${idx}`,
@@ -626,7 +625,10 @@ describe('Table', () => {
             {
               name: 'nested',
               type: FieldType.nestedFrames,
-              values: [[nestedFrame(0), nestedFrame(1)]],
+              values: [
+                [createNestedFrame(0), createNestedFrame(1)],
+                [createNestedFrame(2), createNestedFrame(3)],
+              ],
               config: {},
             },
           ],

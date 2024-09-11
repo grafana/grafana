@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
 var _ pluginsLoader.Service = (*Loader)(nil)
@@ -19,10 +20,10 @@ type Loader struct {
 }
 
 func ProvideService(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
-	initializer initialization.Initializer, termination termination.Terminator,
+	initializer initialization.Initializer, termination termination.Terminator, errorTracker pluginerrs.ErrorTracker,
 ) *Loader {
 	return &Loader{
-		loader: pluginsLoader.New(discovery, bootstrap, validation, initializer, termination),
+		loader: pluginsLoader.New(discovery, bootstrap, validation, initializer, termination, errorTracker),
 	}
 }
 

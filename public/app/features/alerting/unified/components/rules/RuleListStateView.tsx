@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
@@ -11,7 +11,6 @@ import { RuleListStateSection } from './RuleListStateSection';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
-  expandAll?: boolean;
 }
 
 type GroupedRules = Record<PromAlertingRuleState, CombinedRule[]>;

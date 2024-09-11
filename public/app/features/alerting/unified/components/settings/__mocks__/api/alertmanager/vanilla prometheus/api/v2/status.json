@@ -1,0 +1,23 @@
+{
+  "cluster": {
+    "name": "01HWZ568JJWWJJNAME4MKKQ987",
+    "peers": [{ "address": "172.18.0.7:9094", "name": "01HWZ568JJWWJJNAME4MKKQ987" }],
+    "status": "ready"
+  },
+  "config": {
+    "global": {},
+    "route": {},
+    "inhibit_rules": [],
+    "templates": [],
+    "receivers": []
+  },
+  "uptime": "2024-05-03T11:59:46.775Z",
+  "versionInfo": {
+    "branch": "HEAD",
+    "buildDate": "20240228-11:47:50",
+    "buildUser": "root@2024b1e0f6e3",
+    "goVersion": "go1.21.7",
+    "revision": "0aa3c2aad14cff039931923ab16b26b7481783b5",
+    "version": "0.27.0"
+  }
+}

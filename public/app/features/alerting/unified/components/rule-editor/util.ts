@@ -327,6 +327,10 @@ export function translateRouteParamToRuleType(param = ''): RuleFormType {
     return RuleFormType.cloudRecording;
   }
 
+  if (param === 'grafana-recording') {
+    return RuleFormType.grafanaRecording;
+  }
+
   return RuleFormType.grafana;
 }
 

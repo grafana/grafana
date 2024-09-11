@@ -5,7 +5,6 @@ import {
   identityOverrideProcessor,
   PanelPlugin,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
@@ -119,10 +118,19 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           step: 0.01,
         },
         defaultValue: defaultOptions.rowHeight,
+      })
+      .addNumberInput({
+        path: 'perPage',
+        name: 'Page size (enable pagination)',
+        settings: {
+          min: 1,
+          step: 1,
+          integer: true,
+        },
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
-    commonOptionsBuilder.addTooltipOptions(builder, !config.featureToggles.newVizTooltips);
+    commonOptionsBuilder.addTooltipOptions(builder);
   })
   .setSuggestionsSupplier(new StatTimelineSuggestionsSupplier())
   .setDataSupport({ annotations: true });

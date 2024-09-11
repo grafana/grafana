@@ -1,24 +1,9 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { EmbeddedScene, SceneFlexLayout, SceneFlexItem, SceneReactObject } from '@grafana/scenes';
 import { useStyles2, useTheme2, Stack, Text, TextLink } from '@grafana/ui';
-
-export const getOverviewScene = () => {
-  return new EmbeddedScene({
-    body: new SceneFlexLayout({
-      children: [
-        new SceneFlexItem({
-          body: new SceneReactObject({
-            component: GettingStarted,
-          }),
-        }),
-      ],
-    }),
-  });
-};
 
 export default function GettingStarted() {
   const theme = useTheme2();
@@ -53,24 +38,28 @@ export default function GettingStarted() {
           <Text element="h3">Get started</Text>
           <ul className={styles.list}>
             <li>
-              <Text weight="bold">Create an alert rule</Text> by adding queries and expressions from multiple data
-              sources.
+              <Text weight="bold">Create an alert rule</Text> to query a data source and evaluate the condition defined
+              in the alert rule
             </li>
             <li>
-              <Text weight="bold">Add labels</Text> to your alert rules{' '}
-              <Text weight="bold">to connect them to notification policies</Text>
+              <Text weight="bold">Route alert notifications</Text> either directly to a contact point or through
+              notification policies for more flexibility
             </li>
             <li>
-              <Text weight="bold">Configure contact points</Text> to define where to send your notifications to.
-            </li>
-            <li>
-              <Text weight="bold">Configure notification policies</Text> to route your alert instances to contact
-              points.
+              <Text weight="bold">Monitor</Text> your alert rules using dashboards and visualizations
             </li>
           </ul>
-          <TextLink href="https://grafana.com/docs/grafana/latest/alerting/" icon="angle-right" inline={false} external>
-            Read more in the docs
-          </TextLink>
+          <p>
+            For a hands-on introduction, refer to our{' '}
+            <TextLink
+              href="https://grafana.com/tutorials/alerting-get-started/"
+              icon="angle-right"
+              inline={true}
+              external
+            >
+              tutorial to get started with Grafana Alerting
+            </TextLink>
+          </p>
         </Stack>
       </ContentBox>
     </div>
@@ -110,9 +99,7 @@ export function WelcomeHeader({ className }: { className?: string }) {
   const styles = useStyles2(getWelcomeHeaderStyles);
 
   return (
-    <div className={styles.welcomeHeaderWrapper}>
-      <div className={styles.subtitle}>Learn about problems in your systems moments after they occur</div>
-
+    <Stack gap={2} direction="column">
       <ContentBox className={cx(styles.ctaContainer, className)}>
         <WelcomeCTABox
           title="Alert rules"
@@ -135,18 +122,11 @@ export function WelcomeHeader({ className }: { className?: string }) {
           hrefText="Manage notification policies"
         />
       </ContentBox>
-    </div>
+    </Stack>
   );
 }
 
 const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
-  welcomeHeaderWrapper: css({
-    color: theme.colors.text.primary,
-  }),
-  subtitle: css({
-    color: theme.colors.text.secondary,
-    paddingBottom: theme.spacing(2),
-  }),
   ctaContainer: css({
     padding: theme.spacing(2),
     display: 'flex',
@@ -195,6 +175,7 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
 
 const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
   container: css({
+    color: theme.colors.text.primary,
     flex: 1,
     minWidth: '240px',
     display: 'grid',

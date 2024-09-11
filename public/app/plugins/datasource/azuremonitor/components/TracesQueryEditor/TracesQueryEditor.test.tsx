@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
+import { AzureQueryType } from '../../dataquery.gen';
 import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
 
 import TracesQueryEditor from './TracesQueryEditor';
@@ -68,7 +68,7 @@ describe('TracesQueryEditor', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureTraces: expect.objectContaining({
           resources: [
@@ -176,11 +176,65 @@ describe('TracesQueryEditor', () => {
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     await userEvent.click(applyButton);
 
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureTraces: expect.objectContaining({
           resources: ['/subscriptions/def-123'],
         }),
+      })
+    );
+  });
+
+  it('should not display the resource selector for exemplar type queries', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    delete query?.subscription;
+    delete query?.azureTraces?.resources;
+    query.queryType = AzureQueryType.TraceExemplar;
+    query.azureTraces = { operationId: 'test-operation-id' };
+    const onChange = jest.fn();
+
+    render(
+      <TracesQueryEditor
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    expect(await screen.queryByRole('button', { name: 'Select a resource' })).not.toBeInTheDocument();
+    expect(await screen.getByDisplayValue('test-operation-id')).toBeInTheDocument();
+  });
+
+  it('should not display the resource selector for exemplar type queries', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    delete query?.subscription;
+    delete query?.azureTraces?.resources;
+    query.queryType = AzureQueryType.TraceExemplar;
+    query.azureTraces = { operationId: 'test-operation-id' };
+    const onChange = jest.fn();
+
+    render(
+      <TracesQueryEditor
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const operationIDInput = await screen.getByDisplayValue('test-operation-id');
+    await userEvent.clear(operationIDInput);
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        azureTraces: undefined,
+        queryType: AzureQueryType.AzureTraces,
+        query: undefined,
       })
     );
   });

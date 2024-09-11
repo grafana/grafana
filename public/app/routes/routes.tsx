@@ -1,4 +1,3 @@
-import React from 'react';
 import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
@@ -10,10 +9,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
+import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/misc';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
+import { ConfigureIRM } from 'app/features/gops/configuration-tracker/components/ConfigureIRM';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -82,7 +83,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/d-solo/:uid/:slug?',
-      pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
@@ -94,7 +94,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     // This route handles embedding of snapshot/scripted dashboard panels
     {
       path: '/dashboard-solo/:type/:slug',
-      pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(
@@ -171,7 +170,14 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/alerts-and-incidents',
-      component: () => <NavLandingPage navId="alerts-and-incidents" />,
+      component: () => {
+        return (
+          <NavLandingPage
+            navId="alerts-and-incidents"
+            header={(!isOpenSourceEdition() && isAdmin()) || isLocalDevEnv() ? <ConfigureIRM /> : undefined}
+          />
+        );
+      },
     },
     {
       path: '/testing-and-synthetics',
@@ -213,9 +219,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/users',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage')
-      ),
+      // Org users page has been combined with admin users
+      component: () => <Redirect to={'/admin/users'} />,
     },
     {
       path: '/org/users/invite',
@@ -426,6 +431,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "SnapshotListPage" */ 'app/features/manage-dashboards/SnapshotListPage')
       ),
     },
+    config.featureToggles.dashboardRestoreUI && {
+      path: '/dashboard/recently-deleted',
+      roles: () => ['Admin'],
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
+      ),
+    },
     {
       path: '/playlists',
       component: SafeDynamicImport(
@@ -490,13 +502,18 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
-    {
+    config.featureToggles.exploreMetrics && {
       path: '/explore/metrics',
       chromeless: false,
       exact: false,
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
+    },
+    {
+      path: '/bookmarks',
+      component: () => <NavLandingPage navId="bookmarks" />,
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),

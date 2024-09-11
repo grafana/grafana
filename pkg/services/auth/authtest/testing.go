@@ -7,8 +7,8 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -82,11 +82,6 @@ func (s *FakeUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.Rot
 
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 	return s.LookupTokenProvider(context.Background(), unhashedToken)
-}
-
-func (s *FakeUserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-	userAgent string) (bool, *auth.UserToken, error) {
-	return s.TryRotateTokenProvider(context.Background(), token, clientIP, userAgent)
 }
 
 func (s *FakeUserAuthTokenService) RevokeToken(ctx context.Context, token *auth.UserToken, soft bool) error {

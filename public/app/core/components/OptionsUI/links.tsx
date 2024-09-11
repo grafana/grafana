@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataLink, DataLinksFieldConfigSettings, StandardEditorProps, VariableSuggestionsScope } from '@grafana/data';
 import { DataLinksInlineEditor } from '@grafana/ui';
 

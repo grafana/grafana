@@ -1,7 +1,9 @@
 import { Location } from 'history';
 
-import { textUtil } from '../text';
-import { GrafanaConfig, RawTimeRange, ScopedVars } from '../types';
+import { textUtil } from '../text/sanitize';
+import { ScopedVars } from '../types/ScopedVars';
+import { GrafanaConfig } from '../types/config';
+import { RawTimeRange } from '../types/time';
 
 import { UrlQueryMap, urlUtil } from './url';
 
@@ -73,7 +75,7 @@ const getUrlForPartial = (location: Location, searchParamsToUpdate: UrlQueryMap)
   const searchParams = urlUtil.parseKeyValue(
     location.search.startsWith('?') ? location.search.substring(1) : location.search
   );
-  for (const key of Object.keys(searchParamsToUpdate)) {
+  for (const key in searchParamsToUpdate) {
     // removing params with null | undefined
     if (searchParamsToUpdate[key] === null || searchParamsToUpdate[key] === undefined) {
       delete searchParams[key];

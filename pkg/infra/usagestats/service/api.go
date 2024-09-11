@@ -15,7 +15,7 @@ func (uss *UsageStats) registerAPIEndpoints() {
 	authorize := accesscontrol.Middleware(uss.accesscontrol)
 
 	uss.RouteRegister.Group(rootUrl, func(subrouter routing.RouteRegister) {
-		subrouter.Get("/usage-report-preview", authorize(accesscontrol.EvalPermission(ActionRead)), routing.Wrap(uss.getUsageReportPreview))
+		subrouter.Get("/usage-report-preview", authorize(accesscontrol.EvalPermission(accesscontrol.ActionUsageStatsRead)), routing.Wrap(uss.getUsageReportPreview))
 	})
 }
 

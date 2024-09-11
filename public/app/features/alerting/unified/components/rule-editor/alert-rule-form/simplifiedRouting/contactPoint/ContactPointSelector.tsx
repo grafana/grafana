@@ -1,6 +1,7 @@
-import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
+import { css, cx, keyframes } from '@emotion/css';
+import * as React from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -14,7 +15,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { ContactPointWithMetadata } from '../../../../contact-points/utils';
 
@@ -143,11 +144,20 @@ export function ContactPointSelector({
 function LinkToContactPoints() {
   const hrefToContactPoints = '/alerting/notifications';
   return (
-    <TextLink external href={createUrl(hrefToContactPoints)} aria-label="View or create contact points">
+    <TextLink external href={createRelativeUrl(hrefToContactPoints)} aria-label="View or create contact points">
       View or create contact points
     </TextLink>
   );
 }
+
+const rotation = keyframes({
+  from: {
+    transform: 'rotate(720deg)',
+  },
+  to: {
+    transform: 'rotate(0deg)',
+  },
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointsSelector: css({
@@ -172,14 +182,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   loading: css({
     pointerEvents: 'none',
-    animation: 'rotation 2s infinite linear',
-    '@keyframes rotation': {
-      from: {
-        transform: 'rotate(720deg)',
-      },
-      to: {
-        transform: 'rotate(0deg)',
-      },
+    [theme.transitions.handleMotion('no-preference')]: {
+      animation: `${rotation} 2s infinite linear`,
+    },
+    [theme.transitions.handleMotion('reduce')]: {
+      animation: `${rotation} 6s infinite linear`,
     },
   }),
   warn: css({

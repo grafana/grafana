@@ -9,6 +9,7 @@ import {
   DataSourceApi,
   LoadingState,
   PanelData,
+  QueryVariableModel,
   ScopedVars,
 } from '@grafana/data';
 
@@ -18,7 +19,6 @@ import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { runRequest } from '../../query/state/runRequest';
 import { getLastKey, getVariable } from '../state/selectors';
 import { KeyedVariableIdentifier } from '../state/types';
-import { QueryVariableModel } from '../types';
 import { getTemplatedRegex } from '../utils';
 
 import { toMetricFindValuesOperator, updateOptionsState, validateVariableSelection } from './operators';
@@ -111,6 +111,13 @@ export class VariableQueryRunner {
 
       const timeSrv = getTimeSrv();
       const runnerArgs = { variable, datasource, searchFilter, timeSrv, runRequest };
+      //if query runner is not available for the datasource, we should return early
+      if (!queryRunners.isQueryRunnerAvailableForDatasource(datasource)) {
+        const error = new Error('Query Runner is not available for datasource.');
+        this.updateOptionsResults.next({ identifier, state: LoadingState.Error, error });
+        return;
+      }
+
       const runner = queryRunners.getRunnerForDatasource(datasource);
       const target = runner.getTarget({ datasource, variable });
       const request = this.getRequest(variable, args, target);

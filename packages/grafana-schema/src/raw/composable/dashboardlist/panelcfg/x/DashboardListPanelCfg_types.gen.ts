@@ -8,7 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "11.0.0";
+export const pluginVersion = "11.2.0";
 
 export interface Options {
   /**
@@ -20,6 +20,7 @@ export interface Options {
   keepTime: boolean;
   maxItems: number;
   query: string;
+  showFolderNames: boolean;
   showHeadings: boolean;
   showRecentlyViewed: boolean;
   showSearch: boolean;
@@ -32,6 +33,7 @@ export const defaultOptions: Partial<Options> = {
   keepTime: false,
   maxItems: 10,
   query: '',
+  showFolderNames: true,
   showHeadings: true,
   showRecentlyViewed: false,
   showSearch: false,

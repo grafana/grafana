@@ -8,10 +8,12 @@ import store from 'app/core/store';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
 
+export const NEW_PANEL_TITLE = 'Panel Title';
+
 export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string): number | undefined {
   const newPanel: Partial<PanelModel> = {
     type: 'timeseries',
-    title: 'Panel Title',
+    title: NEW_PANEL_TITLE,
     gridPos: calculateNewPanelGridPos(dashboard),
     datasource: datasource ? { uid: datasource } : null,
     isNew: true,
@@ -68,7 +70,7 @@ export function onPasteCopiedPanel(dashboard: DashboardModel, panelPluginInfo?: 
 
   const newPanel = {
     type: panelPluginInfo.id,
-    title: 'Panel Title',
+    title: NEW_PANEL_TITLE,
     gridPos: {
       x: gridPos.x,
       y: gridPos.y,

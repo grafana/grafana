@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { ReactNode } from 'react';
+import { ReactNode } from 'react';
+import * as React from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -120,9 +121,9 @@ function OptionPaneLabel({ title, description, overrides, addon }: OptionPanelLa
 
 function getLabelStyles(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-      justify-content: space-between;
-    `,
+    container: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
   };
 }

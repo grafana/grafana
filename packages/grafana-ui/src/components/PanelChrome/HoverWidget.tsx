@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { ReactElement, useCallback, useRef } from 'react';
+import { ReactElement, useCallback, useRef } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -66,7 +67,9 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       label: 'hover-container-widget',
-      transition: `all .1s linear`,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: `all .1s linear`,
+      },
       display: 'flex',
       position: 'absolute',
       zIndex: 1,

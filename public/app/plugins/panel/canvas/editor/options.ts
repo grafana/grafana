@@ -1,17 +1,22 @@
 import { capitalize } from 'lodash';
 
+import { FieldType } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import { CanvasConnection, CanvasElementOptions, ConnectionDirection } from 'app/features/canvas';
+import { ConnectionDirection } from 'app/features/canvas/element';
+import { SVGElements } from 'app/features/canvas/runtime/element';
 import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
+import { CanvasConnection, CanvasElementOptions } from '../panelcfg.gen';
 import { LineStyle } from '../types';
 
 import { LineStyleEditor } from './LineStyleEditor';
+import { DataLinksEditor } from './element/DataLinksEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
+  addDataLinks: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
   addSize: PanelOptionsSupplier<CanvasConnection>;
   addRadius: PanelOptionsSupplier<CanvasConnection>;
@@ -60,6 +65,15 @@ export const optionBuilder: OptionSuppliers = {
         editor: BackgroundSizeEditor,
         settings: {
           resourceType: 'image',
+        },
+        showIf: () => {
+          // Do not show image size editor for SVG based elements
+          // See https://github.com/grafana/grafana/issues/84843#issuecomment-2010921066 for additional context
+          if (context.options?.type) {
+            return !SVGElements.has(context.options.type);
+          }
+
+          return true;
         },
       });
   },
@@ -152,6 +166,7 @@ export const optionBuilder: OptionSuppliers = {
       settings: {
         min: 0,
         max: 200,
+        filteredFieldType: FieldType.number,
       },
       defaultValue: {
         // Configured values
@@ -190,6 +205,17 @@ export const optionBuilder: OptionSuppliers = {
       editor: LineStyleEditor,
       settings: {},
       defaultValue: { value: LineStyle.Solid, label: 'Solid' },
+    });
+  },
+
+  addDataLinks: (builder, context) => {
+    builder.addCustomEditor({
+      category: ['Data links'],
+      id: 'dataLinks',
+      path: 'links',
+      name: 'Links',
+      editor: DataLinksEditor,
+      settings: context.options,
     });
   },
 };

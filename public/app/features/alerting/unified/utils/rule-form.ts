@@ -1,21 +1,22 @@
-import { omit } from 'lodash';
+import { clamp, omit } from 'lodash';
 
 import {
   DataQuery,
   DataSourceInstanceSettings,
   DataSourceRef,
   getDefaultRelativeTimeRange,
+  getNextRefId,
   IntervalValues,
   rangeUtil,
   RelativeTimeRange,
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
+import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
-import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import {
   getDashboardSceneFor,
@@ -24,7 +25,6 @@ import {
 } from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,
@@ -47,14 +47,27 @@ import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
 import { getDefaultOrFirstCompatibleDataSource, GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
-import { parseInterval } from './time';
+import {
+  isAlertingRulerRule,
+  isGrafanaAlertingRuleByType,
+  isGrafanaRecordingRule,
+  isGrafanaRulerRule,
+  isRecordingRulerRule,
+} from './rules';
+import { formatPrometheusDuration, parseInterval, safeParsePrometheusDuration } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
 
-export const MINUTE = '1m';
-
 export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
+
+// even if the min interval is < 1m we should default to 1m, but allow arbitrary values for minInterval > 1m
+const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting?.minInterval ?? '10s');
+const GROUP_EVALUATION_INTERVAL_LOWER_BOUND = safeParsePrometheusDuration('1m');
+const GROUP_EVALUATION_INTERVAL_UPPER_BOUND = Infinity;
+
+export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
+  clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
+);
 
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
@@ -75,8 +88,8 @@ export const getDefaultFormValues = (): RuleFormValues => {
     condition: '',
     noDataState: GrafanaAlertStateDecision.OK,
     execErrState: GrafanaAlertStateDecision.OK,
-    evaluateFor: '5m',
-    evaluateEvery: MINUTE,
+    evaluateFor: DEFAULT_GROUP_EVALUATION_INTERVAL,
+    evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
     manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false
     contactPoints: {},
     overrideGrouping: false,
@@ -187,28 +200,61 @@ export function getNotificationSettingsForDTO(
 }
 
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused, contactPoints, manualRouting } =
-    values;
+  const {
+    name,
+    condition,
+    noDataState,
+    execErrState,
+    evaluateFor,
+    queries,
+    isPaused,
+    contactPoints,
+    manualRouting,
+    type,
+    metric,
+  } = values;
   if (condition) {
     const notificationSettings: GrafanaNotificationSettings | undefined = getNotificationSettingsForDTO(
       manualRouting,
       contactPoints
     );
+    if (isGrafanaAlertingRuleByType(type)) {
+      return {
+        grafana_alert: {
+          title: name,
+          condition,
+          data: queries.map(fixBothInstantAndRangeQuery),
+          is_paused: Boolean(isPaused),
 
-    return {
-      grafana_alert: {
-        title: name,
-        condition,
-        no_data_state: noDataState,
-        exec_err_state: execErrState,
-        data: queries.map(fixBothInstantAndRangeQuery),
-        is_paused: Boolean(isPaused),
-        notification_settings: notificationSettings,
-      },
-      for: evaluateFor,
-      annotations: arrayToRecord(values.annotations || []),
-      labels: arrayToRecord(values.labels || []),
-    };
+          // Alerting rule specific
+          no_data_state: noDataState,
+          exec_err_state: execErrState,
+          notification_settings: notificationSettings,
+        },
+        annotations: arrayToRecord(values.annotations || []),
+        labels: arrayToRecord(values.labels || []),
+
+        // Alerting rule specific
+        for: evaluateFor,
+      };
+    } else {
+      return {
+        grafana_alert: {
+          title: name,
+          condition,
+          data: queries.map(fixBothInstantAndRangeQuery),
+          is_paused: Boolean(isPaused),
+
+          // Recording rule specific
+          record: {
+            metric: metric ?? name,
+            from: condition,
+          },
+        },
+        annotations: arrayToRecord(values.annotations || []),
+        labels: arrayToRecord(values.labels || []),
+      };
+    }
   }
   throw new Error('Cannot create rule without specifying alert condition');
 }
@@ -244,34 +290,56 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
   const defaultFormValues = getDefaultFormValues();
   if (isGrafanaRulesSource(ruleSourceName)) {
-    if (isGrafanaRulerRule(rule)) {
+    // GRAFANA-MANAGED RULES
+    if (isGrafanaRecordingRule(rule)) {
+      // grafana recording rule
       const ga = rule.grafana_alert;
-
-      const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
-
       return {
         ...defaultFormValues,
         name: ga.title,
-        type: RuleFormType.grafana,
+        type: RuleFormType.grafanaRecording,
         group: group.name,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
-        evaluateFor: rule.for || '0',
-        noDataState: ga.no_data_state,
-        execErrState: ga.exec_err_state,
         queries: ga.data,
         condition: ga.condition,
         annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
-
-        contactPoints: routingSettings,
-        manualRouting: Boolean(routingSettings),
+        metric: ga.record?.metric,
       };
+    } else if (isGrafanaRulerRule(rule)) {
+      // grafana alerting rule
+      const ga = rule.grafana_alert;
+      const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+      if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
+        return {
+          ...defaultFormValues,
+          name: ga.title,
+          type: RuleFormType.grafana,
+          group: group.name,
+          evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
+          evaluateFor: rule.for || '0',
+          noDataState: ga.no_data_state,
+          execErrState: ga.exec_err_state,
+          queries: ga.data,
+          condition: ga.condition,
+          annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
+          labels: listifyLabelsOrAnnotations(rule.labels, true),
+          folder: { title: namespace, uid: ga.namespace_uid },
+          isPaused: ga.is_paused,
+
+          contactPoints: routingSettings,
+          manualRouting: Boolean(routingSettings),
+        };
+      } else {
+        throw new Error('Unexpected type of rule for grafana rules source');
+      }
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
     }
   } else {
+    // DATASOURCE-MANAGED RULES
     if (isAlertingRulerRule(rule)) {
       const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
 
@@ -561,12 +629,12 @@ export const panelToRuleFormValues = async (
   }
 
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(queries), '-');
     queries.push(reduceExpression);
 
     const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
       reduceExpression.refId,
-      getNextRefIdChar(queries)
+      getNextRefId(queries)
     );
     queries.push(thresholdExpression);
   }
@@ -631,12 +699,12 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
   }
 
   if (!grafanaQueries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(grafanaQueries), '-');
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefId(grafanaQueries), '-');
     grafanaQueries.push(reduceExpression);
 
     const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
       reduceExpression.refId,
-      getNextRefIdChar(grafanaQueries)
+      getNextRefId(grafanaQueries)
     );
     grafanaQueries.push(thresholdExpression);
   }

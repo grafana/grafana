@@ -89,6 +89,7 @@ const grafanaAlert = {
   condition: 'B',
   exec_err_state: GrafanaAlertStateDecision.Alerting,
   namespace_uid: 'namespaceuid123',
+  rule_group: 'my-group',
   no_data_state: GrafanaAlertStateDecision.NoData,
   title: 'Test alert',
   uid: 'asdf23',

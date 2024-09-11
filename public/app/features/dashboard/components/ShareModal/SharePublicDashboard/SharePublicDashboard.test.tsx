@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
@@ -354,11 +353,14 @@ describe('SharePublic - Report interactions', () => {
   });
 
   it('reports interaction when public dashboard tab is clicked', async () => {
+    jest.spyOn(DashboardInteractions, 'sharingCategoryClicked');
     await renderSharePublicDashboard();
 
     await waitFor(() => {
-      expect(DashboardInteractions.sharingTabChanged).toHaveBeenCalledTimes(1);
-      expect(DashboardInteractions.sharingTabChanged).lastCalledWith({ item: shareDashboardType.publicDashboard });
+      expect(DashboardInteractions.sharingCategoryClicked).lastCalledWith({
+        item: shareDashboardType.publicDashboard,
+        shareResource: 'dashboard',
+      });
     });
   });
 
@@ -372,7 +374,6 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableTimeRangeSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_time_picker_clicked', {
         enabled: !pubdashResponse.timeSelectionEnabled,
       });
@@ -389,7 +390,6 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableAnnotationsSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_annotations_clicked', {
         enabled: !pubdashResponse.annotationsEnabled,
       });
@@ -403,7 +403,6 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.PauseSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledTimes(1);
       expect(reportInteraction).toHaveBeenLastCalledWith('dashboards_sharing_public_pause_clicked', {
         paused: pubdashResponse.isEnabled,
       });

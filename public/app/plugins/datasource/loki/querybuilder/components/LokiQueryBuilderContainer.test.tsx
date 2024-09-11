@@ -1,6 +1,5 @@
 import { render, screen, waitFor, findAllByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';
 
@@ -42,7 +41,8 @@ describe('LokiQueryBuilderContainer', () => {
       showExplain: false,
     };
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
-    props.datasource.languageProvider.fetchSeriesLabels = jest.fn().mockReturnValue({ job: ['grafana', 'loki'] });
+    props.datasource.languageProvider.fetchLabels = jest.fn().mockReturnValue(['job']);
+    props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['grafana', 'loki']);
     props.onChange = jest.fn();
 
     render(<LokiQueryBuilderContainer {...props} />);

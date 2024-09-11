@@ -78,7 +78,8 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 }
 
 func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
-	_, initialRules := models.GenerateUniqueAlertRules(100, models.AlertRuleGen())
+	gen := models.RuleGen
+	initialRules := gen.GenerateManyRef(100)
 	init := make(map[models.AlertRuleKey]*models.AlertRule, len(initialRules))
 	for _, rule := range initialRules {
 		init[rule.GetKey()] = rule
@@ -95,7 +96,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 	t.Run("should return empty diff if version does not change", func(t *testing.T) {
 		newRules := make([]*models.AlertRule, 0, len(initialRules))
 		// generate random and then override rule key + version
-		_, randomNew := models.GenerateUniqueAlertRules(len(initialRules), models.AlertRuleGen())
+		randomNew := gen.GenerateManyRef(len(initialRules))
 		for i := 0; i < len(initialRules); i++ {
 			rule := randomNew[i]
 			oldRule := initialRules[i]
@@ -128,7 +129,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 }
 
 func TestRuleWithFolderFingerprint(t *testing.T) {
-	rule := models.AlertRuleGen()()
+	rule := models.RuleGen.GenerateRef()
 	title := uuid.NewString()
 	f := ruleWithFolder{rule: rule, folderTitle: title}.Fingerprint()
 	t.Run("should calculate a fingerprint", func(t *testing.T) {
@@ -191,6 +192,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			RuleGroupIndex:  1,
 			NoDataState:     "test-nodata",
 			ExecErrState:    "test-err",
+			Record:          &models.Record{Metric: "my_metric", From: "A"},
 			For:             12,
 			Annotations: map[string]string{
 				"key-annotation": "value-annotation",
@@ -229,6 +231,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			RuleGroupIndex:  22,
 			NoDataState:     "test-nodata2",
 			ExecErrState:    "test-err2",
+			Record:          &models.Record{Metric: "my_metric2", From: "B"},
 			For:             1141,
 			Annotations: map[string]string{
 				"key-annotation2": "value-annotation",

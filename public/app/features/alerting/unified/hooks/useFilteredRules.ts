@@ -9,11 +9,17 @@ import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unifie
 import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
-import { labelsMatchMatchers, matcherToMatcherField, parseMatchers } from '../utils/alertmanager';
+import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
-import { parseMatcher } from '../utils/matchers';
-import { getRuleHealth, isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
+import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
+import {
+  getRuleHealth,
+  isAlertingRule,
+  isGrafanaRulerRule,
+  isPluginProvidedRule,
+  isPromRuleType,
+} from '../utils/rules';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
@@ -22,11 +28,26 @@ import { useURLSearchParams } from './useURLSearchParams';
 const MAX_NEEDLE_SIZE = 25;
 const INFO_THRESHOLD = Infinity;
 
+/**
+ * Escape query strings so that regex characters don't interfere
+ * with uFuzzy search methods.
+ *
+ * The fuzzy searching will take the query and generate a regex - but if the query
+ * contains a regex itself, then it can easily end up being split in a bad place
+ * and end up creating an invalid expression
+ */
+const escapeQueryRegex = (query: string) => {
+  // see https://stackoverflow.com/a/6969486
+  return query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
   const searchQuery = queryParams.get('search') ?? '';
 
-  const filterState = useMemo(() => getSearchFilterFromQuery(searchQuery), [searchQuery]);
+  const filterState = useMemo<RulesFilter>(() => {
+    return getSearchFilterFromQuery(searchQuery);
+  }, [searchQuery]);
   const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
 
   const updateFilters = useCallback(
@@ -50,7 +71,7 @@ export function useRulesFilter() {
       dataSource: queryParams.get('dataSource') ?? undefined,
       alertState: queryParams.get('alertState') ?? undefined,
       ruleType: queryParams.get('ruleType') ?? undefined,
-      labels: parseMatchers(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
+      labels: parsePromQLStyleMatcherLoose(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
     };
 
     const hasLegacyFilters = Object.values(legacyFilters).some((legacyFilter) => !isEmpty(legacyFilter));
@@ -122,10 +143,12 @@ export const filterRules = (
   if (namespaceFilter) {
     const namespaceHaystack = filteredNamespaces.map((ns) => ns.name);
 
+    const escapedQuery = escapeQueryRegex(namespaceFilter);
+
     const ufuzzy = getSearchInstance(namespaceFilter);
     const [idxs, info, order] = ufuzzy.search(
       namespaceHaystack,
-      namespaceFilter,
+      escapedQuery,
       getOutOfOrderLimit(namespaceFilter),
       INFO_THRESHOLD
     );
@@ -149,9 +172,11 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       const groupsHaystack = filteredGroups.map((g) => g.name);
       const ufuzzy = getSearchInstance(groupNameFilter);
 
+      const escapedQuery = escapeQueryRegex(groupNameFilter);
+
       const [idxs, info, order] = ufuzzy.search(
         groupsHaystack,
-        groupNameFilter,
+        escapedQuery,
         getOutOfOrderLimit(groupNameFilter),
         INFO_THRESHOLD
       );
@@ -185,10 +210,11 @@ const reduceGroups = (filterState: RulesFilter) => {
     if (ruleNameQuery) {
       const rulesHaystack = filteredRules.map((r) => r.name);
       const ufuzzy = getSearchInstance(ruleNameQuery);
+      const escapedQuery = escapeQueryRegex(ruleNameQuery);
 
       const [idxs, info, order] = ufuzzy.search(
         rulesHaystack,
-        ruleNameQuery,
+        escapedQuery,
         getOutOfOrderLimit(ruleNameQuery),
         INFO_THRESHOLD
       );
@@ -208,13 +234,17 @@ const reduceGroups = (filterState: RulesFilter) => {
       const matchesFilterFor = chain(filterState)
         // ⚠️ keep this list of properties we filter for here up-to-date ⚠️
         // We are ignoring predicates we've matched before we get here (like "freeFormWords")
-        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid'])
+        .pick(['ruleType', 'dataSourceNames', 'ruleHealth', 'labels', 'ruleState', 'dashboardUid', 'plugins'])
         .omitBy(isEmpty)
         .mapValues(() => false)
         .value();
 
       if ('ruleType' in matchesFilterFor && filterState.ruleType === promRuleDefition?.type) {
         matchesFilterFor.ruleType = true;
+      }
+
+      if ('plugins' in matchesFilterFor && filterState.plugins === 'hide') {
+        matchesFilterFor.plugins = !isPluginProvidedRule(rule);
       }
 
       if ('dataSourceNames' in matchesFilterFor) {

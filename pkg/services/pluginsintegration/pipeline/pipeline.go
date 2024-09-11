@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
 func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
@@ -49,11 +49,10 @@ func ProvideBootstrapStage(cfg *config.PluginManagementCfg, sc plugins.Signature
 	})
 }
 
-func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Validator, ai angularinspector.Inspector,
-	et pluginerrs.SignatureErrorTracker) *validation.Validate {
+func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Validator, ai angularinspector.Inspector) *validation.Validate {
 	return validation.New(cfg, validation.Opts{
 		ValidateFuncs: []validation.ValidateFunc{
-			SignatureValidationStep(sv, et),
+			SignatureValidationStep(sv),
 			validation.ModuleJSValidationStep(),
 			validation.AngularDetectionStep(cfg, ai),
 		},
@@ -62,15 +61,19 @@ func ProvideValidationStage(cfg *config.PluginManagementCfg, sv signature.Valida
 
 func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Service, bp plugins.BackendFactoryProvider,
 	pm process.Manager, externalServiceRegistry auth.ExternalServiceRegistry,
-	roleRegistry plugins.RoleRegistry, pluginEnvProvider envvars.Provider, tracer tracing.Tracer) *initialization.Initialize {
+	roleRegistry pluginaccesscontrol.RoleRegistry,
+	actionSetRegistry pluginaccesscontrol.ActionSetRegistry,
+	pluginEnvProvider envvars.Provider,
+	tracer tracing.Tracer) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
 			initialization.BackendClientInitStep(pluginEnvProvider, bp),
-			initialization.PluginRegistrationStep(pr),
 			initialization.BackendProcessStartStep(pm),
 			RegisterPluginRolesStep(roleRegistry),
+			RegisterActionSetsStep(actionSetRegistry),
 			ReportBuildMetrics,
+			initialization.PluginRegistrationStep(pr),
 		},
 	})
 }

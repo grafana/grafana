@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -308,7 +308,6 @@ func TestOAuth_Authenticate(t *testing.T) {
 
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Login, identity.ClientParams.LookUpParams.Login)
-				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.UserID, identity.ClientParams.LookUpParams.UserID)
 			} else {
 				assert.Nil(t, tt.expectedIdentity)
 			}
@@ -486,7 +485,7 @@ func TestOAuth_Logout(t *testing.T) {
 			}
 			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures())
 
-			redirect, ok := c.Logout(context.Background(), &authn.Identity{}, &login.UserAuth{})
+			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: identity.NewTypedIDString(identity.TypeUser, "1")})
 
 			assert.Equal(t, tt.expectedOK, ok)
 			if tt.expectedOK {
@@ -505,6 +504,49 @@ func TestGenPKCECodeVerifier(t *testing.T) {
 	verifier, err := genPKCECodeVerifier()
 	assert.NoError(t, err)
 	assert.Len(t, verifier, 128)
+}
+
+func TestIsEnabled(t *testing.T) {
+	type testCase struct {
+		desc     string
+		oauthCfg *social.OAuthInfo
+		expected bool
+	}
+
+	tests := []testCase{
+		{
+			desc:     "should return false when client is not enabled",
+			oauthCfg: &social.OAuthInfo{Enabled: false},
+			expected: false,
+		},
+		{
+			desc:     "should return false when client doesnt exists",
+			oauthCfg: nil,
+			expected: false,
+		},
+		{
+			desc:     "should return true when client is enabled",
+			oauthCfg: &social.OAuthInfo{Enabled: true},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			fakeSocialSvc := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthCfg,
+			}
+			cfg := setting.NewCfg()
+			c := ProvideOAuth(
+				social.GitHubProviderName,
+				cfg,
+				nil,
+				fakeSocialSvc,
+				&setting.OSSImpl{Cfg: cfg},
+				featuremgmt.WithFeatures())
+			assert.Equal(t, tt.expected, c.IsEnabled())
+		})
+	}
 }
 
 type mockConnector struct {

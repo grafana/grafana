@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 /**
  * A simple "flex: 1;" component you can use in combination with the Stack component(s), like so
@@ -13,8 +12,8 @@ import React from 'react';
 
 export const Spacer = () => (
   <span
-    className={css`
-      flex: 1;
-    `}
+    className={css({
+      flex: 1,
+    })}
   />
 );

@@ -3,6 +3,7 @@ package ldap
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"math"
@@ -17,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -43,7 +44,7 @@ type IServer interface {
 
 // Server is basic struct of LDAP authorization
 type Server struct {
-	cfg        *setting.Cfg
+	cfg        *Config
 	Config     *ServerConfig
 	Connection IConnection
 	log        log.Logger
@@ -84,7 +85,7 @@ var (
 )
 
 // New creates the new LDAP connection
-func New(config *ServerConfig, cfg *setting.Cfg) IServer {
+func New(config *ServerConfig, cfg *Config) IServer {
 	return &Server{
 		Config: config,
 		cfg:    cfg,
@@ -95,28 +96,14 @@ func New(config *ServerConfig, cfg *setting.Cfg) IServer {
 // Dial dials in the LDAP
 // TODO: decrease cyclomatic complexity
 func (server *Server) Dial() error {
-	var err error
-	var certPool *x509.CertPool
-	if server.Config.RootCACert != "" {
-		certPool = x509.NewCertPool()
-		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
-			// nolint:gosec
-			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
-			pem, err := os.ReadFile(caCertFile)
-			if err != nil {
-				return err
-			}
-			if !certPool.AppendCertsFromPEM(pem) {
-				return errors.New("Failed to append CA certificate " + caCertFile)
-			}
-		}
+	certPool, err := getRootCACertPool(*server.Config)
+	if err != nil {
+		return err
 	}
-	var clientCert tls.Certificate
-	if server.Config.ClientCert != "" && server.Config.ClientKey != "" {
-		clientCert, err = tls.LoadX509KeyPair(server.Config.ClientCert, server.Config.ClientKey)
-		if err != nil {
-			return err
-		}
+
+	clientCert, err := getClientCert(*server.Config)
+	if err != nil {
+		return err
 	}
 
 	timeout := time.Duration(server.Config.Timeout) * time.Second
@@ -130,8 +117,8 @@ func (server *Server) Dial() error {
 				InsecureSkipVerify: server.Config.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
-				MinVersion:         server.Config.minTLSVersion,
-				CipherSuites:       server.Config.tlsCiphers,
+				MinVersion:         server.Config.MinTLSVersionID,
+				CipherSuites:       server.Config.TLSCipherIDs,
 			}
 			if len(clientCert.Certificate) > 0 {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
@@ -312,6 +299,66 @@ func (server *Server) Users(logins []string) (
 	return serializedUsers, nil
 }
 
+func getRootCACertPool(config ServerConfig) (*x509.CertPool, error) {
+	var pemCerts [][]byte
+
+	if config.RootCACert != "" {
+		for _, caCertFile := range util.SplitString(config.RootCACert) {
+			// nolint:gosec
+			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
+			pem, err := os.ReadFile(caCertFile)
+			if err != nil {
+				return nil, err
+			}
+
+			pemCerts = append(pemCerts, pem)
+		}
+	} else if len(config.RootCACertValue) > 0 {
+		for _, cert := range config.RootCACertValue {
+			pem, err := base64.StdEncoding.DecodeString(cert)
+			if err != nil {
+				return nil, err
+			}
+
+			pemCerts = append(pemCerts, pem)
+		}
+	}
+
+	if len(pemCerts) > 0 {
+		certPool := x509.NewCertPool()
+
+		for _, pem := range pemCerts {
+			if !certPool.AppendCertsFromPEM(pem) {
+				return nil, errors.New("failed to append CA certificate")
+			}
+		}
+
+		return certPool, nil
+	}
+
+	return nil, nil
+}
+
+func getClientCert(config ServerConfig) (tls.Certificate, error) {
+	if config.ClientCert != "" && config.ClientKey != "" {
+		return tls.LoadX509KeyPair(config.ClientCert, config.ClientKey)
+	} else if config.ClientCertValue != "" && config.ClientKeyValue != "" {
+		certPem, err := base64.StdEncoding.DecodeString(config.ClientCertValue)
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+
+		keyPem, err := base64.StdEncoding.DecodeString(config.ClientKeyValue)
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+
+		return tls.X509KeyPair(certPem, keyPem)
+	}
+
+	return tls.Certificate{}, nil
+}
+
 // getUsersIteration is a helper function for Users() method.
 // It divides the users by equal parts for the anticipated requests
 func getUsersIteration(logins []string, fn func(int, int) error) error {
@@ -366,7 +413,7 @@ func (server *Server) users(logins []string) (
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
 func (server *Server) validateGrafanaUser(user *login.ExternalUserInfo) error {
-	if !server.cfg.LDAPSkipOrgRoleSync && len(server.Config.Groups) > 0 &&
+	if !server.cfg.SkipOrgRoleSync && len(server.Config.Groups) > 0 &&
 		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
 		server.log.Warn(
 			"User does not belong in any of the specified LDAP groups",
@@ -451,7 +498,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*login.ExternalUserInf
 	}
 
 	// Skipping org role sync
-	if server.cfg.LDAPSkipOrgRoleSync {
+	if server.cfg.SkipOrgRoleSync {
 		server.log.Debug("Skipping organization role mapping.")
 		return extUser, nil
 	}

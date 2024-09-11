@@ -15,14 +15,25 @@ labels:
 menuTitle: Query tracing data
 title: Query tracing data
 weight: 300
+refs:
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Query tracing data
 
-The Tempo data source's query editor helps you query and display traces from Tempo in [Explore][explore].
+The Tempo data source's query editor helps you query and display traces from Tempo in [Explore](ref:explore).
 
 This topic explains configuration and queries specific to the Tempo data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
+For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
 To add TraceQL panels to your dashboard, refer to the [Traces panel documentation](/docs/grafana/latest/panels-visualizations/visualizations/traces/).
 
@@ -98,11 +109,3 @@ To query a particular trace:
 1. Enter the trace's ID into the query field.
 
 {{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo TraceID query type" >}}
-
-{{% docs/reference %}}
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
-
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-{{% /docs/reference %}}

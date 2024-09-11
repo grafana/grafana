@@ -8,7 +8,8 @@ import { Coordinate } from 'ol/coordinate';
 import { isEmpty } from 'ol/extent';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
 import { fromLonLat } from 'ol/proj';
-import React, { Component, ReactNode } from 'react';
+import { Component, ReactNode } from 'react';
+import * as React from 'react';
 import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
@@ -384,7 +385,14 @@ export class GeomapPanel extends Component<Props, State> {
       <>
         <Global styles={this.globalCSS} />
         <div className={styles.wrap} onMouseLeave={this.clearTooltip}>
-          <div className={styles.map} ref={this.initMapRef}></div>
+          <div
+            role="application"
+            className={styles.map}
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={0} // Interactivity is added through the ref
+            aria-label={`Navigable map`}
+            ref={this.initMapRef}
+          ></div>
           <GeomapOverlay
             bottomLeft={legends}
             topRight1={topRight1}

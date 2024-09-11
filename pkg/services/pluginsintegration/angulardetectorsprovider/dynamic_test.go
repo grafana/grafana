@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -343,18 +342,6 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 			backgroundJobIntervalOnPrem = oldBackgroundJobInterval
 		})
 
-		t.Run("is disabled if feature flag is not present", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
-			svc.features = featuremgmt.WithFeatures()
-			require.True(t, svc.IsDisabled(), "background service should be disabled")
-		})
-
-		t.Run("is enabled if feature flag is present", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL)
-			svc.features = featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
-			require.False(t, svc.IsDisabled(), "background service should be enabled")
-		})
-
 		t.Run("fetches value from gcom on start if too much time has passed", func(t *testing.T) {
 			gcomCallback := make(chan struct{})
 			gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
@@ -433,6 +420,24 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 
 			require.True(t, jobCalls.calledX(tcRuns), "should have the correct number of job calls")
 			require.True(t, gcom.httpCalls.calledX(tcRuns), "should have the correct number of gcom api calls")
+		})
+
+		t.Run("IsDisabled", func(t *testing.T) {
+			for _, tc := range []struct {
+				name                  string
+				checkForPluginUpdates bool
+				expIsDisabled         bool
+			}{
+				{name: "true", checkForPluginUpdates: true, expIsDisabled: false},
+				{name: "false", checkForPluginUpdates: false, expIsDisabled: true},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					cfg := setting.NewCfg()
+					cfg.CheckForPluginUpdates = tc.checkForPluginUpdates
+					svc := provideDynamic(t, srv.URL, provideDynamicOpts{cfg: cfg})
+					require.Equal(t, tc.expIsDisabled, svc.IsDisabled(), "IsDisabled should return correct value")
+				})
+			}
 		})
 	})
 }
@@ -593,12 +598,8 @@ func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *D
 	if opt.cfg == nil {
 		opt.cfg = setting.NewCfg()
 	}
-	opt.cfg.GrafanaComURL = gcomURL
-	d, err := ProvideDynamic(
-		opt.cfg,
-		opt.store,
-		featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
-	)
+	opt.cfg.GrafanaComAPIURL = gcomURL + "/api"
+	d, err := ProvideDynamic(opt.cfg, opt.store)
 	require.NoError(t, err)
 	return d
 }

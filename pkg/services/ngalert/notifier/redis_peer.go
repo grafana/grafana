@@ -2,9 +2,11 @@ package notifier
 
 import (
 	"context"
+	"crypto/tls"
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
+	dstls "github.com/grafana/dskit/crypto/tls"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/redis/go-redis/v9"
@@ -20,13 +23,17 @@ import (
 )
 
 type redisConfig struct {
-	addr     string
-	username string
-	password string
-	db       int
-	name     string
-	prefix   string
-	maxConns int
+	addr        string
+	username    string
+	password    string
+	db          int
+	name        string
+	prefix      string
+	maxConns    int
+	clusterMode bool
+
+	tlsEnabled bool
+	tls        dstls.ClientConfig
 }
 
 const (
@@ -51,7 +58,7 @@ const (
 
 type redisPeer struct {
 	name      string
-	redis     *redis.Client
+	redis     redis.UniversalClient
 	prefix    string
 	logger    log.Logger
 	states    map[string]alertingCluster.State
@@ -90,13 +97,35 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	if cfg.maxConns >= 0 {
 		poolSize = cfg.maxConns
 	}
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.addr,
-		Username: cfg.username,
-		Password: cfg.password,
-		DB:       cfg.db,
-		PoolSize: poolSize,
-	})
+
+	addrs := strings.Split(cfg.addr, ",")
+
+	var tlsClientConfig *tls.Config
+	var err error
+	if cfg.tlsEnabled {
+		tlsClientConfig, err = cfg.tls.GetTLSConfig()
+		if err != nil {
+			logger.Error("Failed to get TLS config", "err", err)
+			return nil, err
+		}
+	}
+
+	opts := &redis.UniversalOptions{
+		Addrs:     addrs,
+		Username:  cfg.username,
+		Password:  cfg.password,
+		DB:        cfg.db,
+		PoolSize:  poolSize,
+		TLSConfig: tlsClientConfig,
+	}
+
+	var rdb redis.UniversalClient
+	if cfg.clusterMode {
+		rdb = redis.NewClusterClient(opts.Cluster())
+	} else {
+		rdb = redis.NewClient(opts.Simple())
+	}
+
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
 		logger.Error("Failed to ping redis - redis-based alertmanager clustering may not be available", "err", cmd.Err())
@@ -431,12 +460,12 @@ func (p *redisPeer) AddState(key string, state alertingCluster.State, _ promethe
 	p.states[key] = state
 	// As we also want to get the state from other nodes, we subscribe to the key.
 	sub := p.redis.Subscribe(context.Background(), p.withPrefix(key))
-	go p.receiveLoop(key, sub)
+	go p.receiveLoop(sub)
 	p.subs[key] = sub
 	return newRedisChannel(p, key, p.withPrefix(key), update)
 }
 
-func (p *redisPeer) receiveLoop(name string, channel *redis.PubSub) {
+func (p *redisPeer) receiveLoop(channel *redis.PubSub) {
 	for {
 		select {
 		case <-p.shutdownc:

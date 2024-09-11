@@ -1,14 +1,14 @@
 import { uniqueId } from 'lodash';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
   DataSourceSettings,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
-} from '@grafana/data/src';
-import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui/src';
-import { config } from 'app/core/config';
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Alert, DataSourceHttpSettings, InlineField, Select, Field, Input, FieldSet } from '@grafana/ui';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
 import { InfluxOptions, InfluxOptionsV1, InfluxVersion } from '../../../types';
@@ -36,11 +36,6 @@ const versionMap: Record<InfluxVersion, SelectableValue<InfluxVersion>> = {
 };
 
 const versions: Array<SelectableValue<InfluxVersion>> = [
-  versionMap[InfluxVersion.InfluxQL],
-  versionMap[InfluxVersion.Flux],
-];
-
-const versionsWithSQL: Array<SelectableValue<InfluxVersion>> = [
   versionMap[InfluxVersion.InfluxQL],
   versionMap[InfluxVersion.SQL],
   versionMap[InfluxVersion.Flux],
@@ -119,7 +114,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
               aria-label="Query language"
               className="width-30"
               value={versionMap[options.jsonData.version ?? InfluxVersion.InfluxQL]}
-              options={config.featureToggles.influxdbSqlSupport ? versionsWithSQL : versions}
+              options={versions}
               defaultValue={versionMap[InfluxVersion.InfluxQL]}
               onChange={this.onVersionChanged}
             />

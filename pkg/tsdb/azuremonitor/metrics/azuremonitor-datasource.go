@@ -48,7 +48,7 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -424,10 +424,9 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			resourceName = extractResourceNameFromMetricsURL(query.URL)
 			resourceID = extractResourceIDFromMetricsURL(query.URL)
 		}
-		if _, ok := labels[resourceIdLabel]; ok {
-			delete(labels, resourceIdLabel)
-			labels["resourceName"] = resourceName
-		}
+
+		delete(labels, resourceIdLabel)
+		labels["resourceName"] = resourceName
 
 		if query.Alias != "" {
 			displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, subscription)

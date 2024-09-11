@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -13,10 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func SetupRBACRole(t *testing.T, db *sqlstore.SQLStore, user *user.SignedInUser) *accesscontrol.Role {
+func SetupRBACRole(t *testing.T, db db.DB, user *user.SignedInUser) *accesscontrol.Role {
 	t.Helper()
 
 	var role *accesscontrol.Role
@@ -49,7 +52,7 @@ func SetupRBACRole(t *testing.T, db *sqlstore.SQLStore, user *user.SignedInUser)
 	return role
 }
 
-func SetupRBACPermission(t *testing.T, db *sqlstore.SQLStore, role *accesscontrol.Role, user *user.SignedInUser) {
+func SetupRBACPermission(t *testing.T, db db.DB, role *accesscontrol.Role, user *user.SignedInUser) {
 	t.Helper()
 
 	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
@@ -76,14 +79,14 @@ func SetupRBACPermission(t *testing.T, db *sqlstore.SQLStore, role *accesscontro
 	require.NoError(t, err)
 }
 
-func CreateDashboard(t *testing.T, sql *sqlstore.SQLStore, features featuremgmt.FeatureToggles, cmd dashboards.SaveDashboardCommand) *dashboards.Dashboard {
+func CreateDashboard(t *testing.T, db db.ReplDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, cmd dashboards.SaveDashboardCommand) *dashboards.Dashboard {
 	t.Helper()
 
 	dashboardStore, err := dashboardstore.ProvideDashboardStore(
-		sql,
-		sql.Cfg,
+		db,
+		cfg,
 		features,
-		tagimpl.ProvideService(sql),
+		tagimpl.ProvideService(db.DB()),
 		quotatest.New(false, nil),
 	)
 	require.NoError(t, err)

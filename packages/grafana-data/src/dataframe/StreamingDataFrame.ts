@@ -1,16 +1,13 @@
 import { AlignedData } from 'uplot';
 
-import { DataFrame, Field, FieldDTO, FieldType, Labels, parseLabels, QueryResultMeta } from '..';
 import { join } from '../transformations/transformers/joinDataFrames';
+import { Labels, QueryResultMeta } from '../types/data';
+import { FieldDTO, DataFrame, Field, FieldType } from '../types/dataFrame';
+import { parseLabels } from '../utils/labels';
 import { renderLegendFormat } from '../utils/legend';
 
-import {
-  DataFrameJSON,
-  decodeFieldValueEntities,
-  FieldSchema,
-  guessFieldTypeFromValue,
-  toFilteredDataFrameDTO,
-} from '.';
+import { DataFrameJSON, decodeFieldValueEntities, FieldSchema } from './DataFrameJSON';
+import { guessFieldTypeFromValue, toFilteredDataFrameDTO } from './processDataFrame';
 
 /**
  * Indicate if the frame is appened or replace
@@ -115,7 +112,7 @@ export class StreamingDataFrame implements DataFrame {
     const dataFrameDTO = toFilteredDataFrameDTO(this, fieldPredicate);
 
     const numberOfItemsToRemove = getNumberOfItemsToRemove(
-      dataFrameDTO.fields.map((f) => f.values) as unknown[][],
+      dataFrameDTO.fields.map((f) => f.values ?? []),
       typeof trimValues?.maxLength === 'number' ? Math.min(trimValues.maxLength, options.maxLength) : options.maxLength,
       this.timeFieldIndex,
       options.maxDelta
@@ -271,8 +268,8 @@ export class StreamingDataFrame implements DataFrame {
             type: f.type ?? FieldType.other,
             // transfer old values by type & name, unless we relied on labels to match fields
             values: isWide
-              ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
-                Array(this.length).fill(undefined)
+              ? (this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
+                Array(this.length).fill(undefined))
               : [],
           };
         });

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
-import React from 'react';
+import { memo } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -13,13 +13,14 @@ import {
   transformDataFrame,
   DataTransformerConfig,
   CustomTransformOperator,
+  Labels,
 } from '@grafana/data';
 import { DataFrame } from '@grafana/data/';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../../inspector/utils/download';
-import { LogLabels } from '../../logs/components/LogLabels';
+import { LogLabels, LogLabelsList } from '../../logs/components/LogLabels';
 import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
 import { logRowsToReadableJson } from '../../logs/utils';
 import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
@@ -52,7 +53,7 @@ enum DownloadFormat {
   CSV = 'csv',
 }
 
-export const LogsMetaRow = React.memo(
+export const LogsMetaRow = memo(
   ({
     meta,
     dedupStrategy,
@@ -133,7 +134,7 @@ export const LogsMetaRow = React.memo(
       logsMetaItem.push(
         {
           label: 'Showing only selected fields',
-          value: renderMetaItem(displayedFields, LogsMetaKind.LabelsMap),
+          value: <LogLabelsList labels={displayedFields} />,
         },
         {
           label: '',
@@ -195,11 +196,16 @@ export const LogsMetaRow = React.memo(
 
 LogsMetaRow.displayName = 'LogsMetaRow';
 
-function renderMetaItem(value: any, kind: LogsMetaKind) {
+function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind) {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return <>{value}</>;
+  }
   if (kind === LogsMetaKind.LabelsMap) {
     return <LogLabels labels={value} />;
-  } else if (kind === LogsMetaKind.Error) {
-    return <span className="logs-meta-item__error">{value}</span>;
   }
-  return value;
+  if (kind === LogsMetaKind.Error) {
+    return <span className="logs-meta-item__error">{value.toString()}</span>;
+  }
+  console.error(`Meta type ${typeof value} ${value} not recognized.`);
+  return <></>;
 }

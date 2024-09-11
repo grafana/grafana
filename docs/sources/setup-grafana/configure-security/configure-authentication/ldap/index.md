@@ -159,6 +159,8 @@ To use the debug view, complete the following steps:
 1.  Then, press "Run"
 1.  If the user is found within any of your LDAP instances, the mapping information is displayed.
 
+Note that this does not work if you are using the single bind configuration outlined below.
+
 {{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" alt="LDAP mapping displayed" >}}
 
 [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) users with [enhanced LDAP integration]({{< relref "../enhanced-ldap" >}}) enabled can also see sync status in the debug view. This requires the `ldap.status:read` permission.

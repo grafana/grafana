@@ -123,3 +123,14 @@ A user that is part of Team A will have access to logs that match `namespace="de
 A user that is part of Team A and part of Team B will have access to logs that match `namespace="dev"`.
 
 A user that is not part of Team A and part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
+
+### Task 6: User A is Admin and part of Team B
+
+We have team B, user A is part of Team B and has an `Admin` basic role.
+
+- Team B has no roles assigned
+- Team B has Query permissions to data source Loki
+
+- Team B has a rule `{ project_id="project-dev" }`
+
+User A may only access logs for data source Loki that match `{ project_id="project-dev" }` and no other logs on the data source.

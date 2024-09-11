@@ -1,4 +1,3 @@
-import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Alert } from '@grafana/ui';

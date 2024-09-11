@@ -19,7 +19,7 @@ exports[`should be able to test and save a receiver 1`] = `
             "name": "test",
             "secureSettings": {},
             "settings": {
-              "addresses": "nteews treerc@egirvaefrana.com",
+              "addresses": "tester@grafana.com",
               "singleEmail": false,
             },
             "type": "email",
@@ -119,16 +119,29 @@ exports[`should be able to test and save a receiver 2`] = `
           "grafana_managed_receiver_configs": [
             {
               "disableResolveMessage": false,
-              "name": "my ",
+              "name": "Oncall-integration",
+              "settings": {
+                "url": "https://oncall-endpoint.example.com",
+              },
+              "type": "oncall",
+            },
+          ],
+          "name": "OnCall Conctact point",
+        },
+        {
+          "grafana_managed_receiver_configs": [
+            {
+              "disableResolveMessage": false,
+              "name": "my new receiver",
               "secureSettings": {},
               "settings": {
-                "addresses": "nteews treerc@egirvaefrana.com",
+                "addresses": "tester@grafana.com",
                 "singleEmail": false,
               },
               "type": "email",
             },
           ],
-          "name": "my ",
+          "name": "my new receiver",
         },
       ],
       "route": {
@@ -139,9 +152,22 @@ exports[`should be able to test and save a receiver 2`] = `
           },
         ],
       },
+      "templates": [
+        "slack-template",
+        "custom-email",
+        "provisioned-template",
+        "template with spaces",
+      ],
     },
-    "template_file_provenances": {},
-    "template_files": {},
+    "template_file_provenances": {
+      "provisioned-template": "api",
+    },
+    "template_files": {
+      "custom-email": "{{ define 'custom-email' }}  Custom email template {{ end }}",
+      "provisioned-template": "{{ define 'provisioned-template' }}  Custom provisioned template {{ end }}",
+      "slack-template": "{{ define 'slack-template' }} Custom slack template {{ end }}",
+      "template with spaces": "{{ define 'template with spaces' }}  Custom template with spaces in the name {{ end }}",
+    },
   },
 ]
 `;

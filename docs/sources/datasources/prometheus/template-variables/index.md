@@ -16,6 +16,27 @@ labels:
 menuTitle: Template variables
 title: Prometheus template variables
 weight: 400
+refs:
+  variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+  add-template-variables-add-ad-hoc-filters:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters
+  add-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+  add-template-variables-global-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables
 ---
 
 # Prometheus template variables
@@ -23,7 +44,7 @@ weight: 400
 Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables. Grafana refers to such variables as **template** variables.
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 
-For an introduction to templating and template variables, see [Templating][variables] and [Add and manage variables][add-template-variables].
+For an introduction to templating and template variables, see [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables).
 
 ## Use query variables
 
@@ -65,7 +86,7 @@ The following selection options are available:
 ### Use interval and range variables
 
 You can use some global built-in variables in query variables, for example, `$__interval`, `$__interval_ms`, `$__range`, `$__range_s` and `$__range_ms`.
-For details, see [Global built-in variables][add-template-variables-global-variables].
+For details, see [Global built-in variables](ref:add-template-variables-global-variables).
 The `label_values` function doesn't support queries, so you can use these variables in conjunction with the `query_result` function to filter variable queries.
 
 Make sure to set the variable's `refresh` trigger to be `On Time Range Change` to get the correct instances when changing the time range on the dashboard.
@@ -133,19 +154,5 @@ If you've enabled the _Multi-value_ or _Include all value_ options, Grafana conv
 
 ## Use the ad hoc filters variable type
 
-Prometheus supports the special [ad hoc filters][add-template-variables-add-ad-hoc-filters] variable type, which you can use to specify any number of label/value filters on the fly.
+Prometheus supports the special [ad hoc filters](ref:add-template-variables-add-ad-hoc-filters) variable type, which you can use to specify any number of label/value filters on the fly.
 These filters are automatically applied to all your Prometheus queries.
-
-{{% docs/reference %}}
-[add-template-variables-add-ad-hoc-filters]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-ad-hoc-filters"
-[add-template-variables-add-ad-hoc-filters]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-ad-hoc-filters"
-
-[add-template-variables-global-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
-[add-template-variables-global-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
-
-[add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
-[add-template-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
-
-[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-{{% /docs/reference %}}

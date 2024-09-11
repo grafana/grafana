@@ -155,9 +155,9 @@ export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejec
   }
 );
 
-export const fetchDetails = createAsyncThunk<Update<CatalogPlugin>, string>(
+export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, string>(
   `${STATE_PREFIX}/fetchDetails`,
-  async (id: string, thunkApi) => {
+  async (id, thunkApi) => {
     try {
       const details = await getPluginDetails(id);
 
@@ -175,12 +175,12 @@ export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlug
 
 // 1. gets remote equivalents from the store (if there are any)
 // 2. merges the remote equivalents with the local plugins
-// 3. updates the the store with the updated CatalogPlugin objects
+// 3. updates the store with the updated CatalogPlugin objects
 export const addLocalPlugins = createAction<LocalPlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
 
 // 1. gets local equivalents from the store (if there are any)
 // 2. merges the local equivalents with the remote plugins
-// 3. updates the the store with the updated CatalogPlugin objects
+// 3. updates the store with the updated CatalogPlugin objects
 export const addRemotePlugins = createAction<RemotePlugin[]>(`${STATE_PREFIX}/addLocalPlugins`);
 
 // 1. merges the local and remote plugins
@@ -191,7 +191,7 @@ export const addLocalAndRemotePlugins = createAction<{ local: LocalPlugin[]; rem
 
 // We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk<
-  Update<CatalogPlugin>,
+  Update<CatalogPlugin, string>,
   {
     id: string;
     version?: string;
@@ -222,7 +222,7 @@ export const install = createAsyncThunk<
 
 export const unsetInstall = createAsyncThunk(`${STATE_PREFIX}/install`, async () => ({}));
 
-export const uninstall = createAsyncThunk<Update<CatalogPlugin>, string>(
+export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>(
   `${STATE_PREFIX}/uninstall`,
   async (id, thunkApi) => {
     try {

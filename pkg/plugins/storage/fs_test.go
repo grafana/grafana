@@ -16,7 +16,7 @@ import (
 
 func TestAdd(t *testing.T) {
 	testDir := "./testdata/tmpInstallPluginDir"
-	err := os.MkdirAll(testDir, os.ModePerm)
+	err := os.MkdirAll(testDir, 0o750)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

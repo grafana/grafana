@@ -83,8 +83,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   renderers,
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
-  eventsScope = '__global_',
 }) => {
+  const eventsScope = '__global_';
+
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
   let alignedFrame: DataFrame;
@@ -604,7 +605,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     };
   }
 
-  builder.setSync();
   builder.setCursor(cursor);
 
   return builder;

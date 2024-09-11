@@ -1,6 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { TemplateSrv } from '@grafana/runtime';
 
@@ -56,6 +55,12 @@ describe('TempoVariableQueryEditor', () => {
     render(<TempoVariableQueryEditor {...props} onChange={onChange} />);
 
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
+    await userEvent.click(document.body);
+
+    // The Label field is rendered only after the query type has been selected.
+    // We wait for it to be displayed to avoid flakyness.
+    await waitFor(() => expect(screen.getByLabelText('Label')).toBeInTheDocument());
+
     await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
     await userEvent.click(document.body);
 

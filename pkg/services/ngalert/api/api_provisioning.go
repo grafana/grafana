@@ -8,9 +8,11 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -28,6 +30,10 @@ type ProvisioningSrv struct {
 	templates           TemplateService
 	muteTimings         MuteTimingService
 	alertRules          AlertRuleService
+	folderSvc           folder.Service
+
+	// XXX: Used to flag recording rules, remove when FT is removed
+	featureManager featuremgmt.FeatureToggles
 }
 
 type ContactPointService interface {
@@ -40,7 +46,7 @@ type ContactPointService interface {
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
 	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, name string) error
+	DeleteTemplate(ctx context.Context, orgID int64, name string, provenance definitions.Provenance, version string) error
 }
 
 type NotificationPolicyService interface {
@@ -54,7 +60,7 @@ type MuteTimingService interface {
 	GetMuteTiming(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
 	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
 	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	DeleteMuteTiming(ctx context.Context, name string, orgID int64) error
+	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
 }
 
 type AlertRuleService interface {
@@ -66,9 +72,9 @@ type AlertRuleService interface {
 	GetRuleGroup(ctx context.Context, user identity.Requester, folder, group string) (alerting_models.AlertRuleGroup, error)
 	ReplaceRuleGroup(ctx context.Context, user identity.Requester, group alerting_models.AlertRuleGroup, provenance alerting_models.Provenance) error
 	DeleteRuleGroup(ctx context.Context, user identity.Requester, folder, group string, provenance alerting_models.Provenance) error
-	GetAlertRuleWithFolderTitle(ctx context.Context, user identity.Requester, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
-	GetAlertRuleGroupWithFolderTitle(ctx context.Context, user identity.Requester, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
-	GetAlertGroupsWithFolderTitle(ctx context.Context, user identity.Requester, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
+	GetAlertRuleWithFolderFullpath(ctx context.Context, u identity.Requester, ruleUID string) (provisioning.AlertRuleWithFolderFullpath, error)
+	GetAlertRuleGroupWithFolderFullpath(ctx context.Context, u identity.Requester, folder, group string) (alerting_models.AlertRuleGroupWithFolderFullpath, error)
+	GetAlertGroupsWithFolderFullpath(ctx context.Context, u identity.Requester, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderFullpath, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -129,13 +135,11 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 		Name:  c.Query("name"),
 		OrgID: c.SignedInUser.GetOrgID(),
 	}
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, nil)
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
+
 	return response.JSON(http.StatusOK, cps)
 }
 
@@ -147,10 +151,7 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 	}
 	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if errors.Is(err, provisioning.ErrPermissionDenied) {
-			return ErrResp(http.StatusForbidden, err, "")
-		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 
 	e, err := AlertingFileExportFromEmbeddedContactPoints(c.SignedInUser.GetOrgID(), cps)
@@ -220,24 +221,26 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, name st
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
 	tmpl := definitions.NotificationTemplate{
-		Name:       name,
-		Template:   body.Template,
-		Provenance: determineProvenance(c),
+		Name:            name,
+		Template:        body.Template,
+		Provenance:      determineProvenance(c),
+		ResourceVersion: body.ResourceVersion,
 	}
 	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), tmpl)
 	if err != nil {
 		if errors.Is(err, provisioning.ErrValidation) {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, modified)
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name)
+	version := c.Query("version")
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.SignedInUser.GetOrgID(), name, determineProvenance(c), version)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusNoContent, nil)
 }
@@ -291,7 +294,14 @@ func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt d
 }
 
 func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval, name string) response.Response {
-	mt.Name = name
+	// if body does not specify name, assume that the path contains the name
+	if mt.Name == "" {
+		mt.Name = name
+	}
+	// if body contains a name, and it's different from the one in the path, assume the latter to be UID
+	if mt.Name != name {
+		mt.UID = name
+	}
 	mt.Provenance = determineProvenance(c)
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.SignedInUser.GetOrgID())
 	if err != nil {
@@ -301,7 +311,8 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 }
 
 func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
-	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID())
+	version := c.Query("version")
+	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.SignedInUser.GetOrgID(), determineProvenance(c), version)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete mute timing", err)
 	}
@@ -333,6 +344,15 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
+
+	if upstreamModel.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+		return ErrResp(
+			http.StatusBadRequest,
+			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
+			"",
+		)
+	}
+
 	provenance := determineProvenance(c)
 	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), c.SignedInUser, upstreamModel, alerting_models.Provenance(provenance))
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
@@ -360,6 +380,15 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
+
+	if updated.Type() == alerting_models.RuleTypeRecording && !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+		return ErrResp(
+			http.StatusBadRequest,
+			fmt.Errorf("%w: recording rules cannot be created on this instance", alerting_models.ErrAlertRuleFailedValidation),
+			"",
+		)
+	}
+
 	updated.OrgID = c.SignedInUser.GetOrgID()
 	updated.UID = UID
 	provenance := determineProvenance(c)
@@ -422,15 +451,15 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 		return srv.RouteGetAlertRuleGroupExport(c, folderUIDs[0], group)
 	}
 
-	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.SignedInUser, folderUIDs)
+	groupsWithFullpath, err := srv.alertRules.GetAlertGroupsWithFolderFullpath(c.Req.Context(), c.SignedInUser, folderUIDs)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
 	}
-	if len(groupsWithTitle) == 0 {
+	if len(groupsWithFullpath) == 0 {
 		return response.Empty(http.StatusNotFound)
 	}
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groupsWithTitle)
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath(groupsWithFullpath)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create alerting file export", err)
 	}
@@ -440,12 +469,12 @@ func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext)
 
 // RouteGetAlertRuleGroupExport retrieves the given alert rule group in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqContext, folder string, group string) response.Response {
-	g, err := srv.alertRules.GetAlertRuleGroupWithFolderTitle(c.Req.Context(), c.SignedInUser, folder, group)
+	g, err := srv.alertRules.GetAlertRuleGroupWithFolderFullpath(c.Req.Context(), c.SignedInUser, folder, group)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rule group", err)
 	}
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{g})
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]alerting_models.AlertRuleGroupWithFolderFullpath{g})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create alerting file export", err)
 	}
@@ -455,7 +484,7 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroupExport(c *contextmodel.ReqCont
 
 // RouteGetAlertRuleExport retrieves the given alert rule in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, UID string) response.Response {
-	rule, err := srv.alertRules.GetAlertRuleWithFolderTitle(c.Req.Context(), c.SignedInUser, UID)
+	rule, err := srv.alertRules.GetAlertRuleWithFolderFullpath(c.Req.Context(), c.SignedInUser, UID)
 	if err != nil {
 		if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -463,8 +492,8 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get alert rules", err)
 	}
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{
-		alerting_models.NewAlertRuleGroupWithFolderTitleFromRulesGroup(rule.AlertRule.GetGroupKey(), alerting_models.RulesGroup{&rule.AlertRule}, rule.FolderTitle),
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderFullpath([]alerting_models.AlertRuleGroupWithFolderFullpath{
+		alerting_models.NewAlertRuleGroupWithFolderFullpathFromRulesGroup(rule.AlertRule.GetGroupKey(), alerting_models.RulesGroup{&rule.AlertRule}, rule.FolderFullpath),
 	})
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
@@ -488,10 +517,10 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
+	if errors.Is(err, store.ErrOptimisticLock) {
+		return ErrResp(http.StatusConflict, err, "")
+	}
 	if err != nil {
-		if errors.Is(err, store.ErrOptimisticLock) {
-			return ErrResp(http.StatusConflict, err, "")
-		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusOK, ag)
@@ -562,22 +591,24 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
 	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies)+len(body.MuteTimings))
 	convertToResources := func() error {
-		for idx, group := range body.Groups {
+		for _, group := range body.Groups {
 			gr := group
+			hash := getHash([]string{gr.Name, gr.FolderUID})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_rule_group",
-				Name: fmt.Sprintf("rule_group_%04d", idx),
+				Name: fmt.Sprintf("rule_group_%016x", hash),
 				Body: &gr,
 			})
 		}
-		for idx, cp := range body.ContactPoints {
+		for _, cp := range body.ContactPoints {
 			upd, err := ContactPointFromContactPointExport(cp)
 			if err != nil {
 				return fmt.Errorf("failed to convert contact points to HCL:%w", err)
 			}
+			hash := getHash([]string{upd.Name})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_contact_point",
-				Name: fmt.Sprintf("contact_point_%d", idx),
+				Name: fmt.Sprintf("contact_point_%016x", hash),
 				Body: &upd,
 			})
 		}
@@ -591,14 +622,15 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 			})
 		}
 
-		for idx, mt := range body.MuteTimings {
+		for _, mt := range body.MuteTimings {
 			mthcl, err := MuteTimingIntervalToMuteTimeIntervalHclExport(mt)
 			if err != nil {
 				return fmt.Errorf("failed to convert mute timing [%s] to HCL:%w", mt.Name, err)
 			}
+			hash := getHash([]string{mthcl.Name})
 			resources = append(resources, hcl.Resource{
 				Type: "grafana_mute_timing",
-				Name: fmt.Sprintf("mute_timing_%d", idx+1),
+				Name: fmt.Sprintf("mute_timing_%016x", hash),
 				Body: mthcl,
 			})
 		}

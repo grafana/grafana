@@ -58,7 +58,7 @@ export function migrateCloudWatchQuery(query: CloudWatchMetricsQuery) {
   }
 
   if (!query.hasOwnProperty('metricEditorMode')) {
-    if (query.metricQueryType === MetricQueryType.Query) {
+    if (query.metricQueryType === MetricQueryType.Insights) {
       query.metricEditorMode = MetricEditorMode.Code;
     } else {
       query.metricEditorMode = query.expression ? MetricEditorMode.Code : MetricEditorMode.Builder;

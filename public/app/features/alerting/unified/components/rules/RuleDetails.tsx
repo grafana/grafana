@@ -1,19 +1,18 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
-import { useStyles2, Tooltip } from '@grafana/ui';
+import { Tooltip, useStyles2 } from '@grafana/ui';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { useCleanAnnotations } from '../../utils/annotations';
-import { isRecordingRulerRule } from '../../utils/rules';
+import { isGrafanaRecordingRule, isRecordingRulerRule } from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
 
-import { RuleDetailsActionButtons } from './RuleDetailsActionButtons';
 import { RuleDetailsAnnotations } from './RuleDetailsAnnotations';
+import RuleDetailsButtons from './RuleDetailsButtons';
 import { RuleDetailsDataSources } from './RuleDetailsDataSources';
 import { RuleDetailsExpression } from './RuleDetailsExpression';
 import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
@@ -37,7 +36,7 @@ export const RuleDetails = ({ rule }: Props) => {
 
   return (
     <div>
-      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
+      <RuleDetailsButtons rule={rule} rulesSource={rulesSource} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}
@@ -53,7 +52,7 @@ export const RuleDetails = ({ rule }: Props) => {
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />
         </div>
       </div>
-      <DetailsField label="Matching instances" horizontal={true}>
+      <DetailsField label="Instances" horizontal={true}>
         <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
       </DetailsField>
     </div>
@@ -66,9 +65,10 @@ interface EvaluationBehaviorSummaryProps {
 
 const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
   let forDuration: string | undefined;
-  let every = rule.group.interval;
-  let lastEvaluation = rule.promRule?.lastEvaluation;
-  let lastEvaluationDuration = rule.promRule?.evaluationTime;
+  const every = rule.group.interval;
+  const lastEvaluation = rule.promRule?.lastEvaluation;
+  const lastEvaluationDuration = rule.promRule?.evaluationTime;
+  const metric = isGrafanaRecordingRule(rule.rulerRule) ? rule.rulerRule?.grafana_alert.record?.metric : undefined;
 
   // recording rules don't have a for duration
   if (!isRecordingRulerRule(rule.rulerRule)) {
@@ -77,6 +77,11 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
 
   return (
     <>
+      {metric && (
+        <DetailsField label="Metric" horizontal={true}>
+          {metric}
+        </DetailsField>
+      )}
       {every && (
         <DetailsField label="Evaluate" horizontal={true}>
           Every {every}
@@ -111,21 +116,21 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: row;
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'row',
 
-    ${theme.breakpoints.down('md')} {
-      flex-direction: column;
-    }
-  `,
-  leftSide: css`
-    flex: 1;
-  `,
-  rightSide: css`
-    ${theme.breakpoints.up('md')} {
-      padding-left: 90px;
-      width: 300px;
-    }
-  `,
+    [theme.breakpoints.down('md')]: {
+      flexDirection: 'column',
+    },
+  }),
+  leftSide: css({
+    flex: 1,
+  }),
+  rightSide: css({
+    [theme.breakpoints.up('md')]: {
+      paddingLeft: '90px',
+      width: '300px',
+    },
+  }),
 });

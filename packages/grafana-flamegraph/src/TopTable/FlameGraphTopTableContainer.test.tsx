@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
-import React from 'react';
 
 import { createDataFrame } from '@grafana/data';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
+import { ColorScheme } from '../types';
 
 import FlameGraphTopTableContainer from './FlameGraphTopTableContainer';
 
@@ -22,6 +22,7 @@ describe('FlameGraphTopTableContainer', () => {
         onSymbolClick={jest.fn()}
         onSearch={onSearch}
         onSandwich={onSandwich}
+        colorScheme={ColorScheme.ValueBased}
       />
     );
 

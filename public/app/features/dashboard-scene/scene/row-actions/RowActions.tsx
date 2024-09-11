@@ -1,15 +1,7 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import {
-  SceneComponentProps,
-  SceneGridLayout,
-  SceneGridRow,
-  SceneObjectBase,
-  SceneObjectState,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Icon, TextLink, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -25,31 +17,6 @@ import { RowOptionsButton } from './RowOptionsButton';
 export interface RowActionsState extends SceneObjectState {}
 
 export class RowActions extends SceneObjectBase<RowActionsState> {
-  private updateLayout(rowClone: SceneGridRow): void {
-    const row = this.getParent();
-
-    const layout = this.getDashboard().state.body;
-
-    if (!(layout instanceof SceneGridLayout)) {
-      throw new Error('Layout is not a SceneGridLayout');
-    }
-
-    // remove the repeated rows
-    const children = layout.state.children.filter((child) => !child.state.key?.startsWith(`${row.state.key}-clone-`));
-
-    // get the index to replace later
-    const index = children.indexOf(row);
-
-    if (index === -1) {
-      throw new Error('Parent row not found in layout children');
-    }
-
-    // replace the row with the clone
-    layout.setState({
-      children: [...children.slice(0, index), rowClone, ...children.slice(index + 1)],
-    });
-  }
-
   public getParent(): SceneGridRow {
     if (!(this.parent instanceof SceneGridRow)) {
       throw new Error('RowActions must have a SceneGridRow parent');
@@ -64,39 +31,26 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
 
   public onUpdate = (title: string, repeat?: string | null): void => {
     const row = this.getParent();
+    let repeatBehavior: RowRepeaterBehavior | undefined;
 
-    // return early if there is no repeat
-    if (!repeat) {
-      const clone = row.clone();
-
-      // remove the row repeater behaviour, leave the rest
-      clone.setState({
-        title,
-        $behaviors: row.state.$behaviors?.filter((b) => !(b instanceof RowRepeaterBehavior)) ?? [],
-      });
-
-      this.updateLayout(clone);
-
-      return;
+    if (row.state.$behaviors) {
+      for (let b of row.state.$behaviors) {
+        if (b instanceof RowRepeaterBehavior) {
+          repeatBehavior = b;
+        }
+      }
     }
 
-    const children = row.state.children.map((child) => child.clone());
+    if (repeat && !repeatBehavior) {
+      const repeatBehavior = new RowRepeaterBehavior({ variableName: repeat });
+      row.setState({ $behaviors: [...(row.state.$behaviors ?? []), repeatBehavior] });
+    } else if (repeatBehavior) {
+      repeatBehavior.removeBehavior();
+    }
 
-    const newBehaviour = new RowRepeaterBehavior({
-      variableName: repeat,
-      sources: children,
-    });
-
-    // get rest of behaviors except the old row repeater, if any, and push new one
-    const behaviors = row.state.$behaviors?.filter((b) => !(b instanceof RowRepeaterBehavior)) ?? [];
-    behaviors.push(newBehaviour);
-
-    row.setState({
-      title,
-      $behaviors: behaviors,
-    });
-
-    newBehaviour.activate();
+    if (title !== row.state.title) {
+      row.setState({ title });
+    }
   };
 
   public onDelete = () => {

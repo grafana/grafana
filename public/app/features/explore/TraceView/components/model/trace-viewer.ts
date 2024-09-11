@@ -56,7 +56,34 @@ export const getTraceName = memoize(_getTraceNameImpl, (spans: TraceSpan[]) => {
   return spans[0].traceID;
 });
 
+// Find header tags according to either old standard (e..g, `http.method`) or the
+// standard OTEL semantic convention, as per https://opentelemetry.io/docs/specs/semconv/http/http-spans
+// (e.g., `http.request.method`). Spans following the OTEL semantic convention are prioritized.
+//
+// Note that we are ignoring these cases:
+// - conventions are mixed, e.g., a span with method in `http.method` but status code in `http.response.status_code`
+// - tags are not in the same span, e.g., method in spans[0] but status in spans[1]
 export function findHeaderTags(spans: TraceSpan[]) {
+  // OTEL semantic convention
+  for (let i = 0; i < spans.length; i++) {
+    const method = spans[i].tags.filter((tag) => {
+      return tag.key === 'http.request.method';
+    });
+
+    const status = spans[i].tags.filter((tag) => {
+      return tag.key === 'http.response.status_code';
+    });
+
+    const url = spans[i].tags.filter((tag) => {
+      return tag.key === 'http.route';
+    });
+
+    if (method.length > 0 || status.length > 0 || url.length > 0) {
+      return { method, status, url };
+    }
+  }
+
+  // Non-standard convention
   for (let i = 0; i < spans.length; i++) {
     const method = spans[i].tags.filter((tag) => {
       return tag.key === 'http.method';
@@ -74,6 +101,7 @@ export function findHeaderTags(spans: TraceSpan[]) {
       return { method, status, url };
     }
   }
+
   return {};
 }
 

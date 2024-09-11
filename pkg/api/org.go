@@ -8,8 +8,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -132,12 +132,11 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	if namespace != identity.NamespaceUser {
+	if !identity.IsIdentityType(c.SignedInUser.GetID(), identity.TypeUser) {
 		return response.Error(http.StatusForbidden, "Only users can create organizations", nil)
 	}
 
-	userID, err := identity.IntIdentifier(namespace, identifier)
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
 	}

@@ -12,8 +12,8 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -53,9 +53,9 @@ type SocialGenericOAuth struct {
 	teamIds              []string
 }
 
-func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
+func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBase(social.GenericOAuthProviderName, info, features, cfg),
+		SocialBase:           newSocialBase(social.GenericOAuthProviderName, orgRoleMapper, info, features, cfg),
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
 		emailAttributePath:   info.EmailAttributePath,
@@ -75,13 +75,18 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettin
 	return provider
 }
 
-func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
-	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+func (s *SocialGenericOAuth) Validate(ctx context.Context, newSettings ssoModels.SSOSettings, oldSettings ssoModels.SSOSettings, requester identity.Requester) error {
+	info, err := CreateOAuthInfoFromKeyValues(newSettings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info, requester)
+	oldInfo, err := CreateOAuthInfoFromKeyValues(oldSettings.Settings)
+	if err != nil {
+		oldInfo = &social.OAuthInfo{}
+	}
+
+	err = validateInfo(info, oldInfo, requester)
 	if err != nil {
 		return err
 	}
@@ -122,7 +127,7 @@ func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOS
 	s.reloadMutex.Lock()
 	defer s.reloadMutex.Unlock()
 
-	s.updateInfo(social.GenericOAuthProviderName, newInfo)
+	s.updateInfo(ctx, social.GenericOAuthProviderName, newInfo)
 
 	s.teamsUrl = newInfo.TeamsUrl
 	s.emailAttributeName = newInfo.EmailAttributeName
@@ -231,6 +236,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	userInfo := &social.BasicUserInfo{}
+	var externalOrgs []string
 	for _, data := range toCheck {
 		s.log.Debug("Processing external user info", "source", data.source, "data", data)
 
@@ -265,6 +271,15 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			}
 		}
 
+		if len(externalOrgs) == 0 && !s.info.SkipOrgRoleSync {
+			var err error
+			externalOrgs, err = s.extractOrgs(data.rawJSON)
+			if err != nil {
+				s.log.Warn("Failed to extract orgs", "err", err)
+				return nil, err
+			}
+		}
+
 		if len(userInfo.Groups) == 0 {
 			groups, err := s.extractGroups(data)
 			if err != nil {
@@ -276,18 +291,21 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 	}
 
-	if userInfo.Role == "" && !s.info.SkipOrgRoleSync {
-		if s.info.RoleAttributeStrict {
-			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
+	if !s.info.SkipOrgRoleSync {
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, externalOrgs, userInfo.Role)
+		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
+			// If no roles are found and role_attribute_strict is set, return an error.
+			// The s.info.RoleAttributeStrict is necessary, because there is a case when len(userInfo.OrgRoles) == 0,
+			// but strict role mapping is not enabled (when getAllOrgs fails).
+			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}
-		userInfo.Role = s.defaultRole()
 	}
 
 	if s.info.AllowAssignGrafanaAdmin && s.info.SkipOrgRoleSync {
 		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
-	if userInfo.Email == "" {
+	if s.canFetchPrivateEmail(userInfo) {
 		var err error
 		userInfo.Email, err = s.fetchPrivateEmail(ctx, client)
 		if err != nil {
@@ -315,6 +333,10 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 
 	s.log.Debug("User info result", "result", userInfo)
 	return userInfo, nil
+}
+
+func (s *SocialGenericOAuth) canFetchPrivateEmail(userinfo *social.BasicUserInfo) bool {
+	return s.info.ApiUrl != "" && userinfo.Email == ""
 }
 
 func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson {

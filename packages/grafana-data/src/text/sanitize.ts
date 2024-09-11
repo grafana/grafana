@@ -100,3 +100,14 @@ export function escapeHtml(str: string): string {
     .replace(/'/g, '&#39;')
     .replace(/"/g, '&quot;');
 }
+
+export const textUtil = {
+  escapeHtml,
+  hasAnsiCodes,
+  sanitize,
+  sanitizeTextPanelContent,
+  sanitizeUrl,
+  sanitizeSVGContent,
+  sanitizeTrustedTypes,
+  sanitizeTrustedTypesRSS,
+};

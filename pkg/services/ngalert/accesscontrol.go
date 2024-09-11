@@ -25,6 +25,10 @@ var (
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
 					Scope:  datasources.ScopeAll,
 				},
+				{
+					Action: accesscontrol.ActionAlertingSilencesRead,
+					Scope:  dashboards.ScopeFoldersAll,
+				},
 				// Following are needed for simplified notification policies
 				{
 					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
@@ -58,6 +62,14 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalWrite,
 					Scope:  datasources.ScopeAll,
+				},
+				{
+					Action: accesscontrol.ActionAlertingSilencesWrite,
+					Scope:  dashboards.ScopeFoldersAll,
+				},
+				{
+					Action: accesscontrol.ActionAlertingSilencesCreate,
+					Scope:  dashboards.ScopeFoldersAll,
 				},
 			}),
 		},

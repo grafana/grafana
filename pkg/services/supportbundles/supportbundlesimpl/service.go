@@ -7,13 +7,13 @@ import (
 
 	grafanaApi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -31,7 +31,7 @@ type Service struct {
 	accessControl  ac.AccessControl
 	bundleRegistry *bundleregistry.Service
 	cfg            *setting.Cfg
-	features       *featuremgmt.FeatureManager
+	features       featuremgmt.FeatureToggles
 	pluginSettings pluginsettings.Service
 	pluginStore    pluginstore.Store
 	store          bundleStore
@@ -49,7 +49,7 @@ func ProvideService(
 	accesscontrolService ac.Service,
 	bundleRegistry *bundleregistry.Service,
 	cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	httpServer *grafanaApi.HTTPServer,
 	kvStore kvstore.KVStore,
 	pluginSettings pluginsettings.Service,

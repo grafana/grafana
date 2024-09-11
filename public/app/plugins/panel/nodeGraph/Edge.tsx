@@ -1,18 +1,18 @@
-import React, { MouseEvent, memo } from 'react';
+import { MouseEvent, memo } from 'react';
 
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
-import { EdgeDatum, NodeDatum } from './types';
+import { EdgeDatumLayout, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
 export const defaultHighlightedEdgeColor = '#a00';
 export const defaultEdgeColor = '#999';
 
 interface Props {
-  edge: EdgeDatum;
+  edge: EdgeDatumLayout;
   hovering: boolean;
   svgIdNamespace: string;
-  onClick: (event: MouseEvent<SVGElement>, link: EdgeDatum) => void;
+  onClick: (event: MouseEvent<SVGElement>, link: EdgeDatumLayout) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
 }

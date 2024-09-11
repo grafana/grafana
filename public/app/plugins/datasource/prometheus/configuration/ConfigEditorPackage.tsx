@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -21,8 +20,8 @@ export const ConfigEditor = (props: Props) => {
 
   const azureAuthSettings = {
     azureAuthSupported: config.azureAuthEnabled,
-    getAzureAuthEnabled: (config: DataSourceSettings<any, any>): boolean => hasCredentials(config),
-    setAzureAuthEnabled: (config: DataSourceSettings<any, any>, enabled: boolean) =>
+    getAzureAuthEnabled: (config: DataSourceSettings): boolean => hasCredentials(config),
+    setAzureAuthEnabled: (config: DataSourceSettings, enabled: boolean) =>
       enabled ? setDefaultCredentials(config) : resetCredentials(config),
     azureSettingsUI: AzureAuthSettings,
   };

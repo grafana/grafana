@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 func TestErrResponse4xx(t *testing.T) {

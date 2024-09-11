@@ -1,6 +1,5 @@
 import { render, RenderResult, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType, escapeStringForRegex } from '@grafana/data';
@@ -45,20 +44,22 @@ const renderBrowse = (
 
 describe('Browse list of plugins', () => {
   describe('when filtering', () => {
-    it('should list installed plugins by default', async () => {
+    it('should list all plugins (including core plugins) by default', async () => {
       const { queryByText } = renderBrowse('/plugins', [
         getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true }),
         getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true }),
-        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isCore: true }),
       ]);
 
       await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
-      expect(queryByText('Plugin 1')).toBeInTheDocument();
       expect(queryByText('Plugin 2')).toBeInTheDocument();
+
+      // Plugins which are not installed should still be listed
       expect(queryByText('Plugin 3')).toBeInTheDocument();
 
-      expect(queryByText('Plugin 4')).toBeNull();
+      // Core plugins should still be listed
+      expect(queryByText('Plugin 4')).toBeInTheDocument();
     });
 
     it('should list all plugins (including core plugins) when filtering by all', async () => {
@@ -91,6 +92,21 @@ describe('Browse list of plugins', () => {
 
       // Not showing not installed plugins
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+    });
+
+    it('should list plugins with update when filtering by update', async () => {
+      const { queryByText } = renderBrowse('/plugins?filterBy=has-update', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', isInstalled: true, hasUpdate: true }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', isInstalled: false }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', isInstalled: true, hasUpdate: true }),
+        getCatalogPluginMock({ id: 'plugin-4', name: 'Plugin 4', isInstalled: true, isCore: true }),
+      ]);
+
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+      expect(queryByText('Plugin 3')).toBeInTheDocument();
+
+      expect(queryByText('Plugin 2')).not.toBeInTheDocument();
+      expect(queryByText('Plugin 4')).not.toBeInTheDocument();
     });
 
     it('should list all plugins (including disabled plugins) when filtering by all', async () => {
@@ -178,6 +194,17 @@ describe('Browse list of plugins', () => {
       // Other plugin types shouldn't be shown
       expect(queryByText('Plugin 2')).not.toBeInTheDocument();
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
+    });
+
+    test('Show request data source and roadmap links', async () => {
+      const { queryByText } = renderBrowse('/plugins', [
+        getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.datasource }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.panel }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.datasource }),
+      ]);
+
+      expect(queryByText('Request a new data source')).toBeInTheDocument();
+      expect(queryByText('View roadmap')).toBeInTheDocument();
     });
   });
 

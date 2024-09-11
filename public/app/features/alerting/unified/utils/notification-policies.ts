@@ -89,7 +89,7 @@ function findMatchingRoutes<T extends Route>(route: T, labels: Label[]): Array<R
   // If the current node matches, recurse through child nodes
   if (route.routes) {
     for (const child of route.routes) {
-      let matchingChildren = findMatchingRoutes(child, labels);
+      const matchingChildren = findMatchingRoutes(child, labels);
       // TODO how do I solve this typescript thingy? It looks correct to me /shrug
       // @ts-ignore
       childMatches = childMatches.concat(matchingChildren);
@@ -232,8 +232,17 @@ type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
 const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
   [MatcherOperator.equal]: (lv, mv) => lv === mv,
   [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
-  [MatcherOperator.regex]: (lv, mv) => new RegExp(mv).test(lv),
-  [MatcherOperator.notRegex]: (lv, mv) => !new RegExp(mv).test(lv),
+  // At the time of writing, Alertmanager compiles to another (anchored) Regular Expression,
+  // so we should also anchor our UI matches for consistency with this behaviour
+  // https://github.com/prometheus/alertmanager/blob/fd37ce9c95898ca68be1ab4d4529517174b73c33/pkg/labels/matcher.go#L69
+  [MatcherOperator.regex]: (lv, mv) => {
+    const re = new RegExp(`^(?:${mv})$`);
+    return re.test(lv);
+  },
+  [MatcherOperator.notRegex]: (lv, mv) => {
+    const re = new RegExp(`^(?:${mv})$`);
+    return !re.test(lv);
+  },
 };
 
 function isLabelMatchInSet(matcher: ObjectMatcher, labels: Label[]): boolean {
@@ -257,7 +266,7 @@ function isLabelMatchInSet(matcher: ObjectMatcher, labels: Label[]): boolean {
 // for route selection algorithm, always compare a single matcher to the entire label set
 // see "matchLabelsSet"
 function isLabelMatch(matcher: ObjectMatcher, label: Label): boolean {
-  let [labelKey, labelValue] = label;
+  const [labelKey, labelValue] = label;
   const [matcherKey, operator, matcherValue] = matcher;
 
   if (labelKey !== matcherKey) {

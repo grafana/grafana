@@ -36,13 +36,6 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         hideFromDefaults: true,
       },
 
-      [FieldConfigProperty.Thresholds]: {
-        hideFromDefaults: true,
-      },
-      [FieldConfigProperty.Mappings]: {
-        hideFromDefaults: true,
-      },
-
       // TODO: this still leaves Color series by: [ Last | Min | Max ]
       // because item.settings?.bySeriesSupport && colorMode.isByValue
       [FieldConfigProperty.Color]: {

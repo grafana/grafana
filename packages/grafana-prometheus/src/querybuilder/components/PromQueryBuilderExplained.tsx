@@ -1,4 +1,5 @@
-import React from 'react';
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderExplained.tsx
+import { memo } from 'react';
 
 import { Stack } from '@grafana/ui';
 
@@ -16,7 +17,7 @@ export interface PromQueryBuilderExplainedProps {
   query: string;
 }
 
-export const PromQueryBuilderExplained = React.memo<PromQueryBuilderExplainedProps>(({ query }) => {
+export const PromQueryBuilderExplained = memo<PromQueryBuilderExplainedProps>(({ query }) => {
   const visQuery = buildVisualQueryFromString(query || '').query;
   const lang = { grammar: promqlGrammar, name: 'promql' };
 

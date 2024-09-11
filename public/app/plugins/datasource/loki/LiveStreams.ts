@@ -43,7 +43,7 @@ export class LiveStreams {
         appendResponseToBufferedData(response, data);
         return [data];
       }),
-      retryWhen((attempts: Observable<any>) =>
+      retryWhen((attempts) =>
         attempts.pipe(
           mergeMap((error, i) => {
             const retryAttempt = i + 1;

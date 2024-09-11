@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { PluginSignatureStatus } from '@grafana/data';
@@ -48,6 +47,7 @@ const getMockPlugin = (id: string): CatalogPlugin => {
     isDisabled: false,
     isDeprecated: false,
     isPublished: true,
+    isManaged: false,
   };
 };
 

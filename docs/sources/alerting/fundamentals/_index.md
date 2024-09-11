@@ -12,22 +12,64 @@ labels:
 menuTitle: Introduction
 title: Introduction to Alerting
 weight: 100
+refs:
+  notification-policies:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
+  silences:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
+  alert-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/
+  contact-points:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/contact-points/
+  mute-timings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
+  external-alertmanagers:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+  alert-rule-evaluation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/rule-evaluation/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/rule-evaluation/
+  group-alert-notifications:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
 ---
 
 # Introduction to Alerting
 
-Whether you’re just starting out or you're a more experienced user of Grafana Alerting, learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly.
+Whether you’re just starting out or you're a more experienced user of Grafana Alerting, learn more about the fundamentals and available features that help you create, manage, and respond to alerts; and improve your team’s ability to resolve issues quickly. For a hands-on introduction, refer to our [tutorial to get started with Grafana Alerting](http://grafana.com/tutorials/alerting-get-started/).
 
 The following diagram gives you an overview of Grafana Alerting and introduces you to some of the fundamental features that are the principles of how Grafana Alerting works.
 
-{{< figure src="/media/docs/alerting/how-alerting-works.png" max-width="750px" caption="How Alerting works" >}}
+<br/>
+
+{{< figure src="/media/docs/alerting/alerting-configure-notifications-v2.png" max-width="750px" alt="How Grafana Alerting works" >}}
 
 ## How it works at a glance
 
-- Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
+- Grafana Alerting periodically queries data sources and evaluates the condition defined in the alert rule
 - If the condition is breached, an alert instance fires
-- Firing and resolved alert instances are routed to notification policies based on matching labels
-- Notifications are sent out to the contact points specified in the notification policy
+- Firing (and resolved) alert instances are sent for notifications, either directly to a contact point or through notification policies for more flexibility
 
 ## Fundamentals
 
@@ -35,15 +77,13 @@ The following concepts are key to your understanding of how Grafana Alerting wor
 
 ### Alert rules
 
-An [alert rule][alert-rules] consists of one or more queries and expressions that select the data you want to measure. It also contains a condition, which is the threshold that an alert rule must meet or exceed in order to fire.
+An [alert rule](ref:alert-rules) consists of one or more queries and expressions that select the data you want to measure. It also contains a condition, which is the threshold that an alert rule must meet or exceed to fire.
 
-Add labels to uniquely identify your alert rule and configure alert routing. Labels link alert rules to notification policies, so you can easily manage which policy should handle which alerts and who gets notified.
-
-Once alert rules are created, they go through various states and transitions.
+In the alert rule, choose the contact point or notification policies to determine how to receive the alert notifications.
 
 ### Alert instances
 
-Each alert rule can produce multiple alert instances (also known as alerts) - one alert instance for each time series. This is exceptionally powerful as it allows us to observe multiple series in a single expression.
+Each alert rule can produce multiple alert instances (also known as alerts) - one alert instance for each time series. This is exceptionally powerful as it allows you to observe multiple series in a single expression.
 
 ```promql
 sum by(cpu) (
@@ -51,44 +91,46 @@ sum by(cpu) (
 )
 ```
 
-A rule using the PromQL expression above creates as many alert instances as the amount of CPUs we are observing after the first evaluation, enabling a single rule to report the status of each CPU.
+A rule using the PromQL expression above creates as many alert instances as the amount of CPUs after the first evaluation, enabling a single rule to report the status of each CPU.
 
 {{< figure src="/static/img/docs/alerting/unified/multi-dimensional-alert.png" caption="Multiple alert instances from a single alert rule" >}}
 
-[Alert rules are frequently evaluated][alert-rule-evaluation] and the state of their alert instances is updated accordingly. Only alert instances that are in a firing or resolved state are routed to notification policies to be handled.
-
-### Notification policies
-
-[Notification policies][notification-policies] group alerts and then route them to contact points. They determine when notifications are sent, and how often notifications should be repeated.
-
-Alert instances are matched to notification policies using label matchers. This provides a flexible way to organize and route alerts to different receivers.
-
-Each policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they handle. Notification policies are defined as a tree structure where the root of the notification policy tree is called the **Default notification policy**. Each policy can have child policies.
-
-{{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" caption="Notification policy routing" >}}
+[Alert rules are frequently evaluated](ref:alert-rule-evaluation) and the state of their alert instances is updated accordingly. Only alert instances that are in a firing or resolved state are sent in notifications.
 
 ### Contact points
 
-[Contact points][contact-points] determine where notifications are sent. For example, you might have a contact point that sends notifications to an email address, to Slack, to an incident management system (IRM) such as Grafana OnCall or Pagerduty, or to a webhook.
+[Contact points](ref:contact-points) determine the notification message and where notifications are sent. For example, you might have a contact point that sends notifications to an email address, to Slack, to an incident management system (IRM) such as Grafana OnCall or Pagerduty, or to a webhook.
 
-Notifications sent from contact points are customizable with notification templates, which can be shared between contact points.
+In the alert rule, you can choose a contact point to receive the alert notifications or use notification policies instead.
+
+### Notification policies
+
+[Notification policies](ref:notification-policies) provide a flexible method to handle alert notifications for larger systems.
+
+Notification policies routes alerts to contact points via label matching. Each notification policy consists of a set of label matchers (0 or more) that specify which alert instances (identified by their labels) they handle. Notification policies are defined in a tree structure, where the root of the notification policy tree is the **Default notification policy**, which ensures all alert instances are handled.
+
+{{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" alt="A diagram displaying how the notification policy tree routes alerts" caption="Routing firing alert instances through notification policies" >}}
+
+<br/>
+
+Each notification policy decides where to send the alert (contact point) and when to send the notification (timing options). Additionally, it can [group multiple firing alert instances into a single notification](ref:group-alert-notifications) to reduce alert noise.
+
+{{< figure src="/media/docs/alerting/alerting-notification-policy-diagram-v5.png" max-width="750px" alt="A diagram of the notification policy component" >}}
 
 ### Silences and mute timings
 
-[Silences][silences] and [mute timings][mute-timings] allow you to pause notifications for specific alerts or even entire notification policies. Use a silence to pause notifications on an ad-hoc basis, such as during a maintenance window; and use mute timings to pause notifications at regular intervals, such as evenings and weekends.
+[Silences](ref:silences) and [mute timings](ref:mute-timings) allow you to pause notifications for specific alerts or even entire notification policies. Use a silence to pause notifications on an ad-hoc basis, such as during a maintenance window; and use mute timings to pause notifications at regular intervals, such as evenings and weekends.
 
 ### Architecture
 
-Grafana Alerting is built on the Prometheus model of designing alerting systems.
-
-Prometheus-based alerting systems have two main components:
+Grafana Alerting is built on the Prometheus model of designing alerting systems. Prometheus-based alerting systems have two main components:
 
 - An alert generator that evaluates alert rules and sends firing and resolved alerts to the alert receiver.
 - An alert receiver (also known as Alertmanager) that receives the alerts and is responsible for handling them and sending their notifications.
 
-Grafana doesn’t use Prometheus as its default alert generator because Grafana Alerting needs to work with many other data sources in addition to Prometheus.
+Grafana Alerting doesn’t use Prometheus as its default alert generator because it works with many other data sources; not just Prometheus.
 
-However, Grafana can also use Prometheus as an alert generator as well as external Alertmanagers. For more information about how to use distinct alerting systems, refer to the [Grafana alert rule types][alert-rules].
+However, Grafana can also use Prometheus as an alert generator (refer to [alert rule types](ref:alert-rules)), as well as external Alertmanagers.
 
 ## Design your Alerting system
 
@@ -121,29 +163,3 @@ Here are some tips on how to create an effective alert management set up for you
 - Continually tune your alert rules to review effectiveness. Remove alert rules to avoid duplication or ineffective alerts.
 - Think carefully about priority and severity levels.
 - Continually review your thresholds and evaluation rules.
-
-{{% docs/reference %}}
-
-[alert-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules"
-[alert-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules"
-
-[contact-points]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/contact-points"
-[contact-points]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/contact-points"
-
-[silences]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence"
-[silences]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence"
-
-[mute-timings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings"
-[mute-timings]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings"
-
-[alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/alertmanager"
-[alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/alertmanager"
-
-[alert-rule-evaluation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/rule-evaluation"
-[alert-rule-evaluation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/rule-evaluation"
-
-[external-alertmanagers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager"
-[external-alertmanagers]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager"
-[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies"
-[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies"
-{{% /docs/reference %}}

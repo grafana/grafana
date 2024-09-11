@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { isEqual } from 'lodash';
+import { useMemo } from 'react';
+import { Unsubscribable } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import {
@@ -17,6 +19,7 @@ import {
   CustomVariable,
   VizPanelMenu,
   VizPanelState,
+  VariableValueSingle,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
@@ -27,7 +30,7 @@ import { LibraryVizPanel } from './LibraryVizPanel';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
 import { DashboardRepeatsProcessedEvent } from './types';
 
-interface DashboardGridItemState extends SceneGridItemStateLike {
+export interface DashboardGridItemState extends SceneGridItemStateLike {
   body: VizPanel | LibraryVizPanel | AddLibraryPanelDrawer;
   repeatedPanels?: VizPanel[];
   variableName?: string;
@@ -39,6 +42,9 @@ interface DashboardGridItemState extends SceneGridItemStateLike {
 export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
+  private _libPanelSubscription: Unsubscribable | undefined;
+  private _prevRepeatValues?: VariableValueSingle[];
+
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: this.state.variableName ? [this.state.variableName] : [],
     onVariableUpdateCompleted: this._onVariableUpdateCompleted.bind(this),
@@ -55,6 +61,46 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
       this._performRepeat();
     }
+
+    // Subscriptions that handles body updates, i.e. VizPanel -> LibraryVizPanel, AddLibPanelWidget -> LibraryVizPanel
+    this._subs.add(
+      this.subscribeToState((newState, prevState) => {
+        if (newState.body !== prevState.body) {
+          if (newState.body instanceof LibraryVizPanel) {
+            this.setupLibraryPanelChangeSubscription(newState.body);
+          }
+        }
+      })
+    );
+
+    // Initial setup of the lbrary panel subscription. Lib panels are lazy laded, so only then we can subscribe to the repeat config changes
+    if (this.state.body instanceof LibraryVizPanel) {
+      this.setupLibraryPanelChangeSubscription(this.state.body);
+    }
+
+    return () => {
+      this._libPanelSubscription?.unsubscribe();
+      this._libPanelSubscription = undefined;
+    };
+  }
+
+  private setupLibraryPanelChangeSubscription(panel: LibraryVizPanel) {
+    if (this._libPanelSubscription) {
+      this._libPanelSubscription.unsubscribe();
+      this._libPanelSubscription = undefined;
+    }
+
+    this._libPanelSubscription = panel.subscribeToState((newState) => {
+      if (newState._loadedPanel?.model.repeat) {
+        this._variableDependency.setVariableNames([newState._loadedPanel.model.repeat]);
+        this.setState({
+          variableName: newState._loadedPanel.model.repeat,
+          repeatDirection: newState._loadedPanel.model.repeatDirection,
+          maxPerRow: newState._loadedPanel.model.maxPerRow,
+        });
+        this._performRepeat();
+      }
+    });
   }
 
   private _onVariableUpdateCompleted(): void {
@@ -111,16 +157,36 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       return;
     }
 
-    let panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const { values, texts } = getMultiVariableValues(variable);
+
+    if (isEqual(this._prevRepeatValues, values)) {
+      return;
+    }
+
+    this._prevRepeatValues = values;
+    const panelToRepeat = this.state.body instanceof LibraryVizPanel ? this.state.body.state.panel! : this.state.body;
     const repeatedPanels: VizPanel[] = [];
 
+    // when variable has no options (due to error or similar) it will not render any panels at all
+    //  adding a placeholder in this case so that there is at least empty panel that can display error
+    const emptyVariablePlaceholderOption = {
+      values: [''],
+      texts: variable.hasAllValue() ? ['All'] : ['None'],
+    };
+
+    const variableValues = values.length ? values : emptyVariablePlaceholderOption.values;
+    const variableTexts = texts.length ? texts : emptyVariablePlaceholderOption.texts;
+
     // Loop through variable values and create repeats
-    for (let index = 0; index < values.length; index++) {
+    for (let index = 0; index < variableValues.length; index++) {
       const cloneState: Partial<VizPanelState> = {
         $variables: new SceneVariableSet({
           variables: [
-            new LocalValueVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
+            new LocalValueVariable({
+              name: variable.state.name,
+              value: variableValues[index],
+              text: String(variableTexts[index]),
+            }),
           ],
         }),
         key: `${panelToRepeat.state.key}-clone-${index}`,

@@ -1,0 +1,127 @@
+model
+  schema 1.1
+
+type instance
+
+type user
+
+type org
+  relations
+    define instance: [instance]
+    define member: [user]
+    define viewer: [user]
+
+    # team management
+    define team_create: [role#assignee]
+    define team_read: [role#assignee]
+    define team_write: [role#assignee] or team_create
+    define team_delete: [role#assignee] or team_write
+    define team_permissions_write: [role#assignee]
+    define team_permissions_read: [role#assignee] or team_permissions_write
+
+    define folder_create: [role#assignee]
+    define folder_read: [role#assignee] or folder_delete
+    define folder_write: [role#assignee] or folder_create
+    define folder_delete: [role#assignee] or folder_write
+    define folder_permissions_write: [role#assignee]
+    define folder_permissions_read: [role#assignee] or folder_permissions_write
+
+    define dashboard_annotations_create: [role#assignee]
+    define dashboard_annotations_read: [role#assignee]
+    define dashboard_annotations_write: [role#assignee]
+    define dashboard_annotations_delete: [role#assignee]
+    define dashboard_create: [role#assignee]
+    define dashboard_delete: [role#assignee]
+    define dashboard_permissions_read: [role#assignee]
+    define dashboard_permissions_write: [role#assignee]
+    define dashboard_public_write: [role#assignee] or dashboard_write
+    define dashboard_read: [role#assignee]
+    define dashboard_write: [role#assignee]
+
+    define library_panel_create: [role#assignee]
+    define library_panel_read: [role#assignee] or library_panel_write
+    define library_panel_write: [role#assignee] or library_panel_create
+    define library_panel_delete: [role#assignee] or library_panel_create
+
+    define alert_rule_create: [role#assignee]
+    define alert_rule_read: [role#assignee] or alert_rule_write
+    define alert_rule_write: [role#assignee] or alert_rule_create
+    define alert_rule_delete: [role#assignee] or alert_rule_write
+    define alert_silence_create: [role#assignee]
+    define alert_silence_delete: [role#assignee] or alert_silence_write
+    define alert_silence_read: [role#assignee] or alert_silence_write
+    define alert_silence_write: [role#assignee] or alert_silence_create
+
+type role
+  relations
+    define org: [org]
+    define instance: [instance]
+    define assignee: [user, team#member, role#assignee]
+
+type team
+  relations
+    define org: [org]
+    define admin: [user]
+    define member: [user] or admin
+
+    define read: [role#assignee] or member or team_read from org
+    define write: [role#assignee] or admin or team_write from org
+    define delete: [role#assignee] or admin or team_delete from org
+    define permissions_read: [role#assignee] or admin or team_permissions_read from org
+    define permissions_write: [role#assignee] or admin or team_permissions_write from org
+
+type folder
+    relations
+      define parent: [folder]
+      define org: [org]
+
+      define create: [user, team#member, role#assignee] or create from parent or folder_create from org
+      define read: [user, team#member, role#assignee] or read from parent or folder_read from org
+      define write: [user, team#member, role#assignee] or write from parent or folder_write from org
+      define delete: [user, team#member, role#assignee] or delete from parent or folder_delete from org
+      define permissions_read: [user, team#member, role#assignee] or permissions_read from parent or folder_permissions_read from org
+      define permissions_write: [user, team#member, role#assignee] or permissions_write from parent or folder_permissions_write from org
+
+      define dashboard_create: [user, team#member, role#assignee] or dashboard_create from parent or dashboard_create from org
+      define dashboard_read: [user, team#member, role#assignee] or dashboard_read from parent or dashboard_read from org
+      define dashboard_write: [user, team#member, role#assignee] or dashboard_write from parent or dashboard_write from org
+      define dashboard_delete: [user, team#member, role#assignee] or dashboard_delete from parent or dashboard_delete from org
+      define dashboard_permissions_read: [user, team#member, role#assignee] or dashboard_permissions_read from parent or dashboard_permissions_read from org
+      define dashboard_permissions_write: [user, team#member, role#assignee] or dashboard_permissions_write from parent or dashboard_permissions_write from org
+      define dashboard_public_write: [user, team#member, role#assignee] or dashboard_public_write from parent or dashboard_public_write from org or dashboard_write
+      define dashboard_annotations_create: [user, team#member, role#assignee] or dashboard_annotations_create from parent or dashboard_annotations_create from org
+      define dashboard_annotations_read: [user, team#member, role#assignee] or dashboard_annotations_read from parent or dashboard_annotations_read from org
+      define dashboard_annotations_write: [user, team#member, role#assignee] or dashboard_annotations_write from parent or dashboard_annotations_write from org
+      define dashboard_annotations_delete: [user, team#member, role#assignee] or dashboard_annotations_delete from parent or dashboard_annotations_delete from org
+
+      define library_panel_create: [user, team#member, role#assignee] or library_panel_create from parent or library_panel_create from org
+      define library_panel_read: [user, team#member, role#assignee] or library_panel_read from parent or library_panel_read from org or library_panel_write
+      define library_panel_write: [user, team#member, role#assignee] or library_panel_write from parent or library_panel_write from org or library_panel_create
+      define library_panel_delete: [user, team#member, role#assignee] or library_panel_delete from parent or library_panel_delete from org or library_panel_create
+
+      define alert_rule_create: [user, team#member, role#assignee] or alert_rule_create from parent or alert_rule_create from org
+      define alert_rule_read: [user, team#member, role#assignee] or alert_rule_read from parent or alert_rule_read from org or alert_rule_write
+      define alert_rule_write: [user, team#member, role#assignee] or alert_rule_write from parent or alert_rule_write from org or alert_rule_create
+      define alert_rule_delete: [user, team#member, role#assignee] or alert_rule_delete from parent or alert_rule_delete from org or alert_rule_write
+      define alert_silence_create: [user, team#member, role#assignee] or alert_silence_create from parent or alert_silence_create from org
+      define alert_silence_read: [user, team#member, role#assignee] or alert_silence_read from parent or alert_silence_read from org or alert_silence_write
+      define alert_silence_write: [user, team#member, role#assignee] or alert_silence_write from parent or alert_silence_write from org or alert_silence_create
+
+# Dashboard
+type dashboard
+  relations
+    define org: [org]
+    define parent: [folder]
+
+    define read: [user, team#member, role#assignee] or dashboard_read from parent or dashboard_read from org
+    define write: [user, team#member, role#assignee] or dashboard_write from parent or dashboard_write from org
+    define delete: [user, team#member, role#assignee] or dashboard_delete from parent or dashboard_delete from org
+    define create: [user, team#member, role#assignee] or dashboard_create from parent or dashboard_create from org
+    define permissions_read: [user, team#member, role#assignee] or dashboard_permissions_read from parent or dashboard_permissions_read from org
+    define permissions_write: [user, team#member, role#assignee] or dashboard_permissions_write from parent or dashboard_permissions_write from org
+
+    define public_write: [user, team#member, role#assignee] or dashboard_public_write from parent or dashboard_public_write from org or write
+    define annotations_create: [user, team#member, role#assignee] or dashboard_annotations_create from parent or dashboard_annotations_create from org
+    define annotations_read: [user, team#member, role#assignee] or dashboard_annotations_read from parent or dashboard_annotations_read from org
+    define annotations_write: [user, team#member, role#assignee] or dashboard_annotations_write from parent or dashboard_annotations_write from org
+    define annotations_delete: [user, team#member, role#assignee] or dashboard_annotations_delete from parent or dashboard_annotations_delete from org

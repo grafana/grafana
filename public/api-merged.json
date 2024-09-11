@@ -48,7 +48,7 @@
     },
     "/access-control/roles": {
       "get": {
-        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
+        "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
         "tags": [
           "access_control",
           "enterprise"
@@ -59,6 +59,11 @@
           {
             "type": "boolean",
             "name": "delegatable",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "name": "includeHidden",
             "in": "query"
           }
         ],
@@ -2289,6 +2294,544 @@
         }
       }
     },
+    "/cloudmigration/migration": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get a list of all cloud migration sessions that have been created.",
+        "operationId": "getSessionList",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationSessionListResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Create a migration session.",
+        "operationId": "createSession",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CloudMigrationSessionRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationSessionResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/run/{runUID}": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get the result of a single migration run.",
+        "operationId": "getCloudMigrationRun",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "RunUID of a migration run",
+            "name": "runUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationRunResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get a cloud migration session by its uid.",
+        "operationId": "getSession",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a migration session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationSessionResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Delete a migration session by its uid.",
+        "operationId": "deleteSession",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a migration session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/run": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get a list of migration runs for a migration.",
+        "operationId": "getCloudMigrationRunList",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a migration",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationRunListResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "It returns migrations that has been created.",
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Trigger the run of a migration to the Grafana Cloud.",
+        "operationId": "runCloudMigration",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a migration",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationRunResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot": {
+      "post": {
+        "description": "If the snapshot initialization is successful, the snapshot uid is returned.",
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Trigger the creation of an instance snapshot associated with the provided session.",
+        "operationId": "createSnapshot",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createSnapshotResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get metadata about a snapshot, including where it is in its processing and final results.",
+        "operationId": "getSnapshot",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "description": "ResultPage is used for pagination with ResultLimit",
+            "name": "resultPage",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 100,
+            "description": "Max limit for snapshot results returned.",
+            "name": "resultLimit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Session UID of a session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "UID of a snapshot",
+            "name": "snapshotUid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/getSnapshotResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}/cancel": {
+      "post": {
+        "description": "TODO: Implement",
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Cancel a snapshot, wherever it is in its processing chain.",
+        "operationId": "cancelSnapshot",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Session UID of a session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "UID of a snapshot",
+            "name": "snapshotUid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshot/{snapshotUid}/upload": {
+      "post": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Upload a snapshot to the Grafana Migration Service for processing.",
+        "operationId": "uploadSnapshot",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Session UID of a session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "UID of a snapshot",
+            "name": "snapshotUid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "(empty)"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/migration/{uid}/snapshots": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Get a list of snapshots for a session.",
+        "operationId": "getShapshotList",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 1,
+            "description": "Page is used for pagination with limit",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "default": 100,
+            "description": "Max limit for results returned.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Session UID of a session",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/snapshotListResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/token": {
+      "get": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Fetch the cloud migration token if it exists.",
+        "operationId": "getCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationGetTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Create gcom access token.",
+        "operationId": "createCloudMigrationToken",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/cloudMigrationCreateTokenResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/cloudmigration/token/{uid}": {
+      "delete": {
+        "tags": [
+          "migrations"
+        ],
+        "summary": "Deletes a cloud migration token.",
+        "operationId": "deleteCloudMigrationToken",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "UID of a cloud migration token",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/cloudMigrationDeleteTokenResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/dashboard/snapshots": {
       "get": {
         "tags": [
@@ -3073,6 +3616,84 @@
         "responses": {
           "200": {
             "$ref": "#/responses/postDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/dashboards/uid/{uid}/trash": {
+      "delete": {
+        "description": "Will delete the dashboard given the specified unique identifier (uid).",
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Hard delete dashboard by uid.",
+        "operationId": "hardDeleteDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/deleteDashboardResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "dashboards"
+        ],
+        "summary": "Restore a dashboard to a given dashboard version using UID.",
+        "operationId": "restoreDeletedDashboardByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RestoreDeletedDashboardCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/postDashboardResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -4010,6 +4631,78 @@
         }
       }
     },
+    "/datasources/uid/{uid}/lbac/teams": {
+      "get": {
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Retrieves LBAC rules for a team.",
+        "operationId": "getTeamLBACRulesApi",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "enterprise"
+        ],
+        "summary": "Updates LBAC rules for a team.",
+        "operationId": "updateTeamLBACRulesApi",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/datasources/uid/{uid}/resources/{datasource_proxy_route}": {
       "get": {
         "tags": [
@@ -4046,6 +4739,155 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache": {
+      "get": {
+        "description": "get cache config for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "getDataSourceCacheConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "set cache config for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "setDataSourceCacheConfig",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CacheConfigSetter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/clean": {
+      "post": {
+        "description": "clean cache for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "cleanDataSourceCache",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/disable": {
+      "post": {
+        "description": "disable cache for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "disableDataSourceCache",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/datasources/{dataSourceUID}/cache/enable": {
+      "post": {
+        "description": "enable cache for a single data source",
+        "tags": [
+          "enterprise"
+        ],
+        "operationId": "enableDataSourceCache",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dataSourceUID",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CacheConfigResponse",
+            "schema": {
+              "$ref": "#/definitions/CacheConfigResponse"
+            }
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -4689,6 +5531,26 @@
             "$ref": "#/responses/notFoundError"
           },
           "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "apiHealthHandler will return ok if Grafana's web server is running and it\ncan access the database. If the database cannot be accessed it will return\nhttp status code 503.",
+        "tags": [
+          "health"
+        ],
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "healthResponse",
+            "schema": {
+              "$ref": "#/definitions/healthResponse"
+            }
+          },
+          "503": {
             "$ref": "#/responses/internalServerError"
           }
         }
@@ -7142,7 +8004,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -7209,6 +8071,77 @@
         }
       }
     },
+    "/reports/images/:image": {
+      "get": {
+        "description": "Available to org admins only and with a valid or expired license.\n\nYou need to have a permission with action `reports.settings:read`.",
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
+        "summary": "Get custom branding report image.",
+        "operationId": "getSettingsImage",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/reports/render/csvs": {
+      "get": {
+        "description": "Available to all users and with a valid license.",
+        "produces": [
+          "application/zip"
+        ],
+        "tags": [
+          "reports",
+          "enterprise"
+        ],
+        "summary": "Download a CSV report.",
+        "operationId": "renderReportCSVs",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "dashboards",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "title",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/contentResponse"
+          },
+          "204": {
+            "$ref": "#/responses/noContentResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/reports/render/pdfs": {
       "get": {
         "description": "Available to all users and with a valid license.",
@@ -7224,7 +8157,7 @@
         "parameters": [
           {
             "type": "string",
-            "name": "dashboardID",
+            "name": "dashboards",
             "in": "query"
           },
           {
@@ -7276,7 +8209,7 @@
           "reports",
           "enterprise"
         ],
-        "summary": "Get settings.",
+        "summary": "Get report settings.",
         "operationId": "getReportSettings",
         "responses": {
           "200": {
@@ -7345,7 +8278,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           }
         ],
@@ -7424,7 +8357,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/CreateOrUpdateReportConfig"
+              "$ref": "#/definitions/CreateOrUpdateReport"
             }
           },
           {
@@ -7712,6 +8645,12 @@
             "default": "alpha-asc",
             "description": "Sort method; for listing all the possible sort methods use the search sorting endpoint.",
             "name": "sort",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "description": "Flag indicating if only soft deleted Dashboards should be returned",
+            "name": "deleted",
             "in": "query"
           }
         ],
@@ -8646,6 +9585,47 @@
         "responses": {
           "200": {
             "$ref": "#/responses/getTeamMembersResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "Takes user emails, and updates team members and admins to the provided lists of users.\nAny current team members and admins not in the provided lists will be removed.",
+        "tags": [
+          "teams"
+        ],
+        "summary": "Set team memberships.",
+        "operationId": "setTeamMemberships",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetTeamMembershipsCommand"
+            }
+          },
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -10516,6 +11496,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -10532,6 +11518,17 @@
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "X-Disable-Provenance",
+            "in": "header"
           }
         ],
         "responses": {
@@ -10799,6 +11796,12 @@
             "schema": {
               "$ref": "#/definitions/ValidationError"
             }
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       },
@@ -10811,15 +11814,27 @@
         "parameters": [
           {
             "type": "string",
-            "description": "Template Name",
+            "description": "Template name",
             "name": "name",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Version of template to use for optimistic concurrency. Leave empty to disable validation",
+            "name": "version",
+            "in": "query"
           }
         ],
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "409": {
+            "description": "GenericPublicError",
+            "schema": {
+              "$ref": "#/definitions/GenericPublicError"
+            }
           }
         }
       }
@@ -10911,7 +11926,7 @@
                 },
                 "settings": {
                   "type": "object",
-                  "additionalProperties": false
+                  "additionalProperties": {}
                 }
               }
             }
@@ -11354,10 +12369,10 @@
           "format": "date-time"
         },
         "annotations": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "state": {
           "type": "string"
@@ -11462,7 +12477,7 @@
         },
         "model": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "queryType": {
           "type": "string"
@@ -11508,7 +12523,7 @@
         "condition": {
           "type": "string"
         },
-        "dasboardUid": {
+        "dashboardUid": {
           "type": "string"
         },
         "data": {
@@ -11551,6 +12566,9 @@
         "panelId": {
           "type": "integer",
           "format": "int64"
+        },
+        "record": {
+          "$ref": "#/definitions/AlertRuleRecordExport"
         },
         "title": {
           "type": "string"
@@ -11699,6 +12717,18 @@
         }
       }
     },
+    "AlertRuleRecordExport": {
+      "type": "object",
+      "title": "Record is the provisioned export of models.Record.",
+      "properties": {
+        "from": {
+          "type": "string"
+        },
+        "metric": {
+          "type": "string"
+        }
+      }
+    },
     "AlertingFileExport": {
       "type": "object",
       "title": "AlertingFileExport is the full provisioned file export.",
@@ -11757,7 +12787,7 @@
           }
         },
         "annotations": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "duration": {
           "type": "number",
@@ -11771,7 +12801,7 @@
           "type": "string"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "lastError": {
           "type": "string"
@@ -11805,7 +12835,7 @@
           }
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -12153,6 +13183,10 @@
         "credentials_file": {
           "type": "string"
         },
+        "credentials_ref": {
+          "description": "CredentialsRef is the name of the secret within the secret manager to use as credentials.",
+          "type": "string"
+        },
         "type": {
           "type": "string"
         }
@@ -12222,11 +13256,136 @@
         "password_file": {
           "type": "string"
         },
+        "password_ref": {
+          "description": "PasswordRef is the name of the secret within the secret manager to use as the password.",
+          "type": "string"
+        },
         "username": {
           "type": "string"
         },
         "username_file": {
           "type": "string"
+        },
+        "username_ref": {
+          "description": "UsernameRef is the name of the secret within the secret manager to use as the username.",
+          "type": "string"
+        }
+      }
+    },
+    "CacheConfig": {
+      "description": "Config defines the internal representation of a cache configuration, including fields not set by the API caller",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dataSourceID": {
+          "description": "Fields that can be set by the API caller - read/write",
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceUID": {
+          "type": "string"
+        },
+        "defaultTTLMs": {
+          "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+          "type": "integer",
+          "format": "int64"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ttlQueriesMs": {
+          "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "ttlResourcesMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "useDefaultTTL": {
+          "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+          "type": "boolean"
+        }
+      }
+    },
+    "CacheConfigResponse": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dataSourceID": {
+          "description": "Fields that can be set by the API caller - read/write",
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceUID": {
+          "type": "string"
+        },
+        "defaultTTLMs": {
+          "description": "These are returned by the HTTP API, but are managed internally - read-only\nNote: 'created' and 'updated' are special properties managed automatically by xorm, but we are setting them manually",
+          "type": "integer",
+          "format": "int64"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        },
+        "ttlQueriesMs": {
+          "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "ttlResourcesMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "useDefaultTTL": {
+          "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+          "type": "boolean"
+        }
+      }
+    },
+    "CacheConfigSetter": {
+      "description": "ConfigSetter defines the cache parameters that users can configure per datasource\nThis is only intended to be consumed by the SetCache HTTP Handler",
+      "type": "object",
+      "properties": {
+        "dataSourceID": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dataSourceUID": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "ttlQueriesMs": {
+          "description": "TTL MS, or \"time to live\", is how long a cached item will stay in the cache before it is removed (in milliseconds)",
+          "type": "integer",
+          "format": "int64"
+        },
+        "ttlResourcesMs": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "useDefaultTTL": {
+          "description": "If UseDefaultTTL is enabled, then the TTLQueriesMS and TTLResourcesMS in this object is always sent as the default TTL located in grafana.ini",
+          "type": "boolean"
         }
       }
     },
@@ -12394,7 +13553,15 @@
             "type": "string"
           }
         },
+        "Policies": {
+          "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OID"
+          }
+        },
         "PolicyIdentifiers": {
+          "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ObjectIdentifier"
@@ -12498,6 +13665,55 @@
         }
       }
     },
+    "CloudMigrationRunListDTO": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseListDTO"
+          }
+        }
+      }
+    },
+    "CloudMigrationSessionListResponseDTO": {
+      "type": "object",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
+          }
+        }
+      }
+    },
+    "CloudMigrationSessionRequestDTO": {
+      "type": "object",
+      "properties": {
+        "authToken": {
+          "type": "string"
+        }
+      }
+    },
+    "CloudMigrationSessionResponseDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
     "ConfFloat64": {
       "description": "ConfFloat64 is a float64. It Marshals float64 values of NaN of Inf\nto null.",
       "type": "number",
@@ -12571,15 +13787,15 @@
       "properties": {
         "analytics": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "functional": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "performance": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         }
       }
     },
@@ -12646,7 +13862,7 @@
         "target": {
           "description": "Target data query",
           "type": "object",
-          "additionalProperties": false,
+          "additionalProperties": {},
           "example": {
             "prop1": "value1",
             "prop2": "value"
@@ -12674,7 +13890,7 @@
         "target": {
           "description": "Target data query",
           "type": "object",
-          "additionalProperties": false,
+          "additionalProperties": {},
           "example": {
             "prop1": "value1",
             "prop2": "value"
@@ -12707,6 +13923,14 @@
       "type": "integer",
       "format": "uint8",
       "title": "CounterResetHint contains the known information about a counter reset,"
+    },
+    "CreateAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
     },
     "CreateCorrelationCommand": {
       "description": "CreateCorrelationCommand is the command for creating a correlation",
@@ -12844,7 +14068,7 @@
         }
       }
     },
-    "CreateOrUpdateReportConfig": {
+    "CreateOrUpdateReport": {
       "type": "object",
       "properties": {
         "dashboards": {
@@ -12990,6 +14214,14 @@
             "Admin"
           ],
           "example": "Admin"
+        }
+      }
+    },
+    "CreateSnapshotResponseDTO": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -13225,9 +14457,6 @@
         },
         "publicDashboardEnabled": {
           "type": "boolean"
-        },
-        "publicDashboardUid": {
-          "type": "string"
         },
         "slug": {
           "type": "string"
@@ -13867,7 +15096,9 @@
         }
       }
     },
-    "EvalQueriesResponse": {},
+    "EvalQueriesResponse": {
+      "type": "object"
+    },
     "ExplorePanelsState": {
       "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
     },
@@ -13967,12 +15198,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "decimals": {
           "type": "integer",
@@ -14331,6 +15562,29 @@
         }
       }
     },
+    "GetAccessTokenResponseDTO": {
+      "type": "object",
+      "properties": {
+        "createdAt": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string"
+        },
+        "firstUsedAt": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "lastUsedAt": {
+          "type": "string"
+        }
+      }
+    },
     "GetAnnotationTagsResponse": {
       "type": "object",
       "title": "GetAnnotationTagsResponse is a response struct for FindTagsResult.",
@@ -14363,6 +15617,49 @@
           }
         }
       ]
+    },
+    "GetSnapshotResponseDTO": {
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseItemDTO"
+          }
+        },
+        "sessionUid": {
+          "type": "string"
+        },
+        "stats": {
+          "$ref": "#/definitions/SnapshotResourceStats"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "INITIALIZING",
+            "CREATING",
+            "PENDING_UPLOAD",
+            "UPLOADING",
+            "PENDING_PROCESSING",
+            "PROCESSING",
+            "FINISHED",
+            "CANCELED",
+            "ERROR",
+            "UNKNOWN"
+          ]
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
     "GettableAlertmanagers": {
       "type": "object",
@@ -14644,6 +15941,9 @@
         "provenance": {
           "$ref": "#/definitions/Provenance"
         },
+        "record": {
+          "$ref": "#/definitions/Record"
+        },
         "rule_group": {
           "type": "string"
         },
@@ -14766,6 +16066,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -14895,6 +16198,9 @@
           "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
           "type": "boolean"
         },
+        "http_headers": {
+          "$ref": "#/definitions/Headers"
+        },
         "no_proxy": {
           "description": "NoProxy contains addresses that should not use a proxy.",
           "type": "string"
@@ -14903,7 +16209,7 @@
           "$ref": "#/definitions/OAuth2"
         },
         "proxy_connect_header": {
-          "$ref": "#/definitions/Header"
+          "$ref": "#/definitions/ProxyHeader"
         },
         "proxy_from_environment": {
           "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -14919,10 +16225,37 @@
     },
     "Header": {
       "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/Secret"
+      "title": "Headers represents the configuration for HTTP headers.",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Secret"
+          }
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Headers": {
+      "type": "object",
+      "title": "Headers represents the configuration for HTTP headers.",
+      "properties": {
+        "Headers": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Header"
+          }
         }
       }
     },
@@ -14930,7 +16263,6 @@
       "type": "object",
       "properties": {
         "folderId": {
-          "description": "Deprecated: use FolderUID instead",
           "type": "integer",
           "format": "int64"
         },
@@ -14947,8 +16279,15 @@
           "type": "integer",
           "format": "int64"
         },
+        "isDeleted": {
+          "type": "boolean"
+        },
         "isStarred": {
           "type": "boolean"
+        },
+        "permanentlyDeleteDate": {
+          "type": "string",
+          "format": "date-time"
         },
         "slug": {
           "type": "string"
@@ -15005,7 +16344,7 @@
       }
     },
     "IPMask": {
-      "description": "See type IPNet and func ParseCIDR for details.",
+      "description": "See type [IPNet] and func [ParseCIDR] for details.",
       "type": "array",
       "title": "An IPMask is a bitmask that can be used to manipulate\nIP addresses for IP addressing and routing.",
       "items": {
@@ -15631,6 +16970,62 @@
         }
       }
     },
+    "MigrateDataResponseDTO": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MigrateDataResponseItemDTO"
+          }
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "MigrateDataResponseItemDTO": {
+      "type": "object",
+      "required": [
+        "type",
+        "refId",
+        "status"
+      ],
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "refId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "WARNING",
+            "ERROR",
+            "PENDING",
+            "UNKNOWN"
+          ]
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER"
+          ]
+        }
+      }
+    },
+    "MigrateDataResponseListDTO": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
     "MoveFolderCommand": {
       "description": "MoveFolderCommand captures the information required by the folder service\nto move a folder.",
       "type": "object",
@@ -15683,7 +17078,7 @@
       }
     },
     "Name": {
-      "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an RDNSequence.",
+      "description": "Name represents an X.509 distinguished name. This only includes the common\nelements of a DN. Note that Name is only an approximation of the X.509\nstructure. If an accurate representation is needed, asn1.Unmarshal the raw\nsubject or issuer as an [RDNSequence].",
       "type": "object",
       "properties": {
         "Country": {
@@ -15729,6 +17124,18 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/GettableRuleGroupConfig"
+        }
+      }
+    },
+    "NavbarPreference": {
+      "type": "object",
+      "title": "NavbarPreference defines model for NavbarPreference.",
+      "properties": {
+        "bookmarkUrls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -15848,6 +17255,9 @@
         },
         "template": {
           "type": "string"
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -15855,6 +17265,9 @@
       "type": "object",
       "properties": {
         "template": {
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
@@ -15890,6 +17303,10 @@
         "client_secret_file": {
           "type": "string"
         },
+        "client_secret_ref": {
+          "description": "ClientSecretRef is the name of the secret within the secret manager to use as the client\nsecret.",
+          "type": "string"
+        },
         "endpoint_params": {
           "type": "object",
           "additionalProperties": {
@@ -15901,7 +17318,7 @@
           "type": "string"
         },
         "proxy_connect_header": {
-          "$ref": "#/definitions/Header"
+          "$ref": "#/definitions/ProxyHeader"
         },
         "proxy_from_environment": {
           "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -15920,6 +17337,10 @@
           "type": "string"
         }
       }
+    },
+    "OID": {
+      "type": "object",
+      "title": "An OID represents an ASN.1 OBJECT IDENTIFIER."
     },
     "ObjectIdentifier": {
       "type": "array",
@@ -16172,8 +17593,8 @@
       }
     },
     "PagerdutyImage": {
-      "description": "PagerdutyImage is an image",
       "type": "object",
+      "title": "PagerdutyImage is an image.",
       "properties": {
         "alt": {
           "type": "string"
@@ -16187,8 +17608,8 @@
       }
     },
     "PagerdutyLink": {
-      "description": "PagerdutyLink is a link",
       "type": "object",
+      "title": "PagerdutyLink is a link.",
       "properties": {
         "href": {
           "type": "string"
@@ -16290,6 +17711,9 @@
         },
         "language": {
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -16795,6 +18219,9 @@
         "notification_settings": {
           "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
+        "record": {
+          "$ref": "#/definitions/Record"
+        },
         "title": {
           "type": "string"
         },
@@ -16844,6 +18271,9 @@
           "items": {
             "$ref": "#/definitions/TimeIntervalItem"
           }
+        },
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -16875,6 +18305,9 @@
         "language": {
           "description": "Selected language (beta)",
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -17038,6 +18471,9 @@
         "provenance": {
           "$ref": "#/definitions/Provenance"
         },
+        "record": {
+          "$ref": "#/definitions/Record"
+        },
         "ruleGroup": {
           "type": "string",
           "maxLength": 190,
@@ -17077,7 +18513,7 @@
           "type": "string"
         },
         "proxy_connect_header": {
-          "$ref": "#/definitions/Header"
+          "$ref": "#/definitions/ProxyHeader"
         },
         "proxy_from_environment": {
           "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
@@ -17085,6 +18521,15 @@
         },
         "proxy_url": {
           "$ref": "#/definitions/URL"
+        }
+      }
+    },
+    "ProxyHeader": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/Secret"
         }
       }
     },
@@ -17211,7 +18656,7 @@
       "properties": {
         "extra": {
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "message": {
           "type": "string"
@@ -17394,12 +18839,12 @@
         "color": {
           "description": "Map values to a display color\nNOTE: this interface is under development in the frontend... so simple map for now",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "custom": {
           "description": "Panel Specific Values",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "decimals": {
           "type": "integer",
@@ -17603,6 +19048,25 @@
         }
       }
     },
+    "Record": {
+      "type": "object",
+      "required": [
+        "metric",
+        "from"
+      ],
+      "properties": {
+        "from": {
+          "description": "Which expression node should be used as the input for the recorded metric.",
+          "type": "string",
+          "example": "A"
+        },
+        "metric": {
+          "description": "Name of the recorded metric.",
+          "type": "string",
+          "example": "grafana_alerts_ratio"
+        }
+      }
+    },
     "RecordingRuleJSON": {
       "description": "RecordingRuleJSON is the external representation of a recording rule",
       "type": "object",
@@ -17636,7 +19100,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "additionalProperties": false
+            "additionalProperties": {}
           }
         },
         "range": {
@@ -17674,7 +19138,6 @@
       }
     },
     "Report": {
-      "description": "ConfigDTO is model representation in transfer",
       "type": "object",
       "properties": {
         "created": {
@@ -17911,6 +19374,14 @@
         "version": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "RestoreDeletedDashboardCommand": {
+      "type": "object",
+      "properties": {
+        "folderUid": {
+          "type": "string"
         }
       }
     },
@@ -18156,7 +19627,7 @@
           "type": "string"
         },
         "labels": {
-          "$ref": "#/definitions/overrideLabels"
+          "$ref": "#/definitions/Labels"
         },
         "lastError": {
           "type": "string"
@@ -18172,7 +19643,7 @@
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/RuleType"
+          "type": "string"
         }
       }
     },
@@ -18283,10 +19754,6 @@
         }
       }
     },
-    "RuleType": {
-      "type": "string",
-      "title": "RuleType models the type of a rule."
-    },
     "SNSConfig": {
       "type": "object",
       "properties": {
@@ -18375,6 +19842,32 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        }
+      }
+    },
+    "SearchDTO": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        },
+        "basicRole": {
+          "type": "string"
+        },
+        "onlyRoles": {
+          "type": "boolean"
+        },
+        "roleName": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
         }
       }
     },
@@ -18717,6 +20210,23 @@
         }
       }
     },
+    "SetTeamMembershipsCommand": {
+      "type": "object",
+      "properties": {
+        "admins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "SetUserRolesCommand": {
       "type": "object",
       "properties": {
@@ -18770,6 +20280,20 @@
     "SignatureAlgorithm": {
       "type": "integer",
       "format": "int64"
+    },
+    "SilenceMetadata": {
+      "type": "object",
+      "properties": {
+        "folder_uid": {
+          "type": "string"
+        },
+        "rule_title": {
+          "type": "string"
+        },
+        "rule_uid": {
+          "type": "string"
+        }
+      }
     },
     "SlackAction": {
       "description": "See https://api.slack.com/docs/message-attachments#action_fields and https://api.slack.com/docs/message-buttons\nfor more information.",
@@ -18921,6 +20445,75 @@
     "SmtpNotEnabled": {
       "$ref": "#/definitions/ResponseDetails"
     },
+    "SnapshotDTO": {
+      "description": "Base snapshot without results",
+      "type": "object",
+      "properties": {
+        "created": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "sessionUid": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "INITIALIZING",
+            "CREATING",
+            "PENDING_UPLOAD",
+            "UPLOADING",
+            "PENDING_PROCESSING",
+            "PROCESSING",
+            "FINISHED",
+            "CANCELED",
+            "ERROR",
+            "UNKNOWN"
+          ]
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "SnapshotListResponseDTO": {
+      "type": "object",
+      "properties": {
+        "snapshots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SnapshotDTO"
+          }
+        }
+      }
+    },
+    "SnapshotResourceStats": {
+      "type": "object",
+      "properties": {
+        "statuses": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "types": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "Span": {
       "type": "object",
       "title": "A Span defines a continuous sequence of buckets.",
@@ -18938,6 +20531,7 @@
       }
     },
     "State": {
+      "description": "+enum",
       "type": "string"
     },
     "Status": {
@@ -19003,12 +20597,20 @@
           "description": "The CA cert to use for the targets.",
           "type": "string"
         },
+        "ca_ref": {
+          "description": "CARef is the name of the secret within the secret manager to use as the CA cert for the\ntargets.",
+          "type": "string"
+        },
         "cert": {
           "description": "Text of the client cert file for the targets.",
           "type": "string"
         },
         "cert_file": {
           "description": "The client cert file for the targets.",
+          "type": "string"
+        },
+        "cert_ref": {
+          "description": "CertRef is the name of the secret within the secret manager to use as the client cert for\nthe targets.",
           "type": "string"
         },
         "insecure_skip_verify": {
@@ -19020,6 +20622,10 @@
         },
         "key_file": {
           "description": "The client key file for the targets.",
+          "type": "string"
+        },
+        "key_ref": {
+          "description": "KeyRef is the name of the secret within the secret manager to use as the client key for\nthe targets.",
           "type": "string"
         },
         "max_version": {
@@ -19697,6 +21303,7 @@
       }
     },
     "Type": {
+      "description": "+enum",
       "type": "string"
     },
     "TypeMeta": {
@@ -19715,7 +21322,7 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nThe Host field contains the host and port subcomponents of the URL.\nWhen the port is present, it is separated from the host with a colon.\nWhen the host is an IPv6 address, it must be enclosed in square brackets:\n\"[fe80::1]:80\". The [net.JoinHostPort] function combines a host and port\ninto a string suitable for the Host field, adding square brackets to\nthe host when necessary.\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the [URL.EscapedPath] method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
       "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
@@ -19761,7 +21368,7 @@
         "Object": {
           "description": "Object is a JSON compatible map with string, float, int, bool, []interface{},\nor map[string]interface{} children.",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         }
       }
     },
@@ -19996,6 +21603,9 @@
         },
         "language": {
           "type": "string"
+        },
+        "navbar": {
+          "$ref": "#/definitions/NavbarPreference"
         },
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
@@ -20353,7 +21963,7 @@
       }
     },
     "Userinfo": {
-      "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+      "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a [URL]. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
       "type": "object"
     },
     "ValidationError": {
@@ -20553,9 +22163,9 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/alertGroup"
       }
     },
@@ -20742,12 +22352,83 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableAlert"
       }
     },
+    "gettableGrafanaSilence": {
+      "type": "object",
+      "required": [
+        "comment",
+        "createdBy",
+        "endsAt",
+        "matchers",
+        "startsAt",
+        "id",
+        "status",
+        "updatedAt"
+      ],
+      "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "example": {
+            "create": false,
+            "read": true,
+            "write": false
+          }
+        },
+        "comment": {
+          "description": "comment",
+          "type": "string"
+        },
+        "createdBy": {
+          "description": "created by",
+          "type": "string"
+        },
+        "endsAt": {
+          "description": "ends at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "description": "id",
+          "type": "string"
+        },
+        "matchers": {
+          "$ref": "#/definitions/matchers"
+        },
+        "metadata": {
+          "$ref": "#/definitions/SilenceMetadata"
+        },
+        "startsAt": {
+          "description": "starts at",
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "$ref": "#/definitions/silenceStatus"
+        },
+        "updatedAt": {
+          "description": "updated at",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "gettableGrafanaSilences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/gettableGrafanaSilence"
+      }
+    },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -20799,37 +22480,24 @@
       "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
+        "type": "object",
         "$ref": "#/definitions/gettableSilence"
       }
     },
-    "integration": {
-      "description": "Integration integration",
+    "healthResponse": {
       "type": "object",
-      "required": [
-        "name",
-        "sendResolved"
-      ],
       "properties": {
-        "lastNotifyAttempt": {
-          "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
-          "type": "string",
-          "format": "date-time"
-        },
-        "lastNotifyAttemptDuration": {
-          "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+        "commit": {
           "type": "string"
         },
-        "lastNotifyAttemptError": {
-          "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+        "database": {
           "type": "string"
         },
-        "name": {
-          "description": "name",
+        "enterpriseCommit": {
           "type": "string"
         },
-        "sendResolved": {
-          "description": "send resolved",
-          "type": "boolean"
+        "version": {
+          "type": "string"
         }
       }
     },
@@ -20872,14 +22540,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/matcher"
-      }
-    },
-    "overrideLabels": {
-      "description": "The custom marshaling for labels.Labels ends up doing this anyways.",
-      "type": "object",
-      "title": "override the labels type with a map for generation.",
-      "additionalProperties": {
-        "type": "string"
       }
     },
     "peerStatus": {
@@ -20995,7 +22655,7 @@
         "extra": {
           "description": "Extra Additional information about the error",
           "type": "object",
-          "additionalProperties": false
+          "additionalProperties": {}
         },
         "message": {
           "description": "Message A human readable message",
@@ -21013,24 +22673,12 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
-        "active",
-        "integrations",
         "name"
       ],
       "properties": {
-        "active": {
-          "description": "active",
-          "type": "boolean"
-        },
-        "integrations": {
-          "description": "integrations",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/integration"
-          }
-        },
         "name": {
           "description": "name",
           "type": "string"
@@ -21311,6 +22959,45 @@
         }
       }
     },
+    "cloudMigrationCreateTokenResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CreateAccessTokenResponseDTO"
+      }
+    },
+    "cloudMigrationDeleteTokenResponse": {
+      "description": "(empty)"
+    },
+    "cloudMigrationGetTokenResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/GetAccessTokenResponseDTO"
+      }
+    },
+    "cloudMigrationRunListResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationRunListDTO"
+      }
+    },
+    "cloudMigrationRunResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/MigrateDataResponseDTO"
+      }
+    },
+    "cloudMigrationSessionListResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionListResponseDTO"
+      }
+    },
+    "cloudMigrationSessionResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CloudMigrationSessionResponseDTO"
+      }
+    },
     "conflictError": {
       "description": "ConflictError",
       "schema": {
@@ -21455,6 +23142,12 @@
         "$ref": "#/definitions/ServiceAccountDTO"
       }
     },
+    "createSnapshotResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CreateSnapshotResponseDTO"
+      }
+    },
     "createTeamResponse": {
       "description": "(empty)",
       "schema": {
@@ -21508,17 +23201,11 @@
       "schema": {
         "type": "object",
         "required": [
-          "id",
+          "uid",
           "title",
           "message"
         ],
         "properties": {
-          "id": {
-            "description": "ID Identifier of the deleted dashboard.",
-            "type": "integer",
-            "format": "int64",
-            "example": 65
-          },
           "message": {
             "description": "Message Message of the deleted dashboard.",
             "type": "string",
@@ -21528,6 +23215,11 @@
             "description": "Title Title of the deleted dashboard.",
             "type": "string",
             "example": "My Dashboard"
+          },
+          "uid": {
+            "description": "UID Identifier of the deleted dashboard.",
+            "type": "string",
+            "example": "65"
           }
         }
       }
@@ -21980,7 +23672,7 @@
           },
           "settings": {
             "type": "object",
-            "additionalProperties": false
+            "additionalProperties": {}
           },
           "source": {
             "type": "string"
@@ -22021,6 +23713,12 @@
         "items": {
           "$ref": "#/definitions/TeamDTO"
         }
+      }
+    },
+    "getSnapshotResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/GetSnapshotResponseDTO"
       }
     },
     "getStatusResponse": {
@@ -22181,7 +23879,7 @@
             },
             "settings": {
               "type": "object",
-              "additionalProperties": false
+              "additionalProperties": {}
             },
             "source": {
               "type": "string"
@@ -22241,6 +23939,12 @@
             "$ref": "#/definitions/RoleDTO"
           }
         }
+      }
+    },
+    "noContentResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "object"
       }
     },
     "notFoundError": {
@@ -22373,7 +24077,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/receiver"
+          "$ref": "#/definitions/Receiver"
         }
       }
     },
@@ -22480,6 +24184,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/RoleAssignmentsDTO"
+      }
+    },
+    "snapshotListResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SnapshotListResponseDTO"
       }
     },
     "unauthorisedError": {

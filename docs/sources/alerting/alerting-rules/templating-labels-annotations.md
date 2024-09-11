@@ -16,6 +16,10 @@ labels:
     - oss
 title: Template labels and annotations
 weight: 500
+refs:
+  explore:
+    - pattern: /docs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Template labels and annotations
@@ -28,9 +32,13 @@ All templates should be written in [text/template](https://pkg.go.dev/text/templ
 
 Each template is evaluated whenever the alert rule is evaluated, and is evaluated for every alert separately. For example, if your alert rule has a templated summary annotation, and the alert rule has 10 firing alerts, then the template will be executed 10 times, once for each alert. You should try to avoid doing expensive computations in your templates as much as possible.
 
+{{% admonition type="caution" %}}
+Extra whitespace in label templates can break matches with notification policies.
+{{% /admonition %}}
+
 ## Examples
 
-Rather than write a complete tutorial on text/template, the following examples attempt to show the most common use-cases we have seen for templates. You can use these examples verbatim, or adapt them as necessary for your use case. For more information on how to write text/template refer to the [text/template](https://pkg.go.dev/text/template) documentation.
+The following examples attempt to show the most common use-cases we have seen for templates. You can use these examples verbatim, or adapt them as necessary for your use case. For more information on how to write text/template refer see [the beginner's guide to alert notification templates in Grafana](https://grafana.com/blog/2023/04/05/grafana-alerting-a-beginners-guide-to-templating-alert-notifications/).
 
 ### Print all labels, comma separated
 
@@ -294,7 +302,7 @@ https://example.com/grafana
 
 ### graphLink
 
-The `graphLink` function returns the path to the graphical view in [Explore][explore] for the given expression and data source:
+The `graphLink` function returns the path to the graphical view in [Explore](ref:explore) for the given expression and data source:
 
 ```
 {{ graphLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}
@@ -390,7 +398,7 @@ The `pathPrefix` function returns the path of the Grafana server as configured i
 
 ### tableLink
 
-The `tableLink` function returns the path to the tabular view in [Explore][explore] for the given expression and data source:
+The `tableLink` function returns the path to the tabular view in [Explore](ref:explore) for the given expression and data source:
 
 ```
 {{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}
@@ -447,7 +455,3 @@ The `reReplaceAll` function replaces text matching the regular expression:
 ```
 example.com:8080
 ```
-
-{{% docs/reference %}}
-[explore]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/explore"
-{{% /docs/reference %}}

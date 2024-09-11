@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Icon, Tooltip } from '@grafana/ui';
 
 export function InfoIcon({ text }: { text: string }) {

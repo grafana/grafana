@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { CSSProperties } from 'react';
+import { CSSProperties } from 'react';
+import * as React from 'react';
 
 import { LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

@@ -19,7 +19,6 @@
                     {
                         "name": "an alert manager receiver",
                         "type": "prometheus-alertmanager",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -38,7 +37,6 @@
                     {
                         "name": "a dingding receiver",
                         "type": "dingding",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -55,7 +53,6 @@
                     {
                         "name": "a discord receiver",
                         "type": "discord",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -72,7 +69,6 @@
                     {
                         "name": "an email receiver",
                         "type": "email",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -89,7 +85,6 @@
                     {
                         "name": "a googlechat receiver",
                         "type": "googlechat",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -105,7 +100,6 @@
                     {
                         "name": "a hipchat receiver",
                         "type": "hipchat",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -123,7 +117,6 @@
                     {
                         "name": "a kafka receiver",
                         "type": "kafka",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -140,7 +133,6 @@
                     {
                         "name": "a line receiver",
                         "type": "line",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -152,7 +144,6 @@
                     {
                         "name": "a opsgenie receiver",
                         "type": "opsgenie",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -164,7 +155,6 @@
                     {
                         "name": "a pagerduty receiver",
                         "type": "pagerduty",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -181,7 +171,6 @@
                     {
                         "name": "a pushover receiver",
                         "type": "pushover",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -208,7 +197,6 @@
                     {
                         "name": "a sensu receiver",
                         "type": "sensu",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -227,7 +215,6 @@
                     {
                         "name": "a sensugo receiver",
                         "type": "sensugo",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -249,7 +236,6 @@
                     {
                         "name": "a slack receiver",
                         "type": "slack",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -273,7 +259,6 @@
                     {
                         "name": "a teams receiver",
                         "type": "teams",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -289,7 +274,6 @@
                     {
                         "name": "a telegram receiver",
                         "type": "telegram",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -307,7 +291,6 @@
                     {
                         "name": "a threema receiver",
                         "type": "threema",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -326,7 +309,6 @@
                     {
                         "name": "a victorops receiver",
                         "type": "victorops",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",
@@ -342,7 +324,6 @@
                     {
                         "name": "a webhook receiver",
                         "type": "webhook",
-                        "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,
                         "frequency": "5m",

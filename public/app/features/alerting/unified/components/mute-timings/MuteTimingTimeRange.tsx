@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -163,19 +162,19 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  field: css`
-    margin-bottom: 0;
-  `,
-  timeRange: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  timeRangeInput: css`
-    width: 90px;
-  `,
-  deleteTimeRange: css`
-    margin: ${theme.spacing(1)} 0 0 ${theme.spacing(0.5)};
-  `,
-  addTimeRange: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  field: css({
+    marginBottom: 0,
+  }),
+  timeRange: css({
+    marginBottom: theme.spacing(1),
+  }),
+  timeRangeInput: css({
+    width: '90px',
+  }),
+  deleteTimeRange: css({
+    margin: `${theme.spacing(1)} 0 0 ${theme.spacing(0.5)}`,
+  }),
+  addTimeRange: css({
+    marginBottom: theme.spacing(2),
+  }),
 });

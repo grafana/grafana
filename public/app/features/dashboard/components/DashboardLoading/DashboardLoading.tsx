@@ -1,5 +1,4 @@
 import { css, keyframes } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -44,16 +43,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
   `;
 
   return {
-    dashboardLoading: css`
-      height: 60vh;
-      display: flex;
-      opacity: 0%;
-      align-items: center;
-      justify-content: center;
-      animation: ${invisibleToVisible} 0s step-end ${slowStartThreshold} 1 normal forwards;
-    `,
-    dashboardLoadingText: css`
-      font-size: ${theme.typography.h4.fontSize};
-    `,
+    dashboardLoading: css({
+      height: '60vh',
+      display: 'flex',
+      opacity: '0%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${invisibleToVisible} 0s step-end ${slowStartThreshold} 1 normal forwards`,
+      },
+    }),
+    dashboardLoadingText: css({
+      fontSize: theme.typography.h4.fontSize,
+    }),
   };
 };

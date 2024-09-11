@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 import { useLocation } from 'react-use';
 
 import { Page } from 'app/core/components/Page/Page';
@@ -18,9 +18,7 @@ interface AlertingPageWrapperProps extends PageProps {
 
 export const AlertingPageWrapper = ({ children, isLoading, ...rest }: AlertingPageWrapperProps) => (
   <Page {...rest}>
-    <Page.Contents isLoading={isLoading}>
-      <div>{children}</div>
-    </Page.Contents>
+    <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
   </Page>
 );
 

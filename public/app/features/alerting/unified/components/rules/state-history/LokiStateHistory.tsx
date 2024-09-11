@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { fromPairs, isEmpty, sortBy, take, uniq } from 'lodash';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataFrame, dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Alert, Button, Field, Icon, Input, Label, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { Alert, Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
@@ -19,6 +20,7 @@ interface Props {
   ruleUID: string;
 }
 
+const STATE_HISTORY_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 const MAX_TIMELINE_SERIES = 12;
 
 const LokiStateHistory = ({ ruleUID }: Props) => {
@@ -38,19 +40,26 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     isLoading,
     isError,
     error,
-  } = useGetRuleHistoryQuery({
-    ruleUid: ruleUID,
-    from: queryTimeRange.from.unix(),
-    to: queryTimeRange.to.unix(),
-    limit: 250,
-  });
+  } = useGetRuleHistoryQuery(
+    {
+      ruleUid: ruleUID,
+      from: queryTimeRange.from.unix(),
+      to: queryTimeRange.to.unix(),
+      limit: 250,
+    },
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      pollingInterval: STATE_HISTORY_POLLING_INTERVAL,
+    }
+  );
 
   const { dataFrames, historyRecords, commonLabels, totalRecordsCount } = useRuleHistoryRecords(
     stateHistory,
     instancesFilter
   );
 
-  const { frameSubset, frameSubsetTimestamps, frameTimeRange } = useFrameSubset(dataFrames);
+  const { frameSubset, frameTimeRange } = useFrameSubset(dataFrames);
 
   const onLogRecordLabelClick = useCallback(
     (label: string) => {
@@ -65,26 +74,6 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     setInstancesFilter('');
     setValue('query', '');
   }, [setInstancesFilter, setValue]);
-
-  const refToHighlight = useRef<HTMLElement | undefined>(undefined);
-
-  const onTimelinePointerMove = useCallback(
-    (seriesIdx: number, pointIdx: number) => {
-      // remove the highlight from the previous refToHighlight
-      refToHighlight.current?.classList.remove(styles.highlightedLogRecord);
-
-      const timestamp = frameSubsetTimestamps[pointIdx];
-      const newTimestampRef = logsRef.current.get(timestamp);
-
-      // now we have the new ref, add the styles
-      newTimestampRef?.classList.add(styles.highlightedLogRecord);
-      // keeping this here (commented) in case we decide we want to go back to this
-      // newTimestampRef?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      refToHighlight.current = newTimestampRef;
-    },
-    [frameSubsetTimestamps, styles.highlightedLogRecord]
-  );
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -138,7 +127,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       ) : (
         <>
           <div className={styles.graphWrapper}>
-            <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} onPointerMove={onTimelinePointerMove} />
+            <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} />
           </div>
           {hasMoreInstances && (
             <div className={styles.moreInstancesWarning}>
@@ -160,7 +149,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   );
 };
 
-function useFrameSubset(frames: DataFrame[]) {
+export function useFrameSubset(frames: DataFrame[]) {
   return useMemo(() => {
     const frameSubset = take(frames, MAX_TIMELINE_SERIES);
     const frameSubsetTimestamps = sortBy(uniq(frameSubset.flatMap((frame) => frame.fields[0].values)));
@@ -242,38 +231,38 @@ function getDefaultTimeRange(): TimeRange {
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  fullSize: css`
-    min-width: 100%;
-    height: 100%;
+  fullSize: css({
+    minWidth: '100%',
+    height: '100%',
 
-    display: flex;
-    flex-direction: column;
-  `,
-  graphWrapper: css`
-    padding: ${theme.spacing()} 0;
-  `,
-  emptyState: css`
-    color: ${theme.colors.text.secondary};
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  graphWrapper: css({
+    padding: `${theme.spacing()} 0`,
+  }),
+  emptyState: css({
+    color: theme.colors.text.secondary,
 
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(2)};
-    align-items: center;
-    margin: auto auto;
-  `,
-  moreInstancesWarning: css`
-    color: ${theme.colors.warning.text};
-    padding: ${theme.spacing()};
-  `,
-  commonLabels: css`
-    display: grid;
-    grid-template-columns: max-content auto;
-  `,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+    alignItems: 'center',
+    margin: 'auto auto',
+  }),
+  moreInstancesWarning: css({
+    color: theme.colors.warning.text,
+    padding: theme.spacing(),
+  }),
+  commonLabels: css({
+    display: 'grid',
+    gridTemplateColumns: 'max-content auto',
+  }),
   // we need !important here to override the list item default styles
-  highlightedLogRecord: css`
-    background: ${theme.colors.primary.transparent} !important;
-    outline: 1px solid ${theme.colors.primary.shade} !important;
-  `,
+  highlightedLogRecord: css({
+    background: `${theme.colors.primary.transparent} !important`,
+    outline: `1px solid ${theme.colors.primary.shade} !important`,
+  }),
 });
 
 export default LokiStateHistory;

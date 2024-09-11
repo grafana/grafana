@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, OneClickMode } from '@grafana/data';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import {
   CanvasElementItem,
@@ -53,8 +51,14 @@ const Triangle = (props: CanvasElementProps<CanvasElementConfig, CanvasElementDa
         />
         <polygon
           points="100,0 200,200 0,200"
-          className={styles.element}
           style={{ fill: data?.backgroundImage ? `url(#image-${uniqueId})` : data?.backgroundColor }}
+        />
+
+        {/* Border */}
+        <polygon
+          points="100,0 200,200 0,200"
+          clipPath={`url(#triangleClip-${uniqueId})`}
+          className={styles.elementBorder}
         />
       </svg>
 
@@ -94,7 +98,10 @@ export const triangleItem: CanvasElementItem = {
       height: options?.placement?.height ?? 138,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
+    links: options?.links ?? [],
   }),
 
   // Called when data changes
@@ -103,6 +110,7 @@ export const triangleItem: CanvasElementItem = {
 
     const data: CanvasElementData = {
       text: textConfig?.text ? dimensionContext.getText(textConfig.text).value() : '',
+      field: textConfig?.text?.field,
       align: textConfig?.align ?? Align.Center,
       valign: textConfig?.valign ?? VAlign.Middle,
       size: textConfig?.size,
@@ -111,8 +119,6 @@ export const triangleItem: CanvasElementItem = {
     if (textConfig?.color) {
       data.color = dimensionContext.getColor(textConfig.color).value();
     }
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.text);
 
     const { background, border } = elementOptions;
     data.backgroundColor = background?.color ? dimensionContext.getColor(background.color).value() : defaultBgColor;
@@ -223,9 +229,11 @@ const getStyles = (theme: GrafanaTheme2, data: CanvasElementData | undefined) =>
       fontSize: `${data?.size}px`,
       color: data?.color,
     }),
-    element: css({
-      stroke: data?.borderColor,
-      strokeWidth: data?.borderWidth,
+    elementBorder: css({
+      fill: 'none',
+      stroke: data?.borderColor ?? 'none',
+      strokeWidth: data?.borderWidth ?? 0,
+      strokeLinejoin: 'round',
     }),
   };
 };

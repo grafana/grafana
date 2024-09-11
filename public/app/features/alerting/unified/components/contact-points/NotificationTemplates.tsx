@@ -1,21 +1,25 @@
-import React from 'react';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
-import { Alert } from '@grafana/ui';
-
-import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { stringifyErrorLike } from '../../utils/misc';
 import { TemplatesTable } from '../receivers/TemplatesTable';
+
+import { useNotificationTemplates } from './useNotificationTemplates';
 
 export const NotificationTemplates = () => {
   const { selectedAlertmanager } = useAlertmanager();
-  const { data, error } = useAlertmanagerConfig(selectedAlertmanager);
+  const { data: templates, isLoading, error } = useNotificationTemplates({ alertmanager: selectedAlertmanager ?? '' });
 
   if (error) {
-    return <Alert title="Failed to fetch notification templates">{String(error)}</Alert>;
+    return <Alert title="Failed to fetch notification templates">{stringifyErrorLike(error)}</Alert>;
   }
 
-  if (data) {
-    return <TemplatesTable config={data} alertManagerName={selectedAlertmanager!} />;
+  if (isLoading) {
+    return <LoadingPlaceholder text="Loading notification templates" />;
+  }
+
+  if (templates) {
+    return <TemplatesTable alertManagerName={selectedAlertmanager!} templates={templates} />;
   }
 
   return null;

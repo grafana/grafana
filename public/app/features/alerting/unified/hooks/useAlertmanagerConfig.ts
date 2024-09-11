@@ -11,6 +11,8 @@ type Options = {
 // and remove this hook since it adds little value
 export function useAlertmanagerConfig(amSourceName?: string, options?: Options) {
   const fetchConfig = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(amSourceName ?? '', {
+    // we'll disable cache by default to prevent overwriting other changes made since last fetch
+    refetchOnMountOrArgChange: true,
     ...options,
     skip: !amSourceName,
   });

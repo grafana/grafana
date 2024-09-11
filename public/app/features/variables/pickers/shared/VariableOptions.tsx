@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, VariableOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Tooltip, Themeable2, withTheme2, clearButtonStyles, stylesFactory } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { ALL_VARIABLE_VALUE } from '../../constants';
-import { VariableOption } from '../../types';
 
 export interface Props extends React.HTMLProps<HTMLUListElement>, Themeable2 {
   multi: boolean;

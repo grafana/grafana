@@ -2,7 +2,7 @@ import { GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/
 
 import { ReceiverTypes } from '../receivers/grafanaAppReceivers/onCall/onCall';
 
-import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from './useContactPoints';
+import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY } from './constants';
 import {
   ReceiverConfigWithMetadata,
   getReceiverDescription,

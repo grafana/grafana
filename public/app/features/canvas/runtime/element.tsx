@@ -1,18 +1,22 @@
-import React, { CSSProperties } from 'react';
+import * as React from 'react';
+import { CSSProperties } from 'react';
 import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
+import { FieldType, getLinksSupplier, LinkModel, OneClickMode, ValueLinkConfig } from '@grafana/data';
 import { LayerElement } from 'app/core/components/Layers/types';
-import {
-  BackgroundImageSize,
-  CanvasElementItem,
-  CanvasElementOptions,
-  canvasElementRegistry,
-} from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
-import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
+import {
+  BackgroundImageSize,
+  Constraint,
+  HorizontalConstraint,
+  Placement,
+  VerticalConstraint,
+} from 'app/plugins/panel/canvas/panelcfg.gen';
+import { getConnectionsByTarget, getRowIndex, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
-import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
+import { CanvasElementItem, CanvasElementOptions } from '../element';
+import { canvasElementRegistry } from '../registry';
 
 import { FrameState } from './frame';
 import { RootElement } from './root';
@@ -20,7 +24,7 @@ import { Scene } from './scene';
 
 let counter = 0;
 
-const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse']);
+export const SVGElements = new Set<string>(['parallelogram', 'triangle', 'cloud', 'ellipse']);
 
 export class ElementState implements LayerElement {
   // UID necessary for moveable to work (for now)
@@ -36,7 +40,10 @@ export class ElementState implements LayerElement {
   div?: HTMLDivElement;
 
   // Calculated
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: any; // depends on the type
+
+  getLinks?: (config: ValueLinkConfig) => LinkModel[];
 
   constructor(
     public item: CanvasElementItem,
@@ -55,6 +62,7 @@ export class ElementState implements LayerElement {
     options.placement = options.placement ?? { width: 100, height: 100, top: 0, left: 0, rotation: 0 };
     options.background = options.background ?? { color: { fixed: 'transparent' } };
     options.border = options.border ?? { color: { fixed: 'dark-green' } };
+    options.oneClickMode = options.oneClickMode ?? OneClickMode.Off;
     const scene = this.getScene();
     if (!options.name) {
       const newName = scene?.getNextElementName();
@@ -192,7 +200,7 @@ export class ElementState implements LayerElement {
 
     if (this.div) {
       for (const key in this.sizeStyle) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
         this.div.style[key as any] = (this.sizeStyle as any)[key];
       }
 
@@ -201,7 +209,7 @@ export class ElementState implements LayerElement {
       if (!SVGElements.has(elementType)) {
         // apply styles to div if it's not an SVG element
         for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
           this.div.style[key as any] = (this.dataStyle as any)[key];
         }
       } else {
@@ -211,7 +219,7 @@ export class ElementState implements LayerElement {
         // wrapper div element (this.div) doesn't re-render (has static `key` property),
         // so we have to clean styles manually;
         for (const key in this.dataStyle) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
           this.div.style[key as any] = '';
         }
       }
@@ -360,6 +368,34 @@ export class ElementState implements LayerElement {
     if (this.item.prepareData) {
       this.data = this.item.prepareData(ctx, this.options);
       this.revId++; // rerender
+    }
+
+    const scene = this.getScene();
+    const frames = scene?.data?.series;
+
+    if (frames) {
+      const defaultField = {
+        name: 'Default field',
+        type: FieldType.string,
+        config: { links: this.options.links ?? [] },
+        values: [],
+      };
+
+      this.getLinks = getLinksSupplier(
+        frames[0],
+        defaultField,
+        {
+          __dataContext: {
+            value: {
+              data: frames,
+              field: defaultField,
+              frame: frames[0],
+              frameIndex: 0,
+            },
+          },
+        },
+        scene?.panel.props.replaceVariables!
+      );
     }
 
     const { background, border } = this.options;
@@ -548,11 +584,33 @@ export class ElementState implements LayerElement {
 
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
-    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen) {
+
+    const shouldHandleTooltip =
+      !scene?.isEditingEnabled && !scene?.tooltip?.isOpen && this.options.oneClickMode === OneClickMode.Off;
+    if (shouldHandleTooltip) {
       this.handleTooltip(event);
     } else if (!isSelected) {
       scene?.connections.handleMouseEnter(event);
     }
+
+    const shouldHandleOneClickLink =
+      this.options.oneClickMode === OneClickMode.Link && this.options.links && this.options.links.length > 0;
+    if (shouldHandleOneClickLink && this.div) {
+      const primaryDataLink = this.getPrimaryDataLink();
+      if (primaryDataLink) {
+        this.div.style.cursor = 'pointer';
+        this.div.title = `Navigate to ${primaryDataLink.title === '' ? 'data link' : primaryDataLink.title}`;
+      }
+    }
+  };
+
+  getPrimaryDataLink = () => {
+    if (this.getLinks) {
+      const links = this.getLinks({ valueRowIndex: getRowIndex(this.data.field, this.getScene()!) });
+      return links[0];
+    }
+
+    return undefined;
   };
 
   handleTooltip = (event: React.MouseEvent) => {
@@ -569,14 +627,27 @@ export class ElementState implements LayerElement {
 
   handleMouseLeave = (event: React.MouseEvent) => {
     const scene = this.getScene();
-    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen && this.options.oneClickMode === OneClickMode.Off) {
       scene.tooltipCallback(undefined);
+    }
+
+    if (this.options.oneClickMode !== OneClickMode.Off && this.div) {
+      this.div.style.cursor = 'auto';
+      this.div.title = '';
     }
   };
 
   onElementClick = (event: React.MouseEvent) => {
-    this.handleTooltip(event);
-    this.onTooltipCallback();
+    // If one-click access is enabled, open the primary link
+    if (this.options.oneClickMode === OneClickMode.Link) {
+      let primaryDataLink = this.getPrimaryDataLink();
+      if (primaryDataLink) {
+        window.open(primaryDataLink.href, primaryDataLink.target);
+      }
+    } else {
+      this.handleTooltip(event);
+      this.onTooltipCallback();
+    }
   };
 
   onElementKeyDown = (event: React.KeyboardEvent) => {
@@ -603,7 +674,6 @@ export class ElementState implements LayerElement {
   render() {
     const { item, div } = this;
     const scene = this.getScene();
-    // TODO: Rethink selected state handling
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (

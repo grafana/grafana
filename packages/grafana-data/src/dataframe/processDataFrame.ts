@@ -1,30 +1,24 @@
 // Libraries
 import { isArray, isBoolean, isNumber, isString } from 'lodash';
 
-// Types
 import { isDateTime } from '../datetime/moment_wrapper';
 import { fieldIndexComparer } from '../field/fieldComparers';
 import { getFieldDisplayName } from '../field/fieldState';
+import { Column, LoadingState, TableData, TimeSeries, TimeSeriesValue } from '../types/data';
 import {
   DataFrame,
-  Field,
-  FieldConfig,
-  TimeSeries,
   FieldType,
-  TableData,
-  Column,
-  GraphSeriesXY,
-  TimeSeriesValue,
-  FieldDTO,
-  DataFrameDTO,
-  TIME_SERIES_VALUE_FIELD_NAME,
   TIME_SERIES_TIME_FIELD_NAME,
-  DataQueryResponseData,
-  PanelData,
-  LoadingState,
-  GraphSeriesValue,
+  TIME_SERIES_VALUE_FIELD_NAME,
+  Field,
   DataFrameWithValue,
-} from '../types/index';
+  DataFrameDTO,
+  FieldDTO,
+  FieldConfig,
+} from '../types/dataFrame';
+import { DataQueryResponseData } from '../types/datasource';
+import { GraphSeriesXY, GraphSeriesValue } from '../types/graph';
+import { PanelData } from '../types/panel';
 
 import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
@@ -149,7 +143,7 @@ function convertGraphSeriesToDataFrame(graphSeries: GraphSeriesXY): DataFrame {
 }
 
 function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
-  const fields = [
+  const fields: Field[] = [
     {
       name: timeSeries.target,
       type: FieldType.other,
@@ -158,7 +152,7 @@ function convertJSONDocumentDataToDataFrame(timeSeries: TimeSeries): DataFrame {
         unit: timeSeries.unit,
         filterable: (timeSeries as any).filterable,
       },
-      values: [] as TimeSeriesValue[][],
+      values: [],
     },
   ];
 
@@ -315,11 +309,11 @@ export function toDataFrame(data: any): DataFrame {
   if ('fields' in data) {
     // DataFrameDTO does not have length
     if ('length' in data && data.fields[0]?.values?.get) {
-      return data as DataFrame;
+      return data;
     }
 
     // This will convert the array values into Vectors
-    return createDataFrame(data as DataFrameDTO);
+    return createDataFrame(data);
   }
 
   // Handle legacy docs/json type

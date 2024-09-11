@@ -1,5 +1,6 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryBuilderContainer.tsx
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import React, { useEffect, useReducer } from 'react';
+import { useEffect, useReducer } from 'react';
 
 import { PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';

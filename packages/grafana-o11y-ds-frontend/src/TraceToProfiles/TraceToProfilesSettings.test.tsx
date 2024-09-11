@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourceSettings } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';

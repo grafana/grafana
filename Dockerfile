@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1
+
 ARG GF_VERSION=11.0.0
 ARG BASE_IMAGE=alpine:3.19.1
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.21.10
+ARG GO_IMAGE=golang:1.22.4
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -21,13 +22,11 @@ COPY plugins-bundled plugins-bundled
 COPY public public
 COPY LICENSE ./
 
-
 RUN apk add --no-cache make build-base python3
 
 RUN yarn install --immutable
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
-COPY public public
 COPY scripts scripts
 COPY emails emails
 
@@ -42,9 +41,12 @@ ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 ARG BINGO="true"
 
-# Install build dependencies
-RUN if grep -i -q alpine /etc/issue; then \ 
-      apk add --no-cache binutils-gold gcc g++ make git; \
+RUN if grep -i -q alpine /etc/issue; then \
+      apk add --no-cache \
+          # This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
+          binutils-gold \
+          # Install build dependencies
+          gcc g++ make git; \
     fi
 
 WORKDIR /tmp/grafana
@@ -56,9 +58,11 @@ COPY .bingo .bingo
 COPY pkg/util/xorm/go.* pkg/util/xorm/
 COPY pkg/apiserver/go.* pkg/apiserver/
 COPY pkg/apimachinery/go.* pkg/apimachinery/
-COPY pkg/promlib/go.* pkg/promlib/
+COPY pkg/build/go.* pkg/build/
 COPY pkg/build/wire/go.* pkg/build/wire/
-
+COPY pkg/promlib/go.* pkg/promlib/
+COPY pkg/storage/unified/resource/go.* pkg/storage/unified/resource/
+COPY pkg/semconv/go.* pkg/semconv/
 
 RUN go mod download
 RUN if [[ "$BINGO" = "true" ]]; then \
@@ -77,7 +81,6 @@ COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
-COPY LICENSE ./
 
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}

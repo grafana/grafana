@@ -1,8 +1,8 @@
 import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { parseMatchers, labelsMatchMatchers, removeMuteTimingFromRoute, matchersToString } from './alertmanager';
-import { parseMatcher } from './matchers';
+import { labelsMatchMatchers, removeMuteTimingFromRoute, matchersToString } from './alertmanager';
+import { parseMatcher, parsePromQLStyleMatcherLooseSafe } from './matchers';
 
 describe('Alertmanager utils', () => {
   describe('parseMatcher', () => {
@@ -64,57 +64,6 @@ describe('Alertmanager utils', () => {
     });
   });
 
-  describe('parseMatchers', () => {
-    it('should parse all operators', () => {
-      expect(parseMatchers('foo=bar, bar=~ba.+, severity!=warning, email!~@grafana.com')).toEqual<Matcher[]>([
-        { name: 'foo', value: 'bar', isRegex: false, isEqual: true },
-        { name: 'bar', value: 'ba.+', isEqual: true, isRegex: true },
-        { name: 'severity', value: 'warning', isRegex: false, isEqual: false },
-        { name: 'email', value: '@grafana.com', isRegex: true, isEqual: false },
-      ]);
-    });
-
-    it('should parse with spaces and brackets', () => {
-      expect(parseMatchers('{ foo=bar }')).toEqual<Matcher[]>([
-        {
-          name: 'foo',
-          value: 'bar',
-          isRegex: false,
-          isEqual: true,
-        },
-      ]);
-    });
-
-    it('should parse with spaces in the value', () => {
-      expect(parseMatchers('foo=bar bazz')).toEqual<Matcher[]>([
-        {
-          name: 'foo',
-          value: 'bar bazz',
-          isRegex: false,
-          isEqual: true,
-        },
-      ]);
-    });
-
-    it('should return nothing for invalid operator', () => {
-      expect(parseMatchers('foo=!bar')).toEqual([]);
-    });
-
-    it('should parse matchers with or without quotes', () => {
-      expect(parseMatchers('foo="bar",bar=bazz')).toEqual<Matcher[]>([
-        { name: 'foo', value: 'bar', isRegex: false, isEqual: true },
-        { name: 'bar', value: 'bazz', isEqual: true, isRegex: false },
-      ]);
-    });
-
-    it('should parse matchers for key with special characters', () => {
-      expect(parseMatchers('foo.bar-baz="bar",baz-bar.foo=bazz')).toEqual<Matcher[]>([
-        { name: 'foo.bar-baz', value: 'bar', isRegex: false, isEqual: true },
-        { name: 'baz-bar.foo', value: 'bazz', isEqual: true, isRegex: false },
-      ]);
-    });
-  });
-
   describe('labelsMatchMatchers', () => {
     it('should return true for matching labels', () => {
       const labels: Labels = {
@@ -123,7 +72,7 @@ describe('Alertmanager utils', () => {
         bazz: 'buzz',
       };
 
-      const matchers = parseMatchers('foo=bar,bar=bazz');
+      const matchers = parsePromQLStyleMatcherLooseSafe('foo=bar,bar=bazz');
       expect(labelsMatchMatchers(labels, matchers)).toBe(true);
     });
     it('should return false for no matching labels', () => {
@@ -131,7 +80,7 @@ describe('Alertmanager utils', () => {
         foo: 'bar',
         bar: 'bazz',
       };
-      const matchers = parseMatchers('foo=buzz');
+      const matchers = parsePromQLStyleMatcherLooseSafe('foo=buzz');
       expect(labelsMatchMatchers(labels, matchers)).toBe(false);
     });
     it('should match with different operators', () => {
@@ -140,7 +89,7 @@ describe('Alertmanager utils', () => {
         bar: 'bazz',
         email: 'admin@grafana.com',
       };
-      const matchers = parseMatchers('foo!=bazz,bar=~ba.+');
+      const matchers = parsePromQLStyleMatcherLooseSafe('foo!=bazz,bar=~ba.+');
       expect(labelsMatchMatchers(labels, matchers)).toBe(true);
     });
   });
@@ -198,7 +147,7 @@ describe('Alertmanager utils', () => {
 
       const matchersString = matchersToString(matchers);
 
-      expect(matchersString).toBe('{severity="critical",resource=~"cpu",rule_uid!="2Otf8canzz",cluster!~"prom"}');
+      expect(matchersString).toBe('{ severity="critical", resource=~"cpu", rule_uid!="2Otf8canzz", cluster!~"prom" }');
     });
   });
 });

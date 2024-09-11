@@ -26,6 +26,7 @@ export interface AzureSettings {
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
   userIdentityFallbackCredentialsEnabled: boolean;
+  azureEntraPasswordCredentialsEnabled: boolean;
 }
 
 export interface AzureCloudInfo {
@@ -116,11 +117,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
     errorInstrumentalizationEnabled: true,
     consoleInstrumentalizationEnabled: false,
     webVitalsInstrumentalizationEnabled: false,
+    tracingInstrumentalizationEnabled: false,
   };
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
+  pluginCatalogManagedPlugins: string[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
@@ -131,6 +134,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
     userIdentityFallbackCredentialsEnabled: false,
+    azureEntraPasswordCredentialsEnabled: false,
   };
   caching = {
     enabled: false,
@@ -177,6 +181,10 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rootFolderUID: string | undefined;
   localFileSystemAvailable: boolean | undefined;
   cloudMigrationIsTarget: boolean | undefined;
+  cloudMigrationFeedbackURL = '';
+  cloudMigrationPollIntervalMs = 2000;
+  reportingStaticContext?: Record<string, string>;
+  exploreDefaultTimeOffset = '1h';
 
   /**
    * Language used in Grafana's UI. This is after the user's preference (or deteceted locale) is resolved to one of
@@ -214,9 +222,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    if (this.buildInfo.env === 'development') {
-      overrideFeatureTogglesFromUrl(this);
-    }
+    overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
@@ -253,15 +259,11 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     return;
   }
 
-  const migrationFeatureFlags = new Set([
-    'autoMigrateOldPanels',
-    'autoMigrateGraphPanel',
-    'autoMigrateTablePanel',
-    'autoMigratePiechartPanel',
-    'autoMigrateWorldmapPanel',
-    'autoMigrateStatPanel',
-    'disableAngular',
-  ]);
+  const isDevelopment = config.buildInfo.env === 'development';
+
+  // Although most flags can not be changed from the URL in production,
+  // some of them are safe (and useful!) to change dynamically from the browser URL
+  const safeRuntimeFeatureFlags = new Set(['queryServiceFromUI']);
 
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
@@ -269,15 +271,14 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 
-      // skip the migration feature flags
-      if (migrationFeatureFlags.has(featureName)) {
-        return;
-      }
-
       const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
-        featureToggles[featureName] = toggleState;
-        console.log(`Setting feature toggle ${featureName} = ${toggleState} via url`);
+        if (isDevelopment || safeRuntimeFeatureFlags.has(featureName)) {
+          featureToggles[featureName] = toggleState;
+          console.log(`Setting feature toggle ${featureName} = ${toggleState} via url`);
+        } else {
+          console.log(`Unable to change feature toggle ${featureName} via url in production.`);
+        }
       }
     }
   });

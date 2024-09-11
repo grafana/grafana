@@ -1,0 +1,331 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`useUpdateRuleGroupConfiguration should be able to move a Data Source managed rule group 1`] = `
+[
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "https://mimir.local:9000/api/v1/status/buildinfo",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1/group-1?subtype=mimir",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-2/a-new-group?subtype=mimir",
+  },
+  {
+    "body": {
+      "interval": "2m",
+      "name": "a-new-group",
+      "rules": [
+        {
+          "alert": "alert1",
+          "annotations": {
+            "summary": "test alert",
+          },
+          "expr": "up = 1",
+          "labels": {
+            "severity": "warning",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-2?subtype=mimir",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-2/a-new-group?subtype=mimir",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "DELETE",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1/group-1?subtype=mimir",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-1/group-1?subtype=mimir",
+  },
+]
+`;
+
+exports[`useUpdateRuleGroupConfiguration should rename a rule group 1`] = `
+[
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/another-group-name?subtype=cortex",
+  },
+  {
+    "body": {
+      "interval": "2m",
+      "name": "another-group-name",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/another-group-name?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "DELETE",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/another-group-name?subtype=cortex",
+  },
+]
+`;
+
+exports[`useUpdateRuleGroupConfiguration should update a rule group interval 1`] = `
+[
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+  {
+    "body": {
+      "interval": "2m",
+      "name": "grafana-group-1",
+      "rules": [
+        {
+          "annotations": {
+            "summary": "Test alert",
+          },
+          "for": "5m",
+          "grafana_alert": {
+            "condition": "A",
+            "data": [
+              {
+                "datasourceUid": "datasource-uid",
+                "model": {
+                  "datasource": {
+                    "type": "prometheus",
+                    "uid": "datasource-uid",
+                  },
+                  "expression": "vector(1)",
+                  "queryType": "alerting",
+                  "refId": "A",
+                },
+                "queryType": "alerting",
+                "refId": "A",
+                "relativeTimeRange": {
+                  "from": 1000,
+                  "to": 2000,
+                },
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "namespace_uid": "uuid020c61ef",
+            "no_data_state": "NoData",
+            "rule_group": "grafana-group-1",
+            "title": "Grafana-rule",
+            "uid": "4d7125fee983",
+          },
+          "labels": {
+            "region": "nasa",
+            "severity": "critical",
+          },
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef?subtype=cortex",
+  },
+  {
+    "body": "",
+    "headers": [
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "GET",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/uuid020c61ef/grafana-group-1?subtype=cortex",
+  },
+]
+`;

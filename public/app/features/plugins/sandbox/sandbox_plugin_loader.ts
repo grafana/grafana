@@ -1,13 +1,11 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
-import { BootData, PluginMeta } from '@grafana/data';
+import { BootData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
-import { getPluginSettings } from '../pluginSettings';
-
-import { getPluginCode, patchSandboxEnvironmentPrototype } from './code_loader';
+import { getPluginCode, getPluginLoadData, patchSandboxEnvironmentPrototype } from './code_loader';
 import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
 import {
   getSafeSandboxDomElement,
@@ -19,7 +17,7 @@ import {
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
-import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment } from './types';
+import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment, SandboxPluginMeta } from './types';
 import { logError, logInfo } from './utils';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
@@ -33,7 +31,7 @@ const pluginLogCache: Record<string, boolean> = {};
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
   patchWebAPIs();
   try {
-    const pluginMeta = await getPluginSettings(pluginId);
+    const pluginMeta = getPluginLoadData(pluginId);
     if (!pluginImportCache.has(pluginId)) {
       pluginImportCache.set(pluginId, doImportPluginModuleInSandbox(pluginMeta));
     }
@@ -48,7 +46,7 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
   }
 }
 
-async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.Module> {
+async function doImportPluginModuleInSandbox(meta: SandboxPluginMeta): Promise<System.Module> {
   logInfo('Loading with sandbox', {
     pluginId: meta.id,
   });
@@ -164,7 +162,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
           }
 
           try {
-            const resolvedDeps = resolvePluginDependencies(dependencies, meta.id);
+            const resolvedDeps = resolvePluginDependencies(dependencies, meta);
             // execute the plugin's code
             const pluginExportsRaw = factory.apply(null, resolvedDeps);
             // only after the plugin has been executed
@@ -215,7 +213,21 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
   });
 }
 
-function resolvePluginDependencies(deps: string[], pluginId: string) {
+/**
+ *
+ * This function resolves the dependencies using the array of AMD deps.
+ * Additionally it supports the RequireJS magic modules `module` and `exports`.
+ * https://github.com/requirejs/requirejs/wiki/Differences-between-the-simplified-CommonJS-wrapper-and-standard-AMD-define#magic
+ *
+ */
+function resolvePluginDependencies(deps: string[], pluginMeta: SandboxPluginMeta) {
+  const pluginExports = {};
+  const pluginModuleDep: ModuleMeta = {
+    id: pluginMeta.id,
+    uri: pluginMeta.module,
+    exports: pluginExports,
+  };
+
   // resolve dependencies
   const resolvedDeps: CompartmentDependencyModule[] = [];
   for (const dep of deps) {
@@ -224,10 +236,18 @@ function resolvePluginDependencies(deps: string[], pluginId: string) {
       resolvedDep = resolvedDep.default;
     }
 
+    if (dep === 'module') {
+      resolvedDep = pluginModuleDep;
+    }
+
+    if (dep === 'exports') {
+      resolvedDep = pluginExports;
+    }
+
     if (!resolvedDep) {
       const error = new Error(`[sandbox] Could not resolve dependency ${dep}`);
       logError(error, {
-        pluginId,
+        pluginId: pluginMeta.id,
         dependency: dep,
         error: String(error),
       });
@@ -236,4 +256,10 @@ function resolvePluginDependencies(deps: string[], pluginId: string) {
     resolvedDeps.push(resolvedDep);
   }
   return resolvedDeps;
+}
+
+interface ModuleMeta {
+  id: string;
+  uri: string;
+  exports: System.Module;
 }

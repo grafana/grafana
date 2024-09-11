@@ -1,7 +1,9 @@
 import { cx, css, keyframes } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { Branding } from '../Branding/Branding';
@@ -35,7 +37,9 @@ export const LoginLayout = ({ children, branding, isChangingPassword }: React.Pr
 
   return (
     <Branding.LoginBackground
-      className={cx(loginStyles.container, startAnim && loginStyles.loginAnim, branding?.loginBackground)}
+      className={cx(loginStyles.container, startAnim && loginStyles.loginAnim, branding?.loginBackground, {
+        [loginStyles.containerBodyScrolling]: config.featureToggles.bodyScrolling,
+      })}
     >
       <div className={loginStyles.loginMain}>
         <div className={cx(loginStyles.loginContent, loginBoxBackground, 'login-content-box')}>
@@ -91,6 +95,9 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
+    }),
+    containerBodyScrolling: css({
+      flex: 1,
     }),
     loginAnim: css({
       ['&:before']: {
@@ -148,7 +155,9 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(2, 0),
       opacity: 0,
-      transition: 'opacity 0.5s ease-in-out',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.5s ease-in-out',
+      },
 
       [theme.breakpoints.up('sm')]: {
         minHeight: theme.spacing(40),
@@ -171,10 +180,14 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       maxWidth: 415,
       width: '100%',
       transform: 'translate(0px, 0px)',
-      transition: '0.25s ease',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: '0.25s ease',
+      },
     }),
     enterAnimation: css({
-      animation: `${flyInAnimation} ease-out 0.2s`,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${flyInAnimation} ease-out 0.2s`,
+      },
     }),
   };
 };

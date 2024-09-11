@@ -1,5 +1,4 @@
 import { render } from '@testing-library/react';
-import React from 'react';
 
 import { getDashboardModel } from '../../../../../test/helpers/getDashboardModel';
 import { DashboardModel } from '../../state/DashboardModel';

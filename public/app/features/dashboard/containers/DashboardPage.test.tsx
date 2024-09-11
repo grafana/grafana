@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
-import React from 'react';
+import { Component } from 'react';
 import { Provider } from 'react-redux';
 import { match, Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
@@ -39,7 +39,7 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 });
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => {
-  class GeneralSettings extends React.Component<{}, {}> {
+  class GeneralSettings extends Component<{}, {}> {
     render() {
       return <>general settings</>;
     }
@@ -68,6 +68,7 @@ jest.mock('app/core/core', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
 }));
 
 function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel {

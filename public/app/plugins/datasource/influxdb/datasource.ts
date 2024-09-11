@@ -3,6 +3,7 @@ import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
+  AdHocVariableFilter,
   AnnotationEvent,
   DataFrame,
   DataQueryError,
@@ -29,12 +30,12 @@ import {
   BackendDataSourceResponse,
   DataSourceWithBackend,
   FetchResponse,
-  frameToMetricFindValue,
   getBackendSrv,
+  getTemplateSrv,
+  TemplateSrv,
 } from '@grafana/runtime';
 import { QueryFormat, SQLQuery } from '@grafana/sql';
 import config from 'app/core/config';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
@@ -46,7 +47,15 @@ import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
-import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxQueryTag, InfluxVersion } from './types';
+import {
+  DEFAULT_POLICY,
+  InfluxOptions,
+  InfluxQuery,
+  InfluxQueryTag,
+  InfluxVariableQuery,
+  InfluxVersion,
+} from './types';
+import { InfluxVariableSupport } from './variables';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -87,6 +96,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.responseParser = new ResponseParser();
     this.version = settingsData.version ?? InfluxVersion.InfluxQL;
     this.isProxyAccess = instanceSettings.access === 'proxy';
+    this.variables = new InfluxVariableSupport(this, this.templateSrv);
 
     if (this.version === InfluxVersion.Flux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
@@ -170,11 +180,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return true;
   }
 
-  applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): InfluxQuery & SQLQuery {
+  applyTemplateVariables(
+    query: InfluxQuery,
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): InfluxQuery & SQLQuery {
     const variables = scopedVars || {};
 
     // We want to interpolate these variables on backend.
-    // The pre-calculated values are replaced withe the variable strings.
+    // The pre-calculated values are replaced with the variable strings.
     variables.__interval = {
       value: '$__interval',
     };
@@ -190,7 +204,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (this.version === InfluxVersion.SQL || this.isMigrationToggleOnAndIsAccessProxy()) {
-      query = this.applyVariables(query, variables);
+      query = this.applyVariables(query, variables, filters);
       if (query.adhocFilters?.length) {
         const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
@@ -238,7 +252,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
   }
 
-  applyVariables(query: InfluxQuery & SQLQuery, scopedVars: ScopedVars) {
+  applyVariables(query: InfluxQuery & SQLQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
     const expandedQuery = { ...query };
     if (query.groupBy) {
       expandedQuery.groupBy = query.groupBy.map((groupBy) => {
@@ -282,7 +296,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     return {
       ...expandedQuery,
-      adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
+      adhocFilters: filters ?? [],
       query: this.templateSrv.replace(
         query.query ?? '',
         scopedVars,
@@ -365,7 +379,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ).then(this.toMetricFindValue);
   }
 
-  async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+  async metricFindQuery(query: InfluxVariableQuery, options?: any): Promise<MetricFindValue[]> {
     if (
       this.version === InfluxVersion.Flux ||
       this.version === InfluxVersion.SQL ||
@@ -373,37 +387,49 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ) {
       const target: InfluxQuery & SQLQuery = {
         refId: 'metricFindQuery',
-        query,
+        query: query.query,
         rawQuery: true,
-        ...(this.version === InfluxVersion.SQL ? { rawSql: query, format: QueryFormat.Table } : {}),
+        ...(this.version === InfluxVersion.SQL ? { rawSql: query.query, format: QueryFormat.Table } : {}),
       };
       return lastValueFrom(
         super.query({
           ...(options ?? {}), // includes 'range'
+          maxDataPoints: query.maxDataPoints,
           targets: [target],
         })
       ).then(this.toMetricFindValue);
     }
 
     const interpolated = this.templateSrv.replace(
-      query,
+      query.query,
       options?.scopedVars,
-      (value: string | string[] = [], variable: QueryVariableModel) => this.interpolateQueryExpr(value, variable, query)
+      (value: string | string[] = [], variable: QueryVariableModel) =>
+        this.interpolateQueryExpr(value, variable, query.query)
     );
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
-      return this.responseParser.parse(query, resp);
+      return this.responseParser.parse(query.query, resp);
     });
   }
 
   toMetricFindValue(rsp: DataQueryResponse): MetricFindValue[] {
-    const data = rsp.data ?? [];
+    const valueMap = new Map<string, MetricFindValue>();
     // Create MetricFindValue object for all frames
-    const values = data.map((d) => frameToMetricFindValue(d)).flat();
-    // Filter out duplicate elements
-    return values.filter((elm, idx, self) => idx === self.findIndex((t) => t.text === elm.text));
+    rsp?.data?.forEach((frame: DataFrame) => {
+      if (frame && frame.length > 0) {
+        let field = frame.fields.find((f) => f.type === FieldType.string);
+        if (!field) {
+          field = frame.fields.find((f) => f.type !== FieldType.time);
+        }
+        if (field) {
+          field.values.forEach((v) => {
+            valueMap.set(v.toString(), { text: v.toString() });
+          });
+        }
+      }
+    });
+    return Array.from(valueMap.values());
   }
-
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
   getTagKeys(options?: DataSourceGetTagKeysOptions<InfluxQuery>) {
@@ -413,10 +439,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       database: this.database,
     });
 
-    return this.metricFindQuery(query);
+    return this.metricFindQuery({ refId: 'get-tag-keys', query });
   }
 
-  getTagValues(options: DataSourceGetTagValuesOptions) {
+  getTagValues(options: DataSourceGetTagValuesOptions<InfluxQuery>) {
     const query = buildMetadataQuery({
       type: 'TAG_VALUES',
       templateService: this.templateSrv,
@@ -424,7 +450,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       withKey: options.key,
     });
 
-    return this.metricFindQuery(query);
+    return this.metricFindQuery({ refId: 'get-tag-values', query });
   }
 
   /**
@@ -587,7 +613,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date: DateTime | string, roundUp: any, timezone: any) {
+  getInfluxTime(date: DateTime | string, roundUp: boolean, timezone: string) {
     let outPutDate;
     if (isString(date)) {
       if (date === 'now') {
@@ -651,7 +677,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     // add global adhoc filters to timeFilter
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    const adhocFilters = options.filters;
     const adhocFiltersFromDashboard = options.targets.flatMap((target: InfluxQuery) => target.adhocFilters ?? []);
     if (adhocFilters?.length || adhocFiltersFromDashboard?.length) {
       const ahFilters = adhocFilters?.length ? adhocFilters : adhocFiltersFromDashboard;

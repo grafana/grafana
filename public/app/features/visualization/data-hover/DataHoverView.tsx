@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import {
   arrayUtils,
@@ -10,7 +9,6 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
@@ -109,7 +107,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
 
   const { displayValues, links } = dispValuesAndLinks;
 
-  if (config.featureToggles.newVizTooltips && header === 'Exemplar') {
+  if (header === 'Exemplar') {
     return <ExemplarHoverView displayValues={displayValues} links={links} header={header} />;
   }
 

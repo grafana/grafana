@@ -7,10 +7,11 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -30,6 +31,7 @@ func TestDashboardService(t *testing.T) {
 			log:            log.New("test.logger"),
 			dashboardStore: &fakeStore,
 			folderService:  folderSvc,
+			features:       featuremgmt.WithFeatures(),
 		}
 
 		origNewDashboardGuardian := guardian.New
@@ -199,7 +201,7 @@ func TestDashboardService(t *testing.T) {
 			folderSvc.ExpectedFolder = &folder.Folder{UID: "i am a folder"}
 			// set up a ctx with signed in user
 			usr := &user.SignedInUser{UserID: 1}
-			ctx := appcontext.WithUser(context.Background(), usr)
+			ctx := identity.WithRequester(context.Background(), usr)
 
 			count, err := service.CountInFolders(ctx, 1, []string{"i am a folder"}, usr)
 			require.NoError(t, err)
@@ -209,6 +211,13 @@ func TestDashboardService(t *testing.T) {
 		t.Run("Delete dashboards in folder", func(t *testing.T) {
 			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUIDs: []string{"uid"}}
 			fakeStore.On("DeleteDashboardsInFolders", mock.Anything, args).Return(nil).Once()
+			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
+			require.NoError(t, err)
+		})
+
+		t.Run("Soft Delete dashboards in folder", func(t *testing.T) {
+			service.features = featuremgmt.WithFeatures(featuremgmt.FlagDashboardRestore)
+			fakeStore.On("SoftDeleteDashboardsInFolders", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})

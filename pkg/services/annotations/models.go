@@ -1,8 +1,8 @@
 package annotations
 
 import (
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type ItemQuery struct {

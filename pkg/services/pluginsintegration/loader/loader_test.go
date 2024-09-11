@@ -63,7 +63,7 @@ func TestLoader_Load(t *testing.T) {
 		cfg          *config.PluginManagementCfg
 		pluginPaths  []string
 		want         []*plugins.Plugin
-		pluginErrors map[string]*plugins.SignatureError
+		pluginErrors map[string]*plugins.Error
 	}{
 		{
 			name:        "Load a Core plugin",
@@ -82,6 +82,7 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Description: "Data source for Amazon AWS monitoring service",
+							Keywords:    []string{"aws", "amazon"},
 							Logos: plugins.Logos{
 								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
@@ -197,30 +198,34 @@ func TestLoader_Load(t *testing.T) {
 						},
 						Includes: []*plugins.Includes{
 							{
-								Name: "Nginx Connections",
-								Path: "dashboards/connections.json",
-								Type: "dashboard",
-								Role: org.RoleViewer,
-								Slug: "nginx-connections",
+								Name:   "Nginx Connections",
+								Path:   "dashboards/connections.json",
+								Type:   "dashboard",
+								Role:   org.RoleViewer,
+								Action: plugins.ActionAppAccess,
+								Slug:   "nginx-connections",
 							},
 							{
-								Name: "Nginx Memory",
-								Path: "dashboards/memory.json",
-								Type: "dashboard",
-								Role: org.RoleViewer,
-								Slug: "nginx-memory",
+								Name:   "Nginx Memory",
+								Path:   "dashboards/memory.json",
+								Type:   "dashboard",
+								Role:   org.RoleViewer,
+								Action: plugins.ActionAppAccess,
+								Slug:   "nginx-memory",
 							},
 							{
-								Name: "Nginx Panel",
-								Type: string(plugins.TypePanel),
-								Role: org.RoleViewer,
-								Slug: "nginx-panel",
+								Name:   "Nginx Panel",
+								Type:   string(plugins.TypePanel),
+								Role:   org.RoleViewer,
+								Action: plugins.ActionAppAccess,
+								Slug:   "nginx-panel",
 							},
 							{
-								Name: "Nginx Datasource",
-								Type: string(plugins.TypeDataSource),
-								Role: org.RoleViewer,
-								Slug: "nginx-datasource",
+								Name:   "Nginx Datasource",
+								Type:   string(plugins.TypeDataSource),
+								Role:   org.RoleViewer,
+								Action: plugins.ActionAppAccess,
+								Slug:   "nginx-datasource",
 							},
 						},
 					},
@@ -279,7 +284,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg:         &config.PluginManagementCfg{},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.SignatureError{
+			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
 					PluginID:        "test-datasource",
 					SignatureStatus: plugins.SignatureStatusUnsigned,
@@ -331,7 +336,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg:         &config.PluginManagementCfg{},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.SignatureError{
+			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
 					PluginID:        "test-datasource",
 					SignatureStatus: plugins.SignatureStatusInvalid,
@@ -346,7 +351,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.SignatureError{
+			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
 					PluginID:        "test-datasource",
 					SignatureStatus: plugins.SignatureStatusInvalid,
@@ -361,7 +366,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-missing-file")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.SignatureError{
+			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
 					PluginID:        "test-datasource",
 					SignatureStatus: plugins.SignatureStatusModified,
@@ -376,7 +381,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-extra-file")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.SignatureError{
+			pluginErrors: map[string]*plugins.Error{
 				"test-datasource": {
 					PluginID:        "test-datasource",
 					SignatureStatus: plugins.SignatureStatusModified,
@@ -420,8 +425,8 @@ func TestLoader_Load(t *testing.T) {
 							Plugins:           []plugins.Dependency{},
 						},
 						Includes: []*plugins.Includes{
-							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
-							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
+							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 						},
 						Backend: false,
 					},
@@ -439,7 +444,7 @@ func TestLoader_Load(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		errTracker := pluginerrs.ProvideSignatureErrorTracker()
+		errTracker := pluginerrs.ProvideErrorTracker()
 		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker)
 
 		t.Run(tt.name, func(t *testing.T) {
@@ -449,7 +454,7 @@ func TestLoader_Load(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 			}
 
-			pluginErrs := errTracker.SignatureErrors(context.Background())
+			pluginErrs := errTracker.Errors(context.Background())
 			require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 			for _, pluginErr := range pluginErrs {
 				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
@@ -603,7 +608,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 			Module:    "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module.js",
 		}}
 
-		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider(), newFakeSignatureErrorTracker())
+		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider(), newFakeErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassBundled
@@ -633,7 +638,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			pluginPaths     []string
 			existingPlugins map[string]struct{}
 			want            []*plugins.Plugin
-			pluginErrors    map[string]*plugins.SignatureError
+			pluginErrors    map[string]*plugins.Error
 		}{
 			{
 				name: "Load multiple plugins (broken, valid, unsigned)",
@@ -680,7 +685,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						SignatureOrg:  "Will Browne",
 					},
 				},
-				pluginErrors: map[string]*plugins.SignatureError{
+				pluginErrors: map[string]*plugins.Error{
 					"test-panel": {
 						PluginID:        "test-panel",
 						SignatureStatus: plugins.SignatureStatusUnsigned,
@@ -693,7 +698,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			reg := fakes.NewFakePluginRegistry()
 			procPrvdr := fakes.NewFakeBackendProcessProvider()
 			procMgr := fakes.NewFakeProcessManager()
-			errTracker := pluginerrs.ProvideSignatureErrorTracker()
+			errTracker := pluginerrs.ProvideErrorTracker()
 
 			l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker)
 			t.Run(tt.name, func(t *testing.T) {
@@ -712,7 +717,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				if !cmp.Equal(got, tt.want, compareOpts...) {
 					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 				}
-				pluginErrs := errTracker.SignatureErrors(context.Background())
+				pluginErrs := errTracker.Errors(context.Background())
 				require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 				for _, pluginErr := range pluginErrs {
 					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
@@ -796,7 +801,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
+		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -854,7 +859,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{GrafanaAppURL: defaultAppURL}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -910,10 +915,10 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 						},
 					},
 					Includes: []*plugins.Includes{
-						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-connections"},
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
-						{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Slug: "nginx-panel"},
-						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Slug: "nginx-datasource"},
+						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-connections"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
+						{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-panel"},
+						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
 					},
 					Backend: false,
 				},
@@ -931,7 +936,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -991,10 +996,10 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 						},
 					},
 					Includes: []*plugins.Includes{
-						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-connections"},
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
-						{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Slug: "nginx-panel"},
-						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Slug: "nginx-datasource"},
+						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-connections"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
+						{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-panel"},
+						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
 					},
 					Backend: false,
 				},
@@ -1021,7 +1026,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		}
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -1255,7 +1260,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		procMgr := fakes.NewFakeProcessManager()
 		reg := fakes.NewFakePluginRegistry()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1338,6 +1343,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Path:       "/a/myorgid-simple-app",
 						Type:       "page",
 						Role:       org.RoleViewer,
+						Action:     plugins.ActionAppAccess,
 						AddToNav:   true,
 						DefaultNav: true,
 						Slug:       "root-page-react",
@@ -1347,6 +1353,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Path:     "/a/myorgid-simple-app/?tab=b",
 						Type:     "page",
 						Role:     org.RoleViewer,
+						Action:   plugins.ActionAppAccess,
 						AddToNav: true,
 						Slug:     "root-page-tab-b",
 					},
@@ -1359,18 +1366,20 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Slug:     "react-config",
 					},
 					{
-						Name: "Streaming Example",
-						Path: "dashboards/streaming.json",
-						Type: "dashboard",
-						Role: org.RoleViewer,
-						Slug: "streaming-example",
+						Name:   "Streaming Example",
+						Path:   "dashboards/streaming.json",
+						Type:   "dashboard",
+						Role:   org.RoleViewer,
+						Action: plugins.ActionAppAccess,
+						Slug:   "streaming-example",
 					},
 					{
-						Name: "Lots of Stats",
-						Path: "dashboards/stats.json",
-						Type: "dashboard",
-						Role: org.RoleViewer,
-						Slug: "lots-of-stats",
+						Name:   "Lots of Stats",
+						Path:   "dashboards/stats.json",
+						Type:   "dashboard",
+						Role:   org.RoleViewer,
+						Action: plugins.ActionAppAccess,
+						Slug:   "lots-of-stats",
 					},
 				},
 				Backend: false,
@@ -1414,8 +1423,8 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 					Plugins:           []plugins.Dependency{},
 				},
 			},
-			Module:          "public/plugins/myorgid-simple-app/child/module.js",
-			BaseURL:         "public/plugins/myorgid-simple-app",
+			Module:          "public/plugins/myorgid-simple-panel/module.js",
+			BaseURL:         "public/plugins/myorgid-simple-panel",
 			FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist/child")),
 			IncludedInAppID: parent.ID,
 			Signature:       plugins.SignatureStatusValid,
@@ -1432,7 +1441,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.PluginManagementCfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -1463,7 +1472,7 @@ type loaderDepOpts struct {
 }
 
 func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Service, proc process.Manager,
-	backendFactory plugins.BackendFactoryProvider, sigErrTracker pluginerrs.SignatureErrorTracker,
+	backendFactory plugins.BackendFactoryProvider, errTracker pluginerrs.ErrorTracker,
 ) *Loader {
 	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
 	angularInspector := angularinspector.NewStaticInspector()
@@ -1474,9 +1483,9 @@ func newLoader(t *testing.T, cfg *config.PluginManagementCfg, reg registry.Servi
 	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
 		finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
-		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
-		terminate)
+		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
+		terminate, errTracker)
 }
 
 func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loaderDepOpts) *Loader {
@@ -1486,7 +1495,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
 	require.NoError(t, err)
-	sigErrTracker := pluginerrs.ProvideSignatureErrorTracker()
+	errTracker := pluginerrs.ProvideErrorTracker()
 
 	angularInspector := opts.angularInspector
 	if opts.angularInspector == nil {
@@ -1506,9 +1515,9 @@ func newLoaderWithOpts(t *testing.T, cfg *config.PluginManagementCfg, opts loade
 	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
 		finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
-		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
-		terminate)
+		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakeActionSetRegistry(), fakes.NewFakePluginEnvProvider(), tracing.InitializeTracerForTest()),
+		terminate, errTracker)
 }
 
 func verifyState(t *testing.T, ps []*plugins.Plugin, reg registry.Service,

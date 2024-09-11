@@ -60,7 +60,11 @@ fix:
 	sed $(SED_INPLACE) -e 's/apimodels\.\[\]PostableApiReceiver/apimodels.TestReceiversConfigParams/' $(GENERATED_GO_MATCHERS)
 	goimports -w -v $(GENERATED_GO_MATCHERS)
 
-clean:
+clean: clean-go
+	rm -f spec.json
+	rm -f spec-stable.json
+
+clean-go:
 	rm -rf ./go
 
 serve: post.json
@@ -69,6 +73,6 @@ serve: post.json
 serve-stable: api.json
 	docker run --rm -p 80:8080 -v $$(pwd):/tmp -e SWAGGER_FILE=/tmp/$(<) swaggerapi/swagger-editor
 
-gen: swagger-codegen-api fix copy-files clean
+gen: swagger-codegen-api fix copy-files clean-go
 
-all: post.json api.json gen
+all: clean spec.json spec-stable.json post.json api.json gen

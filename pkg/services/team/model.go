@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
@@ -20,6 +20,9 @@ var (
 
 	ErrTeamMemberAlreadyAdded = errors.New("user is already added to this team")
 )
+
+const MemberPermissionName = "Member"
+const AdminPermissionName = "Admin"
 
 // Team model
 type Team struct {
@@ -87,6 +90,13 @@ type SearchTeamsQuery struct {
 	HiddenUsers  map[string]struct{}
 }
 
+type ListTeamsCommand struct {
+	Limit int
+	Start int
+	OrgID int64
+	UID   string
+}
+
 type TeamDTO struct {
 	ID            int64                          `json:"id" xorm:"id"`
 	UID           string                         `json:"uid" xorm:"uid"`
@@ -124,17 +134,16 @@ type TeamMember struct {
 
 type AddTeamMemberCommand struct {
 	UserID     int64                          `json:"userId" binding:"Required"`
-	OrgID      int64                          `json:"-"`
-	TeamID     int64                          `json:"-"`
-	External   bool                           `json:"-"`
 	Permission dashboardaccess.PermissionType `json:"-"`
 }
 
 type UpdateTeamMemberCommand struct {
-	UserID     int64                          `json:"-"`
-	OrgID      int64                          `json:"-"`
-	TeamID     int64                          `json:"-"`
 	Permission dashboardaccess.PermissionType `json:"permission"`
+}
+
+type SetTeamMembershipsCommand struct {
+	Members []string `json:"members"`
+	Admins  []string `json:"admins"`
 }
 
 type RemoveTeamMemberCommand struct {

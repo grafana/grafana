@@ -1,9 +1,7 @@
-import 'whatwg-fetch'; // fetch polyfill
 import { fireEvent, render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
@@ -251,8 +249,8 @@ describe('NestedFolderPicker', () => {
       await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowRight}');
 
       // Folder A's children are visible
-      expect(screen.getByLabelText(folderA_folderA.item.title)).toBeInTheDocument();
-      expect(screen.getByLabelText(folderA_folderB.item.title)).toBeInTheDocument();
+      expect(await screen.findByLabelText(folderA_folderA.item.title)).toBeInTheDocument();
+      expect(await screen.findByLabelText(folderA_folderB.item.title)).toBeInTheDocument();
 
       // Collapse Folder A
       await userEvent.keyboard('{ArrowLeft}');

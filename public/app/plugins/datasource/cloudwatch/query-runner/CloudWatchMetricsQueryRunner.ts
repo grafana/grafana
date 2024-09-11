@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import React from 'react';
+import { createElement } from 'react';
 import { catchError, map, Observable, of } from 'rxjs';
 
 import {
@@ -34,7 +34,7 @@ const displayAlert = (datasourceName: string, region: string) =>
       `CloudWatch request limit reached in ${region} for data source ${datasourceName}`,
       '',
       undefined,
-      React.createElement(ThrottlingErrorMessage, { region }, null),
+      createElement(ThrottlingErrorMessage, { region }, null),
     ],
   });
 

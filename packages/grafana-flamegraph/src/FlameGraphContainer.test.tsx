@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import { useRef, useCallback } from 'react';
 
 import { createDataFrame, createTheme } from '@grafana/data';
 
@@ -10,7 +10,7 @@ import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
 jest.mock('react-use', () => ({
   useMeasure: () => {
-    const ref = React.useRef();
+    const ref = useRef();
     return [ref, { width: 1600 }];
   },
 }));
@@ -29,7 +29,8 @@ describe('FlameGraphContainer', () => {
       },
     };
 
-    return <FlameGraphContainer data={flameGraphData} getTheme={() => createTheme({ colors: { mode: 'dark' } })} />;
+    const getTheme = useCallback(() => createTheme({ colors: { mode: 'dark' } }), []);
+    return <FlameGraphContainer data={flameGraphData} getTheme={getTheme} />;
   };
 
   it('should render without error', async () => {

@@ -1,7 +1,7 @@
-resource "grafana_mute_timing" "mute_timing_1" {
+resource "grafana_mute_timing" "mute_timing_9e85e7a27b8f12ca" {
   name = "interval"
 }
-resource "grafana_mute_timing" "mute_timing_2" {
+resource "grafana_mute_timing" "mute_timing_b469bb50150a4298" {
   name = "full-interval"
 
   intervals {

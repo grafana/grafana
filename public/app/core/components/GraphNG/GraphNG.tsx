@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
+import * as React from 'react';
 import uPlot, { AlignedData } from 'uplot';
 
 import {
@@ -13,8 +14,8 @@ import {
   TimeRange,
   TimeZone,
 } from '@grafana/data';
-import { VizLegendOptions } from '@grafana/schema';
-import { Themeable2, PanelContextRoot, VizLayout } from '@grafana/ui';
+import { DashboardCursorSync, VizLegendOptions } from '@grafana/schema';
+import { Themeable2, VizLayout } from '@grafana/ui';
 import { UPlotChart } from '@grafana/ui/src/components/uPlot/Plot';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { Renderers, UPlotConfigBuilder } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
@@ -49,6 +50,7 @@ export interface GraphNGProps extends Themeable2 {
   renderLegend: (config: UPlotConfigBuilder) => React.ReactElement | null;
   replaceVariables: InterpolateFunction;
   dataLinkPostProcessor?: DataLinkPostProcessor;
+  cursorSync?: DashboardCursorSync;
 
   /**
    * needed for propsToDiff to re-init the plot & config
@@ -91,7 +93,6 @@ const defaultMatchers = {
  * "Time as X" core component, expects ascending x
  */
 export class GraphNG extends Component<GraphNGProps, GraphNGState> {
-  static contextType = PanelContextRoot;
   private plotInstance: React.RefObject<uPlot>;
 
   constructor(props: GraphNGProps) {
@@ -131,25 +132,36 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       if (withLinks) {
         const timeZone = Array.isArray(this.props.timeZone) ? this.props.timeZone[0] : this.props.timeZone;
 
-        alignedFrame.fields.forEach((field) => {
-          field.getLinks = getLinksSupplier(
-            alignedFrame,
-            field,
-            {
-              ...field.state?.scopedVars,
-              __dataContext: {
-                value: {
-                  data: [alignedFrame],
-                  field: field,
-                  frame: alignedFrame,
-                  frameIndex: 0,
+        // for links gen we need to use original frames but with the aligned/joined data values
+        let linkFrames = frames.map((frame, frameIdx) => ({
+          ...frame,
+          fields: alignedFrame.fields.filter(
+            (field, fieldIdx) => fieldIdx === 0 || field.state?.origin?.frameIndex === frameIdx
+          ),
+          length: alignedFrame.length,
+        }));
+
+        linkFrames.forEach((linkFrame, frameIndex) => {
+          linkFrame.fields.forEach((field) => {
+            field.getLinks = getLinksSupplier(
+              linkFrame,
+              field,
+              {
+                ...field.state?.scopedVars,
+                __dataContext: {
+                  value: {
+                    data: linkFrames,
+                    field: field,
+                    frame: linkFrame,
+                    frameIndex,
+                  },
                 },
               },
-            },
-            replaceVariables,
-            timeZone,
-            dataLinkPostProcessor
-          );
+              replaceVariables,
+              timeZone,
+              dataLinkPostProcessor
+            );
+          });
         });
 
         // filter join field and fields.y
@@ -178,17 +190,23 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   }
 
   componentDidUpdate(prevProps: GraphNGProps) {
-    const { frames, structureRev, timeZone, propsToDiff } = this.props;
+    const { frames, structureRev, timeZone, cursorSync, propsToDiff } = this.props;
 
     const propsChanged = !sameProps(prevProps, this.props, propsToDiff);
 
-    if (frames !== prevProps.frames || propsChanged || timeZone !== prevProps.timeZone) {
+    if (
+      frames !== prevProps.frames ||
+      propsChanged ||
+      timeZone !== prevProps.timeZone ||
+      cursorSync !== prevProps.cursorSync
+    ) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
           this.state.config === undefined ||
           timeZone !== prevProps.timeZone ||
+          cursorSync !== prevProps.cursorSync ||
           structureRev !== prevProps.structureRev ||
           !structureRev ||
           propsChanged;

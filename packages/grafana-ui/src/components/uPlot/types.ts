@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import uPlot, { Options, AlignedData } from 'uplot';
 
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
@@ -12,10 +12,6 @@ export type PlotConfig = Pick<
   Options,
   'mode' | 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate' | 'padding'
 >;
-
-export interface PlotPluginProps {
-  id: string;
-}
 
 export type FacetValues = any[];
 export type FacetSeries = FacetValues[];

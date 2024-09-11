@@ -1,19 +1,31 @@
 import { css } from '@emotion/css';
-import { isEmpty, truncate } from 'lodash';
-import React, { useState } from 'react';
+import { chain, isEmpty, truncate } from 'lodash';
+import { useState } from 'react';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
+import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
+import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
+import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
-import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule, isRecordingRule } from '../../utils/rules';
-import { createUrl } from '../../utils/url';
+import {
+  RulePluginOrigin,
+  getRulePluginOrigin,
+  isAlertingRule,
+  isFederatedRuleGroup,
+  isGrafanaRecordingRule,
+  isGrafanaRulerRule,
+  isGrafanaRulerRulePaused,
+  isRecordingRule,
+} from '../../utils/rules';
+import { createRelativeUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -21,9 +33,8 @@ import { WithReturnButton } from '../WithReturnButton';
 import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
 
-import { useAlertRulePageActions } from './Actions';
-import { useDeleteModal } from './DeleteModal';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
+import PausedBadge from './PausedBadge';
 import { useAlertRule } from './RuleContext';
 import { RecordingBadge, StateBadge } from './StateBadges';
 import { Details } from './tabs/Details';
@@ -32,7 +43,7 @@ import { InstancesList } from './tabs/Instances';
 import { QueryResults } from './tabs/Query';
 import { Routing } from './tabs/Routing';
 
-enum ActiveTab {
+export enum ActiveTab {
   Query = 'query',
   Instances = 'instances',
   History = 'history',
@@ -49,12 +60,6 @@ const RuleViewer = () => {
   // of duplicating provisioned alert rules
   const [duplicateRuleIdentifier, setDuplicateRuleIdentifier] = useState<RuleIdentifier>();
 
-  const [deleteModal, showDeleteModal] = useDeleteModal();
-  const actions = useAlertRulePageActions({
-    handleDuplicateRule: setDuplicateRuleIdentifier,
-    handleDelete: showDeleteModal,
-  });
-
   const { annotations, promRule } = rule;
   const hasError = isErrorHealth(rule.promRule?.health);
 
@@ -62,6 +67,10 @@ const RuleViewer = () => {
 
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+  const isPaused = isGrafanaRulerRule(rule.rulerRule) && isGrafanaRulerRulePaused(rule.rulerRule);
+
+  const showError = hasError && !isPaused;
+  const ruleOrigin = getRulePluginOrigin(rule);
 
   const summary = annotations[Annotation.summary];
 
@@ -73,15 +82,18 @@ const RuleViewer = () => {
       renderTitle={(title) => (
         <Title
           name={title}
+          paused={isPaused}
           state={isAlertType ? promRule.state : undefined}
           health={rule.promRule?.health}
           ruleType={rule.promRule?.type}
+          ruleOrigin={ruleOrigin}
         />
       )}
-      actions={actions}
+      actions={<RuleActionsButtons rule={rule} showCopyLinkButton rulesSource={rule.namespace.rulesSource} />}
       info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
+          {isPaused && <InfoPausedRule />}
           {summary}
           {/* alerts and notifications and stuff */}
           {isFederatedRule && <FederatedRuleWarning />}
@@ -90,7 +102,7 @@ const RuleViewer = () => {
             <ProvisioningAlert resource={ProvisionedResource.AlertRule} bottomSpacing={0} topSpacing={2} />
           )}
           {/* error state */}
-          {hasError && (
+          {showError && (
             <Alert title="Something went wrong when evaluating this alert rule" bottomSpacing={0} topSpacing={2}>
               <pre style={{ marginBottom: 0 }}>
                 <code>{rule.promRule?.lastError ?? 'No error message'}</code>
@@ -110,8 +122,6 @@ const RuleViewer = () => {
           {activeTab === ActiveTab.Details && <Details rule={rule} />}
         </TabContent>
       </Stack>
-
-      {deleteModal}
       {duplicateRuleIdentifier && (
         <RedirectToCloneRule
           redirectTo={true}
@@ -139,14 +149,18 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const interval = group.interval;
 
   if (runbookUrl) {
+    /* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */
+    const truncatedUrl = truncate(runbookUrl, { length: 42 });
+    const valueToAdd = isValidRunbookURL(runbookUrl) ? (
+      <TextLink variant="bodySmall" href={runbookUrl} external>
+        {truncatedUrl}
+      </TextLink>
+    ) : (
+      <Text variant="bodySmall">{truncatedUrl}</Text>
+    );
     metadata.push({
-      label: 'Runbook',
-      value: (
-        <TextLink variant="bodySmall" href={runbookUrl} external>
-          {/* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */}
-          {truncate(runbookUrl, { length: 42 })}
-        </TextLink>
-      ),
+      label: 'Runbook URL',
+      value: valueToAdd,
     });
   }
 
@@ -179,6 +193,13 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
       ),
     });
   }
+  if (isGrafanaRecordingRule(rule.rulerRule)) {
+    const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
+    metadata.push({
+      label: 'Metric name',
+      value: <Text color="primary">{metric}</Text>,
+    });
+  }
 
   if (interval) {
     metadata.push({
@@ -201,39 +222,50 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 // TODO move somewhere else
 export const createListFilterLink = (values: Array<[string, string]>) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
-  return createUrl(`/alerting/list?` + params.toString());
+  return createRelativeUrl(`/alerting/list`, params);
 };
 
 interface TitleProps {
   name: string;
+  paused?: boolean;
   // recording rules don't have a state
   state?: PromAlertingRuleState;
   health?: RuleHealth;
   ruleType?: PromRuleType;
+  ruleOrigin?: RulePluginOrigin;
 }
 
-export const Title = ({ name, state, health, ruleType }: TitleProps) => {
+export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
   const styles = useStyles2(getStyles);
+  const [queryParams] = useQueryParams();
   const isRecordingRule = ruleType === PromRuleType.Recording;
+  const returnTo = queryParams.returnTo ? String(queryParams.returnTo) : '/alerting/list';
 
   return (
     <div className={styles.title}>
-      <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
+      <LinkButton variant="secondary" icon="angle-left" href={returnTo} />
+      {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} />}
       <Text variant="h1" truncate>
         {name}
       </Text>
-      {/* recording rules won't have a state */}
-      {state && <StateBadge state={state} health={health} />}
-      {isRecordingRule && <RecordingBadge health={health} />}
+      {paused ? (
+        <PausedBadge />
+      ) : (
+        <>
+          {/* recording rules won't have a state */}
+          {state && <StateBadge state={state} health={health} />}
+          {isRecordingRule && <RecordingBadge health={health} />}
+        </>
+      )}
     </div>
   );
 };
 
 export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 
-function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
+export function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
-  const tabFromQuery = queryParams['tab'];
+  const tabFromQuery = queryParams.tab;
 
   const activeTab = isValidTab(tabFromQuery) ? tabFromQuery : ActiveTab.Query;
 
@@ -257,7 +289,7 @@ function usePageNav(rule: CombinedRule) {
 
   const summary = annotations[Annotation.summary];
   const isAlertType = isAlertingRule(promRule);
-  const numberOfInstance = isAlertType ? (promRule.alerts ?? []).length : undefined;
+  const numberOfInstance = isAlertType ? calculateTotalInstances(rule.instanceTotals) : undefined;
 
   const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
@@ -323,6 +355,14 @@ function usePageNav(rule: CombinedRule) {
   };
 }
 
+const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
+  return chain(stats)
+    .pick([AlertInstanceTotalState.Alerting, AlertInstanceTotalState.Pending, AlertInstanceTotalState.Normal])
+    .values()
+    .sum()
+    .value();
+};
+
 const getStyles = () => ({
   title: css({
     display: 'flex',
@@ -331,5 +371,19 @@ const getStyles = () => ({
     minWidth: 0,
   }),
 });
+
+function isValidRunbookURL(url: string) {
+  const isRelative = url.startsWith('/');
+  let isAbsolute = false;
+
+  try {
+    new URL(url);
+    isAbsolute = true;
+  } catch (_) {
+    return false;
+  }
+
+  return isRelative || isAbsolute;
+}
 
 export default RuleViewer;

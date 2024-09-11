@@ -1,0 +1,5143 @@
+diff --git a/.github/ISSUE_TEMPLATE/0-bug-report.yaml b/.github/ISSUE_TEMPLATE/0-bug-report.yaml
+deleted file mode 100644
+index 79d35ee6dec..00000000000
+--- a/.github/ISSUE_TEMPLATE/0-bug-report.yaml
++++ /dev/null
+@@ -1,93 +0,0 @@
+-name: New Bug Report
+-description: File a bug report
+-title: "Product Area: Short description of bug"
+-body:
+-  - type: markdown
+-    attributes:
+-      value: |
+-        Thanks for taking the time to fill out this bug report!
+-
+-        Please try to give your issue a good title. Try using the product-area where you are having an issue and a brief description of the problem. Like this:
+-        - `Dashboards: Template Variables break when I do X` or
+-        - `Alerting: message templating plus Slack channel breaks when I do X`
+-  - type: markdown
+-    attributes:
+-      value: |
+-        **HINT:** Have you tried [searching](https://github.com/grafana/grafana/issues) for similar issues? Duplicate issues are common.
+-
+-        **Are you reporting a security vulnerability?** [Submit it here instead](https://github.com/grafana/grafana/security/policy).
+-  - type: markdown
+-    attributes:
+-      value: |
+-       #
+-
+-  - type: textarea
+-    attributes:
+-      label: What happened?
+-      description: "**Hot Tip:** Record your screen and attach it here."
+-    validations:
+-      required: true
+-
+-  - type: textarea
+-    attributes:
+-      label: What did you expect to happen?
+-    validations:
+-      required: true
+-
+-  - type: textarea
+-    attributes:
+-      label: Did this work before?
+-      description: "If this worked before, what Grafana version worked correctly?"
+-    validations:
+-      required: true
+-
+-  - type: textarea
+-    attributes:
+-      label: How do we reproduce it?
+-      placeholder: "Steps to reproduce..."
+-      value: |
+-        1.
+-        2.
+-        3.
+-    validations:
+-      required: true
+-
+-  - type: textarea
+-    attributes:
+-      label: Is the bug inside a dashboard panel?
+-      description: |
+-        If the bug appears inside a [dashboard panel](https://grafana.com/docs/grafana/latest/panels-visualizations/#panels-and-visualizations), please use the ["Get help" feature](https://grafana.com/docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/). Select **Copy to clipboard** and paste the data below.
+-
+-  - type: textarea
+-    attributes:
+-      label: Environment (with versions)?
+-      description: |
+-        [How do I find my Grafana version info?](https://community.grafana.com/t/how-to-find-your-grafana-version-info-3-different-ways/86857)
+-      placeholder: "Grafana, OS, and Browser versions..."
+-      value: |
+-        Grafana:
+-        OS:
+-        Browser:
+-    validations:
+-      required: false
+-
+-  - type: dropdown
+-    attributes:
+-      label: Grafana platform?
+-      description: How are you running/deploying Grafana?
+-      options:
+-        - I use Grafana Cloud
+-        - Docker
+-        - Kubernetes
+-        - A package manager (APT, YUM, BREW, etc.)
+-        - A downloaded binary
+-        - Other
+-        - I don't know
+-    validations:
+-      required: false
+-
+-  - type: input
+-    attributes:
+-      label: Datasource(s)?
+-      description: "Is this issue specific to a datasource plugin? (Please list all that apply)"
+-      placeholder: "ex. Elasticsearch 5.0.0 or Infinity 1.4.1 ..."
+diff --git a/.github/ISSUE_TEMPLATE/1-feature_requests.md b/.github/ISSUE_TEMPLATE/1-feature_requests.md
+deleted file mode 100644
+index 67449c9af2a..00000000000
+--- a/.github/ISSUE_TEMPLATE/1-feature_requests.md
++++ /dev/null
+@@ -1,20 +0,0 @@
+----
+-name: Feature Requests
+-about: Suggest an enhancement or new feature for the Grafana project
+----
+-
+-<!-- Please only use this template for submitting feature requests -->
+-
+-**Why is this needed**:
+-
+-[Add a description of the problem the feature is trying to solve.]
+-
+-
+-**What would you like to be added**:
+-
+-[Add a brief description of what the feature or enhancement should do.]
+-
+-
+-**Who is this feature for?**
+-
+-[Add information on what kind of user the feature is for.]
+diff --git a/.github/ISSUE_TEMPLATE/2-accessibility.md b/.github/ISSUE_TEMPLATE/2-accessibility.md
+deleted file mode 100644
+index 51b3ecc255b..00000000000
+--- a/.github/ISSUE_TEMPLATE/2-accessibility.md
++++ /dev/null
+@@ -1,26 +0,0 @@
+----
+-name: Accessibility issue
+-about: Help make Grafana be better at keyboard navigation, screen-readable and accessible to all.
+-labels: 'type: accessibility'
+----
+-
+-<!--
+-Please only use this template for submitting accessibility issues.
+-
+-This is a new feature area for Grafana that we want to improve. We have long way to go
+-to really improve accessibility and would like your help to know where to start.
+--->
+-
+-**Steps to reproduce**:
+-
+-**Actual Result**:
+-
+-**Expected Result**
+-
+-**Relevant WCAG Criteria:** [#.#.# WCAG Criterion](link to https://www.w3.org/WAI/WCAG21/quickref/?versions=2.0)
+-
+-**Environment**:
+-- Grafana version:
+-- Data source type & version:
+-- User OS & Browser:
+-- Others:
+diff --git a/.github/ISSUE_TEMPLATE/3-data_source_request.yaml b/.github/ISSUE_TEMPLATE/3-data_source_request.yaml
+deleted file mode 100644
+index 02e5266d231..00000000000
+--- a/.github/ISSUE_TEMPLATE/3-data_source_request.yaml
++++ /dev/null
+@@ -1,45 +0,0 @@
+----
+-name: New data source request
+-description: Raise a request for a new data source plugin
+-title: "[New Data Source]: <name-of-service>"
+-labels:
+-  - area/datasource,type/new-plugin-request
+-body:
+-  - type: markdown
+-    attributes:
+-      value: |
+-        Thank you for requesting a new data source plugin!
+-
+-        We greatly appreciate feedback from our community about which new data sources would be beneficial. 
+-        
+-        Grafana Labs regularly reviews these requests and uses them to inform our prioritization. Note: we cannot offer any guarantees on whether we or our community will build a given data source.
+-        
+-        Please check our [roadmap](https://github.com/orgs/grafana/projects/619?pane=info) for existing requests and subscribe to stay informed of our plans. If no request exists, please fill out the following information.
+-
+-        Please do not request support or file bug reports and feature requests for existing plugins here.
+-        - For support, please use the community support resources [here](https://grafana.com/help/).
+-        - Please consider the `New Bug Report` or `Feature Requests` [issue templates](https://github.com/grafana/grafana/issues/new/choose) for other requests.
+-  - type: textarea
+-    id: background
+-    attributes:
+-      label: Background
+-      description: Tell us about the service you would like to see integrated as a data source
+-      placeholder: ACME_DB is an open source time-series database that is used by many organizations to store their metrics data. It is a popular choice for monitoring and observability.
+-    validations:
+-      required: true
+-  - type: textarea
+-    id: use_case
+-    attributes:
+-      label: Use case
+-      description: Describe any key requirements or data you would need surfaced, ideally including why they are useful for you.
+-      placeholder: My team uses ACME_DB as the application database to monitor our produciton workloads, so we'd like to alert on it and visualize ACME_DB data next to our logs and traces in Grafana.
+-    validations:
+-      required: true
+-  - type: checkboxes
+-    attributes:
+-      label: Contribution
+-      description: If you are interested in creating the data source yourself and contributing to the [plugin catalog](https://grafana.com/grafana/plugins/), please fill in the following
+-      options:
+-        - label: Are you looking to create the plugin?
+-        - label: Are you affiliated with the project/product the data source integrates with?
+-        - label: Does the plugin integrate with a commercial product?
+diff --git a/.github/ISSUE_TEMPLATE/4-staff_issues.md b/.github/ISSUE_TEMPLATE/4-staff_issues.md
+deleted file mode 100644
+index 48aa91e08c9..00000000000
+--- a/.github/ISSUE_TEMPLATE/4-staff_issues.md
++++ /dev/null
+@@ -1,5 +0,0 @@
+----
+-name: Staff Issues
+-about: Blank issue for Grafana staff members
+-labels: 'internal'
+----
+diff --git a/.github/ISSUE_TEMPLATE/config.yml b/.github/ISSUE_TEMPLATE/config.yml
+deleted file mode 100644
+index 8211d8ee69c..00000000000
+--- a/.github/ISSUE_TEMPLATE/config.yml
++++ /dev/null
+@@ -1,5 +0,0 @@
+-blank_issues_enabled: false
+-contact_links:
+-  - name: Questions & Help
+-    url: https://community.grafana.com
+-    about: Please ask and answer questions here.
+diff --git a/.github/workflows/actions/changelog/action.yml b/.github/workflows/actions/changelog/action.yml
+deleted file mode 100644
+index c99bed23450..00000000000
+--- a/.github/workflows/actions/changelog/action.yml
++++ /dev/null
+@@ -1,22 +0,0 @@
+-name: Changelog generator
+-description: Generates and publishes a changelog for the given release version
+-inputs:
+-  target:
+-    description: Target tag, branch or commit hash for the changelog
+-    required: true
+-  previous:
+-    description: Previous tag, branch or commit hash to start changelog from
+-    required: false
+-  github_token:
+-    description: GitHub token with read/write access to all necessary repositories
+-    required: true
+-  output_file:
+-    description: A file to store resulting changelog markdown
+-    required: false
+-outputs:
+-  changelog:
+-    description: Changelog contents between the two given versions in Markdown format
+-runs:
+-  using: 'node20'
+-  main: 'index.js'
+-  
+diff --git a/.github/workflows/actions/changelog/index.js b/.github/workflows/actions/changelog/index.js
+deleted file mode 100644
+index 9bb200ba208..00000000000
+--- a/.github/workflows/actions/changelog/index.js
++++ /dev/null
+@@ -1,319 +0,0 @@
+-import { appendFileSync, writeFileSync } from 'fs';
+-import { exec as execCallback } from 'node:child_process';
+-import { promisify } from 'node:util';
+-
+-//
+-// Github Action core utils: logging (notice + debug log levels), must escape
+-// newlines and percent signs
+-//
+-const escapeData = (s) => s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+-const LOG = (msg) => console.log(`::notice::${escapeData(msg)}`);
+-
+-//
+-// Semver utils: parse, compare, sort etc (using official regexp)
+-// https://regex101.com/r/Ly7O1x/3/
+-//
+-const semverRegExp =
+-  /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
+-
+-const semverParse = (tag) => {
+-  const m = tag.match(semverRegExp);
+-  if (!m) {
+-    return;
+-  }
+-  const [_, major, minor, patch, prerelease] = m;
+-  return [+major, +minor, +patch, prerelease, tag];
+-};
+-
+-// semverCompare takes two parsed semver tags and comparest them more or less
+-// according to the semver specs
+-const semverCompare = (a, b) => {
+-  for (let i = 0; i < 3; i++) {
+-    if (a[i] !== b[i]) {
+-      return a[i] < b[i] ? 1 : -1;
+-    }
+-  }
+-  if (a[3] !== b[3]) {
+-    return a[3] < b[3] ? 1 : -1;
+-  }
+-  return 0;
+-};
+-
+-// Using `git tag -l` output find the tag (version) that goes semantically
+-// right before the given version. This might not work correctly with some
+-// pre-release versions, which is why it's possible to pass previous version
+-// into this action explicitly to avoid this step.
+-const getPreviousVersion = async (version) => {
+-  const exec = promisify(execCallback);
+-  const { stdout } = await exec('git tag -l');
+-  const prev = stdout
+-    .split('\n')
+-    .map(semverParse)
+-    .filter((tag) => tag)
+-    .sort(semverCompare)
+-    .find((tag) => semverCompare(tag, semverParse(version)) > 0);
+-  if (!prev) {
+-    throw `Could not find previous git tag for ${version}`;
+-  }
+-  return prev[4];
+-};
+-
+-// A helper for Github GraphQL API endpoint
+-const graphql = async (ghtoken, query, variables) => {
+-  const { env } = process;
+-  const results = await fetch('https://api.github.com/graphql', {
+-    method: 'POST',
+-    headers: {
+-      'Content-Type': 'application/json',
+-      Authorization: `Bearer ${ghtoken}`,
+-    },
+-    body: JSON.stringify({ query, variables }),
+-  });
+-  const { data } = await results.json();
+-  return data;
+-};
+-
+-// Using Github GraphQL API find the timestamp for the given tag/commit hash.
+-// This is required for PR listing, because Github API only takes date/time as
+-// a "since" parameter while listing. Currently there is no way to provide two
+-// "commitish" items and get a list of PRs in between them.
+-const getCommitishDate = async (name, owner, target) => {
+-  const result = await graphql(
+-    ghtoken,
+-    `
+-      query getCommitDate($owner: String!, $name: String!, $target: String!) {
+-        repository(owner: $owner, name: $name) {
+-          object(expression: $target) {
+-            ... on Commit {
+-              committedDate
+-            }
+-          }
+-        }
+-      }
+-    `,
+-    { name, owner, target }
+-  );
+-  return result.repository.object.committedDate;
+-};
+-
+-// Using Github GraphQL API get a list of PRs between the two "commitish" items.
+-// This resoves the "since" item's timestamp first and iterates over all PRs
+-// till "target" using naïve pagination.
+-const getHistory = async (name, owner, target, sinceDate) => {
+-  LOG(`Fetching ${owner}/${name} PRs since ${sinceDate} till ${target}`);
+-  const query = `
+-  query findCommitsWithAssociatedPullRequests(
+-    $name: String!
+-    $owner: String!
+-    $target: String!
+-    $sinceDate: GitTimestamp
+-    $cursor: String
+-  ) {
+-    repository(name: $name, owner: $owner) {
+-      object(expression: $target) {
+-        ... on Commit {
+-          history(first: 50, since: $sinceDate, after: $cursor) {
+-            totalCount
+-            pageInfo {
+-              hasNextPage
+-              endCursor
+-            }
+-            nodes {
+-              id
+-              associatedPullRequests(first: 1) {
+-                nodes {
+-                  title
+-                  number
+-                  labels(first: 10) {
+-                    nodes {
+-                      name
+-                    }
+-                  }
+-                  commits(first: 1) {
+-                    nodes {
+-                      commit {
+-                        author {
+-                          user {
+-                            login
+-                          }
+-                        }
+-                      }
+-                    }
+-                  }
+-                }
+-              }
+-            }
+-          }
+-        }
+-      }
+-    }
+-  }`;
+-
+-  let cursor;
+-  let nodes = [];
+-  for (;;) {
+-    const result = await graphql(ghtoken, query, {
+-      name,
+-      owner,
+-      target,
+-      sinceDate,
+-      cursor,
+-    });
+-    LOG(`GraphQL: ${JSON.stringify(result)}`);
+-    nodes = [...nodes, ...result.repository.object.history.nodes];
+-    const { hasNextPage, endCursor } = result.repository.object.history.pageInfo;
+-    if (!hasNextPage) {
+-      break;
+-    }
+-    cursor = endCursor;
+-  }
+-  return nodes;
+-};
+-
+-// The main function for this action: given two "commitish" items it gets a
+-// list of PRs between them and filters/groups the PRs by category (bugfix,
+-// feature, deprecation, breaking change and plugin fixes/enhancements).
+-//
+-// PR grouping relies on Github labels only, not on the PR contents.
+-const getChangeLogItems = async (name, owner, sinceDate, to) => {
+-  // check if a node contains a certain label
+-  const hasLabel = ({ labels }, label) => labels.nodes.some(({ name }) => name === label);
+-  // get all the PRs between the two "commitish" items
+-  const history = await getHistory(name, owner, to, sinceDate);
+-
+-  const items = history.flatMap((node) => {
+-    // discard PRs without a "changelog" label
+-    const changes = node.associatedPullRequests.nodes.filter((PR) => hasLabel(PR, 'add to changelog'));
+-    if (changes.length === 0) {
+-      return [];
+-    }
+-    const item = changes[0];
+-    const { number, url, labels } = item;
+-    const title = item.title.replace(/^\[[^\]]+\]:?\s*/, '');
+-    // for changelog PRs try to find a suitable category.
+-    // Note that we can not detect "deprecation notices" like that
+-    // as there is no suitable label yet.
+-    const isBug = /fix/i.test(title) || hasLabel({ labels }, 'type/bug');
+-    const isBreaking = hasLabel({ labels }, 'breaking change');
+-    const isPlugin =
+-      hasLabel({ labels }, 'area/grafana/ui') ||
+-      hasLabel({ labels }, 'area/grafana/toolkit') ||
+-      hasLabel({ labels }, 'area/grafana/runtime');
+-    const author = item.commits.nodes[0].commit.author.user.login;
+-    return {
+-      repo: name,
+-      number,
+-      title,
+-      author,
+-      isBug,
+-      isPlugin,
+-      isBreaking,
+-    };
+-  });
+-  return items;
+-};
+-
+-// ======================================================
+-//                 GENERATE CHANGELOG
+-// ======================================================
+-
+-LOG(`Changelog action started`);
+-
+-const ghtoken = process.env.GITHUB_TOKEN || process.env.INPUT_GITHUB_TOKEN;
+-if (!ghtoken) {
+-  throw 'GITHUB_TOKEN is not set and "github_token" input is empty';
+-}
+-
+-const target = process.argv[2] || process.env.INPUT_TARGET;
+-LOG(`Target tag/branch/commit: ${target}`);
+-
+-const previous = process.argv[3] || process.env.INPUT_PREVIOUS || (await getPreviousVersion(target));
+-
+-LOG(`Previous tag/commit: ${previous}`);
+-
+-const sinceDate = await getCommitishDate('grafana', 'grafana', previous);
+-LOG(`Previous tag/commit timestamp: ${sinceDate}`);
+-
+-// Get all changelog items from Grafana OSS
+-const oss = await getChangeLogItems('grafana', 'grafana', sinceDate, target);
+-// Get all changelog items from Grafana Enterprise
+-const entr = await getChangeLogItems('grafana-enterprise', 'grafana', sinceDate, target);
+-
+-LOG(`Found OSS PRs: ${oss.length}`);
+-LOG(`Found Enterprise PRs: ${entr.length}`);
+-
+-// Sort PRs and categorise them into sections
+-const changelog = [...oss, ...entr]
+-  .sort((a, b) => (a.title < b.title ? -1 : 1))
+-  .reduce(
+-    (changelog, item) => {
+-      if (item.isPlugin) {
+-        changelog.plugins.push(item);
+-      } else if (item.isBug) {
+-        changelog.bugfixes.push(item);
+-      } else if (item.isBreaking) {
+-        changelog.breaking.push(item);
+-      } else {
+-        changelog.features.push(item);
+-      }
+-      return changelog;
+-    },
+-    {
+-      breaking: [],
+-      plugins: [],
+-      bugfixes: [],
+-      features: [],
+-    }
+-  );
+-
+-// Convert PR numbers to Github links
+-const pullRequestLink = (n) => `[#${n}](https://github.com/grafana/grafana/pull/${n})`;
+-// Convert Github user IDs to Github links
+-const userLink = (u) => `[@${u}](https://github.com/${u})`;
+-
+-// Now that we have a changelog - we can render some markdown as an output
+-const markdown = (changelog) => {
+-  // This convers a list of changelog items into a markdown section with a list of titles/links
+-  const section = (title, items) =>
+-    items.length === 0
+-      ? ''
+-      : `### ${title}
+-
+-${items
+-  .map(
+-    (item) =>
+-      `- ${item.title.replace(/^([^:]*:)/gm, '**$1**')} ${
+-        item.repo === 'grafana-enterprise'
+-          ? '(Enterprise)'
+-          : `${pullRequestLink(item.number)}, ${userLink(item.author)}`
+-      }`
+-  )
+-  .join('\n')}
+-  `;
+-
+-  // Render all present sections for the given changelog
+-  return `${section('Features and enhancements', changelog.features)}
+-${section('Bug fixes', changelog.bugfixes)}
+-${section('Breaking changes', changelog.breaking)}
+-${section('Plugin development fixes & changes', changelog.plugins)}
+-`;
+-};
+-
+-const md = markdown(changelog);
+-
+-// Print changelog, mostly for debugging
+-LOG(`Resulting markdown: ${md}`);
+-
+-// Save changelog as an output for this action
+-if (process.env.GITHUB_OUTPUT) {
+-  LOG(`Output to ${process.env.GITHUB_OUTPUT}`);
+-  appendFileSync(process.env.GITHUB_OUTPUT, `changelog<<EOF\n${escapeData(md)}\nEOF`);
+-} else {
+-  LOG('GITHUB_OUTPUT is not set');
+-}
+-
+-// Save changelog as an output file (if requested)
+-if (process.env.INPUT_OUTPUT_FILE) {
+-  LOG(`Output to ${process.env.INPUT_OUTPUT_FILE}`);
+-  writeFileSync(process.env.INPUT_OUTPUT_FILE, md);
+-}
+diff --git a/.github/workflows/actions/changelog/package.json b/.github/workflows/actions/changelog/package.json
+deleted file mode 100644
+index e7296af8524..00000000000
+--- a/.github/workflows/actions/changelog/package.json
++++ /dev/null
+@@ -1,6 +0,0 @@
+-{
+-  "name": "changelog",
+-  "main": "index.js",
+-  "type": "module",
+-  "description": "changelog generator"
+-}
+diff --git a/.github/workflows/alerting-swagger-gen.yml b/.github/workflows/alerting-swagger-gen.yml
+deleted file mode 100644
+index 7c3af87837f..00000000000
+--- a/.github/workflows/alerting-swagger-gen.yml
++++ /dev/null
+@@ -1,37 +0,0 @@
+-on:
+-  workflow_dispatch:
+-  schedule:
+-    - cron: '0 0 * * 1'
+-
+-jobs:
+-  gen-swagger:
+-    name: Alerting Swagger spec generation cron job
+-    runs-on: ubuntu-latest
+-
+-    steps:
+-      - name: Checkout repository
+-        uses: actions/checkout@v4
+-        with:
+-          fetch-depth: 2
+-      - name: Set go version
+-        uses: actions/setup-go@v4
+-        with:
+-          go-version-file: go.mod
+-      - name: Build swagger
+-        run: |
+-          make -C pkg/services/ngalert/api/tooling post.json api.json
+-      - name: Open Pull Request
+-        uses: peter-evans/create-pull-request@v5
+-        with:
+-          token: ${{ secrets.GITHUB_TOKEN }}
+-          commit-message: "chore: update alerting swagger spec"
+-          title: "Alerting: Update Swagger spec"
+-          body: |
+-            This is an automated pull request to update the alerting swagger spec.
+-            Please review and merge.
+-          branch: update-alerting-swagger-spec
+-          delete-branch: true
+-          labels: 'area/alerting,type/docs,no-changelog'
+-          team-reviewers: 'grafana/alerting-backend'
+-          draft: false
+-
+diff --git a/.github/workflows/auto-milestone.yml b/.github/workflows/auto-milestone.yml
+deleted file mode 100644
+index 0697888fba0..00000000000
+--- a/.github/workflows/auto-milestone.yml
++++ /dev/null
+@@ -1,27 +0,0 @@
+-name: Auto-milestone
+-on:
+-  pull_request_target:
+-    types:
+-      - opened
+-      - reopened
+-      - closed
+-      - ready_for_review
+-
+-permissions:
+-  pull-requests: write
+-  contents: write
+-
+-# Note: this action runs with write permissions on GITHUB_TOKEN even from forks
+-# so it must not run untrusted code (such as checking out the pull request)
+-jobs:
+-  main:
+-    runs-on: ubuntu-latest
+-    if: github.event.pull_request.draft == false
+-    steps:
+-      # Note: Github will not trigger other actions from this because it uses
+-      # the GITHUB_TOKEN token
+-      - name: Run auto-milestone
+-        uses: grafana/grafana-github-actions-go/auto-milestone@main
+-        with:
+-          pr: ${{ github.event.pull_request.number }}
+-          token: ${{ secrets.GITHUB_TOKEN }}
+diff --git a/.github/workflows/backport.yml b/.github/workflows/backport.yml
+deleted file mode 100644
+index 18407b67f76..00000000000
+--- a/.github/workflows/backport.yml
++++ /dev/null
+@@ -1,33 +0,0 @@
+-name: Backport PR Creator
+-on:
+-  pull_request_target:
+-    types:
+-      - closed
+-      - labeled
+-
+-jobs:
+-  main:
+-    if: github.repository == 'grafana/grafana'
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout Actions
+-        uses: actions/checkout@v4
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: ./actions
+-          ref: main
+-      - name: Install Actions
+-        run: npm install --production --prefix ./actions
+-      - name: "Generate token"
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-      - name: Run backport
+-        uses: ./actions/backport
+-        with:
+-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+-          token: ${{ steps.generate_token.outputs.token }}
+-          labelsToAdd: "backport"
+-          title: "[{{base}}] {{originalTitle}}"
+diff --git a/.github/workflows/bump-version.yml b/.github/workflows/bump-version.yml
+deleted file mode 100644
+index 5f0b7cf3020..00000000000
+--- a/.github/workflows/bump-version.yml
++++ /dev/null
+@@ -1,43 +0,0 @@
+-name: Bump version
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      version:
+-        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
+-        required: true
+-      push:
+-        default: true
+-        required: false
+-      dry_run:
+-        default: false
+-        required: false
+-jobs:
+-  main:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout Grafana
+-        uses: actions/checkout@v4
+-      - name: Update package.json versions
+-        uses: ./pkg/build/actions/bump-version
+-        with:
+-          version: ${{ inputs.version }}
+-      - if: ${{ inputs.push }}
+-        name: Generate token
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-      - if: ${{ inputs.push }}
+-        name: Push & Create PR
+-        run: |
+-          git config --local user.name "github-actions[bot]"
+-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+-          git config --local --add --bool push.autoSetupRemote true
+-          git checkout -b "bump-version/${{ github.run_id }}/${{ inputs.version }}"
+-          git add .
+-          git commit -m "bump version ${{ inputs.version }}"
+-          git push
+-          gh pr create --dry-run=${{ inputs.dry_run }} -l "type/ci" -l "no-changelog" -B "${{ github.ref_name }}" --title "Release: Bump version to ${{ inputs.version }}" --body "Updated version to ${{ inputs.version }}"
+-        env:
+-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+diff --git a/.github/workflows/changelog.yml b/.github/workflows/changelog.yml
+deleted file mode 100644
+index 48246cc7f42..00000000000
+--- a/.github/workflows/changelog.yml
++++ /dev/null
+@@ -1,130 +0,0 @@
+-name: Generate changelog
+-on:
+-  workflow_call:
+-    inputs:
+-      version:
+-        type: string
+-        required: true
+-        description: 'Target release version (semver, git tag, branch or commit)'
+-      target:
+-        required: true
+-        type: string
+-        description: 'The base branch that these changes are being merged into'
+-      dry_run:
+-        required: false
+-        default: false
+-        type: boolean
+-      latest:
+-        required: false
+-        default: false
+-        type: boolean
+-    secrets:
+-      GRAFANA_DELIVERY_BOT_APP_ID:
+-        required: true
+-      GRAFANA_DELIVERY_BOT_APP_PEM:
+-        required: true
+-
+-  workflow_dispatch:
+-    inputs:
+-      version:
+-        type: string
+-        required: true
+-        description: 'Target release version (semver, git tag, branch or commit)'
+-      target:
+-        required: true
+-        type: string
+-        description: 'The base branch that these changes are being merged into'
+-      dry_run:
+-        required: false
+-        default: false
+-        type: boolean
+-      latest:
+-        required: false
+-        default: false
+-        type: boolean
+-
+-permissions:
+-  contents: write
+-  pull-requests: write
+-
+-jobs:
+-  main:
+-    runs-on: ubuntu-latest
+-    permissions:
+-      contents: write
+-    steps:
+-      - name: "Generate token"
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-      - name: "Checkout Grafana repo"
+-        uses: "actions/checkout@v4"
+-        with:
+-          ref: main
+-          sparse-checkout: |
+-            .github/workflows
+-            CHANGELOG.md
+-          fetch-depth: 0
+-          fetch-tags: true
+-      - name: "Configure git user"
+-        run: |
+-          git config --local user.name "github-actions[bot]"
+-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+-          git config --local --add --bool push.autoSetupRemote true
+-      - name: "Create branch"
+-        run: git checkout -b "changelog/${{ github.run_id }}/${{ inputs.version }}"
+-      - name: "Generate changelog"
+-        id: changelog
+-        uses: ./.github/workflows/actions/changelog
+-        with:
+-          github_token: ${{ steps.generate_token.outputs.token }}
+-          target: v${{ inputs.version }}
+-          output_file: changelog_items.md
+-      - name: "Patch CHANGELOG.md"
+-        run: |
+-          # Prepare CHANGELOG.md content with version delimiters
+-          (
+-            echo
+-            echo "# ${{ inputs.version}} ($(date '+%F'))"
+-            echo
+-            cat changelog_items.md
+-          ) > CHANGELOG.part
+-
+-          # Check if a version exists in the changelog
+-          if grep -q "<!-- ${{ inputs.version}} START" CHANGELOG.md ; then
+-            # Replace the content between START and END delimiters
+-            echo "Version ${{ inputs.version }} is found in the CHANGELOG.md, patching contents..."
+-            sed -i -e '/${{ inputs.version }} START/,/${{ inputs.version }} END/{//!d;}' \
+-                   -e '/${{ inputs.version }} START/r CHANGELOG.part' CHANGELOG.md
+-          else
+-            # Prepend changelog part to the main changelog file
+-            echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
+-            (
+-              echo "<!-- ${{ inputs.version }} START -->"
+-              cat CHANGELOG.part
+-              echo "<!-- ${{ inputs.version }} END -->"
+-              cat CHANGELOG.md
+-            ) > CHANGELOG.tmp
+-            mv CHANGELOG.tmp CHANGELOG.md
+-          fi
+-
+-          git diff CHANGELOG.md
+-          git add CHANGELOG.md
+-      - name: "Commit changelog changes"
+-        run: git commit --allow-empty -m "Update changelog" CHANGELOG.md
+-      - name: "git push"
+-        if: ${{ inputs.dry_run }} != true
+-        run: git push
+-      - name: "Create changelog PR"
+-        run: >
+-          gh pr create \
+-            --dry-run=${{ inputs.dry_run }} \
+-            --label "no-backport" \
+-            --label "no-changelog" \
+-            -B "${{ inputs.target }}" \
+-            --title "Release: update changelog for ${{ inputs.version }}" \
+-            --body "Changelog changes for release ${{ inputs.version }}"
+-        env:
+-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+diff --git a/.github/workflows/close-milestone.yml b/.github/workflows/close-milestone.yml
+deleted file mode 100644
+index 11613b5fab9..00000000000
+--- a/.github/workflows/close-milestone.yml
++++ /dev/null
+@@ -1,44 +0,0 @@
+-name: Close milestone
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      version:
+-        required: true
+-        description: Needs to match, exactly, the name of a milestone
+-  workflow_call:
+-    inputs:
+-      version_call:
+-        description: Needs to match, exactly, the name of a milestone
+-        required: true
+-        type: string
+-
+-jobs:
+-  main:
+-    if: github.repository == 'grafana/grafana'
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout Actions
+-        uses: actions/checkout@v4
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: ./actions
+-          ref: main
+-      - name: Install Actions
+-        run: npm install --production --prefix ./actions
+-      - name: "Generate token"
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-      - name: Close milestone (manually invoked)
+-        if: ${{ github.event.inputs.version != '' }}
+-        uses: ./actions/close-milestone
+-        with:
+-          token: ${{ steps.generate_token.outputs.token }}
+-      - name: Close milestone (workflow invoked)
+-        if: ${{ inputs.version_call != '' }}
+-        uses: ./actions/close-milestone
+-        with:
+-          version_call: ${{ inputs.version_call }}
+-          token: ${{ steps.generate_token.outputs.token }}
+diff --git a/.github/workflows/codeowners-validator.yml b/.github/workflows/codeowners-validator.yml
+deleted file mode 100644
+index 12184b2f680..00000000000
+--- a/.github/workflows/codeowners-validator.yml
++++ /dev/null
+@@ -1,38 +0,0 @@
+-name: "Codeowners Validator"
+-
+-on:
+-  pull_request:
+-    branches: [ main ]
+-
+-jobs:
+-  codeowners-validator:
+-    runs-on: ubuntu-latest
+-    steps:
+-      # Checks-out your repository, which is validated in the next step
+-      - uses: actions/checkout@v4
+-      - name: GitHub CODEOWNERS Validator
+-        uses: mszostok/codeowners-validator@v0.7.4
+-        # input parameters
+-        with:
+-          # ==== GitHub Auth ====
+-
+-          # "The list of checks that will be executed. By default, all checks are executed. Possible values: files,owners,duppatterns,syntax"
+-          checks: "files,duppatterns,syntax"
+-
+-          # "The comma-separated list of experimental checks that should be executed. By default, all experimental checks are turned off. Possible values: notowned,avoid-shadowing"
+-          experimental_checks: "notowned,avoid-shadowing"
+-          
+-          # The repository path in which CODEOWNERS file should be validated."
+-          repository_path: "."
+-
+-          # Defines the level on which the application should treat check issues as failures. Defaults to warning, which treats both errors and warnings as failures, and exits with error code 3. Possible values are error and warning. Default: warning"
+-          check_failure_level: "error"
+-
+-          # The comma-separated list of patterns that should be ignored by not-owned-checker. For example, you can specify * and as a result, the * pattern from the CODEOWNERS file will be ignored and files owned by this pattern will be reported as unowned unless a later specific pattern will match that path. It's useful because often we have default owners entry at the begging of the CODOEWNERS file, e.g. * @global-owner1 @global-owner2"
+-          not_owned_checker_skip_patterns: ""
+-
+-          # Specifies whether CODEOWNERS may have unowned files. For example, `/infra/oncall-rotator/oncall-config.yml` doesn't have owner and this is not reported.
+-          owner_checker_allow_unowned_patterns: "false"
+-
+-          # Specifies whether only teams are allowed as owners of files.
+-          owner_checker_owners_must_be_teams: "false"          
+diff --git a/.github/workflows/codeql-analysis.yml b/.github/workflows/codeql-analysis.yml
+deleted file mode 100644
+index 14981389deb..00000000000
+--- a/.github/workflows/codeql-analysis.yml
++++ /dev/null
+@@ -1,70 +0,0 @@
+-# For most projects, this workflow file will not need changing; you simply need
+-# to commit it to your repository.
+-#
+-# You may wish to alter this file to override the set of languages analyzed,
+-# or to provide custom queries or build logic.
+-name: "CodeQL"
+-
+-on:
+-  workflow_dispatch:
+-  push:
+-    branches: [main, v1.8.x, v2.0.x, v2.1.x, v2.6.x, v3.0.x, v3.1.x, v4.0.x, v4.1.x, v4.2.x, v4.3.x, v4.4.x, v4.5.x, v4.6.x, v4.7.x, v5.0.x, v5.1.x, v5.2.x, v5.3.x, v5.4.x, v6.0.x, v6.1.x, v6.2.x, v6.3.x, v6.4.x, v6.5.x, v6.6.x, v6.7.x, v7.0.x, v7.1.x, v7.2.x]
+-    paths-ignore:
+-      - '**/*.cue'
+-      - '**/*.json'
+-      - '**/*.md'
+-      - '**/*.txt'
+-      - '**/*.yml'
+-  schedule:
+-    - cron: '0 4 * * 6'
+-
+-permissions:
+-  security-events: write
+-
+-jobs:
+-  analyze:
+-    name: Analyze
+-    runs-on: ubuntu-latest
+-    if: github.repository == 'grafana/grafana'
+-
+-    strategy:
+-      fail-fast: false
+-      matrix:
+-        # Override automatic language detection by changing the below list
+-        # Supported options are ['csharp', 'cpp', 'go', 'java', 'javascript', 'python']
+-        language: ['javascript', 'go', 'python']
+-        # Learn more...
+-        # https://docs.github.com/en/github/finding-security-vulnerabilities-and-errors-in-your-code/configuring-code-scanning#overriding-automatic-language-detection
+-
+-    steps:
+-    - name: Checkout repository
+-      uses: actions/checkout@v4
+-      with:
+-        # We must fetch at least the immediate parents so that if this is
+-        # a pull request then we can checkout the head.
+-        fetch-depth: 2
+-
+-    - if: matrix.language == 'go'
+-      name: Set go version
+-      uses: actions/setup-go@v4
+-      with:
+-        go-version-file: go.mod
+-
+-    # Initializes the CodeQL tools for scanning.
+-    - name: Initialize CodeQL
+-      uses: github/codeql-action/init@v2
+-      with:
+-        languages: ${{ matrix.language }}
+-        # If you wish to specify custom queries, you can do so here or in a config file.
+-        # By default, queries listed here will override any specified in a config file.
+-        # Prefix the list here with "+" to use these queries and those in the config file.
+-        # queries: ./path/to/local/query, your-org/your-repo/queries@main
+-
+-    - if: matrix.language == 'go'
+-      name: Build go files
+-      run: |
+-        go mod verify
+-        make build-go
+-
+-    - name: Perform CodeQL Analysis
+-      uses: github/codeql-action/analyze@v2
+diff --git a/.github/workflows/commands.yml b/.github/workflows/commands.yml
+deleted file mode 100644
+index c0244a0274a..00000000000
+--- a/.github/workflows/commands.yml
++++ /dev/null
+@@ -1,41 +0,0 @@
+-name: Run commands when issues are labeled or comments added
+-on:
+-  issues:
+-    types: [labeled, unlabeled]
+-  issue_comment:
+-    types: [created]
+-concurrency:
+-  group: issue-commands-${{ github.event.issue.number }}
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.GRAFANA_MISC_STATS_API_KEY != '' && secrets.ISSUE_COMMANDS_TOKEN != '') || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  main:
+-    needs: config
+-    if: needs.config.outputs.has-secrets
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout Actions
+-        uses: actions/checkout@v4
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: ./actions
+-          ref: main
+-      - name: Install Actions
+-        run: npm install --production --prefix ./actions
+-      - name: Run Commands
+-        uses: ./actions/commands
+-        with:
+-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+-          token: ${{secrets.ISSUE_COMMANDS_TOKEN}}
+-          configPath: commands
+diff --git a/.github/workflows/community-release.yml b/.github/workflows/community-release.yml
+deleted file mode 100644
+index 86e7703e5c4..00000000000
+--- a/.github/workflows/community-release.yml
++++ /dev/null
+@@ -1,46 +0,0 @@
+-name: Create community release post
+-on:
+-  workflow_call:
+-    inputs:
+-      version:
+-        type: string
+-        required: true
+-        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
+-      dry_run:
+-        type: boolean
+-        required: false
+-        default: false
+-        description: When enabled, this workflow will print a preview instead of creating an actual post.
+-    secrets:
+-      GRAFANA_MISC_STATS_API_KEY:
+-        required: true
+-      GRAFANABOT_FORUM_KEY:
+-        required: true
+-  workflow_dispatch:
+-    inputs:
+-      version:
+-        type: string
+-        required: true
+-        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
+-      dry_run:
+-        type: boolean
+-        required: false
+-        default: false
+-        description: When enabled, this workflow will print a preview instead of creating an actual post.
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  main:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Run community-release (manually invoked)
+-        uses: grafana/grafana-github-actions-go/community-release@main
+-        with:
+-          token: ${{ secrets.GITHUB_TOKEN }}
+-          version: ${{ inputs.version }}
+-          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+-          community_api_key: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+-          community_api_username: grafanabot
+-          dry_run: ${{ inputs.dry_run }}
+diff --git a/.github/workflows/core-plugins-build-and-release.yml b/.github/workflows/core-plugins-build-and-release.yml
+deleted file mode 100644
+index e4803a2208f..00000000000
+--- a/.github/workflows/core-plugins-build-and-release.yml
++++ /dev/null
+@@ -1,269 +0,0 @@
+-name: Build and release core plugins
+-
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      plugin_id:
+-        description: "ID of the plugin you want to publish"
+-        required: true
+-        type: choice
+-        options:
+-          - grafana-azure-monitor-datasource
+-          - grafana-pyroscope-datasource
+-          - grafana-testdata-datasource
+-          - jaeger
+-          - parca
+-          - stackdriver
+-          - tempo
+-          - zipkin
+-
+-concurrency:
+-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
+-  cancel-in-progress: true
+-
+-env:
+-  GRABPL_VERSION: 3.0.44
+-  GCP_BUCKET: integration-artifacts # Dev: plugins-community-staging
+-  GCOM_API: https://grafana.com # Dev: https://grafana-dev.com
+-
+-# These permissions are needed to assume roles from Github's OIDC.
+-permissions:
+-  contents: read
+-  id-token: write
+-
+-jobs:
+-  build-and-publish:
+-    name: Build and publish ${{ inputs.plugin_id }}
+-    runs-on: ubuntu-latest
+-    outputs:
+-      type: ${{ steps.get_dir.outputs.dir }}
+-      has_backend: ${{ steps.check_backend.outputs.has_backend }}
+-      version: ${{ steps.build_frontend.outputs.version }}
+-    steps:
+-      - name: checkout
+-        uses: actions/checkout@v4
+-      - name: Verify inputs
+-        run: |
+-          if [ -z ${{ inputs.plugin_id }} ]; then echo "Missing plugin ID"; exit 1; fi
+-      - id: get-secrets
+-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+-        with:
+-          # Secrets placed in the ci/repo/grafana/<repo>/<path> path in Vault
+-          repo_secrets: |
+-            PLUGINS_GOOGLE_CREDENTIALS=core-plugins-build-and-release:PLUGINS_GOOGLE_CREDENTIALS
+-            PLUGINS_GRAFANA_API_KEY=core-plugins-build-and-release:PLUGINS_GRAFANA_API_KEY
+-            PLUGINS_GCOM_TOKEN=core-plugins-build-and-release:PLUGINS_GCOM_TOKEN
+-      - name: 'Authenticate to Google Cloud'
+-        uses: 'google-github-actions/auth@v2'
+-        with:
+-          credentials_json: '${{ env.PLUGINS_GOOGLE_CREDENTIALS }}'
+-      - name: 'Set up Cloud SDK'
+-        uses: 'google-github-actions/setup-gcloud@v2'
+-      - name: Setup nodejs environment
+-        uses: actions/setup-node@v4
+-        with:
+-          node-version-file: .nvmrc
+-          cache: yarn
+-      - name: Find plugin directory
+-        shell: bash
+-        id: get_dir
+-        run: |
+-          dir=$(dirname \
+-            $(egrep -lir --include=plugin.json --exclude-dir=dist \
+-              '"id": "${{ inputs.plugin_id }}"' \
+-              public/app/plugins \
+-            ) \
+-          )
+-          echo "dir=${dir}" >> $GITHUB_OUTPUT
+-      - name: Install frontend dependencies
+-        shell: bash
+-        working-directory: ${{ steps.get_dir.outputs.dir }}
+-        run: |
+-          yarn install --immutable
+-      - name: Download grabpl executable
+-        shell: sh
+-        working-directory: ${{ steps.get_dir.outputs.dir }}
+-        run: |
+-          [ ! -d ./bin ] && mkdir -pv ./bin || true
+-          curl -fL -o ./bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
+-          chmod 0755 ./bin/grabpl
+-      - name: Check backend
+-        id: check_backend
+-        shell: bash
+-        run: |
+-          if egrep -qr --include=main.go 'datasource.Manage\("${{ inputs.plugin_id }}"' pkg/tsdb; then
+-            echo "has_backend=true" >> $GITHUB_OUTPUT
+-          else
+-            echo "has_backend=false" >> $GITHUB_OUTPUT
+-          fi
+-      - name: Setup golang environment
+-        uses: actions/setup-go@v4
+-        if: steps.check_backend.outputs.has_backend == 'true'
+-        with:
+-          go-version-file: go.mod
+-      - name: Install Mage
+-        shell: bash
+-        if: steps.check_backend.outputs.has_backend == 'true'
+-        run: |
+-          go install github.com/magefile/mage
+-      - name: Check tools
+-        shell: bash
+-        working-directory: ${{ steps.get_dir.outputs.dir }}
+-        run: |
+-          echo "======================================="
+-          echo "  Frontend tools"
+-          echo "======================================="
+-          echo "-------- node version -----"
+-          node --version
+-          echo "-------- npm version -----"
+-          npm --version
+-          echo "-------- yarn version -----"
+-          yarn --version
+-          echo "======================================="
+-          echo "  Misc tools"
+-          echo "======================================="
+-          echo "-------- docker version -----"
+-          docker --version
+-          echo "-------- jq version -----"
+-          jq --version
+-          echo "-------- grabpl version -----"
+-          ./bin/grabpl --version
+-          echo "======================================="
+-      - name: Check backend tools
+-        shell: bash
+-        if: steps.check_backend.outputs.has_backend == 'true'
+-        working-directory: ${{ steps.get_dir.outputs.dir }}
+-        run: |
+-          echo "======================================="
+-          echo "  Backend tools"
+-          echo "======================================="
+-          echo "-------- go version -----"
+-          go version
+-          echo "-------- mage version -----"
+-          mage --version
+-          echo "======================================="
+-      - name: build:frontend
+-        shell: bash
+-        id: build_frontend
+-        run: |
+-          command="plugin:build:commit"
+-          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+-            # Release branch, do not add commit hash to version
+-            command="plugin:build"
+-          fi
+-          yarn $command --scope="@grafana-plugins/${{ inputs.plugin_id }}"
+-          version=$(cat ${{ steps.get_dir.outputs.dir }}/dist/plugin.json | jq -r .info.version)
+-          echo "version=${version}" >> $GITHUB_OUTPUT
+-      - name: build:backend
+-        if: steps.check_backend.outputs.has_backend == 'true'
+-        shell: bash
+-        env:
+-          VERSION: ${{ steps.build_frontend.outputs.version }}  
+-        run: |
+-          make build-plugin-go PLUGIN_ID=${{ inputs.plugin_id }}
+-      - name: package
+-        working-directory: ${{ steps.get_dir.outputs.dir }}
+-        run: |
+-          mkdir -p ci/jobs/package
+-          bin/grabpl plugin package
+-        env:
+-          GRAFANA_API_KEY: ${{ env.PLUGINS_GRAFANA_API_KEY }}
+-          PLUGIN_SIGNATURE_TYPE: grafana
+-      - name: Check existing release
+-        env:
+-          GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
+-          VERSION: ${{ steps.build_frontend.outputs.version }}  
+-        run: |
+-          api_res=$(curl -X 'GET' -H "Authorization: Bearer $GCOM_TOKEN" \
+-            '${{ env.GCOM_API}}/api/plugins/${{ inputs.plugin_id }}?version=$VERSION' \
+-            -H 'accept: application/json')
+-          api_res_code=$(echo $api_res | jq -r .code)
+-          if [ "$api_res_code" = "NotFound" ]; then
+-            echo "No existing release found"
+-          else
+-            echo "Expecting a missing release, got:"
+-            echo $api_res
+-            exit 1
+-          fi
+-      - name: store build artifacts
+-        uses: actions/upload-artifact@v4
+-        with:
+-          name: build-artifacts
+-          path: ${{ steps.get_dir.outputs.dir }}/ci/packages/*.zip
+-      - name: Publish release to Google Cloud Storage
+-        working-directory: ${{ steps.get_dir.outputs.dir }}
+-        env:
+-          VERSION: ${{ steps.build_frontend.outputs.version }}  
+-        run: |
+-          echo "Publish release to Google Cloud Storage:"
+-          touch ci/packages/windows ci/packages/darwin ci/packages/linux ci/packages/any
+-          gsutil -m cp -r ci/packages/*windows* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/windows
+-          gsutil -m cp -r ci/packages/*linux* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux 
+-          gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin
+-          gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any
+-      - name: Publish new plugin version on grafana.com
+-        if: steps.check_backend.outputs.has_backend == 'true'
+-        working-directory: ${{ steps.get_dir.outputs.dir }}
+-        env:
+-          GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
+-          VERSION: ${{ steps.build_frontend.outputs.version }}  
+-        run: |
+-          echo "Publish new plugin version on grafana.com:"
+-          echo "Plugin version: ${VERSION}"
+-          result=`curl -H "Authorization: Bearer $GCOM_TOKEN" -H "Content-Type: application/json" ${{ env.GCOM_API}}/api/plugins -d "{
+-            \"url\": \"https://github.com/grafana/grafana/tree/main/${{ steps.get_dir.outputs.dir }}\",
+-            \"download\": {
+-              \"linux-amd64\": {
+-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux/${{ inputs.plugin_id }}-${VERSION}.linux_amd64.zip\",
+-                \"md5\": \"$(cat ci/packages/info-linux_amd64.json | jq -r .plugin.md5)\"
+-              },
+-              \"linux-arm64\": {
+-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux/${{ inputs.plugin_id }}-${VERSION}.linux_arm64.zip\",
+-                \"md5\": \"$(cat ci/packages/info-linux_arm64.json | jq -r .plugin.md5)\"
+-              },
+-              \"linux-arm\": {
+-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/linux/${{ inputs.plugin_id }}-${VERSION}.linux_arm.zip\",
+-                \"md5\": \"$(cat ci/packages/info-linux_arm.json | jq -r .plugin.md5)\"
+-              },
+-              \"windows-amd64\": {
+-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/windows/${{ inputs.plugin_id }}-${VERSION}.windows_amd64.zip\",
+-                \"md5\": \"$(cat ci/packages/info-windows_amd64.json | jq -r .plugin.md5)\"
+-              },
+-              \"darwin-amd64\": {
+-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin/${{ inputs.plugin_id }}-${VERSION}.darwin_amd64.zip\",
+-                \"md5\": \"$(cat ci/packages/info-darwin_amd64.json | jq -r .plugin.md5)\"
+-              },
+-              \"darwin-arm64\": {
+-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/darwin/${{ inputs.plugin_id }}-${VERSION}.darwin_arm64.zip\",
+-                \"md5\": \"$(cat ci/packages/info-darwin_arm64.json | jq -r .plugin.md5)\"
+-              }
+-            }
+-          }"`
+-          if [[ "$(echo $result | jq -r .version)" == "null" ]]; then
+-            echo "Failed to publish plugin version. Got:"
+-            echo $result
+-            exit 1
+-          fi
+-      - name: Publish new plugin version on grafana.com (frontend only)
+-        if: steps.check_backend.outputs.has_backend == 'false'
+-        working-directory: ${{ steps.get_dir.outputs.dir }}
+-        env:
+-          GCOM_TOKEN: ${{ env.PLUGINS_GCOM_TOKEN }}
+-          VERSION: ${{ steps.build_frontend.outputs.version }}
+-        run: |
+-          echo "Publish new plugin version on grafana.com:"
+-          echo "Plugin version: ${VERSION}"
+-          result=`curl -H "Authorization: Bearer $GCOM_TOKEN" -H "Content-Type: application/json" ${{ env.GCOM_API}}/api/plugins -d "{
+-            \"url\": \"https://github.com/grafana/grafana/tree/main/${{ steps.get_dir.outputs.dir }}\",
+-            \"download\": {
+-              \"any\": {
+-                \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${VERSION}/any/${{ inputs.plugin_id }}-${VERSION}.any.zip\",
+-                \"md5\": \"$(cat ci/packages/info-any.json | jq -r .plugin.md5)\"
+-              }
+-            }
+-          }"`
+-          if [[ "$(echo $result | jq -r .version)" == "null" ]]; then
+-            echo "Failed to publish plugin version. Got:"
+-            echo $result
+-            exit 1
+-          fi
+diff --git a/.github/workflows/create-security-patch-from-security-mirror.yml b/.github/workflows/create-security-patch-from-security-mirror.yml
+deleted file mode 100644
+index e187149b8b4..00000000000
+--- a/.github/workflows/create-security-patch-from-security-mirror.yml
++++ /dev/null
+@@ -1,28 +0,0 @@
+-# Owned by grafana-release-guild
+-# Intended to be dropped into the base repo (Ex: grafana/grafana) for use in the security mirror.
+-name: Create security patch
+-run-name: create-security-patch
+-on:
+-  pull_request:
+-    types:
+-      - opened
+-      - reopened
+-      - synchronize
+-    branches:
+-      - "main"
+-      - "v*.*.*"
+-
+-# This is run before the pull request has been merged, so we'll run against the src branch
+-jobs:
+-  trigger_downstream_create_security_patch:
+-    concurrency: create-patch-${{ github.ref_name }}
+-    uses: grafana/security-patch-actions/.github/workflows/create-patch.yml@main
+-    if: github.repository == 'grafana/grafana-security-mirror'
+-    with:
+-      repo: "${{ github.repository }}"
+-      src_ref: "${{ github.head_ref }}" # this is the source branch name, Ex: "feature/newthing"
+-      patch_ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
+-      patch_repo: "grafana/grafana-security-patches"
+-      patch_prefix: "${{ github.event.pull_request.number }}"
+-    secrets: inherit
+-
+diff --git a/.github/workflows/dashboards-issue-add-label.yml b/.github/workflows/dashboards-issue-add-label.yml
+deleted file mode 100644
+index 766c89c7242..00000000000
+--- a/.github/workflows/dashboards-issue-add-label.yml
++++ /dev/null
+@@ -1,73 +0,0 @@
+-name: When an issue changes and it's part of the dashboards project, add the dashboards squad label
+-on:
+-  issues:
+-    types: [opened, closed, edited, reopened, assigned, unassigned, labeled, unlabeled]
+-
+-env:
+-  GITHUB_TOKEN: ${{ secrets.ISSUE_COMMANDS_TOKEN }}
+-  ORGANIZATION: ${{ github.repository_owner }}
+-  REPO: ${{ github.event.repository.name }}
+-  TARGET_PROJECT: 202
+-  LABEL_IDs: "LA_kwDOAOaWjc8AAAABT38U-A"
+-
+-concurrency:
+-  group: issue-label-when-in-project-${{ github.event.number }}
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.ISSUE_COMMANDS_TOKEN != '') || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  main:
+-    needs: config
+-    if: needs.config.outputs.has-secrets
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: log in
+-        run: gh api user -q .login
+-      - name: Check if issue is in target project
+-        run: |
+-          gh api graphql -f query='
+-            query($org: String!, $repo: String!) {
+-              repository(name: $repo, owner: $org) {
+-                issue (number: ${{ github.event.issue.number }}) {
+-                  id
+-                  projectItems(first:20) {
+-                    nodes {
+-                      project {
+-                        number,
+-                      },
+-                    }
+-                  }
+-                }
+-              }
+-            }' -f org=$ORGANIZATION -f repo=$REPO > projects_data.json
+-
+-            echo 'IN_TARGET_PROJ='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.TARGET_PROJECT }}) | .project != null' projects_data.json) >> $GITHUB_ENV
+-            echo 'ITEM_ID='$(jq '.data.repository.issue.id' projects_data.json) >> $GITHUB_ENV
+-      - name: Set up label array
+-        if: env.IN_TARGET_PROJ
+-        run: |
+-          IFS=',' read -ra LABEL_IDs <<< "${{ env.LABEL_IDs }}"
+-          for item in "${LABEL_IDs[@]}"; do
+-            echo "Item: $item"
+-          done
+-      - name: Add label to issue
+-        if: env.IN_TARGET_PROJ
+-        run: |
+-          gh api graphql -f query='
+-            mutation ($labelableId: ID!, $labelIds: [ID!]!) {
+-              addLabelsToLabelable(
+-                input: {labelableId: $labelableId, labelIds: $labelIds}
+-              ) {
+-                  clientMutationId
+-              }
+-            }' -f labelableId=$ITEM_ID -f labelIds=${{ env.LABEL_IDs }}
+diff --git a/.github/workflows/detect-breaking-changes-levitate.yml b/.github/workflows/detect-breaking-changes-levitate.yml
+deleted file mode 100644
+index 0cca7c5e785..00000000000
+--- a/.github/workflows/detect-breaking-changes-levitate.yml
++++ /dev/null
+@@ -1,366 +0,0 @@
+-# Only runs if anything under the packages/ directory changes.
+----
+-name: Levitate / Detect breaking changes in PR
+-
+-on:
+-  pull_request:
+-    paths:
+-      - 'packages/**'
+-    branches:
+-      - 'main'
+-
+-jobs:
+-  buildPR:
+-    name: Build PR
+-    runs-on: ubuntu-latest
+-    defaults:
+-      run:
+-        working-directory: './pr'
+-
+-    steps:
+-      - uses: actions/checkout@v4
+-        with:
+-          path: './pr'
+-      - uses: actions/setup-node@v4
+-        with:
+-          node-version: 20.9.0
+-
+-      - name: Get yarn cache directory path
+-        id: yarn-cache-dir-path
+-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+-
+-      - name: Restore yarn cache
+-        uses: actions/cache@v4
+-        id: yarn-cache
+-        with:
+-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+-          key: yarn-cache-folder-${{ hashFiles('**/yarn.lock', '.yarnrc.yml') }}
+-          restore-keys: |
+-            yarn-cache-folder-
+-
+-      - name: Install dependencies
+-        run: yarn install --immutable
+-
+-      - name: Build packages
+-        run: yarn packages:build
+-
+-      - name: Pack packages
+-        run: yarn packages:pack --out ./%s.tgz
+-
+-      - name: Zip built tarballed packages
+-        run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
+-
+-      - name: Upload build output as artifact
+-        uses: actions/upload-artifact@v4
+-        with:
+-          name: buildPr
+-          path: './pr/pr_built_packages.zip'
+-
+-  buildBase:
+-    name: Build Base
+-    runs-on: ubuntu-latest
+-    defaults:
+-      run:
+-        working-directory: './base'
+-
+-    steps:
+-      - uses: actions/checkout@v4
+-        with:
+-          path: './base'
+-          ref: ${{ github.event.pull_request.base.ref }}
+-
+-      - uses: actions/setup-node@v4
+-        with:
+-          node-version: 20.9.0
+-
+-      - name: Get yarn cache directory path
+-        id: yarn-cache-dir-path
+-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+-
+-      - name: Restore yarn cache
+-        uses: actions/cache@v4
+-        id: yarn-cache
+-        with:
+-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+-          key: yarn-cache-folder-${{ hashFiles('**/yarn.lock', '.yarnrc.yml') }}
+-          restore-keys: |
+-            yarn-cache-folder-
+-
+-      - name: Install dependencies
+-        run: yarn install --immutable
+-
+-      - name: Build packages
+-        run: yarn packages:build
+-
+-      - name: Pack packages
+-        run: yarn packages:pack --out ./%s.tgz
+-
+-      - name: Zip built tarballed packages
+-        run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
+-
+-      - name: Upload build output as artifact
+-        uses: actions/upload-artifact@v4
+-        with:
+-          name: buildBase
+-          path: './base/base_built_packages.zip'
+-
+-  Detect:
+-    name: Detect breaking changes
+-    runs-on: ubuntu-latest
+-    needs: ['buildPR', 'buildBase']
+-    env:
+-      GITHUB_STEP_NUMBER: 8
+-    permissions:
+-      contents: 'read'
+-      id-token: 'write'
+-
+-    steps:
+-      - uses: actions/checkout@v4
+-      - uses: actions/setup-node@v4
+-        with:
+-          node-version: 20.9.0
+-
+-      - name: Get built packages from pr
+-        uses: actions/download-artifact@v4
+-        with:
+-          name: buildPr
+-
+-      - name: Get built packages from base
+-        uses: actions/download-artifact@v4
+-        with:
+-          name: buildBase
+-
+-      - name: Unzip artifact from pr
+-        run: unzip -j pr_built_packages.zip -d ./pr && rm pr_built_packages.zip
+-
+-      - name: Unzip artifact from base
+-        run: unzip -j base_built_packages.zip -d ./base && rm base_built_packages.zip
+-
+-      - id: 'auth'
+-        uses: 'google-github-actions/auth@v2'
+-        with:
+-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+-          service_account: ${{ secrets.LEVITATE_SA }}
+-
+-      - name: 'Set up Cloud SDK'
+-        uses: 'google-github-actions/setup-gcloud@v2'
+-        with:
+-          version: '>= 363.0.0'
+-          project_id: 'grafanalabs-global'
+-          install_components: 'bq'
+-
+-        # This step is needed to generate a detailed levitate report
+-      - name: Set up gcloud project
+-        run: |
+-          unset CLOUDSDK_CORE_PROJECT
+-          unset GCLOUD_PROJECT
+-          unset GCP_PROJECT
+-          unset GOOGLE_CLOUD_PROJECT
+-
+-          gcloud config set project grafanalabs-global
+-
+-      - name: Get link for the Github Action job
+-        id: job
+-        uses: actions/github-script@v6
+-        with:
+-          script: |
+-              const name = 'Detect breaking changes';
+-              const script = require('./.github/workflows/scripts/pr-get-job-link.js')
+-              await script({name, github, context, core})
+-
+-      - name: Detect breaking changes
+-        id: breaking-changes
+-        run: ./scripts/check-breaking-changes.sh
+-        env:
+-          FORCE_COLOR: 3
+-          GITHUB_JOB_LINK: ${{ steps.job.outputs.link }}
+-
+-      - name: Persisting the check output
+-        run: |
+-            mkdir -p ./levitate
+-            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}#step:${GITHUB_STEP_NUMBER}:1\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
+-
+-      - name: Upload check output as artifact
+-        uses: actions/upload-artifact@v4
+-        with:
+-          name: levitate
+-          path: levitate/
+-
+-
+-  Report:
+-    name: Report breaking changes in PR
+-    runs-on: ubuntu-latest
+-    needs: ['Detect']
+-
+-    steps:
+-      - name: "Generate token"
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
+-
+-      - uses: actions/checkout@v4
+-
+-      - name: 'Download artifact'
+-        uses: actions/download-artifact@v4
+-        with:
+-          name: levitate
+-
+-      - name: Parsing levitate result
+-        uses: actions/github-script@v6
+-        id: levitate-run
+-        with:
+-          script: |
+-            const filePath = 'result.json';
+-            const script = require('./.github/workflows/scripts/json-file-to-job-output.js');
+-            await script({ core, filePath });
+-
+-      # Check if label exists
+-      - name: Check if "levitate breaking change" label exists
+-        id: does-label-exist
+-        uses: actions/github-script@v6
+-        env:
+-          PR_NUMBER: ${{ github.event.pull_request.number }}
+-        with:
+-          script: |
+-            const { data } = await github.rest.issues.listLabelsOnIssue({
+-              issue_number: process.env.PR_NUMBER,
+-              owner: context.repo.owner,
+-              repo: context.repo.repo,
+-            });
+-            const labels = data.map(({ name }) => name);
+-            const doesExist = labels.includes('levitate breaking change');
+-
+-            return doesExist ? 1 : 0;
+-
+-      # put the markdown into a variable
+-      - name: Levitate Markdown
+-        id: levitate-markdown
+-        run: |
+-            if [ -f "levitate.md" ]; then
+-            {
+-              echo 'levitate_markdown<<EOF'
+-              cat levitate.md
+-              echo EOF
+-            } >> $GITHUB_OUTPUT
+-            else
+-              echo "levitate_markdown=No breaking changes detected" >> $GITHUB_OUTPUT
+-            fi
+-
+-
+-      # Comment on the PR
+-      - name: Comment on PR
+-        if: steps.levitate-run.outputs.exit_code == 1
+-        uses: marocchino/sticky-pull-request-comment@v2
+-        with:
+-          header: levitate-breaking-change-comment
+-          number: ${{ github.event.pull_request.number }}
+-          message: |
+-            ⚠️ &nbsp;&nbsp;**Possible breaking changes (md version)**&nbsp;&nbsp; ⚠️
+-
+-            ${{ steps.levitate-markdown.outputs.levitate_markdown }}
+-
+-            [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
+-            [Console output](${{ steps.levitate-run.outputs.job_link }})
+-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+-
+-      # Remove comment from the PR (no more breaking changes)
+-      - name: Remove comment from PR
+-        if: steps.levitate-run.outputs.exit_code == 0
+-        uses: marocchino/sticky-pull-request-comment@v2
+-        with:
+-          header: levitate-breaking-change-comment
+-          number: ${{ github.event.pull_request.number }}
+-          delete: true
+-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+-
+-      # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
+-      - name: Post to Slack
+-        id: slack
+-        if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && env.HAS_SECRETS
+-        uses: slackapi/slack-github-action@v1.26.0
+-        with:
+-          payload: |
+-            {
+-              "pr_link": "https://github.com/grafana/grafana/pull/${{ steps.levitate-run.outputs.pr_number }}",
+-              "pr_number": "${{ steps.levitate-run.outputs.pr_number }}",
+-              "job_link": "${{ steps.levitate-run.outputs.job_link }}",
+-              "reporting_job_link": "${{ github.event.workflow_run.html_url }}",
+-              "message": "${{ steps.levitate-run.outputs.message }}"
+-            }
+-        env:
+-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
+-          HAS_SECRETS: ${{ (github.repository == 'grafana/grafana' || secrets.SLACK_LEVITATE_WEBHOOK_URL != '') || '' }}
+-
+-      # Add the label
+-      - name: Add "levitate breaking change" label
+-        if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0
+-        uses: actions/github-script@v6
+-        env:
+-          PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
+-        with:
+-          github-token: ${{ steps.generate_token.outputs.token }}
+-          script: |
+-            await github.rest.issues.addLabels({
+-              issue_number: process.env.PR_NUMBER,
+-              owner: context.repo.owner,
+-              repo: context.repo.repo,
+-              labels: ['levitate breaking change']
+-            })
+-
+-      # Remove label (no more breaking changes)
+-      - name: Remove "levitate breaking change" label
+-        if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1
+-        uses: actions/github-script@v6
+-        env:
+-          PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
+-        with:
+-          github-token: ${{ steps.generate_token.outputs.token }}
+-          script: |
+-            await github.rest.issues.removeLabel({
+-              issue_number: process.env.PR_NUMBER,
+-              owner: context.repo.owner,
+-              repo: context.repo.repo,
+-              name: 'levitate breaking change'
+-            })
+-
+-      # Add reviewers
+-      # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
+-      # Related issue: https://github.com/renovatebot/renovate/issues/1908
+-      - name: Add "grafana/plugins-platform-frontend" as a reviewer
+-        if: steps.levitate-run.outputs.exit_code == 1
+-        uses: actions/github-script@v6
+-        env:
+-          PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
+-        with:
+-          github-token: ${{ steps.generate_token.outputs.token }}
+-          script: |
+-            await github.rest.pulls.requestReviewers({
+-              pull_number: process.env.PR_NUMBER,
+-              owner: context.repo.owner,
+-              repo: context.repo.repo,
+-              reviewers: [],
+-              team_reviewers: ['plugins-platform-frontend']
+-            });
+-
+-      # Remove reviewers (no more breaking changes)
+-      - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
+-        if: steps.levitate-run.outputs.exit_code == 0
+-        uses: actions/github-script@v6
+-        env:
+-          PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
+-        with:
+-          github-token: ${{ steps.generate_token.outputs.token }}
+-          script: |
+-            await github.rest.pulls.removeRequestedReviewers({
+-              pull_number: process.env.PR_NUMBER,
+-              owner: context.repo.owner,
+-              repo: context.repo.repo,
+-              reviewers: [],
+-              team_reviewers: ['plugins-platform-frontend']
+-            });
+-
+-      - name: Exit
+-        run: exit ${{ steps.levitate-run.outputs.exit_code }}
+-        shell: bash
+diff --git a/.github/workflows/doc-validator.yml b/.github/workflows/doc-validator.yml
+deleted file mode 100644
+index 75b721904cc..00000000000
+--- a/.github/workflows/doc-validator.yml
++++ /dev/null
+@@ -1,29 +0,0 @@
+-name: "doc-validator"
+-on:
+-  pull_request:
+-    paths: ["docs/sources/**"]
+-  workflow_dispatch:
+-jobs:
+-  doc-validator:
+-    runs-on: "ubuntu-latest"
+-    container:
+-      image: "grafana/doc-validator:v5.0.0"
+-    steps:
+-      - name: "Checkout code"
+-        uses: "actions/checkout@v4"
+-      - name: "Run doc-validator tool"
+-        # Only run doc-validator on specific directories.
+-        run: >
+-          doc-validator
+-          '--include=^docs/sources/(?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$'
+-          '--skip-checks=^(?:image.+|canonical-does-not-match-pretty-URL)$'
+-          ./docs/sources
+-          /docs/grafana/latest
+-          | reviewdog
+-          -f=rdjsonl
+-          --fail-on-error
+-          --filter-mode=nofilter
+-          --name=doc-validator
+-          --reporter=github-pr-review
+-        env:
+-          REVIEWDOG_GITHUB_API_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+diff --git a/.github/workflows/ephemeral-instances-pr-comment.yml b/.github/workflows/ephemeral-instances-pr-comment.yml
+deleted file mode 100644
+index be07b7ef6ac..00000000000
+--- a/.github/workflows/ephemeral-instances-pr-comment.yml
++++ /dev/null
+@@ -1,61 +0,0 @@
+-name: 'Ephemeral instances'
+-on:
+-  issue_comment:
+-    types: [created]
+-  pull_request:
+-    types: [closed]
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.EI_APP_ID != '' &&
+-                        secrets.EI_APP_PRIVATE_KEY != '' &&
+-                        secrets.EI_GCOM_HOST != '' &&
+-                        secrets.EI_GCOM_TOKEN != '' &&
+-                        secrets.EI_EPHEMERAL_INSTANCES_REGISTRY != '' &&
+-                        secrets.EI_GCP_SERVICE_ACCOUNT_KEY_BASE64 != '' &&
+-                        secrets.EI_EPHEMERAL_ORG_ID != ''
+-                        ) || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  handle-pull-request-event:
+-    needs: config
+-    if: needs.config.outputs.has-secrets &&
+-        ${{ github.event.issue.pull_request && (startsWith(github.event.comment.body, '/deploy-to-hg') || github.event.action == 'closed') }}
+-    runs-on:
+-      labels: ubuntu-latest-8-cores
+-    continue-on-error: true
+-    steps:
+-      - name: Generate a GitHub app installation token
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.EI_APP_ID }}
+-          private_key: ${{ secrets.EI_APP_PRIVATE_KEY }}
+-
+-      - name: Checkout ephemeral instances repository
+-        uses: actions/checkout@v4
+-        with:
+-          repository: grafana/ephemeral-grafana-instances-github-action
+-          token: ${{ steps.generate_token.outputs.token }}
+-          ref: main
+-          path: ephemeral
+-
+-      - name: build and deploy ephemeral instance
+-        uses: ./ephemeral
+-        with:
+-          github-token:  ${{ steps.generate_token.outputs.token }}
+-          gcom-host: ${{ secrets.EI_GCOM_HOST }}
+-          gcom-token: ${{ secrets.EI_GCOM_TOKEN }}
+-          registry: "${{ secrets.EI_EPHEMERAL_INSTANCES_REGISTRY }}"
+-          gcp-service-account-key: "${{ secrets.EI_GCP_SERVICE_ACCOUNT_KEY_BASE64 }}"
+-          ephemeral-org-id: "${{ secrets.EI_EPHEMERAL_ORG_ID }}"
+-          oss-or-enterprise: oss
+-          verbose: true
+diff --git a/.github/workflows/epic-add-to-platform-ux-parent-project.yml b/.github/workflows/epic-add-to-platform-ux-parent-project.yml
+deleted file mode 100644
+index 97462269fce..00000000000
+--- a/.github/workflows/epic-add-to-platform-ux-parent-project.yml
++++ /dev/null
+@@ -1,149 +0,0 @@
+-name: When epic issues changed in Platform UX squad projects, check if epic is part of specified child projects and update on Platform UX parent project
+-
+-on:
+-  issues:
+-    types: [opened, closed, edited, reopened, assigned, unassigned, labeled, unlabeled]
+-    labels:
+-      - 'type/epic'
+-
+-env:
+-  GH_TOKEN: ${{ secrets.GH_BOT_PROJECTS_ACCESS_TOKEN }}
+-  ORGANIZATION: ${{ github.repository_owner }}
+-  REPO: ${{ github.event.repository.name }}
+-  PARENT_PROJECT: 304
+-  CHILD_PROJECT_1: 78
+-  CHILD_PROJECT_2: 111
+-  CHILD_PROJECT_3: 202
+-
+-concurrency:
+-  group: issue-add-to-parent-project-${{ github.event.number }}
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.GH_BOT_PROJECTS_ACCESS_TOKEN != '') || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  main:
+-    needs: config
+-    if: needs.config.outputs.has-secrets && contains(github.event.issue.labels.*.name, 'type/epic')
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Check if issue is in child or parent projects
+-        run: |
+-          gh api graphql -f query='
+-            query($org: String!, $repo: String!) {
+-              repository(name: $repo, owner: $org) {
+-                issue (number: ${{ github.event.issue.number }}) {
+-                  projectItems(first:20) {
+-                    nodes {
+-                      id,
+-                      project {
+-                        number,
+-                        title
+-                      },
+-                      fieldValueByName(name:"Status") {
+-                        ... on ProjectV2ItemFieldSingleSelectValue {
+-                          optionId
+-                          name
+-                        }
+-                      }
+-                    }
+-                  }
+-                }
+-              }
+-            }' -f org=$ORGANIZATION -f repo=$REPO > projects_data.json
+-
+-            echo 'IN_PARENT_PROJ='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.PARENT_PROJECT }}) | .project != null' projects_data.json) >> $GITHUB_ENV
+-            echo 'PARENT_PROJ_STATUS_ID='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.PARENT_PROJECT }}) | select(.fieldValueByName != null) | .fieldValueByName.optionId' projects_data.json) >> $GITHUB_ENV
+-            echo 'ITEM_ID='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.PARENT_PROJECT }}) | .id' projects_data.json) >> $GITHUB_ENV
+-            echo 'IN_CHILD_PROJ='$(jq 'first(.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.CHILD_PROJECT_1 }} or .project.number==${{ env.CHILD_PROJECT_2 }} or .project.number==${{ env.CHILD_PROJECT_3 }}) | .project != null)' projects_data.json) >> $GITHUB_ENV
+-            echo 'CHILD_PROJ_STATUS='$(jq -r '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.CHILD_PROJECT_1 }} or .project.number==${{ env.CHILD_PROJECT_2 }} or .project.number==${{ env.CHILD_PROJECT_3 }}) | select(.fieldValueByName != null) | .fieldValueByName.name' projects_data.json) >> $GITHUB_ENV
+-      - name: Get parent project project data
+-        if: env.IN_CHILD_PROJ
+-        run: |
+-          gh api graphql -f query='
+-            query($org: String!, $number: Int!) {
+-              organization(login: $org){
+-                projectV2(number: $number) {
+-                  id
+-                  fields(first:20) {
+-                    nodes {
+-                      ... on ProjectV2Field {
+-                        id
+-                        name
+-                      }
+-                      ... on ProjectV2SingleSelectField {
+-                        id
+-                        name
+-                        options {
+-                          id
+-                          name
+-                        }
+-                      }
+-                    }
+-                  }
+-                }
+-              }
+-            }' -f org=$ORGANIZATION -F number=$PARENT_PROJECT > project_data.json
+-
+-          echo 'PROJECT_ID='$(jq '.data.organization.projectV2.id' project_data.json) >> $GITHUB_ENV
+-          echo 'STATUS_FIELD_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .id' project_data.json) >> $GITHUB_ENV
+-          echo 'TODO_OPTION_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .options[] | select(.name=="Todo") |.id' project_data.json) >> $GITHUB_ENV
+-          echo 'PROGRESS_OPTION_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .options[] | select(.name=="In Progress") |.id' project_data.json) >> $GITHUB_ENV
+-          echo 'DONE_OPTION_ID='$(jq '.data.organization.projectV2.fields.nodes[] | select(.name== "Status") | .options[] | select(.name=="Done") |.id' project_data.json) >> $GITHUB_ENV
+-      - name: Add issue to parent project
+-        if: env.IN_CHILD_PROJ && !env.IN_PARENT_PROJ
+-        run: |
+-          item_id="$( gh api graphql -f query='
+-            mutation($project:ID!, $issue:ID!) {
+-              addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
+-                item {
+-                  id
+-                }
+-              }
+-            }' -f project=$PROJECT_ID -f issue=${{ github.event.issue.node_id }} --jq '.data.addProjectV2ItemById.item.id')"
+-
+-            echo 'ITEM_ID='$item_id >> $GITHUB_ENV
+-      - name: Set parent project status Done
+-        if: contains(env.CHILD_PROJ_STATUS, 'Done')
+-        run: |
+-          echo 'OPTION_ID='$DONE_OPTION_ID >> $GITHUB_ENV
+-      - name: Set parent project status In Progress
+-        if: contains(env.CHILD_PROJ_STATUS, 'In ') || contains(env.CHILD_PROJ_STATUS, 'Blocked')
+-        run: |
+-          echo 'OPTION_ID='$PROGRESS_OPTION_ID >> $GITHUB_ENV
+-      - name: Set parent project status To do
+-        if: env.CHILD_PROJ_STATUS && !contains(env.CHILD_PROJ_STATUS, 'In ') && !contains(env.CHILD_PROJ_STATUS, 'Blocked') && ! contains(env.CHILD_PROJ_STATUS, 'Done')
+-        run: |
+-          echo 'OPTION_ID='$TODO_OPTION_ID >> $GITHUB_ENV
+-      - name: Set issue status in parent project
+-        if: env.OPTION_ID && (env.OPTION_ID != env.PARENT_PROJ_STATUS_ID)
+-        run: |
+-          gh api graphql -f query='
+-            mutation (
+-              $project: ID!
+-              $item: ID!
+-              $status_field: ID!
+-              $status_value: String!
+-            ) {
+-              set_status: updateProjectV2ItemFieldValue(input: {
+-                projectId: $project
+-                itemId: $item
+-                fieldId: $status_field
+-                value: {
+-                  singleSelectOptionId: $status_value
+-                  }
+-              }) {
+-                projectV2Item {
+-                  id
+-                  }
+-              }
+-            }' -f project=$PROJECT_ID -f item=$ITEM_ID -f status_field=$STATUS_FIELD_ID -f status_value=${{ env.OPTION_ID }} --silent
+diff --git a/.github/workflows/github-release.yml b/.github/workflows/github-release.yml
+deleted file mode 100644
+index a46a12134bf..00000000000
+--- a/.github/workflows/github-release.yml
++++ /dev/null
+@@ -1,48 +0,0 @@
+-name: Create or update GitHub release
+-on:
+-  workflow_call:
+-    inputs:
+-      version:
+-        required: true
+-        description: Needs to match, exactly, the name of a milestone (NO v prefix)
+-        type: string
+-      latest:
+-        required: false
+-        default: false
+-        description: Mark this release as latest (`1`) or not (`0`, default)
+-        type: string
+-      dry_run:
+-        required: false
+-        default: false
+-        type: boolean
+-  workflow_dispatch:
+-    inputs:
+-      version:
+-        required: true
+-        description: Needs to match, exactly, the name of a milestone (NO v prefix)
+-        type: string
+-      latest:
+-        required: false
+-        description: Mark this release as latest (`1`) or not (`0`, default)
+-        type: string
+-      dry_run:
+-        required: false
+-        default: false
+-        type: boolean
+-
+-permissions:
+-  # contents: write allows the action(s) to create github releases
+-  contents: write
+-
+-jobs:
+-  main:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Create GitHub release (manually invoked)
+-        uses: grafana/grafana-github-actions-go/github-release@main
+-        with:
+-          token: ${{ secrets.GITHUB_TOKEN }}
+-          version: ${{ inputs.version }}
+-          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+-          latest: ${{ inputs.latest }}
+-          dry_run: ${{ inputs.dry_run }}
+diff --git a/.github/workflows/go_lint.yml b/.github/workflows/go_lint.yml
+deleted file mode 100644
+index 4cdbabf22b3..00000000000
+--- a/.github/workflows/go_lint.yml
++++ /dev/null
+@@ -1,32 +0,0 @@
+-name: golangci-lint
+-on:
+-  push:
+-    paths:
+-      - pkg/**
+-      - .github/workflows/go_lint.yml
+-      - go.*
+-    branches:
+-      - main
+-  pull_request:
+-
+-permissions:
+-  contents: read
+-
+-jobs:
+-  lint-go:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - uses: actions/checkout@v4
+-      - uses: actions/setup-go@v5
+-        with:
+-          go-version-file: ./go.mod
+-      - run: CODEGEN_VERIFY=1 make gen-cue
+-      - run: make gen-go
+-      - name: golangci-lint
+-        uses: golangci/golangci-lint-action@v6
+-        with:
+-          version: v1.59.1
+-          args: |
+-            --config .golangci.toml --max-same-issues=0 --max-issues-per-linter=0 --verbose $(./scripts/go-workspace/golangci-lint-includes.sh) 
+-          skip-cache: true
+-          install-mode: binary
+diff --git a/.github/workflows/i18n-crowdin-download.yml b/.github/workflows/i18n-crowdin-download.yml
+deleted file mode 100644
+index 440ee9068ba..00000000000
+--- a/.github/workflows/i18n-crowdin-download.yml
++++ /dev/null
+@@ -1,120 +0,0 @@
+-name: Crowdin Download Action
+-
+-on:
+-  workflow_dispatch:
+-  schedule:
+-    - cron: "0 * * * *"
+-
+-jobs:
+-  download-sources-from-crowdin:
+-    runs-on: ubuntu-latest
+-
+-    permissions:
+-      contents: write # needed to commit changes into the PR
+-      pull-requests: write # needed to update PR description, labels, etc
+-
+-    steps:
+-      - uses: actions/checkout@v4
+-        with:
+-          ref: ${{ github.head_ref }}
+-
+-      - name: Generate token
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
+-
+-      - name: Download sources
+-        id: crowdin-download
+-        uses: crowdin/github-action@v1
+-        with:
+-          upload_sources: false
+-          upload_translations: false
+-          download_sources: false
+-          download_translations: true
+-          export_only_approved: true
+-          localization_branch_name: i18n_crowdin_translations
+-          create_pull_request: true
+-          pull_request_title: 'I18n: Download translations from Crowdin'
+-          pull_request_body:  |
+-            :robot: Automatic download of translations from Crowdin.
+-
+-            Steps for merging:
+-              1. A quick sanity check of the changes and approve. Things to look out for:
+-                - No changes in the English file. The source of truth is in the main branch, NOT in Crowdin.
+-                - Translations maybe be removed if the English phrase was removed, but there should not be many of these
+-                - Anything else that looks 'funky'. Ask if you're not sure.
+-              2. Approve & (Auto-)merge. :tada:
+-
+-            If there's a conflict, close the pull request and **delete the branch**. A GH action will recreate the pull request.
+-            Remember, the longer this pull request is open, the more likely it is that it'll get conflicts.
+-          pull_request_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'
+-          pull_request_reviewers: 'grafana-frontend-platform'
+-          pull_request_base_branch_name: 'main'
+-          base_url: 'https://grafana.api.crowdin.com'
+-          config: 'crowdin.yml'
+-          source: 'public/locales/en-US/grafana.json'
+-          translation: 'public/locales/%locale%/%original_file_name%'
+-          # Magic details of the github-actions bot user, to pass CLA checks
+-          github_user_name: "github-actions[bot]"
+-          github_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+-        env:
+-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+-
+-      - name: Get pull request ID
+-        if: steps.crowdin-download.outputs.pull_request_url
+-        shell: bash
+-        # Crowdin action returns us the URL of the pull request, but we need an ID for the GraphQL API
+-        # that looks like 'PR_kwDOAOaWjc5mP_GU'
+-        run: |
+-          pr_id=$(gh pr view ${{ steps.crowdin-download.outputs.pull_request_url }} --json id -q .id)
+-          echo "PULL_REQUEST_ID=$pr_id" >> "$GITHUB_ENV"
+-        env:
+-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+-
+-      - name: Get project board ID
+-        uses: octokit/graphql-action@v2.x
+-        id: get-project-id
+-        if: steps.crowdin-download.outputs.pull_request_url
+-        with:
+-          # Frontend Platform project - https://github.com/orgs/grafana/projects/78
+-          org: grafana
+-          project_number: 78
+-          query: |
+-            query getProjectId($org: String!, $project_number: Int!){
+-              organization(login: $org) {
+-                projectV2(number: $project_number) {
+-                  title
+-                  id
+-                }
+-              }
+-            }
+-        env:
+-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+-
+-      - name: Add to project board
+-        uses: octokit/graphql-action@v2.x
+-        if: steps.crowdin-download.outputs.pull_request_url
+-        with:
+-          projectid: ${{ fromJson(steps.get-project-id.outputs.data).organization.projectV2.id }}
+-          prid: ${{ env.PULL_REQUEST_ID }}
+-          query: |
+-            mutation addPullRequestToProject($projectid: ID!, $prid: ID!){
+-              addProjectV2ItemById(input: {projectId: $projectid, contentId: $prid}) {
+-                item {
+-                  id
+-                }
+-              }
+-            }
+-        env:
+-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+-
+-      - name: Run auto-milestone
+-        uses: grafana/grafana-github-actions-go/auto-milestone@main
+-        if: steps.crowdin-download.outputs.pull_request_url
+-        with:
+-          pr: ${{ steps.crowdin-download.outputs.pull_request_number }}
+-          token: ${{ steps.generate_token.outputs.token }}
+diff --git a/.github/workflows/i18n-crowdin-upload.yml b/.github/workflows/i18n-crowdin-upload.yml
+deleted file mode 100644
+index 9e028b5386f..00000000000
+--- a/.github/workflows/i18n-crowdin-upload.yml
++++ /dev/null
+@@ -1,33 +0,0 @@
+-name: Crowdin Upload Action
+-
+-on:
+-  workflow_dispatch:
+-  push:
+-    paths:
+-      - 'public/locales/en-US/grafana.json'
+-    branches:
+-      - main
+-
+-jobs:
+-  upload-sources-to-crowdin:
+-    runs-on: ubuntu-latest
+-
+-    steps:
+-      - name: Checkout
+-        uses: actions/checkout@v4
+-
+-      - name: Upload sources
+-        uses: crowdin/github-action@v1
+-        with:
+-          upload_sources: true
+-          upload_sources_args: '--dest=public/locales/en-US/grafana.json'
+-          upload_translations: false
+-          download_translations: false
+-          create_pull_request: false
+-          base_url: 'https://grafana.api.crowdin.com'
+-          config: 'crowdin.yml'
+-          source: 'public/locales/en-US/grafana.json'
+-          translation: 'public/locales/%locale%/%original_file_name%'
+-        env:
+-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+diff --git a/.github/workflows/issue-labeled.yml b/.github/workflows/issue-labeled.yml
+deleted file mode 100644
+index 8cc4f303c8b..00000000000
+--- a/.github/workflows/issue-labeled.yml
++++ /dev/null
+@@ -1,99 +0,0 @@
+-name: Notify Slack channel based on new issue label
+-
+-on:
+-  issues:
+-    types: [labeled]
+-
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.SLACK_WEBHOOK_URL != '') || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  notify:
+-    needs: config
+-    if: needs.config.outputs.has-secrets
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: "Download teams.yml to know which label is for which team"
+-        run: wget https://raw.githubusercontent.com/grafana/grafana/main/.github/teams.yml
+-
+-      - name: "Determine which team to notify"
+-        run: |
+-          # Default to null values.
+-          CHANNEL="null"
+-          TEAM="null"
+-
+-          echo "${{ github.event.label.name }} label added"
+-          export CURRENT_LABEL="${{ github.event.label.name }}" # Enable the use of the label in yq evaluations
+-          # yq is installed by default in ubuntu-latest
+-          if [[ $(yq e 'keys | .[] | select(. == env(CURRENT_LABEL))' teams.yml ) ]]; then
+-            # Check if we have a channel set to notify on comments.
+-            if [[ $(yq '.[env(CURRENT_LABEL)] | has("channel-label")' teams.yml ) == true ]]; then
+-              CHANNEL=$(yq '.[env(CURRENT_LABEL)].channel-label' teams.yml)
+-              echo "Ready to send issue to channel ID ${CHANNEL}"
+-            fi
+-
+-            if [[ $(yq '.[env(CURRENT_LABEL)] | has("exclude-github-team")' teams.yml ) == true ]]; then
+-              TEAM=$(yq '.[env(CURRENT_LABEL)].exclude-github-team' teams.yml)
+-              echo "Will not send issue to channel if issue author is part of the team ${TEAM}"
+-            fi
+-          fi
+-
+-          # set environment for next steps
+-          echo "CHANNEL=${CHANNEL}" >> $GITHUB_ENV
+-          echo "TEAM=${TEAM}" >> $GITHUB_ENV
+-
+-      - name: "Prepare payload"
+-        uses: frabert/replace-string-action@v2.5
+-        id: preparePayload
+-        with:
+-          # replace double quotes with single quotes to avoid breaking the JSON payload sent to Slack
+-          string: ${{ github.event.issue.title }}
+-          pattern: '"'
+-          replace-with: "'"
+-          flags: 'g'
+-
+-      - name: Get Token
+-        id: get_workflow_token
+-        uses: peter-murray/workflow-application-token-action@v3
+-        with:
+-          application_id: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_ID }}
+-          application_private_key: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_KEY }}
+-
+-      - name: "Check that issue author is not part of the team"
+-        if: ${{ env.TEAM != 'null' }}
+-        run: |
+-          response=$(gh api /orgs/grafana/teams/${{ env.TEAM }}/memberships/${{ github.event.issue.user.login }} -i -H "Accept: application/vnd.github.v3+json")
+-          STATUS_CODE=$(echo "$response" | head -n 1 | cut -d' ' -f2)
+-          if [ "$status_code" -eq 404 ]; then
+-            echo "The user was not found in the team."
+-            echo "USER_FOUND=false" >> $GITHUB_ENV
+-          else
+-            echo "The user was potentially found in the team"
+-            echo "USER_FOUND=maybe" >> $GITHUB_ENV
+-          fi
+-        env:
+-          GITHUB_TOKEN: ${{ steps.get_workflow_token.outputs.token }}
+-
+-      - name: "Send Slack notification"
+-        if: ${{ (env.CHANNEL != 'null') && ((env.USER_FOUND == 'false') || (env.TEAM != 'null')) }}
+-        uses: slackapi/slack-github-action@v1.26.0
+-        with:
+-          payload: >
+-            {
+-              "icon_emoji": ":grafana:",
+-              "username": "Grafana issue labeled",
+-              "text": "Issue \"${{ steps.preparePayload.outputs.replaced }}\" labeled \"${{ github.event.label.name }}\": ${{ github.event.issue.html_url }}, please triage.",
+-              "channel": "${{ env.CHANNEL }}"
+-            }
+-        env:
+-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+diff --git a/.github/workflows/issue-opened.yml b/.github/workflows/issue-opened.yml
+deleted file mode 100644
+index 5df1de30a2c..00000000000
+--- a/.github/workflows/issue-opened.yml
++++ /dev/null
+@@ -1,28 +0,0 @@
+-name: Run commands when issues are opened
+-on:
+-  issues:
+-    types: [opened]
+-concurrency:
+-  group: issue-opened-${{ github.event.issue.number }}
+-jobs:
+-  main:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout Actions
+-        uses: actions/checkout@v4
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: ./actions
+-          ref: main
+-      - name: Install Actions
+-        run: npm install --production --prefix ./actions
+-      # give issue-openers a chance to add labels after submit
+-      - name: Sleep for 2 minutes
+-        run: sleep 2m
+-        shell: bash
+-      - name: Run Commands
+-        uses: ./actions/commands
+-        with:
+-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+-          token: ${{secrets.ISSUE_COMMANDS_TOKEN}}
+-          configPath: "issue-opened"
+diff --git a/.github/workflows/metrics-collector.yml b/.github/workflows/metrics-collector.yml
+deleted file mode 100644
+index 2e22a830a88..00000000000
+--- a/.github/workflows/metrics-collector.yml
++++ /dev/null
+@@ -1,50 +0,0 @@
+-#
+-# When triggered by the cron job it will also collect metrics for:
+-#  * number of issues without label
+-#  * number of issues with "needs more info"
+-#  * number of issues with "needs investigation"
+-#  * number of issues with label type/bug
+-#  * number of open issues in current milestone
+-#
+-# https://github.com/grafana/grafana-github-actions/blob/main/metrics-collector/index.ts
+-#
+-name: Github issue metrics collection
+-on:
+-  schedule:
+-    - cron: "*/10 * * * *"
+-  issues:
+-    types: [opened, closed]
+-
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.GRAFANA_MISC_STATS_API_KEY != '') || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  main:
+-    needs: config
+-    if: needs.config.outputs.has-secrets
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout Actions
+-        uses: actions/checkout@v4
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: ./actions
+-          ref: main
+-      - name: Install Actions
+-        run: npm install --production --prefix ./actions
+-      - name: Run metrics collector
+-        uses: ./actions/metrics-collector
+-        with:
+-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+-          token: ${{secrets.GITHUB_TOKEN}}
+-          configPath: "metrics-collector"
+diff --git a/.github/workflows/milestone.yml b/.github/workflows/milestone.yml
+deleted file mode 100644
+index f686dee7d55..00000000000
+--- a/.github/workflows/milestone.yml
++++ /dev/null
+@@ -1,19 +0,0 @@
+-name: Close Milestone
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      version_input:
+-        description: 'The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
+-        required: true
+-jobs:
+-  call-remove-milestone:
+-    uses: grafana/grafana/.github/workflows/remove-milestone.yml@main
+-    with:
+-      version_call: ${{ github.event.inputs.version_input }}
+-    secrets: inherit
+-  call-close-milestone:
+-    uses: grafana/grafana/.github/workflows/close-milestone.yml@main
+-    with:
+-      version_call: ${{ github.event.inputs.version_input }}
+-    secrets: inherit
+-    needs: call-remove-milestone
+diff --git a/.github/workflows/pr-checks.yml b/.github/workflows/pr-checks.yml
+deleted file mode 100644
+index ae2b0898f73..00000000000
+--- a/.github/workflows/pr-checks.yml
++++ /dev/null
+@@ -1,45 +0,0 @@
+-name: PR Checks
+-on:
+-  pull_request_target:
+-    types:
+-      - opened
+-      - reopened
+-      - synchronize
+-      - ready_for_review
+-      - labeled
+-      - unlabeled
+-      - edited
+-      - auto_merge_enabled
+-  issues:
+-    types:
+-      - milestoned
+-      - demilestoned
+-
+-concurrency:
+-  group: pr-checks-${{ github.event.number }}
+-
+-permissions:
+-  statuses: write
+-  checks: write
+-  actions: write
+-  contents: read
+-  pull-requests: read
+-
+-jobs:
+-  main:
+-    runs-on: ubuntu-latest
+-    if: github.event.pull_request.draft == false
+-    steps:
+-      - name: Checkout Actions
+-        uses: actions/checkout@v4
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: ./actions
+-          ref: main
+-      - name: Install Actions
+-        run: npm install --production --prefix ./actions
+-      - name: Run PR Checks
+-        uses: ./actions/pr-checks
+-        with:
+-          token: ${{secrets.GITHUB_TOKEN}}
+-          configPath: pr-checks
+diff --git a/.github/workflows/pr-codeql-analysis-go.yml b/.github/workflows/pr-codeql-analysis-go.yml
+deleted file mode 100644
+index ce9082f4400..00000000000
+--- a/.github/workflows/pr-codeql-analysis-go.yml
++++ /dev/null
+@@ -1,53 +0,0 @@
+-name: "CodeQL for PR / go"
+-
+-on:
+-  workflow_dispatch:
+-  pull_request:
+-    branches: [main]
+-    paths:
+-      - '**/*.go'
+-
+-permissions:
+-  security-events: write
+-
+-jobs:
+-  analyze:
+-    name: Analyze
+-    runs-on: ubuntu-latest
+-    if: github.repository == 'grafana/grafana'
+-
+-    steps:
+-    - name: "Generate token"
+-      id: generate_token
+-      continue-on-error: true
+-      uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+-      with:
+-        app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-        private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-
+-    - name: Checkout repository
+-      uses: actions/checkout@v4
+-      with:
+-        # We must fetch at least the immediate parents so that if this is
+-        # a pull request then we can checkout the head.
+-        fetch-depth: 2
+-        token: ${{ steps.generate_token.outputs.token }}
+-
+-    - name: Set go version
+-      uses: actions/setup-go@v4
+-      with:
+-        go-version-file: go.mod
+-
+-    # Initializes the CodeQL tools for scanning.
+-    - name: Initialize CodeQL
+-      uses: github/codeql-action/init@v2
+-      with:
+-        languages: "go"
+-
+-    - name: Build go files
+-      run: |
+-        go mod verify
+-        make build-go
+-
+-    - name: Perform CodeQL Analysis
+-      uses: github/codeql-action/analyze@v2
+diff --git a/.github/workflows/pr-codeql-analysis-javascript.yml b/.github/workflows/pr-codeql-analysis-javascript.yml
+deleted file mode 100644
+index 6c5264c926a..00000000000
+--- a/.github/workflows/pr-codeql-analysis-javascript.yml
++++ /dev/null
+@@ -1,36 +0,0 @@
+-name: "CodeQL for PR / javascript"
+-
+-on:
+-  workflow_dispatch:
+-  pull_request:
+-    branches: [main]
+-    paths:
+-      - '**/*.js'
+-      - '**/*.ts'
+-      - '**/*.tsx'
+-
+-permissions:
+-  security-events: write
+-
+-jobs:
+-  analyze:
+-    name: Analyze
+-    runs-on: ubuntu-latest
+-    if: github.repository == 'grafana/grafana'
+-
+-    steps:
+-    - name: Checkout repository
+-      uses: actions/checkout@v4
+-      with:
+-        # We must fetch at least the immediate parents so that if this is
+-        # a pull request then we can checkout the head.
+-        fetch-depth: 2
+-
+-    # Initializes the CodeQL tools for scanning.
+-    - name: Initialize CodeQL
+-      uses: github/codeql-action/init@v2
+-      with:
+-        languages: "javascript"
+-
+-    - name: Perform CodeQL Analysis
+-      uses: github/codeql-action/analyze@v2
+diff --git a/.github/workflows/pr-codeql-analysis-python.yml b/.github/workflows/pr-codeql-analysis-python.yml
+deleted file mode 100644
+index aea55365afc..00000000000
+--- a/.github/workflows/pr-codeql-analysis-python.yml
++++ /dev/null
+@@ -1,34 +0,0 @@
+-name: "CodeQL for PR / python"
+-
+-on:
+-  workflow_dispatch:
+-  pull_request:
+-    branches: [main]
+-    paths:
+-      - '**/*.py'
+-
+-permissions:
+-  security-events: write
+-
+-jobs:
+-  analyze:
+-    name: Analyze
+-    runs-on: ubuntu-latest
+-    if: github.repository == 'grafana/grafana'
+-
+-    steps:
+-    - name: Checkout repository
+-      uses: actions/checkout@v4
+-      with:
+-        # We must fetch at least the immediate parents so that if this is
+-        # a pull request then we can checkout the head.
+-        fetch-depth: 2
+-
+-    # Initializes the CodeQL tools for scanning.
+-    - name: Initialize CodeQL
+-      uses: github/codeql-action/init@v2
+-      with:
+-        languages: "python"
+-
+-    - name: Perform CodeQL Analysis
+-      uses: github/codeql-action/analyze@v2
+diff --git a/.github/workflows/pr-commands.yml b/.github/workflows/pr-commands.yml
+deleted file mode 100644
+index 51838dc7ae7..00000000000
+--- a/.github/workflows/pr-commands.yml
++++ /dev/null
+@@ -1,51 +0,0 @@
+-name: PR automation
+-on:
+-  pull_request_target:
+-    types:
+-      - labeled
+-      - opened
+-      - synchronize
+-concurrency:
+-  group: pr-commands-${{ github.event.number }}
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.GRAFANA_PR_AUTOMATION_APP_ID != '' &&
+-                        secrets.GRAFANA_PR_AUTOMATION_APP_PEM != '' &&
+-                        secrets.GRAFANA_MISC_STATS_API_KEY != ''
+-                        ) || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  main:
+-    needs: config
+-    if: needs.config.outputs.has-secrets
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout Actions
+-        uses: actions/checkout@v4
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: ./actions
+-          ref: main
+-      - name: Install Actions
+-        run: npm install --production --prefix ./actions
+-      - name: "Generate token"
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
+-      - name: Run Commands
+-        uses: ./actions/commands
+-        with:
+-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+-          token: ${{ steps.generate_token.outputs.token }}
+-          configPath: pr-commands
+diff --git a/.github/workflows/pr-go-workspace-check.yml b/.github/workflows/pr-go-workspace-check.yml
+deleted file mode 100644
+index 699f211e1e9..00000000000
+--- a/.github/workflows/pr-go-workspace-check.yml
++++ /dev/null
+@@ -1,33 +0,0 @@
+-name: "Go Workspace Check"
+-
+-on:
+-  workflow_dispatch:
+-  pull_request:
+-    branches: [main]
+-
+-jobs:
+-  check:
+-    name: Go Workspace Check
+-    runs-on: ubuntu-latest
+-
+-    steps:
+-    - name: Checkout repository
+-      uses: actions/checkout@v4
+-
+-    - name: Set go version
+-      uses: actions/setup-go@v4
+-      with:
+-        go-version-file: go.mod
+-
+-    - name: Update workspace
+-      run: make update-workspace
+-
+-    - name: Check for go mod & workspace changes 
+-      run: |
+-        if ! git diff --exit-code --quiet; then
+-          echo "Changes detected:"
+-          git diff
+-          echo "Please run 'make update-workspace' and commit the changes."
+-          echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
+-          exit 1
+-        fi
+\ No newline at end of file
+diff --git a/.github/workflows/pr-patch-check.yml b/.github/workflows/pr-patch-check.yml
+deleted file mode 100644
+index ef1009b7545..00000000000
+--- a/.github/workflows/pr-patch-check.yml
++++ /dev/null
+@@ -1,27 +0,0 @@
+-# Owned by grafana-release-guild
+-# Intended to be dropped into the base repo Ex: grafana/grafana
+-name: Check for patch conflicts
+-run-name: check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
+-on:
+-  pull_request:
+-    types:
+-      - opened
+-      - reopened
+-      - synchronize
+-    branches:
+-      - "main"
+-      - "v*.*.*"
+-      - "release-*"
+-
+-# Since this is run on a pull request, we want to apply the patches intended for the
+-# target branch onto the source branch, to verify compatibility before merging.
+-jobs:
+-  trigger_downstream_patch_check:
+-    uses: grafana/security-patch-actions/.github/workflows/test-patches.yml@main
+-    if: github.repository == 'grafana/grafana'
+-    with:
+-      src_repo: "${{ github.repository }}"
+-      src_ref: "${{ github.head_ref }}" # this is the source branch name, Ex: "feature/newthing"
+-      patch_repo: "${{ github.repository }}-security-patches"
+-      patch_ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
+-    secrets: inherit
+diff --git a/.github/workflows/pr.yaml b/.github/workflows/pr.yaml
+new file mode 100644
+index 00000000000..03cf1b7fa88
+--- /dev/null
++++ b/.github/workflows/pr.yaml
+@@ -0,0 +1,53 @@
++name: pr
++
++on:
++ pull_request:
++
++jobs:
++  build:
++    runs-on: ubuntu-latest
++    permissions:
++      contents: write
++      id-token: write
++    steps:
++      -
++        name: Checkout
++        uses: actions/checkout@v3
++      - name: Free Disk Space (Ubuntu)
++        uses: jlumbroso/free-disk-space@main
++        with:
++          # this might remove tools that are actually needed,
++          # if set to "true" but frees about 6 GB
++          tool-cache: false
++
++          # all of these default to true, but feel free to set to
++          # "false" if necessary for your workflow
++          android: true
++          dotnet: true
++          haskell: true
++          large-packages: true
++          docker-images: true
++          swap-storage: true
++      -
++        name: Set up QEMU
++        uses: docker/setup-qemu-action@v3
++        with:
++          platforms: arm64
++      -
++        name: Set up Docker Buildx
++        uses: docker/setup-buildx-action@v3
++      -
++        name: Get Grafana Version
++        run: echo "GF_VERSION=$(npm pkg get version | tr -d '"')" >> $GITHUB_ENV
++      -
++        name: Build Docker Image
++        uses: docker/build-push-action@v5
++        with:
++          context: .
++          push: false
++          target: groundcover
++          cache-from: type=gha
++          cache-to: type=gha,mode=max
++          platforms: linux/amd64,linux/arm64
++          build-args: GF_VERSION=${{ env.GF_VERSION }}
++          tags: grafana-groundcover
+diff --git a/.github/workflows/publish-kinds-next.yml b/.github/workflows/publish-kinds-next.yml
+deleted file mode 100644
+index 4aed6cf36c3..00000000000
+--- a/.github/workflows/publish-kinds-next.yml
++++ /dev/null
+@@ -1,63 +0,0 @@
+-name: "publish-kinds-next"
+-
+-on:
+-  push:
+-    branches:
+-      - "main"
+-    paths:
+-      - '**/*.cue'
+-  workflow_dispatch:
+-
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    if: github.repository == 'grafana/grafana'
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.GRAFANA_DELIVERY_BOT_APP_ID != '' &&secrets.GRAFANA_DELIVERY_BOT_APP_PEM != '') || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  main:
+-    needs: config
+-    if: github.repository == 'grafana/grafana' && needs.config.outputs.has-secrets
+-    runs-on: "ubuntu-latest"
+-    steps:
+-      - name: "Checkout Grafana repo"
+-        uses: "actions/checkout@v4"
+-        with:
+-          fetch-depth: 0
+-
+-      - name: "Setup Go"
+-        uses: "actions/setup-go@v4"
+-        with:
+-          go-version-file: go.mod
+-
+-      - name: "Verify kinds"
+-        run: go run .github/workflows/scripts/kinds/verify-kinds.go
+-
+-      - name: "Generate token"
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-
+-      - name: "Clone website-sync Action"
+-        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafana-delivery-bot:${{ steps.generate_token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+-
+-      - name: "Publish to kind registry (next)"
+-        uses: "./.github/actions/website-sync"
+-        id: "publish-next"
+-        with:
+-          repository: "grafana/kind-registry"
+-          branch: "main"
+-          host: "github.com"
+-          github_pat: "grafana-delivery-bot:${{ steps.generate_token.outputs.token }}"
+-          source_folder: ".github/workflows/scripts/kinds/next"
+-          target_folder: "grafana/next"
+diff --git a/.github/workflows/publish-kinds-release.yml b/.github/workflows/publish-kinds-release.yml
+deleted file mode 100644
+index 691cdff3867..00000000000
+--- a/.github/workflows/publish-kinds-release.yml
++++ /dev/null
+@@ -1,85 +0,0 @@
+-name: "publish-kinds-release"
+-
+-on:
+-  push:
+-    branches:
+-      - v[0-9]+.[0-9]+.x
+-    tags:
+-      - v[0-9]+.[0-9]+.[0-9]+
+-    paths:
+-      - '**/*.cue'
+-  workflow_dispatch:
+-
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    if: github.repository == 'grafana/grafana'
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.GRAFANA_DELIVERY_BOT_APP_ID != '' && secrets.GRAFANA_DELIVERY_BOT_APP_PEM != '') || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  main:
+-    needs: config
+-    if: github.repository == 'grafana/grafana' && needs.config.outputs.has-secrets
+-    runs-on: "ubuntu-latest"
+-    steps:
+-      - name: "Checkout Grafana repo"
+-        uses: "actions/checkout@v4"
+-        with:
+-          # required for the `grafana/grafana-github-actions/has-matching-release-tag` action to work
+-          fetch-depth: 0
+-
+-      - name: "Setup Go"
+-        uses: "actions/setup-go@v4"
+-        with:
+-          go-version-file: go.mod
+-
+-      - name: "Verify kinds"
+-        run: go run .github/workflows/scripts/kinds/verify-kinds.go
+-
+-      - name: "Checkout Actions library"
+-        uses: "actions/checkout@v4"
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: "./actions"
+-
+-      - name: "Install Actions from library"
+-        run: "npm install --production --prefix ./actions"
+-
+-      - name: "Determine if there is a matching release tag"
+-        id: "has-matching-release-tag"
+-        uses: "./actions/has-matching-release-tag"
+-        with:
+-          ref_name: "${{ github.ref_name }}"
+-          release_tag_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+-          release_branch_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.x$"
+-
+-      - name: "Generate token"
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-
+-      - name: "Clone website-sync Action"
+-        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+-        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafana-delivery-bot:${{ steps.generate_token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+-
+-      - name: "Publish to kind registry (release)"
+-        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+-        uses: "./.github/actions/website-sync"
+-        id: "publish-release"
+-        with:
+-          repository: "grafana/kind-registry"
+-          branch: "main"
+-          host: "github.com"
+-          github_pat: "grafana-delivery-bot:${{ steps.generate_token.outputs.token }}"
+-          source_folder: ".github/workflows/scripts/kinds/next"
+-          target_folder: "grafana/${{ github.ref_name }}"
+diff --git a/.github/workflows/publish-technical-documentation-next.yml b/.github/workflows/publish-technical-documentation-next.yml
+deleted file mode 100644
+index 56fc984700e..00000000000
+--- a/.github/workflows/publish-technical-documentation-next.yml
++++ /dev/null
+@@ -1,38 +0,0 @@
+-name: "publish-technical-documentation-next"
+-
+-on:
+-  push:
+-    branches:
+-      - "main"
+-    paths:
+-      - "docs/sources/**"
+-  workflow_dispatch:
+-jobs:
+-  sync:
+-    if: github.repository == 'grafana/grafana'
+-    runs-on: "ubuntu-latest"
+-    steps:
+-      - name: "Checkout Grafana repo"
+-        uses: "actions/checkout@v4"
+-
+-      - name: "Clone website-sync Action"
+-        # WEBSITE_SYNC_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+-        # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+-        # GitHub administrator to update the organization secret.
+-        # The IT helpdesk can update the organization secret.
+-        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.WEBSITE_SYNC_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+-
+-      - name: "Publish to website repository (next)"
+-        uses: "./.github/actions/website-sync"
+-        id: "publish-next"
+-        with:
+-          repository: "grafana/website"
+-          branch: "master"
+-          host: "github.com"
+-          # PUBLISH_TO_WEBSITE_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+-          # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+-          # GitHub administrator to update the organization secret.
+-          # The IT helpdesk can update the organization secret.
+-          github_pat: "grafanabot:${{ secrets.PUBLISH_TO_WEBSITE_TOKEN }}"
+-          source_folder: "docs/sources"
+-          target_folder: "content/docs/grafana/next"
+diff --git a/.github/workflows/publish-technical-documentation-release.yml b/.github/workflows/publish-technical-documentation-release.yml
+deleted file mode 100644
+index c22bb41cb48..00000000000
+--- a/.github/workflows/publish-technical-documentation-release.yml
++++ /dev/null
+@@ -1,74 +0,0 @@
+-name: "publish-technical-documentation-release"
+-
+-on:
+-  push:
+-    branches:
+-      - v[0-9]+.[0-9]+.x
+-    tags:
+-      - v[0-9]+.[0-9]+.[0-9]+
+-    paths:
+-      - "docs/sources/**"
+-  workflow_dispatch:
+-jobs:
+-  sync:
+-    if: github.repository == 'grafana/grafana'
+-    runs-on: "ubuntu-latest"
+-    steps:
+-      - name: "Checkout Grafana repo"
+-        uses: "actions/checkout@v4"
+-        with:
+-          fetch-depth: 0
+-
+-      - name: "Checkout Actions library"
+-        uses: "actions/checkout@v4"
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: "./actions"
+-
+-      - name: "Install Actions from library"
+-        run: "npm install --production --prefix ./actions"
+-
+-      - name: "Determine if there is a matching release tag"
+-        id: "has-matching-release-tag"
+-        uses: "./actions/has-matching-release-tag"
+-        with:
+-          ref_name: "${{ github.ref_name }}"
+-          release_tag_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+-          release_branch_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.x$"
+-
+-      - name: "Determine technical documentation version"
+-        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+-        uses: "./actions/docs-target"
+-        id: "target"
+-        with:
+-          ref_name: "${{ github.ref_name }}"
+-
+-      - name: "Clone website-sync Action"
+-        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+-        # WEBSITE_SYNC_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+-        # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+-        # GitHub administrator to update the organization secret.
+-        # The IT helpdesk can update the organization secret.
+-        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.WEBSITE_SYNC_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+-
+-      - name: "Switch to HEAD of version branch for tags"
+-        # Tags aren't necessarily made to the HEAD of the version branch.
+-        # The documentation to be published is always on the HEAD of the version branch.
+-        if: "steps.has-matching-release-tag.outputs.bool == 'true' && github.ref_type == 'tag'"
+-        run: "git switch --detach origin/${{ steps.target.outputs.target }}.x"
+-
+-      - name: "Publish to website repository (release)"
+-        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+-        uses: "./.github/actions/website-sync"
+-        id: "publish-release"
+-        with:
+-          repository: "grafana/website"
+-          branch: "master"
+-          host: "github.com"
+-          # PUBLISH_TO_WEBSITE_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+-          # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+-          # GitHub administrator to update the organization secret.
+-          # The IT helpdesk can update the organization secret.
+-          github_pat: "grafanabot:${{ secrets.PUBLISH_TO_WEBSITE_TOKEN }}"
+-          source_folder: "docs/sources"
+-          target_folder: "content/docs/grafana/${{ steps.target.outputs.target }}"
+diff --git a/.github/workflows/release-comms.yml b/.github/workflows/release-comms.yml
+deleted file mode 100644
+index dc7355ef0b8..00000000000
+--- a/.github/workflows/release-comms.yml
++++ /dev/null
+@@ -1,78 +0,0 @@
+-# This workflow runs whenever the release PR is merged. It includes post-release communication processes like
+-# posting to slack, the website, community forums, etc.
+-# Only things that happen after a release is completed and all of the necessary code changes (like the changelog) are made.
+-name: Post-release
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      dry_run:
+-        required: false
+-        default: true
+-      version:
+-        required: true
+-      latest:
+-        type: bool
+-        default: false
+-  pull_request:
+-    types:
+-    - closed
+-    branches:
+-    - 'main'
+-    - 'v*.*.*'
+-
+-jobs:
+-  setup:
+-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
+-    name: Setup and establish latest
+-    outputs:
+-      version: ${{ steps.output.outputs.version }}
+-      dry_run: ${{ steps.output.outputs.dry_run }}
+-      latest: ${{ steps.output.outputs.latest }}
+-    runs-on: ubuntu-latest
+-    steps:
+-    - if: ${{ github.event_name == 'workflow_dispatch' }}
+-      run: |
+-        echo setting up GITHUB_ENV for ${{ github.event_name }}
+-        echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+-        echo "DRY_RUN=${{ inputs.dry_run }}" >> $GITHUB_ENV
+-        echo "LATEST=${{ inputs.latest }}" >> $GITHUB_ENV
+-    - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
+-      run: |
+-        echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\/.*\///g')" >> $GITHUB_ENV
+-        echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}" >> $GITHUB_ENV
+-        echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') }}" >> $GITHUB_ENV
+-    - id: output
+-      run: |
+-        echo "dry_run: $DRY_RUN"
+-        echo "latest: $LATEST"
+-        echo "version: $VERSION"
+-
+-        echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
+-        echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+-        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+-  post_changelog_on_forum:
+-    needs: setup
+-    uses: ./.github/workflows/community-release.yml
+-    secrets:
+-      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+-      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+-    with:
+-      version: ${{ needs.setup.outputs.version }}
+-      dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
+-  create_github_release:
+-    # a github release requires a git tag
+-    # The github-release action retrieves the changelog using the /repos/grafana/grafana/contents/CHANGELOG.md API
+-    # endpoint.
+-    needs: setup
+-    uses: ./.github/workflows/github-release.yml
+-    with:
+-      version: ${{ needs.setup.outputs.version }}
+-      dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
+-      latest: ${{ needs.setup.outputs.latest }}
+-  post_on_slack:
+-    needs: setup
+-    runs-on: ubuntu-latest
+-    steps:
+-    - run: |
+-        echo announce on slack that ${{ needs.setup.outputs.version }} has been released
+-        echo dry run: ${{ needs.setup.outputs.dry_run }}
+diff --git a/.github/workflows/release-pr.yml b/.github/workflows/release-pr.yml
+deleted file mode 100644
+index f960bb5ca74..00000000000
+--- a/.github/workflows/release-pr.yml
++++ /dev/null
+@@ -1,161 +0,0 @@
+-# This workflow creates a new PR in Grafana which is triggered after a release is completed.
+-# It should include all code changes that are needed after a release is done. This includes the changelog update and
+-# version bumps, but could include more in the future.
+-# Please refrain from including any processes that do not result in code changes in this workflow. Instead, they should
+-# either be triggered in the release promotion process or in the release comms process (that is triggered by merging
+-# this PR).
+-name: Complete a Grafana release
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      version:
+-        required: true
+-        type: string
+-        description: The version of Grafana that is being released
+-      target:
+-        required: true
+-        type: string
+-        description: The base branch that these changes are being merged into
+-      backport:
+-        required: false
+-        type: string
+-        description: Branch to backport these changes to
+-      dry_run:
+-        required: false
+-        default: false
+-        type: boolean
+-      latest:
+-        required: false
+-        default: false
+-        type: boolean
+-
+-permissions:
+-  contents: write
+-  pull-requests: write
+-
+-jobs:
+-  push-changelog-to-main:
+-    name: Create PR to main to update the changelog
+-    uses: ./.github/workflows/changelog.yml
+-    with:
+-      version: ${{ inputs.version }}
+-      latest: ${{ inputs.latest }}
+-      dry_run: ${{ inputs.dry_run }}
+-      target: main
+-    secrets:
+-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-  create-prs:
+-    name: Create Release PR
+-    runs-on: ubuntu-latest
+-    if: github.repository == 'grafana/grafana'
+-    steps:
+-      - name: Generate bot token
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-      - name: Checkout Grafana
+-        uses: actions/checkout@v4
+-        with:
+-          ref: ${{ inputs.target }}
+-          fetch-depth: 0
+-          fetch-tags: true
+-      - name: Checkout Grafana (main)
+-        uses: actions/checkout@v4
+-        with:
+-          ref: main
+-          fetch-depth: '0'
+-          fetch-tags: 'false'
+-          path: .grafana-main
+-      - name: Configure git user
+-        run: |
+-          git config --local user.name "github-actions[bot]"
+-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+-          git config --local --add --bool push.autoSetupRemote true
+-
+-      - name: Create branch
+-        run: git checkout -b "release/${{ github.run_id }}/${{ inputs.version }}"
+-      - name: Generate changelog
+-        id: changelog
+-        uses: ./.grafana-main/.github/workflows/actions/changelog
+-        with:
+-          github_token: ${{ steps.generate_token.outputs.token }}
+-          target: v${{ inputs.version }}
+-          output_file: changelog_items.md
+-      - name: Patch CHANGELOG.md
+-        run: |
+-          # Prepare CHANGELOG.md content with version delimiters
+-          (
+-            echo
+-            echo "# ${{ inputs.version}} ($(date '+%F'))"
+-            echo
+-            cat changelog_items.md
+-          ) > CHANGELOG.part
+-
+-          # Check if a version exists in the changelog
+-          if grep -q "<!-- ${{ inputs.version}} START" CHANGELOG.md ; then
+-            # Replace the content between START and END delimiters
+-            echo "Version ${{ inputs.version }} is found in the CHANGELOG.md, patching contents..."
+-            sed -i -e '/${{ inputs.version }} START/,/${{ inputs.version }} END/{//!d;}' \
+-                   -e '/${{ inputs.version }} START/r CHANGELOG.part' CHANGELOG.md
+-          else
+-            # Prepend changelog part to the main changelog file
+-            echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
+-            (
+-              echo "<!-- ${{ inputs.version }} START -->"
+-              cat CHANGELOG.part
+-              echo "<!-- ${{ inputs.version }} END -->"
+-              cat CHANGELOG.md
+-            ) > CHANGELOG.tmp
+-            mv CHANGELOG.tmp CHANGELOG.md
+-          fi
+-
+-          rm -f CHANGELOG.part changelog_items.md
+-
+-          git diff CHANGELOG.md
+-
+-      - name: Commit CHANGELOG.md changes
+-        run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
+-
+-      - name: Update package.json versions
+-        uses: ./.grafana-main/pkg/build/actions/bump-version
+-        with:
+-          version: 'patch'
+-
+-      - name: Add package.json changes
+-        run: |
+-          git add package.json lerna.json yarn.lock packages public
+-          git commit -m "Update version to ${{ inputs.version }}"
+-
+-      - name: Git push
+-        if: ${{ inputs.dry_run }} != true
+-        run: git push --set-upstream origin release/${{ github.run_id }}/${{ inputs.version }}
+-
+-      - name: Create PR without backports
+-        if: "${{ inputs.backport == '' }}"
+-        run: >
+-          gh pr create \
+-            $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
+-            -l "no-changelog" \
+-            --dry-run=${{ inputs.dry_run }} \
+-            -B "${{ inputs.target }}" \
+-            --title "Release: ${{ inputs.version }}" \
+-            --body "These code changes must be merged after a release is complete"
+-        env:
+-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+-
+-      - name: Create PR with backports
+-        if: "${{ inputs.backport != '' }}"
+-        run: >
+-          gh pr create \
+-            $( [ "x${{ inputs.latest }}" == "xtrue" ] && printf %s '-l "release/latest"') \
+-            -l "product-approved" \
+-            -l "no-changelog" \
+-            --dry-run=${{ inputs.dry_run }} \
+-            -B "${{ inputs.target }}" \
+-            --title "Release: ${{ inputs.version }}" \
+-            --body "These code changes must be merged after a release is complete"
+-        env:
+-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+diff --git a/.github/workflows/release.yaml b/.github/workflows/release.yaml
+new file mode 100644
+index 00000000000..41ae32197f9
+--- /dev/null
++++ b/.github/workflows/release.yaml
+@@ -0,0 +1,76 @@
++name: release
++
++on:
++  push:
++    tags:
++      - 'v*.*.*'
++
++jobs:
++  release:
++    runs-on: ubuntu-latest
++    permissions:
++      contents: write
++      id-token: write
++    steps:
++      -
++        name: Checkout
++        uses: actions/checkout@v3
++      - name: Free Disk Space (Ubuntu)
++        uses: jlumbroso/free-disk-space@main
++        with:
++          # this might remove tools that are actually needed,
++          # if set to "true" but frees about 6 GB
++          tool-cache: false
++
++          # all of these default to true, but feel free to set to
++          # "false" if necessary for your workflow
++          android: true
++          dotnet: true
++          haskell: true
++          large-packages: true
++          docker-images: true
++          swap-storage: true
++      -
++        name: Set up QEMU
++        uses: docker/setup-qemu-action@v3
++        with:
++          platforms: arm64
++      -
++        name: Set up Docker Buildx
++        uses: docker/setup-buildx-action@v3
++      -
++        name: Login to Quay.io
++        uses: docker/login-action@v3
++        with:
++          registry: quay.io
++          username: ${{ secrets.QUAY_USERNAME }}
++          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
++      -
++        name: Configure AWS credentials
++        uses: aws-actions/configure-aws-credentials@v4
++        with:
++          aws-region: us-east-1
++          role-to-assume: arn:aws:iam::125608480246:role/grafana-github-actions
++      -
++        name: Login to Amazon ECR Public
++        id: login-ecr-public
++        uses: aws-actions/amazon-ecr-login@v2
++        with:
++          registry-type: public
++      -
++        name: Get Grafana Version
++        run: echo "GF_VERSION=$(npm pkg get version | tr -d '"')" >> $GITHUB_ENV
++      -
++        name: Build Docker Image
++        uses: docker/build-push-action@v5
++        with:
++          context: .
++          push: true
++          target: groundcover
++          cache-from: type=gha
++          cache-to: type=gha,mode=max
++          platforms: linux/amd64,linux/arm64
++          build-args: GF_VERSION=${{ env.GF_VERSION }}
++          tags: |
++            quay.io/groundcover/grafana-groundcover:${{ github.ref_name	}}-grafana${{ env.GF_VERSION }}
++            public.ecr.aws/groundcovercom/grafana-groundcover:${{ github.ref_name	}}-grafana${{ env.GF_VERSION }}
+\ No newline at end of file
+diff --git a/.github/workflows/remove-milestone.yml b/.github/workflows/remove-milestone.yml
+deleted file mode 100644
+index d41b63f1f51..00000000000
+--- a/.github/workflows/remove-milestone.yml
++++ /dev/null
+@@ -1,60 +0,0 @@
+-name: Remove milestone
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      version:
+-        required: true
+-        description: Needs to match, exactly, the name of a milestone
+-  workflow_call:
+-    inputs:
+-      version_call:
+-        description: Needs to match, exactly, the name of a milestone
+-        required: true
+-        type: string
+-
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.GRAFANA_DELIVERY_BOT_APP_ID != '' && secrets.GRAFANA_DELIVERY_BOT_APP_PEM != '') || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  main:
+-    needs: config
+-    if: needs.config.outputs.has-secrets
+-    permissions:
+-      issues: write
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout Actions
+-        uses: actions/checkout@v4
+-        with:
+-          repository: "grafana/grafana-github-actions"
+-          path: ./actions
+-          ref: main
+-      - name: Install Actions
+-        run: npm install --production --prefix ./actions
+-      - name: "Generate token"
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-      - name: Remove milestone from open issues (manually invoked)
+-        if: ${{ github.event.inputs.version != '' }}
+-        uses: ./actions/remove-milestone
+-        with:
+-          token: ${{ steps.generate_token.outputs.token }}
+-      - name: Remove milestone from open issues (workflow invoked)
+-        if: ${{ inputs.version_call != '' }}
+-        uses: ./actions/remove-milestone
+-        with:
+-          version_call: ${{ inputs.version_call }}
+-          token: ${{ steps.generate_token.outputs.token }}
+diff --git a/.github/workflows/run-scenes-e2e.yml b/.github/workflows/run-scenes-e2e.yml
+deleted file mode 100644
+index 53425680492..00000000000
+--- a/.github/workflows/run-scenes-e2e.yml
++++ /dev/null
+@@ -1,47 +0,0 @@
+-name: Run dashboard scenes e2e
+-
+-on:
+-  schedule:
+-    - cron: "0 8 * * 1-5" # every day at 08:00UTC on weekdays
+-  # push # uncomment for test run during PR
+-
+-env:
+-  ARCH: linux-amd64
+-
+-jobs:
+-  dashboard-scenes-e2e:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: Checkout
+-        uses: actions/checkout@v4
+-      - name: Pin Go version to mod file
+-        uses: actions/setup-go@v5
+-        with:
+-          go-version-file: 'go.mod'
+-      - run: go version
+-      - uses: actions/setup-node@v4
+-        with:
+-          node-version: 20
+-      - name: Install dependencies
+-        run: yarn install --immutable
+-      - name: Build grafana
+-        run: make build
+-      - name: Install Cypress dependencies
+-        uses: cypress-io/github-action@v6
+-        with: 
+-          runTests: false
+-      - name: Run dashboard scenes e2e
+-        run: yarn e2e:scenes
+-      - name: "Send Slack notification"
+-        if: ${{ failure() }}
+-        uses: slackapi/slack-github-action@v1.26.0
+-        with:
+-          payload: >
+-            {
+-              "icon_emoji": ":this-is-fine-fire:",
+-              "username": "Dashboard scenes e2e tests failed",
+-              "text": "Link to run: https://github.com/${{github.repository}}/actions/runs/${{github.run_id}}",
+-              "channel": "#grafana-dashboards-squad"
+-            }
+-        env:
+-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+diff --git a/.github/workflows/sbom-report.yml b/.github/workflows/sbom-report.yml
+deleted file mode 100644
+index c913b76331a..00000000000
+--- a/.github/workflows/sbom-report.yml
++++ /dev/null
+@@ -1,20 +0,0 @@
+-name: syft-sbom-ci
+-
+-on:
+-  release:
+-    types: [created]
+-
+-jobs:
+-  syft-sbom:
+-
+-    runs-on: ubuntu-latest
+-
+-    steps:
+-    - name: Checkout
+-      uses: actions/checkout@v4
+-        
+-    - name: Anchore SBOM Action
+-      uses: anchore/sbom-action@v0.14.2
+-      with:
+-         artifact-name: ${{ github.event.repository.name }}-spdx.json
+-
+diff --git a/.github/workflows/scripts/json-file-to-job-output.js b/.github/workflows/scripts/json-file-to-job-output.js
+deleted file mode 100644
+index c71c1b86001..00000000000
+--- a/.github/workflows/scripts/json-file-to-job-output.js
++++ /dev/null
+@@ -1,18 +0,0 @@
+-module.exports = async ({ core, filePath }) => {
+-    try {
+-        const fs = require('fs').promises;
+-        const content = await fs.readFile(filePath)
+-        const result = JSON.parse(content);
+-    
+-        core.startGroup('Parsing json file...');
+-
+-        for (const property in result) {
+-            core.info(`${property} <- ${result[property]}`);
+-            core.setOutput(property, result[property]);
+-        }
+-
+-        core.endGroup();
+-    } catch (error) {
+-        core.setFailed(error.message);
+-    }
+-}
+\ No newline at end of file
+diff --git a/.github/workflows/scripts/kinds/verify-kinds.go b/.github/workflows/scripts/kinds/verify-kinds.go
+deleted file mode 100644
+index ab60a90bd3e..00000000000
+--- a/.github/workflows/scripts/kinds/verify-kinds.go
++++ /dev/null
+@@ -1,229 +0,0 @@
+-package main
+-
+-import (
+-	"context"
+-	"errors"
+-	"fmt"
+-	"golang.org/x/text/cases"
+-	"golang.org/x/text/language"
+-	"os"
+-	"path/filepath"
+-	"regexp"
+-	"strings"
+-
+-	"cuelang.org/go/cue"
+-	cueformat "cuelang.org/go/cue/format"
+-	"github.com/grafana/codejen"
+-	"github.com/grafana/grafana/pkg/registry/schemas"
+-)
+-
+-var nonAlphaNumRegex = regexp.MustCompile("[^a-zA-Z0-9 ]+")
+-
+-// main This script verifies that stable kinds are not updated once published (new schemas
+-// can be added but existing ones cannot be updated).
+-// It generates kind files into a local "next" folder, ready to be published in the kind-registry repo.
+-// If kind names are given as parameters, the script will make the above actions only for the
+-// given kinds.
+-func main() {
+-	// File generation
+-	jfs := codejen.NewFS()
+-	outputPath := filepath.Join(".github", "workflows", "scripts", "kinds")
+-
+-	corekinds, err := schemas.GetCoreKinds()
+-	die(err)
+-
+-	composableKinds, err := schemas.GetComposableKinds()
+-	die(err)
+-
+-	coreJennies := codejen.JennyList[schemas.CoreKind]{}
+-	coreJennies.Append(
+-		CoreKindRegistryJenny(outputPath),
+-	)
+-	corefs, err := coreJennies.GenerateFS(corekinds...)
+-	die(err)
+-	die(jfs.Merge(corefs))
+-
+-	composableJennies := codejen.JennyList[schemas.ComposableKind]{}
+-	composableJennies.Append(
+-		ComposableKindRegistryJenny(outputPath),
+-	)
+-	composablefs, err := composableJennies.GenerateFS(composableKinds...)
+-	die(err)
+-	die(jfs.Merge(composablefs))
+-
+-	if err = jfs.Write(context.Background(), ""); err != nil {
+-		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
+-	}
+-
+-	if err := copyCueSchemas("packages/grafana-schema/src/common", filepath.Join(outputPath, "next")); err != nil {
+-		die(fmt.Errorf("error while copying the grafana-schema/common package:\n%s", err))
+-	}
+-}
+-
+-func copyCueSchemas(fromDir string, toDir string) error {
+-	baseTargetDir := filepath.Base(fromDir)
+-
+-	return filepath.Walk(fromDir, func(path string, info os.FileInfo, err error) error {
+-		if err != nil {
+-			return err
+-		}
+-
+-		targetPath := filepath.Join(
+-			toDir,
+-			baseTargetDir,
+-			strings.TrimPrefix(path, fromDir),
+-		)
+-
+-		if info.IsDir() {
+-			return ensureDirectoryExists(targetPath, info.Mode())
+-		}
+-
+-		if !strings.HasSuffix(path, ".cue") {
+-			return nil
+-		}
+-
+-		return copyFile(path, targetPath, info.Mode())
+-	})
+-}
+-
+-func copyFile(from string, to string, mode os.FileMode) error {
+-	input, err := os.ReadFile(from)
+-	if err != nil {
+-		return err
+-	}
+-
+-	return os.WriteFile(to, input, mode)
+-}
+-
+-func ensureDirectoryExists(directory string, mode os.FileMode) error {
+-	_, err := os.Stat(directory)
+-	if errors.Is(err, os.ErrNotExist) {
+-		if err = os.Mkdir(directory, mode); err != nil {
+-			return err
+-		}
+-	} else if err != nil {
+-		return err
+-	}
+-
+-	return os.Chmod(directory, mode)
+-}
+-
+-func die(errs ...error) {
+-	if len(errs) > 0 && errs[0] != nil {
+-		for _, err := range errs {
+-			fmt.Fprint(os.Stderr, err, "\n")
+-		}
+-		os.Exit(1)
+-	}
+-}
+-
+-// CoreKindRegistryJenny generates kind files into the "next" folder of the local kind registry.
+-func CoreKindRegistryJenny(path string) codejen.OneToOne[schemas.CoreKind] {
+-	return &kindregjenny{
+-		path: path,
+-	}
+-}
+-
+-type kindregjenny struct {
+-	path string
+-}
+-
+-func (j *kindregjenny) JennyName() string {
+-	return "KindRegistryJenny"
+-}
+-
+-func (j *kindregjenny) Generate(kind schemas.CoreKind) (*codejen.File, error) {
+-	newKindBytes, err := kindToBytes(kind.CueFile)
+-	if err != nil {
+-		return nil, err
+-	}
+-
+-	path := filepath.Join(j.path, "next", "core", kind.Name, kind.Name+".cue")
+-	return codejen.NewFile(path, newKindBytes, j), nil
+-}
+-
+-// ComposableKindRegistryJenny generates kind files into the "next" folder of the local kind registry.
+-func ComposableKindRegistryJenny(path string) codejen.OneToOne[schemas.ComposableKind] {
+-	return &ckrJenny{
+-		path: path,
+-	}
+-}
+-
+-type ckrJenny struct {
+-	path string
+-}
+-
+-func (j *ckrJenny) JennyName() string {
+-	return "ComposableKindRegistryJenny"
+-}
+-
+-func (j *ckrJenny) Generate(k schemas.ComposableKind) (*codejen.File, error) {
+-	name := strings.ToLower(fmt.Sprintf("%s/%s", k.Name, k.Filename))
+-
+-	v := fixComposableKindFormat(k)
+-
+-	newKindBytes, err := kindToBytes(v)
+-	if err != nil {
+-		return nil, err
+-	}
+-
+-	newKindBytes = []byte(fmt.Sprintf("package grafanaplugin\n\n%s", newKindBytes))
+-
+-	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name), newKindBytes, j), nil
+-}
+-
+-// kindToBytes converts a kind cue value to a .cue file content
+-func kindToBytes(kind cue.Value) ([]byte, error) {
+-	node := kind.Syntax(
+-		cue.All(),
+-		cue.Schema(),
+-		cue.Docs(true),
+-	)
+-
+-	return cueformat.Node(node)
+-}
+-
+-func fixComposableKindFormat(schema schemas.ComposableKind) cue.Value {
+-	variant := "PanelCfg"
+-	if schema.CueFile.LookupPath(cue.ParsePath("composableKinds.DataQuery")).Exists() {
+-		variant = "DataQuery"
+-	}
+-
+-	newCue := schema.CueFile.Context().CompileString(
+-		fmt.Sprintf("schemaInterface: %q\n", variant) +
+-			fmt.Sprintf("name: %q + %q\n\n", UpperCamelCase(schema.Name), variant) +
+-			"lineage: _",
+-	)
+-
+-	lineagePath := cue.MakePath(cue.Str("composableKinds"), cue.Str(variant), cue.Str("lineage"))
+-	return newCue.FillPath(cue.MakePath(cue.Str("lineage")), schema.CueFile.LookupPath(lineagePath))
+-}
+-
+-func UpperCamelCase(s string) string {
+-	s = LowerCamelCase(s)
+-
+-	// Uppercase the first letter
+-	if len(s) > 0 {
+-		s = strings.ToUpper(s[:1]) + s[1:]
+-	}
+-
+-	return s
+-}
+-
+-func LowerCamelCase(s string) string {
+-	// Replace all non-alphanumeric characters by spaces
+-	s = nonAlphaNumRegex.ReplaceAllString(s, " ")
+-
+-	// Title case s
+-	s = cases.Title(language.AmericanEnglish, cases.NoLower).String(s)
+-
+-	// Remove all spaces
+-	s = strings.ReplaceAll(s, " ", "")
+-
+-	// Lowercase the first letter
+-	if len(s) > 0 {
+-		s = strings.ToLower(s[:1]) + s[1:]
+-	}
+-
+-	return s
+-}
+diff --git a/.github/workflows/scripts/pr-get-job-link.js b/.github/workflows/scripts/pr-get-job-link.js
+deleted file mode 100644
+index b1b49c89941..00000000000
+--- a/.github/workflows/scripts/pr-get-job-link.js
++++ /dev/null
+@@ -1,9 +0,0 @@
+-
+-module.exports = async ({ name, github, context, core }) => {
+-    const { owner, repo } = context.repo;
+-    const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs/${context.runId}/jobs`
+-    const result = await github.request(url);
+-    const job = result.data.jobs.find(j => j.name === name);
+-    
+-    core.setOutput('link', `${job.html_url}?check_suite_focus=true`);
+-}
+diff --git a/.github/workflows/stale.yml b/.github/workflows/stale.yml
+deleted file mode 100644
+index 778a49b16d0..00000000000
+--- a/.github/workflows/stale.yml
++++ /dev/null
+@@ -1,42 +0,0 @@
+-name: 'Close stale issues and PRs'
+-on:
+-  schedule:
+-    - cron: '30 1 * * *'
+-
+-permissions:
+-  issues: write
+-  pull-requests: write
+-
+-jobs:
+-  stale:
+-    runs-on: ubuntu-latest
+-    steps:
+-      - uses: actions/stale@v9
+-        with:
+-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+-          operations-per-run: 750
+-          # start from the oldest issues/PRs when performing stale operations
+-          ascending: true
+-          days-before-issue-stale: 365
+-          days-before-issue-close: 30
+-          stale-issue-label: stale
+-          exempt-issue-labels: no stalebot,type/epic
+-          stale-issue-message: >
+-            This issue has been automatically marked as stale because it has not had
+-            activity in the last year. It will be closed in 30 days if no further activity occurs. Please
+-            feel free to leave a comment if you believe the issue is still relevant.
+-            Thank you for your contributions!
+-          close-issue-message: >
+-            This issue has been automatically closed because it has not had any further
+-            activity in the last 30 days. Thank you for your contributions!
+-          days-before-pr-stale: 30
+-          days-before-pr-close: 14
+-          stale-pr-label: stale
+-          exempt-pr-labels: no stalebot
+-          stale-pr-message: >
+-            This pull request has been automatically marked as stale because it has not had
+-            activity in the last 30 days. It will be closed in 2 weeks if no further activity occurs. Please
+-            feel free to give a status update or ping for review. Thank you for your contributions!
+-          close-pr-message: >
+-            This pull request has been automatically closed because it has not had any further
+-            activity in the last 2 weeks. Thank you for your contributions!
+diff --git a/.github/workflows/sync-mirror.yml b/.github/workflows/sync-mirror.yml
+deleted file mode 100644
+index 09c8f87d509..00000000000
+--- a/.github/workflows/sync-mirror.yml
++++ /dev/null
+@@ -1,25 +0,0 @@
+-# Owned by grafana-release-guild
+-# Intended to be dropped into the base repo, Ex: grafana/grafana
+-name: Sync to mirror
+-run-name: sync-to-mirror-${{ github.ref_name }}
+-on:
+-  workflow_dispatch:
+-  push:
+-    branches:
+-      - "main"
+-      - "v*.*.*"
+-      - "release-*"
+-
+-# This is run after the pull request has been merged, so we'll run against the target branch
+-jobs:
+-  trigger_downstream_patch_mirror:
+-    concurrency: patch-mirror-${{ github.ref_name }}
+-    uses: grafana/security-patch-actions/.github/workflows/mirror-branch-and-apply-patches.yml@main
+-    if: github.repository == 'grafana/grafana'
+-    with:
+-      ref: "${{ github.ref_name }}" # this is the target branch name, Ex: "main"
+-      src_repo: "${{ github.repository }}"
+-      dest_repo: "${{ github.repository }}-security-mirror"
+-      patch_repo: "${{ github.repository }}-security-patches"
+-    secrets: inherit
+-
+diff --git a/.github/workflows/trivy-scan.yml b/.github/workflows/trivy-scan.yml
+deleted file mode 100644
+index f3a2c32f53e..00000000000
+--- a/.github/workflows/trivy-scan.yml
++++ /dev/null
+@@ -1,54 +0,0 @@
+-name: Trivy Scan
+-on:
+-  pull_request:
+-    # only run on PRs where go.mod/go.sum/etc have been updated
+-    paths:
+-      - go.*
+-  push:
+-    branches:
+-      - main
+-    paths:
+-      - go.*
+-
+-jobs:
+-  trivy-scan:
+-    runs-on: ubuntu-22.04
+-    steps:
+-    - uses: actions/checkout@v4
+-    - name: Run Trivy vulnerability scanner (table output)
+-      uses: aquasecurity/trivy-action@0.24.0
+-      with:
+-        # scan the filesystem, rather than building a Docker image prior - the
+-        # downside is we won't catch dependencies that are only installed in the
+-        # image, but the upside is we'll only catch vulnerabilities that are
+-        # explicitly in the our dependencies
+-        scan-type: 'fs'
+-        scanners: 'vuln'
+-        format: 'table'
+-        exit-code: 1
+-        ignore-unfixed: true
+-        vuln-type: 'os,library'
+-        severity: 'CRITICAL,HIGH'
+-        trivyignores: .trivyignore
+-        # for the PR check, ignore JS-related issues
+-        skip-files: 'yarn.lock,package.json'
+-    - name: Run Trivy vulnerability scanner (SARIF)
+-      uses: aquasecurity/trivy-action@0.24.0
+-      with:
+-        scan-type: 'fs'
+-        scanners: 'vuln'
+-        # Note: The SARIF format ignores severity and uploads all vulns for
+-        # later triage. The table-format step above is used to fail the build
+-        # if there are any critical or high vulnerabilities.
+-        # See https://github.com/aquasecurity/trivy-action/issues/95
+-        format: 'sarif'
+-        output: 'trivy-results.sarif'
+-        ignore-unfixed: true
+-        vuln-type: 'os,library'
+-        trivyignores: .trivyignore
+-      if: always() && github.repository == 'grafana/grafana'
+-    - name: Upload Trivy scan results to GitHub Security tab
+-      uses: github/codeql-action/upload-sarif@v3
+-      with:
+-        sarif_file: 'trivy-results.sarif'
+-      if: always() && github.repository == 'grafana/grafana'
+diff --git a/.github/workflows/update-changelog.yml b/.github/workflows/update-changelog.yml
+deleted file mode 100644
+index db22ab1fb96..00000000000
+--- a/.github/workflows/update-changelog.yml
++++ /dev/null
+@@ -1,52 +0,0 @@
+-name: Update changelog
+-on:
+-  workflow_dispatch:
+-    inputs:
+-      version:
+-        required: true
+-        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
+-      skip_pr:
+-        required: false
+-        default: "0"
+-      skip_community_post:
+-        required: false
+-        default: "0"
+-jobs:
+-  config:
+-    runs-on: "ubuntu-latest"
+-    outputs:
+-      has-secrets: ${{ steps.check.outputs.has-secrets }}
+-    steps:
+-      - name: "Check for secrets"
+-        id: check
+-        shell: bash
+-        run: |
+-          if [ -n "${{ (secrets.GRAFANA_DELIVERY_BOT_APP_ID != '' &&
+-                        secrets.GRAFANA_DELIVERY_BOT_APP_PEM != '' &&
+-                        secrets.GRAFANA_MISC_STATS_API_KEY != '' &&
+-                        secrets.GRAFANABOT_FORUM_KEY != ''
+-                        ) || '' }}" ]; then
+-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+-          fi
+-
+-  main:
+-    needs: config
+-    if: needs.config.outputs.has-secrets
+-    runs-on: ubuntu-latest
+-    steps:
+-      - name: "Generate token"
+-        id: generate_token
+-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+-        with:
+-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+-      - name: Run update changelog (manually invoked)
+-        uses: grafana/grafana-github-actions-go/update-changelog@main
+-        with:
+-          token: ${{ steps.generate_token.outputs.token }}
+-          version: ${{ inputs.version }}
+-          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+-          community_api_key: ${{ secrets.GRAFANABOT_FORUM_KEY }}
+-          community_api_username: grafanabot
+-          skip_pr: ${{ inputs.skip_pr }}
+-          skip_community_post: ${{ inputs.skip_community_post }}
+diff --git a/.github/workflows/update-make-docs.yml b/.github/workflows/update-make-docs.yml
+deleted file mode 100644
+index 49b64504bd0..00000000000
+--- a/.github/workflows/update-make-docs.yml
++++ /dev/null
+@@ -1,19 +0,0 @@
+-name: Update `make docs` procedure
+-on:
+-  schedule:
+-    - cron: '0 7 * * 1-5'
+-  workflow_dispatch:
+-jobs:
+-  main:
+-    if: github.repository == 'grafana/grafana'
+-    runs-on: ubuntu-latest
+-    steps:
+-      - uses: actions/checkout@v4
+-      - uses: grafana/writers-toolkit/update-make-docs@update-make-docs/v1
+-        with:
+-          pr_options: >
+-            --label 'backport v10.1.x'
+-            --label 'backport v10.2.x'
+-            --label 'backport v10.3.x'
+-            --label no-changelog
+-            --label type/docs
+diff --git a/.github/workflows/verify-kinds.yml b/.github/workflows/verify-kinds.yml
+deleted file mode 100644
+index 88b45660d45..00000000000
+--- a/.github/workflows/verify-kinds.yml
++++ /dev/null
+@@ -1,26 +0,0 @@
+-name: "verify-kinds"
+-
+-on:
+-  pull_request:
+-    branches: [ main ]
+-    paths:
+-      - '**/*.cue'
+-
+-jobs:
+-  main:
+-    runs-on: "ubuntu-latest"
+-    steps:
+-      - name: "Checkout Grafana repo"
+-        uses: "actions/checkout@v4"
+-        with:
+-          fetch-depth: 0
+-
+-      - name: "Setup Go"
+-        uses: "actions/setup-go@v4"
+-        with:
+-          go-version-file: go.mod
+-
+-      - name: "Verify kinds"
+-        run: go run .github/workflows/scripts/kinds/verify-kinds.go
+-        env:
+-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+diff --git a/Dockerfile b/Dockerfile
+index 416b2a5b5b8..e37ea043573 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,9 +1,10 @@
+ # syntax=docker/dockerfile:1
+ 
++ARG GF_VERSION=11.0.0
+ ARG BASE_IMAGE=alpine:3.19.1
+ ARG JS_IMAGE=node:20-alpine
+ ARG JS_PLATFORM=linux/amd64
+-ARG GO_IMAGE=golang:1.22.4-alpine
++ARG GO_IMAGE=golang:1.22.4
+ 
+ ARG GO_SRC=go-builder
+ ARG JS_SRC=js-builder
+@@ -32,7 +33,7 @@ COPY emails emails
+ ENV NODE_ENV production
+ RUN yarn build
+ 
+-FROM ${GO_IMAGE} as go-builder
++FROM --platform=${JS_PLATFORM} ${GO_IMAGE} as go-builder
+ 
+ ARG COMMIT_SHA=""
+ ARG BUILD_BRANCH=""
+@@ -84,6 +85,19 @@ COPY .github .github
+ ENV COMMIT_SHA=${COMMIT_SHA}
+ ENV BUILD_BRANCH=${BUILD_BRANCH}
+ 
++RUN make gen-go WIRE_TAGS=${WIRE_TAGS}
++
++FROM ${GO_SRC} as go-build-amd64
++RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
++
++FROM ${GO_SRC} as go-build-arm64
++
++RUN apt-get update && \
++    apt-get -y install gcc-aarch64-linux-gnu;
++
++ENV GOARCH=arm64
++ENV CC=aarch64-linux-gnu-gcc
++
+ RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+ 
+ FROM ${BASE_IMAGE} as tgz-builder
+@@ -98,7 +112,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
+ RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
+ 
+ # helpers for COPY --from
+-FROM ${GO_SRC} as go-src
++ARG TARGETARCH
++FROM go-build-${TARGETARCH} as go-src
+ FROM ${JS_SRC} as js-src
+ 
+ # Final stage
+@@ -191,3 +206,20 @@ COPY ${RUN_SH} /run.sh
+ 
+ USER "$GF_UID"
+ ENTRYPOINT [ "/run.sh" ]
++
++FROM grafana/grafana:${GF_VERSION}-ubuntu as groundcover
++
++COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
++COPY --from=js-src /tmp/grafana/public ./public
++
++USER 0
++
++ENV GF_PLUGIN_DIR="/usr/share/grafana/plugins" \
++    GF_PATHS_PLUGINS="/usr/share/grafana/plugins"
++
++RUN mkdir -p ${GF_PLUGIN_DIR} && \
++    chmod -R 777 ${GF_PLUGIN_DIR} && \
++    grafana cli plugins install grafana-clickhouse-datasource 4.0.3 && \
++    grafana cli plugins install marcusolsson-treemap-panel 2.0.1
++
++USER "$GF_UID"
+diff --git a/pkg/api/accesscontrol.go b/pkg/api/accesscontrol.go
+index 0b1cac3cc2b..c82eb794506 100644
+--- a/pkg/api/accesscontrol.go
++++ b/pkg/api/accesscontrol.go
+@@ -232,8 +232,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
+ 			Group:       "Organizations",
+ 			Permissions: ac.ConcatPermissions(orgReaderRole.Role.Permissions, []ac.Permission{
+ 				{Action: ac.ActionOrgsPreferencesRead},
+-				{Action: ac.ActionOrgsWrite},
+-				{Action: ac.ActionOrgsPreferencesWrite},
++				// {Action: ac.ActionOrgsWrite},
++				// {Action: ac.ActionOrgsPreferencesWrite},
+ 			}),
+ 		},
+ 		Grants: []string{string(org.RoleAdmin)},
+@@ -293,12 +293,12 @@ func (hs *HTTPServer) declareFixedRoles() error {
+ 			Description: "Create, read, write, or delete a team as well as controlling team memberships.",
+ 			Group:       "Teams",
+ 			Permissions: []ac.Permission{
+-				{Action: ac.ActionTeamsCreate},
+-				{Action: ac.ActionTeamsDelete, Scope: ac.ScopeTeamsAll},
++				// {Action: ac.ActionTeamsCreate},
++				// {Action: ac.ActionTeamsDelete, Scope: ac.ScopeTeamsAll},
+ 				{Action: ac.ActionTeamsPermissionsRead, Scope: ac.ScopeTeamsAll},
+-				{Action: ac.ActionTeamsPermissionsWrite, Scope: ac.ScopeTeamsAll},
++				// {Action: ac.ActionTeamsPermissionsWrite, Scope: ac.ScopeTeamsAll},
+ 				{Action: ac.ActionTeamsRead, Scope: ac.ScopeTeamsAll},
+-				{Action: ac.ActionTeamsWrite, Scope: ac.ScopeTeamsAll},
++				// {Action: ac.ActionTeamsWrite, Scope: ac.ScopeTeamsAll},
+ 			},
+ 		},
+ 		Grants: []string{string(org.RoleAdmin)},
+diff --git a/pkg/services/ngalert/accesscontrol.go b/pkg/services/ngalert/accesscontrol.go
+index 84b981fd2ab..f3776698114 100644
+--- a/pkg/services/ngalert/accesscontrol.go
++++ b/pkg/services/ngalert/accesscontrol.go
+@@ -209,7 +209,7 @@ var (
+ 				},
+ 			},
+ 		},
+-		Grants: []string{string(org.RoleAdmin)},
++		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)},
+ 	}
+ 
+ 	alertingProvisioningReaderWithSecretsRole = accesscontrol.RoleRegistration{
+diff --git a/pkg/services/ngalert/ngalert.go b/pkg/services/ngalert/ngalert.go
+index b85aa73a871..da48511aebe 100644
+--- a/pkg/services/ngalert/ngalert.go
++++ b/pkg/services/ngalert/ngalert.go
+@@ -158,7 +158,7 @@ type AlertNG struct {
+ 
+ func (ng *AlertNG) init() error {
+ 	// AlertNG should be initialized before the cancellation deadline of initCtx
+-	initCtx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
++	initCtx, cancelFunc := context.WithTimeout(context.Background(), 90*time.Second)
+ 	defer cancelFunc()
+ 
+ 	ng.store.Logger = ng.Log
+@@ -595,6 +595,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
+ 		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
+ 	}
+ 	if backend == historian.BackendTypeLoki {
++		l.Info(fmt.Sprintf("loki state history backend is enabled, log all changes %v, otel enabled %v", cfg.LogAll, cfg.OtelEnabled))
+ 		lcfg, err := historian.NewLokiConfig(cfg)
+ 		if err != nil {
+ 			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
+diff --git a/pkg/services/ngalert/state/historian/loki.go b/pkg/services/ngalert/state/historian/loki.go
+index 9d125fe2384..7375717c6aa 100644
+--- a/pkg/services/ngalert/state/historian/loki.go
++++ b/pkg/services/ngalert/state/historian/loki.go
+@@ -79,17 +79,19 @@ type RemoteLokiBackend struct {
+ 	clock          clock.Clock
+ 	metrics        *metrics.Historian
+ 	log            log.Logger
++	logAll         bool
+ 	ac             AccessControl
+ 	ruleStore      RuleStore
+ }
+ 
+ func NewRemoteLokiBackend(logger log.Logger, cfg LokiConfig, req client.Requester, metrics *metrics.Historian, tracer tracing.Tracer, ruleStore RuleStore, ac AccessControl) *RemoteLokiBackend {
+ 	return &RemoteLokiBackend{
+-		client:         NewLokiClient(cfg, req, metrics, logger, tracer),
++		client:         NewHistorianExportClient(cfg, req, metrics, logger, tracer),
+ 		externalLabels: cfg.ExternalLabels,
+ 		clock:          clock.New(),
+ 		metrics:        metrics,
+ 		log:            logger,
++		logAll:         cfg.LogAll,
+ 		ac:             ac,
+ 		ruleStore:      ruleStore,
+ 	}
+@@ -102,7 +104,7 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
+ // Record writes a number of state transitions for a given rule to an external Loki instance.
+ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
+ 	logger := h.log.FromContext(ctx)
+-	logStream := StatesToStream(rule, states, h.externalLabels, logger)
++	logStream := StatesToStream(rule, states, h.externalLabels, logger, h.logAll)
+ 
+ 	errCh := make(chan error, 1)
+ 	if len(logStream.Values) == 0 {
+@@ -269,7 +271,7 @@ func merge(res []Stream, folderUIDToFilter []string) (*data.Frame, error) {
+ 	return frame, nil
+ }
+ 
+-func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) Stream {
++func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger, logAll bool) Stream {
+ 	labels := mergeLabels(make(map[string]string), externalLabels)
+ 	// System-defined labels take precedence over user-defined external labels.
+ 	labels[StateHistoryLabelKey] = StateHistoryLabelValue
+@@ -279,7 +281,7 @@ func StatesToStream(rule history_model.RuleMeta, states []state.StateTransition,
+ 
+ 	samples := make([]Sample, 0, len(states))
+ 	for _, state := range states {
+-		if !shouldRecord(state) {
++		if !shouldRecord(state) && !logAll {
+ 			continue
+ 		}
+ 
+@@ -537,3 +539,11 @@ func (h *RemoteLokiBackend) getFolderUIDsForFilter(ctx context.Context, query mo
+ 	sort.Strings(uids)
+ 	return uids, nil
+ }
++
++func NewHistorianExportClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger, tracer tracing.Tracer) remoteLokiClient {
++	if cfg.OtelConfig.Enabled {
++		return NewOtelLokiClient(cfg.OtelConfig, metrics)
++	}
++
++	return NewLokiClient(cfg, req, metrics, logger, tracer)
++}
+diff --git a/pkg/services/ngalert/state/historian/loki_http.go b/pkg/services/ngalert/state/historian/loki_http.go
+index c925dc361c5..9304bd20d18 100644
+--- a/pkg/services/ngalert/state/historian/loki_http.go
++++ b/pkg/services/ngalert/state/historian/loki_http.go
+@@ -42,6 +42,8 @@ type LokiConfig struct {
+ 	ExternalLabels    map[string]string
+ 	Encoder           encoder
+ 	MaxQueryLength    time.Duration
++	LogAll            bool
++	OtelConfig        OtelConfig
+ 	MaxQuerySize      int
+ }
+ 
+@@ -81,6 +83,15 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
+ 		MaxQuerySize:      cfg.LokiMaxQuerySize,
+ 		// Snappy-compressed protobuf is the default, same goes for Promtail.
+ 		Encoder: SnappyProtoEncoder{},
++		LogAll:  cfg.LogAll,
++		OtelConfig: OtelConfig{
++			Enabled:       cfg.OtelEnabled,
++			Endpoint:      cfg.OtelEndpoint,
++			EnableTLS:     cfg.OtelEnableTLS,
++			TLSSkipVerify: cfg.OtelTLSSkipVerify,
++			ApiKey:        cfg.OtelApiKey,
++			MaxQuerySize:  cfg.LokiMaxQuerySize,
++		},
+ 	}, nil
+ }
+ 
+diff --git a/pkg/services/ngalert/state/historian/otel_loki_client.go b/pkg/services/ngalert/state/historian/otel_loki_client.go
+new file mode 100644
+index 00000000000..11acafc555e
+--- /dev/null
++++ b/pkg/services/ngalert/state/historian/otel_loki_client.go
+@@ -0,0 +1,350 @@
++package historian
++
++import (
++	"bytes"
++	"compress/gzip"
++	"context"
++	"crypto/tls"
++	"encoding/json"
++	"fmt"
++	"net/http"
++	"net/url"
++	"strconv"
++	"sync"
++	"time"
++
++	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
++	"github.com/unknwon/log"
++	"github.com/valyala/bytebufferpool"
++	"go.opentelemetry.io/collector/pdata/pcommon"
++	"go.opentelemetry.io/collector/pdata/plog"
++	"go.opentelemetry.io/collector/pdata/plog/plogotlp"
++	"google.golang.org/grpc"
++	"google.golang.org/grpc/credentials"
++	"google.golang.org/grpc/credentials/insecure"
++	"google.golang.org/grpc/metadata"
++)
++
++var (
++	_            remoteLokiClient = (*otelLokiClient)(nil)
++	payloadsPool                  = bytebufferpool.Pool{}
++)
++
++type OtelConfig struct {
++	Enabled       bool
++	MaxQuerySize  int
++	WriteTimeout  time.Duration
++	Endpoint      string
++	EnableTLS     bool
++	TLSSkipVerify bool
++	ApiKey        string
++}
++
++func (c OtelConfig) HttpMode() bool {
++	u, err := url.Parse(c.Endpoint)
++	if err != nil {
++		return false
++	}
++
++	return u.Scheme == "http" || u.Scheme == "https"
++}
++
++func (c OtelConfig) GetWriteTimeout() time.Duration {
++	const writeTimeoutDefault = 5 * time.Second
++	if c.WriteTimeout == 0 {
++		return writeTimeoutDefault
++	}
++
++	return c.WriteTimeout
++}
++
++type otelLokiClient struct {
++	grpcClient plogotlp.GRPCClient
++	httpClient *http.Client
++	once       *sync.Once
++	cfg        OtelConfig
++	metrics    *metrics.Historian
++	httpMode   bool
++}
++
++func NewOtelLokiClient(cfg OtelConfig, metrics *metrics.Historian) *otelLokiClient {
++	return &otelLokiClient{
++		once:     &sync.Once{},
++		cfg:      cfg,
++		metrics:  metrics,
++		httpMode: cfg.HttpMode(),
++	}
++}
++
++func (p *otelLokiClient) Ping(context.Context) error {
++	return nil
++}
++
++func (p *otelLokiClient) RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (QueryRes, error) {
++	return QueryRes{}, fmt.Errorf("unsupported operation")
++}
++
++func (p *otelLokiClient) initClient() (err error) {
++	p.once.Do(func() {
++		if p.httpMode {
++			err = p.initHTTPClient(p.cfg)
++			return
++		}
++
++		err = p.initGrpcClient(p.cfg)
++	})
++
++	if err != nil {
++		return fmt.Errorf("failed to create otel loki client: %w", err)
++	}
++
++	return nil
++}
++
++func (p *otelLokiClient) initGrpcClient(cfg OtelConfig) error {
++	conn, err := newOtlpGrpcConn(cfg)
++	if err != nil {
++		return err
++	}
++
++	p.grpcClient = plogotlp.NewGRPCClient(conn)
++	return nil
++}
++
++func (p *otelLokiClient) initHTTPClient(cfg OtelConfig) error {
++	p.httpClient = &http.Client{
++		Transport: getOTLPHTTPConnectionTransport(cfg),
++	}
++	return nil
++}
++
++func (p *otelLokiClient) MaxQuerySize() int {
++	return p.cfg.MaxQuerySize
++}
++
++func (p *otelLokiClient) Push(ctx context.Context, s []Stream) (err error) {
++	const (
++		exportGRPCMethodName = "otelExportGRPC"
++		exportHTTPMethodName = "otelExportHTTP"
++	)
++
++	exportStart := time.Now()
++	logs, size, err := p.pushRequestToLogs(s, time.Now())
++	if err != nil {
++		return err
++	}
++
++	timeoutCtx, cancelFunc := context.WithTimeout(ctx, p.cfg.GetWriteTimeout())
++	defer cancelFunc()
++
++	req := plogotlp.NewExportRequestFromLogs(logs)
++
++	var status string
++	var method string
++	if p.httpMode {
++		method = exportHTTPMethodName
++		p.metrics.WriteDuration.Before(ctx, exportHTTPMethodName, exportStart)
++		status, err = p.pushHttp(timeoutCtx, &req)
++	} else {
++		method = exportGRPCMethodName
++		p.metrics.WriteDuration.Before(ctx, exportGRPCMethodName, exportStart)
++		status, err = p.pushGrpc(timeoutCtx, &req)
++	}
++
++	if err != nil {
++		return fmt.Errorf("failed to export logs: %w", err)
++	}
++
++	p.metrics.WriteDuration.After(ctx, method, status, exportStart)
++	p.metrics.BytesWritten.Add(float64(size))
++	return nil
++}
++
++func (p *otelLokiClient) pushHttp(ctx context.Context, req *plogotlp.ExportRequest) (status string, err error) {
++	const (
++		contentTypeHeader   = "Content-Type"
++		apiKeyHeader        = "apikey"
++		protobufContentType = "application/x-protobuf"
++		contentEncoding     = "Content-Encoding"
++		contentEncodingGzip = "gzip"
++	)
++
++	err = p.initClient()
++	if err != nil {
++		return "", err
++	}
++
++	protoBody, err := req.MarshalProto()
++	if err != nil {
++		return "", fmt.Errorf("failed to marshal logs: %w", err)
++	}
++
++	gzippedBuffer := payloadsPool.Get()
++	defer payloadsPool.Put(gzippedBuffer)
++
++	gzipWriter := gzip.NewWriter(gzippedBuffer)
++	_, err = gzipWriter.Write(protoBody)
++	if err != nil {
++		return "", fmt.Errorf("failed to gzip request: %w", err)
++	}
++
++	err = gzipWriter.Close()
++	if err != nil {
++		return "", fmt.Errorf("failed to close the gzip writer: %w", err)
++	}
++
++	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, p.cfg.Endpoint, bytes.NewReader(gzippedBuffer.Bytes()))
++	if err != nil {
++		return "", fmt.Errorf("failed to create http request: %w", err)
++	}
++
++	httpReq.Header.Set(contentEncoding, contentEncodingGzip)
++	httpReq.Header.Set(contentTypeHeader, protobufContentType)
++	if p.cfg.ApiKey != "" {
++		httpReq.Header.Set(apiKeyHeader, p.cfg.ApiKey)
++	}
++
++	response, err := p.httpClient.Do(httpReq)
++	if err != nil {
++		return "", fmt.Errorf("failed to send http request: %w", err)
++	}
++
++	defer response.Body.Close()
++	return strconv.Itoa(response.StatusCode), nil
++}
++
++func (p *otelLokiClient) pushGrpc(ctx context.Context, req *plogotlp.ExportRequest) (status string, err error) {
++	const (
++		failureCode = "1"
++		successCode = "0"
++	)
++
++	err = p.initClient()
++	if err != nil {
++		return "", err
++	}
++
++	_, err = p.grpcClient.Export(ctx, *req)
++	if err != nil {
++		return failureCode, err
++	}
++
++	return successCode, nil
++}
++
++func (p *otelLokiClient) pushRequestToLogs(sreams []Stream, observedTimestamp time.Time) (plog.Logs, int, error) {
++	logs := plog.NewLogs()
++	if len(sreams) == 0 {
++		return logs, 0, nil
++	}
++	rls := logs.ResourceLogs().AppendEmpty()
++	logSlice := rls.ScopeLogs().AppendEmpty().LogRecords()
++	totalSize := 0
++
++	var lastErr error
++	var errNumber int64
++	for _, stream := range sreams {
++		// Return early if stream does not contain any entries
++		if len(stream.Stream) == 0 {
++			continue
++		}
++
++		totalSize += calcAttributesSize(stream.Stream)
++
++		for _, entry := range stream.Values {
++			lr := logSlice.AppendEmpty()
++			convertEntryToLogRecord(entry, stream.Stream, &lr, observedTimestamp)
++			totalSize += len(entry.V)
++		}
++	}
++
++	if lastErr != nil {
++		lastErr = fmt.Errorf("%d entries failed to process, the last error: %w", errNumber, lastErr)
++	}
++
++	return logs, totalSize, lastErr
++}
++
++func convertEntryToLogRecord(entry Sample, streamAttributes map[string]string, lr *plog.LogRecord, defaultTimestamp time.Time) error {
++	const timestampAttribute = "timestamp"
++
++	observedTimestamp := pcommon.NewTimestampFromTime(defaultTimestamp)
++	lr.SetObservedTimestamp(observedTimestamp)
++
++	var recordAttributes map[string]any
++	err := json.Unmarshal([]byte(entry.V), &recordAttributes)
++	if err != nil {
++		return fmt.Errorf("failed to unmarshal log line: %w", err)
++	}
++
++	var timestamp pcommon.Timestamp
++	if !entry.T.IsZero() {
++		timestamp = pcommon.NewTimestampFromTime(entry.T)
++	} else {
++		timestamp = observedTimestamp
++	}
++
++	lr.SetTimestamp(timestamp)
++	lr.Attributes().FromRaw(recordAttributes)
++	attributes := lr.Attributes()
++	attributes.PutStr(timestampAttribute, timestamp.AsTime().Format(time.RFC3339Nano))
++	for k, v := range streamAttributes {
++		attributes.PutStr(k, v)
++	}
++
++	return nil
++}
++
++func calcAttributesSize(attributes map[string]string) int {
++	size := 0
++	for k, v := range attributes {
++		size += len(k) + len(v)
++	}
++	return size
++}
++
++func newOtlpGrpcConn(cfg OtelConfig) (conn *grpc.ClientConn, err error) {
++	const (
++		apiKeyHeader                 = "apikey"
++		defaultConnectionDialTimeout = 10 * time.Second
++	)
++	creds := insecure.NewCredentials()
++	if cfg.EnableTLS {
++		config := &tls.Config{
++			InsecureSkipVerify: cfg.TLSSkipVerify,
++		}
++		creds = credentials.NewTLS(config)
++		log.Info("Establishing grpcs connection")
++	} else {
++		log.Info("Establishing not encrypted grpc connection")
++	}
++
++	options := []grpc.DialOption{
++		grpc.WithTransportCredentials(creds),
++	}
++
++	if cfg.ApiKey != "" {
++		options = append(options, grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req interface{}, reply interface{},
++			cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
++
++			ctx = metadata.AppendToOutgoingContext(ctx, apiKeyHeader, cfg.ApiKey)
++			return invoker(ctx, method, req, reply, cc, opts...)
++		}))
++	}
++
++	ctx, cancel := context.WithTimeout(context.Background(), defaultConnectionDialTimeout)
++	defer cancel()
++	return grpc.DialContext(ctx, cfg.Endpoint, options...)
++}
++
++func getOTLPHTTPConnectionTransport(otelConfig OtelConfig) *http.Transport {
++	if otelConfig.EnableTLS {
++		return &http.Transport{
++			TLSClientConfig: &tls.Config{
++				InsecureSkipVerify: otelConfig.TLSSkipVerify,
++			},
++		}
++	}
++
++	return &http.Transport{}
++}
+diff --git a/pkg/setting/setting_unified_alerting.go b/pkg/setting/setting_unified_alerting.go
+index 49807306148..2a01887af3a 100644
+--- a/pkg/setting/setting_unified_alerting.go
++++ b/pkg/setting/setting_unified_alerting.go
+@@ -2,6 +2,7 @@ package setting
+ 
+ import (
+ 	"fmt"
++	"os"
+ 	"strconv"
+ 	"strings"
+ 	"time"
+@@ -168,6 +169,12 @@ type UnifiedAlertingStateHistorySettings struct {
+ 	MultiPrimary          string
+ 	MultiSecondaries      []string
+ 	ExternalLabels        map[string]string
++	LogAll                bool
++	OtelEnabled           bool
++	OtelEndpoint          string
++	OtelEnableTLS         bool
++	OtelTLSSkipVerify     bool
++	OtelApiKey            string
+ }
+ 
+ // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
+@@ -416,6 +423,12 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
+ 		MultiPrimary:          stateHistory.Key("primary").MustString(""),
+ 		MultiSecondaries:      splitTrim(stateHistory.Key("secondaries").MustString(""), ","),
+ 		ExternalLabels:        stateHistoryLabels.KeysHash(),
++		LogAll:                stateHistory.Key("log_all").MustBool(false),
++		OtelEnabled:           stateHistory.Key("otel_export_enabled").MustBool(false),
++		OtelEndpoint:          stateHistory.Key("otel_endpoint").MustString(""),
++		OtelEnableTLS:         stateHistory.Key("otel_enable_tls").MustBool(false),
++		OtelTLSSkipVerify:     stateHistory.Key("otel_tls_skip_verify").MustBool(false),
++		OtelApiKey:            os.Getenv("API_KEY"),
+ 	}
+ 	uaCfg.StateHistory = uaCfgStateHistory
+ 
+diff --git a/public/app/core/components/AppChrome/AppChromeService.tsx b/public/app/core/components/AppChrome/AppChromeService.tsx
+index 5c1d88ebb41..712a25110e8 100644
+--- a/public/app/core/components/AppChrome/AppChromeService.tsx
++++ b/public/app/core/components/AppChrome/AppChromeService.tsx
+@@ -49,7 +49,7 @@ export class AppChromeService {
+     chromeless: true, // start out hidden to not flash it on pages without chrome
+     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
+     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
+-    megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
++    megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, false),
+     megaMenuDocked: this.megaMenuDocked,
+     kioskMode: null,
+     layout: PageLayoutType.Canvas,
+diff --git a/public/app/core/components/AppChrome/TopBar/TopSearchBar.tsx b/public/app/core/components/AppChrome/TopBar/TopSearchBar.tsx
+index 92ef3dd70ca..0daf4a268ae 100644
+--- a/public/app/core/components/AppChrome/TopBar/TopSearchBar.tsx
++++ b/public/app/core/components/AppChrome/TopBar/TopSearchBar.tsx
+@@ -12,7 +12,7 @@ import { useSelector } from 'app/types';
+ import { Branding } from '../../Branding/Branding';
+ import { enrichHelpItem } from '../MegaMenu/utils';
+ import { NewsContainer } from '../News/NewsContainer';
+-import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
++// import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
+ import { QuickAdd } from '../QuickAdd/QuickAdd';
+ import { TOP_BAR_LEVEL_HEIGHT } from '../types';
+ 
+@@ -41,7 +41,7 @@ export const TopSearchBar = memo(function TopSearchBar() {
+         <a className={styles.logo} href={homeUrl} title="Go to home">
+           <Branding.MenuLogo className={styles.img} />
+         </a>
+-        <OrganizationSwitcher />
++        {/* <OrganizationSwitcher /> */}
+       </TopSearchBarSection>
+ 
+       <TopSearchBarSection>
+diff --git a/public/app/features/alerting/unified/utils/rule-form.ts b/public/app/features/alerting/unified/utils/rule-form.ts
+index 960e24e07da..75c74e481f7 100644
+--- a/public/app/features/alerting/unified/utils/rule-form.ts
++++ b/public/app/features/alerting/unified/utils/rule-form.ts
+@@ -86,8 +86,8 @@ export const getDefaultFormValues = (): RuleFormValues => {
+     queries: [],
+     recordingRulesQueries: [],
+     condition: '',
+-    noDataState: GrafanaAlertStateDecision.NoData,
+-    execErrState: GrafanaAlertStateDecision.Error,
++    noDataState: GrafanaAlertStateDecision.OK,
++    execErrState: GrafanaAlertStateDecision.OK,
+     evaluateFor: DEFAULT_GROUP_EVALUATION_INTERVAL,
+     evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+     manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false
+diff --git a/public/app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm.tsx b/public/app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm.tsx
+index de2ba28a91f..2cddb5dc311 100644
+--- a/public/app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm.tsx
++++ b/public/app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm.tsx
+@@ -40,10 +40,10 @@ export function SelectionOptionsForm({
+       />
+       {includeAll && (
+         <VariableTextField
+-          defaultValue={allValue ?? ''}
++          defaultValue={allValue ?? '.*'}
+           onBlur={onAllValueChange}
+           name="Custom all value"
+-          placeholder="blank = auto"
++          placeholder=".*"
+           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput}
+         />
+       )}
+diff --git a/public/app/features/profile/UserProfileEditPage.test.tsx b/public/app/features/profile/UserProfileEditPage.test.tsx
+index a8e27dcd80d..b2134a3c546 100644
+--- a/public/app/features/profile/UserProfileEditPage.test.tsx
++++ b/public/app/features/profile/UserProfileEditPage.test.tsx
+@@ -242,26 +242,26 @@ describe('UserProfileEditPage', () => {
+       });
+     });
+ 
+-    describe('and organizations are loading', () => {
+-      it('should show teams loading placeholder', async () => {
+-        await getTestContext({ orgsAreLoading: true });
+-
+-        expect(screen.getByText(/loading organizations\.\.\./i)).toBeInTheDocument();
+-      });
+-    });
+-
+-    describe('and organizations are loaded', () => {
+-      it('should show organizations', async () => {
+-        await getTestContext();
+-
+-        const { orgsTable, orgsEditorRow, orgsViewerRow, orgsAdminRow } = getSelectors();
+-        expect(screen.getByRole('heading', { name: /organizations/i })).toBeInTheDocument();
+-        expect(orgsTable()).toBeInTheDocument();
+-        expect(orgsEditorRow()).toBeInTheDocument();
+-        expect(orgsViewerRow()).toBeInTheDocument();
+-        expect(orgsAdminRow()).toBeInTheDocument();
+-      });
+-    });
++    // describe('and organizations are loading', () => {
++    //   it('should show teams loading placeholder', async () => {
++    //     await getTestContext({ orgsAreLoading: true });
++
++    //     expect(screen.getByText(/loading organizations\.\.\./i)).toBeInTheDocument();
++    //   });
++    // });
++
++    // describe('and organizations are loaded', () => {
++    //   it('should show organizations', async () => {
++    //     await getTestContext();
++
++    //     const { orgsTable, orgsEditorRow, orgsViewerRow, orgsAdminRow } = getSelectors();
++    //     expect(screen.getByRole('heading', { name: /organizations/i })).toBeInTheDocument();
++    //     expect(orgsTable()).toBeInTheDocument();
++    //     expect(orgsEditorRow()).toBeInTheDocument();
++    //     expect(orgsViewerRow()).toBeInTheDocument();
++    //     expect(orgsAdminRow()).toBeInTheDocument();
++    //   });
++    // });
+ 
+     describe('and sessions are loading', () => {
+       it('should show teams loading placeholder', async () => {
+@@ -300,24 +300,24 @@ describe('UserProfileEditPage', () => {
+       });
+     });
+ 
+-    describe('and organization is changed', () => {
+-      it('should call changeUserOrg', async () => {
+-        const { props } = await getTestContext();
+-        const orgsAdminSelectButton = () =>
+-          within(getSelectors().orgsAdminRow()).getByRole('button', {
+-            name: /select organisation/i,
+-          });
+-
+-        await userEvent.click(orgsAdminSelectButton());
+-
+-        await waitFor(() => expect(props.changeUserOrg).toHaveBeenCalledTimes(1));
+-        expect(props.changeUserOrg).toHaveBeenCalledWith({
+-          name: 'Third',
+-          orgId: 2,
+-          role: 'Admin',
+-        });
+-      });
+-    });
++    // describe('and organization is changed', () => {
++    //   it('should call changeUserOrg', async () => {
++    //     const { props } = await getTestContext();
++    //     const orgsAdminSelectButton = () =>
++    //       within(getSelectors().orgsAdminRow()).getByRole('button', {
++    //         name: /select organisation/i,
++    //       });
++
++    //     await userEvent.click(orgsAdminSelectButton());
++
++    //     await waitFor(() => expect(props.changeUserOrg).toHaveBeenCalledTimes(1));
++    //     expect(props.changeUserOrg).toHaveBeenCalledWith({
++    //       name: 'Third',
++    //       orgId: 2,
++    //       role: 'Admin',
++    //     });
++    //   });
++    // });
+ 
+     describe('and session is revoked', () => {
+       it('should call revokeUserSession', async () => {
+diff --git a/public/app/features/profile/UserProfileEditPage.tsx b/public/app/features/profile/UserProfileEditPage.tsx
+index 4de0ebee3d4..5cd73ed391f 100644
+--- a/public/app/features/profile/UserProfileEditPage.tsx
++++ b/public/app/features/profile/UserProfileEditPage.tsx
+@@ -12,7 +12,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
+ import { t } from 'app/core/internationalization';
+ import { StoreState } from 'app/types';
+ 
+-import UserOrganizations from './UserOrganizations';
++// import UserOrganizations from './UserOrganizations';
+ import UserProfileEditForm from './UserProfileEditForm';
+ import UserSessions from './UserSessions';
+ import { UserTeams } from './UserTeams';
+@@ -108,7 +108,7 @@ export function UserProfileEditPage({
+       <SharedPreferences resourceUri="user" preferenceType="user" />
+       <Stack direction="column" gap={6}>
+         <UserTeams isLoading={teamsAreLoading} teams={teams} />
+-        <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
++        {/* <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} /> */}
+         <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
+       </Stack>
+     </Stack>

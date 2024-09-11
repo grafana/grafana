@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
@@ -50,6 +51,16 @@ const (
 	chinaConsoleURL   = "console.amazonaws.cn"
 )
 
+type SQLExpressionGroupBy struct {
+	Expressions []dataquery.QueryEditorGroupByExpression `json:"expressions"`
+	Type        dataquery.QueryEditorArrayExpressionType `json:"type"`
+}
+
+type sqlExpression struct {
+	dataquery.SQLExpression
+	GroupBy *SQLExpressionGroupBy `json:"groupBy,omitempty"`
+}
+
 type CloudWatchQuery struct {
 	logger            log.Logger
 	RefId             string
@@ -59,6 +70,7 @@ type CloudWatchQuery struct {
 	MetricName        string
 	Statistic         string
 	Expression        string
+	Sql               sqlExpression
 	SqlExpression     string
 	ReturnData        bool
 	Dimensions        map[string][]string
@@ -210,8 +222,9 @@ var validMetricDataID = regexp.MustCompile(`^[a-z][a-zA-Z0-9_]*$`)
 
 type metricsDataQuery struct {
 	dataquery.CloudWatchMetricsQuery
-	Type              string `json:"type"`
-	TimezoneUTCOffset string `json:"timezoneUTCOffset"`
+	Sql               *sqlExpression `json:"sql,omitempty"`
+	Type              string         `json:"type"`
+	TimezoneUTCOffset string         `json:"timezoneUTCOffset"`
 }
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
@@ -254,6 +267,10 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			cwQuery.MetricQueryType = *mdq.MetricQueryType
 		}
 
+		if mdq.Sql != nil {
+			cwQuery.Sql = *mdq.Sql
+		}
+
 		if mdq.SqlExpression != nil {
 			cwQuery.SqlExpression = *mdq.SqlExpression
 		}
@@ -294,7 +311,7 @@ func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery) {
 func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time,
 	defaultRegionValue string, crossAccountQueryingEnabled bool) error {
 	if metricsDataQuery.Statistic == nil && metricsDataQuery.Statistics == nil {
-		return fmt.Errorf("query must have either statistic or statistics field")
+		return errorsource.DownstreamError(fmt.Errorf("query must have either statistic or statistics field"), false)
 	}
 
 	var err error

@@ -12,7 +12,8 @@ type IsLoadingCallback = (loading: boolean) => void;
 export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoadingCallback) => {
   if (api && api.endpoint) {
     // If API endpoint origin matches Grafana origin, don't call it.
-    if (requestMatchesGrafanaOrigin(api.endpoint)) {
+    const interpolatedUrl = interpolateVariables(api.endpoint);
+    if (requestMatchesGrafanaOrigin(interpolatedUrl)) {
       appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
       updateLoadingStateCallback && updateLoadingStateCallback(false);
       return;

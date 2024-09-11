@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { PluginExtension, PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
@@ -83,7 +83,7 @@ describe('Plugin Extension Validators', () => {
   describe('assertExtensionPointIdIsValid()', () => {
     it('should throw an error if the extensionPointId does not have the right prefix', () => {
       expect(() => {
-        assertExtensionPointIdIsValid({
+        assertExtensionPointIdIsValid('my-org-app', {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
@@ -94,14 +94,14 @@ describe('Plugin Extension Validators', () => {
 
     it('should NOT throw an error if the extensionPointId is correct', () => {
       expect(() => {
-        assertExtensionPointIdIsValid({
+        assertExtensionPointIdIsValid('my-org-app', {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
           extensionPointId: 'grafana/some-page/extension-point-a',
         });
 
-        assertExtensionPointIdIsValid({
+        assertExtensionPointIdIsValid('my-org-app', {
           type: PluginExtensionTypes.link,
           title: 'Title',
           description: 'Description',
@@ -274,7 +274,7 @@ describe('Plugin Extension Validators', () => {
 
     it('should return TRUE if we pass in a component wrapped with React.memo()', () => {
       const Component = () => <div>Some text</div>;
-      const wrapped = React.memo(() => (
+      const wrapped = memo(() => (
         <div>
           <Component />
         </div>

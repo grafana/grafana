@@ -1,5 +1,6 @@
 import { cx, css } from '@emotion/css';
-import React, { forwardRef, HTMLAttributes } from 'react';
+import { forwardRef, HTMLAttributes } from 'react';
+import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -81,7 +82,7 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
       verticalAlign: 'baseline',
       backgroundColor: colors.color,
       color: theme.v1.palette.gray98,
-      whiteSpace: 'nowrap',
+      whiteSpace: 'pre',
       textShadow: 'none',
       padding: '3px 6px',
       borderRadius: theme.shape.radius.default,

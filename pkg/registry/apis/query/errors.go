@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 var QueryError = errutil.BadRequest("query.error").MustTemplate(

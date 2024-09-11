@@ -16,6 +16,27 @@ labels:
     - oss
 title: Bar chart
 weight: 100
+refs:
+  standard-calculations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
+  standard-options-definitions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options/#max
+  add-a-field-override:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides/#add-a-field-override
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/#add-a-field-override
+  configure-data-links:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links/
 ---
 
 # Bar chart
@@ -45,6 +66,10 @@ If you have multiple time series or tables you first need to join them using a j
 have multiple time series and you want to compare their last and max value add the **Reduce** transform and specify **Max** and **Last** as options under **Calculations**.
 
 {{< figure src="/static/img/docs/bar-chart-panel/bar-chart-time-series-v8-0.png" max-width="1025px" caption="Bar chart time series example" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Bar chart options
 
@@ -129,6 +154,22 @@ Transparency of the gradient is calculated based on the values on the y-axis. Op
 
 Gradient color is generated based on the hue of the line color.
 
+#### Scheme gradient mode
+
+The **Gradient mode** option located under the **Graph styles** has a mode named **Scheme**. When you enable **Scheme**, the bar receives a gradient color defined from the selected **Color scheme**.
+
+##### From thresholds
+
+If the **Color scheme** is set to **From thresholds (by value)** and **Gradient mode** is set to **Scheme**, then the bar color changes as they cross the defined thresholds.
+
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_thresholds_bars.png" max-width="1200px" caption="Color scheme: From thresholds" >}}
+
+##### Gradient color schemes
+
+The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
+
+{{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+
 ## Tooltip options
 
 {{< docs/shared lookup="visualizations/tooltip-options-1.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -167,7 +208,7 @@ Display all Y-axes on the right side.
 
 Hide all axes.
 
-To selectively hide axes, [Add a field override][] that targets specific fields.
+To selectively hide axes, [Add a field override](ref:add-a-field-override) that targets specific fields.
 
 ### Label
 
@@ -187,7 +228,7 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a defined point.
 
-You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions][].
+You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions](ref:standard-options-definitions).
 
 {{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+2" >}}
 
@@ -210,17 +251,3 @@ You can set standard min/max options to define hard limits of the Y-axis. For mo
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
-[Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides#add-a-field-override"
-
-[standard calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[standard calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-
-[Standard options definitions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options#max"
-[Standard options definitions]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options#max"
-
-[Configure data links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links"
-[Configure data links]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links"
-{{% /docs/reference %}}

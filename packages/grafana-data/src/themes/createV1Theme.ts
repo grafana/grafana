@@ -1,4 +1,4 @@
-import { GrafanaTheme, GrafanaThemeCommons, GrafanaThemeType } from '../types';
+import { GrafanaTheme, GrafanaThemeCommons, GrafanaThemeType } from '../types/theme';
 
 import { GrafanaTheme2 } from './types';
 

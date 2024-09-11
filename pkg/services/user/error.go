@@ -3,7 +3,7 @@ package user
 import (
 	"errors"
 
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 var (
@@ -22,4 +22,5 @@ var (
 	ErrEmptyUsernameAndEmail = errutil.BadRequest(
 		"user.empty-username-and-email", errutil.WithPublicMessage("Need to specify either username or email"),
 	)
+	ErrPasswordMissmatch = errutil.BadRequest("user.password-missmatch", errutil.WithPublicMessage("Invalid old password"))
 )

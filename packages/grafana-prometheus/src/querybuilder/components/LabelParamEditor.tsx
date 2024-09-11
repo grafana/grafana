@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/LabelParamEditor.tsx
+import { useState } from 'react';
 
 import { DataSourceApi, SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';

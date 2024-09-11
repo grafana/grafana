@@ -59,11 +59,15 @@ type Interactions = {
   // User clicks on history nodes to navigate exploration history
   history_step_clicked: {
     type: (
-      // One of the the standard step types
+      // One of the standard step types
       | TrailStepType
       // The special metric step type that is created when the user de-selects the current metric
       | 'metric-clear'
     );
+    // Which step index was clicked on
+    step: number;
+    // The total number of steps currently in the trail
+    numberOfSteps: number;
   };
   // User clicks on tab to change the action view
   metric_action_view_changed: { view: ActionViewType };
@@ -90,6 +94,21 @@ type Interactions = {
     );
     // The number of search terms activated when the selection was made
     searchTermCount: number | null;
+  };
+  // User opens/closes the prefix filter dropdown
+  prefix_filter_clicked: {
+    from: (
+      // By clicking "Select" on a metric panel when on the no-metric-selected metrics list view
+      | 'metric_list'
+      // By clicking "Select" on a metric panel when on the related metrics tab
+      | 'related_metrics'
+    )
+    action: (
+      // Opens the dropdown
+      | 'open'
+      // Closes the dropdown
+      | 'close'
+    )
   };
 };
 

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, PluginSignatureType } from '@grafana/data';
 
@@ -26,10 +25,17 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   }
 
   if (Boolean(version)) {
-    info.push({
-      label: 'Version',
-      value: version,
-    });
+    if (plugin.isManaged) {
+      info.push({
+        label: 'Version',
+        value: 'Managed by Grafana',
+      });
+    } else {
+      info.push({
+        label: 'Version',
+        value: version,
+      });
+    }
   }
 
   if (Boolean(plugin.orgName)) {

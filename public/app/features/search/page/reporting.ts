@@ -10,6 +10,7 @@ interface QueryProps {
   query: string;
   tagCount: number;
   includePanels?: boolean;
+  deleted: boolean;
 }
 
 export const reportDashboardListViewed = (eventTrackingNamespace: EventTrackingNamespace, query: QueryProps) => {
@@ -47,5 +48,6 @@ const getQuerySearchContext = (query: QueryProps) => {
     tagCount: query.tagCount ?? 0,
     queryLength: query.query?.length ?? 0,
     includePanels: query.includePanels ?? false,
+    deleted: query.deleted ?? false,
   };
 };

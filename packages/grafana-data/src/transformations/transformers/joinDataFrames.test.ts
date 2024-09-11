@@ -1,5 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { getFieldDisplayName } from '../../field';
+import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { fieldMatchers } from '../matchers';
@@ -32,7 +32,7 @@ describe('align frames', () => {
 
     // the following does not work for tabular joins where the joined on field value is duplicated
     // the time will never have a duplicated time which is joined on
-    it('should perform an outer join', () => {
+    it('should perform an outer join - as expected on time series data', () => {
       const out = joinDataFrames({ frames: [series1, series2] })!;
       expect(
         out.fields.map((f) => ({
@@ -85,7 +85,7 @@ describe('align frames', () => {
       `);
     });
 
-    it('should perform an inner join', () => {
+    it('should perform an inner join - as expected on time series data', () => {
       const out = joinDataFrames({ frames: [series1, series2], mode: JoinMode.inner })!;
       expect(
         out.fields.map((f) => ({
@@ -139,7 +139,11 @@ describe('align frames', () => {
 
     const tableData1 = toDataFrame({
       fields: [
-        { name: 'gender', type: FieldType.string, values: ['MALE', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'FEMALE'] },
+        {
+          name: 'gender',
+          type: FieldType.string,
+          values: ['NON-BINARY', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'NON-BINARY'],
+        },
         {
           name: 'day',
           type: FieldType.string,
@@ -150,12 +154,12 @@ describe('align frames', () => {
     });
     const tableData2 = toDataFrame({
       fields: [
-        { name: 'gender', type: FieldType.string, values: ['MALE', 'FEMALE'] },
-        { name: 'count', type: FieldType.number, values: [103, 95] },
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'NON-BINARY', 'FEMALE'] },
+        { name: 'count', type: FieldType.number, values: [103, 95, 201] },
       ],
     });
 
-    it('should perform an outer join with duplicated values to join on', () => {
+    it('should perform an outer join with duplicated values to join on - as expected for tabular data', () => {
       const out = joinDataFrames({
         frames: [tableData1, tableData2],
         joinBy: fieldMatchers.get(FieldMatcherID.byName).get('gender'),
@@ -171,12 +175,12 @@ describe('align frames', () => {
           {
             "name": "gender",
             "values": [
-              "MALE",
+              "NON-BINARY",
               "MALE",
               "MALE",
               "FEMALE",
               "FEMALE",
-              "FEMALE",
+              "NON-BINARY",
             ],
           },
           {
@@ -204,11 +208,72 @@ describe('align frames', () => {
           {
             "name": "count",
             "values": [
-              103,
-              103,
-              103,
               95,
+              103,
+              103,
+              201,
+              201,
               95,
+            ],
+          },
+        ]
+      `);
+    });
+
+    it('should perform an inner join with duplicated values to join on - as expected for tabular data', () => {
+      const out = joinDataFrames({
+        frames: [tableData1, tableData2],
+        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('gender'),
+        mode: JoinMode.inner,
+      })!;
+      expect(
+        out.fields.map((f) => ({
+          name: f.name,
+          values: f.values,
+        }))
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "name": "gender",
+            "values": [
+              "NON-BINARY",
+              "MALE",
+              "MALE",
+              "FEMALE",
+              "FEMALE",
+              "NON-BINARY",
+            ],
+          },
+          {
+            "name": "day",
+            "values": [
+              "Wednesday",
+              "Tuesday",
+              "Monday",
+              "Wednesday",
+              "Tuesday",
+              "Monday",
+            ],
+          },
+          {
+            "name": "count",
+            "values": [
+              18,
+              72,
+              13,
+              17,
+              71,
+              7,
+            ],
+          },
+          {
+            "name": "count",
+            "values": [
+              95,
+              103,
+              103,
+              201,
+              201,
               95,
             ],
           },
@@ -410,6 +475,38 @@ describe('align frames', () => {
         "Muta",
       ]
     `);
+  });
+
+  it('add frame.name as field.labels.name only when field.labels.name does not exist', () => {
+    const series1 = toDataFrame({
+      name: 'Frame A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'Metric 1', type: FieldType.number, values: [1, 100], labels: { name: 'bar' } },
+      ],
+    });
+
+    const series2 = toDataFrame({
+      name: 'Frame B',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Metric 2', type: FieldType.number, values: [150] },
+      ],
+    });
+
+    const series3 = toDataFrame({
+      name: 'Frame C',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Value', type: FieldType.number, values: [150] }, // weird that in this "Value" case it doesnt get moved into field.labels.name
+      ],
+    });
+
+    const out = joinDataFrames({ frames: [series1, series2, series3] })!;
+
+    expect(out.fields[1].labels).toEqual({ name: 'bar' });
+    expect(out.fields[2].labels).toEqual({ name: 'Frame B' });
+    expect(out.fields[3].labels).toEqual({});
   });
 
   it('supports duplicate times', () => {

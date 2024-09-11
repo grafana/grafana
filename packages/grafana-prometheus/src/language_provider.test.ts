@@ -1,10 +1,11 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_provider.test.ts
 import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
 import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
-import { PrometheusCacheLevel } from './types';
+import { PrometheusCacheLevel, PromQuery } from './types';
 
 const now = new Date(1681300293392).getTime();
 const timeRangeDurationSeconds = 1;
@@ -303,6 +304,221 @@ describe('Language completion provider', () => {
         },
         undefined
       );
+    });
+  });
+
+  describe('fetchLabels', () => {
+    const tr = getMockTimeRange();
+    const getParams = (requestSpy: ReturnType<typeof jest.spyOn>) => {
+      // Following is equal to `URLSearchParams().toString()`
+      return requestSpy.mock.calls[0][2]?.toString() ?? 'undefined';
+    };
+
+    describe('with POST', () => {
+      let languageProvider: LanguageProvider;
+      beforeEach(() => {
+        languageProvider = new LanguageProvider({
+          ...defaultDatasource,
+          httpMethod: 'POST',
+        } as PrometheusDatasource);
+      });
+
+      it('should send query metrics to the POST request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'C',
+            expr: 'go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        const params = getParams(requestSpy);
+        expect(params).toMatch(encodeURI('match[]=go_gc_pauses_seconds_bucket'));
+      });
+
+      it('should send metrics from complex query to the POST request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'C',
+            expr: 'histogram_quantile(0.95, sum(rate(go_gc_pauses_seconds_bucket[$__rate_interval])) by (le))',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        const params = getParams(requestSpy);
+        expect(params).toMatch(encodeURI('match[]=go_gc_pauses_seconds_bucket'));
+      });
+
+      it('should send metrics from multiple queries to the POST request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'B',
+            expr: 'process_cpu_seconds_total',
+          },
+          {
+            refId: 'C',
+            expr: 'go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        const params = getParams(requestSpy);
+        expect(params).toMatch(encodeURI('match[]=process_cpu_seconds_total&match[]=go_gc_pauses_seconds_bucket'));
+      });
+
+      it('should send metrics from a query contains multiple metrics to the POST request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'B',
+            expr: 'process_cpu_seconds_total + go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        const params = getParams(requestSpy);
+        expect(params).toMatch(encodeURI('match[]=process_cpu_seconds_total&match[]=go_gc_pauses_seconds_bucket'));
+      });
+
+      it('should send metrics from a query contains multiple metrics and queries to the POST request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'A',
+            expr: 'histogram_quantile(0.95, sum(rate(process_max_fds[$__rate_interval])) by (le)) + go_gc_heap_frees_by_size_bytes_bucket',
+          },
+          {
+            refId: 'B',
+            expr: 'process_cpu_seconds_total + go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        const params = getParams(requestSpy);
+        expect(params).toMatch(
+          encodeURI(
+            'match[]=process_max_fds&match[]=go_gc_heap_frees_by_size_bytes_bucket&match[]=process_cpu_seconds_total&match[]=go_gc_pauses_seconds_bucket'
+          )
+        );
+      });
+    });
+
+    describe('with GET', () => {
+      let languageProvider: LanguageProvider;
+      beforeEach(() => {
+        languageProvider = new LanguageProvider({
+          ...defaultDatasource,
+          httpMethod: 'GET',
+        } as PrometheusDatasource);
+      });
+
+      it('should send query metrics to the GET request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'C',
+            expr: 'go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(requestSpy.mock.calls[0][0]).toMatch(encodeURI('match[]=go_gc_pauses_seconds_bucket'));
+      });
+
+      it('should send metrics from complex query to the GET request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'C',
+            expr: 'histogram_quantile(0.95, sum(rate(go_gc_pauses_seconds_bucket[$__rate_interval])) by (le))',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(requestSpy.mock.calls[0][0]).toMatch(encodeURI('match[]=go_gc_pauses_seconds_bucket'));
+      });
+
+      it('should send metrics from multiple queries to the GET request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'B',
+            expr: 'process_cpu_seconds_total',
+          },
+          {
+            refId: 'C',
+            expr: 'go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(requestSpy.mock.calls[0][0]).toMatch(
+          encodeURI('match[]=process_cpu_seconds_total&match[]=go_gc_pauses_seconds_bucket')
+        );
+      });
+
+      it('should send metrics from a query contains multiple metrics to the GET request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'B',
+            expr: 'process_cpu_seconds_total + go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(requestSpy.mock.calls[0][0]).toMatch(
+          encodeURI('match[]=process_cpu_seconds_total&match[]=go_gc_pauses_seconds_bucket')
+        );
+      });
+
+      it('should send metrics from a query contains multiple metrics and queries to the GET request', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'A',
+            expr: 'histogram_quantile(0.95, sum(rate(process_max_fds[$__rate_interval])) by (le)) + go_gc_heap_frees_by_size_bytes_bucket',
+          },
+          {
+            refId: 'B',
+            expr: 'process_cpu_seconds_total + go_gc_pauses_seconds_bucket',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(requestSpy.mock.calls[0][0]).toMatch(
+          encodeURI(
+            'match[]=process_max_fds&match[]=go_gc_heap_frees_by_size_bytes_bucket&match[]=process_cpu_seconds_total&match[]=go_gc_pauses_seconds_bucket'
+          )
+        );
+      });
+
+      it('should dont send match[] parameter if there is no metric', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'A',
+            expr: '',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(requestSpy.mock.calls[0][0].indexOf('match[]')).toEqual(-1);
+      });
     });
   });
 

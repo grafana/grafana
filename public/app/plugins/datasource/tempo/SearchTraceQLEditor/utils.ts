@@ -1,12 +1,38 @@
 import { startCase, uniq } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { AdHocVariableFilter, ScopedVars, SelectableValue } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { VariableFormatID } from '@grafana/schema';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { intrinsics } from '../traceql/traceql';
 import { Scope } from '../types';
 
+export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: ScopedVars) => {
+  const interpolatedFilters = filters.map((filter) => {
+    const updatedFilter = {
+      ...filter,
+      tag: getTemplateSrv().replace(filter.tag ?? '', scopedVars ?? {}),
+    };
+
+    if (filter.value) {
+      updatedFilter.value =
+        typeof filter.value === 'string'
+          ? getTemplateSrv().replace(filter.value ?? '', scopedVars ?? {}, VariableFormatID.Pipe)
+          : filter.value.map((v) => getTemplateSrv().replace(v ?? '', scopedVars ?? {}, VariableFormatID.Pipe));
+    }
+
+    return updatedFilter;
+  });
+
+  return interpolatedFilters;
+};
+
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
+  if (!filters) {
+    return '';
+  }
+
   return `{${filters
     .filter((f) => f.tag && f.operator && f.value?.length)
     .map((f) => `${scopeHelper(f)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`)
@@ -22,6 +48,7 @@ const valueHelper = (f: TraceqlFilter) => {
   }
   return f.value;
 };
+
 const scopeHelper = (f: TraceqlFilter) => {
   // Intrinsic fields don't have a scope
   if (intrinsics.find((t) => t === f.tag)) {
@@ -31,6 +58,7 @@ const scopeHelper = (f: TraceqlFilter) => {
     (f.scope === TraceqlSearchScope.Resource || f.scope === TraceqlSearchScope.Span ? f.scope?.toLowerCase() : '') + '.'
   );
 };
+
 const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
   if (f.tag === 'duration') {
     const durationType = filters.find((f) => f.id === 'duration-type');
@@ -40,6 +68,20 @@ const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
     return f.tag;
   }
   return f.tag;
+};
+
+export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[]) => {
+  return `{${filters
+    .filter((f) => f.key && f.operator && f.value)
+    .map((f) => `${f.key}${f.operator}${adHocValueHelper(f)}`)
+    .join(' && ')}}`;
+};
+
+const adHocValueHelper = (f: AdHocVariableFilter) => {
+  if (intrinsics.find((t) => t === f.key)) {
+    return f.value;
+  }
+  return `"${f.value}"`;
 };
 
 export const filterScopedTag = (f: TraceqlFilter) => {

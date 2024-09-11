@@ -173,6 +173,11 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
+	perr := hs.pluginErrorResolver.PluginError(c.Req.Context(), pluginID)
+	if perr != nil {
+		return response.Error(http.StatusInternalServerError, perr.PublicMessage(), perr)
+	}
+
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		return response.Error(http.StatusNotFound, "Plugin not found, no installed plugin with that id", nil)
@@ -451,6 +456,8 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
+	hs.log.Info("Plugin install/update requested", "pluginId", pluginID, "user", c.Login)
+
 	compatOpts := plugins.NewCompatOpts(hs.Cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, compatOpts)
 	if err != nil {
@@ -481,6 +488,9 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 
 func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
+
+	hs.log.Info("Plugin uninstall requested", "pluginId", pluginID, "user", c.Login)
+
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
 		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
@@ -539,8 +549,8 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
 	evaluator := evalAllPermissions(plugin.JSONData.IAM.Permissions)
-	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.accesscontrolService, c)
-	if hs.Cfg.RBACSingleOrganization {
+	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.authnService, c)
+	if hs.Cfg.RBAC.SingleOrganization {
 		// In a single organization setup, no need for a global check
 		hasAccess = ac.HasAccess(hs.AccessControl, c)
 	}

@@ -1,7 +1,8 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/metrics-modal/MetricsModal.tsx
 import { cx } from '@emotion/css';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import debounce from 'debounce-promise';
-import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';

@@ -1,5 +1,6 @@
 import { dateTime, locationUtil, TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { SceneObjectRef, VizPanel } from '@grafana/scenes';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
@@ -161,6 +162,12 @@ export function getLocalTimeZone() {
 
   return '&tz=' + encodeURIComponent(options.timeZone);
 }
+
+export const getTrackingSource = (
+  panel?: PanelModel | SceneObjectRef<VizPanel> | { timeFrom?: string; id: number }
+) => {
+  return panel ? 'panel' : 'dashboard';
+};
 
 export const shareDashboardType: {
   [key: string]: string;

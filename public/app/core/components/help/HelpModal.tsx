@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
@@ -27,7 +27,7 @@ const getShortcuts = (modKey: string) => {
           description: t('help-modal.shortcuts-description.exit-edit/setting-views', 'Exit edit/setting views'),
         },
         {
-          keys: [`${modKey} + h`],
+          keys: ['?'],
           description: t('help-modal.shortcuts-description.show-all-shortcuts', 'Show all keyboard shortcuts'),
         },
         { keys: ['c', 't'], description: t('help-modal.shortcuts-description.change-theme', 'Change theme') },

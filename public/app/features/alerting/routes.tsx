@@ -62,6 +62,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceRead,
         AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingSilenceRead,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
@@ -79,10 +80,6 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/silence/:id/edit',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingInstanceUpdate,
-        AccessControlAction.AlertingInstancesExternalWrite,
-      ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
       ),
@@ -95,6 +92,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
+      ),
+    },
+    {
+      path: '/alerting/notifications/templates/*',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+      ]),
+      component: importAlertingComponent(
+        () => import(/* webpackChunkName: "Templates" */ 'app/features/alerting/unified/Templates')
       ),
     },
     {
@@ -160,6 +167,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/alerting/history/',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "HistoryPage" */ 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryPage'
+          )
+      ),
+    },
+    {
       path: '/alerting/new/:type?',
       pageClass: 'page-alerting',
       roles: evaluateAccess([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]),
@@ -207,7 +224,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       path: '/alerting/admin',
       roles: () => ['Admin'],
       component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertingAdmin" */ 'app/features/alerting/unified/Admin')
+        () => import(/* webpackChunkName: "AlertingSettings" */ 'app/features/alerting/unified/Settings')
       ),
     },
   ];

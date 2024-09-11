@@ -476,6 +476,17 @@ describe('matchLabels', () => {
     expect(result).toHaveProperty('matches', false);
     expect(result.labelsMatch).toMatchSnapshot();
   });
+
+  it('does not match unanchored regular expressions', () => {
+    const result = matchLabels([['foo', MatcherOperator.regex, 'bar']], [['foo', 'barbarbar']]);
+    // This may seem unintuitive, but this is how Alertmanager matches, as it anchors the regex
+    expect(result.matches).toEqual(false);
+  });
+
+  it('matches regular expressions with wildcards', () => {
+    const result = matchLabels([['foo', MatcherOperator.regex, '.*bar.*']], [['foo', 'barbarbar']]);
+    expect(result.matches).toEqual(true);
+  });
 });
 
 describe('unquoteRouteMatchers', () => {

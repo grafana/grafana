@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 import useDebounce from 'react-use/lib/useDebounce';
 
@@ -22,17 +22,17 @@ export function QueryValidator({ db, query, onValidate, range }: QueryValidatorP
 
   const styles = useMemo(() => {
     return {
-      error: css`
-        color: ${theme.colors.error.text};
-        font-size: ${theme.typography.bodySmall.fontSize};
-        font-family: ${theme.typography.fontFamilyMonospace};
-      `,
-      valid: css`
-        color: ${theme.colors.success.text};
-      `,
-      info: css`
-        color: ${theme.colors.text.secondary};
-      `,
+      error: css({
+        color: theme.colors.error.text,
+        fontSize: theme.typography.bodySmall.fontSize,
+        fontFamily: theme.typography.fontFamilyMonospace,
+      }),
+      valid: css({
+        color: theme.colors.success.text,
+      }),
+      info: css({
+        color: theme.colors.text.secondary,
+      }),
     };
   }, [theme]);
 

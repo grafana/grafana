@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { createRef, PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
 import {
@@ -38,7 +38,7 @@ interface State {
 export class AnnoListPanel extends PureComponent<Props, State> {
   style = getStyles(config.theme2);
   subs = new Subscription();
-  tagListRef = React.createRef<HTMLUListElement>();
+  tagListRef = createRef<HTMLUListElement>();
 
   constructor(props: Props) {
     super(props);
@@ -146,10 +146,10 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     const params = {
       from: this._timeOffset(anno.time, options.navigateBefore, true),
       to: this._timeOffset(anno.timeEnd ?? anno.time, options.navigateAfter, false),
-      viewPanel: options.navigateToPanel ? anno.panelId : undefined,
+      viewPanel: options.navigateToPanel && anno.panelId ? anno.panelId : undefined,
     };
 
-    if (current?.uid === anno.dashboardUID) {
+    if (!anno.dashboardUID || current?.uid === anno.dashboardUID) {
       locationService.partial(params);
       return;
     }
@@ -296,13 +296,13 @@ export class AnnoListPanel extends PureComponent<Props, State> {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
-  noneFound: css`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: calc(100% - 30px);
-  `,
+  noneFound: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 'calc(100% - 30px)',
+  }),
   filter: css({
     alignItems: 'center',
     display: 'flex',

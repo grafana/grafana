@@ -15,13 +15,29 @@ labels:
 menuTitle: Configure Prometheus
 title: Configure the Prometheus data source
 weight: 200
+refs:
+  intro-to-prometheus:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/
+  exemplars:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/
+  configure-data-links-value-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-data-links/#value-variables
 ---
 
 # Configure Prometheus
 
 Grafana ships with built-in support for Prometheus. If you are new to Prometheus the following documentation will help you get started working with Prometheus and Grafana:
 
-- [What is Prometheus?][intro-to-prometheus]
+- [What is Prometheus?](ref:intro-to-prometheus)
 - [Prometheus data model](https://prometheus.io/docs/concepts/data_model/)
 - [Getting started](https://prometheus.io/docs/prometheus/latest/getting_started/)
 
@@ -32,8 +48,8 @@ To add the Prometheus data source, complete the following steps:
 1. Click **Connections** in the left-side menu.
 1. Under **Connections**, click **Add new connection**.
 1. Enter `Prometheus` in the search bar.
-1. Select **Prometheus data source**.
-1. Click **Create a Prometheus data source** in the upper right.
+1. Select **Prometheus**.
+1. Click **Add new data source** in the upper right.
 
 You will be taken to the **Settings** tab where you will set up your Prometheus configuration.
 
@@ -119,11 +135,11 @@ Following are additional configuration options.
 
 ### Exemplars
 
-Support for exemplars is available only for the Prometheus data source. If this is your first time working with exemplars see [Introduction to exemplars][exemplars]. An exemplar is a specific trace representative of measurement taken in a given time interval.
+Support for exemplars is available only for the Prometheus data source. If this is your first time working with exemplars see [Introduction to exemplars](ref:exemplars). An exemplar is a specific trace representative of measurement taken in a given time interval.
 
 - **Internal link** - Toggle on to enable an internal link. When enabled, reveals the data source selector. Select the backend tracing data store for your exemplar data.
 
-- **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro][configure-data-links-value-variables].
+- **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro](ref:configure-data-links-value-variables).
 
 - **Data source** - _(Visible if you **enable** `Internal link`)_ The data source the exemplar will navigate to.
 
@@ -132,14 +148,3 @@ Support for exemplars is available only for the Prometheus data source. If this 
 - **Label name** - The name of the field in the `labels` object used to obtain the traceID property.
 
 - **Remove exemplar link** - Click to remove existing links.
-
-{{% docs/reference %}}
-[configure-data-links-value-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links#value-variables"
-[configure-data-links-value-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links#value-variables"
-
-[exemplars]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
-[exemplars]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
-
-[intro-to-prometheus]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-to-prometheus"
-[intro-to-prometheus]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-to-prometheus"
-{{% /docs/reference %}}

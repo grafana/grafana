@@ -1,14 +1,13 @@
 import { action } from '@storybook/addon-actions';
 import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
-import React, { CSSProperties, useState, ReactNode } from 'react';
+import { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
-import { Button, Icon, PanelChrome, PanelChromeProps, RadioButtonGroup } from '@grafana/ui';
+import { Button, Icon, PanelChrome, PanelChromeProps, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { HorizontalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
 
 import mdx from './PanelChrome.mdx';
@@ -124,7 +123,7 @@ export const Examples = () => {
   return (
     <DashboardStoryCanvas>
       <div>
-        <HorizontalGroup spacing="md" align="flex-start" wrap>
+        <Stack gap={2} alignItems="flex-start" wrap="wrap">
           {renderPanel('Has statusMessage', {
             title: 'Default title',
             statusMessage: 'Error text',
@@ -255,7 +254,7 @@ export const Examples = () => {
               </Button>
             ),
           })}
-        </HorizontalGroup>
+        </Stack>
       </div>
     </DashboardStoryCanvas>
   );
@@ -265,7 +264,7 @@ export const ExamplesHoverHeader = () => {
   return (
     <DashboardStoryCanvas>
       <div>
-        <HorizontalGroup spacing="md" align="flex-start" wrap>
+        <Stack gap={2} alignItems="flex-start" wrap="wrap">
           {renderPanel('Title items, menu, hover header', {
             title: 'Default title',
             description: 'This is a description',
@@ -316,7 +315,7 @@ export const ExamplesHoverHeader = () => {
               </a>
             ),
           })}
-        </HorizontalGroup>
+        </Stack>
       </div>
     </DashboardStoryCanvas>
   );

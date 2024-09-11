@@ -269,7 +269,7 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return func(include *plugins.Includes) bool {
 		useRBAC := s.features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && include.RequiresRBACAction()
-		if useRBAC && !hasAccess(ac.EvalPermission(include.Action)) {
+		if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, include.Action)) {
 			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
 				"include", include.Name)
@@ -286,25 +286,30 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-k8s-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 1, Text: "Kubernetes"},
 		"grafana-aws-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 2},
 		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
-		"grafana-pyroscope-app":            {SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Profiles"},
-		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDExplore, SortWeight: 2, Text: "Logs"},
+		"grafana-lokiexplore-app":          {SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Logs"},
+		"grafana-exploretraces-app":        {SectionID: navtree.NavIDExplore, SortWeight: 2, Text: "Traces"},
+		"grafana-pyroscope-app":            {SectionID: navtree.NavIDExplore, SortWeight: 3, Text: "Profiles"},
 		"grafana-kowalski-app":             {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightFrontend, Text: "Frontend", Icon: "frontend-observability"},
 		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
-		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},
-		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incidents"},
-		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
-		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4},
-		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
+		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "IRM"},
+		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "OnCall"},
+		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Incident"},
+		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4, Text: "Machine Learning"},
+		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 5},
+		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfgPlugins, SortWeight: 3},
 		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDCfg, Text: "Adaptive Metrics"},
+		"grafana-adaptivelogs-app":         {SectionID: navtree.NavIDCfg, Text: "Adaptive Logs"},
+		"grafana-attributions-app":         {SectionID: navtree.NavIDCfg, Text: "Attributions"},
 		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
 		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 		"grafana-asserts-app":              {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAsserts, Icon: "asserts"},
+		"grafana-csp-app":                  {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCloudServiceProviders, Icon: "cloud"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
-		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfg, SortWeight: 7},
+		"/a/grafana-auth-app": {SectionID: navtree.NavIDCfgAccess, SortWeight: 2},
 	}
 
 	appSections := s.cfg.Raw.Section("navigation.app_sections")

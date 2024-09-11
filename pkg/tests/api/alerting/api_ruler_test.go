@@ -51,11 +51,11 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
-	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -335,11 +335,11 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
-	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -509,7 +509,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 
 			require.Equal(t, "folder1", allExport.Groups[0].Folder)
 			require.Equal(t, "folder2", allExport.Groups[1].Folder)
-			require.Equal(t, "subfolder", allExport.Groups[2].Folder)
+			require.Equal(t, "folder1/subfolder", allExport.Groups[2].Folder)
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {
@@ -632,7 +632,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			require.Equal(t, http.StatusOK, status)
 			require.Len(t, export.Groups, 2)
 			require.Equal(t, "folder1", export.Groups[0].Folder)
-			require.Equal(t, "subfolder", export.Groups[1].Folder)
+			require.Equal(t, "folder1/subfolder", export.Groups[1].Folder)
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {
@@ -731,11 +731,11 @@ func TestAlertRulePostExport(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
-	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -811,10 +811,10 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		AppModeProduction:     true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create user
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -901,10 +901,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		AppModeProduction:    true,
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1241,10 +1241,10 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1338,8 +1338,8 @@ func TestIntegrationRuleCreate(t *testing.T) {
 		EnableUnifiedAlerting: true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	createUser(t, store, user.CreateUserCommand{
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -1411,11 +1411,11 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	userID := createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1438,7 +1438,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	}
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -1628,10 +1628,10 @@ func TestIntegrationRulePause(t *testing.T) {
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 	})
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
@@ -1758,10 +1758,10 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagRecoveryThreshold},
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "password",
 		Login:          "grafana",
@@ -1832,10 +1832,10 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagAlertingSimplifiedRouting},
 	})
 
-	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, p)
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "password",
 		Login:          "grafana",
@@ -2098,5 +2098,61 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		}, 10*time.Second, 1*time.Second) {
 			t.Logf("config: %s", routeBody)
 		}
+	})
+}
+
+func TestIntegrationRuleUpdateAllDatabases(t *testing.T) {
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	// Create a user to make authenticated requests
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	folderUID := util.GenerateShortUID()
+	client.CreateFolder(t, folderUID, "folder1")
+
+	t.Run("group renamed followed by delete for case-only changes should not delete both groups", func(t *testing.T) { // Regression test.
+		group := generateAlertRuleGroup(3, alertRuleGen())
+		groupName := group.Name
+
+		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folderUID, group.Name)
+		require.Lenf(t, getGroup.Rules, 3, "expected 3 rules in group")
+		require.Equal(t, groupName, getGroup.Rules[0].GrafanaManagedAlert.RuleGroup)
+
+		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+		newGroup := strings.ToUpper(group.Name)
+		group.Name = newGroup
+		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+		getGroup = client.GetRulesGroup(t, folderUID, group.Name)
+		require.Lenf(t, getGroup.Rules, 3, "expected 3 rules in group")
+		require.Equal(t, newGroup, getGroup.Rules[0].GrafanaManagedAlert.RuleGroup)
+
+		status, body = client.DeleteRulesGroup(t, folderUID, groupName)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
+
+		// Old group is gone.
+		getGroup = client.GetRulesGroup(t, folderUID, groupName)
+		require.Lenf(t, getGroup.Rules, 0, "expected no rules")
+
+		// New group still exists.
+		getGroup = client.GetRulesGroup(t, folderUID, newGroup)
+		require.Lenf(t, getGroup.Rules, 3, "expected 3 rules in group")
+		require.Equal(t, newGroup, getGroup.Rules[0].GrafanaManagedAlert.RuleGroup)
 	})
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -18,7 +19,7 @@ import (
 var _ PluginRequestConfigProvider = (*RequestConfigProvider)(nil)
 
 type PluginRequestConfigProvider interface {
-	PluginRequestConfig(ctx context.Context, pluginID string) map[string]string
+	PluginRequestConfig(ctx context.Context, pluginID string, externalService *auth.ExternalService) map[string]string
 }
 
 type RequestConfigProvider struct {
@@ -33,7 +34,7 @@ func NewRequestConfigProvider(cfg *PluginInstanceCfg) *RequestConfigProvider {
 
 // PluginRequestConfig returns a map of configuration that should be passed in a plugin request.
 // nolint:gocyclo
-func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginID string) map[string]string {
+func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginID string, externalService *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
 
 	if s.cfg.GrafanaAppURL != "" {
@@ -94,6 +95,10 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 			m[azsettings.AzureCloud] = azureSettings.Cloud
 		}
 
+		if len(azureSettings.CustomCloudListJSON) > 0 {
+			m[azsettings.AzureCustomCloudsConfig] = azureSettings.CustomCloudListJSON
+		}
+
 		if azureSettings.ManagedIdentityEnabled {
 			m[azsettings.ManagedIdentityEnabled] = "true"
 
@@ -137,6 +142,8 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 				}
 			}
 		}
+
+		m[azsettings.AzureEntraPasswordCredentialsEnabled] = strconv.FormatBool(azureSettings.AzureEntraPasswordCredentialsEnabled)
 	}
 
 	if s.cfg.UserFacingDefaultError != "" {
@@ -158,6 +165,10 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	if s.cfg.SigV4AuthEnabled {
 		m[awsds.SigV4AuthEnabledEnvVarKeyName] = "true"
 		m[awsds.SigV4VerboseLoggingEnvVarKeyName] = strconv.FormatBool(s.cfg.SigV4VerboseLogging)
+	}
+
+	if externalService != nil {
+		m[backend.AppClientSecret] = externalService.ClientSecret
 	}
 
 	return m

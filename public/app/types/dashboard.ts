@@ -1,5 +1,6 @@
 import { DataQuery } from '@grafana/data';
 import { Dashboard, DataSourceRef } from '@grafana/schema';
+import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 export interface DashboardDTO {
@@ -63,11 +64,15 @@ export interface DashboardMeta {
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
-  publicDashboardUid?: string;
   publicDashboardEnabled?: boolean;
   dashboardNotFound?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
+
+  // When loaded from kubernetes, we stick the raw metadata here
+  // yes weird, but this means all the editor structures can exist unchanged
+  // until we use the resource as the main container
+  k8s?: Partial<ObjectMeta>;
 }
 
 export interface AnnotationActions {

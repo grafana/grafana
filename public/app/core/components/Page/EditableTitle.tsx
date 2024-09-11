@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';

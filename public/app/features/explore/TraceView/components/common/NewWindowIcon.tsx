@@ -14,7 +14,6 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React from 'react';
 
 import { Icon, useStyles2 } from '@grafana/ui';
 
@@ -32,13 +31,8 @@ type Props = {
   className?: string;
 };
 
-export default function NewWindowIcon(props: Props) {
-  const { isLarge, className, ...rest } = props;
+export default function NewWindowIcon({ isLarge = false, className }: Props) {
   const styles = useStyles2(getStyles);
   const cls = cx({ [styles.NewWindowIconLarge]: isLarge }, className);
-  return <Icon className={cls} name={'anchor'} {...rest} />;
+  return <Icon className={cls} name={'anchor'} />;
 }
-
-NewWindowIcon.defaultProps = {
-  isLarge: false,
-};

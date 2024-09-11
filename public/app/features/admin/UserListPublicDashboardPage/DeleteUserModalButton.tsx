@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
@@ -73,11 +72,11 @@ export const DeleteUserModalButton = ({ user }: { user: SessionUser }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    width: 500px;
-  `,
-  description: css`
-    font-size: ${theme.typography.body.fontSize};
-    margin: 0;
-  `,
+  modal: css({
+    width: '500px',
+  }),
+  description: css({
+    fontSize: theme.typography.body.fontSize,
+    margin: 0,
+  }),
 });

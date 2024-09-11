@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { NavModel } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 

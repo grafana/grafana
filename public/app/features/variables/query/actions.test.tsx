@@ -1,6 +1,13 @@
-import React from 'react';
-
-import { DataSourceApi, DataSourceRef, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import {
+  DataSourceApi,
+  DataSourceRef,
+  getDefaultTimeRange,
+  LoadingState,
+  QueryVariableModel,
+  VariableHide,
+  VariableRefresh,
+  VariableSort,
+} from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
@@ -29,7 +36,7 @@ import {
   variableStateFetching,
 } from '../state/sharedReducer';
 import { variablesInitTransaction } from '../state/transactionReducer';
-import { QueryVariableModel, VariableHide, VariableQueryEditorProps, VariableRefresh, VariableSort } from '../types';
+import { VariableQueryEditorProps } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';

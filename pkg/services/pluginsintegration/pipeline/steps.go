@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -71,15 +71,15 @@ func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.P
 // RegisterPluginRoles implements an InitializeFunc for registering plugin roles.
 type RegisterPluginRoles struct {
 	log          log.Logger
-	roleRegistry plugins.RoleRegistry
+	roleRegistry pluginaccesscontrol.RoleRegistry
 }
 
 // RegisterPluginRolesStep returns a new InitializeFunc for registering plugin roles.
-func RegisterPluginRolesStep(roleRegistry plugins.RoleRegistry) initialization.InitializeFunc {
+func RegisterPluginRolesStep(roleRegistry pluginaccesscontrol.RoleRegistry) initialization.InitializeFunc {
 	return newRegisterPluginRoles(roleRegistry).Register
 }
 
-func newRegisterPluginRoles(registry plugins.RoleRegistry) *RegisterPluginRoles {
+func newRegisterPluginRoles(registry pluginaccesscontrol.RoleRegistry) *RegisterPluginRoles {
 	return &RegisterPluginRoles{
 		log:          log.New("plugins.roles.registration"),
 		roleRegistry: registry,
@@ -90,6 +90,34 @@ func newRegisterPluginRoles(registry plugins.RoleRegistry) *RegisterPluginRoles 
 func (r *RegisterPluginRoles) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if err := r.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); err != nil {
 		r.log.Warn("Declare plugin roles failed.", "pluginId", p.ID, "error", err)
+		return nil, err
+	}
+	return p, nil
+}
+
+// RegisterActionSets implements an InitializeFunc for registering plugin action sets.
+type RegisterActionSets struct {
+	log               log.Logger
+	actionSetRegistry pluginaccesscontrol.ActionSetRegistry
+}
+
+// RegisterActionSetsStep returns a new InitializeFunc for registering plugin action sets.
+func RegisterActionSetsStep(actionRegistry pluginaccesscontrol.ActionSetRegistry) initialization.InitializeFunc {
+	return newRegisterActionSets(actionRegistry).Register
+}
+
+func newRegisterActionSets(registry pluginaccesscontrol.ActionSetRegistry) *RegisterActionSets {
+	return &RegisterActionSets{
+		log:               log.New("plugins.actionsets.registration"),
+		actionSetRegistry: registry,
+	}
+}
+
+// Register registers the plugin action sets.
+func (r *RegisterActionSets) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if err := r.actionSetRegistry.RegisterActionSets(ctx, p.ID, p.ActionSets); err != nil {
+		r.log.Warn("Plugin action set registration failed", "pluginId", p.ID, "error", err)
+		return nil, err
 	}
 	return p, nil
 }
@@ -105,15 +133,12 @@ func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, 
 // SignatureValidation implements a ValidateFunc for validating plugin signatures.
 type SignatureValidation struct {
 	signatureValidator signature.Validator
-	errs               pluginerrs.SignatureErrorTracker
 	log                log.Logger
 }
 
 // SignatureValidationStep returns a new ValidateFunc for validating plugin signatures.
-func SignatureValidationStep(signatureValidator signature.Validator,
-	sigErr pluginerrs.SignatureErrorTracker) validation.ValidateFunc {
+func SignatureValidationStep(signatureValidator signature.Validator) validation.ValidateFunc {
 	sv := &SignatureValidation{
-		errs:               sigErr,
 		signatureValidator: signatureValidator,
 		log:                log.New("plugins.signature.validation"),
 	}
@@ -121,22 +146,18 @@ func SignatureValidationStep(signatureValidator signature.Validator,
 }
 
 // Validate validates the plugin signature. If a signature error is encountered, the error is recorded with the
-// pluginerrs.SignatureErrorTracker.
+// pluginerrs.ErrorTracker.
 func (v *SignatureValidation) Validate(ctx context.Context, p *plugins.Plugin) error {
 	err := v.signatureValidator.ValidateSignature(p)
 	if err != nil {
-		var sigErr *plugins.SignatureError
+		var sigErr *plugins.Error
 		if errors.As(err, &sigErr) {
 			v.log.Warn("Skipping loading plugin due to problem with signature",
 				"pluginId", p.ID, "status", sigErr.SignatureStatus)
-			p.SignatureError = sigErr
-			v.errs.Record(ctx, sigErr)
+			p.Error = sigErr
 		}
 		return err
 	}
-
-	// clear plugin error if a pre-existing error has since been resolved
-	v.errs.Clear(ctx, p.ID)
 
 	return nil
 }

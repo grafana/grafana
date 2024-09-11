@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { Fragment, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { usePrevious } from 'react-use';
 
 import {
@@ -31,13 +31,16 @@ export const SeriesEditor = ({
   const mappingChanged = prevMapping != null && mapping !== prevMapping;
 
   const defaultFrame = { frame: { matcher: { id: FrameMatcherID.byIndex, options: 0 } } };
+  const [selectedIdx, setSelectedIdx] = useState(0);
 
   if (mappingChanged || seriesCfg == null) {
     seriesCfg = [{ ...defaultFrame }];
     onChange([...seriesCfg]);
-  }
 
-  const [selectedIdx, setSelectedIdx] = useState(0);
+    if (selectedIdx > 0) {
+      setSelectedIdx(0);
+    }
+  }
 
   const addSeries = () => {
     seriesCfg = seriesCfg.concat({ ...defaultFrame });

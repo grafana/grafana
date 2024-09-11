@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Alert, ClipboardButton, Field, FieldSet, Input, Switch, TextLink } from '@grafana/ui';
@@ -8,7 +8,7 @@ import { DashboardInteractions } from 'app/features/dashboard-scene/utils/intera
 
 import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
-import { buildImageUrl, buildShareUrl } from './utils';
+import { buildImageUrl, buildShareUrl, getTrackingSource } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -30,7 +30,6 @@ export class ShareLink extends PureComponent<Props, State> {
       shareUrl: '',
       imageUrl: '',
     };
-    this.onCopy = this.onCopy.bind(this);
   }
 
   componentDidMount() {
@@ -74,13 +73,14 @@ export class ShareLink extends PureComponent<Props, State> {
     return this.state.shareUrl;
   };
 
-  onCopy() {
+  onCopy = () => {
     DashboardInteractions.shareLinkCopied({
       currentTimeRange: this.state.useCurrentTimeRange,
       theme: this.state.selectedTheme,
       shortenURL: this.state.useShortUrl,
+      shareResource: getTrackingSource(this.props.panel),
     });
-  }
+  };
 
   render() {
     const { panel, dashboard } = this.props;
@@ -163,7 +163,7 @@ export class ShareLink extends PureComponent<Props, State> {
             bottomSpacing={0}
           >
             <Trans i18nKey="share-modal.link.render-instructions">
-              To render a panel image, you must install the
+              To render a panel image, you must install the{' '}
               <TextLink href="https://grafana.com/grafana/plugins/grafana-image-renderer" external>
                 Grafana image renderer plugin
               </TextLink>

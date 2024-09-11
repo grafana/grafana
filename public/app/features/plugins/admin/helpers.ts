@@ -76,7 +76,12 @@ export function mergeLocalsAndRemotes({
           catalogPlugin.hasUpdate &&
           catalogPlugin.installedVersion !== instancePlugin?.version;
 
+        if (instancePlugin?.version && instancePlugin?.version !== remotePlugin.version) {
+          catalogPlugin.hasUpdate = true;
+        }
+
         catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
+        catalogPlugin.isProvisioned = provisionedSet.has(remotePlugin.slug);
       }
 
       catalogPlugins.push(catalogPlugin);
@@ -122,8 +127,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     id,
     info: {
       logos: {
-        small: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/small`,
-        large: `https://grafana.com/api/plugins/${id}/versions/${version}/logos/large`,
+        small: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${version}/logos/small`,
+        large: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${version}/logos/large`,
       },
       keywords,
     },
@@ -137,6 +142,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isPublished: true,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
+    isManaged: isManagedPlugin(id),
     isDeprecated: status === RemotePluginStatus.Deprecated,
     isCore: plugin.internal,
     isDev: false,
@@ -186,6 +192,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isDeprecated: false,
     isDev: Boolean(dev),
     isEnterprise: false,
+    isManaged: isManagedPlugin(id),
     type,
     error: error?.errorCode,
     accessControl: accessControl,
@@ -210,8 +217,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
 
   if (remote) {
     logos = {
-      small: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/small`,
-      large: `https://grafana.com/api/plugins/${id}/versions/${remote.version}/logos/large`,
+      small: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/small`,
+      large: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/large`,
     };
   } else if (local && local.info.logos) {
     logos = local.info.logos;
@@ -233,6 +240,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isDisabled: isDisabled,
     isDeprecated: remote?.status === RemotePluginStatus.Deprecated,
     isPublished: true,
+    isManaged: isManagedPlugin(id),
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
     // TODO<check if we would like to keep preferring the remote version>
@@ -366,6 +374,12 @@ function isNotHiddenByConfig(id: string) {
   const { pluginCatalogHiddenPlugins }: { pluginCatalogHiddenPlugins: string[] } = config;
 
   return !pluginCatalogHiddenPlugins.includes(id);
+}
+
+export function isManagedPlugin(id: string) {
+  const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
+
+  return pluginCatalogManagedPlugins?.includes(id);
 }
 
 function isDisabledSecretsPlugin(type?: PluginType): boolean {

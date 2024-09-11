@@ -13,6 +13,7 @@ import {
   MutableDataFrame,
   QueryResultMeta,
   LogsVolumeType,
+  NumericLogLevel,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -48,6 +49,17 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
   if (level) {
     return level;
+  }
+  if (typeof key === 'string') {
+    // The level did not match any entry of LogLevel. It might be unknown or a numeric level.
+    const numericLevel = parseInt(key, 10);
+    // Safety check to confirm that we're parsing a number and not a number with a string.
+    // For example `parseInt('1abcd', 10)` outputs 1
+    if (key.length === numericLevel.toString().length) {
+      return NumericLogLevel[key] || LogLevel.unknown;
+    }
+  } else if (typeof key === 'number') {
+    return NumericLogLevel[key] || LogLevel.unknown;
   }
 
   return LogLevel.unknown;
@@ -142,6 +154,22 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
   };
 };
 
+export const checkLogsSampled = (logRow: LogRowModel): { isSampled: boolean; sampleMessage?: string } => {
+  if (logRow.labels.__adaptive_logs_sampled__) {
+    let msg =
+      logRow.labels.__adaptive_logs_sampled__ === 'true'
+        ? 'Logs like this one have been dropped by Adaptive Logs'
+        : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
+    return {
+      isSampled: true,
+      sampleMessage: msg,
+    };
+  }
+  return {
+    isSampled: false,
+  };
+};
+
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
 
@@ -203,19 +231,8 @@ export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames
 
   // collect and aggregate into aggregated object
   dataFrames.forEach((dataFrame) => {
-    const fieldCache = new FieldCache(dataFrame);
-    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+    const { level, valueField, timeField, length } = getLogLevelInfo(dataFrame);
 
-    if (!timeField) {
-      throw new Error('Missing time field');
-    }
-    if (!valueField) {
-      throw new Error('Missing value field');
-    }
-
-    const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
-    const length = valueField.values.length;
     configs[level] = {
       meta: dataFrame.meta,
       valueFieldConfig: valueField.config,
@@ -293,6 +310,23 @@ export const copyText = async (text: string, buttonRef: React.MutableRefObject<E
     textarea.remove();
   }
 };
+
+export function getLogLevelInfo(dataFrame: DataFrame) {
+  const fieldCache = new FieldCache(dataFrame);
+  const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+  const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+
+  if (!timeField) {
+    throw new Error('Missing time field');
+  }
+  if (!valueField) {
+    throw new Error('Missing value field');
+  }
+
+  const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
+  const length = valueField.values.length;
+  return { level, valueField, timeField, length };
+}
 
 export function targetIsElement(target: EventTarget | null): target is Element {
   return target instanceof Element;

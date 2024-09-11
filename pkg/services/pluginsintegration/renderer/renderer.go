@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
 
@@ -136,5 +137,7 @@ func createLoader(cfg *config.PluginManagementCfg, pluginEnvProvider envvars.Pro
 		return nil, err
 	}
 
-	return loader.New(d, b, v, i, t), nil
+	et := pluginerrs.ProvideErrorTracker()
+
+	return loader.New(d, b, v, i, t, et), nil
 }

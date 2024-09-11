@@ -4,8 +4,8 @@ The bot is configured via [commands.json](https://github.com/grafana/grafana/blo
 
 Comment commands:
 
-* Write the word `/duplicate #<number>`  anywhere in a comment and the bot  will add the correct label and standard message.
-* Write the word `/needsMoreInfo`  anywhere in a comment and the bot will add the correct label and standard message.
+* Write the word `/duplicate #<number>` anywhere in a comment and the bot will add the correct label and standard message.
+* Write the word `/needsMoreInfo` anywhere in a comment and the bot will add the correct label and standard message.
 
 Label commands:
 

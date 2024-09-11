@@ -57,6 +57,10 @@ export interface TempoQuery extends common.DataQuery {
    */
   spss?: number;
   /**
+   * For metric queries, the step size to use
+   */
+  step?: string;
+  /**
    * The type of the table that is used to display the search results
    */
   tableType?: SearchTableType;
@@ -83,6 +87,7 @@ export enum SearchStreamingState {
  * The type of the table that is used to display the search results
  */
 export enum SearchTableType {
+  Raw = 'raw',
   Spans = 'spans',
   Traces = 'traces',
 }

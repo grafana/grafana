@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const authQueryParamName = "auth_token"
@@ -137,6 +137,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	}
 
 	return id, nil
+}
+
+func (s *JWT) IsEnabled() bool {
+	return s.cfg.JWTAuth.Enabled
 }
 
 // remove sensitive query param

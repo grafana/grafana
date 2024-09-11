@@ -1,5 +1,4 @@
-import React, { useMemo } from 'react';
-import { UseTableRowProps } from 'react-table';
+import { useMemo } from 'react';
 
 import {
   Avatar,
@@ -8,10 +7,12 @@ import {
   FetchDataFunc,
   Icon,
   InteractiveTable,
+  LinkButton,
   Pagination,
   Stack,
   Tag,
   Text,
+  TextLink,
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -40,6 +41,7 @@ export const UsersTable = ({
 }: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
   const showBelongsTo = useMemo(() => users.some((user) => user.orgs), [users]);
+
   const columns: Array<Column<UserDTO>> = useMemo(
     () => [
       {
@@ -50,7 +52,13 @@ export const UsersTable = ({
       {
         id: 'login',
         header: 'Login',
-        cell: ({ cell: { value } }: Cell<'login'>) => value,
+        cell: ({ row: { original } }: Cell<'login'>) => {
+          return (
+            <TextLink color="primary" inline={false} href={`/admin/users/edit/${original.id}`} title="Edit user">
+              {original.login}
+            </TextLink>
+          );
+        },
         sortType: 'string',
       },
       {
@@ -82,8 +90,6 @@ export const UsersTable = ({
                   </Stack>
                 );
               },
-              sortType: (a: UseTableRowProps<UserDTO>, b: UseTableRowProps<UserDTO>) =>
-                (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
             },
           ]
         : []),
@@ -104,8 +110,6 @@ export const UsersTable = ({
                   value
                 );
               },
-              // Needs the assertion here, the types are not inferred correctly due to the  conditional assignment
-              sortType: 'string' as const,
             },
           ]
         : []),
@@ -138,11 +142,14 @@ export const UsersTable = ({
         header: '',
         cell: ({ row: { original } }: Cell) => {
           return (
-            <a href={`admin/users/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
-              <Tooltip content={'Edit user'}>
-                <Icon name={'pen'} />
-              </Tooltip>
-            </a>
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              icon="pen"
+              href={`admin/users/edit/${original.id}`}
+              aria-label={`Edit user ${original.name}`}
+              tooltip={'Edit user'}
+            />
           );
         },
       },

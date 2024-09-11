@@ -1,7 +1,7 @@
-import React, { ReactElement, useMemo, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 
 import { PluginExtensionLink, PluginExtensionPoints } from '@grafana/data';
-import { getPluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinkExtensions } from '@grafana/runtime';
 import { Dropdown, IconButton } from '@grafana/ui';
 import { ConfirmNavigationModal } from 'app/features/explore/extensions/ConfirmNavigationModal';
 import { Alert, CombinedRule } from 'app/types/unified-alerting';
@@ -20,8 +20,8 @@ export const AlertInstanceExtensionPoint = ({
   extensionPointId,
 }: AlertInstanceExtensionPointProps): ReactElement | null => {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
-  const context = { instance, rule };
-  const extensions = useExtensionLinks(context, extensionPointId);
+  const context = useMemo(() => ({ instance, rule }), [instance, rule]);
+  const { extensions } = usePluginLinkExtensions({ context, extensionPointId, limitPerPlugin: 3 });
 
   if (extensions.length === 0) {
     return null;
@@ -48,18 +48,3 @@ export type PluginExtensionAlertInstanceContext = {
   rule?: CombinedRule;
   instance: Alert;
 };
-
-function useExtensionLinks(
-  context: PluginExtensionAlertInstanceContext,
-  extensionPointId: PluginExtensionPoints
-): PluginExtensionLink[] {
-  return useMemo(() => {
-    const { extensions } = getPluginLinkExtensions({
-      extensionPointId,
-      context,
-      limitPerPlugin: 3,
-    });
-
-    return extensions;
-  }, [context, extensionPointId]);
-}

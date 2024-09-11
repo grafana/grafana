@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { sortBy } from 'lodash';
-import React, { ChangeEvent } from 'react';
+import { ChangeEvent } from 'react';
+import * as React from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
@@ -8,13 +9,13 @@ import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   HighlightPart,
-  HorizontalGroup,
   Input,
   Label,
   LoadingPlaceholder,
   withTheme2,
   BrowserLabel as LokiLabel,
   fuzzyMatch,
+  Stack,
 } from '@grafana/ui';
 
 import LokiLanguageProvider from '../LanguageProvider';
@@ -533,7 +534,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
           <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
             <span className={error ? styles.error : ''}>{error || status}</span>
           </div>
-          <HorizontalGroup>
+          <Stack gap={1}>
             <Button aria-label="Use selector as logs button" disabled={empty} onClick={this.onClickRunLogsQuery}>
               Show logs
             </Button>
@@ -556,7 +557,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
             <Button aria-label="Selector clear button" variant="secondary" onClick={this.onClickClear}>
               Clear
             </Button>
-          </HorizontalGroup>
+          </Stack>
         </div>
       </>
     );

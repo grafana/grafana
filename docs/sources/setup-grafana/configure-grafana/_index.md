@@ -705,7 +705,7 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 
 ### angular_support_enabled
 
-This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
+This is set to false by default, meaning that the angular framework and support components will not be loaded. This means that
 all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins" >}}) and core features that depend on angular support will stop working.
 
 The core features that depend on angular are:
@@ -753,10 +753,6 @@ Set name for external snapshot button. Defaults to `Publish to snapshots.raintan
 ### public_mode
 
 Set to true to enable this Grafana instance to act as an external snapshot server and allow unauthenticated requests for creating and deleting snapshots. Default is `false`.
-
-### snapshot_remove_expired
-
-Enable this to automatically remove expired snapshots. Default is `true`.
 
 <hr />
 
@@ -891,6 +887,12 @@ Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes
 The duration in time a verification email, used to update the email address of a user, remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is 1h (1 hour).
+
+### last_seen_update_interval
+
+The frequency of updating a user's last seen time.
+This setting should be expressed as a duration. Examples: 1h (hour), 15m (minutes)
+Default is `15m` (15 minutes). The minimum supported duration is `5m` (5 minutes). The maximum supported duration is `1h` (1 hour).
 
 ### hidden_users
 
@@ -1175,6 +1177,28 @@ Azure cloud environment where Grafana is hosted:
 | US Government cloud                              | AzureUSGovernment      |
 | Microsoft German national cloud ("Black Forest") | AzureGermanCloud       |
 
+### clouds_config
+
+The JSON config defines a list of Azure clouds and their associated properties when hosted in custom Azure environments.
+
+For example:
+
+```ini
+clouds_config = `[
+		{
+			"name":"CustomCloud1",
+			"displayName":"Custom Cloud 1",
+			"aadAuthority":"https://login.cloud1.contoso.com/",
+			"properties":{
+				"azureDataExplorerSuffix": ".kusto.windows.cloud1.contoso.com",
+				"logAnalytics":            "https://api.loganalytics.cloud1.contoso.com",
+				"portal":                  "https://portal.azure.cloud1.contoso.com",
+				"prometheusResourceId":    "https://prometheus.monitor.azure.cloud1.contoso.com",
+				"resourceManager":         "https://management.azure.cloud1.contoso.com"
+			}
+		}]`
+```
+
 ### managed_identity_enabled
 
 Specifies whether Grafana hosted in Azure service with Managed Identity configured (e.g. Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
@@ -1246,6 +1270,12 @@ By default is the same as used in AAD authentication or can be set to another ap
 Set plugins that will receive Azure settings via plugin context.
 
 By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
+
+### azure_entra_password_credentials_enabled
+
+Specifies whether Entra password auth can be used for the MSSQL data source. This authentication is not recommended and consideration should be taken before enabling this.
+
+Disabled by default, needs to be explicitly enabled.
 
 ## [auth.jwt]
 
@@ -1460,6 +1490,10 @@ Turn on console instrumentation. Only affects Grafana Javascript Agent
 
 Turn on webvitals instrumentation. Only affects Grafana Javascript Agent
 
+### instrumentations_tracing_enabled
+
+Turns on tracing instrumentation. Only affects Grafana Javascript Agent.
+
 ### api_key
 
 If `custom_endpoint` required authentication, you can set the api key here. Only relevant for Grafana Javascript Agent provider.
@@ -1526,11 +1560,15 @@ Sets a global limit on number of alert rules that can be created. Default is -1 
 
 Sets a global limit on number of correlations that can be created. Default is -1 (unlimited).
 
+### alerting_rule_evaluation_results
+
+Limit the number of query evaluation results per alert rule. If the condition query of an alert rule produces more results than this limit, the evaluation results in an error. Default is -1 (unlimited).
+
 <hr>
 
 ## [unified_alerting]
 
-For more information about the Grafana alerts, refer to [About Grafana Alerting]({{< relref "../../alerting" >}}).
+For more information about the Grafana alerts, refer to [Grafana Alerting]({{< relref "../../alerting" >}}).
 
 ### enabled
 
@@ -1557,6 +1595,10 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 ### ha_redis_address
 
 The Redis server address that should be connected to.
+
+{{< admonition type="note" >}}
+For more information on Redis, refer to [Enable alerting high availability using Redis](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability/#enable-alerting-high-availability-using-redis).
+{{< /admonition >}}
 
 ### ha_redis_username
 
@@ -1612,6 +1654,12 @@ The interval between sending gossip messages. By lowering this value (more frequ
 across cluster more quickly at the expense of increased bandwidth usage. The default value is `200ms`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_reconnect_timeout
+
+Length of time to attempt to reconnect to a lost peer. When running Grafana in a Kubernetes cluster, set this duration to less than `15m`.
+
+The string is a possibly signed sequence of decimal numbers followed by a unit suffix (ms, s, m, h, d), such as `30s` or `1m`.
 
 ### ha_push_pull_interval
 
@@ -1739,6 +1787,11 @@ For more information about this feature, refer to [Explore]({{< relref "../../ex
 
 Enable or disable the Explore section. Default is `enabled`.
 
+### defaultTimeOffset
+
+Set a default time offset from now on the time picker. Default is 1 hour.
+This setting should be expressed as a duration. Examples: 1h (hour), 1d (day), 1w (week), 1M (month).
+
 ## [help]
 
 Configures the help section.
@@ -1776,6 +1829,16 @@ Configures Query history in Explore.
 ### enabled
 
 Enable or disable the Query history. Default is `enabled`.
+
+<hr>
+
+## [short_links]
+
+Configures settings around the short link feature.
+
+### expire_time
+
+Short links which are never accessed are considered expired or stale, and will be deleted as cleanup. Set the expiration time in days. Default is `7` days. Maximum is `365` days, and setting above the maximum will have `365` set instead. Setting `0` means the short links will be cleaned up approximately every 10 minutes.
 
 <hr>
 
@@ -1925,7 +1988,7 @@ Configure general parameters shared between OpenTelemetry providers.
 
 Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
 
-Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+Can be set or overridden with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable). The service name can be set or overridden using attributes or with the environment variable `OTEL_SERVICE_NAME`.
 
 ### sampler_type
 
@@ -1950,7 +2013,7 @@ Depending on the value of `sampler_type`, the sampler configuration parameter ca
 
 When `sampler_type` is `remote`, this specifies the URL of the sampling server. This can be used by all tracing providers.
 
-Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Agent](/oss/agent/).
+Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Alloy](https://grafana.com/oss/alloy-opentelemetry-collector/).
 
 <hr>
 

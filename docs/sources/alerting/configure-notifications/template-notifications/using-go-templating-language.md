@@ -16,6 +16,22 @@ labels:
     - oss
 title: Using Go's templating language
 weight: 100
+refs:
+  create-notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates/
+  extendeddata:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#extendeddata
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#extendeddata
+  reference:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
 ---
 
 # Using Go's templating language
@@ -26,7 +42,7 @@ Before you start creating your own notification templates, we recommend that you
 
 ## Dot
 
-In text/template there is a special cursor called dot, and is written as `.`. You can think of this cursor as a variable whose value changes depending where in the template it is used. For example, at the start of a notification template `.` refers to something called [`ExtendedData`][extendeddata] which contains a number of fields including `Alerts`, `Status`, `GroupLabels`, `CommonLabels`, `CommonAnnotations` and `ExternalURL`. However, dot might refer to something else when used in a range over a list, when used inside a `with`, or when writing feature templates to be used in other templates. You can see examples of this in [Create notification templates][create-notification-templates], and all data and functions in the [Reference][reference].
+In text/template there is a special cursor called dot, and is written as `.`. You can think of this cursor as a variable whose value changes depending where in the template it is used. For example, at the start of a notification template `.` refers to something called [`ExtendedData`](ref:extendeddata) which contains a number of fields including `Alerts`, `Status`, `GroupLabels`, `CommonLabels`, `CommonAnnotations` and `ExternalURL`. However, dot might refer to something else when used in a range over a list, when used inside a `with`, or when writing feature templates to be used in other templates. You can see examples of this in [Create notification templates](ref:create-notification-templates), and all data and functions in the [Reference](ref:reference).
 
 ## Opening and closing tags
 
@@ -240,7 +256,7 @@ You can use indentation, both tabs and spaces, and line breaks, to make template
 {{ end }}
 ```
 
-However, indentation in the template will also be present in the text. Next we will see how to remove it.
+However, indentation in the template is also present in the text. Next, we look at how to remove it.
 
 ## Remove spaces and line breaks
 
@@ -280,14 +296,3 @@ The indentation and line breaks in the template are now absent from the text:
 alertname = "Test"
 grafana_folder = "Test alerts"
 ```
-
-{{% docs/reference %}}
-[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates"
-[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates"
-
-[extendeddata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference#extendeddata"
-[extendeddata]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference#extendeddata"
-
-[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference"
-[reference]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference"
-{{% /docs/reference %}}

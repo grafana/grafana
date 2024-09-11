@@ -2,27 +2,37 @@ package user
 
 import (
 	"fmt"
-	"strings"
+	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 const (
 	GlobalOrgID = int64(0)
 )
 
+var _ identity.Requester = &SignedInUser{}
+
 type SignedInUser struct {
-	UserID           int64  `xorm:"user_id"`
-	UserUID          string `xorm:"user_uid"`
-	OrgID            int64  `xorm:"org_id"`
-	OrgName          string
-	OrgRole          roletype.RoleType
-	Login            string
-	Name             string
-	Email            string
-	AuthenticatedBy  string
+	UserID        int64  `xorm:"user_id"`
+	UserUID       string `xorm:"user_uid"`
+	OrgID         int64  `xorm:"org_id"`
+	OrgName       string
+	OrgRole       identity.RoleType
+	Login         string
+	Name          string
+	Email         string
+	EmailVerified bool
+	// AuthID will be set if user signed in using external method
+	AuthID string
+	// AuthenticatedBy be set if user signed in using external method
+	AuthenticatedBy            string
+	AllowedKubernetesNamespace string
+
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
 	IsGrafanaAdmin   bool
@@ -33,9 +43,92 @@ type SignedInUser struct {
 	Teams            []int64
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
+
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken string `json:"-" xorm:"-"`
+	IDToken       string                                   `json:"-" xorm:"-"`
+	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
+
+	// When other settings are not deterministic, this value is used
+	FallbackType identity.IdentityType
+}
+
+// Access implements claims.AuthInfo.
+func (u *SignedInUser) GetAccess() claims.AccessClaims {
+	return &identity.IDClaimsWrapper{Source: u}
+}
+
+// Identity implements claims.AuthInfo.
+func (u *SignedInUser) GetIdentity() claims.IdentityClaims {
+	if u.IDTokenClaims != nil {
+		return authnlib.NewIdentityClaims(*u.IDTokenClaims)
+	}
+	return &identity.IDClaimsWrapper{Source: u}
+}
+
+// GetRawIdentifier implements Requester.
+func (u *SignedInUser) GetRawIdentifier() string {
+	if u.UserUID == "" {
+		// nolint:staticcheck
+		id, _ := u.GetInternalID()
+		return strconv.FormatInt(id, 10)
+	}
+	return u.UserUID
+}
+
+// Deprecated: use GetUID
+func (u *SignedInUser) GetInternalID() (int64, error) {
+	switch {
+	case u.ApiKeyID != 0:
+		return u.ApiKeyID, nil
+	case u.IsAnonymous:
+		return 0, nil
+	default:
+	}
+	return u.UserID, nil
+}
+
+// GetIdentityType implements Requester.
+func (u *SignedInUser) GetIdentityType() identity.IdentityType {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.TypeAPIKey
+	case u.IsServiceAccount:
+		return identity.TypeServiceAccount
+	case u.UserID > 0:
+		return identity.TypeUser
+	case u.IsAnonymous:
+		return identity.TypeAnonymous
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return identity.TypeRenderService
+	}
+	return u.FallbackType
+}
+
+// GetName implements identity.Requester.
+func (u *SignedInUser) GetName() string {
+	return u.Name
+}
+
+// GetExtra implements Requester.
+func (u *SignedInUser) GetExtra() map[string][]string {
+	extra := map[string][]string{}
+	if u.IDToken != "" {
+		extra["id-token"] = []string{u.IDToken}
+	}
+	if u.OrgRole.IsValid() {
+		extra["user-instance-role"] = []string{string(u.GetOrgRole())}
+	}
+	return extra
+}
+
+// GetGroups implements Requester.
+func (u *SignedInUser) GetGroups() []string {
+	groups := []string{}
+	for _, t := range u.Teams {
+		groups = append(groups, strconv.FormatInt(t, 10))
+	}
+	return groups
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -52,37 +145,7 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
-// TODO: There's a need to remove this struct since it creates a circular dependency
-
-// DEPRECATED: This function uses `UserDisplayDTO` model which we want to remove
-// In order to retrieve the user URL, we need the dto library. However, adding
-// the dto library to the user service creates a circular dependency
-func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
-	return &UserDisplayDTO{
-		ID:    u.UserID,
-		UID:   u.UserUID,
-		Login: u.Login,
-		Name:  u.Name,
-		// AvatarURL: dtos.GetGravatarUrl(u.GetEmail()),
-	}
-}
-
-// Static function to parse a requester into a UserDisplayDTO
-func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
-	userID := int64(0)
-	namespaceID, identifier := requester.GetNamespacedID()
-	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
-		userID, _ = identity.IntIdentifier(namespaceID, identifier)
-	}
-
-	return &UserDisplayDTO{
-		ID:    userID,
-		Login: requester.GetLogin(),
-		Name:  requester.GetDisplayName(),
-	}, nil
-}
-
-func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
+func (u *SignedInUser) HasRole(role identity.RoleType) bool {
 	if u.IsGrafanaAdmin {
 		return true
 	}
@@ -113,22 +176,26 @@ func (u *SignedInUser) HasUniqueId() bool {
 	return u.IsRealUser() || u.IsApiKeyUser() || u.IsServiceAccountUser()
 }
 
+func (u *SignedInUser) GetAllowedKubernetesNamespace() string {
+	return u.AllowedKubernetesNamespace
+}
+
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
-	namespace, id := u.GetNamespacedID()
+	typ, id := u.GetID().Type(), u.GetID().ID()
 	if !u.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
 		orgRole := u.GetOrgRole()
 		if orgRole == "" {
-			orgRole = roletype.RoleNone
+			orgRole = identity.RoleNone
 		}
 
 		id = string(orgRole)
 	}
 
-	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
+	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), typ, id)
 }
 
 // GetIsGrafanaAdmin returns true if the user is a server admin
@@ -186,35 +253,43 @@ func (u *SignedInUser) GetTeams() []int64 {
 }
 
 // GetOrgRole returns the role of the active entity in the active organization
-func (u *SignedInUser) GetOrgRole() roletype.RoleType {
+func (u *SignedInUser) GetOrgRole() identity.RoleType {
 	return u.OrgRole
 }
 
 // GetID returns namespaced id for the entity
-func (u *SignedInUser) GetID() string {
-	switch {
-	case u.ApiKeyID != 0:
-		return namespacedID(identity.NamespaceAPIKey, u.ApiKeyID)
-	case u.IsServiceAccount:
-		return namespacedID(identity.NamespaceServiceAccount, u.UserID)
-	case u.UserID > 0:
-		return namespacedID(identity.NamespaceUser, u.UserID)
-	case u.IsAnonymous:
-		return identity.NamespaceAnonymous + ":"
-	case u.AuthenticatedBy == "render" && u.UserID == 0:
-		return namespacedID(identity.NamespaceRenderService, 0)
-	}
-
-	// backwards compatibility
-	return namespacedID(identity.NamespaceUser, u.UserID)
+func (u *SignedInUser) GetID() identity.TypedID {
+	ns, id := u.getTypeAndID()
+	return identity.NewTypedIDString(ns, id)
 }
 
-// GetNamespacedID returns the namespace and ID of the active entity
-// The namespace is one of the constants defined in pkg/services/auth/identity
-func (u *SignedInUser) GetNamespacedID() (string, string) {
-	parts := strings.Split(u.GetID(), ":")
-	// Safety: GetID always returns a ':' separated string
-	return parts[0], parts[1]
+func (u *SignedInUser) getTypeAndID() (identity.IdentityType, string) {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.TypeAPIKey, strconv.FormatInt(u.ApiKeyID, 10)
+	case u.IsServiceAccount:
+		return identity.TypeServiceAccount, strconv.FormatInt(u.UserID, 10)
+	case u.UserID > 0:
+		return identity.TypeUser, strconv.FormatInt(u.UserID, 10)
+	case u.IsAnonymous:
+		return identity.TypeAnonymous, "0"
+	case u.AuthenticatedBy == "render" && u.UserID == 0:
+		return identity.TypeRenderService, "0"
+	}
+
+	return u.FallbackType, strconv.FormatInt(u.UserID, 10)
+}
+
+func (u *SignedInUser) GetUID() string {
+	return fmt.Sprintf("%s:%s", u.GetIdentityType(), u.GetRawIdentifier())
+}
+
+func (u *SignedInUser) GetAuthID() string {
+	return u.AuthID
+}
+
+func (u *SignedInUser) GetAuthenticatedBy() string {
+	return u.AuthenticatedBy
 }
 
 func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
@@ -237,21 +312,20 @@ func (u *SignedInUser) GetEmail() string {
 	return u.Email
 }
 
+func (u *SignedInUser) IsEmailVerified() bool {
+	return u.EmailVerified
+}
+
 // GetDisplayName returns the display name of the active entity
 // The display name is the name if it is set, otherwise the login or email
 func (u *SignedInUser) GetDisplayName() string {
 	return u.NameOrFallback()
 }
 
-// DEPRECATEAD: Returns the authentication method used
-func (u *SignedInUser) GetAuthenticatedBy() string {
-	return u.AuthenticatedBy
-}
-
 func (u *SignedInUser) GetIDToken() string {
 	return u.IDToken
 }
 
-func namespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
+func (u *SignedInUser) GetIDClaims() *authnlib.Claims[authnlib.IDTokenClaims] {
+	return u.IDTokenClaims
 }

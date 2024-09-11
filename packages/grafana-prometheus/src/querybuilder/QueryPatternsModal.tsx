@@ -1,12 +1,12 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/QueryPatternsModal.tsx
 import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import { CoreApp, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, DataQuery, getNextRefId, GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
 
-import { getNextRefIdChar } from '../gcopypaste/app/core/utils/query';
 import { PromQuery } from '../types';
 
 import { promQueryModeller } from './PromQueryModeller';
@@ -58,7 +58,7 @@ export const QueryPatternsModal = (props: Props) => {
     if (hasNewQueryOption && selectAsNewQuery) {
       onAddQuery({
         ...query,
-        refId: getNextRefIdChar(queries ?? [query]),
+        refId: getNextRefId(queries ?? [query]),
         expr: promQueryModeller.renderQuery(visualQuery.query),
       });
     } else {
@@ -119,14 +119,14 @@ export const QueryPatternsModal = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    cardsContainer: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-    `,
-    spacing: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    cardsContainer: css({
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+    }),
+    spacing: css({
+      marginBottom: theme.spacing(1),
+    }),
   };
 };

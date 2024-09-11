@@ -1,8 +1,5 @@
-import React from 'react';
-
 import {
   SceneComponentProps,
-  SceneGridLayout,
   SceneObjectBase,
   SceneObjectState,
   VizPanel,
@@ -66,6 +63,9 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       pluginVersion: libPanelModel.pluginVersion,
       displayMode: libPanelModel.transparent ? 'transparent' : undefined,
       description: libPanelModel.description,
+      // To be replaced with it's own option persisted option instead derived
+      hoverHeader: !libPanelModel.title && !libPanelModel.timeFrom && !libPanelModel.timeShift,
+      hoverHeaderOffset: 0,
       $data: createPanelDataProvider(libPanelModel),
       menu: new VizPanelMenu({ $behaviors: [panelMenuBehavior] }),
       titleItems: [
@@ -78,29 +78,6 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     };
 
     const panel = new VizPanel(vizPanelState);
-    const gridItem = this.parent;
-
-    if (libPanelModel.repeat && gridItem instanceof DashboardGridItem && gridItem.parent instanceof SceneGridLayout) {
-      this._parent = undefined;
-      const repeater = new DashboardGridItem({
-        key: gridItem.state.key,
-        x: gridItem.state.x,
-        y: gridItem.state.y,
-        width: libPanelModel.repeatDirection === 'h' ? 24 : gridItem.state.width,
-        height: gridItem.state.height,
-        itemHeight: gridItem.state.height,
-        body: this,
-        variableName: libPanelModel.repeat,
-        repeatedPanels: [],
-        repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
-        maxPerRow: libPanelModel.maxPerRow,
-      });
-      gridItem.parent.setState({
-        children: gridItem.parent.state.children.map((child) =>
-          child.state.key === gridItem.state.key ? repeater : child
-        ),
-      });
-    }
 
     this.setState({ panel, _loadedPanel: libPanel, isLoaded: true, name: libPanel.name });
   }

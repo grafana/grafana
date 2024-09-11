@@ -10,7 +10,6 @@ The following directories and their subdirectories are licensed under Apache-2.0
 
 ```
 packages/grafana-data/
-packages/grafana-e2e/
 packages/grafana-e2e-selectors/
 packages/grafana-runtime/
 packages/grafana-ui/

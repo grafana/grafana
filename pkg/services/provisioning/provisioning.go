@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/folder"
 	alertingauthz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -118,7 +120,7 @@ func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 // Used for testing purposes
 func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
-	provisionDatasources func(context.Context, string, datasources.Store, datasources.CorrelationsStore, org.Service) error,
+	provisionDatasources func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error,
 	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
 ) *ProvisioningServiceImpl {
 	return &ProvisioningServiceImpl{
@@ -142,7 +144,7 @@ type ProvisioningServiceImpl struct {
 	pollingCtxCancel             context.CancelFunc
 	newDashboardProvisioner      dashboards.DashboardProvisionerFactory
 	dashboardProvisioner         dashboards.DashboardProvisioner
-	provisionDatasources         func(context.Context, string, datasources.Store, datasources.CorrelationsStore, org.Service) error
+	provisionDatasources         func(context.Context, string, datasources.BaseDataSourceService, datasources.CorrelationsStore, org.Service) error
 	provisionPlugins             func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error
 	provisionAlerting            func(context.Context, prov_alerting.ProvisionerConfig) error
 	mutex                        sync.Mutex
@@ -259,8 +261,8 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 	ruleService := provisioning.NewAlertRuleService(
 		st,
 		st,
-		nil,
-		ps.dashboardService,
+		ps.folderService,
+		//ps.dashboardService,
 		ps.quotaService,
 		ps.SQLStore,
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
@@ -270,17 +272,25 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		notifier.NewCachedNotificationSettingsValidationService(&st),
 		alertingauthz.NewRuleService(ps.ac),
 	)
-	receiverSvc := notifier.NewReceiverService(ps.ac, &st, st, ps.secretService, ps.SQLStore, ps.log)
-	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
+	configStore := legacy_storage.NewAlertmanagerConfigStore(&st)
+	receiverSvc := notifier.NewReceiverService(
+		alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true),
+		configStore,
+		st,
+		ps.secretService,
+		ps.SQLStore,
+		ps.log,
+	)
+	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		st, ps.SQLStore, receiverSvc, ps.log, &st)
-	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,
+	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
-	mutetimingsService := provisioning.NewMuteTimingService(&st, st, &st, ps.log)
-	templateService := provisioning.NewTemplateService(&st, st, &st, ps.log)
+	mutetimingsService := provisioning.NewMuteTimingService(configStore, st, &st, ps.log, &st)
+	templateService := provisioning.NewTemplateService(configStore, st, &st, ps.log)
 	cfg := prov_alerting.ProvisionerConfig{
 		Path:                       alertingPath,
 		RuleService:                *ruleService,
-		DashboardService:           ps.dashboardService,
+		FolderService:              ps.folderService,
 		DashboardProvService:       ps.dashboardProvisioningService,
 		ContactPointService:        *contactPointService,
 		NotificiationPolicyService: *notificationPolicyService,

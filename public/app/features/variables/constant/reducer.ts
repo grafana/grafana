@@ -1,8 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import { ConstantVariableModel, VariableHide, VariableOption } from '@grafana/data';
+
 import { getInstanceState } from '../state/selectors';
 import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
-import { ConstantVariableModel, initialVariableModelState, VariableHide, VariableOption } from '../types';
+import { initialVariableModelState } from '../types';
 
 export const initialConstantVariableModelState: ConstantVariableModel = {
   ...initialVariableModelState,

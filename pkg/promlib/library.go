@@ -32,7 +32,7 @@ type instance struct {
 	versionCache *cache.Cache
 }
 
-type ExtendOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options) error
+type ExtendOptions func(ctx context.Context, settings backend.DataSourceInstanceSettings, clientOpts *sdkhttpclient.Options, log log.Logger) error
 
 func NewService(httpClientProvider *sdkhttpclient.Provider, plog log.Logger, extendOptions ExtendOptions) *Service {
 	if httpClientProvider == nil {
@@ -53,7 +53,7 @@ func newInstanceSettings(httpClientProvider *sdkhttpclient.Provider, log log.Log
 		}
 
 		if extendOptions != nil {
-			err = extendOptions(ctx, settings, opts)
+			err = extendOptions(ctx, settings, opts, log)
 			if err != nil {
 				return nil, fmt.Errorf("error extending transport options: %v", err)
 			}

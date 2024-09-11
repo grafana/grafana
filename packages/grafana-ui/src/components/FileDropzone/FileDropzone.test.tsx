@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { FileDropzone } from './FileDropzone';
 import { REMOVE_FILE } from './FileListItem';
@@ -109,7 +108,7 @@ describe('The FileDropzone component', () => {
 
     expect(await screen.findByText('ping.json')).toBeInTheDocument();
     expect(fileReaderSpy).not.toBeCalled();
-    expect(onDrop).toBeCalledWith([fileToUpload], [], expect.anything());
+    expect(onDrop).toHaveBeenCalledWith([fileToUpload], [], expect.anything());
   });
 
   it('should show children inside the dropzone', () => {

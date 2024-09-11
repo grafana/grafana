@@ -1,18 +1,12 @@
 import { lastValueFrom } from 'rxjs';
 
-import { isObject, urlUtil } from '@grafana/data';
+import { isObject } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
-  AlertmanagerAlert,
   AlertManagerCortexConfig,
   AlertmanagerGroup,
   AlertmanagerStatus,
-  ExternalAlertmanagerConfig,
-  ExternalAlertmanagersResponse,
-  Matcher,
   Receiver,
-  Silence,
-  SilenceCreatePayload,
   TestReceiversAlert,
   TestReceiversPayload,
   TestReceiversResult,
@@ -77,71 +71,6 @@ export async function deleteAlertManagerConfig(alertManagerSourceName: string): 
       showSuccessAlert: false,
     })
   );
-}
-
-export async function fetchSilences(alertManagerSourceName: string): Promise<Silence[]> {
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<Silence[]>({
-      url: `/api/alertmanager/${getDatasourceAPIUid(alertManagerSourceName)}/api/v2/silences`,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-  return result.data;
-}
-
-// returns the new silence ID. Even in the case of an update, a new silence is created and the previous one expired.
-export async function createOrUpdateSilence(
-  alertmanagerSourceName: string,
-  payload: SilenceCreatePayload
-): Promise<Silence> {
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<Silence>({
-      url: `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/api/v2/silences`,
-      data: payload,
-      showErrorAlert: false,
-      showSuccessAlert: false,
-      method: 'POST',
-    })
-  );
-  return result.data;
-}
-
-export async function expireSilence(alertmanagerSourceName: string, silenceID: string): Promise<void> {
-  await getBackendSrv().delete(
-    `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/api/v2/silence/${encodeURIComponent(silenceID)}`
-  );
-}
-
-export async function fetchAlerts(
-  alertmanagerSourceName: string,
-  matchers?: Matcher[],
-  silenced = true,
-  active = true,
-  inhibited = true
-): Promise<AlertmanagerAlert[]> {
-  const filters =
-    urlUtil.toUrlParams({ silenced, active, inhibited }) +
-      matchers
-        ?.map(
-          (matcher) =>
-            `filter=${encodeURIComponent(
-              `${escapeQuotes(matcher.name)}=${matcher.isRegex ? '~' : ''}"${escapeQuotes(matcher.value)}"`
-            )}`
-        )
-        .join('&') || '';
-
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<AlertmanagerAlert[]>({
-      url:
-        `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/api/v2/alerts` +
-        (filters ? '?' + filters : ''),
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  );
-
-  return result.data;
 }
 
 export async function fetchAlertGroups(alertmanagerSourceName: string): Promise<AlertmanagerGroup[]> {
@@ -232,45 +161,4 @@ function getReceiverResultError(receiversResult: TestReceiversResult) {
         .map((receiver) => receiver.error ?? 'Unknown error.')
     )
     .join('; ');
-}
-
-export async function addAlertManagers(alertManagerConfig: ExternalAlertmanagerConfig): Promise<void> {
-  await lastValueFrom(
-    getBackendSrv().fetch({
-      method: 'POST',
-      data: alertManagerConfig,
-      url: '/api/v1/ngalert/admin_config',
-      showErrorAlert: false,
-      showSuccessAlert: false,
-    })
-  ).then(() => {
-    fetchExternalAlertmanagerConfig();
-  });
-}
-
-export async function fetchExternalAlertmanagers(): Promise<ExternalAlertmanagersResponse> {
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<ExternalAlertmanagersResponse>({
-      method: 'GET',
-      url: '/api/v1/ngalert/alertmanagers',
-    })
-  );
-
-  return result.data;
-}
-
-export async function fetchExternalAlertmanagerConfig(): Promise<ExternalAlertmanagerConfig> {
-  const result = await lastValueFrom(
-    getBackendSrv().fetch<ExternalAlertmanagerConfig>({
-      method: 'GET',
-      url: '/api/v1/ngalert/admin_config',
-      showErrorAlert: false,
-    })
-  );
-
-  return result.data;
-}
-
-function escapeQuotes(value: string): string {
-  return value.replace(/"/g, '\\"');
 }

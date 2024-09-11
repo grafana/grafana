@@ -1,8 +1,7 @@
-import { CoreApp, DataSourceApi, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
+import { CoreApp, DataSourceApi, getNextRefId, hasQueryExportSupport, hasQueryImportSupport } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { DataQuery } from '@grafana/schema';
-import { getNextRefIdChar } from 'app/core/utils/query';
 
 export async function updateQueries(
   nextDS: DataSourceApi,
@@ -11,7 +10,7 @@ export async function updateQueries(
   currentDS?: DataSourceApi
 ): Promise<DataQuery[]> {
   let nextQueries = queries;
-  const datasource = { type: nextDS.type, uid: nextDSUidOrVariableExpression };
+  const datasource = { ...nextDS.getRef(), uid: nextDSUidOrVariableExpression };
   const DEFAULT_QUERY = { ...nextDS?.getDefaultQuery?.(CoreApp.PanelEditor), datasource, refId: 'A' };
 
   // we are changing data source type
@@ -49,7 +48,7 @@ export async function updateQueries(
               currUid = templateSrv.replace(currentQuery.datasource.uid);
             }
             if (currUid === nextUid && currIsTemplate === nextIsTemplate) {
-              currentQuery.refId = getNextRefIdChar(reduced);
+              currentQuery.refId = getNextRefId(reduced);
               return reduced.concat([currentQuery]);
             }
           }

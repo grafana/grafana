@@ -14,7 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,13 +31,12 @@ var (
 // Dynamic is an angulardetector.DetectorsProvider that calls GCOM to get Angular detection patterns,
 // converts them to detectors and caches them for all future calls.
 // It also provides a background service that will periodically refresh the patterns from GCOM.
-// If the feature flag FlagPluginsDynamicAngularDetectionPatterns is disabled, the background service is disabled.
 type Dynamic struct {
-	log      log.Logger
-	features featuremgmt.FeatureToggles
+	log log.Logger
 
 	httpClient http.Client
 	baseURL    string
+	disabled   bool
 
 	// store is the underlying angular patterns store used as a cache.
 	store angularpatternsstore.Service
@@ -53,7 +52,7 @@ type Dynamic struct {
 	backgroundJobInterval time.Duration
 }
 
-func ProvideDynamic(cfg *setting.Cfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
+func ProvideDynamic(cfg *setting.Cfg, store angularpatternsstore.Service) (*Dynamic, error) {
 	backgroundJobInterval := backgroundJobIntervalOnPrem
 	if cfg.StackID != "" {
 		// Use a shorter interval for cloud.
@@ -63,15 +62,13 @@ func ProvideDynamic(cfg *setting.Cfg, store angularpatternsstore.Service, featur
 
 	d := &Dynamic{
 		log:                   log.New("plugin.angulardetectorsprovider.dynamic"),
-		features:              features,
 		store:                 store,
 		httpClient:            makeHttpClient(),
-		baseURL:               cfg.GrafanaComURL,
+		baseURL:               cfg.GrafanaComAPIURL,
 		backgroundJobInterval: backgroundJobInterval,
-	}
-	if d.IsDisabled() {
-		// Do not attempt to restore if the background service is disabled (no feature flag)
-		return d, nil
+		// Disable the background service if the user has opted out of plugin updates.
+		// (useful for air-gapped installations)
+		disabled: !cfg.CheckForPluginUpdates,
 	}
 	d.log.Debug("Providing dynamic angular detection patterns", "baseURL", d.baseURL, "interval", d.backgroundJobInterval)
 
@@ -233,11 +230,6 @@ func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 	return nil
 }
 
-// IsDisabled returns true if FlagPluginsDynamicAngularDetectionPatterns is not enabled.
-func (d *Dynamic) IsDisabled() bool {
-	return !d.features.IsEnabledGlobally(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
-}
-
 // randomSkew returns a random time.Duration between 0 and maxSkew.
 // This can be added to d.backgroundJobInterval to skew it by a random amount.
 func (d *Dynamic) randomSkew(maxSkew time.Duration) time.Duration {
@@ -309,6 +301,11 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	}
 }
 
+// IsDisabled returns whether the dynamic detectors provider background service is disabled.
+func (d *Dynamic) IsDisabled() bool {
+	return d.disabled
+}
+
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
 func (d *Dynamic) ProvideDetectors(_ context.Context) []angulardetector.AngularDetector {
 	d.mux.RLock()
@@ -336,3 +333,10 @@ func makeHttpClient() http.Client {
 		Transport: tr,
 	}
 }
+
+// static checks
+
+var (
+	_ registry.BackgroundService = (*Dynamic)(nil)
+	_ registry.CanBeDisabled     = (*Dynamic)(nil)
+)

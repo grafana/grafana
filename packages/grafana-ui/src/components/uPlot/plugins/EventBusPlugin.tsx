@@ -17,14 +17,13 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 interface EventBusPluginProps {
   config: UPlotConfigBuilder;
   eventBus: EventBus;
-  sync: () => boolean;
   frame?: DataFrame;
 }
 
 /**
  * @alpha
  */
-export const EventBusPlugin = ({ config, eventBus, sync, frame }: EventBusPluginProps) => {
+export const EventBusPlugin = ({ config, eventBus, frame }: EventBusPluginProps) => {
   const frameRef = useRef<DataFrame | undefined>(frame);
   frameRef.current = frame;
 
@@ -51,7 +50,7 @@ export const EventBusPlugin = ({ config, eventBus, sync, frame }: EventBusPlugin
     config.addHook('setLegend', () => {
       let viaSync = u!.cursor.event == null;
 
-      if (!viaSync && sync()) {
+      if (!viaSync) {
         let dataIdx = u!.cursor.idxs!.find((v) => v != null);
 
         if (dataIdx == null) {

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactNode, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -191,7 +191,7 @@ export const AmRoutesExpandedForm = ({
       {watch().overrideGrouping && (
         <Field
           label="Group by"
-          description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the parent policy."
+          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the parent policy."
         >
           <Controller
             rules={{
@@ -310,21 +310,21 @@ const getStyles = (theme: GrafanaTheme2) => {
   const commonSpacing = theme.spacing(3.5);
 
   return {
-    addMatcherBtn: css`
-      margin-bottom: ${commonSpacing};
-    `,
-    matchersContainer: css`
-      background-color: ${theme.colors.background.secondary};
-      padding: ${theme.spacing(1.5)} ${theme.spacing(2)};
-      padding-bottom: 0;
-      width: fit-content;
-    `,
-    matchersOperator: css`
-      min-width: 120px;
-    `,
-    noMatchersWarning: css`
-      padding: ${theme.spacing(1)} ${theme.spacing(2)};
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    addMatcherBtn: css({
+      marginBottom: commonSpacing,
+    }),
+    matchersContainer: css({
+      backgroundColor: theme.colors.background.secondary,
+      padding: `${theme.spacing(1.5)} ${theme.spacing(2)}`,
+      paddingBottom: 0,
+      width: 'fit-content',
+    }),
+    matchersOperator: css({
+      minWidth: '120px',
+    }),
+    noMatchersWarning: css({
+      padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+      marginBottom: theme.spacing(1),
+    }),
   };
 };

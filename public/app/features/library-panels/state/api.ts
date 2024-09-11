@@ -170,7 +170,6 @@ export function libraryVizPanelToSaveModel(libraryPanel: LibraryVizPanel) {
 export async function updateLibraryVizPanel(libraryPanel: LibraryVizPanel): Promise<LibraryElementDTO> {
   const { uid, folderUID, name, model, version, kind } = libraryVizPanelToSaveModel(libraryPanel);
 
-  console.log('updateLibraryVizPanel', model);
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
     folderUID,
     name,

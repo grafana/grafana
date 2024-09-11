@@ -553,6 +553,15 @@ export enum BigValueTextMode {
 }
 
 /**
+ * TODO docs
+ */
+export enum PercentChangeColorMode {
+  Inverted = 'inverted',
+  SameAsValue = 'same_as_value',
+  Standard = 'standard',
+}
+
+/**
  * TODO -- should not be table specific!
  * TODO docs
  */
@@ -601,6 +610,7 @@ export enum SortOrder {
 export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig, BarConfig, StackableFieldConfig, HideableFieldConfig {
   drawStyle?: GraphDrawStyle;
   gradientMode?: GraphGradientMode;
+  insertNulls?: (boolean | number);
   thresholdsStyle?: GraphThresholdsStyleConfig;
   transform?: GraphTransform;
 }
@@ -739,6 +749,7 @@ export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
  */
 export interface TableAutoCellOptions {
   type: TableCellDisplayMode.Auto;
+  wrapText?: boolean;
 }
 
 /**
@@ -746,6 +757,7 @@ export interface TableAutoCellOptions {
  */
 export interface TableColorTextCellOptions {
   type: TableCellDisplayMode.ColorText;
+  wrapText?: boolean;
 }
 
 /**
@@ -759,6 +771,8 @@ export interface TableJsonViewCellOptions {
  * Json view cell options
  */
 export interface TableImageCellOptions {
+  alt?: string;
+  title?: string;
   type: TableCellDisplayMode.Image;
 }
 
@@ -793,12 +807,14 @@ export interface TableColoredBackgroundCellOptions {
   applyToRow?: boolean;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
+  wrapText?: boolean;
 }
 
 /**
  * Height of a table cell
  */
 export enum TableCellHeight {
+  Auto = 'auto',
   Lg = 'lg',
   Md = 'md',
   Sm = 'sm',
@@ -845,6 +861,10 @@ export enum VariableFormatID {
 }
 
 export interface DataSourceRef {
+  /**
+   *  Datasource API version
+   */
+  apiVersion?: string;
   /**
    * The plugin type-id
    */

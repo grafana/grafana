@@ -1,0 +1,19 @@
+apiVersion: 1
+
+apps:
+  - type: myorg-extensions-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false
+  - type: myorg-a-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false
+  - type: myorg-b-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false
+  - type: myorg-extensionpoint-app
+    org_id: 1
+    org_name: Main Org.
+    disabled: false

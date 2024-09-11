@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,8 +7,8 @@ import { Alert, CollapsableSection, LoadingPlaceholder, Stack, useStyles2 } from
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
-import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints';
-import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
+import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoint';
+import { useGrafanaContactPoints } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 
 import { ContactPointDetails } from './contactPoint/ContactPointDetails';
@@ -28,8 +28,9 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
     isLoading,
     error: errorInContactPointStatus,
     contactPoints,
-    refetchReceivers,
-  } = useContactPointsWithStatus({ includePoliciesCount: false, receiverStatusPollingInterval: 0 });
+    refetch: refetchReceivers,
+  } = useGrafanaContactPoints();
+
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
@@ -62,7 +63,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       <Stack direction="row" alignItems="center">
         <div className={styles.firstAlertManagerLine}></div>
         <div className={styles.alertManagerName}>
-          Alert manager:
+          Alertmanager:
           <img src={alertManager.imgUrl} alt="Alert manager logo" className={styles.img} />
           {alertManagerName}
         </div>

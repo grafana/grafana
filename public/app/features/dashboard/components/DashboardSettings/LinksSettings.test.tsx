@@ -1,11 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 
@@ -90,12 +88,10 @@ describe('LinksSettings', () => {
     const linklessDashboard = createDashboardModelFixture({ links: [] });
     setup(linklessDashboard);
 
-    const linksTab = screen.getByRole('tab', { name: 'Tab Links' });
+    const linksTab = screen.getByRole('tab', { name: 'Links' });
     expect(linksTab).toBeInTheDocument();
     expect(linksTab).toHaveAttribute('aria-selected', 'true');
-    expect(
-      screen.getByTestId(selectors.components.CallToActionCard.buttonV2('Add dashboard link'))
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add dashboard link' })).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
@@ -104,9 +100,7 @@ describe('LinksSettings', () => {
     setup(dashboard);
 
     expect(getTableBodyRows().length).toBe(dashboard.links.length);
-    expect(
-      screen.queryByTestId(selectors.components.CallToActionCard.buttonV2('Add dashboard link'))
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add dashboard link' })).not.toBeInTheDocument();
   });
 
   test('it rearranges the order of dashboard links', async () => {

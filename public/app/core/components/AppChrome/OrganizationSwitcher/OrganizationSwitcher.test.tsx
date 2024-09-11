@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole } from '@grafana/data';
@@ -30,11 +29,14 @@ const renderWithProvider = ({ initialState }: { initialState?: Partial<appTypes.
 
 describe('OrganisationSwitcher', () => {
   beforeEach(() => {
-    (window.matchMedia as jest.Mock).mockImplementation(() => ({
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      matches: true,
-    }));
+    jest.spyOn(window, 'matchMedia').mockImplementation(
+      () =>
+        ({
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+          matches: true,
+        }) as unknown as MediaQueryList
+    );
   });
 
   it('should only render if more than one organisations', () => {
@@ -80,11 +82,14 @@ describe('OrganisationSwitcher', () => {
   });
 
   it('should render a picker in mobile screen', () => {
-    (window.matchMedia as jest.Mock).mockImplementation(() => ({
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      matches: false,
-    }));
+    jest.spyOn(window, 'matchMedia').mockImplementation(
+      () =>
+        ({
+          addEventListener: jest.fn(),
+          removeEventListener: jest.fn(),
+          matches: false,
+        }) as unknown as MediaQueryList
+    );
     renderWithProvider({
       initialState: {
         organization: {

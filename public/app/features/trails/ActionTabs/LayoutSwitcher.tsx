@@ -1,11 +1,10 @@
-import React from 'react';
-
 import { SelectableValue } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { MetricScene } from '../MetricScene';
 import { reportExploreMetrics } from '../interactions';
+import { TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
 
 import { LayoutType } from './types';
 
@@ -40,6 +39,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> {
 
   public onLayoutChange = (layout: LayoutType) => {
     reportExploreMetrics('breakdown_layout_changed', { layout });
+    localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, layout);
     this.getMetricScene().setState({ layout });
   };
 

@@ -1,12 +1,10 @@
-import {
-  DataLink,
-  Field,
-  FieldOverrideContext,
-  SelectableValue,
-  SliderMarks,
-  ThresholdsConfig,
-  ValueMapping,
-} from '../../types';
+import { Field } from '../../types/dataFrame';
+import { DataLink } from '../../types/dataLink';
+import { FieldOverrideContext } from '../../types/fieldOverrides';
+import { SelectableValue } from '../../types/select';
+import { SliderMarks } from '../../types/slider';
+import { ThresholdsConfig } from '../../types/thresholds';
+import { ValueMapping } from '../../types/valueMapping';
 
 export const identityOverrideProcessor = <T>(value: T) => {
   return value;
@@ -57,8 +55,8 @@ export const dataLinksOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
-) => {
-  return value as DataLink[];
+): DataLink[] => {
+  return value;
 };
 
 export interface ValueMappingFieldConfigSettings {}
@@ -67,8 +65,8 @@ export const valueMappingsOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: ValueMappingFieldConfigSettings
-) => {
-  return value as ValueMapping[]; // !!!! likely not !!!!
+): ValueMapping[] => {
+  return value; // !!!! likely not !!!!
 };
 
 export interface SelectFieldConfigSettings<T> {
@@ -121,8 +119,8 @@ export const thresholdsOverrideProcessor = (
   value: any,
   _context: FieldOverrideContext,
   _settings?: ThresholdsFieldConfigSettings
-) => {
-  return value as ThresholdsConfig; // !!!! likely not !!!!
+): ThresholdsConfig => {
+  return value; // !!!! likely not !!!!
 };
 
 export interface UnitFieldConfigSettings {

@@ -1,5 +1,4 @@
-import React from 'react';
-
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/DataSourceHttpSettingsOverhaul.tsx
 import { DataSourceSettings } from '@grafana/data';
 import { Auth, AuthMethod, ConnectionSettings, convertLegacyAuthProps } from '@grafana/experimental';
 import { SecureSocksProxySettings, useTheme2 } from '@grafana/ui';

@@ -256,4 +256,26 @@ describe('filterRules', function () {
     expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
     expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe('CPU too high');
   });
+
+  it('does not crash when trying to filter with regex-like strings', () => {
+    const rules = [mockCombinedRule({ name: '[alongnameinthefirstgroup]' })];
+
+    const ns = mockCombinedRuleNamespace({
+      name: 'foo|bar',
+      groups: [
+        // Create group with regex-like name so we can test that searching for it doesn't crash,
+        // and so we can test further paths of the filtering
+        // (we need some a group to be matched so we can test filtering by rule name as well)
+        mockCombinedRuleGroup('some|group', rules),
+      ],
+    });
+
+    const ruleQuery = '[alongnameinthefirstgroup][thishas spaces][somethingelse]';
+    const namespaceQuery = 'foo|bar';
+    const groupQuery = 'some|group';
+
+    const performFilter = () =>
+      filterRules([ns], getFilter({ groupName: groupQuery, ruleName: ruleQuery, namespace: namespaceQuery }));
+    expect(performFilter).not.toThrow();
+  });
 });

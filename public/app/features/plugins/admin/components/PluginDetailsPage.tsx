@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2, TabContent, Alert } from '@grafana/ui';
-import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Alert, Box, Stack, TabContent, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types';
 
@@ -99,30 +98,36 @@ export function PluginDetailsPage({
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    alert: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    subtitle: css`
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
-    `,
+    alert: css({
+      marginBottom: theme.spacing(2),
+    }),
+    subtitle: css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    }),
     // Needed due to block formatting context
-    tabContent: css`
-      overflow: auto;
-      height: 100%;
-      padding-left: 5px;
-    `,
+    tabContent: config.featureToggles.bodyScrolling
+      ? css({
+          paddingLeft: '5px',
+        })
+      : css({
+          overflow: 'auto',
+          height: '100%',
+          paddingLeft: '5px',
+        }),
   };
 };
 
 function NotFoundPlugin() {
   return (
-    <Layout justify="center" align="center">
-      <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
-        That plugin cannot be found. Please check the url is correct or <br />
-        go to the <a href="/plugins">plugin catalog</a>.
-      </Alert>
-    </Layout>
+    <Stack justifyContent="center" alignItems="center" height="100%">
+      <Box>
+        <Alert severity={AppNotificationSeverity.Warning} title="Plugin not found">
+          That plugin cannot be found. Please check the url is correct or <br />
+          go to the <a href="/plugins">plugin catalog</a>.
+        </Alert>
+      </Box>
+    </Stack>
   );
 }

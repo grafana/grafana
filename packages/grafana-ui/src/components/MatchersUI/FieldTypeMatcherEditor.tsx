@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import { memo, useMemo, useCallback } from 'react';
 
 import { FieldMatcherID, fieldMatchers, SelectableValue, FieldType, DataFrame } from '@grafana/data';
 

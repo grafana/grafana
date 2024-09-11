@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 import { LogRowModel, Field, LinkModel, DataFrame } from '@grafana/data';
 
@@ -23,7 +23,7 @@ export interface Props {
   onBlur: () => void;
 }
 
-export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
+export const LogRowMessageDisplayedFields = memo((props: Props) => {
   const { row, detectedFields, getFieldLinks, wrapLogMessage, styles, mouseIsOver, pinned, ...rest } = props;
   const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
   const fields = useMemo(() => getAllFields(row, getFieldLinks), [getFieldLinks, row]);

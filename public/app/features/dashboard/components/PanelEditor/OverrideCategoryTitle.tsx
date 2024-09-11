@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { FieldConfigOptionsRegistry, GrafanaTheme2, ConfigOverrideRule } from '@grafana/data';
 import { HorizontalGroup, Icon, IconButton, useStyles2 } from '@grafana/ui';
@@ -8,7 +7,7 @@ import { FieldMatcherUIRegistryItem } from '@grafana/ui/src/components/MatchersU
 interface Props {
   isExpanded: boolean;
   registry: FieldConfigOptionsRegistry;
-  matcherUi: FieldMatcherUIRegistryItem<any>;
+  matcherUi: FieldMatcherUIRegistryItem<ConfigOverrideRule>;
   override: ConfigOverrideRule;
   overrideName: string;
   onOverrideRemove: () => void;
@@ -47,23 +46,23 @@ OverrideCategoryTitle.displayName = 'OverrideTitle';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    matcherUi: css`
-      padding: ${theme.spacing(1)};
-    `,
-    propertyPickerWrapper: css`
-      margin-top: ${theme.spacing(2)};
-    `,
-    overrideDetails: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-      font-weight: ${theme.typography.fontWeightRegular};
-    `,
-    options: css`
-      overflow: hidden;
-      padding-right: ${theme.spacing(4)};
-    `,
-    unknownLabel: css`
-      margin-bottom: 0;
-    `,
+    matcherUi: css({
+      padding: theme.spacing(1),
+    }),
+    propertyPickerWrapper: css({
+      marginTop: theme.spacing(2),
+    }),
+    overrideDetails: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.fontWeightRegular,
+    }),
+    options: css({
+      overflow: 'hidden',
+      paddingRight: theme.spacing(4),
+    }),
+    unknownLabel: css({
+      marginBottom: 0,
+    }),
   };
 };

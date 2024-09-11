@@ -6,8 +6,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func TestDecorator(t *testing.T) {
@@ -42,7 +43,7 @@ func TestDecorator(t *testing.T) {
 	_, _ = d.QueryData(context.Background(), &backend.QueryDataRequest{})
 	require.True(t, queryDataCalled)
 
-	sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+	sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		return nil
 	})
 
@@ -146,13 +147,17 @@ func (c *TestClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 }
 
 type MiddlewareScenarioContext struct {
-	QueryDataCallChain       []string
-	CallResourceCallChain    []string
-	CollectMetricsCallChain  []string
-	CheckHealthCallChain     []string
-	SubscribeStreamCallChain []string
-	PublishStreamCallChain   []string
-	RunStreamCallChain       []string
+	QueryDataCallChain         []string
+	CallResourceCallChain      []string
+	CollectMetricsCallChain    []string
+	CheckHealthCallChain       []string
+	SubscribeStreamCallChain   []string
+	PublishStreamCallChain     []string
+	RunStreamCallChain         []string
+	InstanceSettingsCallChain  []string
+	ValidateAdmissionCallChain []string
+	MutateAdmissionCallChain   []string
+	ConvertObjectCallChain     []string
 }
 
 func (ctx *MiddlewareScenarioContext) NewMiddleware(name string) plugins.ClientMiddleware {
@@ -218,6 +223,27 @@ func (m *TestMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 	err := m.next.RunStream(ctx, req, sender)
 	m.sCtx.RunStreamCallChain = append(m.sCtx.RunStreamCallChain, fmt.Sprintf("after %s", m.Name))
 	return err
+}
+
+func (m *TestMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	m.sCtx.ValidateAdmissionCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
+	res, err := m.next.ValidateAdmission(ctx, req)
+	m.sCtx.ValidateAdmissionCallChain = append(m.sCtx.ValidateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
+	return res, err
+}
+
+func (m *TestMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("before %s", m.Name))
+	res, err := m.next.MutateAdmission(ctx, req)
+	m.sCtx.MutateAdmissionCallChain = append(m.sCtx.MutateAdmissionCallChain, fmt.Sprintf("after %s", m.Name))
+	return res, err
+}
+
+func (m *TestMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("before %s", m.Name))
+	res, err := m.next.ConvertObject(ctx, req)
+	m.sCtx.ConvertObjectCallChain = append(m.sCtx.ConvertObjectCallChain, fmt.Sprintf("after %s", m.Name))
+	return res, err
 }
 
 var _ plugins.Client = &TestClient{}

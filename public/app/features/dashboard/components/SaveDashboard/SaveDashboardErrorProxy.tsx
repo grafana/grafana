@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
@@ -126,20 +126,19 @@ export const proxyHandlesError = (errorStatus: string) => {
 };
 
 const getConfirmPluginDashboardSaveModalStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    width: 500px;
-  `,
-  modalText: css`
-    font-size: ${theme.typography.h4.fontSize};
-    color: ${theme.colors.text.primary};
-    margin-bottom: ${theme.spacing(4)}
-    padding-top: ${theme.spacing(2)};
-  `,
-  modalButtonRow: css`
-    margin-bottom: 14px;
-    a,
-    button {
-      margin-right: ${theme.spacing(2)};
-    }
-  `,
+  modal: css({
+    width: '500px',
+  }),
+  modalText: css({
+    fontSize: theme.typography.h4.fontSize,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing(4),
+    paddingTop: theme.spacing(2),
+  }),
+  modalButtonRow: css({
+    marginBottom: '14px',
+    'a, button': {
+      marginRight: theme.spacing(2),
+    },
+  }),
 });

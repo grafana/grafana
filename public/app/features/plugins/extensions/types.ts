@@ -9,4 +9,7 @@ export type PluginExtensionRegistryItem = {
 };
 
 // A map of placement names to a list of extensions
-export type PluginExtensionRegistry = Record<string, PluginExtensionRegistryItem[]>;
+export type PluginExtensionRegistry = {
+  id: string;
+  extensions: Record<string, PluginExtensionRegistryItem[]>;
+};

@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import React from 'react';
 
 import { FileListItem, REMOVE_FILE } from './FileListItem';
 
@@ -58,6 +57,6 @@ describe('The FileListItem component', () => {
 
     fireEvent.click(screen.getByRole('button', { name: REMOVE_FILE }));
 
-    expect(removeFile).toBeCalledWith(customFile);
+    expect(removeFile).toHaveBeenCalledWith(customFile);
   });
 });

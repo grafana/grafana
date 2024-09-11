@@ -31,6 +31,7 @@ mkdir $PROV_DIR
 mkdir $PROV_DIR/datasources
 mkdir $PROV_DIR/dashboards
 mkdir $PROV_DIR/alerting
+mkdir $PROV_DIR/plugins
 
 cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
 cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
@@ -51,6 +52,7 @@ echo -e "Copy provisioning setup from devenv"
 cp devenv/datasources.yaml $PROV_DIR/datasources
 cp devenv/dashboards.yaml $PROV_DIR/dashboards
 cp devenv/alert_rules.yaml $PROV_DIR/alerting
+cp devenv/plugins.yaml $PROV_DIR/plugins
 
 cp -r devenv $RUNDIR
 

@@ -19,6 +19,7 @@ const (
 
 // Defines values for SearchTableType.
 const (
+	SearchTableTypeRaw    SearchTableType = "raw"
 	SearchTableTypeSpans  SearchTableType = "spans"
 	SearchTableTypeTraces SearchTableType = "traces"
 )
@@ -127,6 +128,9 @@ type TempoQuery struct {
 
 	// Defines the maximum number of spans per spanset that are returned from Tempo
 	Spss *int64 `json:"spss,omitempty"`
+
+	// For metric queries, the step size to use
+	Step *string `json:"step,omitempty"`
 
 	// The type of the table that is used to display the search results
 	TableType *SearchTableType `json:"tableType,omitempty"`

@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
@@ -34,7 +34,7 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	t, err := tapi.teamService.CreateTeam(cmd.Name, cmd.Email, c.SignedInUser.GetOrgID())
+	t, err := tapi.teamService.CreateTeam(c.Req.Context(), cmd.Name, cmd.Email, c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(http.StatusConflict, "Team name taken", err)
@@ -49,9 +49,9 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 	// if the request is authenticated using API tokens
 	// the SignedInUser is an empty struct therefore
 	// an additional check whether it is an actual user is required
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetID().Type(), c.SignedInUser.GetID().ID()
 	switch namespace {
-	case identity.NamespaceUser:
+	case identity.TypeUser:
 		userID, err := strconv.ParseInt(identifier, 10, 64)
 		if err != nil {
 			c.Logger.Error("Could not add creator to team because user id is not a number", "error", err)

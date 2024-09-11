@@ -2,10 +2,13 @@ package expr
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -81,4 +84,44 @@ var _ backend.CallResourceHandler = &recordingCallResourceHandler{}
 func (f *recordingCallResourceHandler) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	f.recordings = append(f.recordings, req)
 	return sender.Send(f.response)
+}
+
+func newScalar(value *float64) mathexp.Scalar {
+	n := mathexp.NewScalar("", value)
+	return n
+}
+
+func newNumber(labels data.Labels, value *float64) mathexp.Number {
+	n := mathexp.NewNumber("", labels)
+	n.SetValue(value)
+	return n
+}
+
+func newSeries(points ...float64) mathexp.Series {
+	series := mathexp.NewSeries("", nil, len(points))
+	for idx, point := range points {
+		p := point
+		series.SetPoint(idx, time.Unix(int64(idx), 0), &p)
+	}
+	return series
+}
+
+func newSeriesPointer(points ...*float64) mathexp.Series {
+	series := mathexp.NewSeries("", nil, len(points))
+	for idx, point := range points {
+		series.SetPoint(idx, time.Unix(int64(idx), 0), point)
+	}
+	return series
+}
+
+func newSeriesWithLabels(labels data.Labels, values ...*float64) mathexp.Series {
+	series := mathexp.NewSeries("", labels, len(values))
+	for idx, value := range values {
+		series.SetPoint(idx, time.Unix(int64(idx), 0), value)
+	}
+	return series
+}
+
+func newResults(values ...mathexp.Value) mathexp.Results {
+	return mathexp.Results{Values: values}
 }

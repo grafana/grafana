@@ -14,7 +14,8 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
+import * as React from 'react';
 
 import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
@@ -117,6 +118,15 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     }
   }
 
+  const urlTooltip = (url: string) => {
+    return (
+      <>
+        <div>http.url or http.target or http.path</div>
+        <div>({url})</div>
+      </>
+    );
+  };
+
   return (
     <header className={styles.header}>
       <div className={styles.titleRow}>
@@ -143,7 +153,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </Tooltip>
           )}
           {url && url.length > 0 && (
-            <Tooltip content={'http.url or http.target or http.path'} interactive={true}>
+            <Tooltip content={urlTooltip(url[0].value)} interactive={true}>
               <span className={styles.url}>{url[0].value}</span>
             </Tooltip>
           )}
@@ -230,33 +240,34 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       lineHeight: '1em',
       margin: '-0.5em 0.5em 0.75em 0.5em',
     }),
-    tag: css`
-      margin: 0 0.5em 0 0;
-    `,
-    duration: css`
-      color: #aaa;
-      margin: 0 0.75em;
-    `,
-    timestamp: css`
-      vertical-align: middle;
-    `,
-    tagMeta: css`
-      margin: 0 0.75em;
-      vertical-align: text-top;
-    `,
-    url: css`
-      margin: -2.5px 0.3em;
-      height: 15px;
-      overflow: hidden;
-      word-break: break-all;
-      line-height: 20px;
-    `,
-    TracePageHeaderTraceId: css`
-      label: TracePageHeaderTraceId;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      max-width: 30%;
-      display: inline-block;
-    `,
+    tag: css({
+      margin: '0 0.5em 0 0',
+    }),
+    duration: css({
+      color: '#aaa',
+      margin: '0 0.75em',
+    }),
+    timestamp: css({
+      verticalAlign: 'middle',
+    }),
+    tagMeta: css({
+      margin: '0 0.75em',
+      verticalAlign: 'text-top',
+    }),
+    url: css({
+      margin: '-2.5px 0.3em',
+      height: '15px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '700px',
+      display: 'inline-block',
+    }),
+    TracePageHeaderTraceId: css({
+      label: 'TracePageHeaderTraceId',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      maxWidth: '30%',
+      display: 'inline-block',
+    }),
   };
 };

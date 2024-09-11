@@ -1,5 +1,13 @@
 {
-  "template_files": {},
+  "template_files": {
+    "slack-template": "{{ define 'slack-template' }} Custom slack template {{ end }}",
+    "custom-email": "{{ define 'custom-email' }}  Custom email template {{ end }}",
+    "provisioned-template": "{{ define 'provisioned-template' }}  Custom provisioned template {{ end }}",
+    "template with spaces": "{{ define 'template with spaces' }}  Custom template with spaces in the name {{ end }}"
+  },
+  "template_file_provenances": {
+    "provisioned-template": "api"
+  },
   "alertmanager_config": {
     "route": {
       "receiver": "grafana-default-email",
@@ -73,7 +81,21 @@
             "secureFields": { "token": true }
           }
         ]
+      },
+      {
+        "name": "OnCall Conctact point",
+        "grafana_managed_receiver_configs": [
+          {
+            "name": "Oncall-integration",
+            "type": "oncall",
+            "settings": {
+              "url": "https://oncall-endpoint.example.com"
+            },
+            "disableResolveMessage": false
+          }
+        ]
       }
-    ]
+    ],
+    "templates": ["slack-template", "custom-email", "provisioned-template", "template with spaces"]
   }
 }

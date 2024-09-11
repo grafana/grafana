@@ -13,6 +13,14 @@ import * as common from '@grafana/schema';
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
   enableLogDetails: boolean;
+  isFilterLabelActive?: unknown;
+  /**
+   * TODO: figure out how to define callbacks
+   */
+  onClickFilterLabel?: unknown;
+  onClickFilterOutLabel?: unknown;
+  onClickFilterOutString?: unknown;
+  onClickFilterString?: unknown;
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
   showLabels: boolean;

@@ -64,7 +64,7 @@ func TestIntegrationBulkOps(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db := InitTestDB(t)
+	db, _ := InitTestDB(t)
 	err := db.engine.Sync(new(bulkTestItem))
 	require.NoError(t, err)
 

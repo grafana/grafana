@@ -32,6 +32,7 @@ var (
 
 type OtelConfig struct {
 	Enabled       bool
+	MaxQuerySize  int
 	WriteTimeout  time.Duration
 	Endpoint      string
 	EnableTLS     bool
@@ -115,6 +116,10 @@ func (p *otelLokiClient) initHTTPClient(cfg OtelConfig) error {
 		Transport: getOTLPHTTPConnectionTransport(cfg),
 	}
 	return nil
+}
+
+func (p *otelLokiClient) MaxQuerySize() int {
+	return p.cfg.MaxQuerySize
 }
 
 func (p *otelLokiClient) Push(ctx context.Context, s []Stream) (err error) {

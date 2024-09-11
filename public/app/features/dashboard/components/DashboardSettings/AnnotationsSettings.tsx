@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AnnotationQuery, getDataSourceRef, NavModelItem } from '@grafana/data';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
@@ -50,10 +48,7 @@ function getSubPageNav(
   if (editItem) {
     return {
       text: editItem.name,
-      parentItem: parentItem && {
-        ...parentItem,
-        url: node.url,
-      },
+      parentItem,
     };
   }
 

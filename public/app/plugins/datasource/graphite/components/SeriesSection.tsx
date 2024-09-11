@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { SegmentSection } from '@grafana/ui';
 
 import { GraphiteQueryEditorState } from '../state/store';

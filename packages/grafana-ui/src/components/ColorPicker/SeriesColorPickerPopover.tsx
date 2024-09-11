@@ -1,8 +1,6 @@
-import { css } from '@emotion/css';
-import React from 'react';
-
-import { withTheme2, useStyles2 } from '../../themes';
-import { Switch } from '../Forms/Legacy/Switch/Switch';
+import { withTheme2 } from '../../themes';
+import { InlineField } from '../Forms/InlineField';
+import { InlineSwitch } from '../Switch/Switch';
 import { PopoverContentProps } from '../Tooltip';
 
 import { ColorPickerPopover, ColorPickerProps } from './ColorPickerPopover';
@@ -13,7 +11,6 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
 }
 
 export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) => {
-  const styles = useStyles2(getStyles);
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
 
   const customPickers = onToggleAxis
@@ -22,18 +19,9 @@ export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) =
           name: 'Y-Axis',
           tabComponent() {
             return (
-              <Switch
-                key="yaxisSwitch"
-                label="Use right y-axis"
-                className={styles.colorPickerAxisSwitch}
-                labelClass={styles.colorPickerAxisSwitchLabel}
-                checked={yaxis === 2}
-                onChange={() => {
-                  if (onToggleAxis) {
-                    onToggleAxis();
-                  }
-                }}
-              />
+              <InlineField labelWidth={20} label="Use right y-axis">
+                <InlineSwitch value={yaxis === 2} label="Use right y-axis" onChange={onToggleAxis} />
+              </InlineField>
             );
           },
         },
@@ -44,15 +32,3 @@ export const SeriesColorPickerPopover = (props: SeriesColorPickerPopoverProps) =
 
 // This component is to enable SeriesColorPickerPopover usage via series-color-picker-popover directive
 export const SeriesColorPickerPopoverWithTheme = withTheme2(SeriesColorPickerPopover);
-
-const getStyles = () => {
-  return {
-    colorPickerAxisSwitch: css({
-      width: '100%',
-    }),
-    colorPickerAxisSwitchLabel: css({
-      display: 'flex',
-      flexGrow: 1,
-    }),
-  };
-};

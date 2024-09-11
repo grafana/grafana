@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2, LinkModel } from '@grafana/data';
 import { DataLinkButton, useStyles2 } from '@grafana/ui';
@@ -85,13 +84,9 @@ const getStyles = (theme: GrafanaTheme2, padding = 0) => {
     exemplarFooter: css({
       display: 'flex',
       flexDirection: 'column',
-      flex: 1,
-      borderTop: `1px solid ${theme.colors.border.medium}`,
       padding: theme.spacing(1),
-
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      whiteSpace: 'nowrap',
+      borderTop: `1px solid ${theme.colors.border.medium}`,
+      gap: 4,
     }),
     linkButton: css({
       width: 'fit-content',

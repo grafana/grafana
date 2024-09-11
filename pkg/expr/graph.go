@@ -90,7 +90,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			if res, ok := vars[neededVar]; ok {
 				if res.Error != nil {
 					errResult := mathexp.Results{
-						Error: makeDependencyError(node.RefID(), neededVar),
+						Error: MakeDependencyError(node.RefID(), neededVar),
 					}
 					vars[node.RefID()] = errResult
 					hasDepError = true

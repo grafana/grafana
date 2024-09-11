@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, DataQuery, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
+import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { CloudAlertPreview } from './CloudAlertPreview';
 import { usePreview } from './PreviewRule';
@@ -105,13 +105,13 @@ export const ExpressionEditor = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  preview: css`
-    padding: ${theme.spacing(2, 0)};
-    max-width: ${theme.breakpoints.values.xl}px;
-  `,
-  previewAlert: css`
-    margin: ${theme.spacing(1, 0)};
-  `,
+  preview: css({
+    padding: theme.spacing(2, 0),
+    maxWidth: `${theme.breakpoints.values.xl}px`,
+  }),
+  previewAlert: css({
+    margin: theme.spacing(1, 0),
+  }),
 });
 
 type QueryMappers<T extends DataQuery = DataQuery> = {

@@ -13,6 +13,12 @@ labels:
 description: Configure options for Grafana's pie chart visualization
 title: Pie chart
 weight: 100
+refs:
+  calculation-types:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types/
 ---
 
 # Pie chart
@@ -21,7 +27,17 @@ weight: 100
 
 Pie charts display reduced series, or values in a series, from one or more queries, as they relate to each other, in the form of slices of a pie. The arc length, area and central angle of a slice are all proportional to the slices value, as it relates to the sum of all values. This type of chart is best used when you want a quick comparison of a small set of values in an aesthetically pleasing form.
 
+## Configure a pie chart visualization
+
+The following video guides you through the creation steps and common customizations of pie chart visualizations and is great for beginners:
+
+{{< youtube id="A_lDhM9w4_g" >}}
+
 {{< docs/play title="Grafana Bar Charts and Pie Charts" url="https://play.grafana.org/d/ktMs4D6Mk/" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Value options
 
@@ -36,7 +52,7 @@ Choose how much information to show.
 
 ### Calculation
 
-Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types][].
+Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types](ref:calculation-types).
 
 ### Limit
 
@@ -128,8 +144,3 @@ Select values to display in the legend. You can select more than one.
 ## Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-{{% docs/reference %}}
-[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/calculation-types"
-[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
-{{% /docs/reference %}}

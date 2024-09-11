@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
@@ -68,12 +68,12 @@ export const ReceiversSection = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  heading: css`
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  `,
-  description: css`
-    color: ${theme.colors.text.secondary};
-  `,
+  heading: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  }),
+  description: css({
+    color: theme.colors.text.secondary,
+  }),
 });

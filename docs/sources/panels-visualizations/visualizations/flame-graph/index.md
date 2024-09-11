@@ -39,6 +39,8 @@ Once you’ve created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 {{< youtube id="VEvK0JkPlOY" >}}
 
+{{< docs/play title="Flame Graphs" url="https://play.grafana.org/d/cdl34qv4zzg8wa/" >}}
+
 ## Supported data formats
 
 To render a flame graph, you must format the data frame data using a _nested set model_.
@@ -66,6 +68,10 @@ The following table is an example of the type of data you need for a flame graph
 | 3     | 3.67 Bil | 3.67 K | test/pkg/distributor.(\*Distributor).Push |
 | 4     | 1.13 Bil | 1.13 K | compress/gzip.(\*Writer).Write            |
 | 5     | 1.06 Bil | 1.06 K | compress/flat.(\*compressor).write        |
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ## Modes
 

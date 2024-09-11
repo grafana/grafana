@@ -1,10 +1,9 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import { OrgRole, PluginExtensionComponent, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginExtensionGetter, GetPluginExtensions } from '@grafana/runtime';
+import { setPluginExtensionsHook, UsePluginExtensions } from '@grafana/runtime';
 import * as useQueryParams from 'app/core/hooks/useQueryParams';
 
 import { TestProvider } from '../../../test/helpers/TestProvider';
@@ -20,6 +19,12 @@ const mockUseQueryParams = useQueryParams as { useQueryParams: typeof useQueryPa
 jest.mock('app/core/hooks/useQueryParams', () => ({
   __esModule: true,
   useQueryParams: () => [{}],
+}));
+
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue({}),
+  }),
 }));
 
 const defaultProps: Props = {
@@ -128,7 +133,7 @@ enum ExtensionPointComponentTabs {
   Two = '2',
 }
 
-const _createTabName = (tab: ExtensionPointComponentTabs) => `Tab ${tab}`;
+const _createTabName = (tab: ExtensionPointComponentTabs) => tab;
 const _createTabContent = (tabId: ExtensionPointComponentId) => `this is settings for component ${tabId}`;
 
 const generalTabName = 'General';
@@ -170,9 +175,11 @@ async function getTestContext(overrides: Partial<Props & { extensions: PluginExt
     .mockResolvedValue({ timezone: 'UTC', homeDashboardUID: 'home-dashboard', theme: 'dark' });
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
-  const getter: GetPluginExtensions<PluginExtensionComponent> = jest.fn().mockReturnValue({ extensions });
+  const getter: UsePluginExtensions<PluginExtensionComponent> = jest
+    .fn()
+    .mockReturnValue({ extensions, isLoading: false });
 
-  setPluginExtensionGetter(getter);
+  setPluginExtensionsHook(getter);
 
   const props = { ...defaultProps, ...overrides };
   const { rerender } = render(

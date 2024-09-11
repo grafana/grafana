@@ -1,23 +1,16 @@
-import { findByRole, findByText, findByTitle, getByTestId, queryByText, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setupServer } from 'msw/node';
-import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { screen, render, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import 'core-js/stable/structured-clone';
-import { setBackendSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardSearchItemType } from '../../../../search/types';
-import { mockDashboardApi } from '../../mockApi';
-import { mockDashboardDto, mockDashboardSearchItem, mockStore } from '../../mocks';
+import { mockDashboardApi, setupMswServer } from '../../mockApi';
+import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 import { getDefaultFormValues } from '../../utils/rule-form';
-
-import 'whatwg-fetch';
 
 import AnnotationsStep from './AnnotationsStep';
 
@@ -43,31 +36,15 @@ const ui = {
   },
 } as const;
 
-const server = setupServer();
-
-beforeAll(() => {
-  setBackendSrv(backendSrv);
-  server.listen({ onUnhandledRequest: 'error' });
-});
-
-beforeEach(() => {
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
-});
+const server = setupMswServer();
 
 function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
-  const store = mockStore(() => null);
   const formApi = useForm<RuleFormValues>({ defaultValues: { ...getDefaultFormValues(), ...formValues } });
 
   return (
-    <TestProvider store={store}>
-      <FormProvider {...formApi}>
-        <AnnotationsStep />
-      </FormProvider>
-    </TestProvider>
+    <FormProvider {...formApi}>
+      <AnnotationsStep />
+    </FormProvider>
   );
 }
 
@@ -120,10 +97,10 @@ describe('AnnotationsField', function () {
       await user.click(ui.setDashboardButton.get());
       expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
 
-      await user.click(await findByTitle(ui.dashboardPicker.dialog.get(), 'My dashboard'));
+      await user.click(await screen.findByTitle('My dashboard'));
       expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
 
-      await user.click(await findByText(ui.dashboardPicker.dialog.get(), 'First panel'));
+      await user.click(await screen.findByText('First panel'));
       expect(ui.dashboardPicker.confirmButton.get()).toBeEnabled();
     });
 
@@ -148,9 +125,9 @@ describe('AnnotationsField', function () {
       render(<FormWrapper formValues={{ annotations: [] }} />);
 
       await user.click(ui.setDashboardButton.get());
-      await user.click(await findByTitle(ui.dashboardPicker.dialog.get(), 'My dashboard'));
+      await user.click(await screen.findByTitle('My dashboard'));
 
-      await user.click(await findByText(ui.dashboardPicker.dialog.get(), 'Second panel'));
+      await user.click(await screen.findByText('Second panel'));
 
       await user.click(ui.dashboardPicker.confirmButton.get());
 
@@ -186,10 +163,10 @@ describe('AnnotationsField', function () {
       await user.click(ui.setDashboardButton.get());
       expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
 
-      await user.click(await findByTitle(ui.dashboardPicker.dialog.get(), 'My dashboard'));
+      await user.click(await screen.findByTitle('My dashboard'));
 
-      expect(await findByText(ui.dashboardPicker.dialog.get(), 'First panel')).toBeInTheDocument();
-      expect(await queryByText(ui.dashboardPicker.dialog.get(), 'Row panel')).not.toBeInTheDocument();
+      expect(await screen.findByText('First panel')).toBeInTheDocument();
+      expect(screen.queryByText('Row panel')).not.toBeInTheDocument();
     });
 
     it('should show panels within collapsed rows', async function () {
@@ -221,11 +198,11 @@ describe('AnnotationsField', function () {
       await user.click(ui.setDashboardButton.get());
       expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
 
-      await user.click(await findByTitle(ui.dashboardPicker.dialog.get(), 'My dashboard'));
+      await user.click(await screen.findByTitle('My dashboard'));
 
-      expect(await findByText(ui.dashboardPicker.dialog.get(), 'First panel')).toBeInTheDocument();
-      expect(await queryByText(ui.dashboardPicker.dialog.get(), 'Row panel')).not.toBeInTheDocument();
-      expect(await findByText(ui.dashboardPicker.dialog.get(), 'Panel within collapsed row')).toBeInTheDocument();
+      expect(await screen.findByText('First panel')).toBeInTheDocument();
+      expect(screen.queryByText('Row panel')).not.toBeInTheDocument();
+      expect(await screen.findByText('Panel within collapsed row')).toBeInTheDocument();
     });
 
     // this test _should_ work in theory but something is stopping the 'onClick' function on the dashboard item
@@ -275,11 +252,11 @@ describe('AnnotationsField', function () {
       expect(annotationValueElements[0]).toHaveTextContent('dash-test-uid');
       expect(annotationValueElements[1]).toHaveTextContent('1');
 
-      const { confirmButton, dialog } = ui.dashboardPicker;
+      const { confirmButton } = ui.dashboardPicker;
 
       await user.click(ui.setDashboardButton.get());
-      await user.click(await findByRole(dialog.get(), 'button', { name: /My other dashboard/ }));
-      await user.click(await findByRole(dialog.get(), 'button', { name: /Third panel/ }));
+      await user.click(await screen.findByRole('button', { name: /My other dashboard/ }));
+      await user.click(await screen.findByRole('button', { name: /Third panel/ }));
       await user.click(confirmButton.get());
 
       expect(ui.dashboardPicker.dialog.query()).not.toBeInTheDocument();
@@ -319,14 +296,12 @@ describe('AnnotationsField', function () {
 
     render(<FormWrapper formValues={{ annotations: [] }} />);
 
-    const { dialog } = ui.dashboardPicker;
-
     await user.click(ui.setDashboardButton.get());
-    await user.click(await findByTitle(dialog.get(), 'My dashboard'));
+    await user.click(await screen.findByTitle('My dashboard'));
 
-    const warnedPanel = await findByRole(dialog.get(), 'button', { name: /First panel/ });
+    const warnedPanel = await screen.findByRole('button', { name: /First panel/ });
 
-    expect(getByTestId(warnedPanel, 'warning-icon')).toBeInTheDocument();
+    expect(within(warnedPanel).getByTestId('warning-icon')).toBeInTheDocument();
   });
 
   it('should render when panels do not contain certain fields', async () => {

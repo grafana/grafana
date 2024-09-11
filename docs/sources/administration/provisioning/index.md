@@ -81,6 +81,14 @@ If the data source already exists, Grafana reconfigures it to match the provisio
 The configuration file can also list data sources to automatically delete, called `deleteDatasources`.
 Grafana deletes the data sources listed in `deleteDatasources` _before_ adding or updating those in the `datasources` list.
 
+You can configure Grafana to automatically delete provisioned data sources when they're removed from the provisioning file.
+To do so, add `prune: true` to the root of your provisioning file.
+With this configuration, Grafana also removes the provisioned data sources if you remove the provisioning file entirely.
+
+{{% admonition type="note" %}}
+The `prune` parameter is available in Grafana v11.1 and higher.
+{{% /admonition %}}
+
 ### Running multiple Grafana instances
 
 If you run multiple instances of Grafana, add a version number to each data source in the configuration and increase it when you update the configuration.
@@ -99,6 +107,10 @@ apiVersion: 1
 deleteDatasources:
   - name: Graphite
     orgId: 1
+
+# Mark provisioned data sources for deletion if they are no longer in a provisioning file.
+# It takes no effect if data sources are already listed in the deleteDatasources section.
+prune: true
 
 # List of data sources to insert/update depending on what's
 # available in the database.
@@ -257,9 +269,8 @@ The _HTTP\*_ tag denotes data sources that communicate using the HTTP protocol, 
 
 #### Custom HTTP headers for data sources
 
-Data sources managed by Grafanas provisioning can be configured to add HTTP headers to all requests
-going to that data source. The header name is configured in the `jsonData` field and the header value should be
-configured in `secureJsonData`.
+Data sources managed with provisioning can be configured to add HTTP headers to all requests.
+The header name is configured in the `jsonData` field and the header value is configured in `secureJsonData`.
 
 ```yaml
 apiVersion: 1

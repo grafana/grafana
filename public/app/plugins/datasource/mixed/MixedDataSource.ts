@@ -10,8 +10,10 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
+  ScopedVars,
 } from '@grafana/data';
-import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { CustomFormatterVariable } from '@grafana/scenes';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
@@ -19,7 +21,8 @@ export const mixedRequestId = (queryIdx: number, requestId?: string) => `mixed-$
 
 export interface BatchedQueries {
   datasource: Promise<DataSourceApi>;
-  targets: DataQuery[];
+  queries: DataQuery[];
+  scopedVars: ScopedVars;
 }
 
 export class MixedDatasource extends DataSourceApi<DataQuery> {
@@ -39,23 +42,71 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     // Build groups of queries to run in parallel
     const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
-    const mixed: BatchedQueries[] = [];
+    const batches: BatchedQueries[] = [];
 
     for (const key in sets) {
-      const targets = sets[key];
-
-      mixed.push({
-        datasource: getDataSourceSrv().get(targets[0].datasource, request.scopedVars),
-        targets,
-      });
+      batches.push(...this.getBatchesForQueries(sets[key], request));
     }
 
     // Missing UIDs?
-    if (!mixed.length) {
+    if (!batches.length) {
       return of({ data: [] }); // nothing
     }
 
-    return this.batchQueries(mixed, request);
+    return this.batchQueries(batches, request);
+  }
+
+  /**
+   * Almost always returns a single batch for each set of queries.
+   * Unless the query is using a multi value variable.
+   */
+  private getBatchesForQueries(queries: DataQuery[], request: DataQueryRequest<DataQuery>) {
+    const dsRef = queries[0].datasource;
+    const batches: BatchedQueries[] = [];
+
+    // Using the templateSrv.replace function here with a custom formatter as that is the cleanest way
+    // to access the raw value or value array of a variable.
+    const datasourceUid = getTemplateSrv().replace(
+      dsRef?.uid,
+      request.scopedVars,
+      (value: string | string[], variable: CustomFormatterVariable) => {
+        // If it's not a data source variable, or single value
+        if (!Array.isArray(value)) {
+          return value;
+        }
+
+        for (const uid of value) {
+          if (uid === 'default') {
+            continue;
+          }
+
+          const dsSettings = getDataSourceSrv().getInstanceSettings(uid);
+
+          batches.push({
+            datasource: getDataSourceSrv().get(uid),
+            queries: cloneDeep(queries),
+            scopedVars: {
+              ...request.scopedVars,
+              [variable.name]: { value: uid, text: dsSettings?.name },
+            },
+          });
+        }
+
+        return '';
+      }
+    );
+
+    if (datasourceUid !== '') {
+      batches.push({
+        datasource: getDataSourceSrv().get(datasourceUid),
+        queries: cloneDeep(queries),
+        scopedVars: {
+          ...request.scopedVars,
+        },
+      });
+    }
+
+    return batches;
   }
 
   batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
@@ -64,7 +115,8 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
         mergeMap((api: DataSourceApi) => {
           const dsRequest = cloneDeep(request);
           dsRequest.requestId = mixedRequestId(i, dsRequest.requestId);
-          dsRequest.targets = query.targets;
+          dsRequest.targets = query.queries;
+          dsRequest.scopedVars = query.scopedVars;
 
           return from(api.query(dsRequest)).pipe(
             map((response) => {
@@ -102,7 +154,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   }
 
   private isQueryable(query: BatchedQueries): boolean {
-    return query && Array.isArray(query.targets) && query.targets.length > 0;
+    return query && Array.isArray(query.queries) && query.queries.length > 0;
   }
 
   private finalizeResponses(responses: DataQueryResponse[]): DataQueryResponse[] {

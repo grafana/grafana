@@ -1,19 +1,28 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
+import { DataQuery } from '@grafana/schema/dist/esm/index';
+import { ErrorBoundaryAlert, Modal, useStyles2, useTheme2 } from '@grafana/ui';
+import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
 
+import { RowActionComponents } from '../query/components/QueryActionComponent';
+
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
+import { ExploreDrawer } from './ExploreDrawer';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
+import { QueriesDrawerContextProvider, useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
+import { AddToLibraryForm } from './QueryLibrary/AddToLibraryForm';
+import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
@@ -22,8 +31,17 @@ import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
+const QUERY_LIBRARY_ACTION_KEY = 'queryLibraryAction';
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+  return (
+    <QueriesDrawerContextProvider>
+      <ExplorePageContent {...props} />
+    </QueriesDrawerContextProvider>
+  );
+}
+
+function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   useTimeSrvFix();
@@ -41,13 +59,36 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const correlationDetails = useSelector(selectCorrelationDetails);
+  const { drawerOpened, setDrawerOpened, queryLibraryAvailable } = useQueriesDrawerContext();
   const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
+  const [queryToAdd, setQueryToAdd] = useState<DataQuery | undefined>();
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
     //We should probably abstract this out at some point
-    chrome.update({ sectionNav: navModel });
+    chrome.update({
+      sectionNav: navModel,
+    });
   }, [chrome, navModel]);
+
+  useEffect(() => {
+    const hasQueryLibrary = config.featureToggles.queryLibrary || false;
+    if (hasQueryLibrary) {
+      RowActionComponents.addKeyedExtraRenderAction(QUERY_LIBRARY_ACTION_KEY, {
+        scope: CoreApp.Explore,
+        queryActionComponent: (props) => (
+          <QueryOperationAction
+            key={props.key}
+            title={t('query-operation.header.save-to-query-library', 'Save to query library')}
+            icon="save"
+            onClick={() => {
+              setQueryToAdd(props.query);
+            }}
+          />
+        ),
+      });
+    }
+  }, []);
 
   useKeyboardShortcuts();
 
@@ -57,6 +98,9 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
         [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
       })}
     >
+      <h1 className="sr-only">
+        <Trans i18nKey="nav.explore.title" />
+      </h1>
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
@@ -78,6 +122,32 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
           );
         })}
       </SplitPaneWrapper>
+      {drawerOpened && (
+        <ExploreDrawer initialHeight={queryLibraryAvailable ? '75vh' : undefined}>
+          <RichHistoryContainer
+            onClose={() => {
+              setDrawerOpened(false);
+            }}
+          />
+        </ExploreDrawer>
+      )}
+      <Modal
+        title={t('explore.add-to-library-modal.title', 'Add query to Query Library')}
+        isOpen={queryToAdd !== undefined}
+        onDismiss={() => setQueryToAdd(undefined)}
+      >
+        <AddToLibraryForm
+          onCancel={() => {
+            setQueryToAdd(undefined);
+          }}
+          onSave={(isSuccess) => {
+            if (isSuccess) {
+              setQueryToAdd(undefined);
+            }
+          }}
+          query={queryToAdd!}
+        />
+      </Modal>
     </div>
   );
 }
@@ -90,6 +160,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       minHeight: 0,
       height: '100%',
       position: 'relative',
+      overflow: 'hidden',
     }),
     correlationsEditorIndicator: css({
       borderLeft: `4px solid ${theme.colors.primary.main}`,

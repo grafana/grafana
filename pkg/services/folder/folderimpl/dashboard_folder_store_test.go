@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -24,24 +23,24 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardFolderStore(t *testing.T) {
-	var sqlStore *sqlstore.SQLStore
+	var sqlStore db.ReplDB
 	var cfg *setting.Cfg
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBwithCfg(t)
+		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore), quotaService)
+		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 	}
 	t.Run("Given dashboard and folder with the same title", func(t *testing.T) {
 		setup()
 		var orgId int64 = 1
 		title := "Very Unique Name"
-		var sqlStore *sqlstore.SQLStore
+		var sqlStore db.DB
 		var folder1, folder2 *dashboards.Dashboard
-		sqlStore = db.InitTestDB(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		folderStore := ProvideDashboardFolderStore(sqlStore)
 		folder2 = insertTestFolder(t, dashboardStore, "TEST", orgId, "", "prod")
 		_ = insertTestDashboard(t, dashboardStore, title, orgId, folder2.ID, folder2.UID, "prod")

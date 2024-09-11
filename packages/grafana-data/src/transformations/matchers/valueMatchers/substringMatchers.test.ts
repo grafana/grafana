@@ -1,4 +1,4 @@
-import { toDataFrame } from '../../../dataframe';
+import { toDataFrame } from '../../../dataframe/processDataFrame';
 import { DataFrame } from '../../../types/dataFrame';
 import { getValueMatcher } from '../../matchers';
 import { ValueMatcherID } from '../ids';
@@ -9,7 +9,7 @@ describe('value substring to matcher', () => {
       fields: [
         {
           name: 'temp',
-          values: ['24', null, '10', 'asd', '42'],
+          values: ['24', null, '10', 'asd', '42', 'ASD', [1, 2, 3]],
         },
       ],
     }),
@@ -30,11 +30,33 @@ describe('value substring to matcher', () => {
     expect(matcher(valueIndex, field, frame, data)).toBeTruthy();
   });
 
+  it('should match case insensitive', () => {
+    const frame = data[0];
+    const field = frame.fields[0];
+    const valueIndex = 5;
+    const caseInsensitiveMatcher = getValueMatcher({
+      id: ValueMatcherID.substring,
+      options: {
+        value: 'asd',
+      },
+    });
+
+    expect(caseInsensitiveMatcher(valueIndex, field, frame, data)).toBeTruthy();
+  });
+
   // Added for https://github.com/grafana/grafana/pull/83548#pullrequestreview-1904931540 where the matcher was not handling null values
   it('should be a mismatch if the option is null and should not cause errors', () => {
     const frame = data[0];
     const field = frame.fields[0];
     const valueIndex = 1;
+
+    expect(matcher(valueIndex, field, frame, data)).toBeFalsy();
+  });
+
+  it('should be a mismatch if the option is an array / non-string and should not cause errors', () => {
+    const frame = data[0];
+    const field = frame.fields[0];
+    const valueIndex = 6;
 
     expect(matcher(valueIndex, field, frame, data)).toBeFalsy();
   });

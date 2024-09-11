@@ -40,6 +40,11 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/ruler/grafana/api/v1/rules",
 		http.MethodGet + "/api/ruler/grafana/api/v1/export/rules":
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
+	case http.MethodGet + "/api/ruler/grafana/api/v1/rule/{RuleUID}":
+		eval = ac.EvalAll(
+			ac.EvalPermission(ac.ActionAlertingRuleRead),
+			ac.EvalPermission(dashboards.ActionFoldersRead),
+		)
 	case http.MethodPost + "/api/ruler/grafana/api/v1/rules/{Namespace}/export":
 		scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":Namespace"))
 		// more granular permissions are enforced by the handler via "authorizeRuleChanges"
@@ -119,16 +124,42 @@ func (api *API) authorize(method, path string) web.Handler {
 
 	// Alert Instances and Silences
 
-	// Silences. Grafana Paths
-	case http.MethodDelete + "/api/alertmanager/grafana/api/v2/silence/{SilenceId}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstanceUpdate) // delete endpoint actually expires silence
+	// Silences for Grafana paths.
+	// These permissions are required but not sufficient, further authorization is done in the request handler.
+	case http.MethodDelete + "/api/alertmanager/grafana/api/v2/silence/{SilenceId}": // Delete endpoint is used for silence expiration.
+		eval = ac.EvalAll(
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingInstanceRead),
+				ac.EvalPermission(ac.ActionAlertingSilencesRead),
+			),
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingInstanceUpdate),
+				ac.EvalPermission(ac.ActionAlertingSilencesWrite),
+			),
+		)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/silence/{SilenceId}":
-		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingInstanceRead),
+			ac.EvalPermission(ac.ActionAlertingSilencesRead),
+		)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/silences":
-		eval = ac.EvalPermission(ac.ActionAlertingInstanceRead)
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingInstanceRead),
+			ac.EvalPermission(ac.ActionAlertingSilencesRead),
+		)
 	case http.MethodPost + "/api/alertmanager/grafana/api/v2/silences":
-		// additional authorization is done in the request handler
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingInstanceCreate), ac.EvalPermission(ac.ActionAlertingInstanceUpdate))
+		eval = ac.EvalAll(
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingInstanceRead),
+				ac.EvalPermission(ac.ActionAlertingSilencesRead),
+			),
+			ac.EvalAny(
+				ac.EvalPermission(ac.ActionAlertingInstanceCreate),
+				ac.EvalPermission(ac.ActionAlertingInstanceUpdate),
+				ac.EvalPermission(ac.ActionAlertingSilencesCreate),
+				ac.EvalPermission(ac.ActionAlertingSilencesWrite),
+			),
+		)
 
 	// Alert Instances. Grafana Paths
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/alerts/groups":

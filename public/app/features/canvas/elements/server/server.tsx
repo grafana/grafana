@@ -1,12 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, OneClickMode } from '@grafana/data';
 import { ColorDimensionConfig, ScalarDimensionConfig } from '@grafana/schema';
 import config from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions';
 import { ColorDimensionEditor, ScalarDimensionEditor } from 'app/features/dimensions/editors';
-import { getDataLinks } from 'app/plugins/panel/canvas/utils';
 
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps } from '../../element';
 
@@ -80,10 +78,13 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
       height: options?.placement?.height ?? 100,
       top: options?.placement?.top,
       left: options?.placement?.left,
+      rotation: options?.placement?.rotation ?? 0,
     },
     config: {
       type: ServerType.Single,
     },
+    oneClickMode: options?.oneClickMode ?? OneClickMode.Off,
+    links: options?.links ?? [],
   }),
 
   // Called when data changes
@@ -98,8 +99,6 @@ export const serverItem: CanvasElementItem<ServerConfig, ServerData> = {
       bulbColor: serverConfig?.bulbColor ? dimensionContext.getColor(serverConfig.bulbColor).value() : 'green',
       type: serverConfig?.type ?? ServerType.Single,
     };
-
-    data.links = getDataLinks(dimensionContext, elementOptions, data.statusColor);
 
     return data;
   },
@@ -172,7 +171,9 @@ export const getServerStyles = (data: ServerData | undefined) => (theme: Grafana
     fill: data?.statusColor ?? 'transparent',
   }),
   circle: css({
-    animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      animation: `blink ${data?.blinkRate ? 1 / data.blinkRate : 0}s infinite step-end`,
+    },
     fill: data?.bulbColor,
     stroke: 'none',
   }),

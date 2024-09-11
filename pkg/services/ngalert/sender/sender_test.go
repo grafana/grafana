@@ -4,8 +4,11 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/api/v2/models"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestSanitizeLabelName(t *testing.T) {
@@ -48,7 +51,9 @@ func TestSanitizeLabelName(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		am := NewExternalAlertmanagerSender()
+		logger := log.New("ngalert.sender.external-alertmanager")
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		require.NoError(t, err)
 		t.Run(tc.desc, func(t *testing.T) {
 			res, err := am.sanitizeLabelName(tc.labelName)
 
@@ -95,7 +100,9 @@ func TestSanitizeLabelSet(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		am := NewExternalAlertmanagerSender()
+		logger := log.New("ngalert.sender.external-alertmanager")
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry())
+		require.NoError(t, err)
 		t.Run(tc.desc, func(t *testing.T) {
 			require.Equal(t, tc.expectedResult, am.sanitizeLabelSet(tc.labelset))
 		})

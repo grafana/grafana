@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import * as React from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Checkbox, Icon, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Checkbox, EmptyState, useStyles2 } from '@grafana/ui';
 import { StoredNotificationItem } from 'app/core/components/AppNotifications/StoredNotificationItem';
+import { Trans, t } from 'app/core/internationalization';
 import {
   clearAllNotifications,
   clearNotification,
@@ -55,10 +57,9 @@ export function StoredNotifications() {
 
   if (notifications.length === 0) {
     return (
-      <div className={styles.noNotifsWrapper}>
-        <Icon name="bell" size="xxl" />
-        <span>Notifications you have received will appear here.</span>
-      </div>
+      <EmptyState variant="completed" message={t('notifications.empty-state.title', "You're all caught up!")}>
+        <Trans i18nKey="notifications.empty-state.description">Notifications you have received will appear here</Trans>
+      </EmptyState>
     );
   }
 
