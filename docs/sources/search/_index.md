@@ -42,11 +42,11 @@ The following images show:
 
 2. Searching by folder name from the Dashboards page.
 
-{{< figure src="/static/img/docs/grafana/dashboards/search-folder-by-name.png" width="700px" >}}
+{{< figure src="/media/docs/grafana/dashboards/search-folder-by-name.png" width="700px" >}}
 
 3. Searching by dashboard name inside a folder.
 
-{{< figure src="/static/img/docs/grafana/dashboards/search-dashboard-within-folder.png" width="700px" >}}
+{{< figure src="/media/docs/grafana/dashboards/search-dashboard-within-folder.png" width="700px" >}}
 
 {{% admonition type="note" %}}
 When you search within a folder, its subfolders are not part of the results returned. You need to be on the **Dashboards** page (or the root level) to search for subfolders by name.
