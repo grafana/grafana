@@ -1,3 +1,5 @@
+import { Unsubscribable } from 'rxjs';
+
 import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
@@ -11,6 +13,7 @@ import {
 } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehaviorState } from './LibraryPanelBehavior';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
@@ -24,6 +27,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
   private _activationHandler() {
     const queryRunner = this.parent;
+    let libraryPanelSub: Unsubscribable;
     let dashboard: DashboardScene;
     if (!(queryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
@@ -45,24 +49,28 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       return;
     }
 
+    // find the source panel referenced in the the dashboard ds query
     const panelId = dashboardQuery.panelId;
     const vizKey = getVizPanelKeyForPanelId(panelId);
-    const panel = findVizPanelByKey(dashboard, vizKey);
+    const sourcePanel = findVizPanelByKey(dashboard, vizKey);
 
-    if (!(panel instanceof VizPanel)) {
+    if (!(sourcePanel instanceof VizPanel)) {
       return;
     }
 
-    //check if panel is a library panel
-    if (isLibraryPanel(panel)) {
-      const libraryPanel = getLibraryPanelBehavior(panel);
-      // if the panel is a library panel, we need to wait until is resolved
-      if (!libraryPanel?.state.isLoaded) {
-        return;
+    //check if the source panel is a library panel and wait for it to load
+    if (isLibraryPanel(sourcePanel)) {
+      const libraryPanel = getLibraryPanelBehavior(sourcePanel);
+      if (!libraryPanel) {
+        throw new Error('Could not find LibraryPanelBehavior for panel');
       }
+      libraryPanelSub = libraryPanel.subscribeToState((newLibPanel, oldLibPanel) => {
+        this.handleLibPanelStateUpdates(newLibPanel, oldLibPanel, queryRunner, sourcePanel);
+      });
+      return;
     }
 
-    const sourcePanelQueryRunner = getQueryRunnerFor(panel);
+    const sourcePanelQueryRunner = getQueryRunnerFor(sourcePanel);
 
     if (!sourcePanelQueryRunner) {
       throw new Error('Could not find SceneQueryRunner for panel');
@@ -74,6 +82,25 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
     return () => {
       this.prevRequestId = sourcePanelQueryRunner?.state.data?.request?.requestId;
+      if (libraryPanelSub) {
+        libraryPanelSub.unsubscribe();
+      }
     };
+  }
+
+  private handleLibPanelStateUpdates(
+    newLibPanel: LibraryPanelBehaviorState,
+    oldLibPanel: LibraryPanelBehaviorState,
+    queryRunner: SceneQueryRunner,
+    sourcePanel: VizPanel
+  ) {
+    if (newLibPanel && newLibPanel?.isLoaded && newLibPanel !== oldLibPanel) {
+      const libPanelQueryRunner = getQueryRunnerFor(sourcePanel);
+
+      if (!(libPanelQueryRunner instanceof SceneQueryRunner)) {
+        throw new Error('Could not find SceneQueryRunner for panel');
+      }
+      queryRunner.runQueries();
+    }
   }
 }
