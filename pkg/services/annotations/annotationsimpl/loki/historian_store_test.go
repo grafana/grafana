@@ -110,12 +110,12 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 
 		t.Run("should return ErrLokiStoreNotFound if rule is not found", func(t *testing.T) {
 			var rules = slices.Concat(maps.Values(dashboardRules)...)
-			id := rand.Int63()
+			id := rand.Int63n(1000) // in Postgres ID is integer, so limit range
 			// make sure id is not known
 			for slices.IndexFunc(rules, func(rule *ngmodels.AlertRule) bool {
-				return rule.ID == id
+				return rule.ID == int64(id)
 			}) >= 0 {
-				id = rand.Int63()
+				id = rand.Int63n(1000)
 			}
 
 			query := annotations.ItemQuery{
