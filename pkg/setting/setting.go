@@ -180,6 +180,7 @@ type Cfg struct {
 	DisableFrontendSandboxForPlugins []string
 	DisableGravatar                  bool
 	DataProxyWhiteList               map[string]bool
+	ActionsAllowPostURL              string
 
 	TempDataLifetime time.Duration
 
@@ -1538,6 +1539,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
 	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
+	cfg.ActionsAllowPostURL = security.Key("actions_allow_post_url").MustString("")
 	cfg.StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)

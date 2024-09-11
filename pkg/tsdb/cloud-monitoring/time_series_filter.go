@@ -21,7 +21,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, 
 }
 
 func parseTimeSeriesResponse(queryRes *backend.DataResponse,
-	response cloudMonitoringResponse, executedQueryString string, query cloudMonitoringQueryExecutor, params url.Values, groupBys []string, logger log.Logger) error {
+	response cloudMonitoringResponse, executedQueryString string, query cloudMonitoringQueryExecutor, params url.Values, groupBys []string, _ log.Logger) error {
 	frames := data.Frames{}
 
 	for _, series := range response.TimeSeries {
