@@ -43,7 +43,7 @@ The following images shows the search of a folder and the search for a dashboard
 TODO >>>> add screenshots
 
 {{% admonition type="note" %}}
-When searching within a folder, the subfolders will not be return. You need to use the main search page to find them.
+When you search within a folder, its subfolders are not part of the results returned. You need to be on the **Dashboards** page (or the root level) to search for subfolders by name.
 {{% /admonition %}}
 
 ## Search dashboards using panel title
