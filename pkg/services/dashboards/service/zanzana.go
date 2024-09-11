@@ -204,17 +204,9 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 	defer span.End()
 
 	query.SkipAccessControlFilter = true
-	// Set limit to default to prevent pagination issues
-	queryLimit := query.Limit
-	query.Limit = defaultQueryLimit
 	findRes, err := dr.dashboardStore.FindDashboards(ctx, query)
 	if err != nil {
 		return nil, err
-	}
-	query.Limit = queryLimit
-
-	if len(findRes) > maxListQueryLimit {
-		return dr.findDashboardsZanzanaList(ctx, query)
 	}
 
 	return dr.checkDashboards(ctx, query, findRes)
