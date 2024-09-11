@@ -308,6 +308,41 @@ func TestCheckContactPoints(t *testing.T) {
 				}(),
 			},
 		},
+		{
+			name:      "editing name of a provisioned receiver should fail",
+			shouldErr: true,
+			currentConfig: []*definitions.GettableApiReceiver{
+				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+			},
+			newConfig: []*definitions.PostableApiReceiver{
+				func() *definitions.PostableApiReceiver {
+					receiver := defaultPostableReceiver(t, "test-1")
+					receiver.Name = "updated name"
+					return receiver
+				}(),
+			},
+		},
+		{
+			name:      "Moving provisioned integration to different receiver should fail",
+			shouldErr: true,
+			currentConfig: []*definitions.GettableApiReceiver{
+				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-2", models.ProvenanceAPI),
+			},
+			newConfig: []*definitions.PostableApiReceiver{
+				func() *definitions.PostableApiReceiver { // Move integration from test-1 to test-2
+					receiver := defaultPostableReceiver(t, "test-1")
+					receiver.GrafanaManagedReceivers = []*definitions.PostableGrafanaReceiver{}
+					return receiver
+				}(),
+				func() *definitions.PostableApiReceiver {
+					receiver2 := defaultPostableReceiver(t, "test-2")
+					integration1 := defaultPostableReceiver(t, "test-1").GrafanaManagedReceivers[0]
+					receiver2.GrafanaManagedReceivers = append(receiver2.GrafanaManagedReceivers, integration1)
+					return receiver2
+				}(),
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -324,11 +359,14 @@ func TestCheckContactPoints(t *testing.T) {
 func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provenance) *definitions.GettableApiReceiver {
 	t.Helper()
 	return &definitions.GettableApiReceiver{
+		Receiver: amConfig.Receiver{
+			Name: uid,
+		},
 		GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
 			GrafanaManagedReceivers: []*definitions.GettableGrafanaReceiver{
 				{
-					UID:                   "123",
-					Name:                  "yeah",
+					UID:                   uid,
+					Name:                  uid,
 					Type:                  "slack",
 					DisableResolveMessage: true,
 					Provenance:            definitions.Provenance(provenance),
@@ -348,11 +386,14 @@ func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provena
 func defaultPostableReceiver(t *testing.T, uid string) *definitions.PostableApiReceiver {
 	t.Helper()
 	return &definitions.PostableApiReceiver{
+		Receiver: amConfig.Receiver{
+			Name: uid,
+		},
 		PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
 			GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
 				{
-					UID:                   "123",
-					Name:                  "yeah",
+					UID:                   uid,
+					Name:                  uid,
 					Type:                  "slack",
 					DisableResolveMessage: true,
 					Settings: definitions.RawMessage(`{
