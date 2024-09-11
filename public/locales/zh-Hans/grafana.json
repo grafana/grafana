@@ -122,11 +122,18 @@
     "contactPointFilter": {
       "label": ""
     },
-    "grafana-rules": {
-      "export-rules": "",
-      "loading": "",
-      "new-recording-rule": "",
-      "title": ""
+    "list-view": {
+      "section": {
+        "dataSourceManaged": {
+          "title": ""
+        },
+        "grafanaManaged": {
+          "export-rules": "",
+          "loading": "",
+          "new-recording-rule": "",
+          "title": ""
+        }
+      }
     },
     "mute_timings": {
       "error-loading": {
@@ -1101,7 +1108,6 @@
       "discard-success": "",
       "error-fetching": "",
       "error-saving": "",
-      "error-update": "",
       "error-validate-form": "",
       "feature-flag-disabled": "",
       "saved": ""
@@ -2029,13 +2035,16 @@
       "copy-link-button": "",
       "email-share-type-option-description": "",
       "email-share-type-option-label": "",
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
       "pause-access-button": "",
       "pause-access-tooltip": "",
       "public-share-type-option-description": "",
       "public-share-type-option-label": "",
       "resume-access-button": "",
       "revoke-access-button": "",
-      "revoke-access-description": ""
+      "revoke-access-description": "",
+      "unsupported-data-source-alert-desc": ""
     },
     "sharing": {
       "success-creation": ""
@@ -2237,6 +2246,11 @@
     "search-input": {
       "include-panels-placeholder": "搜索仪表板和面板",
       "placeholder": "搜索仪表板"
+    }
+  },
+  "select": {
+    "select-menu": {
+      "selected-count": ""
     }
   },
   "service-accounts": {
