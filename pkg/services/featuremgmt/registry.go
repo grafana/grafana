@@ -736,6 +736,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "kubernetesFolders",
+			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:            "datasourceQueryTypes",
 			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
 			Stage:           FeatureStageExperimental,
@@ -1379,6 +1385,12 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
+		}, {
+			Name:         "alertingFilterV2",
+			Description:  "Enable the new alerting search experience",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
 		},
 		{
 			Name:            "backgroundPluginInstaller",
@@ -1447,6 +1459,13 @@ var (
 			Description: "Enable the app sidecar feature that allows rendering 2 apps at the same time",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaExploreSquad,
+		},
+		{
+			Name:         "groupAttributeSync",
+			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
 		},
 	}
 )
