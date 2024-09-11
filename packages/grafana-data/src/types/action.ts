@@ -3,10 +3,11 @@ import { DataFrame, Field, ValueLinkConfig } from './dataFrame';
 import { InterpolateFunction } from './panel';
 import { SelectableValue } from './select';
 
-export interface Action<T = ActionType.Fetch, TOptions = FetchOptions> {
-  type: T;
+export interface Action {
+  type: ActionType;
   title: string;
-  options: TOptions;
+
+  fetch: FetchOptions;
 }
 
 /**
@@ -51,7 +52,7 @@ export const contentTypeOptions: SelectableValue[] = [
 export const defaultActionConfig: Action = {
   type: ActionType.Fetch,
   title: '',
-  options: {
+  fetch: {
     url: '',
     method: HttpRequestMethod.POST,
     body: '{}',
