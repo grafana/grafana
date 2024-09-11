@@ -1,21 +1,19 @@
 import { css, cx } from '@emotion/css';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { FC, useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
 
 import { labelsApi } from '../../../api/labelsApi';
 import { usePluginBridge } from '../../../hooks/usePluginBridge';
-import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
-import { fetchRulerRulesIfNotFetchedYet } from '../../../state/actions';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 import { RuleFormValues } from '../../../types/rule-form';
 import { isPrivateLabelKey } from '../../../utils/labels';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
 import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
+import { useAlertRuleSuggestions } from '../useAlertRuleSuggestions';
 
 import { AddButton, RemoveButton } from './LabelsButtons';
 
@@ -24,52 +22,6 @@ const useGetOpsLabelsKeys = (skip: boolean) => {
     skip,
   });
   return { loading: isloadingLabels, labelsOpsKeys: currentData };
-};
-const useGetAlertRulesLabels = (
-  dataSourceName: string
-): { loading: boolean; labelsByKey: Record<string, Set<string>> } => {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(fetchRulerRulesIfNotFetchedYet(dataSourceName));
-  }, [dispatch, dataSourceName]);
-
-  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const rulerRequest = rulerRuleRequests[dataSourceName];
-
-  const labelsByKeyResult = useMemo<Record<string, Set<string>>>(() => {
-    const labelsByKey: Record<string, Set<string>> = {};
-
-    const rulerRulesConfig = rulerRequest?.result;
-    if (!rulerRulesConfig) {
-      return labelsByKey;
-    }
-
-    const allRules = Object.values(rulerRulesConfig)
-      .flatMap((groups) => groups)
-      .flatMap((group) => group.rules);
-
-    allRules.forEach((rule) => {
-      if (rule.labels) {
-        Object.entries(rule.labels).forEach(([key, value]) => {
-          if (!value) {
-            return;
-          }
-
-          const labelEntry = labelsByKey[key];
-          if (labelEntry) {
-            labelEntry.add(value);
-          } else {
-            labelsByKey[key] = new Set([value]);
-          }
-        });
-      }
-    });
-
-    return labelsByKey;
-  }, [rulerRequest]);
-
-  return { loading: rulerRequest?.loading, labelsByKey: labelsByKeyResult };
 };
 
 function mapLabelsToOptions(
@@ -158,7 +110,7 @@ export function useCombinedLabels(
   selectedKey: string
 ) {
   // ------- Get labels keys and their values from existing alerts
-  const { loading, labelsByKey: labelsByKeyFromExisingAlerts } = useGetAlertRulesLabels(dataSourceName);
+  const { isLoading, labels: labelsByKeyFromExisingAlerts } = useAlertRuleSuggestions(dataSourceName);
   // ------- Get only the keys from the ops labels, as we will fetch the values for the keys once the key is selected.
   const { loading: isLoadingLabels, labelsOpsKeys = [] } = useGetOpsLabelsKeys(
     !labelsPluginInstalled || loadingLabelsPlugin
@@ -178,7 +130,7 @@ export function useCombinedLabels(
 
   //------- Convert the keys from the existing alerts to options for the dropdown
   const keysFromExistingAlerts = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKeyFromExisingAlerts).filter(isKeyAllowed), labelsInSubform);
+    return mapLabelsToOptions(Array.from(labelsByKeyFromExisingAlerts.keys()).filter(isKeyAllowed), labelsInSubform);
   }, [labelsByKeyFromExisingAlerts, labelsInSubform]);
 
   // create two groups of labels, one for ops and one for custom
@@ -195,8 +147,7 @@ export function useCombinedLabels(
     },
   ];
 
-  const selectedKeyIsFromAlerts =
-    labelsByKeyFromExisingAlerts[selectedKey] !== undefined && labelsByKeyFromExisingAlerts[selectedKey]?.size > 0;
+  const selectedKeyIsFromAlerts = labelsByKeyFromExisingAlerts.has(selectedKey);
   const selectedKeyIsFromOps = labelsByKeyOps[selectedKey] !== undefined && labelsByKeyOps[selectedKey]?.size > 0;
   const selectedKeyDoesNotExist = !selectedKeyIsFromAlerts && !selectedKeyIsFromOps;
 
@@ -248,7 +199,7 @@ export function useCombinedLabels(
 
       // values from existing alerts will take precedence over values from ops
       if (selectedKeyIsFromAlerts || !labelsPluginInstalled) {
-        return mapLabelsToOptions(labelsByKeyFromExisingAlerts[key]);
+        return mapLabelsToOptions(labelsByKeyFromExisingAlerts.get(key));
       }
       return valuesFromSelectedGopsKey;
     },
@@ -256,7 +207,7 @@ export function useCombinedLabels(
   );
 
   return {
-    loading: loading || isLoadingLabels,
+    loading: isLoading || isLoadingLabels,
     keysFromExistingAlerts,
     groupedOptions,
     getValuesForLabel,
