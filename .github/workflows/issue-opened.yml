@@ -4,6 +4,11 @@ on:
     types: [opened]
 concurrency:
   group: issue-opened-${{ github.event.issue.number }}
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   main:
     runs-on: ubuntu-latest
