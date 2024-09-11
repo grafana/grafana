@@ -74,7 +74,7 @@ jobs:
         #uses: grafana/auto-triager@main
         uses: ./auto-triager
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ github.event.issue.number }}
           openai_api_key: ${{ env.AUTOTRIAGER_OPENAI_API_KEY }}
           add_labels: true
