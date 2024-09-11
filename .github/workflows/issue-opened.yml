@@ -36,9 +36,7 @@ jobs:
         shell: bash
         run: |
           if [ -n "${{ (secrets.GRAFANA_DELIVERY_BOT_APP_ID != '' &&
-                        secrets.GRAFANA_DELIVERY_BOT_APP_PEM != '' &&
-                        secrets.OPENAI_API_KEY != '' &&
-                        secrets.SLACK_WEBHOOK_URL != ''
+                        secrets.GRAFANA_DELIVERY_BOT_APP_PEM != ''
                         ) || '' }}" ]; then
             echo "has-secrets=1" >> "$GITHUB_OUTPUT"
           fi
@@ -54,6 +52,15 @@ jobs:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/repo/grafana/<repo>/<path> path in Vault
+          repo_secrets: |
+            AUTOTRIAGER_OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
+            AUTOTRIAGER_SLACK_WEBHOOK_URL=plugins_platform_issue_triager:AUTOTRIAGER_SLACK_WEBHOOK_URL
+
       - name: Checkout auto-triager repository
         uses: actions/checkout@v4
         with:
@@ -67,13 +74,10 @@ jobs:
         #uses: grafana/auto-triager@main
         uses: ./auto-triager
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ github.event.issue.number }}
-          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          # Leaving the action in monitoring mode for now
-          # should be set to true when ready to use
-          # add_labels: true
-          add_labels: false
+          openai_api_key: ${{ env.AUTOTRIAGER_OPENAI_API_KEY }}
+          add_labels: true
 
       - name: Labels from auto triage
         run: |
@@ -88,8 +92,8 @@ jobs:
               "icon_emoji": ":robocto:",
               "username": "Auto Triager",
               "type": "mrkdwn",
-              "text": "Auto triager found the following labels: ${{ steps.auto_triage.outputs.triage_labels }} for [issue #${{ github.event.issue.number }}](${{ github.event.issue.html_url }})",
+              "text": "Auto triager found the following labels: ${{ steps.auto_triage.outputs.triage_labels }} for issue ${{ github.event.issue.html_url }}",
               "channel": "#triage-automation-ci"
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL:  ${{ env.AUTOTRIAGER_SLACK_WEBHOOK_URL }}
