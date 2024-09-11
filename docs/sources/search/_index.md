@@ -34,13 +34,19 @@ The search is:
 You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard or folder.
 {{% /admonition %}}
 
-The following image shows the search results when you search a dashboard by name.
+The following images show:
+
+1. Searching by dashboard name from the Dashboards page.
 
 {{< figure src="/static/img/docs/v91/dashboard-features/search-by-dashboard-name.png" width="700px" >}}
 
-The following images shows the search of a folder and the search for a dashboard inside that folder.
+2. Searching by folder name from the Dashboards page.
 
-TODO >>>> add screenshots
+{{< figure src="/static/img/docs/grafana/dashboards/search-folder-by-name.png" width="700px" >}}
+
+3. Searching by dashboard name inside a folder.
+
+{{< figure src="/static/img/docs/grafana/dashboards/search-dashboard-within-folder.png" width="700px" >}}
 
 {{% admonition type="note" %}}
 When you search within a folder, its subfolders are not part of the results returned. You need to be on the **Dashboards** page (or the root level) to search for subfolders by name.
