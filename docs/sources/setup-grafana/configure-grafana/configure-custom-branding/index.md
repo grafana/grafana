@@ -17,7 +17,8 @@ Custom branding enables you to replace the Grafana Labs brand and logo with your
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud). For Cloud Advanced and Enterprise customers, please provide custom elements and logos to our Support team. We will help you host your images and update your custom branding.
 
-This feature is not available for Grafana Free and Pro tiers. For more information on feature availability across plans, see our [feature comparison page](/docs/grafana-cloud/cost-management-and-billing/understand-grafana-cloud-features)
+This feature is not available for Grafana Free and Pro tiers.
+For more information on feature availability across plans, refer to our [feature comparison page](/docs/grafana-cloud/cost-management-and-billing/understand-grafana-cloud-features/)
 
 {{% /admonition %}}
 
