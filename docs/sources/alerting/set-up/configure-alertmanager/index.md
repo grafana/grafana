@@ -34,15 +34,19 @@ Grafana Alerting is based on the architecture of the Prometheus alerting system.
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
-Grafana has its own pre-configured Alertmanager, referred to as "Grafana" in the user interface:
+**Grafana Alertmanager**
 
-- **Grafana Alertmanager** is the default internal Alertmanager if you run Grafana on-premises or as open source. It can receive alerts from Grafana but cannot receive alerts from external alert generators such as Mimir or Loki.
+Grafana has its own built-in Alertmanager, referred to as "Grafana" in the user interface. It is the default internal Alertmanager if you run Grafana on-premises or as open source. It can receive alerts from Grafana, but cannot receive alerts from alert generators such as Mimir or Loki.
 
-- **Cloud Alertmanager** runs in Grafana Cloud and can receive Grafana-managed alerts and Data sources-managed alerts like Mimir, Loki, and Prometheus.
+**Cloud Alertmanager**
 
-Grafana Alerting also supports sending alerts to **External Alertmanagers**, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), which can receive alerts from Grafana, Loki, Mimir, and Prometheus.
+The Cloud Alertmanager runs in Grafana Cloud. It can receive Grafana-managed alerts and data sources-managed alerts, such as Mimir, Loki, and Prometheus.
 
-You can use both internal and external Alertmanagers. The decision often depends on your alerting setup and where your alerts are being generated. Here are two examples of when you may want to [add an external Alertmanager](#add-an-external-alertmanager) and send your alerts there instead of the default Grafana Alertmanager:
+**External Alertmanagers**
+
+Grafana Alerting also supports sending alerts to external alertmanagers, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), which can receive alerts from Grafana, Loki, Mimir, and Prometheus.
+
+You can use a combination of Alertmanagers. The decision often depends on your alerting setup and where your alerts are being generated. Here are two examples of when you may want to [add an external Alertmanager](#add-an-external-alertmanager) and send your alerts there instead of using the built-in Grafana Alertmanager.
 
 1. You may already have Alertmanagers on-premises in your own Cloud infrastructure that you still want to use because you have other alert generators, such as Prometheus.
 
