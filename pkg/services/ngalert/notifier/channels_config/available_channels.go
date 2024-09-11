@@ -1484,9 +1484,8 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 		{ // Since Grafana 11.1
 			Type:        "sns",
 			Name:        "AWS SNS",
-			Description: "Sends notifications to Cisco Webex Teams",
+			Description: "Sends notifications to AWS Simple Notification Service",
 			Heading:     "Webex settings",
-			Info:        "Notifications can be configured for any Cisco Webex Teams",
 			Options: []NotifierOption{
 				{
 					Label:        "The Amazon SNS API URL",
@@ -1602,16 +1601,28 @@ func GetSecretKeysForContactPointType(contactPointType string) ([]string, error)
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
 		if strings.EqualFold(n.Type, contactPointType) {
-			var secureFields []string
-			for _, field := range n.Options {
-				if field.Secure {
-					secureFields = append(secureFields, field.PropertyName)
-				}
-			}
-			return secureFields, nil
+			return getSecretFields("", n.Options), nil
 		}
 	}
 	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+}
+
+func getSecretFields(parentPath string, options []NotifierOption) []string {
+	var secureFields []string
+	for _, field := range options {
+		name := field.PropertyName
+		if parentPath != "" {
+			name = parentPath + "." + name
+		}
+		if field.Secure {
+			secureFields = append(secureFields, name)
+			continue
+		}
+		if len(field.SubformOptions) > 0 {
+			secureFields = append(secureFields, getSecretFields(name, field.SubformOptions)...)
+		}
+	}
+	return secureFields
 }
 
 // ConfigForIntegrationType returns the config for the given integration type. Returns error is integration type is not known.
