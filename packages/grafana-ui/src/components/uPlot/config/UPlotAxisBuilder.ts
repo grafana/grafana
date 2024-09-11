@@ -92,8 +92,6 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       distr = ScaleDistribution.Linear,
     } = this.props;
 
-    console.log(space);
-
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
