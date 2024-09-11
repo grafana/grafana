@@ -112,7 +112,6 @@ export function isValid(text: string | DateTime): boolean {
  * @param time
  * @param roundUp If true it will round the time to endOf time unit, otherwise to startOf time unit.
  */
-// TODO: Had to revert Andrejs `time: moment.Moment` to `time: any`
 export function parseDateMath(
   mathString: string,
   time: DateTime,
