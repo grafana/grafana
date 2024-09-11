@@ -1893,10 +1893,12 @@
     },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "Cőŉŧäčŧ Ğřäƒäŉä Ŀäþş",
         "dependencies": "Đępęŉđęŉčįęş",
         "downloads": "Đőŵŉľőäđş",
         "from": "Fřőm",
-        "reportAbuse": "Ŗępőřŧ Åþūşę",
+        "links": "Ŀįŉĸş ",
+        "reportAbuse": "Ŗępőřŧ ä čőŉčęřŉ ",
         "signature": "Ŝįģŉäŧūřę",
         "status": "Ŝŧäŧūş",
         "updatedAt": "Ŀäşŧ ūpđäŧęđ: ",
