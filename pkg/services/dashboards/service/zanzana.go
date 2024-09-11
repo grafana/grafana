@@ -19,6 +19,7 @@ import (
 const (
 	maxListQueryLength = 8
 	maxListQueryLimit  = 100
+	defaultQueryLimit  = 1000
 )
 
 type searchResult struct {
@@ -201,11 +202,15 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 	defer span.End()
 
 	query.SkipAccessControlFilter = true
+	// Set limit to default to prevent pagination issues
+	queryLimit := query.Limit
+	query.Limit = defaultQueryLimit
 	findRes, err := dr.dashboardStore.FindDashboards(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
+	query.Limit = queryLimit
 	return dr.checkDashboards(ctx, query, findRes)
 }
 
@@ -229,6 +234,9 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 		go func() {
 			defer wg.Done()
 			for d := range resToCheck {
+				if len(allowedResults) >= int(query.Limit) {
+					return
+				}
 				objectType := zanzana.TypeDashboard
 				if d.IsFolder {
 					objectType = zanzana.TypeFolder
@@ -259,6 +267,9 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 	wg.Wait()
 	close(allowedResults)
 	for r := range allowedResults {
+		if len(res) >= int(query.Limit) {
+			break
+		}
 		res = append(res, r)
 	}
 
