@@ -16,7 +16,7 @@ weight: 80
 
 # Search dashboards and folders
 
-You can search for dashboards and folders by name.
+You can search for dashboards and dashboard folders by name.
 
 When you search for dashboards, you can also do it by panel title. Whether you search by name or panel title, the system returns all dashboards available within the Grafana instance, even if you do not have permission to view the contents of the dashboard.
 
