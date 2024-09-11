@@ -1,5 +1,4 @@
-import { DataFrameType, Field, FieldType, LogRowModel, MutableDataFrame } from '@grafana/data';
-import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
+import { DataFrameType, Field, FieldType, LinkModel, LogRowModel, MutableDataFrame } from '@grafana/data';
 
 import { createLogRow } from './__mocks__/logRow';
 import { getAllFields, createLogLineLinks, FieldDef } from './logParser';
@@ -403,7 +402,7 @@ describe('logParser', () => {
 
   describe('createLogLineLinks', () => {
     it('should change FieldDef to have keys of variable keys', () => {
-      const variableLink: ExploreFieldLinkModel = {
+      const variableLink: LinkModel = {
         href: 'test',
         onClick: () => {},
         origin: {
@@ -437,7 +436,7 @@ describe('logParser', () => {
     });
 
     it('should return empty array if no variables', () => {
-      const variableLink: ExploreFieldLinkModel = {
+      const variableLink: LinkModel = {
         href: 'test',
         onClick: () => {},
         origin: {

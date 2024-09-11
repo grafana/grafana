@@ -88,6 +88,24 @@ export interface InternalDataLink<T extends DataQuery = any> {
 export type LinkTarget = '_blank' | '_self' | undefined;
 
 /**
+ * Can be used to gain more information about an interpolation operation
+ */
+export interface VariableInterpolation {
+  /** The full matched expression including, example: ${varName.field:regex} */
+  match: string;
+  /** In the expression ${varName.field:regex} variableName is varName */
+  variableName: string;
+  /** In the expression ${varName.fields[0].name:regex} the fieldPath is fields[0].name */
+  fieldPath?: string;
+  /** In the expression ${varName:regex} the regex part is the format */
+  format?: string;
+  /** The formatted value of the variable expresion. Will equal match when variable not found or scopedVar was undefined or null **/
+  value: string;
+  // When value === match this will be true, meaning the variable was not found
+  found?: boolean;
+}
+
+/**
  * Processed Link Model. The values are ready to use
  */
 export interface LinkModel<T = any> {
@@ -98,6 +116,9 @@ export interface LinkModel<T = any> {
 
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any, origin?: any) => void;
+
+  // TODO, see if necessary outside of Explore
+  variables?: VariableInterpolation[];
 }
 
 /**

@@ -19,8 +19,9 @@ import {
   DataLinkPostProcessor,
   ExploreUrlState,
   urlUtil,
+  VariableInterpolation,
 } from '@grafana/data';
-import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
@@ -40,17 +41,6 @@ const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
  * be passed back to the visualization.
  */
 const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilter];
-
-/**
- * This extension of the LinkModel was done to support correlations, which need the variables' names
- * and values split out for display purposes
- *
- * Correlations are internal links only so the variables property will always be defined (but possibly empty)
- * for internal links and undefined for non-internal links
- */
-export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variables: VariableInterpolation[];
-}
 
 const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
 
@@ -109,7 +99,7 @@ export const getFieldLinksForExplore = (options: {
   dataFrame?: DataFrame;
   // if not provided, field.config.links are used
   linksToProcess?: DataLink[];
-}): ExploreFieldLinkModel[] => {
+}): LinkModel[] => {
   const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
   const scopedVars: ScopedVars = { ...(vars || {}) };
   scopedVars['__value'] = {
@@ -158,7 +148,7 @@ export const getFieldLinksForExplore = (options: {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });
 
-    const fieldLinks = links.map((link) => {
+    const fieldLinks: Array<LinkModel | undefined> = links.map((link) => {
       let internalLinkSpecificVars: ScopedVars = {};
       if (link.meta?.transformations) {
         link.meta?.transformations.forEach((transformation) => {
@@ -220,13 +210,13 @@ export const getFieldLinksForExplore = (options: {
             onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
-          return { ...internalLink, variables: variables };
+          return { ...internalLink, variables: variables } as LinkModel;
         }
       } else {
         return undefined;
       }
     });
-    return fieldLinks.filter((link): link is ExploreFieldLinkModel => !!link);
+    return (fieldLinks || []).filter((link): link is LinkModel => !!link);
   }
   return [];
 };

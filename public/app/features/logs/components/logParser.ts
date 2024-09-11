@@ -2,14 +2,13 @@ import { partition } from 'lodash';
 
 import { DataFrame, Field, FieldWithIndex, LinkModel, LogRowModel } from '@grafana/data';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
 import { parseLogsFrame } from '../logsFrame';
 
 export type FieldDef = {
   keys: string[];
   values: string[];
-  links?: Array<LinkModel<Field>> | ExploreFieldLinkModel[];
+  links?: Array<LinkModel<Field>> | LinkModel[];
   fieldIndex: number;
 };
 
@@ -19,11 +18,7 @@ export type FieldDef = {
  */
 export const getAllFields = (
   row: LogRowModel,
-  getFieldLinks?: (
-    field: Field,
-    rowIndex: number,
-    dataFrame: DataFrame
-  ) => Array<LinkModel<Field>> | ExploreFieldLinkModel[]
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>> | LinkModel[]
 ) => {
   return getDataframeFields(row, getFieldLinks);
 };
@@ -35,8 +30,8 @@ export const getAllFields = (
 export const createLogLineLinks = (hiddenFieldsWithLinks: FieldDef[]): FieldDef[] => {
   let fieldsWithLinksFromVariableMap: FieldDef[] = [];
   hiddenFieldsWithLinks.forEach((linkField) => {
-    linkField.links?.forEach((link: LinkModel | ExploreFieldLinkModel) => {
-      if ('variables' in link && link.variables.length > 0) {
+    linkField.links?.forEach((link: LinkModel | LinkModel) => {
+      if ('variables' in link && link.variables!.length > 0) {
         // convert ExploreFieldLinkModel to LinkModel by omitting variables field
         const fieldDefFromLink: LinkModel = {
           href: link.href,
@@ -45,12 +40,12 @@ export const createLogLineLinks = (hiddenFieldsWithLinks: FieldDef[]): FieldDef[
           onClick: link.onClick,
           target: link.target,
         };
-        const variableKeys = link.variables.map((variable) => {
+        const variableKeys = link.variables!.map((variable) => {
           const varName = variable.variableName;
           const fieldPath = variable.fieldPath ? `.${variable.fieldPath}` : '';
           return `${varName}${fieldPath}`;
         });
-        const variableValues = link.variables.map((variable) => (variable.found ? variable.value : ''));
+        const variableValues = link.variables!.map((variable) => (variable.found ? variable.value : ''));
         fieldsWithLinksFromVariableMap.push({
           keys: variableKeys,
           values: variableValues,

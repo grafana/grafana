@@ -794,6 +794,7 @@ export {
   SupportedTransformationType,
   type InternalDataLink,
   type LinkTarget,
+  type VariableInterpolation,
   type LinkModel,
   type LinkModelSupplier,
   VariableOrigin,
