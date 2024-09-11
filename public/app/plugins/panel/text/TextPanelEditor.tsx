@@ -12,7 +12,7 @@ import {
 
 import { Options, TextMode } from './panelcfg.gen';
 
-export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, any, Options>) => {
+export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, {}, Options>) => {
   const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);
   const styles = useStyles2(getStyles);
 

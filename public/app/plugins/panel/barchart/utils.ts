@@ -52,7 +52,7 @@ interface BarSeries {
 
 export function prepSeries(
   frames: DataFrame[],
-  fieldConfig: FieldConfigSource<any>,
+  fieldConfig: FieldConfigSource,
   stacking: StackingMode,
   theme: GrafanaTheme2,
   xFieldName?: string,

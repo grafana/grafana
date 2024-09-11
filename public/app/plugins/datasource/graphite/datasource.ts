@@ -494,7 +494,7 @@ export class GraphiteDatasource
   }
 
   metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {
-    const options: any = optionalOptions || {};
+    const options = optionalOptions || {};
 
     const queryObject = convertToGraphiteQueryObject(findQuery);
     if (queryObject.queryType === GraphiteQueryType.Value || queryObject.queryType === GraphiteQueryType.MetricName) {
