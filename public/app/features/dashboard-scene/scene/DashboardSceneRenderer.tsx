@@ -3,20 +3,19 @@ import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { SceneComponentProps, VizPanel } from '@grafana/scenes';
+import { useChromeHeaderHeight } from '@grafana/runtime';
+import { SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { getNavModel } from 'app/core/selectors/navModel';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
-import { explicitlyControlledMigrationPanels } from 'app/features/dashboard/state/PanelModel';
-import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
+import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene } = model.useState();
@@ -57,28 +56,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} key="dashboard-empty-state" />
   );
 
-  const showAngularDeprecationNotice = () => {
-    const panels = model.getDashboardPanels();
-    const shouldShowAutoMigrateLink = panels.some((panel) => {
-      if (panel instanceof VizPanel) {
-        return explicitlyControlledMigrationPanels.includes(panel.state.pluginId);
-      }
-      return false;
-    });
-
-    return (
-      config.featureToggles.angularDeprecationUI &&
-      model.hasDashboardAngularPlugins() &&
-      model.state.uid && (
-        <AngularDeprecationNotice
-          dashboardUid={model.state.uid}
-          showAutoMigrateLink={shouldShowAutoMigrateLink}
-          key={model.state.uid}
-        />
-      )
-    );
-  };
-
   const withPanels = (
     <div className={cx(styles.body, !hasControls && styles.bodyWithoutControls)} key="dashboard-panels">
       <bodyToRender.Component model={bodyToRender} />
@@ -87,7 +64,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   const notFound = meta.dashboardNotFound && <EntityNotFound entity="Dashboard" key="dashboard-not-found" />;
 
-  let body = [showAngularDeprecationNotice(), withPanels];
+  const angularBanner = <DashboardAngularDeprecationBanner dashboard={model} key="angular-deprecation-banner" />;
+
+  let body = [angularBanner, withPanels];
 
   if (notFound) {
     body = [notFound];

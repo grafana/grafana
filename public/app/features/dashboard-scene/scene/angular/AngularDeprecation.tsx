@@ -7,7 +7,7 @@ import { Icon, PanelChrome, Tooltip, useStyles2 } from '@grafana/ui';
 import { explicitlyControlledMigrationPanels } from 'app/features/dashboard/state/PanelModel';
 import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
 
-import { getQueryRunnerFor } from '../utils/utils';
+import { getQueryRunnerFor } from '../../utils/utils';
 
 export class AngularDeprecation extends SceneObjectBase {
   static Component = AngularDeprecationRenderer;

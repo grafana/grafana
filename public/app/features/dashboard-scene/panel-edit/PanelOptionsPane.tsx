@@ -12,7 +12,7 @@ import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPlugi
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 
-import { isUsingAngularPanelPlugin } from '../scene/AngularDeprecation';
+import { isUsingAngularPanelPlugin } from '../scene/angular/AngularDeprecation';
 
 import { PanelEditor } from './PanelEditor';
 import { PanelOptions } from './PanelOptions';

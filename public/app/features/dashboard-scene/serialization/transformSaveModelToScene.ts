@@ -26,7 +26,6 @@ import { ScopesFacade } from 'app/features/scopes';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
-import { AngularDeprecation } from '../scene/AngularDeprecation';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -39,6 +38,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
