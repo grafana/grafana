@@ -22,10 +22,9 @@ export default {
       .exclude(new RegExp(eslintPathsToIgnore.join('|'))),
   'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
   'no gf-form usage': () =>
-    regexp(
-      /gf-form/gm,
-      'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.'
-    ).include('**/*.{ts,tsx,html}'),
+    regexp(/gf-form/gm, 'gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.')
+      .include('**/*.{ts,tsx,html}')
+      .exclude(new RegExp('packages/grafana-ui/src/themes/GlobalStyles')),
 };
 
 function countUndocumentedStories() {
