@@ -9,7 +9,6 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
 )
@@ -280,12 +279,6 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 func (d *DualWriterMode1) Destroy() {
 	d.Storage.Destroy()
 	d.Legacy.Destroy()
-}
-
-func (d *DualWriterMode1) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	err := errors.New("Watch not implemented in mode 1")
-	d.Log.Error(err, err.Error())
-	return nil, err
 }
 
 func (d *DualWriterMode1) GetSingularName() string {
