@@ -452,6 +452,11 @@ export function isPluginUpdateable(plugin: CatalogPlugin) {
     return false;
   }
 
+  // If the plugin is currently being updated, it should not be updated
+  if (plugin.isUpdatingFromInstance) {
+    return false;
+  }
+
   // Managed plugins cannot be updated
   return !plugin.isManaged;
 }
