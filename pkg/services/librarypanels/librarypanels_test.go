@@ -7,9 +7,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
@@ -40,6 +37,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 const userInDbName = "user_in_db"
@@ -736,7 +735,6 @@ func createDashboard(t *testing.T, sqlStore db.ReplDB, user *user.SignedInUser, 
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 		foldertest.NewFakeService(),
 		nil,
-		actest.FakeService{},
 	)
 	require.NoError(t, err)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
@@ -831,7 +829,6 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 			foldertest.NewFakeService(),
 			nil,
-			actest.FakeService{},
 		)
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashService)
