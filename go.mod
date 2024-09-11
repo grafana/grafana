@@ -478,6 +478,7 @@ require (
 
 require (
 	cloud.google.com/go/longrunning v0.5.12 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/at-wat/mqtt-go v0.19.4 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
@@ -500,6 +501,3 @@ exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
 // Use our fork xorm. go.work currently overrides this and points to the local ./pkg/util/xorm directory.
 replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
-
-// lock for mysql tsdb compat
-replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
