@@ -62,7 +62,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
   const isEditedPanelDirty = usePanelEditDirty(editPanel);
-  const isEditingLibraryPanel = isEditingLibPanel(editPanel);
+  const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
@@ -611,14 +611,6 @@ function addDynamicActions(
       }
     }
   }
-}
-
-function isEditingLibPanel(panelEditor?: PanelEditor) {
-  if (!panelEditor) {
-    return false;
-  }
-
-  return isLibraryPanel(panelEditor.state.panelRef.resolve());
 }
 
 // This hook handles when panelEditor is not defined to avoid conditionally hook usage

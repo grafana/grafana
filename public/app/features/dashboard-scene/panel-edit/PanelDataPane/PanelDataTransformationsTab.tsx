@@ -55,9 +55,9 @@ export class PanelDataTransformationsTab
   }
 
   public onChangeTransformations(transformations: DataTransformerConfig[]) {
-    const dataprovider = this.getDataTransformer();
-    dataprovider.setState({ transformations });
-    dataprovider.reprocessTransformations();
+    const transformer = this.getDataTransformer();
+    transformer.setState({ transformations });
+    transformer.reprocessTransformations();
   }
 }
 

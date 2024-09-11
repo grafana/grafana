@@ -268,10 +268,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       },
     });
 
-    if (this.state.editPanel) {
-      this.state.editPanel.dashboardSaved();
-    }
-
+    this.state.editPanel?.dashboardSaved();
     this._changeTracker.startTrackingChanges();
   }
 
