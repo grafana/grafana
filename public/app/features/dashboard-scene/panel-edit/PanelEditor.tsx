@@ -9,6 +9,7 @@ import {
   SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
+  sceneUtils,
   VizPanel,
   VizPanelState,
 } from '@grafana/scenes';
@@ -62,7 +63,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private setOriginalState(panelRef: SceneObjectRef<VizPanel>) {
     const panel = panelRef.resolve();
 
-    this._originalState = panel.state;
+    this._originalState = sceneUtils.cloneSceneObjectState(panel.state);
     this._originalSaveModel = vizPanelToPanel(panel);
 
     if (panel.parent instanceof DashboardGridItem) {
