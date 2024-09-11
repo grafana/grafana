@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -72,29 +70,22 @@ func (t *NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(notificationsModels.SchemeGroupVersion)
 }
 
-func (t *NotificationsAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
-	optsGetter generic.RESTOptionsGetter,
-	dualWriteBuilder grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(notificationsModels.GROUP, scheme, metav1.ParameterCodec, codecs)
-
+func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
 	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, optsGetter, dualWriteBuilder)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize time-interval storage: %w", err)
+		return fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
 
 	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder, t.ng.Api.ReceiverService)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize receiver storage: %w", err)
+		return fmt.Errorf("failed to initialize receiver storage: %w", err)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
 		notificationsModels.TimeIntervalResourceInfo.StoragePath(): intervals,
 		notificationsModels.ReceiverResourceInfo.StoragePath():     recvStorage,
 	}
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
