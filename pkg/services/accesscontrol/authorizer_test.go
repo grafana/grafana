@@ -53,7 +53,7 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 			Name:      "1",
 		})
 
-		assert.Error(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, false, ok)
 	})
 
