@@ -1893,10 +1893,12 @@
     },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "Contact Grafana Labs",
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
-        "reportAbuse": "Report Abuse",
+        "links": "Links ",
+        "reportAbuse": "Report a concern ",
         "signature": "Signature",
         "status": "Status",
         "updatedAt": "Last updated: ",
