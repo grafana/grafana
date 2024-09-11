@@ -68,7 +68,7 @@ func RegisterAPIService(
 	return builder, nil
 }
 
-func NewAPISevice(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
+func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
 	return &IdentityAccessManagementAPIBuilder{
 		store: store,
 		authorizer: authorizer.AuthorizerFunc(
