@@ -113,7 +113,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			id := rand.Int63n(1000) // in Postgres ID is integer, so limit range
 			// make sure id is not known
 			for slices.IndexFunc(rules, func(rule *ngmodels.AlertRule) bool {
-				return rule.ID == int64(id)
+				return rule.ID == id
 			}) >= 0 {
 				id = rand.Int63n(1000)
 			}
