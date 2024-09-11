@@ -152,6 +152,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     error: error?.errorCode,
     angularDetected,
     isFullyInstalled: isDisabled,
+    latestVersion: plugin.version,
   };
 }
 
@@ -264,6 +265,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     angularDetected: local?.angularDetected ?? remote?.angularDetected,
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
+    latestVersion: local?.latestVersion || remote?.version || '',
   };
 }
 
