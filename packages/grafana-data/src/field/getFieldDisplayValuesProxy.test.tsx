@@ -92,4 +92,18 @@ describe('getFieldDisplayValuesProxy', () => {
     expect(p.test.numeric).toBe(1);
     expect(p.test.toString()).toBe('1');
   });
+
+  it('should fall back to matching by name in non-primary frame', () => {
+    const frameA = toDataFrame({ fields: [...shortTimeField, { name: 'foo', values: [1, 2, 3] }] });
+    const frameB = toDataFrame({ fields: [...shortTimeField, { name: 'bar', values: [4,5,6] }] });
+
+    const p = getFieldDisplayValuesProxy({
+      frame: frameA,
+      frames: [frameA, frameB],
+      rowIndex: 0,
+    });
+
+    expect(p.foo.numeric).toBe(1);
+    expect(p.bar.numeric).toBe(4);
+  });
 });

@@ -103,7 +103,7 @@ export function dataMacro(
   const obj = {
     name: frame.name,
     refId: frame.refId,
-    fields: getFieldDisplayValuesProxy({ frame, rowIndex }),
+    fields: getFieldDisplayValuesProxy({ frame, frames: scopedVars.__dataContext?.value.data, rowIndex }),
   };
 
   const value = getFieldAccessor(fieldPath)(obj) ?? '';
