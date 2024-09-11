@@ -28,11 +28,13 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
+
+	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
+	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 }
 
 type Service interface {
 	registry.ProvidesUsageStats
-	ZanzanaChecker
 	// GetRoleByName returns a role by name
 	GetRoleByName(ctx context.Context, orgID int64, roleName string) (*RoleDTO, error)
 	// GetUserPermissions returns user permissions with only action and scope fields set.
@@ -61,8 +63,6 @@ type Service interface {
 }
 
 type ZanzanaChecker interface {
-	Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error)
-	ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error)
 }
 
 //go:generate  mockery --name Store --structname MockStore --outpkg actest --filename store_mock.go --output ./actest/

@@ -211,3 +211,11 @@ func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg
 
 	a.log.FromContext(ctx).Debug(msg, "id", ident.GetID(), "orgID", ident.GetOrgID(), "permissions", eval.GoString())
 }
+
+func (a *AccessControl) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	return a.zclient.Check(ctx, in)
+}
+
+func (a *AccessControl) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	return a.zclient.ListObjects(ctx, in)
+}

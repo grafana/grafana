@@ -3,6 +3,8 @@ package accesscontrol
 import (
 	"context"
 
+	openfgav1 "github.com/openfga/api/proto/openfga/v1"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -34,6 +36,14 @@ func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix strin
 
 func (a *recordingAccessControlFake) IsDisabled() bool {
 	return a.Disabled
+}
+
+func (a *recordingAccessControlFake) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	return nil, nil
+}
+
+func (a *recordingAccessControlFake) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	return nil, nil
 }
 
 var _ accesscontrol.AccessControl = &recordingAccessControlFake{}

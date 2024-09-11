@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/claims"
-	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -791,12 +790,4 @@ func (s *Service) GetRoleByName(ctx context.Context, orgID int64, roleName strin
 		return true
 	})
 	return role, err
-}
-
-func (s *Service) Check(ctx context.Context, in *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
-	return s.zclient.Check(ctx, in)
-}
-
-func (s *Service) ListObjects(ctx context.Context, in *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	return s.zclient.ListObjects(ctx, in)
 }

@@ -170,7 +170,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 }
 
 func (dr *DashboardServiceImpl) listResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
-	res, err := dr.acService.ListObjects(ctx, &openfgav1.ListObjectsRequest{
+	res, err := dr.ac.ListObjects(ctx, &openfgav1.ListObjectsRequest{
 		User:     query.SignedInUser.GetUID(),
 		Type:     resourceType,
 		Relation: "read",
@@ -240,7 +240,7 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 					Object:   object,
 				}
 
-				checkRes, err := dr.acService.Check(ctx, &openfgav1.CheckRequest{
+				checkRes, err := dr.ac.Check(ctx, &openfgav1.CheckRequest{
 					TupleKey: key,
 				})
 				if err != nil {

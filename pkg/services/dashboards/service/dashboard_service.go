@@ -58,7 +58,6 @@ type DashboardServiceImpl struct {
 	folderPermissions    accesscontrol.FolderPermissionsService
 	dashboardPermissions accesscontrol.DashboardPermissionsService
 	ac                   accesscontrol.AccessControl
-	acService            accesscontrol.Service
 	metrics              *dashboardsMetrics
 }
 
@@ -67,7 +66,7 @@ func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
-	folderSvc folder.Service, r prometheus.Registerer, acService accesscontrol.Service,
+	folderSvc folder.Service, r prometheus.Registerer,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -77,7 +76,6 @@ func ProvideDashboardServiceImpl(
 		folderPermissions:    folderPermissionsService,
 		dashboardPermissions: dashboardPermissionsService,
 		ac:                   ac,
-		acService:            acService,
 		folderStore:          folderStore,
 		folderService:        folderSvc,
 		metrics:              newDashboardsMetrics(r),
