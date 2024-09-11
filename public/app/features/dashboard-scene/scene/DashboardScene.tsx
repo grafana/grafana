@@ -60,6 +60,7 @@ import {
   getDefaultRow,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
+  getQueryRunnerFor,
   getVizPanelKeyForPanelId,
   isPanelClone,
 } from '../utils/utils';
@@ -574,10 +575,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (gridItem instanceof DashboardGridItem) {
       panelState = sceneUtils.cloneSceneObjectState(gridItem.state.body.state);
-      panelData = sceneGraph.getData(gridItem.state.body).clone();
+
+      let queryRunner = getQueryRunnerFor(gridItem.state.body);
+      const queries = queryRunner?.state.queries.map((q) => ({ ...q }));
+      queryRunner = queryRunner?.clone({ queries });
+      panelData = sceneGraph.getData(gridItem.state.body).clone({ $data: queryRunner });
     } else {
       panelState = sceneUtils.cloneSceneObjectState(vizPanel.state);
-      panelData = sceneGraph.getData(vizPanel).clone();
+
+      let queryRunner = getQueryRunnerFor(vizPanel);
+      const queries = queryRunner?.state.queries.map((q) => ({ ...q }));
+      queryRunner = queryRunner?.clone({ queries });
+      panelData = sceneGraph.getData(vizPanel).clone({ $data: queryRunner });
     }
 
     // when we duplicate a panel we don't want to clone the alert state

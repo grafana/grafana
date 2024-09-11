@@ -1,11 +1,13 @@
+import { css, cx } from '@emotion/css';
 import { Controller, useForm } from 'react-hook-form';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { sceneGraph } from '@grafana/scenes';
-import { FieldSet, Icon, Label, Spinner, Stack, Text, TimeRangeInput, Tooltip } from '@grafana/ui';
+import { FieldSet, Icon, Label, Spinner, Stack, Text, TimeRangeLabel, Tooltip, useStyles2 } from '@grafana/ui';
 import { Switch } from '@grafana/ui/src/components/Switch/Switch';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { ConfigPublicDashboardForm } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -18,6 +20,7 @@ const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 type FormInput = Omit<ConfigPublicDashboardForm, 'isPaused'>;
 
 export default function ShareConfiguration() {
+  const styles = useStyles2(getStyles);
   const { dashboard } = useShareDrawerContext();
   const [update, { isLoading }] = useUpdatePublicDashboardMutation();
 
@@ -119,8 +122,13 @@ export default function ShareConfiguration() {
                   <Trans i18nKey="public-dashboard.configuration.display-annotations-label">Display annotations</Trans>
                 </Label>
               </Stack>
-              <Stack gap={1} alignItems="center">
-                <TimeRangeInput value={timeRange.value} showIcon disabled onChange={() => {}} />
+              <Stack gap={1} alignItems="flex-start">
+                <div className={styles.timeRange}>
+                  <Trans i18nKey="public-dashboard.configuration.time-range-label">Time range</Trans>
+                </div>
+                <div className={cx(styles.timeRange, styles.timeRangeValue)}>
+                  <TimeRangeLabel value={timeRange.value} />
+                </div>
                 <Tooltip
                   placement="right"
                   content={t(
@@ -128,7 +136,7 @@ export default function ShareConfiguration() {
                     'The shared dashboard uses the default time range settings of the dashboard'
                   )}
                 >
-                  <Icon name="info-circle" size="sm" />
+                  <Icon name="info-circle" size="md" />
                 </Tooltip>
               </Stack>
             </Stack>
@@ -139,3 +147,13 @@ export default function ShareConfiguration() {
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  timeRange: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.bodySmall.fontWeight,
+  }),
+  timeRangeValue: css({
+    color: theme.colors.text.secondary,
+  }),
+});
