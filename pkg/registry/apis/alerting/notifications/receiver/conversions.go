@@ -4,6 +4,7 @@ import (
 	"maps"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -13,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
-func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, namespacer request.NamespaceMapper) (*model.ReceiverList, error) {
+func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, namespacer request.NamespaceMapper, selector fields.Selector) (*model.ReceiverList, error) {
 	result := &model.ReceiverList{
 		Items: make([]model.Receiver, 0, len(receivers)),
 	}
@@ -21,6 +22,9 @@ func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, namespac
 		k8sResource, err := convertToK8sResource(orgID, receiver, namespacer)
 		if err != nil {
 			return nil, err
+		}
+		if selector != nil && !selector.Empty() && !selector.Matches(model.SelectableReceiverFields(k8sResource)) {
+			continue
 		}
 		result.Items = append(result.Items, *k8sResource)
 	}

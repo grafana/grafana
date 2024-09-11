@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Button, Checkbox, FieldSet, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
@@ -13,8 +14,10 @@ import { AccessControlAction } from 'app/types';
 import { PublicDashboardAlert } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/PublicDashboardAlert';
 import { useShareDrawerContext } from '../../../ShareDrawer/ShareDrawerContext';
 
+const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+
 export default function CreatePublicSharing({ hasError }: { hasError: boolean }) {
-  const { dashboard } = useShareDrawerContext();
+  const { dashboard, onDismiss } = useShareDrawerContext();
   const styles = useStyles2(getStyles);
 
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
@@ -48,10 +51,10 @@ export default function CreatePublicSharing({ hasError }: { hasError: boolean })
             />
           </div>
           <Stack direction="row" gap={1} alignItems="center">
-            <Button type="submit" disabled={!isValid}>
+            <Button type="submit" disabled={!isValid} data-testid={selectors.CreateButton}>
               <Trans i18nKey="public-dashboard.public-sharing.accept-button">Accept</Trans>
             </Button>
-            <Button variant="secondary" onClick={() => dashboard.closeModal()}>
+            <Button variant="secondary" onClick={onDismiss}>
               <Trans i18nKey="public-dashboard.public-sharing.cancel-button">Cancel</Trans>
             </Button>
             {isLoading && <Spinner />}
