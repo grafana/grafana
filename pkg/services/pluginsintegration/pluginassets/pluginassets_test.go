@@ -77,6 +77,43 @@ func TestService_Calculate(t *testing.T) {
 			expected: plugins.LoadingStrategyScript,
 		},
 		{
+			name: "Expected LoadingStrategyFetch when parent create-plugin version is not set, is configured as CDN enabled and plugin is not angular",
+			pluginSettings: setting.PluginSettings{
+				"parent-datasource": {
+					"cdn": "true",
+				},
+			},
+			plugin: newPlugin(pluginID, false, func(p pluginstore.Plugin) pluginstore.Plugin {
+				p.Parent = &pluginstore.ParentPlugin{ID: "parent-datasource"}
+				return p
+			}),
+			expected: plugins.LoadingStrategyFetch,
+		},
+		{
+			name: "Expected LoadingStrategyFetch when parent create-plugin version is not set, is configured as CDN enabled and plugin is angular",
+			pluginSettings: setting.PluginSettings{
+				"parent-datasource": {
+					"cdn": "true",
+				},
+			},
+			plugin: newPlugin(pluginID, false, func(p pluginstore.Plugin) pluginstore.Plugin {
+				p.Angular.Detected = true
+				p.Parent = &pluginstore.ParentPlugin{ID: "parent-datasource"}
+				return p
+			}),
+			expected: plugins.LoadingStrategyFetch,
+		},
+		{
+			name:           "Expected LoadingStrategyFetch when parent create-plugin version is not set, is not configured as CDN enabled and plugin is angular",
+			pluginSettings: setting.PluginSettings{},
+			plugin: newPlugin(pluginID, false, func(p pluginstore.Plugin) pluginstore.Plugin {
+				p.Angular.Detected = true
+				p.Parent = &pluginstore.ParentPlugin{ID: "parent-datasource"}
+				return p
+			}),
+			expected: plugins.LoadingStrategyFetch,
+		},
+		{
 			name: "Expected LoadingStrategyFetch when create-plugin version is not compatible, plugin is not angular, is configured as CDN enabled and does not have the CDN class",
 			pluginSettings: newPluginSettings(pluginID, map[string]string{
 				"cdn":                     "true",
