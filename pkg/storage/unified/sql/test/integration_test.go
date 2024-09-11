@@ -31,7 +31,7 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 
 	dbstore := infraDB.InitTestDB(t)
 	cfg := setting.NewCfg()
-	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage)
+	features := featuremgmt.WithFeatures()
 
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, cfg, features, nil)
 	require.NoError(t, err)
@@ -331,7 +331,7 @@ func TestClientServer(t *testing.T) {
 	cfg.GRPCServerAddress = "localhost:0"
 	cfg.GRPCServerNetwork = "tcp"
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorage)
+	features := featuremgmt.WithFeatures()
 
 	svc, err := sql.ProvideService(cfg, features, dbstore, nil)
 	require.NoError(t, err)
@@ -356,7 +356,7 @@ func TestClientServer(t *testing.T) {
 	t.Run("Create a client", func(t *testing.T) {
 		conn, err := grpc.NewClient(svc.GetAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		require.NoError(t, err)
-		client = resource.NewResourceStoreClientGRPC(conn)
+		client = resource.NewResourceClient(conn)
 	})
 
 	t.Run("Create a resource", func(t *testing.T) {

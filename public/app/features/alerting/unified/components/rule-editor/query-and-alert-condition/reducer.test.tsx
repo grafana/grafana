@@ -233,19 +233,22 @@ describe('Query and expressions reducer', () => {
     });
   });
 
-  it('Should update time range for all expressions that have this data source when dispatching updateExpressionTimeRange', () => {
-    const expressionQuery: AlertQuery = {
+  it('Should update time range for all resample expressions that have this data source when dispatching updateExpressionTimeRange', () => {
+    const expressionQuery: AlertQuery<ExpressionQuery> = {
       refId: 'B',
       queryType: 'expression',
       datasourceUid: '__expr__',
       model: {
+        datasource: {
+          type: '__expr__',
+          uid: '__expr__',
+        },
         queryType: 'query',
-        datasource: '__expr__',
         refId: 'B',
         expression: 'A',
-        type: ExpressionQueryType.classic,
+        type: ExpressionQueryType.resample,
         window: '10s',
-      } as ExpressionQuery,
+      },
     };
     const customTimeRange: RelativeTimeRange = { from: 900, to: 1000 };
 
@@ -262,7 +265,7 @@ describe('Query and expressions reducer', () => {
     };
 
     const newState = queriesAndExpressionsReducer(initialState, updateExpressionTimeRange());
-    expect(newState).toStrictEqual({
+    expect(newState).toStrictEqual<{ queries: AlertQuery[] }>({
       queries: [
         {
           refId: 'A',
@@ -274,19 +277,19 @@ describe('Query and expressions reducer', () => {
         {
           datasourceUid: '__expr__',
           model: {
-            datasource: '__expr__',
             expression: 'A',
+            datasource: {
+              type: '__expr__',
+              uid: '__expr__',
+            },
             queryType: 'query',
             refId: 'B',
-            type: ExpressionQueryType.classic,
+            type: ExpressionQueryType.resample,
             window: '10s',
           },
           queryType: 'expression',
           refId: 'B',
-          relativeTimeRange: {
-            from: 900,
-            to: 1000,
-          },
+          relativeTimeRange: customTimeRange,
         },
       ],
     });

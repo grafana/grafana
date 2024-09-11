@@ -1,1 +1,1 @@
-example.com/foo/wire.go:x:y: foo not exported by package bar
+example.com/foo/wire.go:x:y: name foo not exported by package bar

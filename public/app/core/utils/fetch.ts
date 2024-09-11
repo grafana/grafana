@@ -57,9 +57,22 @@ const putHeaderParser: HeaderParser = parseHeaderByMethodFactory('put');
 const patchHeaderParser: HeaderParser = parseHeaderByMethodFactory('patch');
 
 const headerParsers = [postHeaderParser, putHeaderParser, patchHeaderParser, defaultHeaderParser];
+const unsafeCharacters = /[^\u0000-\u00ff]/g;
+
+/**
+ * Header values can only contain ISO-8859-1 characters. If a header key or value contains characters outside of this, we will encode the whole value.
+ * Since `encodeURI` also encodes spaces, we won't encode if the value doesn't contain any unsafe characters.
+ */
+function sanitizeHeader(v: string) {
+  return unsafeCharacters.test(v) ? encodeURI(v) : v;
+}
 
 export const parseHeaders = (options: BackendSrvRequest) => {
-  const headers = options?.headers ? new Headers(options.headers) : new Headers();
+  const safeHeaders: Record<string, string> = {};
+  for (let [key, value] of Object.entries(options.headers ?? {})) {
+    safeHeaders[sanitizeHeader(key)] = sanitizeHeader(value);
+  }
+  const headers = new Headers(safeHeaders);
   const parsers = headerParsers.filter((parser) => parser.canParse(options));
   const combinedHeaders = parsers.reduce((prev, parser) => {
     return parser.parse(prev);
