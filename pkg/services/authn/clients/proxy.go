@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -118,13 +120,14 @@ func (c *Proxy) retrieveIDFromCache(ctx context.Context, cacheKey string, r *aut
 		return nil, err
 	}
 
-	uid, err := strconv.ParseInt(string(entry), 10, 64)
+	_, err = strconv.ParseInt(string(entry), 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse user id from cache: %w - entry: %s", err, string(entry))
 	}
 
 	return &authn.Identity{
-		ID:    authn.NewNamespaceID(authn.NamespaceUser, uid),
+		ID:    string(entry),
+		Type:  claims.TypeUser,
 		OrgID: r.OrgID,
 		// FIXME: This does not match the actual auth module used, but should not have any impact
 		// Maybe caching the auth module used with the user ID would be a good idea
@@ -144,18 +147,18 @@ func (c *Proxy) Priority() uint {
 	return 50
 }
 
-func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	if identity.ClientParams.CacheAuthProxyKey == "" {
+func (c *Proxy) Hook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
+	if id.ClientParams.CacheAuthProxyKey == "" {
 		return nil
 	}
 
-	if !identity.ID.IsNamespace(authn.NamespaceUser) {
+	if !id.IsIdentityType(claims.TypeUser) {
 		return nil
 	}
 
-	id, err := identity.ID.ParseInt()
+	internalId, err := id.GetInternalID()
 	if err != nil {
-		c.log.Warn("Failed to cache proxy user", "error", err, "userId", identity.ID.ID(), "err", err)
+		c.log.Warn("Failed to cache proxy user", "error", err, "userId", id.GetID(), "err", err)
 		return nil
 	}
 
@@ -175,15 +178,15 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 		}
 	}
 
-	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", id)
-	bytes := []byte(strconv.FormatInt(id, 10))
+	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", internalId)
+	bytes := []byte(strconv.FormatInt(internalId, 10))
 	duration := time.Duration(c.cfg.AuthProxy.SyncTTL) * time.Minute
-	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, bytes, duration); err != nil {
-		c.log.Warn("Failed to cache proxy user", "error", err, "userId", id)
+	if err := c.cache.Set(ctx, id.ClientParams.CacheAuthProxyKey, bytes, duration); err != nil {
+		c.log.Warn("Failed to cache proxy user", "error", err, "userId", internalId)
 	}
 
 	// store current cacheKey for the user
-	return c.cache.Set(ctx, userKey, []byte(identity.ClientParams.CacheAuthProxyKey), duration)
+	return c.cache.Set(ctx, userKey, []byte(id.ClientParams.CacheAuthProxyKey), duration)
 }
 
 func (c *Proxy) isAllowedIP(r *authn.Request) bool {

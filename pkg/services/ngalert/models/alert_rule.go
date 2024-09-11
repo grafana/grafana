@@ -108,8 +108,8 @@ const (
 type RuleType string
 
 const (
-	RuleTypeAlerting  = "alerting"
-	RuleTypeRecording = "recording"
+	RuleTypeAlerting  RuleType = "alerting"
+	RuleTypeRecording RuleType = "recording"
 )
 
 func (r RuleType) String() string {
@@ -467,6 +467,11 @@ type AlertRuleGroupKey struct {
 	RuleGroup    string
 }
 
+type AlertRuleGroupKeyWithFolderFullpath struct {
+	AlertRuleGroupKey
+	FolderFullpath string
+}
+
 func (k AlertRuleGroupKey) String() string {
 	return fmt.Sprintf("{orgID: %d, namespaceUID: %s, groupName: %s}", k.OrgID, k.NamespaceUID, k.RuleGroup)
 }
@@ -768,7 +773,7 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if ruleToPatch.Title == "" {
 		ruleToPatch.Title = existingRule.Title
 	}
-	if ruleToPatch.Condition == "" || len(ruleToPatch.Data) == 0 {
+	if !hasAnyCondition(ruleToPatch) || len(ruleToPatch.Data) == 0 {
 		ruleToPatch.Condition = existingRule.Condition
 		ruleToPatch.Data = existingRule.Data
 	}
@@ -872,4 +877,8 @@ func (r *Record) Fingerprint() data.Fingerprint {
 	writeString(r.Metric)
 	writeString(r.From)
 	return data.Fingerprint(h.Sum64())
+}
+
+func hasAnyCondition(rule *AlertRuleWithOptionals) bool {
+	return rule.Condition != "" || (rule.Record != nil && rule.Record.From != "")
 }

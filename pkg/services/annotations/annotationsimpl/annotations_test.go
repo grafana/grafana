@@ -188,8 +188,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	permissions := []accesscontrol.Permission{
 		{
 			Action: dashboards.ActionFoldersCreate,
-		}, {
-			Action: dashboards.ActionFoldersWrite,
 			Scope:  dashboards.ScopeFoldersAll,
 		},
 	}
@@ -227,7 +225,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		})
 
 		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
-		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil)
+		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		cfg.AnnotationMaximumTagsLength = 60
 

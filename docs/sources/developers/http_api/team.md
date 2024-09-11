@@ -404,6 +404,52 @@ Status Codes:
 - **403** - Permission denied
 - **404** - Team not found/Team member not found
 
+## Bulk Update Team Members
+
+Allows bulk updating team members and administrators using user emails.
+Will override all current members and administrators for the specified team.
+
+`PUT /api/teams/:teamId/members
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#team-api" >}}) for an explanation.
+
+| Action                  | Scope    |
+| ----------------------- | -------- |
+| teams.permissions:write | teams:\* |
+
+**Example Request**:
+
+```http
+PUT /api/teams/1/members HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer glsa_kcVxDhZtu5ISOZIEt
+
+{
+  "members": ["user1@email.com", "user2@email.com"]
+  "admins": ["user3@email.com"]
+}
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{"message":"Team memberships have been updated"}
+```
+
+Status Codes:
+
+- **200** - Ok
+- **401** - Unauthorized
+- **403** - Permission denied
+- **404** - Team not found/Team member not found
+- **500** - Internal error
+
 ## Get Team Preferences
 
 `GET /api/teams/:teamId/preferences`

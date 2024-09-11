@@ -65,7 +65,7 @@ func (c *gmsClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cloud
 
 	if resp.StatusCode != 200 {
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("token validation failure: %v", body)
+		return fmt.Errorf("token validation failure: %v", string(body))
 	}
 
 	return nil
@@ -254,7 +254,7 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 		return
 	}
 
-	path := fmt.Sprintf("%s/api/v1/snapshots/events", c.buildBasePath(session.ClusterSlug))
+	path := fmt.Sprintf("%s/api/v1/events", c.buildBasePath(session.ClusterSlug))
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(event); err != nil {

@@ -1,11 +1,10 @@
-import { render, waitFor, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { render, userEvent, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { DataSourceSrv, locationService, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
@@ -21,7 +20,6 @@ import NotificationPolicies, { findRoutesMatchingFilters } from './NotificationP
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
-import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
 import { MockDataSourceSrv, mockDataSource, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';
@@ -47,19 +45,18 @@ const mocks = {
   },
   contextSrv: jest.mocked(contextSrv),
 };
-const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
+
+setupMswServer();
 
 const renderNotificationPolicies = (alertManagerSourceName?: string) => {
-  locationService.push(location);
-  locationService.push(
-    '/alerting/routes' + (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
-  );
-
-  return render(
-    <TestProvider>
-      <NotificationPolicies />
-    </TestProvider>
-  );
+  return render(<NotificationPolicies />, {
+    historyOptions: {
+      initialEntries: [
+        '/alerting/routes' +
+          (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : ''),
+      ],
+    },
+  });
 };
 
 const dataSources = {
@@ -199,7 +196,6 @@ describe('NotificationPolicies', () => {
     mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
   });
 
   afterEach(() => {
@@ -227,7 +223,7 @@ describe('NotificationPolicies', () => {
       template_files: {},
     });
 
-    await renderNotificationPolicies();
+    renderNotificationPolicies();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
 
@@ -282,30 +278,30 @@ describe('NotificationPolicies', () => {
       return Promise.resolve(currentConfig.current);
     });
 
-    await renderNotificationPolicies();
+    const { user } = renderNotificationPolicies();
     expect(await ui.rootReceiver.find()).toHaveTextContent('default');
     expect(ui.rootGroupBy.get()).toHaveTextContent('alertname');
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    await userEvent.click(ui.editButton.get(rootRouteContainer));
+    await user.click(ui.editButton.get(rootRouteContainer));
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
     await clickSelectOption(receiverSelect, 'critical');
 
     const groupSelect = ui.groupSelect.get();
-    await userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
+    await user.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
 
     // configure timing intervals
-    await userEvent.click(byText('Timing options').get(rootRouteContainer));
+    await user.click(byText('Timing options').get(rootRouteContainer));
 
     await updateTiming(ui.groupWaitContainer.get(), '1', 'Minutes');
     await updateTiming(ui.groupIntervalContainer.get(), '4', 'Minutes');
     await updateTiming(ui.groupRepeatContainer.get(), '5', 'Hours');
 
     //save
-    await userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await user.click(ui.saveButton.get(rootRouteContainer));
 
     // wait for it to go out of edit mode
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
@@ -344,21 +340,21 @@ describe('NotificationPolicies', () => {
       template_files: {},
     });
 
-    await renderNotificationPolicies();
+    const { user } = renderNotificationPolicies();
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    await userEvent.click(ui.editButton.get(rootRouteContainer));
+    await user.click(ui.editButton.get(rootRouteContainer));
 
     // configure receiver & group by
     const receiverSelect = await ui.receiverSelect.find();
     await clickSelectOption(receiverSelect, 'default');
 
     const groupSelect = ui.groupSelect.get();
-    await userEvent.type(byRole('combobox').get(groupSelect), 'severity{enter}');
-    await userEvent.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
+    await user.type(byRole('combobox').get(groupSelect), 'severity{enter}');
+    await user.type(byRole('combobox').get(groupSelect), 'namespace{enter}');
     //save
-    await userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await user.click(ui.saveButton.get(rootRouteContainer));
 
     // wait for it to go out of edit mode
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
@@ -408,7 +404,7 @@ describe('NotificationPolicies', () => {
       refetch: jest.fn(),
     }));
 
-    await renderNotificationPolicies();
+    renderNotificationPolicies();
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
     expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
     expect(ui.rootReceiver.query()).not.toBeInTheDocument();
@@ -443,14 +439,14 @@ describe('NotificationPolicies', () => {
       return Promise.resolve(currentConfig.current);
     });
 
-    await renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
+    const { user } = renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
     expect(await ui.rootReceiver.find()).toHaveTextContent('default');
     expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
 
     // Toggle a save to test new object_matchers
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    await userEvent.click(ui.editButton.get(rootRouteContainer));
-    await userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await user.click(ui.editButton.get(rootRouteContainer));
+    await user.click(ui.saveButton.get(rootRouteContainer));
 
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
 
@@ -513,18 +509,18 @@ describe('NotificationPolicies', () => {
 
     mocks.api.updateAlertManagerConfig.mockResolvedValue(Promise.resolve());
 
-    await renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
+    const { user } = renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
 
     const deleteButtons = await ui.deleteRouteButton.findAll();
     expect(deleteButtons).toHaveLength(1);
 
-    await userEvent.click(deleteButtons[0]);
+    await user.click(deleteButtons[0]);
 
     const confirmDeleteButton = ui.confirmDeleteButton.get(ui.confirmDeleteModal.get());
     expect(confirmDeleteButton).toBeInTheDocument();
 
-    await userEvent.click(confirmDeleteButton);
+    await user.click(confirmDeleteButton);
 
     expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith<[string, AlertManagerCortexConfig]>(
       GRAFANA_RULES_SOURCE_NAME,
@@ -569,14 +565,14 @@ describe('NotificationPolicies', () => {
       return Promise.resolve(currentConfig.current);
     });
 
-    await renderNotificationPolicies(dataSources.am.name);
+    const { user } = renderNotificationPolicies(dataSources.am.name);
     expect(await ui.rootReceiver.find()).toHaveTextContent('default');
     expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
 
     // Toggle a save to test new object_matchers
     const rootRouteContainer = await ui.rootRouteContainer.find();
-    await userEvent.click(ui.editButton.get(rootRouteContainer));
-    await userEvent.click(ui.saveButton.get(rootRouteContainer));
+    await user.click(ui.editButton.get(rootRouteContainer));
+    await user.click(ui.saveButton.get(rootRouteContainer));
 
     await waitFor(() => expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument());
 
@@ -615,7 +611,7 @@ describe('NotificationPolicies', () => {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
-    await renderNotificationPolicies(dataSources.promAlertManager.name);
+    renderNotificationPolicies(dataSources.promAlertManager.name);
     const rootRouteContainer = await ui.rootRouteContainer.find();
     expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
     const rows = await ui.row.findAll();
@@ -645,10 +641,10 @@ describe('NotificationPolicies', () => {
       refetch: jest.fn(),
     }));
 
-    await renderNotificationPolicies(dataSources.promAlertManager.name);
+    renderNotificationPolicies(dataSources.promAlertManager.name);
     const rootRouteContainer = await ui.rootRouteContainer.find();
     await waitFor(() =>
-      expect(within(rootRouteContainer).getByTestId('matching-instances')).toHaveTextContent('0instances')
+      expect(within(rootRouteContainer).getByTestId('matching-instances')).toHaveTextContent('0instance')
     );
 
     expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
@@ -684,10 +680,10 @@ describe('NotificationPolicies', () => {
 
     mocks.api.fetchAlertManagerConfig.mockResolvedValue(defaultConfig);
 
-    await renderNotificationPolicies(dataSources.am.name);
+    const { user } = renderNotificationPolicies(dataSources.am.name);
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(1);
-    await userEvent.click(ui.editRouteButton.get(rows[0]));
+    await user.click(ui.editRouteButton.get(rows[0]));
 
     const muteTimingSelect = ui.muteTimingSelect.get();
     await clickSelectOption(muteTimingSelect, 'default-mute');
@@ -696,7 +692,7 @@ describe('NotificationPolicies', () => {
     const savePolicyButton = ui.savePolicyButton.get();
     expect(savePolicyButton).toBeInTheDocument();
 
-    await userEvent.click(savePolicyButton);
+    await user.click(savePolicyButton);
 
     await waitFor(() => expect(savePolicyButton).not.toBeInTheDocument());
 
@@ -730,7 +726,7 @@ describe('NotificationPolicies', () => {
       message: 'alertmanager storage object not found',
     });
 
-    await renderNotificationPolicies();
+    renderNotificationPolicies();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
 
@@ -812,15 +808,17 @@ describe('findRoutesMatchingFilters', () => {
 });
 
 const clickSelectOption = async (selectElement: HTMLElement, optionText: string): Promise<void> => {
-  await userEvent.click(byRole('combobox').get(selectElement));
+  const user = userEvent.setup();
+  await user.click(byRole('combobox').get(selectElement));
   await selectOptionInTest(selectElement, optionText);
 };
 
 const updateTiming = async (selectElement: HTMLElement, value: string, timeUnit: string): Promise<void> => {
+  const user = userEvent.setup();
   const input = byRole('textbox').get(selectElement);
   const select = byRole('combobox').get(selectElement);
-  await userEvent.clear(input);
-  await userEvent.type(input, value);
-  await userEvent.click(select);
+  await user.clear(input);
+  await user.type(input, value);
+  await user.click(select);
   await selectOptionInTest(selectElement, timeUnit);
 };

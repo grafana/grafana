@@ -83,7 +83,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         name === fieldName('settings.integration_type') &&
         value === OnCallIntegrationType.ExistingIntegration
       ) {
-        setValue(fieldName('settings.url'), initialValues.settings['url']);
+        setValue(fieldName('settings.url'), initialValues.settings.url);
       }
     });
 
@@ -94,7 +94,7 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const onResetSecureField = (key: string) => {
     if (_secureFields[key]) {
-      const updatedSecureFields = { ...secureFields };
+      const updatedSecureFields = { ..._secureFields };
       delete updatedSecureFields[key];
       setSecureFields(updatedSecureFields);
       setValue(`${pathPrefix}.secureFields`, updatedSecureFields);

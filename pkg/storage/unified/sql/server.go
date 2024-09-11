@@ -1,7 +1,7 @@
 package sql
 
 import (
-	"github.com/grafana/grafana/pkg/infra/db"
+	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -10,7 +10,7 @@ import (
 )
 
 // Creates a ResourceServer
-func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
+func ProvideResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
 	}
@@ -19,7 +19,7 @@ func ProvideResourceServer(db db.DB, cfg *setting.Cfg, features featuremgmt.Feat
 	if err != nil {
 		return nil, err
 	}
-	store, err := NewBackendStore(backendOptions{DB: eDB, Tracer: tracer})
+	store, err := NewBackend(BackendOptions{DBProvider: eDB, Tracer: tracer})
 	if err != nil {
 		return nil, err
 	}

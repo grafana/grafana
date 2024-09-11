@@ -9,10 +9,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -60,7 +60,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	user, err := appcontext.User(ctx)
+	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	access.CanSave, _ = guardian.CanSave()
 	access.CanAdmin, _ = guardian.CanAdmin()
 	access.CanDelete, _ = guardian.CanDelete()
-	access.CanStar = user.IsRealUser() && !user.IsAnonymous
+	access.CanStar = user.IsIdentityType(claims.TypeUser)
 
 	access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
@@ -100,9 +100,9 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		Name:      name,
 	}
 	store := r.builder.legacy.access
-	rsp, err := store.Read(ctx, &resource.ReadRequest{Key: key})
-	if err != nil {
-		return nil, err
+	rsp := store.ReadResource(ctx, &resource.ReadRequest{Key: key})
+	if rsp.Error != nil {
+		return nil, resource.GetError(rsp.Error)
 	}
 	dash := &dashboard.Dashboard{}
 	err = json.Unmarshal(rsp.Value, dash)

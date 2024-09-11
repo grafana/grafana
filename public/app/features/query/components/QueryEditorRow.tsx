@@ -40,7 +40,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
-import { RowActionComponents } from './QueryActionComponent';
+import { QueryActionComponent, RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 
@@ -425,9 +425,17 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderExtraActions = () => {
-    const { query, queries, data, onAddQuery, dataSource } = this.props;
+    const { query, queries, data, onAddQuery, dataSource, app } = this.props;
 
-    const extraActions = RowActionComponents.getAllExtraRenderAction()
+    const unscopedActions = RowActionComponents.getAllExtraRenderAction();
+
+    let scopedActions: QueryActionComponent[] = [];
+
+    if (app !== undefined) {
+      scopedActions = RowActionComponents.getScopedExtraRenderAction(app);
+    }
+
+    const extraActions = [...unscopedActions, ...scopedActions]
       .map((action, index) =>
         action({
           query,

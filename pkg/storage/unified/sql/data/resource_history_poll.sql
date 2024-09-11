@@ -8,5 +8,9 @@ SELECT
     {{ .Ident "action" | .Into .Response.Action }}
 
     FROM {{ .Ident "resource_history" }}
-    WHERE {{ .Ident "resource_version" }} > {{ .Arg .SinceResourceVersion }}
+    WHERE 1 = 1
+    AND {{ .Ident "group" }} = {{ .Arg .Group }}
+    AND {{ .Ident "resource" }} = {{ .Arg .Resource }}
+    AND {{ .Ident "resource_version" }} > {{ .Arg .SinceResourceVersion }}
+    ORDER BY {{ .Ident "resource_version" }} ASC
 ;

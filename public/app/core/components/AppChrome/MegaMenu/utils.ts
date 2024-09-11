@@ -38,6 +38,8 @@ export const enrichWithInteractionTracking = (item: NavModelItem, megaMenuDocked
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,
+      itemIsBookmarked: Boolean(config.featureToggles.pinNavItems && newItem?.parentItem?.id === 'bookmarks'),
+      bookmarkToggleOn: Boolean(config.featureToggles.pinNavItems),
     });
     onClick?.();
   };
@@ -127,4 +129,18 @@ export function getEditionAndUpdateLinks(): NavModelItem[] {
   }
 
   return links;
+}
+
+export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
+  for (const item of nodes) {
+    if (item.url === url) {
+      return item;
+    } else if (item.children?.length) {
+      const found = findByUrl(item.children, url);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return null;
 }

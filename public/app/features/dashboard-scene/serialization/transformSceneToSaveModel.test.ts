@@ -15,7 +15,14 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, setPluginImportUtils } from '@grafana/runtime';
-import { MultiValueVariable, SceneGridLayout, SceneGridRow, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import {
+  MultiValueVariable,
+  sceneGraph,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneTimeRange,
+  VizPanel,
+} from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
@@ -26,7 +33,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
@@ -37,11 +44,7 @@ import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
-import {
-  buildGridItemForLibPanel,
-  buildGridItemForPanel,
-  transformSaveModelToScene,
-} from './transformSaveModelToScene';
+import { buildGridItemForPanel, transformSaveModelToScene } from './transformSaveModelToScene';
 import {
   gridItemToPanel,
   gridRowToSaveModel,
@@ -129,11 +132,14 @@ jest.mock('@grafana/runtime', () => ({
         toDataQuery: (q: StandardVariableQuery) => q,
       },
     }),
+    // mock getInstanceSettings()
+    getInstanceSettings: jest.fn(),
   }),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     panels: {
       text: { skipDataQuery: true },
     },
@@ -338,33 +344,33 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Library panels', () => {
     it('given a library panel', () => {
-      // Not using buildGridItemFromPanelSchema since it strips options/fieldConfig
-      const libVizPanel = new LibraryVizPanel({
-        name: 'Some lib panel panel',
-        title: 'A panel',
-        uid: 'lib-panel-uid',
-        panelKey: 'lib-panel',
-        panel: new VizPanel({
-          key: 'panel-4',
-          title: 'Panel blahh blah',
-          fieldConfig: {
-            defaults: {},
-            overrides: [],
+      const libVizPanel = new VizPanel({
+        key: 'panel-4',
+        title: 'Panel blahh blah',
+        $behaviors: [
+          new LibraryPanelBehavior({
+            name: 'Some lib panel panel',
+            title: 'A panel',
+            uid: 'lib-panel-uid',
+          }),
+        ],
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        options: {
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'bottom',
+            showLegend: true,
           },
-          options: {
-            legend: {
-              calcs: [],
-              displayMode: 'list',
-              placement: 'bottom',
-              showLegend: true,
-            },
-            tooltip: {
-              maxHeight: 600,
-              mode: 'single',
-              sort: 'none',
-            },
+          tooltip: {
+            maxHeight: 600,
+            mode: 'single',
+            sort: 'none',
           },
-        }),
+        },
       });
 
       const panel = new DashboardGridItem({
@@ -814,32 +820,33 @@ describe('transformSceneToSaveModel', () => {
       it('handles repeated library panels', () => {
         const { scene, repeater } = buildPanelRepeaterScene(
           { variableQueryTime: 0, numberOfOptions: 2 },
-          new LibraryVizPanel({
-            name: 'Some lib panel panel',
-            title: 'A panel',
-            uid: 'lib-panel-uid',
-            panelKey: 'lib-panel',
-            panel: new VizPanel({
-              key: 'panel-4',
-              title: 'Panel blahh blah',
-              fieldConfig: {
-                defaults: {},
-                overrides: [],
+          new VizPanel({
+            key: 'panel-4',
+            title: 'Panel blahh blah',
+            fieldConfig: {
+              defaults: {},
+              overrides: [],
+            },
+            options: {
+              legend: {
+                calcs: [],
+                displayMode: 'list',
+                placement: 'bottom',
+                showLegend: true,
               },
-              options: {
-                legend: {
-                  calcs: [],
-                  displayMode: 'list',
-                  placement: 'bottom',
-                  showLegend: true,
-                },
-                tooltip: {
-                  maxHeight: 600,
-                  mode: 'single',
-                  sort: 'none',
-                },
+              tooltip: {
+                maxHeight: 600,
+                mode: 'single',
+                sort: 'none',
               },
-            }),
+            },
+            $behaviors: [
+              new LibraryPanelBehavior({
+                name: 'Some lib panel panel',
+                title: 'A panel',
+                uid: 'lib-panel-uid',
+              }),
+            ],
           })
         );
 
@@ -1094,12 +1101,39 @@ describe('transformSceneToSaveModel', () => {
       expect((saveModel.panels![1] as any).options.content).toBe('new content');
     });
   });
+
+  describe('Given a scene with repeated panels and non-repeated panels', () => {
+    it('should save repeated panels itemHeight as height', () => {
+      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const gridItem = sceneGraph.findByKey(scene, 'grid-item-2') as DashboardGridItem;
+      expect(gridItem).toBeInstanceOf(DashboardGridItem);
+      expect(gridItem.state.height).toBe(10);
+      expect(gridItem.state.itemHeight).toBe(10);
+      expect(gridItem.state.itemHeight).toBe(10);
+      expect(gridItem.state.variableName).toBe('pod');
+      gridItem.setState({ itemHeight: 24 });
+      const saveModel = transformSceneToSaveModel(scene);
+      expect(saveModel.panels?.[3].gridPos?.h).toBe(24);
+    });
+
+    it('should not save non-repeated panels itemHeight as height', () => {
+      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const gridItem = sceneGraph.findByKey(scene, 'grid-item-15') as DashboardGridItem;
+      expect(gridItem).toBeInstanceOf(DashboardGridItem);
+      expect(gridItem.state.height).toBe(2);
+      expect(gridItem.state.itemHeight).toBe(2);
+      expect(gridItem.state.variableName).toBeUndefined();
+      gridItem.setState({ itemHeight: 24 });
+      let saveModel = transformSceneToSaveModel(scene);
+      expect(saveModel.panels?.[1].gridPos?.h).toBe(2);
+
+      gridItem.setState({ height: 34 });
+      saveModel = transformSceneToSaveModel(scene);
+      expect(saveModel.panels?.[1].gridPos?.h).toBe(34);
+    });
+  });
 });
 
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>) {
-  if (panel.libraryPanel) {
-    return buildGridItemForLibPanel(new PanelModel(panel))!;
-  }
-
   return buildGridItemForPanel(new PanelModel(panel));
 }

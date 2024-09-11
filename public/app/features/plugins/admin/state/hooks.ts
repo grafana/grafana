@@ -4,17 +4,15 @@ import { PluginError, PluginType } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types';
 
 import { sortPlugins, Sorters } from '../helpers';
-import { CatalogPlugin, PluginListDisplayMode } from '../types';
+import { CatalogPlugin } from '../types';
 
 import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall } from './actions';
-import { setDisplayMode } from './reducer';
 import {
   selectPlugins,
   selectById,
   selectIsRequestPending,
   selectRequestError,
   selectIsRequestNotFetched,
-  selectDisplayMode,
   selectPluginErrors,
   type PluginFilters,
 } from './selectors';
@@ -33,6 +31,15 @@ export const useGetAll = (filters: PluginFilters, sortBy: Sorters = Sorters.name
     isLoading,
     error,
     plugins: sortedPlugins,
+  };
+};
+
+export const useGetUpdatable = () => {
+  const { isLoading } = useFetchStatus();
+  const updatablePlugins = useSelector(selectPlugins({ isInstalled: true, hasUpdate: true }));
+  return {
+    isLoading,
+    updatablePlugins,
   };
 };
 
@@ -149,14 +156,4 @@ export const useFetchDetailsLazy = () => {
   const dispatch = useDispatch();
 
   return (id: string) => dispatch(fetchDetails(id));
-};
-
-export const useDisplayMode = () => {
-  const dispatch = useDispatch();
-  const displayMode = useSelector(selectDisplayMode);
-
-  return {
-    displayMode,
-    setDisplayMode: (v: PluginListDisplayMode) => dispatch(setDisplayMode(v)),
-  };
 };

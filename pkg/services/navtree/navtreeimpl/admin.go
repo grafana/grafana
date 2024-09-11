@@ -163,9 +163,8 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		Children: accessNodeLinks,
 	}
 
-	if len(usersNode.Children) > 0 {
-		configNodes = append(configNodes, usersNode)
-	}
+	// Always append admin access as it's injected by grafana-auth-app.
+	configNodes = append(configNodes, usersNode)
 
 	if authConfigUIAvailable && hasAccess(ssoutils.EvalAuthenticationSettings(s.cfg)) ||
 		(hasAccess(ssoutils.OauthSettingsEvaluator(s.cfg)) && s.features.IsEnabled(ctx, featuremgmt.FlagSsoSettingsApi)) {

@@ -20,7 +20,6 @@ import {
   AlertManagerCortexConfig,
   AlertmanagerReceiver,
   EmailConfig,
-  GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   MatcherOperator,
   Route,
@@ -169,10 +168,6 @@ export function mockApi(server: SetupServer) {
           })
         )
       );
-    },
-
-    getContactPointsList: (response: GrafanaManagedContactPoint[]) => {
-      server.use(http.get(`/api/v1/notifications/receivers`, () => HttpResponse.json(response)));
     },
   };
 }

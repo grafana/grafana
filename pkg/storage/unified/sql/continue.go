@@ -11,7 +11,7 @@ type ContinueToken struct {
 	ResourceVersion int64 `json:"v"`
 }
 
-func (c *ContinueToken) String() string {
+func (c ContinueToken) String() string {
 	b, _ := json.Marshal(c)
 	return base64.StdEncoding.EncodeToString(b)
 }

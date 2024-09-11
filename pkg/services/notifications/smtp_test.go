@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"io"
 	"net/textproto"
+	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	smtpmock "github.com/mocktools/go-smtp-mock/v2"
 	"github.com/stretchr/testify/assert"
@@ -153,6 +155,7 @@ func TestSmtpDialer(t *testing.T) {
 func TestSmtpSend(t *testing.T) {
 	srv := smtpmock.New(smtpmock.ConfigurationAttr{
 		MultipleRcptto: true,
+		HostAddress:    "127.0.0.1",
 	})
 	require.NoError(t, srv.Start())
 	defer func() { _ = srv.Stop() }()
@@ -182,6 +185,8 @@ func TestSmtpSend(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 
+		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
+		time.Sleep(1 * time.Millisecond)
 		messages := srv.MessagesAndPurge()
 		require.Len(t, messages, 1)
 		sentMsg := messages[0]
@@ -232,6 +237,8 @@ func TestSmtpSend(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, 1, count)
 
+		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
+		time.Sleep(1 * time.Millisecond)
 		messages := srv.MessagesAndPurge()
 		require.Len(t, messages, 1)
 		sentMsg := messages[0]
@@ -289,14 +296,21 @@ func TestSmtpSend(t *testing.T) {
 
 		count, err := client.Send(ctx, msgs...)
 		require.NoError(t, err)
-		require.Equal(t, 3, count)
+		assert.Equal(t, 3, count)
 
+		// workaround for https://github.com/mocktools/go-smtp-mock/issues/181
+		time.Sleep(1 * time.Millisecond)
 		messages := srv.MessagesAndPurge()
-		require.Len(t, messages, 3)
+		assert.Len(t, messages, 3)
+
+		// sort for test consistency
+		sort.Slice(messages, func(i, j int) bool {
+			return messages[i].RcpttoRequestResponse()[0][0] < messages[j].RcpttoRequestResponse()[0][0]
+		})
 
 		for i, sentMsg := range messages {
 			rcpts := sentMsg.RcpttoRequestResponse()
-			require.EqualValues(t, [][]string{
+			assert.EqualValues(t, [][]string{
 				{fmt.Sprintf("RCPT TO:<rcpt%d@example.com>", i+1), "250 Received"},
 			}, rcpts)
 
@@ -309,7 +323,7 @@ func TestSmtpSend(t *testing.T) {
 			// make sure the trace is propagated
 			traceId := span.SpanContext().TraceID().String()
 			hasPrefix := strings.HasPrefix(hdr.Get("traceparent"), "00-"+traceId+"-")
-			require.True(t, hasPrefix)
+			assert.True(t, hasPrefix)
 
 			// one of the lines should be the body we expect!
 			found := false
@@ -327,7 +341,7 @@ func TestSmtpSend(t *testing.T) {
 				}
 			}
 
-			require.True(t, found)
+			assert.True(t, found)
 		}
 	})
 }

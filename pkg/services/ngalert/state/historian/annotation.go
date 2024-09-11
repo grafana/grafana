@@ -95,8 +95,15 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 		defer cancel()
 		defer close(errCh)
 		logger := h.log.FromContext(ctx)
+		logger.Debug("Saving state history batch", "samples", len(annotations))
 
-		errCh <- h.store.Save(ctx, panel, annotations, rule.OrgID, logger)
+		err := h.store.Save(ctx, panel, annotations, rule.OrgID, logger)
+		if err != nil {
+			logger.Error("Failed to save history batch", len(annotations), "err", err)
+			errCh <- err
+			return
+		}
+		logger.Debug("Done saving history batch", "samples", len(annotations))
 	}(writeCtx)
 	return errCh
 }

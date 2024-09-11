@@ -15,7 +15,7 @@ import {
   TemplateSrv as BaseTemplateSrv,
   VariableInterpolation,
 } from '@grafana/runtime';
-import { sceneGraph, VariableCustomFormatterFn, SafeSerializableSceneObject } from '@grafana/scenes';
+import { sceneGraph, VariableCustomFormatterFn, SceneObject } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
 import { getVariablesCompatibility } from '../dashboard-scene/utils/getVariablesCompatibility';
@@ -51,7 +51,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   private regex = variableRegex;
   private index: any = {};
   private grafanaVariables = new Map<string, any>();
-  private timeRange?: TimeRange | null = null;
+  private _timeRange?: TimeRange | null = null;
   private _adhocFiltersDeprecationWarningLogged = new Map<string, boolean>();
 
   constructor(private dependencies: TemplateSrvDependencies = runtimeDependencies) {
@@ -60,7 +60,7 @@ export class TemplateSrv implements BaseTemplateSrv {
 
   init(variables: any, timeRange?: TimeRange) {
     this._variables = variables;
-    this.timeRange = timeRange;
+    this._timeRange = timeRange;
     this.updateIndex();
   }
 
@@ -81,6 +81,16 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     return this.dependencies.getVariables();
+  }
+
+  get timeRange(): TimeRange | null | undefined {
+    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+      const sceneTimeRange = sceneGraph.getTimeRange(window.__grafanaSceneContext);
+
+      return sceneTimeRange.state.value;
+    }
+
+    return this._timeRange;
   }
 
   updateIndex() {
@@ -110,7 +120,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   updateTimeRange(timeRange: TimeRange) {
-    this.timeRange = timeRange;
+    this._timeRange = timeRange;
     this.updateIndex();
   }
 
@@ -249,7 +259,8 @@ export class TemplateSrv implements BaseTemplateSrv {
   ): string {
     // Scenes compatability (primary method) is via SceneObject inside scopedVars. This way we get a much more accurate "local" scope for the evaluation
     if (scopedVars && scopedVars.__sceneObject) {
-      const sceneObject = (scopedVars.__sceneObject.value as SafeSerializableSceneObject).valueOf();
+      // We are using valueOf here as __sceneObject can be after scenes 5.6.0 a SafeSerializableSceneObject that overrides valueOf to return the underlying SceneObject
+      const sceneObject: SceneObject = scopedVars.__sceneObject.value.valueOf();
       return sceneGraph.interpolate(
         sceneObject,
         target,

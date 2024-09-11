@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -323,15 +323,15 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
-	ac := actest.FakeAccessControl{}
+	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sc.replStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	t.Logf("Creating folder with title and UID %q", title)
-	ctx := appcontext.WithUser(context.Background(), &sc.user)
+	ctx := identity.WithRequester(context.Background(), &sc.user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
 		OrgID: sc.user.OrgID, Title: title, UID: title, SignedInUser: &sc.user,
 	})
@@ -428,7 +428,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			LastSeenAt: time.Now(),
 			// Allow user to create folders
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersCreate: {}},
+				1: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}},
 			},
 		}
 		req := &http.Request{
@@ -436,7 +436,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 				"Content-Type": []string{"application/json"},
 			},
 		}
-		ctx := appcontext.WithUser(context.Background(), &usr)
+		ctx := identity.WithRequester(context.Background(), &usr)
 		req = req.WithContext(ctx)
 		webCtx := web.Context{Req: req}
 
@@ -463,7 +463,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Cfg:           cfg,
 			features:      featuremgmt.WithFeatures(),
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest()),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
