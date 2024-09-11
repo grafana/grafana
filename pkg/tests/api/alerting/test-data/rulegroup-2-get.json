@@ -41,7 +41,10 @@
         "rule_group": "Group2",
         "no_data_state": "NoData",
         "exec_err_state": "Error",
-        "is_paused": false
+        "is_paused": false,
+        "editor_settings": {
+          "simplified_query_editor": false
+        }
       }
     }
   ]

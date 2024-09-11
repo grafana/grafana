@@ -269,6 +269,11 @@ type AlertRule struct {
 	Labels               map[string]string
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
+	EditorSettings       EditorSettings
+}
+
+type EditorSettings struct {
+	SimplifiedQueryEditor bool `json:"simplified_query_editor"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.

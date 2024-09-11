@@ -197,6 +197,12 @@ func (a *AlertRuleMutators) WithUniqueID() AlertRuleMutator {
 	}
 }
 
+func (a *AlertRuleMutators) WithEditorSettingsSimplifiedQueryEditor(mode bool) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.EditorSettings.SimplifiedQueryEditor = mode
+	}
+}
+
 func (a *AlertRuleMutators) WithGroupIndex(groupIndex int) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.RuleGroupIndex = groupIndex

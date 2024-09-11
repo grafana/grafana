@@ -41,7 +41,10 @@
         "rule_group": "Group3",
         "no_data_state": "NoData",
         "exec_err_state": "Alerting",
-        "is_paused": false
+        "is_paused": false,
+        "editor_settings": {
+          "simplified_query_editor": false
+        }
       }
     },
     {
@@ -83,7 +86,10 @@
         "rule_group": "Group3",
         "no_data_state": "NoData",
         "exec_err_state": "Alerting",
-        "is_paused": false
+        "is_paused": false,
+        "editor_settings": {
+          "simplified_query_editor": false
+        }
       }
     }
   ]

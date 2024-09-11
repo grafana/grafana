@@ -575,6 +575,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 			IsPaused:             r.IsPaused,
 			NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
 			Record:               ApiRecordFromModelRecord(r.Record),
+			EditorSettings:       AlertRuleEditorSettingsFromEditorSettings(r.EditorSettings),
 		},
 	}
 	forDuration := model.Duration(r.For)

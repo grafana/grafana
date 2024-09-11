@@ -434,6 +434,11 @@ const (
 )
 
 // swagger:model
+type AlertRuleEditorSettings struct {
+	SimplifiedQueryEditor bool `json:"simplified_query_editor" yaml:"simplified_query_editor"`
+}
+
+// swagger:model
 type AlertRuleNotificationSettings struct {
 	// Name of the receiver to send notifications to.
 	// required: true
@@ -500,6 +505,7 @@ type PostableGrafanaRule struct {
 	IsPaused             *bool                          `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
 	Record               *Record                        `json:"record" yaml:"record"`
+	EditorSettings       *AlertRuleEditorSettings       `json:"editor_settings,omitempty" yaml:"editor_settings,omitempty"`
 }
 
 // swagger:model
@@ -521,6 +527,7 @@ type GettableGrafanaRule struct {
 	IsPaused             bool                           `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
+	EditorSettings       *AlertRuleEditorSettings       `json:"editor_settings,omitempty" yaml:"editor_settings,omitempty"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.

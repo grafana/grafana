@@ -80,6 +80,14 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 		}
 		result.NotificationSettings = ns
 	}
+
+	if ar.EditorSettings != "" {
+		err = json.Unmarshal([]byte(ar.EditorSettings), &result.EditorSettings)
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("failed to parse editor settings: %w", err)
+		}
+	}
+
 	return result, nil
 }
 
@@ -151,6 +159,12 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		result.NotificationSettings = string(notificationSettingsData)
 	}
 
+	editorSettingsData, err := json.Marshal(ar.EditorSettings)
+	if err != nil {
+		return alertRule{}, fmt.Errorf("failed to marshal editor settings: %w", err)
+	}
+	result.EditorSettings = string(editorSettingsData)
+
 	return result, nil
 }
 
@@ -177,5 +191,6 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		Labels:               rule.Labels,
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: rule.NotificationSettings,
+		EditorSettings:       rule.EditorSettings,
 	}
 }

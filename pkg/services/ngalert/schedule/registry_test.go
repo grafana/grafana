@@ -204,6 +204,9 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			NotificationSettings: []models.NotificationSettings{
 				models.NotificationSettingsGen()(),
 			},
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryEditor: false,
+			},
 		}
 		r2 := &models.AlertRule{
 			ID:        2,
@@ -242,6 +245,9 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			IsPaused: true,
 			NotificationSettings: []models.NotificationSettings{
 				models.NotificationSettingsGen()(),
+			},
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryEditor: true,
 			},
 		}
 

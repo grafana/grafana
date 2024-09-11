@@ -798,6 +798,93 @@ func TestAlertRulePostExport(t *testing.T) {
 	})
 }
 
+func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		EnableQuota:           true,
+		DisableAnonymous:      true,
+		ViewersCanEdit:        true,
+		AppModeProduction:     true,
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	// Create user
+	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+	const folderName = "folder1"
+
+	apiClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+	apiClient.CreateFolder(t, folderName, folderName)
+
+	interval, err := model.ParseDuration("1m")
+	require.NoError(t, err)
+	alertRule := apimodels.PostableExtendedRuleNode{
+		ApiRuleNode: &apimodels.ApiRuleNode{
+			For:         &interval,
+			Labels:      map[string]string{"label1": "val1"},
+			Annotations: map[string]string{"annotation1": "val1"},
+		},
+		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+			Title:     "AlwaysFiring",
+			Condition: "A",
+			Data: []apimodels.AlertQuery{
+				{
+					RefID: "A",
+					RelativeTimeRange: apimodels.RelativeTimeRange{
+						From: apimodels.Duration(time.Duration(5) * time.Hour),
+						To:   apimodels.Duration(time.Duration(3) * time.Hour),
+					},
+					DatasourceUID: expr.DatasourceUID,
+					Model: json.RawMessage(`{
+						"type": "math",
+						"expression": "2 + 3 > 1"
+						}`),
+				},
+			},
+			EditorSettings: &apimodels.AlertRuleEditorSettings{
+				SimplifiedQueryEditor: false,
+			},
+		},
+	}
+	rules := apimodels.PostableRuleGroupConfig{
+		Name: "arulegroup",
+		Rules: []apimodels.PostableExtendedRuleNode{
+			alertRule,
+		},
+	}
+
+	respModel, status, _ := apiClient.PostRulesGroupWithStatus(t, folderName, &rules)
+	assert.Equal(t, http.StatusAccepted, status)
+	require.Len(t, respModel.Created, 1)
+
+	createdRuleGroup := apiClient.GetRulesGroup(t, folderName, rules.Name).GettableRuleGroupConfig
+	require.Len(t, createdRuleGroup.Rules, 1)
+	require.Equal(t, alertRule.GrafanaManagedAlert.EditorSettings.SimplifiedQueryEditor, createdRuleGroup.Rules[0].GrafanaManagedAlert.EditorSettings.SimplifiedQueryEditor)
+
+	t.Run("set simplified query editor in editor settings", func(t *testing.T) {
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		rulesWithUID.Rules[0].GrafanaManagedAlert.EditorSettings = &apimodels.AlertRuleEditorSettings{
+			SimplifiedQueryEditor: false,
+		}
+
+		_, status, body := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
+		println(body)
+		assert.Equal(t, http.StatusAccepted, status)
+
+		updatedRuleGroup := apiClient.GetRulesGroup(t, folderName, rules.Name).GettableRuleGroupConfig
+		require.Len(t, updatedRuleGroup.Rules, 1)
+		require.False(t, false, updatedRuleGroup.Rules[0].GrafanaManagedAlert.EditorSettings.SimplifiedQueryEditor)
+	})
+}
+
 func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
@@ -1021,7 +1108,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
-				"exec_err_state": "Alerting"
+				"exec_err_state": "Alerting",
+				"editor_settings": {
+					"simplified_query_editor": false
+				}
 			}
 		}, {
 			"expr": "",
@@ -1054,7 +1144,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "Alerting",
-				"exec_err_state": "Alerting"
+				"exec_err_state": "Alerting",
+				"editor_settings": {
+					"simplified_query_editor": false
+				}
 			}
 		}]
 	}]
@@ -1099,7 +1192,10 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
-				"exec_err_state": "Alerting"
+				"exec_err_state": "Alerting",
+				"editor_settings": {
+					"simplified_query_editor": false
+				}
 			}
 		}]
 	}]
