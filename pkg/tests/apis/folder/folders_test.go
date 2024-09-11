@@ -263,6 +263,30 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.NotNil(t, legacyCreate.Result)
 		uid := legacyCreate.Result.UID
 		require.NotEmpty(t, uid)
+
+		expectedResult := `{
+			"apiVersion": "folder.grafana.app/v0alpha1",
+			"kind": "Folder",
+			"metadata": {
+			  "annotations": {
+				"grafana.app/originPath": "${originPath}",
+				"grafana.app/originName": "SQL"
+			  },
+			  "creationTimestamp": "${creationTimestamp}",
+			  "name": "` + uid + `",
+			  "namespace": "default",
+			  "resourceVersion": "${resourceVersion}",
+			  "uid": "${uid}"
+			},
+			"spec": {
+			  "title": "Test"
+			}
+		  }`
+
+		// Get should return the same result
+		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 	})
 	return helper
 }
