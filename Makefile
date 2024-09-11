@@ -346,27 +346,32 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 
 ##@ Services
 
-# create docker-compose file with provided sources and start them
-# example: make devenv sources=postgres,auth/openldap
+COMPOSE := $(shell if docker compose --help >/dev/null 2>&1; then echo docker compose; else echo docker-compose; fi)
+ifeq ($(COMPOSE),docker-compose)
+$(warning From July 2023 Compose V1 (docker-compose) stopped receiving updates. Migrate to Compose V2 (docker compose). https://docs.docker.com/compose/migrate/)
+endif
+
+# Create a Docker Compose file with provided sources and start them.
+# For example, `make devenv sources=postgres,auth/openldap`
 .PHONY: devenv
 ifeq ($(sources),)
 devenv:
-	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
+	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,auth/openldap\n'
 else
-devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
+devenv: devenv-down ## Start optional services like Postgresql, Prometheus, or Elasticsearch.
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
 	(rm -rf {docker-compose.yaml,conf.tmp,.env}; exit 1)
 
 	@cd devenv; \
-	docker-compose up -d --build
+	$(COMPOSE) up -d --build
 endif
 
 .PHONY: devenv-down
 devenv-down: ## Stop optional services.
 	@cd devenv; \
 	test -f docker-compose.yaml && \
-	docker-compose down || exit 0;
+	$(COMPOSE) down || exit 0;
 
 .PHONY: devenv-postgres
 devenv-postgres:
