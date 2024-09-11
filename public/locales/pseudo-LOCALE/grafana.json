@@ -225,6 +225,19 @@
       "update-rule": {
         "success": "Ŗūľę ūpđäŧęđ şūččęşşƒūľľy"
       }
+    },
+    "search": {
+      "property": {
+        "data-source": "Đäŧä şőūřčę",
+        "evaluation-group": "Ēväľūäŧįőŉ ģřőūp",
+        "labels": "Ŀäþęľş",
+        "namespace": "Főľđęř / Ńämęşpäčę",
+        "rule-health": "Ħęäľŧĥ",
+        "rule-name": "Åľęřŧįŉģ řūľę ŉämę",
+        "rule-type": "Ŧypę",
+        "state": "Ŝŧäŧę"
+      },
+      "save-query": "Ŝävę čūřřęŉŧ şęäřčĥ"
     }
   },
   "annotations": {
@@ -367,11 +380,15 @@
     }
   },
   "common": {
+    "apply": "Åppľy",
     "cancel": "Cäŉčęľ",
+    "clear": "Cľęäř",
+    "close": "Cľőşę",
     "locale": {
       "default": "Đęƒäūľŧ"
     },
-    "save": "Ŝävę"
+    "save": "Ŝävę",
+    "search": "Ŝęäřčĥ"
   },
   "configuration-tracker": {
     "config-card": {

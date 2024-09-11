@@ -225,6 +225,19 @@
       "update-rule": {
         "success": "Rule updated successfully"
       }
+    },
+    "search": {
+      "property": {
+        "data-source": "Data source",
+        "evaluation-group": "Evaluation group",
+        "labels": "Labels",
+        "namespace": "Folder / Namespace",
+        "rule-health": "Health",
+        "rule-name": "Alerting rule name",
+        "rule-type": "Type",
+        "state": "State"
+      },
+      "save-query": "Save current search"
     }
   },
   "annotations": {
@@ -367,11 +380,15 @@
     }
   },
   "common": {
+    "apply": "Apply",
     "cancel": "Cancel",
+    "clear": "Clear",
+    "close": "Close",
     "locale": {
       "default": "Default"
     },
-    "save": "Save"
+    "save": "Save",
+    "search": "Search"
   },
   "configuration-tracker": {
     "config-card": {
