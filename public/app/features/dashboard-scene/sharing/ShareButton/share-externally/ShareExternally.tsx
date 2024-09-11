@@ -169,7 +169,7 @@ function Actions({ publicDashboard, onRevokeClick }: { publicDashboard: PublicDa
       <div className={styles.actionsContainer}>
         <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
           <ClipboardButton
-            data-testid={selectors.copyUrlButton}
+            data-testid={selectors.Configuration.copyUrlButton}
             variant="primary"
             fill="outline"
             icon="link"
@@ -184,6 +184,7 @@ function Actions({ publicDashboard, onRevokeClick }: { publicDashboard: PublicDa
             fill="outline"
             disabled={isUpdateLoading || !hasWritePermissions}
             onClick={onRevokeClick}
+            data-testid={selectors.Configuration.revokeAccessButton}
           >
             <Trans i18nKey="public-dashboard.share-externally.revoke-access-button">Revoke access</Trans>
           </Button>
@@ -201,6 +202,7 @@ function Actions({ publicDashboard, onRevokeClick }: { publicDashboard: PublicDa
             }
             onClick={onPauseOrResumeClick}
             disabled={isUpdateLoading || !hasWritePermissions}
+            data-testid={selectors.Configuration.toggleAccessButton}
           >
             {publicDashboard.isEnabled ? (
               <Trans i18nKey="public-dashboard.share-externally.pause-access-button">Pause access</Trans>

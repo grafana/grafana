@@ -44,8 +44,8 @@ afterEach(() => {
 describe('Alerts', () => {
   it('when share type is public, warning is shown', async () => {
     await buildAndRenderScenario({});
-    expect(screen.queryByTestId(shareExternallySelector.PublicAlert)).toBeInTheDocument();
-    expect(screen.queryByTestId(shareExternallySelector.EmailSharingAlert)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(shareExternallySelector.publicAlert)).toBeInTheDocument();
+    expect(screen.queryByTestId(shareExternallySelector.emailSharingAlert)).not.toBeInTheDocument();
   });
   it('when user has no write permissions, warning is shown', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);

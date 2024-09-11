@@ -289,10 +289,20 @@ export const Pages = {
   ShareDashboardDrawer: {
     ShareExternally: {
       container: 'data-testid share externally drawer container',
-      copyUrlButton: 'data-testid share externally copy url button',
+      publicAlert: 'data-testid public share alert',
+      emailSharingAlert: 'data-testid email share alert',
       shareTypeSelect: 'data-testid share externally share type select',
-      PublicAlert: 'data-testid public share alert',
-      EmailSharingAlert: 'data-testid email share alert',
+      Creation: {
+        createButton: 'data-testid share dashboard create button',
+        willBePublicCheckbox: 'data-testid share dashboard will be public checkbox',
+      },
+      Configuration: {
+        enableTimeRangeSwitch: 'data-testid share externally enable time range switch',
+        enableAnnotationsSwitch: 'data-testid share externally enable annotations switch',
+        copyUrlButton: 'data-testid share externally copy url button',
+        revokeAccessButton: 'data-testid share externally revoke access button',
+        toggleAccessButton: 'data-testid share externally pause or resume access button',
+      },
     },
     ShareSnapshot: {
       container: 'data-testid share snapshot drawer container',
