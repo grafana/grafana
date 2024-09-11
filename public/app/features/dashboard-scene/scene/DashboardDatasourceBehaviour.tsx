@@ -1,7 +1,14 @@
 import { SceneObjectBase, SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
-import { findVizPanelByKey, getDashboardSceneFor, getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getLibraryPanelBehavior,
+  getQueryRunnerFor,
+  getVizPanelKeyForPanelId,
+  isLibraryPanel,
+} from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -44,6 +51,15 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
     if (!(panel instanceof VizPanel)) {
       return;
+    }
+
+    //check if panel is a library panel
+    if (isLibraryPanel(panel)) {
+      const libraryPanel = getLibraryPanelBehavior(panel);
+      // if the panel is a library panel, we need to wait until is resolved
+      if (!libraryPanel?.state.isLoaded) {
+        return;
+      }
     }
 
     const sourcePanelQueryRunner = getQueryRunnerFor(panel);
