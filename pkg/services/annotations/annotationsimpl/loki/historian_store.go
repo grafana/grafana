@@ -39,8 +39,6 @@ const (
 var (
 	ErrLokiStoreInternal = errutil.Internal("annotations.loki.internal")
 	ErrLokiStoreNotFound = errutil.NotFound("annotations.loki.notFound")
-
-	errMissingRule = errors.New("rule not found")
 )
 
 type RuleStore interface {
@@ -98,7 +96,7 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 		var err error
 		rule, err = r.ruleStore.GetRuleByID(ctx, ngmodels.GetAlertRuleByIDQuery{OrgID: query.OrgID, ID: query.AlertID})
 		if err != nil {
-			if errors.Is(err, errMissingRule) {
+			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 				return make([]*annotations.ItemDTO, 0), ErrLokiStoreNotFound.Errorf("rule with ID %d does not exist", query.AlertID)
 			}
 			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query rule: %w", err)

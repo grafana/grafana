@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"math/rand"
 	"net/url"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -104,6 +106,35 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			)
 			require.NoError(t, err)
 			require.Len(t, res, numTransitions)
+		})
+
+		t.Run("should return ErrLokiStoreNotFound if rule is not found", func(t *testing.T) {
+			var rules = slices.Concat(maps.Values(dashboardRules)...)
+			id := rand.Int63()
+			// make sure id is not known
+			for slices.IndexFunc(rules, func(rule *ngmodels.AlertRule) bool {
+				return rule.ID == id
+			}) >= 0 {
+				id = rand.Int63()
+			}
+
+			query := annotations.ItemQuery{
+				OrgID:   1,
+				AlertID: id,
+				From:    start.UnixMilli(),
+				To:      start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+			}
+			_, err := store.Get(
+				context.Background(),
+				&query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.ErrorIs(t, err, ErrLokiStoreNotFound)
 		})
 
 		t.Run("can query history by dashboard id", func(t *testing.T) {
