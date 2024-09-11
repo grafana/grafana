@@ -1,12 +1,21 @@
 package playlist
 
 import (
+	"context"
 	"encoding/json"
+	"net/http"
+
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -14,6 +23,12 @@ import (
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
+}
+
+var gvr = schema.GroupVersionResource{
+	Group:    "folder.grafana.app",
+	Version:  "v0alpha1",
+	Resource: "folders",
 }
 
 func TestIntegrationFoldersApp(t *testing.T) {
@@ -34,7 +49,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
 		require.NoError(t, err)
-		// fmt.Printf("%s", string(v1Disco))
 
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
@@ -86,4 +100,169 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			]
 		  }`, string(v1Disco))
 	})
+
+	t.Run("with k8s api flag", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false,
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesFolders,                    // The change we are testing
+			},
+		}))
+	})
+
+	t.Run("with dual write (file, mode 0)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode0,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
+	t.Run("with dual write (file, mode 1)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode0,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified storage, mode 1)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false,
+			DisableAnonymous:     true,
+			APIServerStorageType: "file", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
+	t.Run("with dual write (etcd, mode 0)", func(t *testing.T) {
+		// NOTE: running local etcd, that will be wiped clean!
+		t.Skip("local etcd testing")
+
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false,
+			DisableAnonymous:     true,
+			APIServerStorageType: "etcd", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode0,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		})
+
+		// Clear the collection before starting (etcd)
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		doFolderTests(t, helper)
+	})
+
+	t.Run("with dual write (etcd, mode 1)", func(t *testing.T) {
+		// NOTE: running local etcd, that will be wiped clean!
+		t.Skip("local etcd testing")
+
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    false,
+			DisableAnonymous:     true,
+			APIServerStorageType: "etcd", // write the files to disk
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+				featuremgmt.FlagKubernetesFolders,
+			},
+		})
+
+		// Clear the collection before starting (etcd)
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		doFolderTests(t, helper)
+	})
+}
+
+func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
+	t.Run("Check folder CRUD (just create for now) in legacy API appears in k8s apis", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		// #TODO fill out the payload: parentUID, description
+		// and check about uid orgid and siU
+		legacyPayload := `{
+			"title": "Test",
+			"uid": ""
+			}`
+		legacyCreate := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(legacyPayload),
+		}, &folder.Folder{})
+		require.NotNil(t, legacyCreate.Result)
+		uid := legacyCreate.Result.UID
+		require.NotEmpty(t, uid)
+	})
+	return helper
 }
