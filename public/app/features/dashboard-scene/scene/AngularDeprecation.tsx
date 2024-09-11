@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps, SceneGridItemLike, SceneObjectBase, VizPanel } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, VizPanel } from '@grafana/scenes';
 import { Icon, PanelChrome, Tooltip, useStyles2 } from '@grafana/ui';
 import { explicitlyControlledMigrationPanels } from 'app/features/dashboard/state/PanelModel';
 import { isAngularDatasourcePluginAndNotHidden } from 'app/features/plugins/angularDeprecation/utils';
@@ -45,7 +45,10 @@ function AngularDeprecationRenderer({ model }: SceneComponentProps<AngularDeprec
 
   const showAngularNotice = shouldShowAngularNotice(panel);
   if (showAngularNotice) {
-    const pluginTypeNotice = getPluginTypeNotice(isGridPanelAngularDatasource(panel), isGridPanelAngularPlugin(panel));
+    const pluginTypeNotice = getPluginTypeNotice(
+      isUsingAngularDatasourcePlugin(panel),
+      isUsingAngularPanelPlugin(panel)
+    );
     const message = `This ${pluginTypeNotice} requires Angular (deprecated).`;
     const angularNoticeTooltip = (
       <Tooltip content={message}>
@@ -69,32 +72,25 @@ export function getPluginTypeNotice(isAngularDatasource: boolean, isAngularPanel
   return 'panel or data source';
 }
 
-export function isGridPanelAngularPlugin(gridItem: SceneGridItemLike) {
-  //check if panel is library panel
-  if (gridItem instanceof VizPanel) {
-    return (
-      (config.panels[gridItem.state.pluginId]?.angular?.detected ||
-        explicitlyControlledMigrationPanels.includes(gridItem.state.pluginId)) &&
-      !config.panels[gridItem.state.pluginId]?.angular?.hideDeprecation
-    );
-  }
-  return false;
+export function isUsingAngularPanelPlugin(panel: VizPanel) {
+  return (
+    (config.panels[panel.state.pluginId]?.angular?.detected ||
+      explicitlyControlledMigrationPanels.includes(panel.state.pluginId)) &&
+    !config.panels[panel.state.pluginId]?.angular?.hideDeprecation
+  );
 }
 
-export function isUsingAngularPlugin(panel: VizPanel) {
-  if (gridItem instanceof VizPanel) {
-    const queryRunner = getQueryRunnerFor(gridItem);
-    const datasource = queryRunner?.state.datasource;
+export function isUsingAngularDatasourcePlugin(panel: VizPanel) {
+  const queryRunner = getQueryRunnerFor(panel);
+  const datasource = queryRunner?.state.datasource;
 
-    return datasource?.uid ? isAngularDatasourcePluginAndNotHidden(datasource?.uid) : false;
-  }
-  return false;
+  return datasource?.uid ? isAngularDatasourcePluginAndNotHidden(datasource?.uid) : false;
 }
 
 export function shouldShowAngularNotice(panel: VizPanel) {
   return (
     (config.featureToggles.angularDeprecationUI ?? false) &&
-    (isGridPanelAngularDatasource(panel) || isGridPanelAngularPlugin(panel))
+    (isUsingAngularDatasourcePlugin(panel) || isUsingAngularPanelPlugin(panel))
   );
 }
 

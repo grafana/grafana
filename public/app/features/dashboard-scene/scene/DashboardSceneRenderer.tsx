@@ -59,9 +59,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   const showAngularDeprecationNotice = () => {
     const panels = model.getDashboardPanels();
-    if (!panels) {
-      return null;
-    }
     const shouldShowAutoMigrateLink = panels.some((panel) => {
       if (panel instanceof VizPanel) {
         return explicitlyControlledMigrationPanels.includes(panel.state.pluginId);

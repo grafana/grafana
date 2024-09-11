@@ -66,7 +66,7 @@ import {
 } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
-import { isGridPanelAngularDatasource, isGridPanelAngularPlugin } from './AngularDeprecation';
+import { isUsingAngularDatasourcePlugin, isUsingAngularPanelPlugin } from './AngularDeprecation';
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -885,25 +885,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
   }
 
-  public getDashboardPanels = () => {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Dashboard scene layout is not SceneGridLayout');
-    }
+  public getDashboardPanels() {
+    return dashboardSceneGraph.getVizPanels(this);
+  }
 
-    const sceneGridLayout = this.state.body;
-    const gridItems = sceneGridLayout.state.children;
-    if (!gridItems) {
-      return [];
-    }
-    return gridItems.map((vizPanel) => {
-      if (!(vizPanel instanceof DashboardGridItem)) {
-        throw new Error('Trying to get a panel in a layout that is not DashboardGridItem');
-      }
-      return vizPanel.state.body;
-    });
-  };
-
-  public hasDashboardAngularPlugins = () => {
+  public hasDashboardAngularPlugins() {
     const sceneGridLayout = this.state.body;
     if (!(sceneGridLayout instanceof SceneGridLayout)) {
       return false;
@@ -913,12 +899,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       if (!(gridItem instanceof DashboardGridItem)) {
         return false;
       }
-      const isAngularPanel = isGridPanelAngularPlugin(gridItem.state.body);
-      const isAngularDs = isGridPanelAngularDatasource(gridItem.state.body);
+      const isAngularPanel = isUsingAngularPanelPlugin(gridItem.state.body);
+      const isAngularDs = isUsingAngularDatasourcePlugin(gridItem.state.body);
       return isAngularPanel || isAngularDs;
     });
     return dashboardWasAngular;
-  };
+  }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
     this._scrollRef = scrollElement;
