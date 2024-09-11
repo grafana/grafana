@@ -27,6 +27,7 @@ var (
 	ErrDashboardFolderNotFound = DashboardErr{
 		Reason:     "Folder not found",
 		StatusCode: 404,
+		Status:     "not-found",
 	}
 	ErrDashboardWithSameUIDExists = DashboardErr{
 		Reason:     "A dashboard with the same uid already exists",
@@ -62,6 +63,7 @@ var (
 	ErrDashboardFolderWithSameNameAsDashboard = DashboardErr{
 		Reason:     "Folder name cannot be the same as one of its dashboards",
 		StatusCode: 400,
+		Status:     "name-match",
 	}
 	ErrDashboardWithSameNameAsFolder = DashboardErr{
 		Reason:     "Dashboard name cannot be the same as folder",
@@ -71,6 +73,7 @@ var (
 	ErrDashboardFolderNameExists = DashboardErr{
 		Reason:     "A folder with that name already exists",
 		StatusCode: 400,
+		Status:     "name-exists",
 	}
 	ErrDashboardUpdateAccessDenied = DashboardErr{
 		Reason:     "Access denied to save dashboard",
