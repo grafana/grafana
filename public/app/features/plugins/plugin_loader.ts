@@ -98,12 +98,10 @@ export async function importPluginModule({
 
   const modulePath = resolveModulePath(path);
   const resolvedModule = System.resolve(modulePath);
-  // @ts-expect-error - waiting on https://github.com/DefinitelyTyped/DefinitelyTyped/pull/70465
   const integrityMap = System.getImportMap().integrity;
 
-  if (moduleHash && !integrityMap[resolvedModule]) {
+  if (moduleHash && integrityMap && !integrityMap[resolvedModule]) {
     SystemJS.addImportMap({
-      // @ts-expect-error - waiting on https://github.com/DefinitelyTyped/DefinitelyTyped/pull/70465
       integrity: {
         [resolvedModule]: moduleHash,
       },
