@@ -1,6 +1,7 @@
 import { firstValueFrom } from 'rxjs';
 
 import { AddedLinksRegistry } from './AddedLinksRegistry';
+import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
 
 describe('AddedLinksRegistry', () => {
   const consoleWarn = jest.fn();
@@ -519,5 +520,64 @@ describe('AddedLinksRegistry', () => {
 
     const registry = subscribeCallback.mock.calls[0][0];
     expect(registry).toEqual({});
+  });
+
+  it('should not be possible to register a link on a read-only registry', async () => {
+    const pluginId = 'grafana-basic-app';
+    const registry = new AddedLinksRegistry();
+    const readOnlyRegistry = registry.readOnly();
+
+    expect(() => {
+      readOnlyRegistry.register({
+        pluginId,
+        configs: [
+          {
+            title: 'Link 2',
+            description: 'Link 2 description',
+            path: `/a/${pluginId}/declare-incident`,
+            targets: 'plugins/myorg-basic-app/start',
+            configure: jest.fn().mockReturnValue({}),
+          },
+        ],
+      });
+    }).toThrow(MSG_CANNOT_REGISTER_READ_ONLY);
+
+    const currentState = await readOnlyRegistry.getState();
+    expect(Object.keys(currentState)).toHaveLength(0);
+  });
+
+  it('should pass down fresh registrations to the read-only version of the registry', async () => {
+    const pluginId = 'grafana-basic-app';
+    const registry = new AddedLinksRegistry();
+    const readOnlyRegistry = registry.readOnly();
+    const subscribeCallback = jest.fn();
+    let readOnlyState;
+
+    // Should have no extensions registered in the beginning
+    readOnlyState = await readOnlyRegistry.getState();
+    expect(Object.keys(readOnlyState)).toHaveLength(0);
+
+    readOnlyRegistry.asObservable().subscribe(subscribeCallback);
+
+    // Register an extension to the original (writable) registry
+    registry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Link 2',
+          description: 'Link 2 description',
+          path: `/a/${pluginId}/declare-incident`,
+          targets: 'plugins/myorg-basic-app/start',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    // The read-only registry should have received the new extension
+    readOnlyState = await readOnlyRegistry.getState();
+    expect(Object.keys(readOnlyState)).toHaveLength(1);
+
+    expect(subscribeCallback).toHaveBeenCalledTimes(2);
+    expect(Object.keys(subscribeCallback.mock.calls[1][0])).toEqual(['plugins/myorg-basic-app/start']);
   });
 });

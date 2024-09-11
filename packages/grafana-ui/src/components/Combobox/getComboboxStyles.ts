@@ -4,12 +4,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
   return {
+    menuClosed: css({
+      display: 'none',
+    }),
     menu: css({
       label: 'grafana-select-menu',
       background: theme.components.dropdown.background,
       boxShadow: theme.shadows.z3,
-      position: 'relative',
-      zIndex: 1,
+      zIndex: theme.zIndex.dropdown,
     }),
     menuHeight: css({
       height: 400,
