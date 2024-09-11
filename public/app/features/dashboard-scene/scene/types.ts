@@ -26,12 +26,12 @@ export interface DashboardLayoutManager extends SceneObject {
    * Remove an elemenet / panel
    * @param element
    */
-  removeElement(element: DashboardLayoutElement): void;
+  removePanel(panel: VizPanel): void;
   /**
    * Creates a copy of an existing element and adds it to the layout
    * @param element
    */
-  duplicateElement(element: DashboardLayoutElement): void;
+  duplicatePanel(panel: VizPanel): void;
   /**
    * Adds a new panel to the layout
    */

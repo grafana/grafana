@@ -528,7 +528,6 @@ describe('DashboardScene', () => {
 
       it('Should paste a library viz panel', () => {
         store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-        jest.spyOn(JSON, 'parse').mockReturnValue({ libraryPanel: { uid: 'uid', name: 'libraryPanel' } });
         jest.mocked(buildGridItemForPanel).mockReturnValue(
           new DashboardGridItem({
             body: new VizPanel({
@@ -542,197 +541,12 @@ describe('DashboardScene', () => {
 
         scene.pastePanel();
 
-        const body = scene.state.body as SceneGridLayout;
-        const gridItem = body.state.children[0] as DashboardGridItem;
-
-        const libVizPanel = gridItem.state.body;
-
         expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
-        expect(body.state.children.length).toBe(6);
-        expect(libVizPanel.state.key).toBe('panel-7');
-        expect(gridItem.state.y).toBe(0);
+
+        const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
+        expect(addedPanel).toBeDefined();
+        expect(addedPanel.state.key).toBe('panel-7');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-      });
-
-      it('Should remove a panel', () => {
-        const panel = findVizPanelByKey(scene, 'panel-1')!;
-        scene.removePanel(panel);
-
-        expect(findVizPanelByKey(scene, 'panel-1')).toBeUndefined();
-      });
-
-      it('Should remove a panel within a row', () => {
-        const vizPanel = (
-          ((scene.state.body as SceneGridLayout).state.children[2] as SceneGridRow).state
-            .children[0] as DashboardGridItem
-        ).state.body;
-        scene.removePanel(vizPanel as VizPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridRow = body.state.children[2] as SceneGridRow;
-
-        expect(gridRow.state.children.length).toBe(1);
-      });
-
-      it('Should remove a library panel', () => {
-        const libraryPanel = ((scene.state.body as SceneGridLayout).state.children[4] as DashboardGridItem).state.body;
-        scene.removePanel(libraryPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-        expect(body.state.children.length).toBe(4);
-      });
-
-      it('Should remove a library panel within a row', () => {
-        const libraryPanel = (
-          ((scene.state.body as SceneGridLayout).state.children[2] as SceneGridRow).state
-            .children[1] as DashboardGridItem
-        ).state.body;
-
-        scene.removePanel(libraryPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridRow = body.state.children[2] as SceneGridRow;
-        expect(gridRow.state.children.length).toBe(1);
-      });
-
-      it('Should duplicate a panel', () => {
-        const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body;
-        scene.duplicatePanel(vizPanel as VizPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridItem = body.state.children[5] as DashboardGridItem;
-
-        expect(body.state.children.length).toBe(6);
-        expect(gridItem.state.body!.state.key).toBe('panel-7');
-      });
-
-      it('Should maintain size of duplicated panel', () => {
-        const gItem = (scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem;
-        gItem.setState({ height: 1 });
-        const vizPanel = gItem.state.body;
-        scene.duplicatePanel(vizPanel as VizPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-        const newGridItem = body.state.children[5] as DashboardGridItem;
-
-        expect(body.state.children.length).toBe(6);
-        expect(newGridItem.state.body!.state.key).toBe('panel-7');
-        expect(newGridItem.state.height).toBe(1);
-      });
-
-      it('Should duplicate a library panel', () => {
-        const libraryPanel = ((scene.state.body as SceneGridLayout).state.children[4] as DashboardGridItem).state.body;
-        scene.duplicatePanel(libraryPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridItem = body.state.children[5] as DashboardGridItem;
-
-        const libVizPanel = gridItem.state.body;
-
-        expect(body.state.children.length).toBe(6);
-        expect(libVizPanel.state.key).toBe('panel-7');
-      });
-
-      it('Should deep clone data provider when duplicating a panel', () => {
-        const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body;
-        scene.duplicatePanel(vizPanel as VizPanel);
-
-        const panelQueries = (
-          ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body.state.$data?.state
-            .$data as SceneQueryRunner
-        ).state.queries;
-        const duplicatedPanelQueries = (
-          ((scene.state.body as SceneGridLayout).state.children[5] as DashboardGridItem).state.body.state.$data?.state
-            .$data as SceneQueryRunner
-        ).state.queries;
-
-        expect(panelQueries[0]).not.toBe(duplicatedPanelQueries[0]);
-      });
-
-      it('Should duplicate a repeated panel', () => {
-        const scene = buildTestScene({
-          body: new SceneGridLayout({
-            children: [
-              new DashboardGridItem({
-                key: `grid-item-1`,
-                width: 24,
-                height: 8,
-                repeatedPanels: [
-                  new VizPanel({
-                    title: 'Library Panel',
-                    key: 'panel-1',
-                    pluginId: 'table',
-                  }),
-                ],
-                body: new VizPanel({
-                  title: 'Library Panel',
-                  key: 'panel-1',
-                  pluginId: 'table',
-                }),
-                variableName: 'custom',
-              }),
-            ],
-          }),
-        });
-
-        const vizPanel = ((scene.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state
-          .repeatedPanels![0];
-
-        scene.duplicatePanel(vizPanel as VizPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridItem = body.state.children[1] as DashboardGridItem;
-
-        expect(body.state.children.length).toBe(2);
-        expect(gridItem.state.body!.state.key).toBe('panel-2');
-      });
-
-      it('Should duplicate a panel in a row', () => {
-        const vizPanel = (
-          ((scene.state.body as SceneGridLayout).state.children[2] as SceneGridRow).state
-            .children[0] as DashboardGridItem
-        ).state.body;
-        scene.duplicatePanel(vizPanel as VizPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridRow = body.state.children[2] as SceneGridRow;
-        const gridItem = gridRow.state.children[2] as DashboardGridItem;
-
-        expect(gridRow.state.children.length).toBe(3);
-        expect(gridItem.state.body!.state.key).toBe('panel-7');
-      });
-
-      it('Should duplicate a library panel in a row', () => {
-        const libraryPanel = (
-          ((scene.state.body as SceneGridLayout).state.children[2] as SceneGridRow).state
-            .children[1] as DashboardGridItem
-        ).state.body;
-
-        scene.duplicatePanel(libraryPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-        const gridRow = body.state.children[2] as SceneGridRow;
-        const gridItem = gridRow.state.children[2] as DashboardGridItem;
-
-        const libVizPanel = gridItem.state.body;
-
-        expect(gridRow.state.children.length).toBe(3);
-        expect(libVizPanel.state.key).toBe('panel-7');
-      });
-
-      it('Should fail to duplicate a panel if it does not have a grid item parent', () => {
-        const vizPanel = new VizPanel({
-          title: 'Panel Title',
-          key: 'panel-5',
-          pluginId: 'timeseries',
-        });
-
-        scene.duplicatePanel(vizPanel);
-
-        const body = scene.state.body as SceneGridLayout;
-
-        // length remains unchanged
-        expect(body.state.children.length).toBe(5);
       });
 
       it('Should unlink a library panel', () => {
@@ -743,24 +557,14 @@ describe('DashboardScene', () => {
         });
 
         const scene = buildTestScene({
-          body: new SceneGridLayout({
-            children: [
-              new DashboardGridItem({
-                key: 'griditem-2',
-                body: libPanel,
-              }),
-            ],
-          }),
+          body: DefaultGridLayoutManager.fromVizPanels([libPanel]),
         });
+
+        expect(isLibraryPanel(libPanel)).toBe(true);
 
         scene.unlinkLibraryPanel(libPanel);
 
-        const body = scene.state.body as SceneGridLayout;
-        const gridItem = body.state.children[0] as DashboardGridItem;
-
-        expect(body.state.children.length).toBe(1);
-        expect(gridItem.state.body).toBeInstanceOf(VizPanel);
-        expect(gridItem.state.$behaviors).toBeUndefined();
+        expect(isLibraryPanel(libPanel)).toBe(false);
       });
 
       it('Should create a library panel', () => {
@@ -775,9 +579,12 @@ describe('DashboardScene', () => {
           body: vizPanel,
         });
 
+        const grid = new SceneGridLayout({ children: [gridItem] });
         const scene = buildTestScene({
-          body: new SceneGridLayout({
-            children: [gridItem],
+          body: new DefaultGridLayoutManager({
+            grid: new SceneGridLayout({
+              children: [gridItem],
+            }),
           }),
         });
 
@@ -788,52 +595,10 @@ describe('DashboardScene', () => {
 
         scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
 
-        const layout = scene.state.body as SceneGridLayout;
-        const newGridItem = layout.state.children[0] as DashboardGridItem;
+        const newGridItem = grid.state.children[0] as DashboardGridItem;
         const behavior = newGridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior;
 
-        expect(layout.state.children.length).toBe(1);
-        expect(newGridItem.state.body).toBeInstanceOf(VizPanel);
-        expect(behavior.state.uid).toBe('uid');
-        expect(behavior.state.name).toBe('name');
-      });
-
-      it('Should create a library panel under a row', () => {
-        const vizPanel = new VizPanel({
-          title: 'Panel A',
-          key: 'panel-1',
-          pluginId: 'table',
-        });
-
-        const gridItem = new DashboardGridItem({
-          key: 'griditem-1',
-          body: vizPanel,
-        });
-
-        const scene = buildTestScene({
-          body: new SceneGridLayout({
-            children: [
-              new SceneGridRow({
-                key: 'row-1',
-                children: [gridItem],
-              }),
-            ],
-          }),
-        });
-
-        const libPanel = {
-          uid: 'uid',
-          name: 'name',
-        };
-
-        scene.createLibraryPanel(vizPanel, libPanel as LibraryPanel);
-
-        const layout = scene.state.body as SceneGridLayout;
-        const newGridItem = (layout.state.children[0] as SceneGridRow).state.children[0] as DashboardGridItem;
-        const behavior = newGridItem.state.body.state.$behaviors![0] as LibraryPanelBehavior;
-
-        expect(layout.state.children.length).toBe(1);
-        expect((layout.state.children[0] as SceneGridRow).state.children.length).toBe(1);
+        expect(grid.state.children.length).toBe(1);
         expect(newGridItem.state.body).toBeInstanceOf(VizPanel);
         expect(behavior.state.uid).toBe('uid');
         expect(behavior.state.name).toBe('name');
@@ -1016,6 +781,19 @@ describe('DashboardScene', () => {
   describe('When coming from explore', () => {
     // When coming from Explore the first panel in a dashboard is a temporary panel
     it('should remove first panel from the grid when discarding changes', () => {
+      const layout = DefaultGridLayoutManager.fromVizPanels([
+        new VizPanel({
+          title: 'Panel A',
+          key: 'panel-1',
+          pluginId: 'table',
+          $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
+        }),
+        new VizPanel({
+          title: 'Panel B',
+          key: 'panel-2',
+          pluginId: 'table',
+        }),
+      ]);
       const scene = new DashboardScene({
         title: 'hello',
         uid: 'dash-1',
@@ -1026,37 +804,18 @@ describe('DashboardScene', () => {
         }),
         controls: new DashboardControls({}),
         $behaviors: [new behaviors.CursorSync({})],
-        body: new SceneGridLayout({
-          children: [
-            new DashboardGridItem({
-              key: 'griditem-1',
-              x: 0,
-              body: new VizPanel({
-                title: 'Panel A',
-                key: 'panel-1',
-                pluginId: 'table',
-                $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
-              }),
-            }),
-            new DashboardGridItem({
-              key: 'griditem-2',
-              body: new VizPanel({
-                title: 'Panel B',
-                key: 'panel-2',
-                pluginId: 'table',
-              }),
-            }),
-          ],
-        }),
+        body: layout,
       });
 
       scene.onEnterEditMode(true);
       expect(scene.state.isEditing).toBe(true);
-      expect((scene.state.body as SceneGridLayout).state.children.length).toBe(2);
+      expect(layout.state.grid.state.children.length).toBe(2);
 
       scene.exitEditMode({ skipConfirm: true });
+
+      const restoredGrid = scene.state.body as DefaultGridLayoutManager;
       expect(scene.state.isEditing).toBe(false);
-      expect((scene.state.body as SceneGridLayout).state.children.length).toBe(1);
+      expect(restoredGrid.state.grid.state.children.length).toBe(1);
     });
   });
 });

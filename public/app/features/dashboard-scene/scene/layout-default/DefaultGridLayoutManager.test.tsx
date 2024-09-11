@@ -41,21 +41,9 @@ describe('DefaultGridLayoutManager', () => {
     });
   });
 
-  describe('removeElement', () => {
-    it('should remove element', () => {
-      const { manager, grid } = setup();
-
-      expect(grid.state.children.length).toBe(3);
-
-      manager.removeElement(grid.state.children[0] as DashboardGridItem);
-
-      expect(grid.state.children.length).toBe(2);
-    });
-  });
-
   describe('addPanel', () => {
     it('Should add a new panel', () => {
-      const { manager, grid } = setup();
+      const { manager } = setup();
 
       const vizPanel = new VizPanel({
         title: 'Panel Title',
@@ -162,6 +150,80 @@ describe('DefaultGridLayoutManager', () => {
       expect(grid.state.children.length).toBe(0);
     });
   });
+
+  describe('removePanel', () => {
+    it('Should remove grid item', () => {
+      const { manager } = setup();
+      const panel = findVizPanelByKey(manager, 'panel-1')!;
+      manager.removePanel(panel);
+
+      expect(findVizPanelByKey(manager, 'panel-1')).toBeNull();
+    });
+
+    it('Should remove a grid item within a row', () => {
+      const { manager, grid } = setup();
+      const vizPanel = findVizPanelByKey(manager, 'panel-within-row1')!;
+
+      manager.removePanel(vizPanel);
+
+      const gridRow = grid.state.children[2] as SceneGridRow;
+      expect(gridRow.state.children.length).toBe(1);
+    });
+  });
+
+  describe('duplicatePanel', () => {
+    it('Should duplicate a panel', () => {
+      const { manager, grid } = setup();
+      const vizPanel = findVizPanelByKey(manager, 'panel-1')!;
+
+      expect(grid.state.children.length).toBe(3);
+
+      manager.duplicatePanel(vizPanel);
+
+      const newGridItem = grid.state.children[3];
+
+      expect(grid.state.children.length).toBe(4);
+      expect(newGridItem.state.key).toBe('panel-7');
+    });
+
+    it('Should maintain size of duplicated panel', () => {
+      const { manager, grid } = setup();
+      const gItem = grid.state.children[0] as DashboardGridItem;
+      gItem.setState({ height: 1 });
+      const vizPanel = gItem.state.body;
+      manager.duplicatePanel(vizPanel as VizPanel);
+
+      const newGridItem = grid.state.children[4] as DashboardGridItem;
+
+      expect(newGridItem.state.height).toBe(1);
+    });
+
+    it('Should duplicate a repeated panel', () => {
+      const { manager, grid } = setup();
+      const gItem = grid.state.children[0] as DashboardGridItem;
+      gItem.setState({ variableName: 'server', repeatDirection: 'v', maxPerRow: 100 });
+      const vizPanel = gItem.state.body;
+      manager.duplicatePanel(vizPanel as VizPanel);
+
+      const newGridItem = grid.state.children[4] as DashboardGridItem;
+
+      expect(newGridItem.state.variableName).toBe('server');
+      expect(newGridItem.state.repeatDirection).toBe('v');
+      expect(newGridItem.state.maxPerRow).toBe(100);
+    });
+
+    it('Should duplicate a panel in a row', () => {
+      const { manager } = setup();
+      const vizPanel = findVizPanelByKey(manager, 'panel-within-row1')!;
+      const gridRow = vizPanel.parent?.parent as SceneGridRow;
+
+      expect(gridRow.state.children.length).toBe(2);
+
+      manager.duplicatePanel(vizPanel);
+
+      expect(gridRow.state.children.length).toBe(3);
+    });
+  });
 });
 
 interface TestOptions {
@@ -195,14 +257,14 @@ function setup(options?: TestOptions) {
         new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel C',
-            key: 'panel-2-clone-2',
+            key: 'panel-within-row1',
             pluginId: 'table',
           }),
         }),
         new DashboardGridItem({
           body: new VizPanel({
             title: 'Panel D',
-            key: 'panel-2-clone-2',
+            key: 'panel-within-row2',
             pluginId: 'table',
           }),
         }),

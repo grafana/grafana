@@ -19,7 +19,7 @@ import {
 } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { RowActions } from '../row-actions/RowActions';
-import { DashboardLayoutManager, DashboardLayoutElement } from '../types';
+import { DashboardLayoutManager } from '../types';
 
 interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
@@ -113,95 +113,82 @@ export class DefaultGridLayoutManager
   }
 
   /**
-   * Element here can be a DashboardGridItem
-   * @param element
-   * @returns
+   * Removes a panel
    */
-  public removeElement(element: DashboardLayoutElement) {
+  public removePanel(panel: VizPanel) {
+    const gridItem = panel.parent!;
+
+    if (!(gridItem instanceof DashboardGridItem)) {
+      throw new Error('Trying to remove panel that is not inside a DashboardGridItem');
+    }
+
     const layout = this.state.grid;
 
     let row: SceneGridRow | undefined;
 
     try {
-      row = sceneGraph.getAncestor(element, SceneGridRow);
+      row = sceneGraph.getAncestor(gridItem, SceneGridRow);
     } catch {
       row = undefined;
     }
 
     if (row) {
-      row.setState({ children: row.state.children.filter((child) => child !== element) });
+      row.setState({ children: row.state.children.filter((child) => child !== gridItem) });
       layout.forceRender();
       return;
     }
 
     this.state.grid.setState({
-      children: layout.state.children.filter((child) => child !== element),
+      children: layout.state.children.filter((child) => child !== gridItem),
     });
   }
 
-  public duplicateElement(element: DashboardLayoutElement): void {
-    // if (!vizPanel.parent) {
-    //   return;
-    // }
-
-    // const libraryPanel = getLibraryVizPanelFromVizPanel(vizPanel);
-
-    // const gridItem = libraryPanel ? libraryPanel.parent : vizPanel.parent;
-
-    if (!(element instanceof DashboardGridItem)) {
-      console.error('Trying to duplicate a panel in a layout that is not DashboardGridItem');
+  public duplicatePanel(vizPanel: VizPanel): void {
+    const gridItem = vizPanel.parent;
+    if (!(gridItem instanceof DashboardGridItem)) {
+      console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
       return;
     }
 
     let panelState;
     let panelData;
+    let newGridItem;
+
     const newPanelId = this.getNextPanelId();
+    const grid = this.state.grid;
 
-    // if (libraryPanel) {
-    //   const gridItemToDuplicateState = sceneUtils.cloneSceneObjectState(gridItem.state);
-
-    //   newGridItem = new DashboardGridItem({
-    //     x: gridItemToDuplicateState.x,
-    //     y: gridItemToDuplicateState.y,
-    //     width: gridItemToDuplicateState.width,
-    //     height: gridItemToDuplicateState.height,
-    //     body: new LibraryVizPanel({
-    //       title: libraryPanel.state.title,
-    //       uid: libraryPanel.state.uid,
-    //       name: libraryPanel.state.name,
-    //       panelKey: getVizPanelKeyForPanelId(newPanelId),
-    //     }),
-    //   });
-    // } else {
-
-    panelState = sceneUtils.cloneSceneObjectState(element.state.body.state);
-    panelData = sceneGraph.getData(element.state.body).clone();
+    if (gridItem instanceof DashboardGridItem) {
+      panelState = sceneUtils.cloneSceneObjectState(gridItem.state.body.state);
+      panelData = sceneGraph.getData(gridItem.state.body).clone();
+    } else {
+      panelState = sceneUtils.cloneSceneObjectState(vizPanel.state);
+      panelData = sceneGraph.getData(vizPanel).clone();
+    }
 
     // when we duplicate a panel we don't want to clone the alert state
     delete panelData.state.data?.alertState;
 
-    const newGridItem = new DashboardGridItem({
-      x: element.state.x,
-      y: element.state.y,
-      height: element.state.height,
-      width: element.state.width,
+    newGridItem = new DashboardGridItem({
+      x: gridItem.state.x,
+      y: gridItem.state.y,
+      height: gridItem.state.height,
+      width: gridItem.state.width,
+      variableName: gridItem.state.variableName,
+      repeatDirection: gridItem.state.repeatDirection,
+      maxPerRow: gridItem.state.maxPerRow,
       body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
     });
 
-    const layout = this.state.grid;
-
-    if (element.parent instanceof SceneGridRow) {
-      const row = element.parent;
+    if (gridItem.parent instanceof SceneGridRow) {
+      const row = gridItem.parent;
 
       row.setState({ children: [...row.state.children, newGridItem] });
 
-      layout.forceRender();
+      grid.forceRender();
       return;
     }
 
-    layout.setState({
-      children: [...layout.state.children, newGridItem],
-    });
+    grid.setState({ children: [...grid.state.children, newGridItem] });
   }
 
   public getVizPanels(): VizPanel[] {
