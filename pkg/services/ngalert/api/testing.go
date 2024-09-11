@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -133,11 +132,11 @@ func (a *recordingAccessControlFake) IsDisabled() bool {
 	return a.Disabled
 }
 
-func (a *recordingAccessControlFake) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, error) {
+func (a *recordingAccessControlFake) Check(ctx context.Context, in ac.CheckRequest) (bool, error) {
 	return false, nil
 }
 
-func (a *recordingAccessControlFake) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
+func (a *recordingAccessControlFake) ListObjects(ctx context.Context, in ac.ListObjectsRequest) ([]string, error) {
 	return nil, nil
 }
 
