@@ -81,7 +81,7 @@ export function isGridPanelAngularPlugin(gridItem: SceneGridItemLike) {
   return false;
 }
 
-export function isGridPanelAngularDatasource(gridItem: SceneGridItemLike) {
+export function isUsingAngularPlugin(panel: VizPanel) {
   if (gridItem instanceof VizPanel) {
     const queryRunner = getQueryRunnerFor(gridItem);
     const datasource = queryRunner?.state.datasource;
