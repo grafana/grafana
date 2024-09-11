@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -41,20 +42,7 @@ func TestIntegrationRequiresDevMode(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestIntegrationDashboardsApp(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-		},
-	})
-	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("dashboard.grafana.app/v0alpha1")
-	require.NoError(t, err)
-
+func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("simple crud+list", func(t *testing.T) {
 		ctx := context.Background()
 		client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -98,6 +86,17 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		// require.Len(t, history.Items, 1)
 		// require.Equal(t, created, history.Items[0].GetName())
 
+		obj.Object["spec"].(map[string]any)["title"] = "Changed title"
+
+		updated, err := client.Resource.Update(context.Background(),
+			obj,
+			metav1.UpdateOptions{},
+		)
+		require.NoError(t, err)
+		require.Equal(t, obj.GetName(), updated.GetName())
+		require.Equal(t, obj.GetUID(), updated.GetUID())
+		require.Less(t, obj.GetResourceVersion(), updated.GetResourceVersion())
+
 		// Delete the object
 		err = client.Resource.Delete(ctx, created, metav1.DeleteOptions{})
 		require.NoError(t, err)
@@ -107,6 +106,108 @@ func TestIntegrationDashboardsApp(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, rsp.Items)
 	})
+}
+
+func TestIntegrationDashboardsApp(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	t.Run("with dual writer mode 0", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 0,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
+
+	t.Run("with dual writer mode 1", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 1,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
+
+	t.Run("with dual writer mode 2", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 2,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
+
+	t.Run("with dual writer mode 3", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 3,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
+
+	t.Run("with dual writer mode 4", func(t *testing.T) {
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction: false, // required for experimental APIs
+			DisableAnonymous:  true,
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+				featuremgmt.FlagKubernetesDashboards,
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: 4,
+				},
+			},
+		})
+		runDashboardTest(t, helper)
+	})
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction: false, // required for experimental APIs
+		DisableAnonymous:  true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+		},
+	})
+
+	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("dashboard.grafana.app/v0alpha1")
+	require.NoError(t, err)
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("dashboard.grafana.app")

@@ -3,7 +3,7 @@ import { clone, map } from 'lodash';
 import { functionRenderer, QueryPart, QueryPartDef, suffixRenderer } from 'app/features/alerting/state/query_part';
 
 const index: any[] = [];
-const categories: any = {
+const categories = {
   Aggregations: [],
   Selectors: [],
   Transformations: [],
