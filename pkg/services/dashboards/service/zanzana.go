@@ -97,7 +97,7 @@ type findDashboardsFn func(ctx context.Context, query *dashboards.FindPersistedD
 
 // getFindDashboardsFn makes a decision which search method should be used
 func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersistedDashboardsQuery) findDashboardsFn {
-	if query.Limit > 0 && query.Limit < maxListQueryLimit {
+	if query.Limit > 0 && query.Limit < maxListQueryLimit && len(query.Title) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
 	if len(query.DashboardUIDs) > 0 && len(query.DashboardUIDs) < maxListQueryLimit {
