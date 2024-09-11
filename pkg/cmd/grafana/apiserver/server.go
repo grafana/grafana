@@ -7,15 +7,6 @@ import (
 	"net"
 	"path"
 
-	"github.com/grafana/pyroscope-go/godeltaprof/http/pprof"
-	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/apiserver/pkg/server/mux"
-	"k8s.io/client-go/tools/clientcmd"
-	netutils "k8s.io/utils/net"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
@@ -24,6 +15,14 @@ import (
 	standaloneoptions "github.com/grafana/grafana/pkg/services/apiserver/standalone/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/pyroscope-go/godeltaprof/http/pprof"
+	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/mux"
+	"k8s.io/client-go/tools/clientcmd"
+	netutils "k8s.io/utils/net"
 )
 
 const (
