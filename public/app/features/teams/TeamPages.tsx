@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { memo, useMemo, useRef } from 'react';
-import { useParams } from 'react-router';
+import { memo, useRef } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { featureEnabled } from '@grafana/runtime';
@@ -18,10 +18,10 @@ import { loadTeam } from './state/actions';
 import { getTeamLoadingNav } from './state/navModel';
 import { getTeam } from './state/selectors';
 
-interface TeamPageRouteParams {
+type TeamPageRouteParams = {
   id: string;
   page?: string;
-}
+};
 
 enum PageTypes {
   Members = 'members',
@@ -32,7 +32,7 @@ enum PageTypes {
 const PAGES = ['members', 'settings', 'groupsync'];
 
 const teamSelector = createSelector(
-  [(state: StoreState) => state.team, (_: StoreState, teamId: number) => teamId],
+  [(state: StoreState) => state.team, (_: StoreState, teamId: string) => teamId],
   (team, teamId) => getTeam(team, teamId)
 );
 
@@ -40,7 +40,7 @@ const pageNavSelector = createSelector(
   [
     (state: StoreState) => state.navIndex,
     (_state: StoreState, pageName: string) => pageName,
-    (_state: StoreState, _pageName: string, teamId: number) => teamId,
+    (_state: StoreState, _pageName: string, teamId: string) => teamId,
   ],
   (navIndex, pageName, teamId) => {
     const teamLoadingNav = getTeamLoadingNav(pageName);
@@ -50,8 +50,7 @@ const pageNavSelector = createSelector(
 
 const TeamPages = memo(() => {
   const isSyncEnabled = useRef(featureEnabled('teamsync'));
-  const params = useParams<TeamPageRouteParams>();
-  const teamId = useMemo(() => parseInt(params.id, 10), [params]);
+  const { id: teamId = '', page } = useParams<TeamPageRouteParams>();
   const team = useSelector((state) => teamSelector(state, teamId));
 
   let defaultPage = 'members';
@@ -59,7 +58,7 @@ const TeamPages = memo(() => {
   if (!team || !contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsPermissionsRead, team)) {
     defaultPage = 'settings';
   }
-  const pageName = params.page ?? defaultPage;
+  const pageName = page ?? defaultPage;
   const pageNav = useSelector((state) => pageNavSelector(state, pageName, teamId));
 
   const dispatch = useDispatch();
@@ -83,6 +82,7 @@ const TeamPages = memo(() => {
         if (canReadTeamPermissions) {
           return <TeamPermissions team={team!} />;
         }
+        return null;
       case PageTypes.Settings:
         return canReadTeam && <TeamSettings team={team!} />;
       case PageTypes.GroupSync:
