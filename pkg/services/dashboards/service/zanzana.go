@@ -119,6 +119,17 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
 
+	resourceUIDs, err := dr.listUserResources(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	query.DashboardUIDs = append(query.DashboardUIDs, resourceUIDs...)
+	query.SkipAccessControlFilter = true
+	return dr.dashboardStore.FindDashboards(ctx, query)
+}
+
+func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]string, error) {
 	var wg sync.WaitGroup
 	resChan := make(chan []string, 2)
 	errChan := make(chan error, 2)
@@ -167,9 +178,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 		uids = append(uids, res...)
 	}
 
-	query.DashboardUIDs = append(uids, query.DashboardUIDs...)
-	query.SkipAccessControlFilter = true
-	return dr.dashboardStore.FindDashboards(ctx, query)
+	return uids, nil
 }
 
 func (dr *DashboardServiceImpl) listResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
