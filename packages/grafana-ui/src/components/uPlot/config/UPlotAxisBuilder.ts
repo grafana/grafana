@@ -92,6 +92,8 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       distr = ScaleDistribution.Linear,
     } = this.props;
 
+    console.log(space);
+
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
@@ -245,12 +247,16 @@ function calculateSpace(
   const maxTicks = plotDim / X_TICK_SPACING_NORMAL;
   const increment = (scaleMax - scaleMin) / maxTicks;
 
+  // not super great, since 0.000005 has many more chars than 1.0
+  // it also doesn't work well with "short" or adaptive units, e.g. 7 K and 6.40 K
+  const bigValue = Math.max(Math.abs(scaleMin), Math.abs(scaleMax));
+
   let sample = '';
 
   if (scale.time) {
-    sample = formatTime(self, [scaleMin], axisIdx, X_TICK_SPACING_NORMAL, increment)[0];
+    sample = formatTime(self, [bigValue], axisIdx, X_TICK_SPACING_NORMAL, increment)[0];
   } else if (formatValue != null) {
-    sample = formatValue(scaleMin);
+    sample = formatValue(bigValue);
   } else {
     return X_TICK_SPACING_NORMAL;
   }
