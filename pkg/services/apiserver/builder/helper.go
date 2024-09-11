@@ -210,18 +210,28 @@ func InstallAPIs(
 		}
 	}
 
+	// TODO: very hacky way to prove that a standalone server
+	// with a single group, multiple versions needs to
+	// call InstallAPIGroup exactly once
+
+	// of course this breaks when you hace multiple groups, each having
+	// a single version
+	var g *genericapiserver.APIGroupInfo
 	for _, b := range builders {
-		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
+		var err error
+		g, err = b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
 		if err != nil {
 			return err
 		}
 		if g == nil || len(g.PrioritizedVersions) < 1 {
 			continue
 		}
-		err = server.InstallAPIGroup(g)
-		if err != nil {
-			return err
-		}
 	}
+
+	err := server.InstallAPIGroup(g)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
