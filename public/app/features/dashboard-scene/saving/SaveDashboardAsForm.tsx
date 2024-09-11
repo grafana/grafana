@@ -1,5 +1,5 @@
 import debounce from 'debounce-promise';
-import { ChangeEvent } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -47,6 +47,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
+  const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
@@ -55,6 +56,11 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
     if (result.status === 'success') {
       dashboard.closeModal();
+    } else {
+      setContentSent({
+        title: data.title,
+        folderUid: data.folder.uid,
+      });
     }
   };
 
@@ -69,15 +75,16 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 
   function renderFooter(error?: Error) {
-    if (isNameExistsError(error)) {
+    const formValuesMatchContentSent =
+      formValues.title.trim() === contentSent.title && formValues.folder.uid === contentSent.folderUid;
+    if (isNameExistsError(error) && formValuesMatchContentSent) {
       return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
     }
-
     return (
       <>
-        {error && (
+        {error && formValuesMatchContentSent && (
           <Alert title="Failed to save dashboard" severity="error">
-            <p>{error.message}</p>
+            {error.message && <p>{error.message}</p>}
           </Alert>
         )}
         <Stack alignItems="center">
@@ -118,7 +125,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
       <Field label="Folder">
         <FolderPicker
-          onChange={(uid: string | undefined, title: string | undefined) => setValue('folder', { uid, title })}
+          onChange={(uid: string | undefined, title: string | undefined) => {
+            setValue('folder', { uid, title });
+          }}
           // Old folder picker fields
           value={formValues.folder?.uid}
           initialTitle={defaultValues!.folder!.title}
