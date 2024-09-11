@@ -38,6 +38,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
   public isWaitingForVariables = false;
   private _prevRepeatValues?: VariableValueSingle[];
+  private _clonedRows?: SceneGridRow[];
 
   public constructor(state: RowRepeaterBehaviorState) {
     super(state);
@@ -46,8 +47,9 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
   }
 
   public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
-    const rows = this._getRows(this._getLayout(), this._getRow());
-    for (const row of rows) {
+    const allRows = [this._getRow(), ...(this._clonedRows ?? [])];
+
+    for (const row of allRows) {
       for (const gridItem of row.state.children) {
         if (!(gridItem instanceof DashboardGridItem)) {
           continue;
@@ -107,15 +109,6 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     };
   }
 
-  private _getRows(layout: SceneGridLayout, rowToRepeat: SceneGridRow): SceneGridRow[] {
-    const clonedRows: SceneGridRow[] = layout.state.children.filter(
-      (child): child is SceneGridRow =>
-        !!(child instanceof SceneGridRow && child.state.key?.includes(`${rowToRepeat.state.key}-clone-`))
-    );
-
-    return [rowToRepeat, ...clonedRows];
-  }
-
   private _getRow(): SceneGridRow {
     if (!(this.parent instanceof SceneGridRow)) {
       throw new Error('RepeatedRowBehavior: Parent is not a SceneGridRow');
@@ -169,7 +162,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     this._prevRepeatValues = values;
 
-    const rows: SceneGridRow[] = [];
+    this._clonedRows = [];
     const rowContent = rowToRepeat.state.children;
     const rowContentHeight = getRowContentHeight(rowContent);
 
@@ -231,10 +224,10 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         rowContentHeight,
         children
       );
-      rows.push(rowClone);
+      this._clonedRows.push(rowClone);
     }
 
-    updateLayout(layout, rows, maxYOfRows, rowToRepeat);
+    updateLayout(layout, this._clonedRows, maxYOfRows, rowToRepeat);
 
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
