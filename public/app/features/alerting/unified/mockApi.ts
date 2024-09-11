@@ -129,7 +129,7 @@ class GrafanaReceiverConfigBuilder {
   }
 }
 
-class AlertmanagerReceiverBuilder {
+export class AlertmanagerReceiverBuilder {
   private receiver: AlertmanagerReceiver = { name: '', email_configs: [], grafana_managed_receiver_configs: [] };
 
   withName(name: string): AlertmanagerReceiverBuilder {

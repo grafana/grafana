@@ -22,7 +22,8 @@ export const receiversReducer = createReducer(initialState, (builder) => {
   builder
     // add a new receiver
     .addCase(addReceiverAction, (draft, { payload: newReceiver }) => {
-      const currentReceivers = draft.alertmanager_config.receivers ?? [];
+      // ensure the receivers are always an array
+      const currentReceivers = (draft.alertmanager_config.receivers = draft.alertmanager_config.receivers ?? []);
 
       // check if the name doesn't already exist
       const nameExists = currentReceivers.some((receiver) => receiver.name === newReceiver.name);
