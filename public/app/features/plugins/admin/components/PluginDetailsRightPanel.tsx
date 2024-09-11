@@ -54,7 +54,7 @@ export function PluginDetailsRightPanel(props: Props): React.ReactElement | null
         <Box padding={2} borderColor="medium" borderStyle="solid">
           <Stack direction="column">
             <Text color="secondary">
-              <Trans i18nKey="plugins.details.labels.reportAbuse">Report Abuse </Trans>
+              <Trans i18nKey="plugins.details.labels.reportAbuse">Report a concern </Trans>
             </Text>
             <LinkButton href="mailto:integrations@grafana.com" variant="secondary" fill="solid">
               <Trans i18nKey="plugins.details.labels.contactGrafanaLabs">Contact Grafana Labs</Trans>
