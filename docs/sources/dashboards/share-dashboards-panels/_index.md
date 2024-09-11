@@ -216,7 +216,7 @@ Export a Grafana JSON file that contains everything you need, including layout, 
 1. Open the dashboard you want to export.
 1. Click the **Export** drop-down list in the top-right corner and select **Export as JSON**.
 
-   The **Save dashboard JSON** drawer opens.
+   The **Export dashboard JSON** drawer opens.
 
 1. Toggle the **Export the dashboard to use in another instance** switch to generate the JSON with a different data source UID.
 1. Click **Download file** or **Copy to clipboard**.
