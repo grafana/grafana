@@ -169,24 +169,24 @@ func (s *fakeRuleAccessControlService) CanWriteAllRules(ctx context.Context, use
 type fakeAlertRuleNotificationStore struct {
 	Calls []call
 
-	RenameReceiverInNotificationSettingsFn     func(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+	RenameReceiverInNotificationSettingsFn     func(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	RenameTimeIntervalInNotificationSettingsFn func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	ListNotificationSettingsFn                 func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
-func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
+func (f *fakeAlertRuleNotificationStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 	call := call{
 		Method: "RenameReceiverInNotificationSettings",
-		Args:   []interface{}{ctx, orgID, oldReceiver, newReceiver},
+		Args:   []interface{}{ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun},
 	}
 	f.Calls = append(f.Calls, call)
 
 	if f.RenameReceiverInNotificationSettingsFn != nil {
-		return f.RenameReceiverInNotificationSettingsFn(ctx, orgID, oldReceiver, newReceiver)
+		return f.RenameReceiverInNotificationSettingsFn(ctx, orgID, oldReceiver, newReceiver, validateProvenance, dryRun)
 	}
 
 	// Default values when no function hook is provided
-	return 0, nil
+	return nil, nil, nil
 }
 
 func (f *fakeAlertRuleNotificationStore) RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {

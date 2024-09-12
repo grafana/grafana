@@ -57,26 +57,27 @@ func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, q models
 	return settings, nil
 }
 
-func (f *fakeConfigStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
+func (f *fakeConfigStore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
 	if oldReceiver == newReceiver {
-		return 0, nil
+		return nil, nil, nil
 	}
 	settings, ok := f.notificationSettings[orgID]
 	if !ok {
-		return 0, nil
+		return nil, nil, nil
 	}
 
-	var updated int
-	for _, notificationSettings := range settings {
+	var updated []models.AlertRuleKey
+	for key, notificationSettings := range settings {
+		validateProvenance(models.ProvenanceNone)
 		for i, setting := range notificationSettings {
 			if setting.Receiver == oldReceiver {
-				updated++
+				updated = append(updated, key)
 				notificationSettings[i].Receiver = newReceiver
 			}
 		}
 	}
 
-	return updated, nil
+	return updated, nil, nil
 }
 
 // Saves the image or returns an error.
