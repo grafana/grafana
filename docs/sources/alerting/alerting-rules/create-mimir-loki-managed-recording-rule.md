@@ -67,7 +67,7 @@ To configure data-source managed recording rules, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Scroll to the **Data-source managed section** and click **+New recording rule**.
+1. Scroll to the **Data source-managed section** and click **+New recording rule**.
 
 #### Enter recording rule name
 
