@@ -133,6 +133,7 @@
 /pkg/services/playlist/ @grafana/grafana-app-platform-squad
 /pkg/services/preference/ @grafana/grafana-backend-group
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
+/pkg/services/provisioning/alerting/ @grafana/alerting-backend
 /pkg/services/query/ @grafana/grafana-app-platform-squad
 /pkg/services/queryhistory/ @grafana/explore-squad
 /pkg/services/quota/ @grafana/grafana-search-and-storage

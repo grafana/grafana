@@ -1,0 +1,28 @@
+apiVersion: 1
+groups:
+  - name: yaml_group
+    folder: my_folder
+    interval: 10s
+    rules:
+    - title: with_typo
+      uid: with_typo
+      dasboardUid: dasboardUid
+      condition: A
+      for: 1m
+      data:
+      - refId: A
+    - title: without_typo
+      uid: without_typo
+      dashboardUid: dashboardUid
+      condition: A
+      for: 1m
+      data:
+      - refId: A
+    - title: with_both
+      uid: with_both
+      dashboardUid: dashboardUid
+      dasboardUid: dasboardUid
+      condition: A
+      for: 1m
+      data:
+      - refId: A
