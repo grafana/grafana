@@ -197,9 +197,8 @@ export class ContextSrv {
       // to distribute the scheduling of the job. For now this can be between 1 and 20 seconds
       const expiresWithDistribution = expires - Math.floor(Math.random() * (20 - 1) + 1);
 
-      // nextRun is when the job should be scheduled for
-      let nextRun = expiresWithDistribution * 1000 - Date.now();
-
+      // nextRun is when the job should be scheduled for in ms. setTimeout ms has a max value of 2147483647.
+      let nextRun = Math.min(expiresWithDistribution * 1000 - Date.now(), 2147483647);
       // @ts-ignore
       this.tokenRotationJobId = setTimeout(() => {
         // if we have a new expiry time from the expiry cookie another tab have already performed the rotation
