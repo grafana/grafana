@@ -182,6 +182,7 @@ cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
 bodyScrolling,preview,@grafana/grafana-frontend-platform,false,false,true
 cloudwatchMetricInsightsCrossAccount,preview,@grafana/aws-datasources,false,false,true
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
+alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
 backgroundPluginInstaller,experimental,@grafana/plugins-platform-backend,false,true,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 newFiltersUI,experimental,@grafana/dashboards-squad,false,false,false
