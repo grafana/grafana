@@ -425,3 +425,42 @@ export function filterByKeyword(plugins: CatalogPlugin[], query: string) {
   }
   return idxs.map((id) => getId(dataArray[id]));
 }
+
+export function isPluginUpdateable(plugin: CatalogPlugin) {
+  // If there is no update available, the plugin cannot be updated
+  if (!plugin.hasUpdate) {
+    return false;
+  }
+
+  // Provisioned plugins cannot be updated
+  if (plugin.isProvisioned) {
+    return false;
+  }
+
+  // Core plugins cannot be updated
+  if (plugin.isCore) {
+    return false;
+  }
+
+  // Currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall.
+  if (plugin.type === PluginType.renderer) {
+    return false;
+  }
+
+  // Preinstalled plugins (with specified version) cannot be updated
+  if (plugin.isPreinstalled.withVersion) {
+    return false;
+  }
+
+  // If the plugin is currently being updated, it should not be updated
+  if (plugin.isUpdatingFromInstance) {
+    return false;
+  }
+
+  // Managed plugins cannot be updated
+  if (plugin.isManaged) {
+    return false;
+  }
+
+  return true;
+}

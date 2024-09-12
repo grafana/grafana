@@ -3,7 +3,7 @@ import { createSelector } from '@reduxjs/toolkit';
 import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { filterByKeyword } from '../helpers';
+import { filterByKeyword, isPluginUpdateable } from '../helpers';
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 
 import { pluginsAdapter } from './reducer';
@@ -61,17 +61,7 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
-      if (filters.hasUpdate !== undefined && plugin.hasUpdate !== filters.hasUpdate) {
-        return false;
-      }
-
-      // plugins not controlled by the user should not be shown as updatable
-      if (
-        filters.hasUpdate !== undefined &&
-        filters.hasUpdate &&
-        plugin.hasUpdate &&
-        (plugin.isCore || plugin.isManaged || plugin.isProvisioned || plugin.isUpdatingFromInstance)
-      ) {
+      if (filters.hasUpdate !== undefined && (plugin.hasUpdate !== filters.hasUpdate || !isPluginUpdateable(plugin))) {
         return false;
       }
 
