@@ -673,9 +673,10 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 
 func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	return &plugins.Plugin{
-		JSONData: jd,
-		Class:    class,
-		FS:       files,
+		JSONData:   jd,
+		Class:      class,
+		FS:         files,
+		ModuleHash: "sha256-test",
 	}
 }
 
@@ -788,7 +789,6 @@ func Test_PluginsSettings(t *testing.T) {
 		Info: plugins.Info{
 			Version: "1.0.0",
 		}}, plugins.ClassExternal, plugins.NewFakeFS())
-
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
 			p1.ID: p1,
@@ -819,6 +819,7 @@ func Test_PluginsSettings(t *testing.T) {
 				},
 				SecureJsonFields: map[string]bool{},
 				LoadingStrategy:  plugins.LoadingStrategyScript,
+				ModuleHash:       p1.ModuleHash,
 			},
 		},
 		{

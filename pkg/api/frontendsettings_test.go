@@ -239,7 +239,8 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
 						{
-							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							Module:     fmt.Sprintf("/%s/module.js", "test-app"),
+							ModuleHash: "sha256-test",
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
 								Info:    plugins.Info{Version: "0.5.0"},
@@ -266,6 +267,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Path:            "/test-app/module.js",
 						Version:         "0.5.0",
 						LoadingStrategy: plugins.LoadingStrategyScript,
+						ModuleHash:      "sha256-test",
 					},
 				},
 			},
@@ -276,7 +278,8 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
 						{
-							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							Module:     fmt.Sprintf("/%s/module.js", "test-app"),
+							ModuleHash: "sha256-test",
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
 								Info:    plugins.Info{Version: "0.5.0"},
@@ -303,6 +306,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Path:            "/test-app/module.js",
 						Version:         "0.5.0",
 						LoadingStrategy: plugins.LoadingStrategyScript,
+						ModuleHash:      "sha256-test",
 					},
 				},
 			},
