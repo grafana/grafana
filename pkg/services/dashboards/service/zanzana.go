@@ -115,6 +115,111 @@ func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersis
 	return dr.findDashboardsZanzanaCheck
 }
 
+// findDashboardsZanzanaCheck implements "Search, then check" strategy. It first performs search query, then filters out results
+// by checking access to each item.
+func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaCheck")
+	defer span.End()
+
+	result := make([]dashboards.DashboardSearchProjection, 0)
+	var page int64 = 1
+	query.SkipAccessControlFilter = true
+	// Set limit to default to prevent pagination issues
+	limit := query.Limit
+
+	for len(result) < int(limit) {
+		query.Page = page
+		query.Limit = defaultQueryLimit
+		findRes, err := dr.dashboardStore.FindDashboards(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+		// Stop when last page reached
+		if len(findRes) == 0 {
+			break
+		}
+
+		query.Limit = limit
+		res, err := dr.checkDashboards(ctx, query, findRes)
+		if err != nil {
+			return nil, err
+		}
+
+		result = append(result, res...)
+		page++
+	}
+
+	if len(result) > int(limit) {
+		result = result[:limit]
+	}
+
+	return result, nil
+}
+
+func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection) ([]dashboards.DashboardSearchProjection, error) {
+	ctx, span := tracer.Start(ctx, "dashboards.service.checkDashboards")
+	defer span.End()
+
+	orgId := query.OrgId
+	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
+		orgId = query.SignedInUser.GetOrgID()
+	}
+
+	concurrentRequests := dr.cfg.Zanzana.ConcurrentChecks
+	res := make([]dashboards.DashboardSearchProjection, 0)
+	resToCheck := make(chan dashboards.DashboardSearchProjection, concurrentRequests)
+	allowedResults := make(chan dashboards.DashboardSearchProjection, len(searchRes))
+	errChan := make(chan error, len(searchRes))
+	var wg sync.WaitGroup
+	for i := 0; i < int(concurrentRequests); i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for d := range resToCheck {
+				if len(allowedResults) >= int(query.Limit) {
+					return
+				}
+				objectType := zanzana.TypeDashboard
+				if d.IsFolder {
+					objectType = zanzana.TypeFolder
+				}
+				object := zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10))
+				req := accesscontrol.CheckRequest{
+					User:     query.SignedInUser.GetUID(),
+					Relation: "read",
+					Object:   object,
+				}
+
+				allowed, err := dr.ac.Check(ctx, req)
+				if err != nil {
+					errChan <- err
+					dr.log.Error("error checking access", "error", err)
+				} else if allowed {
+					allowedResults <- d
+				}
+			}
+		}()
+	}
+
+	for _, r := range searchRes {
+		resToCheck <- r
+	}
+	close(resToCheck)
+
+	wg.Wait()
+	close(allowedResults)
+	for r := range allowedResults {
+		if len(res) >= int(query.Limit) {
+			break
+		}
+		res = append(res, r)
+	}
+
+	return res, nil
+}
+
+// findDashboardsZanzanaList implements "List, then search" strategy. It first retrieve a list of resources
+// with given type available to the user and then passes that list as a filter to the search query.
 func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
@@ -206,83 +311,4 @@ func (dr *DashboardServiceImpl) listResources(ctx context.Context, query *dashbo
 	}
 
 	return resourceUIDs, nil
-}
-
-func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaCheck")
-	defer span.End()
-
-	query.SkipAccessControlFilter = true
-	// Set limit to default to prevent pagination issues
-	queryLimit := query.Limit
-	query.Limit = defaultQueryLimit
-	findRes, err := dr.dashboardStore.FindDashboards(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-
-	query.Limit = queryLimit
-	return dr.checkDashboards(ctx, query, findRes)
-}
-
-func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection) ([]dashboards.DashboardSearchProjection, error) {
-	ctx, span := tracer.Start(ctx, "dashboards.service.checkDashboards")
-	defer span.End()
-
-	orgId := query.OrgId
-	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
-		orgId = query.SignedInUser.GetOrgID()
-	}
-
-	concurrentRequests := dr.cfg.Zanzana.ConcurrentChecks
-	res := make([]dashboards.DashboardSearchProjection, 0)
-	resToCheck := make(chan dashboards.DashboardSearchProjection, concurrentRequests)
-	allowedResults := make(chan dashboards.DashboardSearchProjection, len(searchRes))
-	errChan := make(chan error, len(searchRes))
-	var wg sync.WaitGroup
-	for i := 0; i < int(concurrentRequests); i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for d := range resToCheck {
-				if len(allowedResults) >= int(query.Limit) {
-					return
-				}
-				objectType := zanzana.TypeDashboard
-				if d.IsFolder {
-					objectType = zanzana.TypeFolder
-				}
-				object := zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10))
-				req := accesscontrol.CheckRequest{
-					User:     query.SignedInUser.GetUID(),
-					Relation: "read",
-					Object:   object,
-				}
-
-				allowed, err := dr.ac.Check(ctx, req)
-				if err != nil {
-					errChan <- err
-					dr.log.Error("error checking access", "error", err)
-				} else if allowed {
-					allowedResults <- d
-				}
-			}
-		}()
-	}
-
-	for _, r := range searchRes {
-		resToCheck <- r
-	}
-	close(resToCheck)
-
-	wg.Wait()
-	close(allowedResults)
-	for r := range allowedResults {
-		if len(res) >= int(query.Limit) {
-			break
-		}
-		res = append(res, r)
-	}
-
-	return res, nil
 }
