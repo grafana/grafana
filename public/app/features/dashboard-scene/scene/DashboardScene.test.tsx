@@ -200,14 +200,13 @@ describe('DashboardScene', () => {
       it('Should exit edit mode and discard panel changes if leaving the dashboard while in panel edit', async () => {
         const panel = findVizPanelByKey(scene, 'panel-1')!;
         const editPanel = buildPanelEditScene(panel!);
-
         scene.setState({ editPanel });
 
         panel.setState({ title: 'new title' });
-
         scene.exitEditMode({ skipConfirm: true });
 
-        expect(panel.state.title).toBe('Panel A');
+        const discardPanel = findVizPanelByKey(scene, panel.state.key)!;
+        expect(discardPanel.state.title).toBe('Panel A');
       });
 
       it.each`
