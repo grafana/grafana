@@ -2,7 +2,7 @@
   "apiVersion": 1,
   "groups": [
     {
-      "name": "my_group",
+      "name": "json_group",
       "folder": "my_folder",
       "interval": "10s",
       "rules": [
