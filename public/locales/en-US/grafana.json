@@ -225,6 +225,19 @@
       "update-rule": {
         "success": "Rule updated successfully"
       }
+    },
+    "search": {
+      "property": {
+        "data-source": "Data source",
+        "evaluation-group": "Evaluation group",
+        "labels": "Labels",
+        "namespace": "Folder / Namespace",
+        "rule-health": "Health",
+        "rule-name": "Alerting rule name",
+        "rule-type": "Type",
+        "state": "State"
+      },
+      "save-query": "Save current search"
     }
   },
   "annotations": {
@@ -367,11 +380,15 @@
     }
   },
   "common": {
+    "apply": "Apply",
     "cancel": "Cancel",
+    "clear": "Clear",
+    "close": "Close",
     "locale": {
       "default": "Default"
     },
-    "save": "Save"
+    "save": "Save",
+    "search": "Search"
   },
   "configuration-tracker": {
     "config-card": {
@@ -1893,10 +1910,12 @@
     },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "Contact Grafana Labs",
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
-        "reportAbuse": "Report Abuse",
+        "links": "Links ",
+        "reportAbuse": "Report a concern ",
         "signature": "Signature",
         "status": "Status",
         "updatedAt": "Last updated: ",
@@ -2044,13 +2063,16 @@
       "copy-link-button": "Copy external link",
       "email-share-type-option-description": "Only people with the link can access dashboard",
       "email-share-type-option-label": "Only specific people",
+      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} shared dashboards",
+      "no-upsert-perm-alert-title": "You don’t have permission to {{ mode }} a shared dashboard",
       "pause-access-button": "Pause access",
       "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
       "public-share-type-option-description": "Anyone with the link can access dashboard",
       "public-share-type-option-label": "Anyone with the link",
       "resume-access-button": "Resume access",
       "revoke-access-button": "Revoke access",
-      "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared."
+      "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared.",
+      "unsupported-data-source-alert-desc": "There are data sources in this dashboard that are unsupported for shared dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}."
     },
     "sharing": {
       "success-creation": "Dashboard is public!"
