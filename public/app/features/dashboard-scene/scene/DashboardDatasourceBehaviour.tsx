@@ -26,24 +26,24 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
   }
 
   private _activationHandler() {
-    const queryRunner = this.parent;
+    const dashboardDsQueryRunner = this.parent;
     let libraryPanelSub: Unsubscribable;
     let dashboard: DashboardScene;
-    if (!(queryRunner instanceof SceneQueryRunner)) {
+    if (!(dashboardDsQueryRunner instanceof SceneQueryRunner)) {
       throw new Error('DashboardDatasourceBehaviour must be attached to a SceneQueryRunner');
     }
 
-    if (queryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
+    if (dashboardDsQueryRunner.state.datasource?.uid !== SHARED_DASHBOARD_QUERY) {
       return;
     }
 
     try {
-      dashboard = getDashboardSceneFor(queryRunner);
+      dashboard = getDashboardSceneFor(dashboardDsQueryRunner);
     } catch {
       return;
     }
 
-    const dashboardQuery = queryRunner.state.queries.find((query) => query.panelId !== undefined);
+    const dashboardQuery = dashboardDsQueryRunner.state.queries.find((query) => query.panelId !== undefined);
 
     if (!dashboardQuery) {
       return;
@@ -60,13 +60,12 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
     //check if the source panel is a library panel and wait for it to load
     if (isLibraryPanel(sourcePanel)) {
-      const libraryPanel = getLibraryPanelBehavior(sourcePanel);
-      if (!libraryPanel) {
-        throw new Error('Could not find LibraryPanelBehavior for panel');
+      const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
+      if (libraryPanelBehaviour) {
+        libraryPanelSub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
+          this.handleLibPanelStateUpdates(newLibPanel, dashboardDsQueryRunner, sourcePanel);
+        });
       }
-      libraryPanelSub = libraryPanel.subscribeToState((newLibPanel, oldLibPanel) => {
-        this.handleLibPanelStateUpdates(newLibPanel, oldLibPanel, queryRunner, sourcePanel);
-      });
       return;
     }
 
@@ -77,7 +76,7 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     }
 
     if (this.prevRequestId && this.prevRequestId !== sourcePanelQueryRunner.state.data?.request?.requestId) {
-      queryRunner.runQueries();
+      dashboardDsQueryRunner.runQueries();
     }
 
     return () => {
@@ -90,17 +89,16 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
   private handleLibPanelStateUpdates(
     newLibPanel: LibraryPanelBehaviorState,
-    oldLibPanel: LibraryPanelBehaviorState,
-    queryRunner: SceneQueryRunner,
+    dashboardDsQueryRunner: SceneQueryRunner,
     sourcePanel: VizPanel
   ) {
-    if (newLibPanel && newLibPanel?.isLoaded && newLibPanel !== oldLibPanel) {
+    if (newLibPanel && newLibPanel?.isLoaded) {
       const libPanelQueryRunner = getQueryRunnerFor(sourcePanel);
 
       if (!(libPanelQueryRunner instanceof SceneQueryRunner)) {
-        throw new Error('Could not find SceneQueryRunner for panel');
+        throw new Error('Could not find SceneQueryRunner for library panel');
       }
-      queryRunner.runQueries();
+      dashboardDsQueryRunner.runQueries();
     }
   }
 }
