@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { getTimeZoneInfo, GrafanaTheme2, InternalTimeZones, TIME_FORMAT } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
 import {
-  getUrlSyncManager,
   SceneComponentProps,
   SceneObjectBase,
   SceneObjectState,
@@ -110,7 +109,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
     trail.subscribeToEvent(SceneVariableValueChangedEvent, (evt) => {
       if (evt.payload.state.name === VAR_FILTERS) {
         const filtersApplied = this.state.filtersApplied;
-        const urlState = getUrlSyncManager().getUrlState(trail);
+        const urlState = sceneUtils.getUrlState(trail);
         this.addTrailStep(trail, 'filters', parseFilterTooltip(urlState, filtersApplied));
         this.setState({ filtersApplied });
       }

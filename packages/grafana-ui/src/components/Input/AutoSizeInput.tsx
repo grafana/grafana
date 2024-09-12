@@ -15,13 +15,32 @@ export interface Props extends InputProps {
 }
 
 export const AutoSizeInput = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { defaultValue = '', minWidth = 10, maxWidth, onCommitChange, onKeyDown, onBlur, ...restProps } = props;
-  const [value, setValue] = React.useState(defaultValue);
+  const {
+    defaultValue = '',
+    minWidth = 10,
+    maxWidth,
+    onCommitChange,
+    onKeyDown,
+    onBlur,
+    value: controlledValue,
+    ...restProps
+  } = props;
+
+  // Initialize internal state
+  const [value, setValue] = React.useState(controlledValue ?? defaultValue);
   const [inputWidth, setInputWidth] = React.useState(minWidth);
 
+  // Update internal state when controlled `value` prop changes
+  useEffect(() => {
+    if (controlledValue !== undefined) {
+      setValue(controlledValue);
+    }
+  }, [controlledValue]);
+
+  // Update input width when `value`, `minWidth`, or `maxWidth` change
   useEffect(() => {
     setInputWidth(getWidthFor(value.toString(), minWidth, maxWidth));
-  }, [value, maxWidth, minWidth]);
+  }, [value, minWidth, maxWidth]);
 
   return (
     <Input

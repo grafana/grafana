@@ -3,7 +3,7 @@ import { ReactElement, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { locationSearchToObject } from '@grafana/runtime';
 import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
@@ -48,9 +48,9 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     { value: 'has-update', label: 'New Updates' },
   ];
 
-  const updatablePlugins = useGetUpdatable();
+  const { isLoading: areUpdatesLoading, updatablePlugins } = useGetUpdatable();
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const disableUpdateAllButton = updatablePlugins.length <= 0;
+  const disableUpdateAllButton = updatablePlugins.length <= 0 || areUpdatesLoading;
 
   const onSortByChange = (value: SelectableValue<string>) => {
     history.push({ query: { sortBy: value.value } });
@@ -90,14 +90,12 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const updateAll = (
     <Button disabled={disableUpdateAllButton} onClick={onUpdateAll}>
       <Trans i18nKey="plugins.catalog.update-all.button">Update all</Trans>
-      {!disableUpdateAllButton ? ` (${updatablePlugins.length})` : ''}
+      {disableUpdateAllButton ? '' : ` (${updatablePlugins.length})`}
     </Button>
   );
 
-  const hideUpdateAllButton = config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall;
-
   return (
-    <Page navModel={navModel} actions={hideUpdateAllButton ? undefined : updateAll} subTitle={subTitle}>
+    <Page navModel={navModel} actions={updateAll} subTitle={subTitle}>
       <Page.Contents>
         <HorizontalGroup wrap>
           <Field label="Search">
@@ -167,6 +165,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
         <RoadmapLinks />
         <UpdateAllModal
           isOpen={showUpdateModal}
+          isLoading={areUpdatesLoading}
           onDismiss={() => setShowUpdateModal(false)}
           plugins={updatablePlugins}
         />
