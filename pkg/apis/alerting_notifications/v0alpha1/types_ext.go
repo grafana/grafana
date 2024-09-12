@@ -52,5 +52,11 @@ func (o *Receiver) SetAccessControl(action string) {
 	if o.Annotations == nil {
 		o.Annotations = make(map[string]string, 1)
 	}
-	o.Annotations[fmt.Sprintf("%s%s/%s", InternalPrefix, "access", action)] = "true"
+	o.Annotations[AccessControlAnnotation(action)] = "true"
+}
+
+// AccessControlAnnotation returns the key for the access control annotation for the given action.
+// Ex. grafana.com/access/canDelete.
+func AccessControlAnnotation(action string) string {
+	return fmt.Sprintf("%s%s/%s", InternalPrefix, "access", action)
 }

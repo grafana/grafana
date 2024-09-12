@@ -302,13 +302,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 			if tc.canRead {
 				expectedWithMetadata := expected.DeepCopy()
 				if tc.canUpdate {
-					expectedWithMetadata.ObjectMeta.Annotations[fmt.Sprintf("%s%s/%s", v0alpha1.InternalPrefix, "access", "canWrite")] = "true"
+					expectedWithMetadata.SetAccessControl("canWrite")
 				}
 				if tc.canDelete {
-					expectedWithMetadata.ObjectMeta.Annotations[fmt.Sprintf("%s%s/%s", v0alpha1.InternalPrefix, "access", "canDelete")] = "true"
+					expectedWithMetadata.SetAccessControl("canDelete")
 				}
 				if tc.canReadSecrets {
-					expectedWithMetadata.ObjectMeta.Annotations[fmt.Sprintf("%s%s/%s", v0alpha1.InternalPrefix, "access", "canReadSecrets")] = "true"
+					expectedWithMetadata.SetAccessControl("canReadSecrets")
 				}
 				t.Run("should be able to list receivers", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
@@ -884,8 +884,8 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.Len(t, receiver.Spec.Integrations, len(integrations))
 
 		// Set access control metadata
-		receiver.ObjectMeta.Annotations[fmt.Sprintf("%s%s/%s", v0alpha1.InternalPrefix, "access", "canWrite")] = "true"
-		receiver.ObjectMeta.Annotations[fmt.Sprintf("%s%s/%s", v0alpha1.InternalPrefix, "access", "canDelete")] = "true"
+		receiver.SetAccessControl("canWrite")
+		receiver.SetAccessControl("canDelete")
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()
