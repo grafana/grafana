@@ -242,7 +242,6 @@ func hasProvisionIntegration(gettable *apimodels.GettableApiReceiver) bool {
 		}
 	}
 	return false
-
 }
 
 // IsEmpty returns true if the delta contains no changes.
