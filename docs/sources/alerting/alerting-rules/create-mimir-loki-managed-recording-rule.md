@@ -109,7 +109,7 @@ If you are using Grafana OSS, enable the `grafanaManagedRecordingRules` feature 
 
 #### Enter a recording rule and metric name
 
-Enter a names to identify your recording rule and metric.
+Enter a names to identify your recording rule and metric. The metric name must be a Prometheus metric name and contain no whitespace.
 
 #### Define recording rule
 
