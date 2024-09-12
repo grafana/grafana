@@ -40,13 +40,13 @@ Grafana has its own built-in Alertmanager, referred to as "Grafana" in the user 
 
 **Cloud Alertmanager**
 
-Each Grafana Cloud instance comes preconfigured with an additional Alertmanager (grafanacloud-STACK_NAME-ngalertmanager) from the Mimir (Prometheus) instance running in the Grafana Cloud Stack. The Cloud Alertmanager can handle both Grafana-managed and data source-managed alerts.
+Each Grafana Cloud instance comes preconfigured with an additional Alertmanager (`grafanacloud-STACK_NAME-ngalertmanager`) from the Mimir (Prometheus) instance running in the Grafana Cloud Stack. The Cloud Alertmanager can handle both Grafana-managed and data source-managed alerts.
 
 **Other Alertmanagers**
 
 Grafana Alerting also supports sending alerts to other alertmanagers, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), which can handle Grafana-managed alerts and data sources-managed alerts such as alerts from Loki, Mimir, and Prometheus.
 
-You can use a combination of Alertmanagers. The decision often depends on your alerting setup and where your alerts are being generated. Here are two examples of when you may want to [add an external Alertmanager](#add-an-external-alertmanager) and send your alerts there instead of using the built-in Grafana Alertmanager.
+You can use a combination of Alertmanagers. The decision often depends on your alerting setup and where your alerts are being generated. Here are two examples of when you may want to [add an Alertmanager](#add-an-external-alertmanager) and send your alerts there instead of using the built-in Grafana Alertmanager.
 
 1. You may already have Alertmanagers on-premises in your own Cloud infrastructure that you still want to use because you have other alert generators, such as Prometheus.
 
