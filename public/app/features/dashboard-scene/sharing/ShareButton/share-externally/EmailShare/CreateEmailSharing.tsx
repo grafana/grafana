@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Button, Checkbox, FieldSet, Spinner, Stack } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
 import { contextSrv } from 'app/core/core';
@@ -13,7 +14,6 @@ import { AccessControlAction } from 'app/types';
 
 import { EmailSharingPricingAlert } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/EmailSharingPricingAlert';
 import { useShareDrawerContext } from '../../../ShareDrawer/ShareDrawerContext';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally.Creation;
 
