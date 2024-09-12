@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -24,7 +24,7 @@ const pageNav: NavModelItem = {
 };
 
 const UserCreatePage = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const {
     handleSubmit,
     register,
@@ -35,9 +35,9 @@ const UserCreatePage = () => {
     async (data: UserDTO) => {
       const { id } = await createUser(data);
 
-      history.push(`/admin/users/edit/${id}`);
+      navigate(`/admin/users/edit/${id}`);
     },
-    [history]
+    [navigate]
   );
 
   return (

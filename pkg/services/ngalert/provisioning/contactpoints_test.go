@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -22,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -374,6 +378,60 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		require.Equal(t, expectedName, cps[0].Name)
 		require.Equal(t, "secure url", cps[0].Settings.Get("url").MustString())
 	})
+}
+
+func TestRemoveSecretsForContactPoint(t *testing.T) {
+	overrides := map[string]func(settings map[string]any){
+		"webhook": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
+			settings["authorization_credentials"] = "test-authz-creds"
+		},
+	}
+
+	configs := notify.AllKnownConfigsForTesting
+	keys := maps.Keys(configs)
+	slices.Sort(keys)
+	for _, integrationType := range keys {
+		cfg := configs[integrationType]
+		var settings map[string]any
+		require.NoError(t, json.Unmarshal([]byte(cfg.Config), &settings))
+		if f, ok := overrides[integrationType]; ok {
+			f(settings)
+		}
+		settingsRaw, err := json.Marshal(settings)
+		require.NoError(t, err)
+
+		expectedFields, err := channels_config.GetSecretKeysForContactPointType(integrationType)
+		require.NoError(t, err)
+
+		t.Run(integrationType, func(t *testing.T) {
+			cp := definitions.EmbeddedContactPoint{
+				Name:     "integration-" + integrationType,
+				Type:     integrationType,
+				Settings: simplejson.MustJson(settingsRaw),
+			}
+			secureFields, err := RemoveSecretsForContactPoint(&cp)
+			require.NoError(t, err)
+
+		FIELDS_ASSERT:
+			for _, field := range expectedFields {
+				assert.Contains(t, secureFields, field)
+				path := strings.Split(field, ".")
+				var expectedValue any = settings
+				for _, segment := range path {
+					v, ok := expectedValue.(map[string]any)
+					if !ok {
+						assert.Fail(t, fmt.Sprintf("cannot get expected value for field '%s'", field))
+						continue FIELDS_ASSERT
+					}
+					expectedValue = v[segment]
+				}
+				assert.EqualValues(t, secureFields[field], expectedValue)
+				v, err := cp.Settings.GetPath(path...).Value()
+				assert.NoError(t, err)
+				assert.Nilf(t, v, "field %s is expected to be removed from the settings", field)
+			}
+		})
+	}
 }
 
 func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *ContactPointService {

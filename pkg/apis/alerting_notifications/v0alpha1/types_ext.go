@@ -1,9 +1,6 @@
 package v0alpha1
 
-import (
-	"fmt"
-	"strings"
-)
+import "fmt"
 
 const InternalPrefix = "grafana.com/"
 const ProvenanceStatusAnnotationKey = InternalPrefix + "provenance"
@@ -55,13 +52,11 @@ func (o *Receiver) SetAccessControl(action string) {
 	if o.Annotations == nil {
 		o.Annotations = make(map[string]string, 1)
 	}
-	o.Annotations[fmt.Sprintf("%s%s/%s", InternalPrefix, "access", action)] = "true"
+	o.Annotations[AccessControlAnnotation(action)] = "true"
 }
 
-func (o *Receiver) SetInUse(routesCnt int, rules []string) {
-	if o.Annotations == nil {
-		o.Annotations = make(map[string]string, 2)
-	}
-	o.Annotations[fmt.Sprintf("%s%s/%s", InternalPrefix, "inUse", "routes")] = fmt.Sprintf("%d", routesCnt)
-	o.Annotations[fmt.Sprintf("%s%s/%s", InternalPrefix, "inUse", "rules")] = strings.Join(rules, ",")
+// AccessControlAnnotation returns the key for the access control annotation for the given action.
+// Ex. grafana.com/access/canDelete.
+func AccessControlAnnotation(action string) string {
+	return fmt.Sprintf("%s%s/%s", InternalPrefix, "access", action)
 }

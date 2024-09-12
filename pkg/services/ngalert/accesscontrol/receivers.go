@@ -134,28 +134,6 @@ var (
 			ac.EvalPermission(ac.ActionAlertingReceiversDelete, ScopeReceiversProvider.GetResourceScopeUID(uid)),
 		)
 	}
-
-	// Admin
-
-	// Asserts pre-conditions for resource permissions access to receivers. If this evaluates to false, the user cannot modify permissions for any receivers.
-	permissionsReceiversPreConditionsEval = ac.EvalAll(
-		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead),  // Action for receivers. UID scope.
-		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite), // Action for receivers. UID scope.
-	)
-
-	// Asserts resource permissions access to all receivers.
-	permissionsAllReceiversEval = ac.EvalAll(
-		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead, ScopeReceiversAll),
-		ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite, ScopeReceiversAll),
-	)
-
-	// Asserts resource permissions access to a specific receiver.
-	permissionsReceiverEval = func(uid string) ac.Evaluator {
-		return ac.EvalAll(
-			ac.EvalPermission(ac.ActionAlertingReceiversPermissionsRead, ScopeReceiversProvider.GetResourceScopeUID(uid)),
-			ac.EvalPermission(ac.ActionAlertingReceiversPermissionsWrite, ScopeReceiversProvider.GetResourceScopeUID(uid)),
-		)
-	}
 )
 
 type ReceiverAccess[T models.Identified] struct {
@@ -164,35 +142,11 @@ type ReceiverAccess[T models.Identified] struct {
 	create        actionAccess[T]
 	update        actionAccess[T]
 	delete        actionAccess[T]
-	permissions   actionAccess[T]
 }
 
 // NewReceiverAccess creates a new ReceiverAccess service. If includeProvisioningActions is true, the service will include
 // permissions specific to the provisioning API.
 func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvisioningActions bool) *ReceiverAccess[T] {
-	// If this service is meant for the provisioning API, we include the provisioning actions as possible permissions.
-	// TODO: Improve this monkey patching.
-	readRedactedReceiversPreConditionsEval := readRedactedReceiversPreConditionsEval
-	readDecryptedReceiversPreConditionsEval := readDecryptedReceiversPreConditionsEval
-	readRedactedReceiverEval := readRedactedReceiverEval
-	readDecryptedReceiverEval := readDecryptedReceiverEval
-	readRedactedAllReceiversEval := readRedactedAllReceiversEval
-	readDecryptedAllReceiversEval := readDecryptedAllReceiversEval
-	if includeProvisioningActions {
-		readRedactedReceiversPreConditionsEval = ac.EvalAny(provisioningExtraReadRedactedPermissions, readRedactedReceiversPreConditionsEval)
-		readDecryptedReceiversPreConditionsEval = ac.EvalAny(provisioningExtraReadDecryptedPermissions, readDecryptedReceiversPreConditionsEval)
-
-		readRedactedReceiverEval = func(uid string) ac.Evaluator {
-			return ac.EvalAny(provisioningExtraReadRedactedPermissions, readRedactedReceiverEval(uid))
-		}
-		readDecryptedReceiverEval = func(uid string) ac.Evaluator {
-			return ac.EvalAny(provisioningExtraReadDecryptedPermissions, readDecryptedReceiverEval(uid))
-		}
-
-		readRedactedAllReceiversEval = ac.EvalAny(provisioningExtraReadRedactedPermissions, readRedactedAllReceiversEval)
-		readDecryptedAllReceiversEval = ac.EvalAny(provisioningExtraReadDecryptedPermissions, readDecryptedAllReceiversEval)
-	}
-
 	rcvAccess := &ReceiverAccess[T]{
 		read: actionAccess[T]{
 			genericService: genericService{
@@ -236,11 +190,11 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			},
 			resource:      "receiver",
 			action:        "update",
-			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, updateReceiversPreConditionsEval),
+			authorizeSome: updateReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return ac.EvalAll(readRedactedReceiverEval(receiver.GetUID()), updateReceiverEval(receiver.GetUID()))
+				return updateReceiverEval(receiver.GetUID())
 			},
-			authorizeAll: ac.EvalAll(readRedactedAllReceiversEval, updateAllReceiversEval),
+			authorizeAll: updateAllReceiversEval,
 		},
 		delete: actionAccess[T]{
 			genericService: genericService{
@@ -248,27 +202,53 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 			},
 			resource:      "receiver",
 			action:        "delete",
-			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, deleteReceiversPreConditionsEval),
+			authorizeSome: deleteReceiversPreConditionsEval,
 			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return ac.EvalAll(readRedactedReceiverEval(receiver.GetUID()), deleteReceiverEval(receiver.GetUID()))
+				return deleteReceiverEval(receiver.GetUID())
 			},
-			authorizeAll: ac.EvalAll(readRedactedAllReceiversEval, deleteAllReceiversEval),
-		},
-		permissions: actionAccess[T]{
-			genericService: genericService{
-				ac: a,
-			},
-			resource:      "receiver",
-			action:        "admin", // Essentially read+write receiver resource permissions.
-			authorizeSome: ac.EvalAll(readRedactedReceiversPreConditionsEval, permissionsReceiversPreConditionsEval),
-			authorizeOne: func(receiver models.Identified) ac.Evaluator {
-				return ac.EvalAll(readRedactedReceiverEval(receiver.GetUID()), permissionsReceiverEval(receiver.GetUID()))
-			},
-			authorizeAll: ac.EvalAll(readRedactedAllReceiversEval, permissionsAllReceiversEval),
+			authorizeAll: deleteAllReceiversEval,
 		},
 	}
 
+	// If this service is meant for the provisioning API, we include the provisioning actions as possible permissions.
+	if includeProvisioningActions {
+		extendAccessControl(&rcvAccess.read, ac.EvalAny, actionAccess[T]{
+			authorizeSome: provisioningExtraReadRedactedPermissions,
+			authorizeAll:  provisioningExtraReadRedactedPermissions,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return provisioningExtraReadRedactedPermissions
+			},
+		})
+		extendAccessControl(&rcvAccess.readDecrypted, ac.EvalAny, actionAccess[T]{
+			authorizeSome: provisioningExtraReadDecryptedPermissions,
+			authorizeAll:  provisioningExtraReadDecryptedPermissions,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return provisioningExtraReadDecryptedPermissions
+			},
+		})
+	}
+
+	// Write and delete permissions should require read permissions.
+	extendAccessControl(&rcvAccess.update, ac.EvalAll, rcvAccess.read)
+	extendAccessControl(&rcvAccess.delete, ac.EvalAll, rcvAccess.read)
+
 	return rcvAccess
+}
+
+// extendAccessControl extends the access control of base with the extension. The operator function is used to combine
+// the authorization evaluators.
+func extendAccessControl[T models.Identified](base *actionAccess[T], operator func(evaluator ...ac.Evaluator) ac.Evaluator, extension actionAccess[T]) {
+	// Prevent infinite recursion.
+	baseSome := base.authorizeSome
+	baseAll := base.authorizeAll
+	baseOne := base.authorizeOne
+
+	// Extend the access control of base with the extension.
+	base.authorizeSome = operator(extension.authorizeSome, baseSome)
+	base.authorizeAll = operator(extension.authorizeAll, baseAll)
+	base.authorizeOne = func(resource models.Identified) ac.Evaluator {
+		return operator(extension.authorizeOne(resource), baseOne(resource))
+	}
 }
 
 // HasList checks if user has access to list redacted receivers. Returns false if user does not have access.
@@ -364,11 +344,12 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 		basePerms.Set(models.ReceiverPermissionReadSecret, true) // Has access to all receivers.
 	}
 
-	if err := s.permissions.AuthorizePreConditions(ctx, user); err != nil {
-		basePerms.Set(models.ReceiverPermissionAdmin, false) // Doesn't match the preconditions.
-	} else if err := s.permissions.AuthorizeAll(ctx, user); err == nil {
-		basePerms.Set(models.ReceiverPermissionAdmin, true) // Has access to all receivers.
-	}
+	// TODO: Add when resource permissions are implemented.
+	//if err := s.permissions.AuthorizePreConditions(ctx, user); err != nil {
+	//	basePerms.Set(models.ReceiverPermissionAdmin, false) // Doesn't match the preconditions.
+	//} else if err := s.permissions.AuthorizeAll(ctx, user); err == nil {
+	//	basePerms.Set(models.ReceiverPermissionAdmin, true) // Has access to all receivers.
+	//}
 
 	if err := s.update.AuthorizePreConditions(ctx, user); err != nil {
 		basePerms.Set(models.ReceiverPermissionWrite, false) // Doesn't match the preconditions.
@@ -399,10 +380,11 @@ func (s ReceiverAccess[T]) Access(ctx context.Context, user identity.Requester, 
 			permSet.Set(models.ReceiverPermissionReadSecret, err == nil)
 		}
 
-		if _, ok := permSet.Has(models.ReceiverPermissionAdmin); !ok {
-			err := s.permissions.authorize(ctx, user, rcv)
-			permSet.Set(models.ReceiverPermissionAdmin, err == nil)
-		}
+		// TODO: Add when resource permissions are implemented.
+		//if _, ok := permSet.Has(models.ReceiverPermissionAdmin); !ok {
+		//	err := s.permissions.authorize(ctx, user, rcv)
+		//	permSet.Set(models.ReceiverPermissionAdmin, err == nil)
+		//}
 
 		if _, ok := permSet.Has(models.ReceiverPermissionWrite); !ok {
 			err := s.update.authorize(ctx, user, rcv)
