@@ -442,6 +442,7 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 }
 
 func createContactPointServiceSutWithConfigStore(t *testing.T, secretService secrets.Service, configStore legacy_storage.AMConfigStore) *ContactPointService {
+	t.Helper()
 	// Encrypt secure settings.
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
@@ -450,7 +451,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true),
 		legacy_storage.NewAlertmanagerConfigStore(configStore),
 		provisioningStore,
-		notifier.NewFakeConfigStore(t, nil),
+		&fakeAlertRuleNotificationStore{},
 		secretService,
 		xact,
 		log.NewNopLogger(),
