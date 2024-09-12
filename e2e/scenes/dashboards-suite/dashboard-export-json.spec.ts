@@ -4,7 +4,9 @@ import '../../utils/support/clipboard';
 describe('Export as JSON', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
 
+  it('Export for internal and external use', () => {
     cy.wrap(
       Cypress.automation('remote:debugger:protocol', {
         command: 'Browser.grantPermissions',
@@ -14,9 +16,6 @@ describe('Export as JSON', () => {
         },
       })
     );
-  });
-
-  it('Export for internal and external use', () => {
     // Opening a dashboard
     cy.intercept({
       pathname: '/api/ds/query',

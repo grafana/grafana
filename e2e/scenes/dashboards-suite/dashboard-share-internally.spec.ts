@@ -8,7 +8,9 @@ describe('Share internally', () => {
     cy.window().then((win) => {
       win.localStorage.removeItem('grafana.dashboard.link.shareConfiguration');
     });
+  });
 
+  it('Create a customized link', () => {
     cy.wrap(
       Cypress.automation('remote:debugger:protocol', {
         command: 'Browser.grantPermissions',
@@ -18,9 +20,7 @@ describe('Share internally', () => {
         },
       })
     );
-  });
 
-  it('Create a customized link', () => {
     cy.intercept({
       pathname: '/api/ds/query',
     }).as('query');
@@ -85,6 +85,16 @@ describe('Share internally', () => {
   });
 
   it('Share button gets configured link', () => {
+    cy.wrap(
+      Cypress.automation('remote:debugger:protocol', {
+        command: 'Browser.grantPermissions',
+        params: {
+          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+          origin: window.location.origin,
+        },
+      })
+    );
+
     cy.intercept({
       pathname: '/api/ds/query',
     }).as('query');

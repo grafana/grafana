@@ -4,7 +4,9 @@ import '../../utils/support/clipboard';
 describe('Snapshots', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
 
+  it('Create a snapshot dashboard', () => {
     cy.wrap(
       Cypress.automation('remote:debugger:protocol', {
         command: 'Browser.grantPermissions',
@@ -14,9 +16,6 @@ describe('Snapshots', () => {
         },
       })
     );
-  });
-
-  it('Create a snapshot dashboard', () => {
     // Opening a dashboard
     cy.intercept({
       pathname: '/api/ds/query',
