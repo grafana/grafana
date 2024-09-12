@@ -55,9 +55,14 @@ const getSelectorValue = (
 
 const replaceVersions = (context: ts.TransformationContext) => (rootNode: ts.Node) => {
   const visit = (node: ts.Node): ts.Node => {
+    // remove all nodes that are not source files or variable statements
+    if (!ts.isSourceFile(node) && ts.isSourceFile(node.parent) && !ts.isVariableStatement(node)) {
+      return undefined;
+    }
+
     const newNode = ts.visitEachChild(node, visit, context);
 
-    if (newNode.kind !== 0 && ts.isObjectLiteralExpression(newNode) && newNode.parent) {
+    if (ts.isObjectLiteralExpression(newNode) && newNode.parent) {
       const parentText = newNode.parent.getFirstToken()?.getText() || '';
       const propertyAssignment = getSelectorValue(newNode.properties, parentText, rootNode.getSourceFile().fileName);
       if (!propertyAssignment) {
