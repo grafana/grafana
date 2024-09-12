@@ -31,7 +31,9 @@ func setupAMTest(t *testing.T) *alertmanager {
 		AppURL:   "http://localhost:9093",
 	}
 
-	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())
+	l := log.New("alertmanager-test")
+
+	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry(), l)
 	sqlStore := db.InitTestDB(t)
 	s := &store.DBstore{
 		Cfg: setting.UnifiedAlertingSettings{
@@ -39,7 +41,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 			DefaultRuleEvaluationInterval: time.Minute,
 		},
 		SQLStore:         sqlStore,
-		Logger:           log.New("alertmanager-test"),
+		Logger:           l,
 		DashboardService: dashboards.NewFakeDashboardService(t),
 	}
 
