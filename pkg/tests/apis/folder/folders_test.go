@@ -38,9 +38,9 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
+		AppModeProduction: true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagKubernetesFolders,
 		},
 	})
 
@@ -105,18 +105,17 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 	t.Run("with k8s api flag", func(t *testing.T) {
 		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction: false,
+			AppModeProduction: true,
 			DisableAnonymous:  true,
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-				featuremgmt.FlagKubernetesFolders,                    // The change we are testing
+				featuremgmt.FlagKubernetesFolders,
 			},
 		}))
 	})
 
 	t.Run("with dual write (file, mode 0)", func(t *testing.T) {
 		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
+			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -125,7 +124,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 				featuremgmt.FlagKubernetesFolders,
 			},
 		}))
@@ -133,7 +131,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 	t.Run("with dual write (file, mode 1)", func(t *testing.T) {
 		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
+			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "file", // write the files to disk
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -142,7 +140,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 				featuremgmt.FlagKubernetesFolders,
 			},
 		}))
@@ -150,7 +147,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
 		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
+			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -159,7 +156,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 				featuremgmt.FlagKubernetesFolders,
 			},
 		}))
@@ -167,7 +163,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 	t.Run("with dual write (unified storage, mode 1)", func(t *testing.T) {
 		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
+			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -176,7 +172,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 				featuremgmt.FlagKubernetesFolders,
 			},
 		}))
@@ -187,7 +182,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		t.Skip("local etcd testing")
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
+			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "etcd",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -196,7 +191,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 				featuremgmt.FlagKubernetesFolders,
 			},
 		})
@@ -217,7 +211,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		t.Skip("local etcd testing")
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
+			AppModeProduction:    true,
 			DisableAnonymous:     true,
 			APIServerStorageType: "etcd",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -226,7 +220,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				},
 			},
 			EnableFeatureToggles: []string{
-				featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 				featuremgmt.FlagKubernetesFolders,
 			},
 		})
