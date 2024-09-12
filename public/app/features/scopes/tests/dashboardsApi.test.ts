@@ -1,84 +1,48 @@
-import { cleanup } from '@testing-library/react';
+import { config } from '@grafana/runtime';
+import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
-import { config, locationService } from '@grafana/runtime';
-import { getDashboardAPI, setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-
-import { initializeScopes } from '../instance';
-
-import { getMock } from './utils/mocks';
-import { resetScenes } from './utils/render';
+import { getDashboardDTO, updateScopes } from './utils/actions';
+import { expectNewDashboardDTO, expectOldDashboardDTO } from './utils/assertions';
+import { getDatasource, getInstanceSettings, getMock } from './utils/mocks';
+import { renderDashboard, resetScenes } from './utils/render';
 
 jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({
-    get: getMock,
-  }),
+  useChromeHeaderHeight: jest.fn(),
+  getBackendSrv: () => ({ get: getMock }),
+  getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
+  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
 }));
 
-describe('Scopes', () => {
-  describe('Dashboards API', () => {
-    describe('Feature flag off', () => {
-      beforeAll(() => {
-        config.featureToggles.scopeFilters = true;
-        config.featureToggles.passScopeToDashboardApi = false;
-      });
+const runTest = async (passScopes: boolean, kubernetesApi: boolean) => {
+  config.featureToggles.scopeFilters = true;
+  config.featureToggles.passScopeToDashboardApi = passScopes;
+  config.featureToggles.kubernetesDashboards = kubernetesApi;
+  setDashboardAPI(undefined);
+  renderDashboard({}, { reloadOnScopesChange: true });
+  await updateScopes(['grafana', 'mimir']);
+  await getDashboardDTO();
 
-      beforeEach(() => {
-        setDashboardAPI(undefined);
-        locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
-      });
+  if (kubernetesApi) {
+    return expectNewDashboardDTO();
+  }
 
-      afterEach(() => {
-        resetScenes();
-        cleanup();
-      });
+  if (passScopes) {
+    return expectOldDashboardDTO(['grafana', 'mimir']);
+  }
 
-      it('Legacy API should not pass the scopes', async () => {
-        config.featureToggles.kubernetesDashboards = false;
-        await getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', undefined);
-      });
+  return expectOldDashboardDTO();
+};
 
-      it('K8s API should not pass the scopes', async () => {
-        config.featureToggles.kubernetesDashboards = true;
-        await getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith(
-          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
-        );
-      });
-    });
-
-    describe('Feature flag on', () => {
-      beforeAll(() => {
-        config.featureToggles.scopeFilters = true;
-        config.featureToggles.passScopeToDashboardApi = true;
-      });
-
-      beforeEach(() => {
-        setDashboardAPI(undefined);
-        locationService.push('/?scopes=scope1&scopes=scope2&scopes=scope3');
-        initializeScopes();
-      });
-
-      afterEach(() => {
-        resetScenes();
-        cleanup();
-      });
-
-      it('Legacy API should pass the scopes', async () => {
-        config.featureToggles.kubernetesDashboards = false;
-        await getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith('/api/dashboards/uid/1', { scopes: ['scope1', 'scope2', 'scope3'] });
-      });
-
-      it('K8s API should not pass the scopes', async () => {
-        config.featureToggles.kubernetesDashboards = true;
-        await getDashboardAPI().getDashboardDTO('1');
-        expect(getMock).toHaveBeenCalledWith(
-          '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/dashboards/1/dto'
-        );
-      });
-    });
+describe('Dashboards API', () => {
+  afterEach(async () => {
+    setDashboardAPI(undefined);
+    await resetScenes();
   });
+
+  it('Legacy API should not pass the scopes with feature flag off', async () => runTest(false, false));
+  it('K8s API should not pass the scopes with feature flag off', async () => runTest(false, true));
+  it('Legacy API should pass the scopes with feature flag on', async () => runTest(true, false));
+  it('K8s API should not pass the scopes with feature flag on', async () => runTest(true, true));
 });
