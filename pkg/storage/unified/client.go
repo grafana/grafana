@@ -24,14 +24,13 @@ func ProvideUnifiedStorageClient(
 	db infraDB.DB,
 	tracer tracing.Tracer,
 ) (resource.ResourceClient, error) {
-
-	opts := options.StorageOptions{}
-
 	// See: apiserver.ApplyGrafanaConfig(cfg, features, o)
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
-	opts.StorageType = options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy)))
-	opts.DataPath = apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
-	opts.Address = apiserverCfg.Key("address").MustString(opts.Address)
+	opts := options.StorageOptions{
+		StorageType: options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy))),
+		DataPath:    apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver")),
+		Address:     apiserverCfg.Key("address").MustString(""),
+	}
 
 	switch opts.StorageType {
 	case options.StorageTypeFile:
