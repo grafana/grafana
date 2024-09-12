@@ -152,7 +152,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false,
 			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
+			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				folderv0alpha1.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode0,
@@ -169,7 +169,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false,
 			DisableAnonymous:     true,
-			APIServerStorageType: "file", // write the files to disk
+			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				folderv0alpha1.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
@@ -189,7 +189,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false,
 			DisableAnonymous:     true,
-			APIServerStorageType: "etcd", // write the files to disk
+			APIServerStorageType: "etcd",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				folderv0alpha1.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode0,
@@ -219,7 +219,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false,
 			DisableAnonymous:     true,
-			APIServerStorageType: "etcd", // write the files to disk
+			APIServerStorageType: "etcd",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				folderv0alpha1.RESOURCEGROUP: {
 					DualWriterMode: grafanarest.Mode1,
