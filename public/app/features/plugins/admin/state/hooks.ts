@@ -37,7 +37,7 @@ export const useGetAll = (filters: PluginFilters, sortBy: Sorters = Sorters.name
 export const useGetUpdatable = () => {
   const { isLoading } = useFetchStatus();
   const { plugins: installed } = useGetAll({ isInstalled: true });
-  const updatablePlugins = installed.filter((p) => isPluginUpdateable(p));
+  const updatablePlugins = installed.filter(isPluginUpdateable);
   return {
     isLoading,
     updatablePlugins,
