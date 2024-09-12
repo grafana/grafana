@@ -51,7 +51,7 @@ This setting has precedence over each individual rule frequency. If a rule frequ
 
 ## Configure data source-managed recording rules
 
-Configure data-source managed recording rules.
+Configure data source-managed recording rules.
 
 ### Before you begin
 
