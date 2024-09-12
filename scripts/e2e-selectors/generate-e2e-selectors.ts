@@ -8,8 +8,8 @@ const packageJson = JSON.parse(readFileSync(join(process.cwd(), 'package.json'))
 // this should be imported from the e2e-selectors package
 const MIN_GRAFANA_VERSION = '8.0.0';
 const version = packageJson.version.replace(/\-.*/, ''); // remove any pre-release tags. we may want to add support build number in the future though
-const sourceDirectory = 'packages/grafana-e2e-selectors/src/e2e-selectors/versioned';
-const destinationDirectory = 'packages/grafana-e2e-selectors/src/e2e-selectors';
+const sourceDirectory = 'packages/grafana-e2e-selectors/src/versioned';
+const destinationDirectory = 'packages/grafana-e2e-selectors/src/generated';
 const fileNames = ['components.ts', 'pages.ts', 'apis.ts'];
 const sourceFiles = fileNames.map((fileName) => {
   const buffer = readFileSync(resolve(join(process.cwd(), sourceDirectory, fileName)));
@@ -38,7 +38,7 @@ const getSelectorValue = (
           current = property;
         }
       } catch (error) {
-        console.error(`Error parsing semver: ${property.name.text} - ${current.name.getText()}`);
+        console.error(`Error parsing semver: ${property.name.text} - ${current?.name.getText()}`);
       }
     }
   }
@@ -57,7 +57,7 @@ const replaceVersions = (context: ts.TransformationContext) => (rootNode: ts.Nod
   const visit = (node: ts.Node): ts.Node => {
     // remove all nodes that are not source files or variable statements
     if (!ts.isSourceFile(node) && ts.isSourceFile(node.parent) && !ts.isVariableStatement(node)) {
-      return undefined;
+      return ts.factory.createEmptyStatement();
     }
 
     const newNode = ts.visitEachChild(node, visit, context);

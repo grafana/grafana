@@ -1,4 +1,4 @@
-import { MIN_GRAFANA_VERSION } from './constants';
+;
 export const versionedComponents = {
     TimePicker: {
         openButton: 'data-testid TimePicker Open Button',

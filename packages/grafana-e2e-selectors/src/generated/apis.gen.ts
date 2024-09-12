@@ -1,4 +1,4 @@
-import { MIN_GRAFANA_VERSION } from './constants';
+;
 export const versionedAPIs = {
     Alerting: {
         eval: '/api/v1/eval',
