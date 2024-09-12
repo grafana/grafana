@@ -3361,13 +3361,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.4.1":
-  version: 0.4.1
-  resolution: "@grafana/aws-sdk@npm:0.4.1"
+"@grafana/aws-sdk@npm:0.4.2":
+  version: 0.4.2
+  resolution: "@grafana/aws-sdk@npm:0.4.2"
   dependencies:
     "@grafana/async-query-data": "npm:0.2.0"
     "@grafana/experimental": "npm:1.7.12"
-  checksum: 10/a8d4c6c979f62931982326e996f797002af291f52642e9e4eff8416908e73a4c285863f7766dd1bc1141123aad8874eb4777077e7c689cd852a758c503f00c22
+  checksum: 10/9192cae1e5820e8dc7740e2c615d363ba9637d655de9b74ed28c11c614ed1fa8d6b134ca58793c447698460b20a240c42995c854c9a8562ef2232e20f04f9be1
   languageName: node
   linkType: hard
 
@@ -18507,7 +18507,7 @@ __metadata:
     "@floating-ui/react": "npm:0.26.23"
     "@formatjs/intl-durationformat": "npm:^0.2.4"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
-    "@grafana/aws-sdk": "npm:0.4.1"
+    "@grafana/aws-sdk": "npm:0.4.2"
     "@grafana/azure-sdk": "npm:0.0.3"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
