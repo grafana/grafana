@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
@@ -67,6 +66,7 @@ type AlertRuleV1 struct {
 	Title                values.StringValue      `json:"title" yaml:"title"`
 	Condition            values.StringValue      `json:"condition" yaml:"condition"`
 	Data                 []QueryV1               `json:"data" yaml:"data"`
+	DasboardUID          values.StringValue      `json:"dasboardUid" yaml:"dasboardUid"` // TODO: Grandfathered typo support. TODO: This should be removed in V2.
 	DashboardUID         values.StringValue      `json:"dashboardUid" yaml:"dashboardUid"`
 	PanelID              values.Int64Value       `json:"panelId" yaml:"panelId"`
 	NoDataState          values.StringValue      `json:"noDataState" yaml:"noDataState"`
@@ -79,43 +79,11 @@ type AlertRuleV1 struct {
 	Record               *RecordV1               `json:"record" yaml:"record"`
 }
 
-// UnmarshalJSON supports the grandfathered typo dasboardUid. TODO: This should be removed in V2.
-func (rule *AlertRuleV1) UnmarshalJSON(b []byte) error {
-	var t struct {
-		AlertRuleV1 `json:",inline" yaml:",inline"`
-		DasboardUID values.StringValue `json:"dasboardUid" yaml:"dasboardUid"`
+func withFallback(value, fallback string) *string {
+	if value == "" {
+		return &fallback
 	}
-	if err := yaml.Unmarshal(b, &t); err != nil {
-		return err
-	}
-	*rule = t.AlertRuleV1
-
-	if rule.DashboardUID.Value() == "" {
-		rule.DashboardUID = t.DasboardUID
-	}
-
-	return nil
-}
-
-// UnmarshalYAML supports the grandfathered typo dasboardUid. Even though the typo only existed in the json tag, we need
-// support in YAML as well since we use yaml.UnmarshalYAML when parsing. TODO: This should be removed in V2.
-func (rule *AlertRuleV1) UnmarshalYAML(value *yaml.Node) error {
-	type plain AlertRuleV1
-	var t struct {
-		plain       `json:",inline" yaml:",inline"`
-		DasboardUID values.StringValue `json:"dasboardUid" yaml:"dasboardUid"`
-	}
-
-	if err := value.Decode(&t); err != nil {
-		return err
-	}
-	*rule = AlertRuleV1(t.plain)
-
-	if rule.DashboardUID.Value() == "" {
-		rule.DashboardUID = t.DasboardUID
-	}
-
-	return nil
+	return &value
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -134,8 +102,9 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 	}
 	alertRule.For = time.Duration(duration)
+	dasboardUID := rule.DasboardUID.Value()
 	dashboardUID := rule.DashboardUID.Value()
-	alertRule.DashboardUID = &dashboardUID
+	alertRule.DashboardUID = withFallback(dashboardUID, dasboardUID) // Use correct spelling over supported typo.
 	panelID := rule.PanelID.Value()
 	alertRule.PanelID = &panelID
 	execErrStateValue := strings.TrimSpace(rule.ExecErrState.Value())

@@ -1,7 +1,6 @@
 package alerting
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -293,54 +292,6 @@ func TestNotificationsSettingsV1MapToModel(t *testing.T) {
 			require.Equal(t, tc.expected, got)
 		})
 	}
-}
-
-// This can be removed when the dasboardUid typo support is removed. TODO: This should be removed in V2.
-func TestRulesDasboardUidTypo(t *testing.T) {
-	t.Run("a rule with dasboardUid json should json unmarshal correctly", func(t *testing.T) {
-		ruleJson := `{"dasboardUid":"test"}`
-		var rule *AlertRuleV1
-		err := json.Unmarshal([]byte(ruleJson), &rule)
-		require.NoError(t, err)
-		require.Equal(t, "test", rule.DashboardUID.Value())
-	})
-	t.Run("a rule with dashboardUid json should json unmarshal correctly", func(t *testing.T) {
-		ruleJson := `{"dashboardUid":"test"}`
-		var rule *AlertRuleV1
-		err := json.Unmarshal([]byte(ruleJson), &rule)
-		require.NoError(t, err)
-		require.Equal(t, "test", rule.DashboardUID.Value())
-	})
-	t.Run("a rule with both dasboardUid and dashboardUid should json unmarshal using dashboardUid", func(t *testing.T) {
-		ruleJson := `{"dasboardUid":"test", "dashboardUid":"test2"}`
-		var rule *AlertRuleV1
-		err := json.Unmarshal([]byte(ruleJson), &rule)
-		require.NoError(t, err)
-		require.Equal(t, "test2", rule.DashboardUID.Value())
-	})
-
-	// Even though the typo only existed in the json tag, we need support in YAML as well since we use yaml.UnmarshalYAML when parsing
-	t.Run("a rule with dasboardUid json should yaml unmarshal correctly", func(t *testing.T) {
-		ruleJson := `{"dasboardUid":"test"}`
-		var rule *AlertRuleV1
-		err := yaml.Unmarshal([]byte(ruleJson), &rule)
-		require.NoError(t, err)
-		require.Equal(t, "test", rule.DashboardUID.Value())
-	})
-	t.Run("a rule with dashboardUid json should yaml unmarshal correctly", func(t *testing.T) {
-		ruleJson := `{"dashboardUid":"test"}`
-		var rule *AlertRuleV1
-		err := yaml.Unmarshal([]byte(ruleJson), &rule)
-		require.NoError(t, err)
-		require.Equal(t, "test", rule.DashboardUID.Value())
-	})
-	t.Run("a rule with both dasboardUid and dashboardUid should yaml unmarshal using dashboardUid", func(t *testing.T) {
-		ruleJson := `{"dasboardUid":"test", "dashboardUid":"test2"}`
-		var rule *AlertRuleV1
-		err := yaml.Unmarshal([]byte(ruleJson), &rule)
-		require.NoError(t, err)
-		require.Equal(t, "test2", rule.DashboardUID.Value())
-	})
 }
 
 func validRuleGroupV1(t *testing.T) AlertRuleGroupV1 {
