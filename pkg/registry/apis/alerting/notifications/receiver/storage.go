@@ -34,11 +34,13 @@ func NewStorage(
 	scheme *runtime.Scheme,
 	optsGetter generic.RESTOptionsGetter,
 	dualWriteBuilder grafanarest.DualWriteBuilder,
+	metadata MetadataService,
 ) (rest.Storage, error) {
 	legacyStore := &legacyStorage{
 		service:        legacySvc,
 		namespacer:     namespacer,
 		tableConverter: resourceInfo.TableConverter(),
+		metadata:       metadata,
 	}
 	if optsGetter != nil && dualWriteBuilder != nil {
 		strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
