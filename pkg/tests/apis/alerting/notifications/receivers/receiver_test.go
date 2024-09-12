@@ -133,11 +133,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 	org1 := helper.Org1
 
 	type testCase struct {
-		user      apis.User
-		canRead   bool
-		canUpdate bool
-		canCreate bool
-		canDelete bool
+		user           apis.User
+		canRead        bool
+		canUpdate      bool
+		canCreate      bool
+		canDelete      bool
+		canReadSecrets bool
 	}
 	// region users
 	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
@@ -215,8 +216,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canRead: true,
 		},
 		{
-			user:    secretsReader,
-			canRead: true,
+			user:           secretsReader,
+			canRead:        true,
+			canReadSecrets: true,
 		},
 		{
 			user:      creator,
@@ -298,6 +300,16 @@ func TestIntegrationAccessControl(t *testing.T) {
 			}
 
 			if tc.canRead {
+				expectedWithMetadata := expected.DeepCopy()
+				if tc.canUpdate {
+					expectedWithMetadata.SetAccessControl("canWrite")
+				}
+				if tc.canDelete {
+					expectedWithMetadata.SetAccessControl("canDelete")
+				}
+				if tc.canReadSecrets {
+					expectedWithMetadata.SetAccessControl("canReadSecrets")
+				}
 				t.Run("should be able to list receivers", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
 					require.NoError(t, err)
@@ -307,7 +319,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				t.Run("should be able to read receiver by resource identifier", func(t *testing.T) {
 					got, err := client.Get(ctx, expected.Name, v1.GetOptions{})
 					require.NoError(t, err)
-					require.Equal(t, expected, got)
+					require.Equal(t, expectedWithMetadata, got)
 
 					t.Run("should get NotFound if resource does not exist", func(t *testing.T) {
 						_, err := client.Get(ctx, "Notfound", v1.GetOptions{})
@@ -870,6 +882,10 @@ func TestIntegrationCRUD(t *testing.T) {
 		}, v1.CreateOptions{})
 		require.NoError(t, err)
 		require.Len(t, receiver.Spec.Integrations, len(integrations))
+
+		// Set access control metadata
+		receiver.SetAccessControl("canWrite")
+		receiver.SetAccessControl("canDelete")
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()

@@ -1,6 +1,9 @@
 package v0alpha1
 
-const ProvenanceStatusAnnotationKey = "grafana.com/provenance"
+import "fmt"
+
+const InternalPrefix = "grafana.com/"
+const ProvenanceStatusAnnotationKey = InternalPrefix + "provenance"
 const ProvenanceStatusNone = "none"
 
 func (o *TimeInterval) GetProvenanceStatus() string {
@@ -43,4 +46,17 @@ func (o *Receiver) SetProvenanceStatus(status string) {
 		status = ProvenanceStatusNone
 	}
 	o.Annotations[ProvenanceStatusAnnotationKey] = status
+}
+
+func (o *Receiver) SetAccessControl(action string) {
+	if o.Annotations == nil {
+		o.Annotations = make(map[string]string, 1)
+	}
+	o.Annotations[AccessControlAnnotation(action)] = "true"
+}
+
+// AccessControlAnnotation returns the key for the access control annotation for the given action.
+// Ex. grafana.com/access/canDelete.
+func AccessControlAnnotation(action string) string {
+	return fmt.Sprintf("%s%s/%s", InternalPrefix, "access", action)
 }

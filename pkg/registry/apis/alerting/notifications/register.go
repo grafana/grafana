@@ -85,7 +85,7 @@ func (t *NotificationsAPIBuilder) GetAPIGroupInfo(
 		return nil, fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
 
-	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder)
+	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder, ac.NewReceiverAccess[*ngmodels.Receiver](t.ng.Api.AccessControl, false))
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize receiver storage: %w", err)
 	}
