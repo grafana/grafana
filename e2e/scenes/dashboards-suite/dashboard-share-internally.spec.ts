@@ -20,6 +20,8 @@ describe('Share internally', () => {
     e2e.pages.Dashboard.DashNav.newShareButton.arrowMenu().click();
     e2e.pages.Dashboard.DashNav.newShareButton.menu.shareInternally().click();
 
+    cy.url().should('include', 'shareView=link');
+
     // Create flow shouldn't show these elements
     e2e.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch().should('exist');
     e2e.pages.ShareDashboardDrawer.ShareInternally.shortenUrlSwitch().should('exist');
@@ -62,14 +64,15 @@ describe('Share internally', () => {
       expect(theme).eq('current');
     });
 
+    e2e.pages.ShareDashboardDrawer.ShareInternally.copyUrlButton().should('exist');
     // absolute time range
     e2e.pages.ShareDashboardDrawer.ShareInternally.copyUrlButton()
       .click()
       .then(() => {
         cy.window().then((win) => {
-          win.navigator.clipboard.readText().then((url) => {
-            expect(url).contain('from=now-6h&to=now');
-            expect(url).not.contain('goto');
+          return win.navigator.clipboard.readText().then((url) => {
+            cy.wrap(url).should('include', 'from=now-6h&to=now');
+            cy.wrap(url).should('not.include', 'goto');
           });
         });
       });
@@ -86,12 +89,18 @@ describe('Share internally', () => {
       .shareLink()
       .click()
       .then(() => {
-        cy.window().then((win) => {
-          win.navigator.clipboard.readText().then((url) => {
-            expect(url).not.contain('from=now-6h&to=now');
-            expect(url).contain('goto');
+        cy.window()
+          .then((win) => {
+            return win.navigator.clipboard.readText().then((url) => {
+              cy.wrap(url).as('url');
+            });
+          })
+          .then(() => {
+            cy.get('@url').then((url) => {
+              cy.wrap(url).should('not.include', 'from=now-6h&to=now');
+              cy.wrap(url).should('include', 'goto');
+            });
           });
-        });
       });
 
     // Open share externally drawer
@@ -107,16 +116,25 @@ describe('Share internally', () => {
     e2e.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch().click({ force: true });
 
     e2e.components.Drawer.General.close().click();
+
+    cy.url().should('not.include', 'shareView=link');
+
     e2e.pages.Dashboard.DashNav.newShareButton
       .shareLink()
       .click()
       .then(() => {
-        cy.window().then((win) => {
-          win.navigator.clipboard.readText().then((url) => {
-            expect(url).contain('from=now-6h&to=now');
-            expect(url).not.contain('goto');
+        cy.window()
+          .then((win) => {
+            return win.navigator.clipboard.readText().then((url) => {
+              cy.wrap(url).as('url');
+            });
+          })
+          .then(() => {
+            cy.get('@url').then((url) => {
+              cy.wrap(url).should('include', 'from=now-6h&to=now');
+              cy.wrap(url).should('not.include', 'goto');
+            });
           });
-        });
       });
   });
 });

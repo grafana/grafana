@@ -326,12 +326,12 @@ export const Pages = {
   },
   ExportDashboardDrawer: {
     ExportAsJson: {
-      container: 'data-testid export as Json drawer container',
-      codeEditor: 'data-testid export as Json code editor',
-      exportExternallyToggle: 'data-testid export externally toggle type select',
-      saveToFileButton: 'data-testid save to file button',
-      copyToClipboardButton: 'data-testid copy to clipboard button',
-      cancelButton: 'data-testid cancel button',
+      container: 'data-testid export as json drawer container',
+      codeEditor: 'data-testid export as json code editor',
+      exportExternallyToggle: 'data-testid export as json externally switch',
+      saveToFileButton: 'data-testid export as json save to file button',
+      copyToClipboardButton: 'data-testid export as json copy to clipboard button',
+      cancelButton: 'data-testid export as json cancel button',
     },
   },
   PublicDashboard: {

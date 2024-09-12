@@ -41,7 +41,6 @@ describe('Snapshots', () => {
       .click()
       .then(() => {
         cy.window().then((win) => {
-          // Use Cypress' built-in promise handling
           return win.navigator.clipboard.readText().then((url) => {
             cy.wrap(url).as('url');
           });
