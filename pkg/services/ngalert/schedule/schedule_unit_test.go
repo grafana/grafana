@@ -650,8 +650,6 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		t.Run("it should not show metrics", func(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithoutNotificationSettings})
 
-			// Because alertRuleWithoutNotificationSettings.orgID is present,
-			// the metric is also present but set to 0 because the org has no rules with NotificationSettings.
 			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simple_routing_rules")
 			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simple_routing_rules]")
