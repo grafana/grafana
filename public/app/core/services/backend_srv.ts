@@ -382,7 +382,6 @@ export class BackendSrv implements BackendService {
                       },
                     })
                   );
-                  this.dependencies.logout();
                   return throwError(() => error);
                 }
 

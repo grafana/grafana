@@ -389,43 +389,21 @@ function handleRedirectTo(): void {
 
   if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
     const rawRedirectTo = queryParams.get(redirectToParamKey)!;
-    if (!isValidRedirectTo(rawRedirectTo)) {
-      return;
-    }
     window.sessionStorage.setItem(RedirectToUrlKey, decodeURIComponent(rawRedirectTo));
     queryParams.delete(redirectToParamKey);
     window.history.replaceState({}, '', `${window.location.pathname}${queryParams.size > 0 ? `?${queryParams}` : ''}`);
     return;
   }
 
-  const redirectTo = window.sessionStorage.getItem(RedirectToUrlKey);
-  if (!redirectTo) {
+  const redirectToPath = window.sessionStorage.getItem(RedirectToUrlKey);
+  if (!redirectToPath) {
     return;
   }
 
-  if (!isValidRedirectTo(redirectTo)) {
-    window.sessionStorage.removeItem(RedirectToUrlKey);
-    return;
-  }
+  const redirectTo = window.location.origin + redirectToPath;
 
   window.sessionStorage.removeItem(RedirectToUrlKey);
   window.location.replace(redirectTo);
-}
-
-function isValidRedirectTo(path: string): boolean {
-  if (!path.startsWith('/')) {
-    return false;
-  }
-
-  if (path.startsWith('//')) {
-    return false;
-  }
-
-  if (config.appSubUrl && !path.startsWith(config.appSubUrl) + '/') {
-    return false;
-  }
-
-  return true;
 }
 
 export default new GrafanaApp();
