@@ -9,7 +9,6 @@ import {
   getLibraryPanelBehavior,
   getQueryRunnerFor,
   getVizPanelKeyForPanelId,
-  isLibraryPanel,
 } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -59,13 +58,11 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
     }
 
     //check if the source panel is a library panel and wait for it to load
-    if (isLibraryPanel(sourcePanel)) {
-      const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
-      if (libraryPanelBehaviour) {
-        libraryPanelSub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
-          this.handleLibPanelStateUpdates(newLibPanel, dashboardDsQueryRunner, sourcePanel);
-        });
-      }
+    const libraryPanelBehaviour = getLibraryPanelBehavior(sourcePanel);
+    if (libraryPanelBehaviour && !libraryPanelBehaviour.state.isLoaded) {
+      libraryPanelSub = libraryPanelBehaviour.subscribeToState((newLibPanel) => {
+        this.handleLibPanelStateUpdates(newLibPanel, dashboardDsQueryRunner, sourcePanel);
+      });
       return;
     }
 
