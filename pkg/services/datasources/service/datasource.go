@@ -368,7 +368,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		if err != nil {
 			if errors.Is(err, plugins.ErrMethodNotImplemented) {
 				if settings.APIVersion == "v0alpha1" {
-					// For v0alpha1 we don't require the plugin to implement ValidateAdmission
+					// For v0alpha1 we don't require plugins to implement ValidateAdmission
 					return settings, nil
 				}
 				return nil, errutil.Internal("plugin.unimplemented").
@@ -393,7 +393,7 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			if settings.APIVersion == "v0alpha1" {
-				// For v0alpha1 we don't require the plugin to implement ValidateAdmission
+				// For v0alpha1 we don't require plugins to implement MutateAdmission
 				return settings, nil
 			}
 			return nil, errutil.Internal("plugin.unimplemented").
