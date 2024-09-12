@@ -522,10 +522,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1})
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
 								# TYPE grafana_alerting_rule_group_rules gauge
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
+								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active", type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -544,12 +543,10 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2})
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
 								# TYPE grafana_alerting_rule_group_rules gauge
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="paused"} 0
+								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+                	            grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -561,12 +558,10 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2})
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
 								# TYPE grafana_alerting_rule_group_rules gauge
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="paused"} 0
+								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+                	            grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -657,13 +652,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 
 			// Because alertRuleWithoutNotificationSettings.orgID is present,
 			// the metric is also present but set to 0 because the org has no rules with NotificationSettings.
-			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_simple_routing_rules The number of alert rules using simplified routing.
-								# TYPE grafana_alerting_simple_routing_rules gauge
-								grafana_alerting_simple_routing_rules{org="%[1]d"} 0
-				`, alertRuleWithoutNotificationSettings.OrgID)
+			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simple_routing_rules")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simple_routing_rules]")
 		})
 
 		alertRule1 := models.RuleGen.With(
@@ -711,7 +702,6 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_simple_routing_rules The number of alert rules using simplified routing.
 								# TYPE grafana_alerting_simple_routing_rules gauge
-								grafana_alerting_simple_routing_rules{org="%[1]d"} 0
 								grafana_alerting_simple_routing_rules{org="%[2]d"} 1
 				`, alertRuleWithoutNotificationSettings.OrgID, alertRule2.OrgID)
 
