@@ -22,7 +22,6 @@ describe('Share internally', () => {
 
     cy.url().should('include', 'shareView=link');
 
-    // Create flow shouldn't show these elements
     e2e.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch().should('exist');
     e2e.pages.ShareDashboardDrawer.ShareInternally.shortenUrlSwitch().should('exist');
     e2e.pages.ShareDashboardDrawer.ShareInternally.copyUrlButton().should('exist');
@@ -65,7 +64,7 @@ describe('Share internally', () => {
     });
 
     e2e.pages.ShareDashboardDrawer.ShareInternally.copyUrlButton().should('exist');
-    // absolute time range
+
     e2e.pages.ShareDashboardDrawer.ShareInternally.copyUrlButton()
       .click()
       .then(() => {
