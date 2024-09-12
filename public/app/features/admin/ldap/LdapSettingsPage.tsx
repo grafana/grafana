@@ -318,7 +318,7 @@ export const LdapSettingsPage = () => {
                   label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS *')}
                   description={t(
                     'ldap-settings-page.search-base-dns.description',
-                    'An array of base dns to search through; separate by spaces.'
+                    'An array of base dns to search through.'
                   )}
                 >
                   <MultiSelect
