@@ -30,7 +30,7 @@ func newPublicDashboardServiceImpl(
 	db, cfg := db.InitTestReplDBWithCfg(t)
 	tagService := tagimpl.ProvideService(db)
 	if annotationsRepo == nil {
-		annotationsRepo = annotationsimpl.ProvideService(db, cfg, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest())
+		annotationsRepo = annotationsimpl.ProvideService(db, cfg, featuremgmt.WithFeatures(), tagService, tracing.InitializeTracerForTest(), nil)
 	}
 
 	if publicDashboardStore == nil {

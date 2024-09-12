@@ -245,21 +245,21 @@ func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
-	ID              int64 `xorm:"pk autoincr 'id'"`
-	OrgID           int64 `xorm:"org_id"`
+	ID              int64
+	OrgID           int64
 	Title           string
 	Condition       string
 	Data            []AlertQuery
 	Updated         time.Time
 	IntervalSeconds int64
-	Version         int64   `xorm:"version"` // this tag makes xorm add optimistic lock (see https://xorm.io/docs/chapter-06/1.lock/)
-	UID             string  `xorm:"uid"`
-	NamespaceUID    string  `xorm:"namespace_uid"`
-	DashboardUID    *string `xorm:"dashboard_uid"`
-	PanelID         *int64  `xorm:"panel_id"`
+	Version         int64
+	UID             string
+	NamespaceUID    string
+	DashboardUID    *string
+	PanelID         *int64
 	RuleGroup       string
-	RuleGroupIndex  int     `xorm:"rule_group_idx"`
-	Record          *Record `xorm:"json"`
+	RuleGroupIndex  int
+	Record          *Record
 	NoDataState     NoDataState
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
@@ -268,7 +268,7 @@ type AlertRule struct {
 	Annotations          map[string]string
 	Labels               map[string]string
 	IsPaused             bool
-	NotificationSettings []NotificationSettings `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
+	NotificationSettings []NotificationSettings
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -630,38 +630,15 @@ func (alertRule *AlertRule) Type() RuleType {
 	return RuleTypeAlerting
 }
 
-// AlertRuleVersion is the model for alert rule versions in unified alerting.
-type AlertRuleVersion struct {
-	ID               int64  `xorm:"pk autoincr 'id'"`
-	RuleOrgID        int64  `xorm:"rule_org_id"`
-	RuleUID          string `xorm:"rule_uid"`
-	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
-	RuleGroup        string
-	RuleGroupIndex   int `xorm:"rule_group_idx"`
-	ParentVersion    int64
-	RestoredFrom     int64
-	Version          int64
-
-	Created         time.Time
-	Title           string
-	Condition       string
-	Data            []AlertQuery
-	IntervalSeconds int64
-	Record          *Record `xorm:"json"`
-	NoDataState     NoDataState
-	ExecErrState    ExecutionErrorState
-	// ideally this field should have been apimodels.ApiDuration
-	// but this is currently not possible because of circular dependencies
-	For                  time.Duration
-	Annotations          map[string]string
-	Labels               map[string]string
-	IsPaused             bool
-	NotificationSettings []NotificationSettings `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
-}
-
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
 type GetAlertRuleByUIDQuery struct {
 	UID   string
+	OrgID int64
+}
+
+// GetAlertRuleByIDQuery is the query for retrieving/deleting an alert rule by ID and organisation ID.
+type GetAlertRuleByIDQuery struct {
+	ID    int64
 	OrgID int64
 }
 
