@@ -251,7 +251,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	o := grafanaapiserveroptions.NewOptions(Codecs.LegacyCodec(groupVersions...))
-	err := ApplyGrafanaConfig(s.cfg, s.features, o)
+	err := applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
 	}
