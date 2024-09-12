@@ -38,6 +38,7 @@ export interface FeatureToggles {
   autoMigrateXYChartPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
+  vizActions?: boolean;
   disableSecretsCompatibility?: boolean;
   logRequestsInstrumentedAsUnknown?: boolean;
   topnav?: boolean;
@@ -114,6 +115,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -201,7 +203,6 @@ export interface FeatureToggles {
   prometheusAzureOverrideAudience?: boolean;
   backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
-  adhocFilterOneOf?: boolean;
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
   singleTopNav?: boolean;
@@ -209,4 +210,7 @@ export interface FeatureToggles {
   exploreLogsAggregatedMetrics?: boolean;
   dsQueryConvert?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
+  appPlatformAccessTokens?: boolean;
+  appSidecar?: boolean;
+  groupAttributeSync?: boolean;
 }

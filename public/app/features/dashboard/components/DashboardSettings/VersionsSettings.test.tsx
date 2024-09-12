@@ -1,13 +1,9 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { historySrv } from 'app/features/dashboard-scene/settings/version-history/HistorySrv';
 
-import { configureStore } from '../../../../store/configureStore';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import { VersionsSettings, VERSIONS_FETCH_LIMIT } from './VersionsSettings';
@@ -27,7 +23,6 @@ const queryByFullText = (text: string) =>
   });
 
 function setup() {
-  const store = configureStore();
   const dashboard = createDashboardModelFixture({
     id: 74,
     version: 11,
@@ -42,15 +37,7 @@ function setup() {
     },
   };
 
-  return render(
-    <GrafanaContext.Provider value={getGrafanaContextMock()}>
-      <Provider store={store}>
-        <BrowserRouter>
-          <VersionsSettings sectionNav={sectionNav} dashboard={dashboard} />
-        </BrowserRouter>
-      </Provider>
-    </GrafanaContext.Provider>
-  );
+  return render(<VersionsSettings sectionNav={sectionNav} dashboard={dashboard} />);
 }
 
 describe('VersionSettings', () => {

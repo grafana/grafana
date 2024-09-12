@@ -1,9 +1,7 @@
-import { render, screen, waitForElementToBeRemoved, within } from '@testing-library/react';
+import { screen, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { BrowserRouter } from 'react-router-dom';
-import { TestProvider } from 'test/helpers/TestProvider';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -69,15 +67,7 @@ afterEach(() => {
 const selectors = e2eSelectors.pages.PublicDashboards;
 
 const renderPublicDashboardTable = async (waitForListRendering?: boolean) => {
-  const context = getGrafanaContextMock();
-
-  render(
-    <TestProvider grafanaContext={context}>
-      <BrowserRouter>
-        <PublicDashboardListTable />
-      </BrowserRouter>
-    </TestProvider>
-  );
+  render(<PublicDashboardListTable />);
 
   waitForListRendering && (await waitForElementToBeRemoved(screen.getAllByTestId('Spinner')[0], { timeout: 3000 }));
 };
