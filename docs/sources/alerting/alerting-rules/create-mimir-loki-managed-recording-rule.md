@@ -67,7 +67,6 @@ To configure data-source managed recording rules, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Select **Rule type** -> **Recording**.
 1. Scroll to the **Data-source managed section** and click **+New recording rule**.
 
 #### Enter recording rule name
@@ -110,8 +109,7 @@ To configure Grafana-managed recording rules, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-2. Select **Rule type** -> **Recording**.
-3. Scroll to the **Grafana-managed section** and click **+New recording rule**.
+1. Scroll to the **Grafana-managed section** and click **+New recording rule**.
 
 #### Enter a recording rule and metric name
 
