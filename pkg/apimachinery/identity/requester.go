@@ -73,7 +73,6 @@ type Requester interface {
 	// HasUniqueId returns true if the entity has a unique id
 	HasUniqueId() bool
 	// GetIDToken returns a signed token representing the identity that can be forwarded to plugins and external services.
-	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	GetIDToken() string
 }
 

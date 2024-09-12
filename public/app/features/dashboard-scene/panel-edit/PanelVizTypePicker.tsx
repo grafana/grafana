@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
-import { CustomScrollbar, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { Button, CustomScrollbar, Field, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
@@ -61,15 +62,29 @@ export function PanelVizTypePicker({ vizManager, data, onChange }: Props) {
     onChange();
   };
 
+  const onCloseVizPicker = () => {
+    onChange();
+  };
+
   return (
     <div className={styles.wrapper}>
-      <FilterInput
-        className={styles.filter}
-        value={searchQuery}
-        onChange={setSearchQuery}
-        autoFocus={true}
-        placeholder="Search for..."
-      />
+      <div className={styles.searchRow}>
+        <FilterInput
+          className={styles.filter}
+          value={searchQuery}
+          onChange={setSearchQuery}
+          autoFocus={true}
+          placeholder="Search for..."
+        />
+        <Button
+          title="Close"
+          variant="secondary"
+          icon="angle-up"
+          className={styles.closeButton}
+          data-testid={selectors.components.PanelEditor.toggleVizPicker}
+          onClick={onCloseVizPicker}
+        />
+      </div>
       <Field className={styles.customFieldMargin}>
         <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
       </Field>
@@ -105,6 +120,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRight: 'none',
     borderBottom: 'none',
     borderTopLeftRadius: theme.shape.radius.default,
+  }),
+  searchRow: css({
+    display: 'flex',
+    marginBottom: theme.spacing(1),
+  }),
+  closeButton: css({
+    marginLeft: theme.spacing(1),
   }),
   customFieldMargin: css({
     marginBottom: theme.spacing(1),

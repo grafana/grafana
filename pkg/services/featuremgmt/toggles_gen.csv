@@ -19,14 +19,15 @@ autoMigrateStatPanel,preview,@grafana/dataviz-squad,false,false,true
 autoMigrateXYChartPanel,GA,@grafana/dataviz-squad,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
+vizActions,experimental,@grafana/dataviz-squad,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
-unifiedStorage,experimental,@grafana/search-and-storage,false,true,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/search-and-storage,false,false,false
+mysqlParseTime,experimental,@grafana/search-and-storage,false,false,false
 accessControlOnCall,preview,@grafana/identity-access-team,false,false,false
 nestedFolders,GA,@grafana/search-and-storage,false,false,false
 alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
@@ -41,7 +42,6 @@ influxdbBackendMigration,GA,@grafana/observability-metrics,false,false,true
 influxqlStreamingParser,experimental,@grafana/observability-metrics,false,false,false
 influxdbRunQueriesInParallel,privatePreview,@grafana/observability-metrics,false,false,false
 prometheusRunQueriesInParallel,privatePreview,@grafana/observability-metrics,false,false,false
-prometheusDataplane,GA,@grafana/observability-metrics,false,false,false
 lokiMetricDataplane,GA,@grafana/observability-logs,false,false,false
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
 dataplaneFrontendFallback,GA,@grafana/observability-metrics,false,false,true
@@ -87,7 +87,6 @@ wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false
 alertingInsights,GA,@grafana/alerting-squad,false,false,true
 externalCorePlugins,experimental,@grafana/plugins-platform-backend,false,false,false
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,true
-idForwarding,experimental,@grafana/identity-access-team,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
@@ -97,6 +96,7 @@ transformationsVariableSupport,GA,@grafana/dataviz-squad,false,false,true
 kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
+kubernetesFolders,experimental,@grafana/search-and-storage,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
 queryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -138,7 +138,7 @@ newFolderPicker,experimental,@grafana/grafana-frontend-platform,false,false,true
 jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,false,true,false
 onPremToCloudMigrations,preview,@grafana/grafana-operator-experience-squad,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,false
-promQLScope,experimental,@grafana/observability-metrics,false,false,false
+promQLScope,GA,@grafana/observability-metrics,false,false,false
 sqlExpressions,experimental,@grafana/grafana-app-platform-squad,false,false,false
 nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,false,false,true
 groupToNestedTableTransformation,GA,@grafana/dataviz-squad,false,false,true
@@ -170,7 +170,7 @@ pluginProxyPreserveTrailingSlash,GA,@grafana/plugins-platform-backend,false,fals
 azureMonitorPrometheusExemplars,preview,@grafana/partner-datasources,false,false,false
 pinNavItems,experimental,@grafana/grafana-frontend-platform,false,false,false
 authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
-openSearchBackendFlowEnabled,preview,@grafana/aws-datasources,false,false,false
+openSearchBackendFlowEnabled,GA,@grafana/aws-datasources,false,false,false
 ssoSettingsLDAP,experimental,@grafana/identity-access-team,false,false,false
 failWrongDSUID,experimental,@grafana/plugins-platform-backend,false,false,false
 databaseReadReplica,experimental,@grafana/grafana-backend-services-squad,false,false,false
@@ -182,6 +182,15 @@ cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
 bodyScrolling,preview,@grafana/grafana-frontend-platform,false,false,true
 cloudwatchMetricInsightsCrossAccount,preview,@grafana/aws-datasources,false,false,true
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
+alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
 backgroundPluginInstaller,experimental,@grafana/plugins-platform-backend,false,true,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
-adhocFilterOneOf,experimental,@grafana/dashboards-squad,false,false,false
+newFiltersUI,experimental,@grafana/dashboards-squad,false,false,false
+lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
+singleTopNav,experimental,@grafana/grafana-frontend-platform,false,false,true
+exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
+exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
+exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
+appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,false
+appSidecar,experimental,@grafana/explore-squad,false,false,false
+groupAttributeSync,experimental,@grafana/identity-access-team,false,false,false

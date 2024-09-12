@@ -34,6 +34,15 @@ export const useGetAll = (filters: PluginFilters, sortBy: Sorters = Sorters.name
   };
 };
 
+export const useGetUpdatable = () => {
+  const { isLoading } = useFetchStatus();
+  const updatablePlugins = useSelector(selectPlugins({ isInstalled: true, hasUpdate: true }));
+  return {
+    isLoading,
+    updatablePlugins,
+  };
+};
+
 export const useGetSingle = (id: string): CatalogPlugin | undefined => {
   useFetchAll();
   useFetchDetails(id);

@@ -123,11 +123,18 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
-    "grafana-rules": {
-      "export-rules": "Export rules",
-      "loading": "Loading...",
-      "new-recording-rule": "New recording rule",
-      "title": "Grafana"
+    "list-view": {
+      "section": {
+        "dataSourceManaged": {
+          "title": "Data source-managed"
+        },
+        "grafanaManaged": {
+          "export-rules": "Export rules",
+          "loading": "Loading...",
+          "new-recording-rule": "New recording rule",
+          "title": "Grafana-managed"
+        }
+      }
     },
     "mute_timings": {
       "error-loading": {
@@ -203,6 +210,9 @@
       "recording-rule": "Recording rule"
     },
     "rules": {
+      "add-rule": {
+        "success": "Rule added successfully"
+      },
       "delete-rule": {
         "success": "Rule successfully deleted"
       },
@@ -211,7 +221,23 @@
       },
       "resume-rule": {
         "success": "Rule evaluation resumed"
+      },
+      "update-rule": {
+        "success": "Rule updated successfully"
       }
+    },
+    "search": {
+      "property": {
+        "data-source": "Data source",
+        "evaluation-group": "Evaluation group",
+        "labels": "Labels",
+        "namespace": "Folder / Namespace",
+        "rule-health": "Health",
+        "rule-name": "Alerting rule name",
+        "rule-type": "Type",
+        "state": "State"
+      },
+      "save-query": "Save current search"
     }
   },
   "annotations": {
@@ -225,6 +251,12 @@
   "api-keys": {
     "empty-state": {
       "message": "No API keys found"
+    }
+  },
+  "bookmarks-page": {
+    "empty": {
+      "message": "It looks like you haven’t created any bookmarks yet",
+      "tip": "Hover over any item in the nav menu and click on the bookmark icon to add it here."
     }
   },
   "bouncing-loader": {
@@ -321,6 +353,9 @@
   "combobox": {
     "clear": {
       "title": "Clear value"
+    },
+    "custom-value": {
+      "create": "Create custom value"
     }
   },
   "command-palette": {
@@ -345,12 +380,21 @@
     }
   },
   "common": {
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "close": "Close",
     "locale": {
       "default": "Default"
     },
-    "save": "Save"
+    "save": "Save",
+    "search": "Search"
   },
-  "complete": "complete",
+  "configuration-tracker": {
+    "config-card": {
+      "complete": "complete"
+    }
+  },
   "connections": {
     "connect-data": {
       "category-header-label": "Data sources",
@@ -591,12 +635,13 @@
       "title": "Annotations"
     },
     "dashboard-delete-button": "Delete dashboard",
-    "dashboard-delete-modal": {
+    "delete-modal": {
       "confirmation-text": "Delete",
       "delete-button": "Delete",
-      "text": "Do you want to delete this dashboard?",
       "title": "Delete"
     },
+    "delete-modal-restore-dashboards-text": "This action will mark the dashboard for deletion in 30 days. Your organization administrator can restore it anytime before the 30 days expire.",
+    "delete-modal-text": "Do you want to delete this dashboard?",
     "general": {
       "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list. Use the format '5s' for seconds, '1m' for minutes, '1h' for hours, and '1d' for days (e.g.: '5s,10s,30s,1m,5m,15m,30m,1h,2h,1d').",
       "auto-refresh-label": "Auto refresh",
@@ -697,7 +742,14 @@
   "embed": {
     "share": {
       "time-range-description": "Change the current relative time range to an absolute time range",
-      "time-range-label": "Time range"
+      "time-range-label": "Lock time range"
+    }
+  },
+  "errors": {
+    "dashboard-settings": {
+      "annotations": {
+        "datasource": "The selected data source does not support annotations. Please select a different data source."
+      }
     }
   },
   "explore": {
@@ -887,7 +939,7 @@
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
       "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
-      "title": "Save dashboard JSON"
+      "title": "Export dashboard JSON"
     },
     "menu": {
       "export-as-json-label": "Export",
@@ -896,6 +948,11 @@
   },
   "folder-picker": {
     "loading": "Loading folders..."
+  },
+  "gen-ai": {
+    "apply-suggestion": "Apply",
+    "incomplete-request-error": "Sorry, I was unable to complete your request. Please try again.",
+    "send-custom-feedback": "Send"
   },
   "grafana-ui": {
     "drawer": {
@@ -915,6 +972,9 @@
     },
     "spinner": {
       "aria-label": "Loading"
+    },
+    "table": {
+      "copy": "Copy to Clipboard"
     }
   },
   "graph": {
@@ -977,11 +1037,102 @@
       "refresh": "Refresh"
     }
   },
+  "ldap-drawer": {
+    "attributes-section": {
+      "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
+      "email-label": "Email",
+      "label": "Attributes",
+      "member-of-label": "Member Of",
+      "name-label": "Name",
+      "surname-label": "Surname",
+      "username-label": "Username"
+    },
+    "extra-security-section": {
+      "client-cert-label": "Client certificate path",
+      "client-cert-placeholder": "/path/to/client_cert.pem",
+      "client-cert-value-label": "Client certificate content",
+      "client-cert-value-placeholder": "Client certificate content in base64",
+      "client-key-label": "Client key path",
+      "client-key-placeholder": "/path/to/client_key.pem",
+      "client-key-value-label": "Client key content",
+      "client-key-value-placeholder": "Client key content in base64",
+      "encryption-provider-base-64": "Base64-encoded content",
+      "encryption-provider-description": "X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption.",
+      "encryption-provider-file-path": "Path to files",
+      "encryption-provider-label": "Encryption key and certificate provision specification.",
+      "label": "Extra security measures",
+      "min-tls-version-description": "This is the minimum TLS version allowed. Accepted values are: TLS1.2, TLS1.3.",
+      "min-tls-version-label": "Min TLS version",
+      "root-ca-cert-label": "Root CA certificate path",
+      "root-ca-cert-placeholder": "/path/to/root_ca_cert.pem",
+      "root-ca-cert-value-label": "Root CA certificate content",
+      "start-tls-description": "If set to true, use LDAP with STARTTLS instead of LDAPS",
+      "start-tls-label": "Start TLS",
+      "tls-ciphers-description": "List of comma- or space-separated ciphers",
+      "tls-ciphers-label": "TLS ciphers",
+      "tls-ciphers-placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]",
+      "use-ssl-description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
+      "use-ssl-label": "Use SSL",
+      "use-ssl-tooltip": "For a complete list of supported ciphers and TLS versions, refer to: {\n        <TextLink style={{ fontSize: 'inherit' }} href=\"https://go.dev/src/crypto/tls/cipher_suites.go\" external>\n          https://go.dev/src/crypto/tls/cipher_suites.go\n        </TextLink>}"
+    },
+    "group-mapping": {
+      "grafana-admin": {
+        "description": "If enabled, all users from this group will be Grafana Admins",
+        "label": "Grafana Admin"
+      },
+      "group-dn": {
+        "description": "The name of the key used to extract the ID token from the returned OAuth2 token.",
+        "label": "Group DN"
+      },
+      "org-id": {
+        "description": "The Grafana organization database id. Default org (ID 1) will be used if left out",
+        "label": "Org ID"
+      },
+      "org-role": {
+        "label": "Org role *"
+      },
+      "remove": {
+        "button": "Remove group mapping"
+      }
+    },
+    "group-mapping-section": {
+      "add": {
+        "button": "Add group mapping"
+      },
+      "description": "Map LDAP groups to Grafana org roles",
+      "group-search-base-dns-description": "Separate by commas or spaces",
+      "group-search-base-dns-label": "Group search base DNS",
+      "group-search-filter-description": "Used to filter and identify group entries within the directory",
+      "group-search-filter-label": "Group search filter",
+      "group-search-filter-user-attribute-description": "Identifies users within group entries for filtering purposes",
+      "group-search-filter-user-attribute-label": "Group name attribute",
+      "label": "Group mapping",
+      "skip-org-role-sync-description": "Prevent synchronizing users’ organization roles from your IdP",
+      "skip-org-role-sync-label": "Skip organization role sync"
+    },
+    "misc-section": {
+      "allow-sign-up-descrition": "If not enabled, only existing Grafana users can log in using LDAP",
+      "allow-sign-up-label": "Allow sign up",
+      "label": "Misc",
+      "port-description": "Default port is 389 without SSL or 636 with SSL",
+      "port-label": "Port",
+      "timeout-description": "Timeout in seconds for the connection to the LDAP server",
+      "timeout-label": "Timeout"
+    },
+    "title": "Advanced settings"
+  },
   "ldap-settings-page": {
+    "advanced-settings-section": {
+      "edit": {
+        "button": "Edit"
+      },
+      "subtitle": "Mappings, extra security measures, and more.",
+      "title": "Advanced Settings"
+    },
     "alert": {
+      "discard-success": "LDAP settings discarded",
       "error-fetching": "Error fetching LDAP settings",
       "error-saving": "Error saving LDAP settings",
-      "error-update": "Error updating LDAP settings",
       "error-validate-form": "Error validating LDAP settings",
       "feature-flag-disabled": "This page is only accessible by enabling the <1>ssoSettingsLDAP</1> feature flag.",
       "saved": "LDAP settings saved"
@@ -1011,6 +1162,10 @@
       "label": "Server host",
       "placeholder": "example: 127.0.0.1"
     },
+    "login-form-alert": {
+      "description": "Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.",
+      "title": "Basic login disabled"
+    },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
       "label": "Search filter*",
@@ -1021,7 +1176,7 @@
       "label": "Search base DNS *",
       "placeholder": "example: \"dc=grafana.dc=org\""
     },
-    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our {documentation}.",
+    "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><0>documentation</0></2>.",
     "title": "Basic Settings"
   },
   "library-panel": {
@@ -1045,6 +1200,7 @@
     "empty-state": {
       "message": "No library panels found"
     },
+    "loading-panel-text": "Loading library panel",
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
       "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
@@ -1063,8 +1219,8 @@
   },
   "link": {
     "share": {
-      "config-alert-description": "Updating your settings will modify the default copy link to include these changes.",
-      "config-alert-title": "Link configuration",
+      "config-alert-description": "Updating your settings will modify the default copy link to include these changes. Please note that these settings are saved within your current browser scope.",
+      "config-alert-title": "Link settings",
       "config-description": "Create a personalized, direct link to share your dashboard within your organization, with the following customization settings:",
       "copy-link-button": "Copy link",
       "copy-to-clipboard": "Link copied to clipboard",
@@ -1582,7 +1738,7 @@
       "title": "SLO"
     },
     "snapshots": {
-      "subtitle": "Interactive, publically available, point-in-time representations of dashboards",
+      "subtitle": "Interactive, publically available, point-in-time representations of dashboards and panels",
       "title": "Snapshots"
     },
     "starred": {
@@ -1736,12 +1892,30 @@
     }
   },
   "plugins": {
+    "catalog": {
+      "update-all": {
+        "all-plugins-updated": "All plugins updated!",
+        "available-header": "Available",
+        "button": "Update all",
+        "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
+        "error": "Error updating plugin:",
+        "header": "The following plugins have update available",
+        "installed-header": "Installed",
+        "modal-confirmation": "Update",
+        "modal-dismiss": "Close",
+        "modal-title": "Update Plugins",
+        "name-header": "Name",
+        "update-header": "Update"
+      }
+    },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "Contact Grafana Labs",
         "dependencies": "Dependencies",
         "downloads": "Downloads",
         "from": "From",
-        "reportAbuse": "Report Abuse",
+        "links": "Links ",
+        "reportAbuse": "Report a concern ",
         "signature": "Signature",
         "status": "Status",
         "updatedAt": "Last updated: ",
@@ -1791,7 +1965,7 @@
       "settings-title": "Settings"
     },
     "configuration": {
-      "display-annotations-description": "Present annotations on this Dashboard",
+      "display-annotations-description": "Present annotations on this dashboard",
       "display-annotations-label": "Display annotations",
       "enable-time-range-description": "Allow people to change time range",
       "enable-time-range-label": "Enable time range",
@@ -1800,6 +1974,7 @@
       "success-resume": "Your dashboard access has been resumed",
       "success-update": "Settings have been successfully updated",
       "success-update-old": "Public dashboard updated!",
+      "time-range-label": "Time range",
       "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
     },
     "create-page": {
@@ -1837,7 +2012,7 @@
       "revoke-button": "Revoke",
       "revoke-button-title": "Revoke",
       "success-creation": "Your dashboard is ready for external sharing",
-      "success-share-type-change": "Dashboard access restricted: Only specific people can now access with the link"
+      "success-share-type-change": "Dashboard access updated: Only specific people can now access with the link"
     },
     "modal-alerts": {
       "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} public dashboards",
@@ -1888,13 +2063,16 @@
       "copy-link-button": "Copy external link",
       "email-share-type-option-description": "Only people with the link can access dashboard",
       "email-share-type-option-label": "Only specific people",
+      "no-upsert-perm-alert-desc": "Contact your admin to get permission to {{mode}} shared dashboards",
+      "no-upsert-perm-alert-title": "You don’t have permission to {{ mode }} a shared dashboard",
       "pause-access-button": "Pause access",
       "pause-access-tooltip": "Pausing will temporarily disable access to this dashboard for all users",
       "public-share-type-option-description": "Anyone with the link can access dashboard",
       "public-share-type-option-label": "Anyone with the link",
       "resume-access-button": "Resume access",
       "revoke-access-button": "Revoke access",
-      "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared."
+      "revoke-access-description": "Are you sure you want to revoke this access? The dashboard can no longer be shared.",
+      "unsupported-data-source-alert-desc": "There are data sources in this dashboard that are unsupported for shared dashboards. Panels that use these data sources may not function properly: {{unsupportedDataSources}}."
     },
     "sharing": {
       "success-creation": "Dashboard is public!"
@@ -2036,6 +2214,8 @@
   },
   "scopes": {
     "dashboards": {
+      "collapse": "Collapse",
+      "expand": "Expand",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
@@ -2099,6 +2279,11 @@
       "placeholder": "Search for dashboards and folders"
     }
   },
+  "select": {
+    "select-menu": {
+      "selected-count": "Selected "
+    }
+  },
   "service-accounts": {
     "empty-state": {
       "button-title": "Add service account",
@@ -2111,12 +2296,12 @@
     "menu": {
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
-      "share-internally-description": "Advanced settings",
+      "share-internally-description": "Link settings",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"
     },
     "share-button": "Share",
-    "share-button-tooltip": "Copy shortened link"
+    "share-button-tooltip": "Copy link"
   },
   "share-drawer": {
     "confirm-action": {
@@ -2131,9 +2316,9 @@
     "embed": {
       "copy": "Copy to clipboard",
       "html": "Embed HTML",
-      "html-description": "The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load.",
-      "info": "Generate HTML for embedding an iframe with this panel.",
-      "time-range": "Time range"
+      "html-description": "The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the users viewing that page need to be signed into Grafana for the graph to load.",
+      "info": "Generate HTML for embedding an iframe with this panel",
+      "time-range": "Lock time range"
     },
     "export": {
       "back-button": "Back to export config",
@@ -2205,8 +2390,7 @@
     "drawer": {
       "new-library-panel-title": "New library panel",
       "share-embed-title": "Share embed",
-      "share-link-title": "Link settings",
-      "share-snapshot-title": "Share snapshot"
+      "share-link-title": "Link settings"
     },
     "menu": {
       "new-library-panel-title": "New library panel",
@@ -2254,6 +2438,10 @@
       "revoke-button-text": "Revoke access",
       "revoke-button-tooltip": "Revoke access",
       "view-button-tooltip": "View shared dashboard"
+    },
+    "empty-state": {
+      "message": "You haven't created any shared dashboards yet",
+      "more-info": "Create a shared dashboard from any existing dashboard through the <1>Share</1> modal. <4>Learn more</4>"
     },
     "toggle": {
       "pause-sharing-toggle-text": "Pause access"
@@ -2307,7 +2495,7 @@
       "delete-button": "Delete snapshot",
       "delete-description": "Are you sure you want to delete this snapshot?",
       "delete-title": "Delete snapshot",
-      "deleted-alert": "Your snapshot has been deleted. It might take up to an hour before the snapshot is cleared from any CDN caches.",
+      "deleted-alert": "Snapshot deleted. It could take an hour to be cleared from CDN caches.",
       "expiration-label": "Expires in",
       "info-alert": "A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.",
       "learn-more-button": "Learn more",
