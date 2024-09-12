@@ -1,8 +1,19 @@
 import { e2e } from '../utils';
+import '../../utils/support/clipboard';
 
 describe('Shared dashboards', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+
+    cy.wrap(
+      Cypress.automation('remote:debugger:protocol', {
+        command: 'Browser.grantPermissions',
+        params: {
+          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+          origin: window.location.origin,
+        },
+      })
+    );
   });
 
   it('Close share externally drawer', () => {
@@ -70,6 +81,7 @@ describe('Shared dashboards', () => {
   });
 
   it('Open a shared dashboard', () => {
+    cy.wrap('').copyToClipboard();
     // Opening a dashboard without template variables
     cy.intercept({
       method: 'POST',
@@ -95,19 +107,18 @@ describe('Shared dashboards', () => {
     e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.copyUrlButton()
       .click()
       .then(() => {
-        cy.window().then((win) => {
-          win.navigator.clipboard.readText().then((url) => {
-            cy.clearCookies()
-              .request(getPublicDashboardAPIUrl(String(url)))
-              .then((resp) => {
-                expect(resp.status).to.eq(200);
-              });
-          });
+        cy.copyFromClipboard().then((url) => {
+          cy.clearCookies()
+            .request(getPublicDashboardAPIUrl(String(url)))
+            .then((resp) => {
+              expect(resp.status).to.eq(200);
+            });
         });
       });
   });
 
   it('Disable a shared dashboard', () => {
+    cy.wrap('').copyToClipboard();
     // Opening a dashboard without template variables
     cy.intercept({
       method: 'POST',
@@ -134,14 +145,12 @@ describe('Shared dashboards', () => {
     e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.copyUrlButton()
       .click()
       .then(() => {
-        cy.window().then((win) => {
-          win.navigator.clipboard.readText().then((url) => {
-            cy.clearCookies()
-              .request({ url: getPublicDashboardAPIUrl(String(url)), failOnStatusCode: false })
-              .then((resp) => {
-                expect(resp.status).to.eq(403);
-              });
-          });
+        cy.copyFromClipboard().then((url) => {
+          cy.clearCookies()
+            .request({ url: getPublicDashboardAPIUrl(String(url)), failOnStatusCode: false })
+            .then((resp) => {
+              expect(resp.status).to.eq(403);
+            });
         });
       });
   });

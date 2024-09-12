@@ -1,5 +1,6 @@
 import { ShareLinkConfiguration } from '../../../public/app/features/dashboard-scene/sharing/ShareButton/utils';
 import { e2e } from '../utils';
+import '../../utils/support/clipboard';
 
 describe('Share internally', () => {
   beforeEach(() => {
@@ -7,6 +8,16 @@ describe('Share internally', () => {
     cy.window().then((win) => {
       win.localStorage.removeItem('grafana.dashboard.link.shareConfiguration');
     });
+
+    cy.wrap(
+      Cypress.automation('remote:debugger:protocol', {
+        command: 'Browser.grantPermissions',
+        params: {
+          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+          origin: window.location.origin,
+        },
+      })
+    );
   });
 
   it('Create a customized link', () => {
@@ -35,11 +46,9 @@ describe('Share internally', () => {
     e2e.pages.ShareDashboardDrawer.ShareInternally.copyUrlButton()
       .click()
       .then(() => {
-        cy.window().then((win) => {
-          win.navigator.clipboard.readText().then((url) => {
-            expect(url).contain('goto');
-            expect(url).not.contain('from=now-6h&to=now');
-          });
+        cy.copyFromClipboard().then((url) => {
+          expect(url).contain('goto');
+          expect(url).not.contain('from=now-6h&to=now');
         });
       });
 
@@ -68,11 +77,9 @@ describe('Share internally', () => {
     e2e.pages.ShareDashboardDrawer.ShareInternally.copyUrlButton()
       .click()
       .then(() => {
-        cy.window().then((win) => {
-          return win.navigator.clipboard.readText().then((url) => {
-            cy.wrap(url).should('include', 'from=now-6h&to=now');
-            cy.wrap(url).should('not.include', 'goto');
-          });
+        cy.copyFromClipboard().then((url) => {
+          cy.wrap(url).should('include', 'from=now-6h&to=now');
+          cy.wrap(url).should('not.include', 'goto');
         });
       });
   });

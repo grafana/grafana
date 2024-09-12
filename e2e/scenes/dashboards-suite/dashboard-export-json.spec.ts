@@ -1,8 +1,19 @@
 import { e2e } from '../utils';
+import '../../utils/support/clipboard';
 
 describe('Export as JSON', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+
+    cy.wrap(
+      Cypress.automation('remote:debugger:protocol', {
+        command: 'Browser.grantPermissions',
+        params: {
+          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+          origin: window.location.origin,
+        },
+      })
+    );
   });
 
   it('Export for internal and external use', () => {
@@ -35,17 +46,9 @@ describe('Export as JSON', () => {
     e2e.pages.ExportDashboardDrawer.ExportAsJson.copyToClipboardButton()
       .click()
       .then(() => {
-        cy.window()
-          .then((win) => {
-            return win.navigator.clipboard.readText().then((json) => {
-              cy.wrap(json).as('url');
-            });
-          })
-          .then(() => {
-            cy.get('@url').then((url) => {
-              cy.wrap(url).should('not.include', '__inputs');
-            });
-          });
+        cy.copyFromClipboard().then((url) => {
+          cy.wrap(url).should('not.include', '__inputs');
+        });
       });
 
     e2e.pages.ExportDashboardDrawer.ExportAsJson.exportExternallyToggle().click({ force: true });
@@ -53,17 +56,9 @@ describe('Export as JSON', () => {
     e2e.pages.ExportDashboardDrawer.ExportAsJson.copyToClipboardButton()
       .click()
       .then(() => {
-        cy.window()
-          .then((win) => {
-            return win.navigator.clipboard.readText().then((json) => {
-              cy.wrap(json).as('url');
-            });
-          })
-          .then(() => {
-            cy.get('@url').then((url) => {
-              cy.wrap(url).should('include', '__inputs');
-            });
-          });
+        cy.copyFromClipboard().then((url) => {
+          cy.wrap(url).should('include', '__inputs');
+        });
       });
 
     e2e.pages.ExportDashboardDrawer.ExportAsJson.cancelButton().click();

@@ -1,8 +1,19 @@
 import { e2e } from '../utils';
+import '../../utils/support/clipboard';
 
 describe('Snapshots', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+
+    cy.wrap(
+      Cypress.automation('remote:debugger:protocol', {
+        command: 'Browser.grantPermissions',
+        params: {
+          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+          origin: window.location.origin,
+        },
+      })
+    );
   });
 
   it('Create a snapshot dashboard', () => {
@@ -40,10 +51,8 @@ describe('Snapshots', () => {
     e2e.pages.ShareDashboardDrawer.ShareSnapshot.copyUrlButton()
       .click()
       .then(() => {
-        cy.window().then((win) => {
-          return win.navigator.clipboard.readText().then((url) => {
-            cy.wrap(url).as('url');
-          });
+        cy.copyFromClipboard().then((url) => {
+          cy.wrap(url).as('url');
         });
       })
       .then(() => {
