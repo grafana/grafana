@@ -424,9 +424,9 @@ groupLoop:
 				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
 				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
 				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
+					renamedReceiver = receiverGroup.Name // remember the old name of the receiver.
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
-					renamedReceiver = receiverGroup.Name
 				}
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.

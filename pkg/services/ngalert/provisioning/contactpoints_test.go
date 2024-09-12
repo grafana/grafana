@@ -590,7 +590,7 @@ func TestStitchReceivers(t *testing.T) {
 				Type: "slack",
 			},
 			expModified:        true,
-			expRenamedReceiver: "new-receiver",
+			expRenamedReceiver: "receiver-1",
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1192,7 +1192,7 @@ func TestStitchReceivers(t *testing.T) {
 				Type: "slack",
 			},
 			expModified:        true,
-			expRenamedReceiver: "receiver-1",
+			expRenamedReceiver: "receiver-2",
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
