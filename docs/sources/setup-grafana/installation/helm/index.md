@@ -285,6 +285,7 @@ In many enterprise networks, TLS certificates are issued by a private certificat
 If your Grafana instance needs to interact with services exposing certificates issued by these private CAs, then you need to ensure Grafana trusts the root certificate.
 
 You might need to configure this if you:
+
 - have plugins that require connectivity to other self hosted systems. For example, if you've installed the Grafana Enterprise Metrics (GEM) plugin, and your GEM cluster is using a private certificate.
 - want to connect to data sources which are listening on HTTPS with a private certificate.
 - are using a backend database for persistence, or caching service that uses private certificates for encryption in transit.
@@ -301,12 +302,12 @@ A simple solution which should work across your entire instance (plugins, data s
    apiVersion: v1
    kind: ConfigMap
    metadata:
-      name: grafana-ca-cert
+     name: grafana-ca-cert
    data:
-      ca.pem: |
-         -----BEGIN CERTIFICATE-----
-         (rest of the CA cert)
-         -----END CERTIFICATE-----
+     ca.pem: |
+       -----BEGIN CERTIFICATE-----
+       (rest of the CA cert)
+       -----END CERTIFICATE-----
    ```
 
    ```bash
