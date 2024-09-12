@@ -548,6 +548,80 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 	assert.Equal(t, uninstalledAltered.Error, "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.")
 }
 
+func TestDeleteSession(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+
+	t.Run("when deleting a session that does not exist in the database, it returns an error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		session, err := s.DeleteSession(ctx, "invalid-session-uid")
+		require.Nil(t, session)
+		require.Error(t, err)
+	})
+
+	t.Run("when deleting an existing session, it returns the deleted session and no error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		createTokenResp, err := s.CreateToken(ctx)
+		require.NoError(t, err)
+		require.NotEmpty(t, createTokenResp.Token)
+
+		cmd := cloudmigration.CloudMigrationSessionRequest{
+			AuthToken: createTokenResp.Token,
+		}
+
+		createResp, err := s.CreateSession(ctx, cmd)
+		require.NoError(t, err)
+		require.NotEmpty(t, createResp.UID)
+		require.NotEmpty(t, createResp.Slug)
+
+		deletedSession, err := s.DeleteSession(ctx, createResp.UID)
+		require.NoError(t, err)
+		require.NotNil(t, deletedSession)
+		require.Equal(t, deletedSession.UID, createResp.UID)
+
+		notFoundSession, err := s.GetSession(ctx, deletedSession.UID)
+		require.ErrorIs(t, err, cloudmigration.ErrMigrationNotFound)
+		require.Nil(t, notFoundSession)
+	})
+}
+
+func TestReportEvent(t *testing.T) {
+	t.Run("when the session is nil, it does not report the event", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		gmsMock := &gmsClientMock{}
+
+		s := setUpServiceTest(t, false).(*Service)
+		s.gmsClient = gmsMock
+
+		require.NotPanics(t, func() {
+			s.report(ctx, nil, gmsclient.EventConnect, time.Minute, nil)
+		})
+
+		require.Zero(t, gmsMock.reportEventCalled)
+	})
+
+	t.Run("when the session is not nil, it reports the event", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		gmsMock := &gmsClientMock{}
+
+		s := setUpServiceTest(t, false).(*Service)
+		s.gmsClient = gmsMock
+
+		require.NotPanics(t, func() {
+			s.report(ctx, &cloudmigration.CloudMigrationSession{}, gmsclient.EventConnect, time.Minute, nil)
+		})
+
+		require.Equal(t, 1, gmsMock.reportEventCalled)
+	})
+}
+
 func ctxWithSignedInUser() context.Context {
 	c := &contextmodel.ReqContext{
 		SignedInUser: &user.SignedInUser{OrgID: 1},
