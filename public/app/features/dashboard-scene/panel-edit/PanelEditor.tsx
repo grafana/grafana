@@ -99,11 +99,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private setOriginalState(panelRef: SceneObjectRef<VizPanel>) {
     const panel = panelRef.resolve();
 
-    this._originalState = sceneUtils.cloneSceneObjectState(panel.state);
     this._originalSaveModel = vizPanelToPanel(panel);
 
     if (panel.parent instanceof DashboardGridItem) {
-      this._originalLayoutElementState = panel.parent.state;
+      this._originalState = sceneUtils.cloneSceneObjectState(panel.state);
+      this._originalLayoutElementState = sceneUtils.cloneSceneObjectState(panel.parent.state);
       this._layoutElement = panel.parent;
     }
   }
@@ -146,10 +146,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panel = this.getPanel();
     const layoutElement = panel.parent;
 
-    this.setOriginalState(this.state.panelRef);
-
     // First time initialization
     if (this.state.isInitializing) {
+      this.setOriginalState(this.state.panelRef);
+
       if (layoutElement instanceof DashboardGridItem) {
         layoutElement.editingStarted();
       }
@@ -220,14 +220,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     if (this.state.isNewPanel) {
       getDashboardSceneFor(this).removePanel(panel);
     } else {
-      // Revert VizPanel changes
-      panel.setState(this._originalState!);
-
-      // Rrevert any layout element changes
+      // Revert any layout element changes
       this._layoutElement.setState(this._originalLayoutElementState!);
     }
 
-    // this._discardChanges = true;
     locationService.partial({ editPanel: null });
   };
 
