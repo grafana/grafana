@@ -225,6 +225,19 @@
       "update-rule": {
         "success": ""
       }
+    },
+    "search": {
+      "property": {
+        "data-source": "",
+        "evaluation-group": "",
+        "labels": "",
+        "namespace": "",
+        "rule-health": "",
+        "rule-name": "",
+        "rule-type": "",
+        "state": ""
+      },
+      "save-query": ""
     }
   },
   "annotations": {
@@ -367,11 +380,15 @@
     }
   },
   "common": {
+    "apply": "",
     "cancel": "",
+    "clear": "",
+    "close": "",
     "locale": {
       "default": "Por defecto"
     },
-    "save": "Guardar"
+    "save": "Guardar",
+    "search": ""
   },
   "configuration-tracker": {
     "config-card": {
@@ -1893,9 +1910,11 @@
     },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "",
         "dependencies": "",
         "downloads": "",
         "from": "",
+        "links": "",
         "reportAbuse": "",
         "signature": "",
         "status": "",
