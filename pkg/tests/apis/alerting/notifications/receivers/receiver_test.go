@@ -300,7 +300,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 			}
 
 			if tc.canRead {
+				// Set expected metadata.
 				expectedWithMetadata := expected.DeepCopy()
+				expectedWithMetadata.SetInUse(0, nil)
 				if tc.canUpdate {
 					expectedWithMetadata.SetAccessControl("canWrite")
 				}
@@ -883,9 +885,10 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, receiver.Spec.Integrations, len(integrations))
 
-		// Set access control metadata
+		// Set expected metadata
 		receiver.SetAccessControl("canWrite")
 		receiver.SetAccessControl("canDelete")
+		receiver.SetInUse(0, nil)
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()
