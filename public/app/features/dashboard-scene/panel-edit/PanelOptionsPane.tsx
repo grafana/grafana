@@ -80,15 +80,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                   pluginType={PluginType.panel}
                   angularSupportEnabled={config?.angularSupportEnabled}
                   interactionElementId="panel-options"
-                />
-                <>
+                >
                   <Card.Heading>
-                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-heading"> Angular Panel Options </Trans>
+                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-heading">Angular panel options </Trans>
                   </Card.Heading>
                   <Card.Description>
                     <Trans i18nKey="dashboards.panel-edit.angular-deprecation-description">
-                      {' '}
-                      This panel is built with AngularJS. To modify the panel options, use the Panel JSON editor.
+                      To modify the panel options, use the Panel JSON editor.
                     </Trans>
                   </Card.Description>
                   <Card.Actions>
@@ -100,11 +98,11 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                       }}
                     >
                       <Trans i18nKey="dashboards.panel-edit.angular-deprecation-button-open-panel-json">
-                        Open Panel JSON
+                        Open JSON editor
                       </Trans>
                     </Button>
                   </Card.Actions>
-                </>
+                </AngularDeprecationPluginNotice>
               </div>
             )}
             <div className={styles.listOfOptions}>
