@@ -19,6 +19,7 @@ import {
   Text,
   TextLink,
   Dropdown,
+  MultiSelect,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
@@ -320,14 +321,20 @@ export const LdapSettingsPage = () => {
                     'An array of base dns to search through; separate by spaces.'
                   )}
                 >
-                  <Input
+                  <MultiSelect
                     id="search-base-dns"
-                    placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: "dc=grafana.dc=org"')}
-                    type="text"
-                    value={watch(`${serverConfig}.search_base_dns`, []).join(' ')}
-                    onChange={({ currentTarget: { value } }) =>
-                      setValue(`${serverConfig}.search_base_dns`, value.split(' '))
-                    }
+                    allowCustomValue
+                    onChange={(v) => {
+                      console.log(v)
+                      setValue(
+                        `${serverConfig}.search_base_dns`,
+                        v.filter(v => typeof v.value === 'string').map(({value}) => value as string)
+                      );
+                    }}
+                    value={watch(`${serverConfig}.search_base_dns`, []).map((v) => ({
+                      label: v,
+                      value: v,
+                    }))}
                   />
                 </Field>
                 <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>

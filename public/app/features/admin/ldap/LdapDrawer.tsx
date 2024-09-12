@@ -341,10 +341,10 @@ export const LdapDrawerComponent = ({
                     onChange={(v) => {
                       setValue(
                         `${serverConfig}.root_ca_cert_value`,
-                        v.filter(({ v }) => typeof v === 'string')?.map(({ v }) => v)
+                        v.filter(v => typeof v.value === 'string').map(({value}) => value as string)
                       );
                     }}
-                    value={watch(`${serverConfig}.root_ca_cert_value`)?.map((v) => ({
+                    value={watch(`${serverConfig}.root_ca_cert_value`, []).map((v) => ({
                       label: renderMultiSelectLabel(v),
                       value: v,
                     }))}
