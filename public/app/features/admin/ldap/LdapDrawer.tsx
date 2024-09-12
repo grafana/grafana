@@ -341,7 +341,7 @@ export const LdapDrawerComponent = ({
                     onChange={(v) => {
                       setValue(
                         `${serverConfig}.root_ca_cert_value`,
-                        v.filter((v) => typeof v.value === 'string').map(({ value }) => value as string)
+                        v.filter((v) => typeof v.value === 'string').map(({value}) => String(value))
                       );
                     }}
                     value={watch(`${serverConfig}.root_ca_cert_value`, []).map((v) => ({

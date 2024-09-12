@@ -325,10 +325,9 @@ export const LdapSettingsPage = () => {
                     id="search-base-dns"
                     allowCustomValue
                     onChange={(v) => {
-                      console.log(v);
                       setValue(
                         `${serverConfig}.search_base_dns`,
-                        v.filter((v) => typeof v.value === 'string').map(({ value }) => value as string)
+                        v.filter((v) => typeof v.value === 'string').map(({value}) => String(value))
                       );
                     }}
                     value={watch(`${serverConfig}.search_base_dns`, []).map((v) => ({
