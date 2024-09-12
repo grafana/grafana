@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,7 +32,6 @@ import (
 
 var (
 	_ builder.APIGroupBuilder      = (*DashboardsAPIBuilder)(nil)
-	_ builder.APIClientConsumer    = (*DashboardsAPIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor = (*DashboardsAPIBuilder)(nil)
 )
 
@@ -54,6 +54,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 	sql db.DB,
 	tracing *tracing.TracingService,
+	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -99,11 +100,6 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
-}
-
-func (b *DashboardsAPIBuilder) InitAPIClients(clients builder.APIClients) error {
-	b.log.Info("DashboardAPI initialized with clients", "resource", clients.Resource, "access", clients.Access)
-	return nil
 }
 
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {

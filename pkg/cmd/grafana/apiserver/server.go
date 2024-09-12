@@ -163,13 +163,9 @@ func (o *APIServerOptions) RunAPIServer(ctx context.Context, config *genericapis
 		return err
 	}
 
-	clients := builder.APIClients{
-		// someday (likely not too soon)
-	}
-
 	// Install the API Group+version
 	// #TODO figure out how to configure storage type in o.Options.StorageOptions
-	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, clients,
+	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server,
 		config.RESTOptionsGetter, o.builders, o.Options.StorageOptions,
 		o.Options.MetricsOptions.MetricsRegisterer, nil, nil, nil, // no need for server lock in standalone
 	)

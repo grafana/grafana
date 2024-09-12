@@ -7,10 +7,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,6 +23,11 @@ import (
 	k8stracing "k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/common"
+
+	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 )
 
 type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
@@ -150,7 +151,6 @@ func InstallAPIs(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	server *genericapiserver.GenericAPIServer,
-	clients APIClients,
 	optsGetter generic.RESTOptionsGetter,
 	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
@@ -211,14 +211,6 @@ func InstallAPIs(
 	}
 
 	for _, b := range builders {
-		// Register the client
-		c, ok := b.(APIClientConsumer)
-		if ok {
-			err := c.InitAPIClients(clients)
-			if err != nil {
-				return err
-			}
-		}
 		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
 		if err != nil {
 			return err
