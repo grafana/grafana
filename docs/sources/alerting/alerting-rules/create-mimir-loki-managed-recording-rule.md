@@ -109,7 +109,7 @@ This feature is only available for Grafana OSS and Enterprise users. It is not a
 
 ### Before you begin
 
- - Enable the `grafanaManagedRecordingRules` [feature flag]((https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/)).
+- Enable the `grafanaManagedRecordingRules` [feature flag](<(https://grafana.com/docs/grafana/%3CGRAFANA_VERSION%3E/setup-grafana/configure-grafana/feature-toggles/)>).
 
 To configure Grafana-managed recording rules, complete the following steps.
 
