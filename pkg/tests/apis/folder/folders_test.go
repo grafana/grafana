@@ -177,6 +177,38 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		}))
 	})
 
+	t.Run("with dual write (unified-grpc, mode 0)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified-grpc",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode0,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
+	t.Run("with dual write (unified-grpc, mode 1)", func(t *testing.T) {
+		doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified-grpc",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folderv0alpha1.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode1,
+				},
+			},
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesFolders,
+			},
+		}))
+	})
+
 	t.Run("with dual write (etcd, mode 0)", func(t *testing.T) {
 		// NOTE: running local etcd, that will be wiped clean!
 		t.Skip("local etcd testing")
