@@ -237,8 +237,8 @@ func extendAccessControl[T models.Identified](base *actionAccess[T], operator fu
 	// Extend the access control of base with the extension.
 	base.authorizeSome = operator(extension.authorizeSome, baseSome)
 	base.authorizeAll = operator(extension.authorizeAll, baseAll)
-	base.authorizeOne = func(receiver models.Identified) ac.Evaluator {
-		return operator(extension.authorizeOne(receiver), baseOne(receiver))
+	base.authorizeOne = func(resource models.Identified) ac.Evaluator {
+		return operator(extension.authorizeOne(resource), baseOne(resource))
 	}
 }
 
