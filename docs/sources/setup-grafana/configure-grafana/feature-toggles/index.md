@@ -212,6 +212,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsSriChecks`                            | Enables SRI checks for plugin assets                                                                                                                                                                                                                                              |
 | `unifiedStorageBigObjectsSupport`             | Enables to save big objects in blob storage                                                                                                                                                                                                                                       |
 | `timeRangeProvider`                           | Enables time pickers sync                                                                                                                                                                                                                                                         |
+| `prometheusUsesCombobox`                      | Use new combobox component for Prometheus query editor                                                                                                                                                                                                                            |
 
 ## Development feature toggles
 

@@ -223,4 +223,5 @@ export interface FeatureToggles {
   pluginsSriChecks?: boolean;
   unifiedStorageBigObjectsSupport?: boolean;
   timeRangeProvider?: boolean;
+  prometheusUsesCombobox?: boolean;
 }

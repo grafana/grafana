@@ -2589,6 +2589,21 @@
     },
     {
       "metadata": {
+        "name": "prometheusUsesCombobox",
+        "resourceVersion": "1726140033271",
+        "creationTimestamp": "2024-09-12T11:19:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-12 11:20:33.271822988 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use new combobox component for Prometheus query editor",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-metrics"
+      }
+    },
+    {
+      "metadata": {
         "name": "publicDashboards",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2022-04-07T18:30:19Z",
