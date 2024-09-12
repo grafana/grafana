@@ -70,10 +70,12 @@ func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) error {
 	return nil
 }
 
+// ReceiverNameUsedByRoutes checks if a receiver name is used in any routes.
 func (rev *ConfigRevision) ReceiverNameUsedByRoutes(name string) bool {
 	return isReceiverInUse(name, []*definitions.Route{rev.Config.AlertmanagerConfig.Route})
 }
 
+// ReceiverUseByName returns a map of receiver names to the number of times they are used in routes.
 func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
 	m := make(map[string]int)
 	receiverUseCounts([]*definitions.Route{rev.Config.AlertmanagerConfig.Route}, m)
