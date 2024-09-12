@@ -36,15 +36,15 @@ Grafana Alerting is based on the architecture of the Prometheus alerting system.
 
 **Grafana Alertmanager**
 
-Grafana has its own built-in Alertmanager, referred to as "Grafana" in the user interface. It is the default internal Alertmanager if you run Grafana on-premises or as open source. It can receive alerts from Grafana, but cannot receive alerts from alert generators such as Mimir or Loki.
+Grafana has its own built-in Alertmanager, referred to as "Grafana" in the user interface. It is the default Alertmanager and can only handle Grafana-managed alerts.
 
 **Cloud Alertmanager**
 
-The Cloud Alertmanager runs in Grafana Cloud. It can receive Grafana-managed alerts and data sources-managed alerts, such as Mimir, Loki, and Prometheus.
+Each Grafana Cloud instance comes preconfigured with an additional Alertmanager (grafanacloud-STACK_NAME-ngalertmanager) from the Mimir (Prometheus) instance running in the Grafana Cloud Stack. The Cloud Alertmanager can handle both Grafana-managed and data source-managed alerts.
 
-**External Alertmanagers**
+**Other Alertmanagers**
 
-Grafana Alerting also supports sending alerts to external alertmanagers, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), which can receive alerts from Grafana, Loki, Mimir, and Prometheus.
+Grafana Alerting also supports sending alerts to other alertmanagers, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), which can handle Grafana-managed alerts and data sources-managed alerts such as alerts from Loki, Mimir, and Prometheus.
 
 You can use a combination of Alertmanagers. The decision often depends on your alerting setup and where your alerts are being generated. Here are two examples of when you may want to [add an external Alertmanager](#add-an-external-alertmanager) and send your alerts there instead of using the built-in Grafana Alertmanager.
 
@@ -52,9 +52,9 @@ You can use a combination of Alertmanagers. The decision often depends on your a
 
 2. You want to use both Prometheus on-premises and hosted Grafana to send alerts to the same Alertmanager that runs in your Cloud infrastructure.
 
-## Add an external Alertmanager
+## Add an Alertmanager
 
-From Grafana, you can configure and administer your own external Alertmanager to receive Grafana alerts.
+From Grafana, you can configure and administer your own Alertmanager to receive Grafana alerts.
 
 {{% admonition type="note" %}}
 Grafana Alerting does not support sending alerts to the AWS Managed Service for Prometheus due to the lack of sigv4 support in Prometheus.
@@ -64,23 +64,23 @@ After you have added the Alertmanager, you can use the Grafana Alerting UI to ma
 
 {{< figure src="/media/docs/alerting/alerting-choose-alertmanager.png" max-width="750px" alt="A screenshot choosing an Alertmanager in the notification policies UI" >}}
 
-External alertmanagers should now be configured as data sources using Grafana Configuration from the main Grafana navigation menu. This enables you to manage the contact points and notification policies of external alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials.
+Alertmanagers should now be configured as data sources using Grafana Configuration from the main Grafana navigation menu. This enables you to manage the contact points and notification policies of external alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials.
 
-To add an external Alertmanager, complete the following steps.
+To add an Alertmanager, complete the following steps.
 
 1. Click **Connections** in the left-side menu.
-1. On the Connections page, search for `Alertmanager`.
-1. Click the **Create a new data source** button.
+2. On the Connections page, search for `Alertmanager`.
+3. Click the **Create a new data source** button.
 
    If you don't see this button, you may need to install the plugin, relaunch your Cloud instance, and then repeat steps 1 and 2.
 
-1. Fill out the fields on the page, as required.
+4. Fill out the fields on the page, as required.
 
    If you are provisioning your data source, set the flag `handleGrafanaManagedAlerts` in the `jsonData` field to `true` to send Grafana-managed alerts to this Alertmanager.
 
    **Note:** Prometheus, Grafana Mimir, and Cortex implementations of Alertmanager are supported. For Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI.
 
-1. Click **Save & test**.
+5. Click **Save & test**.
 
 {{< admonition type="note" >}}
 On the Settings page, you can manage your Alertmanager configurations and configure where Grafana-managed alert instances are forwarded.
