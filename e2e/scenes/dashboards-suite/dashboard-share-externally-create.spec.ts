@@ -16,9 +16,11 @@ describe('Shared dashboards', () => {
     e2e.pages.Dashboard.DashNav.newShareButton.arrowMenu().click();
     e2e.pages.Dashboard.DashNav.newShareButton.menu.shareExternally().click();
 
+    cy.url().should('include', 'shareView=public_dashboard');
     e2e.pages.ShareDashboardDrawer.ShareExternally.container().should('be.visible');
     e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.PublicShare.cancelButton().click();
 
+    cy.url().should('not.include', 'shareView=public_dashboard');
     e2e.pages.ShareDashboardDrawer.ShareExternally.container().should('not.exist');
   });
 

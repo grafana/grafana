@@ -318,7 +318,10 @@ export const Pages = {
       },
     },
     ShareSnapshot: {
+      url: (key: string) => `/dashboard/snapshot/${key}`,
       container: 'data-testid share snapshot drawer container',
+      publishSnapshot: 'data-testid share snapshot publish button',
+      copyUrlButton: 'data-testid share snapshot copy url button',
     },
   },
   ExportDashboardDrawer: {
