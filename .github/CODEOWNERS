@@ -507,7 +507,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/lib/ @grafana/grafana-frontend-platform
 /public/lib/monaco-languages/kusto.ts @grafana/partner-datasources
 /public/maps/ @ryantxu
-/public/mockServiceWorker.js @grafana/frontend-ops
 /public/robots.txt @grafana/frontend-ops
 /public/fonts/ @grafana/grafana-frontend-platform
 /public/sass/ @grafana/grafana-frontend-platform
