@@ -102,7 +102,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 }
 
 func (b *DashboardsAPIBuilder) InitAPIClients(clients builder.APIClients) error {
-	b.log.Info("I")
+	b.log.Info("DashboardAPI initialized with clients", "resource", clients.Resource, "access", clients.Access)
 	return nil
 }
 
