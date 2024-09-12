@@ -594,10 +594,10 @@ func TestStitchReceivers(t *testing.T) {
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
-						Receiver: "new-receiver",
+						Receiver: "receiver-1",
 						Routes: []*definitions.Route{
 							{
-								Receiver: "new-receiver",
+								Receiver: "receiver-1",
 							},
 						},
 					},
@@ -1202,7 +1202,7 @@ func TestStitchReceivers(t *testing.T) {
 								Receiver: "receiver-1",
 							},
 							{
-								Receiver: "receiver-1",
+								Receiver: "receiver-2",
 							},
 						},
 					},
