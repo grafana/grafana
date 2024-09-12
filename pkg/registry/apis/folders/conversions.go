@@ -14,17 +14,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
-func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) unstructured.Unstructured {
+func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructured.Unstructured {
 	// #TODO add other fields
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]interface{}{
-				"title": cmd.Title,
+				"title": cmd.NewTitle,
 			},
 		},
 	}
 	obj.SetName(cmd.UID)
 	return obj
+}
+
+func UnstructuredToLegacyFolder(item unstructured.Unstructured) *folder.Folder {
+	spec := item.Object["spec"].(map[string]any)
+	return &folder.Folder{
+		UID:   item.GetName(),
+		Title: spec["title"].(string),
+		// #TODO add other fields
+	}
 }
 
 func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) *dtos.Folder {

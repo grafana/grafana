@@ -448,9 +448,12 @@ func (hs *HTTPServer) registerRoutes() {
 			if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
 				// Use k8s client to implement legacy API
 				handler := newFolderK8sHandler(hs)
+				folderRoute.Get("/", handler.searchFolders)
 				folderRoute.Post("/", handler.createFolder)
 				folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
 					folderUidRoute.Get("/", handler.getFolder)
+					folderUidRoute.Delete("/", handler.deleteFolder)
+					folderUidRoute.Put("/:uid", handler.updateFolder)
 				})
 			} else {
 				idScope := dashboards.ScopeFoldersProvider.GetResourceScope(ac.Parameter(":id"))
