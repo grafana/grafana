@@ -36,7 +36,7 @@ You can use your keyboard arrow keys to navigate the results and press `Enter` t
 
 The following images show:
 
-1. Searching by dashboard name from the Dashboards page.
+Searching by dashboard name from the **Dashboards** page.
 
 {{< figure src="/static/img/docs/v91/dashboard-features/search-by-dashboard-name.png" width="700px" >}}
 
