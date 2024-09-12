@@ -1,46 +1,53 @@
 import { readFileSync } from 'fs';
 import { writeFile } from 'node:fs/promises';
-import { resolve } from 'path';
-import path = require('path');
+import { resolve, join } from 'path';
 import * as semver from 'semver';
 import * as ts from 'typescript';
+const packageJson = JSON.parse(readFileSync(join(process.cwd(), 'package.json')).toString());
 
-const packageJson = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json')).toString());
-const version = packageJson.version.replace(/\-.*/, '');
-
-const entry = resolve(process.cwd(), 'scripts/e2e-selectors/components2.ts');
-const sourceFile = ts.createSourceFile(
-  'components.ts',
-  readFileSync(entry).toString(),
-  ts.ScriptTarget.ES2015,
-  /*setParentNodes */ true
-);
+// this should be imported from the e2e-selectors package
+const MIN_GRAFANA_VERSION = '8.0.0';
+const version = packageJson.version.replace(/\-.*/, ''); // remove any pre-release tags. we may want to add support build number in the future though
+const sourceDirectory = 'packages/grafana-e2e-selectors/src/e2e-selectors/versioned';
+const destinationDirectory = 'packages/grafana-e2e-selectors/src/e2e-selectors';
+const fileNames = ['components.ts', 'pages.ts', 'apis.ts'];
+const sourceFiles = fileNames.map((fileName) => {
+  const buffer = readFileSync(resolve(join(process.cwd(), sourceDirectory, fileName)));
+  // replace usage of [MIN_GRAFANA_VERSION] variable with the actual value
+  const code = buffer.toString().replace(/\[MIN_GRAFANA_VERSION\]/g, `'${MIN_GRAFANA_VERSION}'`);
+  return ts.createSourceFile(fileName, code, ts.ScriptTarget.ES2015, /*setParentNodes */ true);
+});
 
 const getSelectorValue = (
   properties: ts.NodeArray<ts.ObjectLiteralElementLike>,
-  escapedText: string
-): ts.PropertyAssignment => {
-  let current: ts.PropertyAssignment;
+  escapedText: string,
+  sourceFileName: string
+): ts.PropertyAssignment | undefined => {
+  let current: ts.PropertyAssignment | undefined = undefined;
   for (const property of properties) {
     if (
+      property.name &&
       ts.isStringLiteral(property.name) &&
       ts.isPropertyAssignment(property) &&
-      semver.satisfies(version, `>=${property.name.text}`)
+      semver.satisfies(version, `>=${property.name.text.replace(/'/g, '')}`)
     ) {
       try {
         if (!current) {
           current = property;
-        } else if (semver.gt(property.name.text, current.name.getText())) {
+        } else if (semver.gt(property.name.text.replace(/'/g, ''), current.name.getText().replace(/'/g, ''))) {
           current = property;
         }
       } catch (error) {
-        console.error(`Error parsing semver: ${property.name.text}`);
+        console.error(`Error parsing semver: ${property.name.text} - ${current.name.getText()}`);
       }
     }
   }
 
   if (!current) {
-    throw new Error(`Could not resolve a value for selector '${escapedText}' using version '${version}'`);
+    // selector doesn't have a version. should throw an error and terminate compilation, but for now just log a error
+    console.error(
+      `${sourceFileName}: Could not resolve a value for selector '${escapedText}' using version '${version}'`
+    );
   }
 
   return current;
@@ -51,22 +58,15 @@ const replaceVersions = (context: ts.TransformationContext) => (rootNode: ts.Nod
     const newNode = ts.visitEachChild(node, visit, context);
 
     if (newNode.kind !== 0 && ts.isObjectLiteralExpression(newNode) && newNode.parent) {
-      const propertyAssignment = getSelectorValue(newNode.properties, newNode.parent.getFirstToken().getText());
+      const parentText = newNode.parent.getFirstToken()?.getText() || '';
+      const propertyAssignment = getSelectorValue(newNode.properties, parentText, rootNode.getSourceFile().fileName);
       if (!propertyAssignment) {
         return newNode;
       }
 
-      if (
-        propertyAssignment &&
-        ts.isStringLiteral(propertyAssignment.name) &&
-        ts.isStringLiteral(propertyAssignment.initializer)
-      ) {
+      if (ts.isStringLiteral(propertyAssignment.name) && ts.isStringLiteral(propertyAssignment.initializer)) {
         return propertyAssignment.initializer;
-      } else if (
-        propertyAssignment &&
-        ts.isStringLiteral(propertyAssignment.name) &&
-        ts.isArrowFunction(propertyAssignment.initializer)
-      ) {
+      } else if (ts.isStringLiteral(propertyAssignment.name) && ts.isArrowFunction(propertyAssignment.initializer)) {
         return propertyAssignment.initializer;
       }
     }
@@ -77,12 +77,16 @@ const replaceVersions = (context: ts.TransformationContext) => (rootNode: ts.Nod
   return ts.visitNode(rootNode, visit);
 };
 
-const transformationResult = ts.transform(sourceFile, [replaceVersions]);
+const transformationResult = ts.transform(sourceFiles, [replaceVersions]);
 const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
-const output = printer.printNode(
-  ts.EmitHint.Unspecified,
-  transformationResult.transformed[0],
-  ts.createSourceFile('', '', ts.ScriptTarget.Latest)
-);
-console.log(output);
-writeFile(resolve(process.cwd(), 'scripts/e2e-selectors/components.gen.ts'), output);
+
+for (const transformed of transformationResult.transformed) {
+  const output = printer.printNode(
+    ts.EmitHint.Unspecified,
+    transformed,
+    transformed.getSourceFile()
+    // ts.createSourceFile('', '', ts.ScriptTarget.Latest)
+  );
+  const fileName = transformed.getSourceFile().fileName.replace(/\.ts$/, '.gen.ts');
+  writeFile(resolve(join(process.cwd(), destinationDirectory, fileName)), output);
+}

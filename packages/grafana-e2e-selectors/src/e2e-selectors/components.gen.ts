@@ -1,3 +1,4 @@
+import { MIN_GRAFANA_VERSION } from './constants';
 export const versionedComponents = {
     TimePicker: {
         openButton: 'data-testid TimePicker Open Button',
@@ -54,7 +55,7 @@ export const versionedComponents = {
         },
     },
     RefreshPicker: {
-        runButtonV2: 'data-testid RefreshPicker run button',
+        runButtonV2: 'RefreshPicker run button',
     },
     QueryTab: {
         addQuery: 'data-testid query-tab-add-query',
@@ -84,7 +85,10 @@ export const versionedComponents = {
     PageToolbar: {
         item: (tooltip: string) => `${tooltip}`,
         showMoreItems: 'Show more items',
-        itemButton: (title: string) => `data-testid ${title}`,
+        itemButton: {
+            //did not exist prior to 9.5.0
+            ['9.5.0']: (title: string) => `data-testid ${title}`,
+        },
         itemButtonTitle: 'Add button',
     },
     QueryEditorToolbarItem: {
