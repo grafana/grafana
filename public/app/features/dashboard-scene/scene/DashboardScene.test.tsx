@@ -197,11 +197,12 @@ describe('DashboardScene', () => {
         expect(resoredLayout.state.children.map((c) => c.state.key)).toEqual(originalPanelOrder);
       });
 
-      it('Should exit edit mode and discard panel changes if leaving the dashboard while in panel edit', () => {
+      it('Should exit edit mode and discard panel changes if leaving the dashboard while in panel edit', async () => {
         const panel = findVizPanelByKey(scene, 'panel-1')!;
         const editPanel = buildPanelEditScene(panel!);
 
         scene.setState({ editPanel });
+
         panel.setState({ title: 'new title' });
 
         scene.exitEditMode({ skipConfirm: true });

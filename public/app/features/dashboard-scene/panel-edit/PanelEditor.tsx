@@ -59,6 +59,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public constructor(state: PanelEditorState) {
     super(state);
+
+    this.setOriginalState(this.state.panelRef);
     this.addActivationHandler(this._activationHandler.bind(this));
   }
 
