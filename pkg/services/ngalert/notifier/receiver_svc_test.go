@@ -825,7 +825,8 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 		permissions map[string][]string
 		existing    []models.Receiver
 
-		visible []models.Receiver
+		visible                 []models.Receiver
+		visibleWithProvisioning []models.Receiver
 	}{
 		{
 			name:     "not authorized without permissions",
@@ -874,6 +875,20 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			existing: allReceivers(),
 			visible:  []models.Receiver{recv1, recv3},
 		},
+		{
+			name:                    "provisioning read applies to only provisioning",
+			permissions:             map[string][]string{accesscontrol.ActionAlertingProvisioningRead: nil},
+			existing:                allReceivers(),
+			visible:                 nil,
+			visibleWithProvisioning: allReceivers(),
+		},
+		{
+			name:                    "provisioning read secrets applies to only provisioning",
+			permissions:             map[string][]string{accesscontrol.ActionAlertingProvisioningReadSecrets: nil},
+			existing:                allReceivers(),
+			visible:                 nil,
+			visibleWithProvisioning: allReceivers(),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -900,6 +915,28 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			for _, recv := range allReceivers() {
 				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
 				if isVisible(recv.UID) {
+					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
+					assert.NotNil(t, response)
+				} else {
+					assert.ErrorIsf(t, err, ac.ErrAuthorizationBase, "receiver '%s' should not be visible, but is", recv.Name)
+				}
+			}
+
+			isVisibleInProvisioning := func(uid string) bool {
+				if tc.visibleWithProvisioning == nil {
+					return isVisible(uid)
+				}
+				for _, recv := range tc.visibleWithProvisioning {
+					if recv.UID == uid {
+						return true
+					}
+				}
+				return false
+			}
+			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true)
+			for _, recv := range allReceivers() {
+				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
+				if isVisibleInProvisioning(recv.UID) {
 					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
 					assert.NotNil(t, response)
 				} else {
@@ -933,14 +970,14 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 			hasAccess: nil,
 		},
 		{
-			name:        "global legacy permissions - not authorized without read",
+			name:        "global legacy permissions - authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil},
-			hasAccess:   nil,
+			hasAccess:   allReceivers(),
 		},
 		{
-			name:        "receivers permissions - not authorized without read",
+			name:        "receivers permissions - authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: nil},
-			hasAccess:   nil,
+			hasAccess:   allReceivers(),
 		},
 		{
 			name:        "global legacy permissions - create all",
