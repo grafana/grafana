@@ -3,8 +3,6 @@ import { isEmpty, pick } from 'lodash';
 import { Observable } from 'rxjs';
 
 import {
-  DataQuery,
-  DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -408,7 +406,7 @@ class MockDataSourceApi extends DataSourceApi {
     super(instanceSettings);
   }
 
-  query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
+  query(): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
     throw new Error('Method not implemented.');
   }
   testDatasource(): Promise<TestDataSourceResponse> {
@@ -711,7 +709,7 @@ export const grantUserPermissions = (permissions: AccessControlAction[]) => {
     .mockImplementation((action) => permissions.includes(action as AccessControlAction));
 };
 
-export const grantUserRole = (role: string) => {
+export const grantUserRole = () => {
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 };
 

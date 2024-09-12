@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { ExploreUrlState, GrafanaTheme2, serializeStateToUrlParam, toURLRange } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, toURLRange } from '@grafana/data';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -128,7 +128,7 @@ export class InsightsMenuButton extends SceneObjectBase<InsightsMenuButtonState>
   static Component = InsightsMenuButtonRenderer;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   buttonsContainer: css({
     display: 'flex',
     flexDirection: 'row',

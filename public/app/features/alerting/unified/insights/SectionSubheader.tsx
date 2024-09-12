@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { DataSourceInformation } from '../home/Insights';
@@ -22,7 +21,7 @@ export function SectionSubheader({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   container: css({
     display: 'flex',
     flexDirection: 'row',

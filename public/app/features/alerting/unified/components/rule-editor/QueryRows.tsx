@@ -196,7 +196,6 @@ export class QueryRows extends PureComponent<Props> {
                         key={query.refId}
                         dsSettings={dsSettings}
                         data={data}
-                        error={error}
                         query={query}
                         onChangeQuery={this.onChangeQuery}
                         onRemoveQuery={this.onRemoveQuery}

@@ -176,7 +176,7 @@ function logRecordsToDataFrame(instanceLabels: string, records: LogRecord[]): Da
       {
         name: instanceLabels,
         type: FieldType.number,
-        values: timeField.values.map((record) => 1),
+        values: timeField.values.map(() => 1),
         config: {},
       },
     ],

@@ -26,10 +26,6 @@ import { Spacer } from '../Spacer';
 
 const VERSIONS_PAGE_SIZE = 30;
 
-interface AlertmanagerConfigurationVersionManagerProps {
-  alertmanagerName: string;
-}
-
 type Diff = {
   added: number;
   removed: number;
@@ -45,9 +41,7 @@ interface ConfigWithDiff extends AlertManagerCortexConfig {
   diff: Diff;
 }
 
-const AlertmanagerConfigurationVersionManager = ({
-  alertmanagerName,
-}: AlertmanagerConfigurationVersionManagerProps) => {
+const AlertmanagerConfigurationVersionManager = () => {
   // we'll track the ID of the version we want to restore
   const [activeRestoreVersion, setActiveRestoreVersion] = useState<number | undefined>(undefined);
   const [confirmRestore, setConfirmRestore] = useState(false);

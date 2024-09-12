@@ -104,7 +104,7 @@ export function formValuesToCloudReceiver(
   const recv: AlertmanagerReceiver = {
     name: values.name,
   };
-  values.items.forEach(({ __id, type, settings, sendResolved }) => {
+  values.items.forEach(({ type, settings, sendResolved }) => {
     const channel = omitEmptyValues({
       ...omitTemporaryIdentifiers(settings),
       send_resolved: sendResolved ?? defaults.sendResolved,

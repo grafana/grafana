@@ -25,7 +25,6 @@ export const PopupCard = ({
   content,
   footer,
   arrow,
-  showAfter = 300,
   wrapperClassName,
   disabled = false,
   showOn = 'hover',
