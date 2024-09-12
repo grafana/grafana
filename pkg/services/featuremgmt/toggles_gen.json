@@ -907,6 +907,19 @@
     },
     {
       "metadata": {
+        "name": "datasourceAPIServers",
+        "resourceVersion": "1726126360379",
+        "creationTimestamp": "2024-09-12T07:32:40Z"
+      },
+      "spec": {
+        "description": "Expose some datasources as apiservers.  NOTE using grafanaAPIServerWithExperimentalAPIs will expose all of them",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceProxyDisableRBAC",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-05-21T13:05:16Z",
