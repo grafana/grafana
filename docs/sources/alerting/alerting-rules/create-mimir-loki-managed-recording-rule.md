@@ -35,6 +35,8 @@ refs:
 In Grafana Cloud, you can only create data source-managed recording rules.
 
 In Grafana OSS, you can create both Grafana-managed and data source-managed recording rules if you enable the `grafanaManagedRecordingRules` feature flag.
+
+For more information on enabling feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/)
 {{< /admonition >}}
 
 Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
@@ -110,6 +112,8 @@ If you are using Grafana OSS, enable the `grafanaManagedRecordingRules` feature 
 #### Enter a recording rule and metric name
 
 Enter a names to identify your recording rule and metric. The metric name must be a Prometheus metric name and contain no whitespace.
+
+For more information, refer to [Metrics and labels](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
 #### Define recording rule
 
