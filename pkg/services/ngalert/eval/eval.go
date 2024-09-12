@@ -705,8 +705,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		}
 
 		// The query service returns instant vectors from prometheus as scalars. We need to handle them accordingly.
-		if isScalarInstantVector(f) {
-			val := f.Fields[1].At(0).(*float64)
+		if val, ok := scalarInstantVector(f); ok {
 			r := buildResult(f, val, ts)
 			evalResults = append(evalResults, r)
 			continue
@@ -789,17 +788,18 @@ func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
 	return r
 }
 
-func isScalarInstantVector(f *data.Frame) bool {
+func scalarInstantVector(f *data.Frame) (*float64, bool) {
+	defaultReturnValue := 0.0
 	if len(f.Fields) != 2 {
-		return false
+		return &defaultReturnValue, false
 	}
 	if f.Fields[0].Len() > 1 || (f.Fields[0].Type() != data.FieldTypeNullableTime && f.Fields[0].Type() != data.FieldTypeTime) {
-		return false
+		return &defaultReturnValue, false
 	}
 	if f.Fields[1].Len() > 1 || f.Fields[1].Type() != data.FieldTypeNullableFloat64 {
-		return false
+		return &defaultReturnValue, false
 	}
-	return true
+	return f.Fields[1].At(0).(*float64), true
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
