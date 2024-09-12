@@ -45,7 +45,7 @@ func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*
 	}
 
 	if err := ss.decryptToken(ctx, &cm); err != nil {
-		return &cm, err
+		return nil, fmt.Errorf("decrypting token: %w", err)
 	}
 
 	return &cm, err
@@ -69,7 +69,7 @@ func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr cloudmigration.C
 
 func (ss *sqlStore) CreateMigrationSession(ctx context.Context, migration cloudmigration.CloudMigrationSession) (*cloudmigration.CloudMigrationSession, error) {
 	if err := ss.encryptToken(ctx, &migration); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("encrypting token: %w", err)
 	}
 
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -101,8 +101,9 @@ func (ss *sqlStore) GetCloudMigrationSessionList(ctx context.Context) ([]*cloudm
 
 	for i := 0; i < len(migrations); i++ {
 		m := migrations[i]
+
 		if err := ss.decryptToken(ctx, m); err != nil {
-			return migrations, err
+			return nil, fmt.Errorf("decrypting token: %w", err)
 		}
 	}
 
@@ -169,7 +170,7 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string)
 	}
 
 	if err := ss.decryptToken(ctx, &c); err != nil {
-		return &c, snapshots, err
+		return nil, nil, fmt.Errorf("decrypting token: %w", err)
 	}
 
 	return &c, snapshots, nil
@@ -474,6 +475,14 @@ func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 }
 
 func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMigrationSession) error {
+	if cm == nil {
+		return cloudmigration.ErrMigrationNotFound
+	}
+
+	if len(cm.AuthToken) == 0 {
+		return cloudmigration.ErrTokenNotFound
+	}
+
 	decoded, err := base64.StdEncoding.DecodeString(cm.AuthToken)
 	if err != nil {
 		return fmt.Errorf("token could not be decoded")
@@ -483,6 +492,7 @@ func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 	if err != nil {
 		return fmt.Errorf("decrypting auth token: %w", err)
 	}
+
 	cm.AuthToken = string(t)
 
 	return nil

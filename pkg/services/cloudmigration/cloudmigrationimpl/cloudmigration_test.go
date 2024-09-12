@@ -137,8 +137,15 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	s.gmsClient = gmsClientMock
 
 	// Insert a session and snapshot into the database before we start
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{})
+	createTokenResp, err := s.CreateToken(context.Background())
+	assert.NoError(t, err)
+	assert.NotEmpty(t, createTokenResp.Token)
+
+	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
+		AuthToken: createTokenResp.Token,
+	})
 	require.NoError(t, err)
+
 	uid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 		UID:            "test uid",
 		SessionUID:     sess.UID,
@@ -306,8 +313,15 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	s.gmsClient = gmsClientMock
 
 	// Insert a snapshot into the database before we start
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{})
+	createTokenResp, err := s.CreateToken(context.Background())
+	assert.NoError(t, err)
+	assert.NotEmpty(t, createTokenResp.Token)
+
+	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
+		AuthToken: createTokenResp.Token,
+	})
 	require.NoError(t, err)
+
 	uid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 		UID:            uuid.NewString(),
 		SessionUID:     sess.UID,
@@ -416,7 +430,13 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
 
 	// Insert a processing snapshot into the database before we start so we query GMS
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{})
+	createTokenResp, err := s.CreateToken(context.Background())
+	assert.NoError(t, err)
+	assert.NotEmpty(t, createTokenResp.Token)
+
+	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
+		AuthToken: createTokenResp.Token,
+	})
 	require.NoError(t, err)
 	snapshotUid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 		UID:            uuid.NewString(),
