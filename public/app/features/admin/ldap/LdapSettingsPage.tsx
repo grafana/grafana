@@ -210,7 +210,7 @@ export const LdapSettingsPage = () => {
   const saveForm = () => {
     putPayload(getValues());
   };
-  const discardForm = async () => {
+  const deleteLDAPConfig = async () => {
     try {
       setIsLoading(true);
       await getBackendSrv().delete('/api/v1/sso-settings/ldap');
@@ -325,10 +325,10 @@ export const LdapSettingsPage = () => {
                     id="search-base-dns"
                     allowCustomValue
                     onChange={(v) => {
-                      console.log(v)
+                      console.log(v);
                       setValue(
                         `${serverConfig}.search_base_dns`,
-                        v.filter(v => typeof v.value === 'string').map(({value}) => value as string)
+                        v.filter((v) => typeof v.value === 'string').map(({ value }) => value as string)
                       );
                     }}
                     value={watch(`${serverConfig}.search_base_dns`, []).map((v) => ({
@@ -368,7 +368,7 @@ export const LdapSettingsPage = () => {
                     <Dropdown
                       overlay={
                         <Menu>
-                          <Menu.Item label="Reset to default values" icon="history-alt" onClick={discardForm} />
+                          <Menu.Item label="Reset to default values" icon="history-alt" onClick={deleteLDAPConfig} />
                         </Menu>
                       }
                       placement="bottom-start"
