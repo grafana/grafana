@@ -786,6 +786,26 @@ func TestIntegrationPatch(t *testing.T) {
 	})
 }
 
+func TestIntegrationRejectConfigApiReceiverModification(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := getTestHelper(t)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	// This config has new and modified receivers.
+	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
+	require.NoError(t, err)
+	var amConfig definitions.PostableUserConfig
+	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Falsef(t, success, "Expected receiver modification to be rejected, but got %s", err)
+}
+
 func TestIntegrationReferentialIntegrity(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -802,11 +822,36 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
+
 	// Prepare environment and create notification policy and rule that use time receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	// First we create the receiver with the new API as the legacy API does not support receiver modification anymore.
+	idx := slices.IndexFunc(amConfig.AlertmanagerConfig.Receivers, func(rcv *definitions.PostableApiReceiver) bool {
+		return rcv.Name == "user-defined"
+	})
+	receiverToCreate := amConfig.AlertmanagerConfig.Receivers[idx]
+	created, err := adminClient.Create(ctx, &v0alpha1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.ReceiverSpec{
+			Title: receiverToCreate.Name,
+			Integrations: []v0alpha1.Integration{
+				createIntegrationWithSettings(t, receiverToCreate.GrafanaManagedReceivers[0].Type, string(receiverToCreate.GrafanaManagedReceivers[0].Settings)),
+			},
+		},
+	}, v1.CreateOptions{})
+	require.NoError(t, err)
+
+	receiverToCreate.GrafanaManagedReceivers[0].UID = *created.Spec.Integrations[0].Uid
+	receiverToCreate.GrafanaManagedReceivers[0].Name = created.Spec.Title
 
 	success, err := legacyCli.PostConfiguration(t, amConfig)
 	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
@@ -821,14 +866,10 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
 	receivers, err := adminClient.List(ctx, v1.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, receivers.Items, 2)
-	idx := slices.IndexFunc(receivers.Items, func(interval v0alpha1.Receiver) bool {
+	idx = slices.IndexFunc(receivers.Items, func(interval v0alpha1.Receiver) bool {
 		return interval.Spec.Title == "user-defined"
 	})
 	receiver := receivers.Items[idx]
@@ -1174,11 +1215,14 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
+	return createIntegrationWithSettings(t, integrationType, cfg.Config)
+}
+func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.Integration {
 	settings := common.Unstructured{}
-	require.NoError(t, settings.UnmarshalJSON([]byte(cfg.Config)))
+	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
 	return v0alpha1.Integration{
 		Settings:              settings,
-		Type:                  cfg.NotifierType,
+		Type:                  integrationType,
 		DisableResolveMessage: util.Pointer(false),
 	}
 }
