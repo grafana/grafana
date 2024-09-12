@@ -52,10 +52,10 @@ export default function CreatePublicSharing({ hasError }: { hasError: boolean })
             />
           </div>
           <Stack direction="row" gap={1} alignItems="center">
-            <Button type="submit" disabled={!isValid} data-testid={selectors.createButton}>
+            <Button type="submit" disabled={!isValid} data-testid={selectors.PublicShare.createButton}>
               <Trans i18nKey="public-dashboard.public-sharing.accept-button">Accept</Trans>
             </Button>
-            <Button variant="secondary" onClick={onDismiss}>
+            <Button variant="secondary" onClick={onDismiss} data-testid={selectors.PublicShare.cancelButton}>
               <Trans i18nKey="public-dashboard.public-sharing.cancel-button">Cancel</Trans>
             </Button>
             {isLoading && <Spinner />}

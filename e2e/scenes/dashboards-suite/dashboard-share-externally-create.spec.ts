@@ -5,6 +5,23 @@ describe('Shared dashboards', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
+  it('Close share externally drawer', () => {
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
+    openDashboard();
+    cy.wait('@query');
+
+    // Open share externally drawer
+    e2e.pages.Dashboard.DashNav.newShareButton.arrowMenu().click();
+    e2e.pages.Dashboard.DashNav.newShareButton.menu.shareExternally().click();
+
+    e2e.pages.ShareDashboardDrawer.ShareExternally.container().should('be.visible');
+    e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.PublicShare.cancelButton().click();
+
+    e2e.pages.ShareDashboardDrawer.ShareExternally.container().should('not.exist');
+  });
+
   it('Create a shared dashboard', () => {
     // Opening a dashboard without template variables
     cy.intercept({
@@ -18,7 +35,7 @@ describe('Shared dashboards', () => {
     e2e.pages.Dashboard.DashNav.newShareButton.menu.shareExternally().click();
 
     // Create button should be disabled
-    e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.createButton().should('be.disabled');
+    e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.PublicShare.createButton().should('be.disabled');
 
     // Create flow shouldn't show these elements
     e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.enableTimeRangeSwitch().should('not.exist');
@@ -35,12 +52,12 @@ describe('Shared dashboards', () => {
 
     // Create shared dashboard
     cy.intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('save');
-    e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.createButton().should('be.enabled').click();
+    e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.PublicShare.createButton().should('be.enabled').click();
     cy.wait('@save');
 
     // These elements shouldn't be rendered after creating public dashboard
     e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.willBePublicCheckbox().should('not.exist');
-    e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.createButton().should('not.exist');
+    e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.PublicShare.createButton().should('not.exist');
 
     // These elements should be rendered
     e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.enableTimeRangeSwitch().should('exist');

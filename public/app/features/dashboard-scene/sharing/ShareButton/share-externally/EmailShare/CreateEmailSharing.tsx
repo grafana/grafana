@@ -13,6 +13,9 @@ import { AccessControlAction } from 'app/types';
 
 import { EmailSharingPricingAlert } from '../../../../../dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/EmailSharingPricingAlert';
 import { useShareDrawerContext } from '../../../ShareDrawer/ShareDrawerContext';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+
+const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally.Creation;
 
 export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
   const { dashboard, onDismiss } = useShareDrawerContext();
@@ -46,10 +49,10 @@ export const CreateEmailSharing = ({ hasError }: { hasError: boolean }) => {
             />
           </div>
           <Stack direction="row" gap={1} alignItems="center">
-            <Button type="submit" disabled={!isValid}>
+            <Button type="submit" disabled={!isValid} data-testid={selectors.EmailShare.createButton}>
               <Trans i18nKey="public-dashboard.email-sharing.accept-button">Accept</Trans>
             </Button>
-            <Button variant="secondary" onClick={onDismiss}>
+            <Button variant="secondary" onClick={onDismiss} data-testid={selectors.EmailShare.cancelButton}>
               <Trans i18nKey="public-dashboard.email-sharing.cancel-button">Cancel</Trans>
             </Button>
             {isLoading && <Spinner />}

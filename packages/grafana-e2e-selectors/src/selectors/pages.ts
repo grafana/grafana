@@ -287,13 +287,26 @@ export const Pages = {
     },
   },
   ShareDashboardDrawer: {
+    ShareInternally: {
+      container: 'data-testid share internally drawer container',
+      lockTimeRangeSwitch: 'data-testid share internally lock time range switch',
+      shortenUrlSwitch: 'data-testid share internally shorten url switch',
+      copyUrlButton: 'data-testid share internally copy url button',
+    },
     ShareExternally: {
       container: 'data-testid share externally drawer container',
       publicAlert: 'data-testid public share alert',
       emailSharingAlert: 'data-testid email share alert',
       shareTypeSelect: 'data-testid share externally share type select',
       Creation: {
-        createButton: 'data-testid share dashboard create button',
+        PublicShare: {
+          createButton: 'data-testid public share dashboard create button',
+          cancelButton: 'data-testid public share dashboard cancel button',
+        },
+        EmailShare: {
+          createButton: 'data-testid email share dashboard create button',
+          cancelButton: 'data-testid email share dashboard cancel button',
+        },
         willBePublicCheckbox: 'data-testid share dashboard will be public checkbox',
       },
       Configuration: {
