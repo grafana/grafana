@@ -186,14 +186,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     const panel = this.state.panelRef.resolve();
 
-    // Revert VizPanel changes
-    panel.setState(this._originalState!);
-
-    // Rrevert any layout element changes
-    this._layoutElement.setState(this._originalLayoutElementState!);
-
     if (this.state.isNewPanel) {
       getDashboardSceneFor(this).removePanel(panel);
+    } else {
+      // Revert VizPanel changes
+      panel.setState(this._originalState!);
+
+      // Rrevert any layout element changes
+      this._layoutElement.setState(this._originalLayoutElementState!);
     }
 
     // this._discardChanges = true;
