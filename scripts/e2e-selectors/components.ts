@@ -1,7 +1,8 @@
 export const components = {
   Menu: {
     MenuComponent: {
-      '9.0.0': (title: string) => `${title} menu`,
+      '9.0.0': (title: string) => `${title} menu2`,
+      '8.5.0': (title: string) => `${title} menu1`,
     },
     MenuGroup: {
       '8.5.0': (title: string) => `${title} menu group`,
