@@ -82,11 +82,11 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                   interactionElementId="panel-options"
                 >
                   <Card.Heading>
-                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-heading">Angular panel options </Trans>
+                    <Trans i18nKey="dashboards.panel-edit.angular-deprecation-heading">Panel options</Trans>
                   </Card.Heading>
                   <Card.Description>
                     <Trans i18nKey="dashboards.panel-edit.angular-deprecation-description">
-                      To modify the panel options, use the Panel JSON editor.
+                      Angular panels options can only be edited using the JSON editor.
                     </Trans>
                   </Card.Description>
                   <Card.Actions>
