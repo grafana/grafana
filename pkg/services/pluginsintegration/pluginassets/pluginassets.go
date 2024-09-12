@@ -46,16 +46,23 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 		}
 	}
 
-	// If the plugin has a parent, check the parent's create_plugin_version setting
+	// If the plugin has a parent
 	if p.Parent != nil {
+		// Check the parent's create_plugin_version setting
 		if pCfg, ok := s.cfg.PluginSettings[p.Parent.ID]; ok {
 			if s.compatibleCreatePluginVersion(pCfg) {
 				return plugins.LoadingStrategyScript
 			}
 		}
+
+		// Since the parent plugin is not explicitly configured as script loading compatible,
+		// If the plugin is either loaded from the CDN (via its parent) or contains Angular, we should use fetch
+		if s.cdnEnabled(p.Parent.ID, p.Class) || p.Angular.Detected {
+			return plugins.LoadingStrategyFetch
+		}
 	}
 
-	if !s.cndEnabled(p) && !p.Angular.Detected {
+	if !s.cdnEnabled(p.ID, p.Class) && !p.Angular.Detected {
 		return plugins.LoadingStrategyScript
 	}
 
@@ -76,6 +83,6 @@ func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
 	return false
 }
 
-func (s *Service) cndEnabled(p pluginstore.Plugin) bool {
-	return s.cdn.PluginSupported(p.ID) || p.Class == plugins.ClassCDN
+func (s *Service) cdnEnabled(pluginID string, class plugins.Class) bool {
+	return s.cdn.PluginSupported(pluginID) || class == plugins.ClassCDN
 }
