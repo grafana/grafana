@@ -1,10 +1,12 @@
 import { readFileSync } from 'fs';
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'path';
+import path = require('path');
 import * as semver from 'semver';
 import * as ts from 'typescript';
 
-export interface TransformerOptions {}
+const packageJson = JSON.parse(readFileSync(path.join(process.cwd(), 'package.json')).toString());
+const version = packageJson.version.replace(/\-.*/, '');
 
 const entry = resolve(process.cwd(), 'scripts/e2e-selectors/components2.ts');
 const sourceFile = ts.createSourceFile(
@@ -14,11 +16,9 @@ const sourceFile = ts.createSourceFile(
   /*setParentNodes */ true
 );
 
-const version = '11.3.0';
-
-const getInitializedForVersion = (
+const getSelectorValue = (
   properties: ts.NodeArray<ts.ObjectLiteralElementLike>,
-  escapedText: ts.__String
+  escapedText: string
 ): ts.PropertyAssignment => {
   let current: ts.PropertyAssignment;
   for (const property of properties) {
@@ -34,7 +34,7 @@ const getInitializedForVersion = (
           current = property;
         }
       } catch (error) {
-        console.error('Could not parse version', property.name.text);
+        console.error(`Error parsing semver: ${property.name.text}`);
       }
     }
   }
@@ -49,8 +49,9 @@ const getInitializedForVersion = (
 const replaceVersions = (context: ts.TransformationContext) => (rootNode: ts.Node) => {
   const visit = (node: ts.Node): ts.Node => {
     const newNode = ts.visitEachChild(node, visit, context);
-    if (ts.isObjectLiteralExpression(newNode) && ts.isIdentifier(newNode.parent)) {
-      const propertyAssignment = getInitializedForVersion(newNode.properties, newNode.parent.escapedText);
+
+    if (newNode.kind !== 0 && ts.isObjectLiteralExpression(newNode) && newNode.parent) {
+      const propertyAssignment = getSelectorValue(newNode.properties, newNode.parent.getFirstToken().getText());
       if (!propertyAssignment) {
         return newNode;
       }
