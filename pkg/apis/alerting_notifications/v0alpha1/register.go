@@ -106,6 +106,22 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		return err
 	}
 
+	err = scheme.AddFieldLabelConversionFunc(
+		ReceiverResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			fieldSet := SelectableReceiverFields(&Receiver{})
+			for key := range fieldSet {
+				if label == key {
+					return label, value, nil
+				}
+			}
+			return "", "", fmt.Errorf("field label not supported for %s: %s", scope.ScopeNodeResourceInfo.GroupVersionKind(), label)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -116,6 +132,16 @@ func SelectableTimeIntervalsFields(obj *TimeInterval) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
 		"metadata.provenance": obj.GetProvenanceStatus(),
 		"spec.name":           obj.Spec.Name,
+	})
+}
+
+func SelectableReceiverFields(obj *Receiver) fields.Set {
+	if obj == nil {
+		return nil
+	}
+	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
+		"metadata.provenance": obj.GetProvenanceStatus(),
+		"spec.title":          obj.Spec.Title,
 	})
 }
 
