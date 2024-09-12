@@ -458,5 +458,9 @@ export function isPluginUpdateable(plugin: CatalogPlugin) {
   }
 
   // Managed plugins cannot be updated
-  return !plugin.isManaged;
+  if (plugin.isManaged) {
+    return false;
+  }
+
+  return true;
 }
