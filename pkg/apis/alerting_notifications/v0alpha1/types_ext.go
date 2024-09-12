@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	"fmt"
-	"strings"
 )
 
 const InternalPrefix = "grafana.com/"
@@ -69,7 +68,7 @@ func (o *Receiver) SetInUse(routesCnt int, rules []string) {
 		o.Annotations = make(map[string]string, 2)
 	}
 	o.Annotations[InUseAnnotation("routes")] = fmt.Sprintf("%d", routesCnt)
-	o.Annotations[InUseAnnotation("rules")] = strings.Join(rules, ",")
+	o.Annotations[InUseAnnotation("rules")] = fmt.Sprintf("%d", len(rules))
 }
 
 // InUseAnnotation returns the key for the in-use annotation for the given resource.
