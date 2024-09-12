@@ -40,7 +40,7 @@ Searching by dashboard name from the **Dashboards** page.
 
 {{< figure src="/static/img/docs/v91/dashboard-features/search-by-dashboard-name.png" width="700px" >}}
 
-2. Searching by folder name from the Dashboards page.
+Searching by folder name from the **Dashboards** page.
 
 {{< figure src="/media/docs/grafana/dashboards/search-folder-by-name.png" width="700px" >}}
 
