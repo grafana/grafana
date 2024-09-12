@@ -7,15 +7,6 @@ describe('Export as JSON', () => {
   });
 
   it('Export for internal and external use', () => {
-    cy.wrap(
-      Cypress.automation('remote:debugger:protocol', {
-        command: 'Browser.grantPermissions',
-        params: {
-          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
-          origin: window.location.origin,
-        },
-      })
-    );
     // Opening a dashboard
     cy.intercept({
       pathname: '/api/ds/query',
@@ -25,6 +16,16 @@ describe('Export as JSON', () => {
       queryParams: { '__feature.scenes': true, '__feature.newDashboardSharingComponent': true },
     });
     cy.wait('@query');
+
+    cy.wrap(
+      Cypress.automation('remote:debugger:protocol', {
+        command: 'Browser.grantPermissions',
+        params: {
+          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+          origin: window.location.origin,
+        },
+      })
+    );
 
     // Open the export drawer
     e2e.pages.Dashboard.DashNav.NewExportButton.arrowMenu().click();

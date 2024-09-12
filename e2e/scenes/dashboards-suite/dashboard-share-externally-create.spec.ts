@@ -62,6 +62,8 @@ describe('Shared dashboards', () => {
   });
 
   it('Open a shared dashboard', () => {
+    openDashboard();
+
     cy.wrap(
       Cypress.automation('remote:debugger:protocol', {
         command: 'Browser.grantPermissions',
@@ -71,9 +73,6 @@ describe('Shared dashboards', () => {
         },
       })
     );
-    // Opening a dashboard without template variables
-
-    openDashboard();
 
     // Tag indicating a dashboard is public
     e2e.pages.Dashboard.DashNav.publicDashboardTag().should('exist');
@@ -103,6 +102,8 @@ describe('Shared dashboards', () => {
   });
 
   it('Disable a shared dashboard', () => {
+    openDashboard();
+
     cy.wrap(
       Cypress.automation('remote:debugger:protocol', {
         command: 'Browser.grantPermissions',
@@ -112,8 +113,6 @@ describe('Shared dashboards', () => {
         },
       })
     );
-    // Opening a dashboard without template variables
-    openDashboard();
 
     // Open share externally drawer
     e2e.pages.Dashboard.DashNav.newShareButton.arrowMenu().click();

@@ -7,15 +7,6 @@ describe('Snapshots', () => {
   });
 
   it('Create a snapshot dashboard', () => {
-    cy.wrap(
-      Cypress.automation('remote:debugger:protocol', {
-        command: 'Browser.grantPermissions',
-        params: {
-          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
-          origin: window.location.origin,
-        },
-      })
-    );
     // Opening a dashboard
     cy.intercept({
       pathname: '/api/ds/query',
@@ -25,6 +16,16 @@ describe('Snapshots', () => {
       queryParams: { '__feature.scenes': true, '__feature.newDashboardSharingComponent': true },
     });
     cy.wait('@query');
+
+    cy.wrap(
+      Cypress.automation('remote:debugger:protocol', {
+        command: 'Browser.grantPermissions',
+        params: {
+          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+          origin: window.location.origin,
+        },
+      })
+    );
 
     const panelsToCheck = [
       'Raw Data Graph',

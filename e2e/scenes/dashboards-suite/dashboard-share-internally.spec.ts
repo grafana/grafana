@@ -11,6 +11,12 @@ describe('Share internally', () => {
   });
 
   it('Create a customized link', () => {
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
+    openDashboard();
+    cy.wait('@query');
+
     cy.wrap(
       Cypress.automation('remote:debugger:protocol', {
         command: 'Browser.grantPermissions',
@@ -20,12 +26,6 @@ describe('Share internally', () => {
         },
       })
     );
-
-    cy.intercept({
-      pathname: '/api/ds/query',
-    }).as('query');
-    openDashboard();
-    cy.wait('@query');
 
     // Open share externally drawer
     e2e.pages.Dashboard.DashNav.newShareButton.arrowMenu().click();
@@ -85,6 +85,12 @@ describe('Share internally', () => {
   });
 
   it('Share button gets configured link', () => {
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
+    openDashboard();
+    cy.wait('@query');
+
     cy.wrap(
       Cypress.automation('remote:debugger:protocol', {
         command: 'Browser.grantPermissions',
@@ -94,12 +100,6 @@ describe('Share internally', () => {
         },
       })
     );
-
-    cy.intercept({
-      pathname: '/api/ds/query',
-    }).as('query');
-    openDashboard();
-    cy.wait('@query');
 
     e2e.pages.Dashboard.DashNav.newShareButton
       .shareLink()
