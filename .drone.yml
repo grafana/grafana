@@ -5214,7 +5214,7 @@ name: gar
 ---
 get:
   name: pat
-  path: infra/data/ci/github/grafanabot
+  path: ci/data/repo/grafana/grafana/grafanabot
 kind: secret
 name: github_token
 ---
@@ -5381,6 +5381,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f849714663e8601fb31344bfb7550c5a4fc77c66ce4176c79bbd40179b678055
+hmac: bd7d2b32723a2da2c19a372046ed8d3ff6ba9439db0b18be435175c931bfaf4f
 
 ...
