@@ -1,15 +1,21 @@
 package ossaccesscontrol
 
 import (
+	"context"
+
+	"github.com/grafana/authlib/claims"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -99,16 +105,46 @@ func ProvideReceiverPermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &ReceiverPermissionsService{srv, service}, nil
-}
-
-func (r ReceiverPermissionsService) ClearUserPermissionCache(user identity.Requester) {
-	r.ac.ClearUserPermissionCache(user)
+	return &ReceiverPermissionsService{srv, service, log.New("resourcepermissions.receivers")}, nil
 }
 
 var _ accesscontrol.ReceiverPermissionsService = new(ReceiverPermissionsService)
 
 type ReceiverPermissionsService struct {
 	*resourcepermissions.Service
-	ac accesscontrol.Service
+	ac  accesscontrol.Service
+	log log.Logger
+}
+
+func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, receiver models.Receiver) {
+	// TODO: Do we need support for cfg.RBAC.PermissionsOnCreation?
+
+	var permissions []accesscontrol.SetResourcePermissionCommand
+	clearCache := false
+	if receiver.Provenance == models.ProvenanceNone && user.IsIdentityType(claims.TypeUser) {
+		userID, err := user.GetInternalID()
+		if err != nil {
+			r.log.Error("Could not make user admin", "receiver", receiver.Name, "id", user.GetID(), "error", err)
+		} else {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+				UserID: userID, Permission: string(alertingac.ReceiverPermissionAdmin),
+			})
+			clearCache = true
+		}
+	}
+
+	permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+		{BuiltinRole: string(org.RoleEditor), Permission: string(alertingac.ReceiverPermissionEdit)},
+		{BuiltinRole: string(org.RoleViewer), Permission: string(alertingac.ReceiverPermissionView)},
+	}...)
+
+	if _, err := r.SetPermissions(ctx, orgID, receiver.UID, permissions...); err != nil {
+		r.log.Error("Could not set default permissions", "receiver", receiver.Name, "error", err)
+	}
+
+	if clearCache {
+		// Clear permission cache for the user who created the receiver, so that new permissions are fetched for their next call
+		// Required for cases when caller wants to immediately interact with the newly created object
+		r.ac.ClearUserPermissionCache(user)
+	}
 }
