@@ -44,7 +44,7 @@ Searching by dashboard name from the **Dashboards** page.
 
 {{< figure src="/media/docs/grafana/dashboards/search-folder-by-name.png" width="700px" >}}
 
-3. Searching by dashboard name inside a folder.
+Searching by dashboard name inside a folder.
 
 {{< figure src="/media/docs/grafana/dashboards/search-dashboard-within-folder.png" width="700px" >}}
 
