@@ -31,14 +31,10 @@ const getSelectorValue = (
       ts.isPropertyAssignment(property) &&
       semver.satisfies(version, `>=${property.name.text.replace(/'/g, '')}`)
     ) {
-      try {
-        if (!current) {
-          current = property;
-        } else if (semver.gt(property.name.text.replace(/'/g, ''), current.name.getText().replace(/'/g, ''))) {
-          current = property;
-        }
-      } catch (error) {
-        console.error(`Error parsing semver: ${property.name.text} - ${current?.name.getText()}`);
+      if (!current) {
+        current = property;
+      } else if (semver.gt(property.name.text.replace(/'/g, ''), current.name.getText().replace(/'/g, ''))) {
+        current = property;
       }
     }
   }
