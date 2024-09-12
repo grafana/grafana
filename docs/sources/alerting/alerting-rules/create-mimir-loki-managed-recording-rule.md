@@ -36,7 +36,7 @@ In Grafana Cloud, you can only create data source-managed recording rules.
 
 In Grafana OSS and Enterprise, you can create both Grafana-managed and data source-managed recording rules if you enable the `grafanaManagedRecordingRules` feature flag.
 
-For more information on enabling feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
+For more information on enabling feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles).
 {{< /admonition >}}
 
 Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
@@ -104,7 +104,7 @@ This feature is only available for Grafana OSS and Enterprise users. It is not a
 
 ### Before you begin
 
-- Enable the `grafanaManagedRecordingRules` [feature flag](<(https://grafana.com/docs/grafana/GRAFANA_VERSION/setup-grafana/configure-grafana/feature-toggles/)>).
+- Enable the `grafanaManagedRecordingRules` [feature flag](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 To configure Grafana-managed recording rules, complete the following steps.
 
