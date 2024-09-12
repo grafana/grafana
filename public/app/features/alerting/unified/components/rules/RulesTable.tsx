@@ -118,9 +118,10 @@ function useLazyLoadRulerRules(rules: CombinedRule[]) {
   const [actions, state] = useAsync(async () => {
     const result = Promise.all(
       rules.map(async (rule) => {
-        const dsFeatures = await fetchDsFeatures({
-          rulesSourceName: getRulesSourceName(rule.namespace.rulesSource),
-        }).unwrap();
+        const dsFeatures = await fetchDsFeatures(
+          { rulesSourceName: getRulesSourceName(rule.namespace.rulesSource) },
+          true
+        ).unwrap();
 
         // Due to lack of ruleUid and folderUid in Prometheus rules we cannot do the lazy load for GMA
         if (dsFeatures.rulerConfig && rule.namespace.rulesSource !== GRAFANA_RULES_SOURCE_NAME) {
@@ -192,7 +193,7 @@ function useColumns(
       {
         id: 'state',
         label: 'State',
-        renderCell: ({ data: rule }) => <RuleStateCell rule={rule} />,
+        renderCell: ({ data: rule }) => <RuleStateCell rule={rule} isLoadingRuler={isRulerLoading} />,
         size: '165px',
       },
       {
@@ -301,15 +302,14 @@ function useColumns(
   }, [showSummaryColumn, showGroupColumn, showNextEvaluationColumn, isRulerLoading]);
 }
 
-function RuleStateCell({ rule }: { rule: CombinedRule }) {
-  const { isDeleting, isCreating, isPaused } = useRuleStatus(rule);
+function RuleStateCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadingRuler: boolean }) {
+  const { isDeleting, isCreating, isPaused } = useRuleStatus(rule, isLoadingRuler);
   return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
 }
 
-// TODO This component itself should load the ruler rule
 function RuleActionsCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadingRuler: boolean }) {
   const styles = useStyles2(getStyles);
-  const { isDeleting, isCreating } = useRuleStatus(rule);
+  const { isDeleting, isCreating } = useRuleStatus(rule, isLoadingRuler);
 
   if (isLoadingRuler) {
     return <Skeleton containerClassName={styles.skeletonWrapper} />;
@@ -325,13 +325,14 @@ function RuleActionsCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadi
   );
 }
 
-function useRuleStatus(rule: CombinedRule) {
+function useRuleStatus(rule: CombinedRule, isLoadingRuler: boolean) {
   const { hasRuler, rulerRulesLoaded } = useHasRuler(rule.namespace.rulesSource);
-
   const { promRule, rulerRule } = rule;
 
-  const isDeleting = Boolean(hasRuler && rulerRulesLoaded && promRule && !rulerRule);
-  const isCreating = Boolean(hasRuler && rulerRulesLoaded && rulerRule && !promRule);
+  const rulerLoaded = prometheusRulesPrimary ? !isLoadingRuler : rulerRulesLoaded;
+
+  const isDeleting = Boolean(hasRuler && rulerLoaded && promRule && !rulerRule);
+  const isCreating = Boolean(hasRuler && rulerLoaded && rulerRule && !promRule);
   const isPaused = isGrafanaRulerRule(rulerRule) && isGrafanaRulerRulePaused(rulerRule);
 
   return { isDeleting, isCreating, isPaused };

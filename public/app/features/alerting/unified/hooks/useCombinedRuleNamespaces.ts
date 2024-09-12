@@ -203,6 +203,9 @@ export function attachRulerRuleToCombinedRule(rule: CombinedRule, rulerGroup: Ru
   const matchingRulerRule = getExistingRuleInGroup(rule.promRule, existingRulerRulesByName, rule.namespace.rulesSource);
   if (matchingRulerRule) {
     rule.rulerRule = matchingRulerRule.rulerRule;
+    rule.query = matchingRulerRule.query;
+    rule.labels = matchingRulerRule.labels;
+    rule.annotations = matchingRulerRule.annotations;
   }
 }
 

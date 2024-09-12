@@ -38,116 +38,113 @@ const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 // TODO: Convert this to a feature toggle
 const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary;
 
-const RuleList = withErrorBoundary(
-  () => {
-    const dispatch = useDispatch();
-    const styles = useStyles2(getStyles);
-    const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
-    const [expandAll, setExpandAll] = useState(false);
+const RuleListV1 = () => {
+  const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
+  const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
+  const [expandAll, setExpandAll] = useState(false);
 
-    const onFilterCleared = useCallback(() => setExpandAll(false), []);
+  const onFilterCleared = useCallback(() => setExpandAll(false), []);
 
-    const [queryParams] = useQueryParams();
-    const { filterState, hasActiveFilters } = useRulesFilter();
+  const [queryParams] = useQueryParams();
+  const { filterState, hasActiveFilters } = useRulesFilter();
 
-    const queryParamView = queryParams.view as keyof typeof VIEWS;
-    const view = VIEWS[queryParamView] ? queryParamView : 'groups';
+  const queryParamView = queryParams.view as keyof typeof VIEWS;
+  const view = VIEWS[queryParamView] ? queryParamView : 'groups';
 
-    const ViewComponent = VIEWS[view];
+  const ViewComponent = VIEWS[view];
 
-    const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
-    const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
+  const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
+  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
-    const loading = rulesDataSourceNames.some(
-      (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
-    );
+  const loading = rulesDataSourceNames.some(
+    (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
+  );
 
-    const promRequests = Object.entries(promRuleRequests);
-    const rulerRequests = Object.entries(rulerRuleRequests);
+  const promRequests = Object.entries(promRuleRequests);
+  const rulerRequests = Object.entries(rulerRuleRequests);
 
-    const allPromLoaded = promRequests.every(
-      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-    );
-    const allRulerLoaded = rulerRequests.every(
-      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-    );
+  const allPromLoaded = promRequests.every(
+    ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
+  );
+  const allRulerLoaded = rulerRequests.every(
+    ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
+  );
 
-    const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
+  const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
 
-    const allRulerEmpty = rulerRequests.every(([_, state]) => {
-      const rulerRules = Object.entries(state?.result ?? {});
-      const noRules = rulerRules.every(([_, result]) => result?.length === 0);
-      return noRules && state.dispatched;
-    });
+  const allRulerEmpty = rulerRequests.every(([_, state]) => {
+    const rulerRules = Object.entries(state?.result ?? {});
+    const noRules = rulerRules.every(([_, result]) => result?.length === 0);
+    return noRules && state.dispatched;
+  });
 
-    const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
-    // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
-    const [_, fetchRules] = useAsyncFn(async () => {
-      if (!loading) {
-        if (prometheusRulesPrimary) {
-          await dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
-          await dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
-        } else {
-          await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
-        }
-      }
-    }, [loading, limitAlerts, dispatch]);
-
-    useEffect(() => {
-      trackRuleListNavigation().catch(() => {});
-    }, []);
-
-    // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
-    useEffect(() => {
+  const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
+  // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
+  const [_, fetchRules] = useAsyncFn(async () => {
+    if (!loading) {
       if (prometheusRulesPrimary) {
-        dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
-        dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
+        await dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+        await dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
       } else {
-        dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+        await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
       }
-    }, [dispatch, limitAlerts]);
-    useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
+    }
+  }, [loading, limitAlerts, dispatch]);
 
-    // Show splash only when we loaded all of the data sources and none of them has alerts
-    const hasNoAlertRulesCreatedYet =
-      allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
-    const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
+  useEffect(() => {
+    trackRuleListNavigation().catch(() => {});
+  }, []);
 
-    const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
-    const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
-    return (
-      // We don't want to show the Loading... indicator for the whole page.
-      // We show separate indicators for Grafana-managed and Cloud rules
-      <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
-        <RuleListErrors />
-        <RulesFilter onFilterCleared={onFilterCleared} />
-        {hasAlertRulesCreated && (
-          <>
-            <div className={styles.break} />
-            <div className={styles.buttonsContainer}>
-              <div className={styles.statsContainer}>
-                {view === 'groups' && hasActiveFilters && (
-                  <Button
-                    className={styles.expandAllButton}
-                    icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
-                    variant="secondary"
-                    onClick={() => setExpandAll(!expandAll)}
-                  >
-                    {expandAll ? 'Collapse all' : 'Expand all'}
-                  </Button>
-                )}
-                <RuleStats namespaces={filteredNamespaces} />
-              </div>
+  // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
+  useEffect(() => {
+    if (prometheusRulesPrimary) {
+      dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+      dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
+    } else {
+      dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
+    }
+  }, [dispatch, limitAlerts]);
+  useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
+
+  // Show splash only when we loaded all of the data sources and none of them has alerts
+  const hasNoAlertRulesCreatedYet =
+    allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
+  const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
+
+  const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
+  const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+  return (
+    // We don't want to show the Loading... indicator for the whole page.
+    // We show separate indicators for Grafana-managed and Cloud rules
+    <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
+      <RuleListErrors />
+      <RulesFilter onFilterCleared={onFilterCleared} />
+      {hasAlertRulesCreated && (
+        <>
+          <div className={styles.break} />
+          <div className={styles.buttonsContainer}>
+            <div className={styles.statsContainer}>
+              {view === 'groups' && hasActiveFilters && (
+                <Button
+                  className={styles.expandAllButton}
+                  icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
+                  variant="secondary"
+                  onClick={() => setExpandAll(!expandAll)}
+                >
+                  {expandAll ? 'Collapse all' : 'Expand all'}
+                </Button>
+              )}
+              <RuleStats namespaces={filteredNamespaces} />
             </div>
-          </>
-        )}
-        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
-      </AlertingPageWrapper>
-    );
-  },
-  { style: 'page' }
-);
+          </div>
+        </>
+      )}
+      {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
+      {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+    </AlertingPageWrapper>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   break: css({
@@ -171,7 +168,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export default RuleList;
+export default withErrorBoundary(RuleListV1, { style: 'page' });
 
 export function CreateAlertButton() {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
