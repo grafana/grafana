@@ -74,6 +74,12 @@ func (rev *ConfigRevision) ReceiverNameUsedByRoutes(name string) bool {
 	return isReceiverInUse(name, []*definitions.Route{rev.Config.AlertmanagerConfig.Route})
 }
 
+func (rev *ConfigRevision) ReceiverUseByName() map[string]int {
+	m := make(map[string]int)
+	receiverUseCounts([]*definitions.Route{rev.Config.AlertmanagerConfig.Route}, m)
+	return m
+}
+
 func (rev *ConfigRevision) GetReceiver(uid string) (*definitions.PostableApiReceiver, error) {
 	for _, r := range rev.Config.AlertmanagerConfig.Receivers {
 		if NameToUid(r.GetName()) == uid {
@@ -153,6 +159,18 @@ func isReceiverInUse(name string, routes []*definitions.Route) bool {
 		}
 	}
 	return false
+}
+
+// receiverUseCounts counts how many times receivers are used in a route or any of its sub-routes.
+func receiverUseCounts(routes []*definitions.Route, m map[string]int) {
+	if len(routes) == 0 {
+		return
+	}
+	for _, route := range routes {
+		m[route.Receiver]++
+		receiverUseCounts(route.Routes, m)
+	}
+	return
 }
 
 // validateAndSetIntegrationUIDs validates existing integration UIDs and generates them if they are empty.
