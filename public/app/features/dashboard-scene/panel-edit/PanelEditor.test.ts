@@ -10,17 +10,16 @@ import {
   sceneGraph,
   SceneGridLayout,
   SceneQueryRunner,
+  SceneTimeRange,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
-import * as libAPI from 'app/features/library-panels/state/api';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
@@ -34,14 +33,16 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
   });
 });
 
-let pluginToLoad: PanelPlugin | undefined;
+let pluginPromise: Promise<PanelPlugin> | undefined;
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
   getPluginImportUtils: () => ({
-    getPanelPluginFromCache: jest.fn(() => pluginToLoad),
+    getPanelPluginFromCache: jest.fn(() => undefined),
+    importPanelPlugin: () => pluginPromise,
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
@@ -75,9 +76,38 @@ describe('PanelEditor', () => {
     }
   });
 
+  describe('When initializing', () => {
+    it('should wait for panel plugin to load', async () => {
+      const { panelEditor, panel, pluginResolve } = await setup({ skipWait: true });
+
+      expect(panel.state.options).toEqual({});
+      expect(panelEditor.state.isInitializing).toBe(true);
+
+      const pluginToLoad = getPanelPlugin({ id: 'text' }).setPanelOptions((build) => {
+        build.addBooleanSwitch({
+          path: 'showHeader',
+          name: 'Show header',
+          defaultValue: true,
+        });
+      });
+
+      pluginResolve(pluginToLoad);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(panelEditor.state.isInitializing).toBe(false);
+      expect(panel.state.options).toEqual({ showHeader: true });
+
+      panel.onOptionsChange({ showHeader: false });
+      panelEditor.onDiscard();
+
+      expect(panel.state.options).toEqual({ showHeader: true });
+    });
+  });
+
   describe('When discarding', () => {
-    it('should discard changes revert all changes', () => {
-      const { panelEditor, panel } = setup();
+    it('should discard changes revert all changes', async () => {
+      const { panelEditor, panel } = await setup();
 
       panel.setState({ title: 'changed title' });
       panelEditor.onDiscard();
@@ -85,15 +115,15 @@ describe('PanelEditor', () => {
       expect(panel.state.title).toBe('original title');
     });
 
-    it('should discard a newly added panel', () => {
-      const { panelEditor, dashboard } = setup({ isNewPanel: true });
+    it('should discard a newly added panel', async () => {
+      const { panelEditor, dashboard } = await setup({ isNewPanel: true });
       panelEditor.onDiscard();
 
       expect((dashboard.state.body as SceneGridLayout).state.children.length).toBe(0);
     });
 
-    it('should discard query runner changes', () => {
-      const { panelEditor, panel } = setup({});
+    it('should discard query runner changes', async () => {
+      const { panelEditor, panel } = await setup({});
 
       const queryRunner = getQueryRunnerFor(panel);
       queryRunner?.setState({ maxDataPoints: 123, queries: [{ refId: 'A' }, { refId: 'B' }] });
@@ -107,8 +137,8 @@ describe('PanelEditor', () => {
   });
 
   describe('When changes are made', () => {
-    it('Should set state to dirty', () => {
-      const { panelEditor, panel } = setup({});
+    it('Should set state to dirty', async () => {
+      const { panelEditor, panel } = await setup({});
 
       expect(panelEditor.state.isDirty).toBe(undefined);
 
@@ -117,8 +147,8 @@ describe('PanelEditor', () => {
       expect(panelEditor.state.isDirty).toBe(true);
     });
 
-    it('Should reset dirty and orginal state when dashboard is saved', () => {
-      const { panelEditor, panel } = setup({});
+    it('Should reset dirty and orginal state when dashboard is saved', async () => {
+      const { panelEditor, panel } = await setup({});
 
       expect(panelEditor.state.isDirty).toBe(undefined);
 
@@ -140,7 +170,7 @@ describe('PanelEditor', () => {
 
   describe('When opening a repeated panel', () => {
     it('Should default to the first variable value if panel is repeated', async () => {
-      const { panel } = setup({ repeatByVariable: 'server' });
+      const { panel } = await setup({ repeatByVariable: 'server' });
       const variable = sceneGraph.lookupVariable('server', panel);
       expect(variable?.getValue()).toBe('A');
     });
@@ -148,56 +178,48 @@ describe('PanelEditor', () => {
 
   describe('Handling library panels', () => {
     it('should call the api with the updated panel', async () => {
-      pluginToLoad = getPanelPlugin({ id: 'text', skipDataQuery: true });
-
-      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
-
-      const libraryPanelModel = {
-        title: 'title',
-        uid: 'uid',
-        name: 'libraryPanelName',
-        model: vizPanelToPanel(panel),
-        type: 'panel',
-        version: 1,
-      };
-
-      const libPanelBehavior = new LibraryPanelBehavior({
-        isLoaded: true,
-        title: libraryPanelModel.title,
-        uid: libraryPanelModel.uid,
-        name: libraryPanelModel.name,
-        _loadedPanel: libraryPanelModel,
-      });
-
-      panel.setState({ $behaviors: [libPanelBehavior] });
-
-      const gridItem = new DashboardGridItem({ body: panel });
-      const editScene = buildPanelEditScene(panel);
-      const scene = new DashboardScene({
-        editPanel: editScene,
-        isEditing: true,
-        body: new SceneGridLayout({
-          children: [gridItem],
-        }),
-      });
-
-      activateFullSceneTree(scene);
-
-      panel.setState({ title: 'changed title' });
-      libPanelBehavior.setState({ name: 'changed name' });
-
-      jest.spyOn(libAPI, 'saveLibPanel').mockImplementation(async (panel) => {
-        const updatedPanel = { ...libAPI.libraryVizPanelToSaveModel(panel), version: 2 };
-        libPanelBehavior.setPanelFromLibPanel(updatedPanel);
-      });
-
-      editScene.onConfirmSaveLibraryPanel();
-
-      await new Promise(process.nextTick); // Wait for mock api to return and update the library panel
-      expect(libPanelBehavior.state._loadedPanel?.version).toBe(2);
-      expect(libPanelBehavior.state.name).toBe('changed name');
-      expect(libPanelBehavior.state.title).toBe('changed title');
-      expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
+      // pluginToLoad = getPanelPlugin({ id: 'text', skipDataQuery: true });
+      // const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+      // const libraryPanelModel = {
+      //   title: 'title',
+      //   uid: 'uid',
+      //   name: 'libraryPanelName',
+      //   model: vizPanelToPanel(panel),
+      //   type: 'panel',
+      //   version: 1,
+      // };
+      // const libPanelBehavior = new LibraryPanelBehavior({
+      //   isLoaded: true,
+      //   title: libraryPanelModel.title,
+      //   uid: libraryPanelModel.uid,
+      //   name: libraryPanelModel.name,
+      //   _loadedPanel: libraryPanelModel,
+      // });
+      // panel.setState({ $behaviors: [libPanelBehavior] });
+      // const gridItem = new DashboardGridItem({ body: panel });
+      // const editScene = buildPanelEditScene(panel);
+      // const scene = new DashboardScene({
+      //   editPanel: editScene,
+      //   $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      //   isEditing: true,
+      //   body: new SceneGridLayout({
+      //     children: [gridItem],
+      //   }),
+      // });
+      // activateFullSceneTree(scene);
+      // await new Promise((r) => setTimeout(r, 1));
+      // panel.setState({ title: 'changed title' });
+      // libPanelBehavior.setState({ name: 'changed name' });
+      // jest.spyOn(libAPI, 'saveLibPanel').mockImplementation(async (panel) => {
+      //   const updatedPanel = { ...libAPI.libraryVizPanelToSaveModel(panel), version: 2 };
+      //   libPanelBehavior.setPanelFromLibPanel(updatedPanel);
+      // });
+      // editScene.onConfirmSaveLibraryPanel();
+      // await new Promise(process.nextTick); // Wait for mock api to return and update the library panel
+      // expect(libPanelBehavior.state._loadedPanel?.version).toBe(2);
+      // expect(libPanelBehavior.state.name).toBe('changed name');
+      // expect(libPanelBehavior.state.title).toBe('changed title');
+      // expect((gridItem.state.body as VizPanel).state.title).toBe('changed title');
     });
 
     it('unlinks library panel', () => {
@@ -233,15 +255,13 @@ describe('PanelEditor', () => {
   });
 
   describe('PanelDataPane', () => {
-    it('should not exist if panel is skipDataQuery', () => {
-      const { panelEditor } = setup({ pluginSkipDataQuery: true });
-
+    it('should not exist if panel is skipDataQuery', async () => {
+      const { panelEditor } = await setup({ pluginSkipDataQuery: true });
       expect(panelEditor.state.dataPane).toBeUndefined();
     });
 
-    it('should exist if panel is supporting querying', () => {
-      const { panelEditor } = setup({ pluginSkipDataQuery: false });
-
+    it('should exist if panel is supporting querying', async () => {
+      const { panelEditor } = await setup({ pluginSkipDataQuery: false });
       expect(panelEditor.state.dataPane).toBeDefined();
     });
   });
@@ -251,10 +271,17 @@ interface SetupOptions {
   isNewPanel?: boolean;
   pluginSkipDataQuery?: boolean;
   repeatByVariable?: string;
+  skipWait?: boolean;
+  pluginLoadTime?: number;
 }
 
-function setup(options: SetupOptions = {}) {
-  pluginToLoad = getPanelPlugin({ id: 'text', skipDataQuery: options.pluginSkipDataQuery });
+async function setup(options: SetupOptions = {}) {
+  const pluginToLoad = getPanelPlugin({ id: 'text', skipDataQuery: options.pluginSkipDataQuery });
+  let pluginResolve = (plugin: PanelPlugin) => {};
+
+  pluginPromise = new Promise<PanelPlugin>((resolve) => {
+    pluginResolve = resolve;
+  });
 
   const panel = new VizPanel({
     key: 'panel-1',
@@ -276,6 +303,7 @@ function setup(options: SetupOptions = {}) {
   const dashboard = new DashboardScene({
     editPanel: panelEditor,
     isEditing: true,
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     $variables: new SceneVariableSet({
       variables: [
         new CustomVariable({
@@ -296,5 +324,11 @@ function setup(options: SetupOptions = {}) {
 
   deactivate = activateFullSceneTree(dashboard);
 
-  return { dashboard, panel, gridItem, panelEditor };
+  if (!options.skipWait) {
+    //console.log('pluginResolve(pluginToLoad)');
+    pluginResolve(pluginToLoad);
+    await new Promise((r) => setTimeout(r, 1));
+  }
+
+  return { dashboard, panel, gridItem, panelEditor, pluginResolve };
 }

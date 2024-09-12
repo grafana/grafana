@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { debounce } from 'lodash';
 
-import { NavIndex } from '@grafana/data';
+import { NavIndex, PanelPlugin } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   PanelBuilders,
@@ -36,13 +36,17 @@ import { PanelOptionsPane } from './PanelOptionsPane';
 export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
   isDirty?: boolean;
-  optionsPane: PanelOptionsPane;
+  optionsPane?: PanelOptionsPane;
   dataPane?: PanelDataPane;
   panelRef: SceneObjectRef<VizPanel>;
   showLibraryPanelSaveModal?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
   tableView?: VizPanel;
-  pluginLoadError?: boolean;
+  pluginLoadErrror?: string;
+  /**
+   * Waiting for library panel or panel plugin to load
+   */
+  isInitializing?: boolean;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
@@ -55,9 +59,39 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public constructor(state: PanelEditorState) {
     super(state);
-
-    this.setOriginalState(state.panelRef);
     this.addActivationHandler(this._activationHandler.bind(this));
+  }
+
+  private _activationHandler() {
+    const panel = this.state.panelRef.resolve();
+    const deactivateParents = activateInActiveParents(panel);
+    const layoutElement = panel.parent;
+
+    this.waitForPlugin();
+
+    return () => {
+      if (layoutElement instanceof DashboardGridItem) {
+        layoutElement.editingCompleted();
+      }
+      if (deactivateParents) {
+        deactivateParents();
+      }
+    };
+  }
+  private waitForPlugin(retry = 0) {
+    const panel = this.getPanel();
+    const plugin = panel.getPlugin();
+
+    if (!plugin || plugin.meta.id !== panel.state.pluginId) {
+      if (retry < 100) {
+        setTimeout(() => this.waitForPlugin(retry + 1), retry * 10);
+      } else {
+        this.setState({ pluginLoadErrror: 'Failed to load panel plugin' });
+      }
+      return;
+    }
+
+    this.gotPanelPlugin(plugin);
   }
 
   private setOriginalState(panelRef: SceneObjectRef<VizPanel>) {
@@ -70,38 +104,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this._originalLayoutElementState = panel.parent.state;
       this._layoutElement = panel.parent;
     }
-  }
-
-  private _activationHandler() {
-    const panel = this.state.panelRef.resolve();
-    const layoutElement = panel.parent;
-
-    if (layoutElement instanceof DashboardGridItem) {
-      layoutElement.editingStarted();
-    }
-
-    const deactivateParents = activateInActiveParents(panel);
-
-    this._setupChangeDetection();
-    this._initDataPane();
-
-    // Listen for panel plugin changes
-    this._subs.add(
-      panel.subscribeToState((n, p) => {
-        if (n.pluginId !== p.pluginId) {
-          this._initDataPane();
-        }
-      })
-    );
-
-    return () => {
-      if (layoutElement instanceof DashboardGridItem) {
-        layoutElement.editingCompleted();
-      }
-      if (deactivateParents) {
-        deactivateParents();
-      }
-    };
   }
 
   /**
@@ -138,20 +140,47 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     return this.state.panelRef?.resolve();
   }
 
-  private _initDataPane(retry = 0) {
+  private gotPanelPlugin(plugin: PanelPlugin) {
     const panel = this.getPanel();
-    const plugin = panel.getPlugin();
+    const layoutElement = panel.parent;
 
-    if (!plugin || plugin.meta.id !== panel.state.pluginId) {
-      if (retry < 100) {
-        setTimeout(() => this._initDataPane(retry + 1), 10);
-      } else {
-        this.setState({ pluginLoadError: true });
+    this.setOriginalState(this.state.panelRef);
+
+    // First time initialization
+    if (this.state.isInitializing) {
+      if (layoutElement instanceof DashboardGridItem) {
+        layoutElement.editingStarted();
       }
 
-      return;
-    }
+      this._setupChangeDetection();
+      this._updateDataPane(plugin);
 
+      // Listen for panel plugin changes
+      this._subs.add(
+        panel.subscribeToState((n, p) => {
+          if (n.pluginId !== p.pluginId) {
+            this.waitForPlugin();
+          }
+        })
+      );
+
+      // Setup options pane
+      this.setState({
+        optionsPane: new PanelOptionsPane({
+          panelRef: this.state.panelRef,
+          searchQuery: '',
+          listMode: OptionFilter.All,
+        }),
+        isInitializing: false,
+      });
+    } else {
+      // plugin changed after first time initialization
+      // Just update data pane
+      this._updateDataPane(plugin);
+    }
+  }
+
+  private _updateDataPane(plugin: PanelPlugin) {
     const skipDataQuery = plugin.meta.skipDataQuery;
 
     if (skipDataQuery && this.state.dataPane) {
@@ -160,7 +189,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     if (!skipDataQuery && !this.state.dataPane) {
-      this.setState({ dataPane: PanelDataPane.createFor(panel) });
+      this.setState({ dataPane: PanelDataPane.createFor(this.getPanel()) });
     }
   }
 
@@ -268,6 +297,7 @@ export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelE
       searchQuery: '',
       listMode: OptionFilter.All,
     }),
+    isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,
   });

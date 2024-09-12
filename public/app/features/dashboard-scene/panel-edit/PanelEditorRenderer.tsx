@@ -4,7 +4,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
-import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
@@ -57,7 +57,8 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
               />
             </div>
           )}
-          {!splitterState.collapsed && <optionsPane.Component model={optionsPane} />}
+          {!splitterState.collapsed && optionsPane && <optionsPane.Component model={optionsPane} />}
+          {!splitterState.collapsed && !optionsPane && <Spinner />}
         </div>
       </div>
     </>
