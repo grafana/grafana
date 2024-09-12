@@ -327,7 +327,7 @@ export const LdapSettingsPage = () => {
                     onChange={(v) => {
                       setValue(
                         `${serverConfig}.search_base_dns`,
-                        v.filter((v) => typeof v.value === 'string').map(({value}) => String(value))
+                        v.filter((v) => typeof v.value === 'string').map(({ value }) => String(value))
                       );
                     }}
                     value={watch(`${serverConfig}.search_base_dns`, []).map((v) => ({
