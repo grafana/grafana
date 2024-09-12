@@ -40,6 +40,7 @@ type ListReceiversQuery struct {
 	Offset int
 }
 
+// ReceiverMetadata contains metadata about a receiver's usage in routes and rules.
 type ReceiverMetadata struct {
 	InUseByRules  []AlertRuleKey
 	InUseByRoutes int
