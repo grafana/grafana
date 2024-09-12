@@ -85,6 +85,19 @@ type LineIntegration struct {
 	Description *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
 }
 
+type MqttIntegration struct {
+	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
+
+	BrokerURL          *string `json:"brokerUrl,omitempty" yaml:"brokerUrl,omitempty" hcl:"broker_url"`
+	ClientID           *string `json:"clientId,omitempty" yaml:"clientId,omitempty" hcl:"client_id"`
+	Topic              *string `json:"topic,omitempty" yaml:"topic,omitempty" hcl:"topic"`
+	Message            *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	MessageFormat      *string `json:"messageFormat,omitempty" yaml:"messageFormat,omitempty" hcl:"message_format"`
+	Username           *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
+	Password           *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
+	InsecureSkipVerify *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
+}
+
 type OnCallIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
@@ -170,11 +183,11 @@ type SensugoIntegration struct {
 }
 
 type SigV4Config struct {
-	Region    string `json:"region,omitempty" yaml:"region,omitempty" hcl:"region"`
-	AccessKey string `json:"access_key,omitempty" yaml:"access_key,omitempty" hcl:"access_key"`
-	SecretKey string `json:"secret_key,omitempty" yaml:"secret_key,omitempty" hcl:"secret_key"`
-	Profile   string `json:"profile,omitempty" yaml:"profile,omitempty" hcl:"profile"`
-	RoleARN   string `json:"role_arn,omitempty" yaml:"role_arn,omitempty" hcl:"role_arn"`
+	Region    *string `json:"region,omitempty" yaml:"region,omitempty" hcl:"region"`
+	AccessKey *Secret `json:"access_key,omitempty" yaml:"access_key,omitempty" hcl:"access_key"`
+	SecretKey *Secret `json:"secret_key,omitempty" yaml:"secret_key,omitempty" hcl:"secret_key"`
+	Profile   *string `json:"profile,omitempty" yaml:"profile,omitempty" hcl:"profile"`
+	RoleARN   *string `json:"role_arn,omitempty" yaml:"role_arn,omitempty" hcl:"role_arn"`
 }
 
 type SnsIntegration struct {
@@ -299,6 +312,7 @@ type ContactPoint struct {
 	Googlechat   []GooglechatIntegration   `json:"googlechat" yaml:"googlechat" hcl:"googlechat,block"`
 	Kafka        []KafkaIntegration        `json:"kafka" yaml:"kafka" hcl:"kafka,block"`
 	Line         []LineIntegration         `json:"line" yaml:"line" hcl:"line,block"`
+	Mqtt         []MqttIntegration         `json:"mqtt" yaml:"mqtt" hcl:"mqtt,block"`
 	Opsgenie     []OpsgenieIntegration     `json:"opsgenie" yaml:"opsgenie" hcl:"opsgenie,block"`
 	Pagerduty    []PagerdutyIntegration    `json:"pagerduty" yaml:"pagerduty" hcl:"pagerduty,block"`
 	OnCall       []OnCallIntegration       `json:"oncall" yaml:"oncall" hcl:"oncall,block"`
