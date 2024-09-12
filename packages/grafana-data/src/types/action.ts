@@ -6,7 +6,6 @@ import { SelectableValue } from './select';
 export interface Action {
   type: ActionType;
   title: string;
-
   fetch: FetchOptions;
 }
 
