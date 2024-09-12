@@ -86,12 +86,7 @@ const transformationResult = ts.transform(sourceFiles, [replaceVersions]);
 const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
 
 for (const transformed of transformationResult.transformed) {
-  const output = printer.printNode(
-    ts.EmitHint.Unspecified,
-    transformed,
-    transformed.getSourceFile()
-    // ts.createSourceFile('', '', ts.ScriptTarget.Latest)
-  );
+  const output = printer.printNode(ts.EmitHint.Unspecified, transformed, transformed.getSourceFile());
   const fileName = transformed.getSourceFile().fileName.replace(/\.ts$/, '.gen.ts');
   writeFile(resolve(join(process.cwd(), destinationDirectory, fileName)), output);
 }

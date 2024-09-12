@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "target": "ES5",
-    "outDir": "dist",
-    "sourceMap": true,
-    "allowJs": true,
-    "resolveJsonModule": true
-  }
-}
