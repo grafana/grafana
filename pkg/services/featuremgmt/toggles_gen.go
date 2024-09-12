@@ -818,4 +818,8 @@ const (
 	// FlagUnifiedStorageBigObjectsSupport
 	// Enables to save big objects in blob storage
 	FlagUnifiedStorageBigObjectsSupport = "unifiedStorageBigObjectsSupport"
+
+	// FlagPrometheusUsesCombobox
+	// Use new combobox component for Prometheus query editor
+	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 )
