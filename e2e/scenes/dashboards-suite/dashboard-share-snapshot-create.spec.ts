@@ -1,3 +1,4 @@
+import { SnapshotCreateResponse } from '../../../public/app/features/dashboard/services/SnapshotSrv';
 import { e2e } from '../utils';
 import '../../utils/support/clipboard';
 
@@ -28,25 +29,39 @@ describe('Snapshots', () => {
     //   })
     // );
 
-    // const panelsToCheck = [
-    //   'Raw Data Graph',
-    //   'Last non-null',
-    //   'min',
-    //   'Max',
-    //   'The data from graph above with seriesToColumns transform',
-    // ];
+    const panelsToCheck = [
+      'Raw Data Graph',
+      'Last non-null',
+      'min',
+      'Max',
+      'The data from graph above with seriesToColumns transform',
+    ];
 
     // Open the sharing drawer
     e2e.pages.Dashboard.DashNav.newShareButton.arrowMenu().click();
     e2e.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot().click();
 
     // Publish snapshot
-    cy.intercept('POST', '/api/snapshots').as('save');
+    cy.intercept('POST', '/api/snapshots').as('create');
     e2e.pages.ShareDashboardDrawer.ShareSnapshot.publishSnapshot().click();
-    cy.wait('@save');
+    cy.wait('@create')
+      .its('response')
+      .then((rs) => {
+        expect(rs.statusCode).eq(200);
+        const body: SnapshotCreateResponse = rs.body;
+        cy.visit(body.url);
+
+        // Validate the dashboard controls are rendered
+        e2e.pages.Dashboard.Controls().should('exist');
+
+        // Validate the panels are rendered
+        for (const title of panelsToCheck) {
+          e2e.components.Panels.Panel.title(title).should('be.visible');
+        }
+      });
 
     // Copy link button should be visible
-    e2e.pages.ShareDashboardDrawer.ShareSnapshot.copyUrlButton().should('exist');
+    // e2e.pages.ShareDashboardDrawer.ShareSnapshot.copyUrlButton().should('exist');
 
     //TODO Failing in CI/CD. Fix it
     // Copy the snapshot URL form the clipboard and open the snapshot

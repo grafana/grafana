@@ -10,7 +10,7 @@ describe('Share internally', () => {
     });
   });
 
-  it('Create a customized link', () => {
+  it('Create a locked time range short link', () => {
     cy.intercept({
       pathname: '/api/ds/query',
     }).as('query');
@@ -30,6 +30,8 @@ describe('Share internally', () => {
 
     // Open share externally drawer
     e2e.pages.Dashboard.DashNav.newShareButton.arrowMenu().click();
+
+    cy.intercept('POST', '/api/short-urls').as('create');
     e2e.pages.Dashboard.DashNav.newShareButton.menu.shareInternally().click();
 
     cy.url().should('include', 'shareView=link');
@@ -43,36 +45,61 @@ describe('Share internally', () => {
       const shareConfiguration = win.localStorage.getItem('grafana.dashboard.link.shareConfiguration');
       expect(shareConfiguration).equal(null);
     });
+    cy.wait('@create')
+      .its('response')
+      .then((rs) => {
+        expect(rs.statusCode).eq(200);
+        const body: { url: string } = rs.body;
+        expect(body.url).contain('goto');
+        cy.visit(body.url);
 
-    //TODO Failing in CI/CD. Fix it
-    // e2e.pages.ShareDashboardDrawer.ShareInternally.copyUrlButton()
-    //   .click()
-    //   .then(() => {
-    //     cy.copyFromClipboard().then((url) => {
-    //       expect(url).contain('goto');
-    //       expect(url).not.contain('from=now-6h&to=now');
-    //     });
-    //   });
+        cy.url().should('not.include', 'from=now-6h&to=now');
+      });
+  });
 
-    e2e.pages.ShareDashboardDrawer.ShareInternally.shortenUrlSwitch().click({ force: true });
+  it('Create a relative time range short link', () => {
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
+    openDashboard();
+    cy.wait('@query');
 
-    cy.window().then((win) => {
-      const shareConfiguration = win.localStorage.getItem('grafana.dashboard.link.shareConfiguration');
-      const { useAbsoluteTimeRange, useShortUrl, theme }: ShareLinkConfiguration = JSON.parse(shareConfiguration);
-      expect(useAbsoluteTimeRange).eq(true);
-      expect(useShortUrl).eq(false);
-      expect(theme).eq('current');
-    });
+    e2e.pages.Dashboard.DashNav.newShareButton.arrowMenu().click();
 
+    e2e.pages.Dashboard.DashNav.newShareButton.menu.shareInternally().click();
+
+    cy.intercept('POST', '/api/short-urls').as('update');
     e2e.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch().click({ force: true });
 
     cy.window().then((win) => {
       const shareConfiguration = win.localStorage.getItem('grafana.dashboard.link.shareConfiguration');
       const { useAbsoluteTimeRange, useShortUrl, theme }: ShareLinkConfiguration = JSON.parse(shareConfiguration);
       expect(useAbsoluteTimeRange).eq(false);
-      expect(useShortUrl).eq(false);
+      expect(useShortUrl).eq(true);
       expect(theme).eq('current');
     });
+
+    cy.wait('@update')
+      .its('response')
+      .then((rs) => {
+        expect(rs.statusCode).eq(200);
+        const body: { url: string } = rs.body;
+        expect(body.url).contain('goto');
+
+        cy.visit(body.url);
+        cy.url().should('include', 'from=now-6h&to=now');
+      });
+
+    //
+    // e2e.pages.ShareDashboardDrawer.ShareInternally.shortenUrlSwitch().click({ force: true });
+    //
+    // cy.window().then((win) => {
+    //   const shareConfiguration = win.localStorage.getItem('grafana.dashboard.link.shareConfiguration');
+    //   const { useAbsoluteTimeRange, useShortUrl, theme }: ShareLinkConfiguration = JSON.parse(shareConfiguration);
+    //   expect(useAbsoluteTimeRange).eq(true);
+    //   expect(useShortUrl).eq(false);
+    //   expect(theme).eq('current');
+    // });
 
     // e2e.pages.ShareDashboardDrawer.ShareInternally.copyUrlButton().should('exist');
 
@@ -84,6 +111,40 @@ describe('Share internally', () => {
     //       cy.wrap(url).should('not.include', 'goto');
     //     });
     //   });
+  });
+
+  it('Create a relative time range short link', () => {
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
+    openDashboard();
+    cy.wait('@query');
+
+    e2e.pages.Dashboard.DashNav.newShareButton.arrowMenu().click();
+
+    e2e.pages.Dashboard.DashNav.newShareButton.menu.shareInternally().click();
+
+    cy.intercept('POST', '/api/short-urls').as('update');
+    e2e.pages.ShareDashboardDrawer.ShareInternally.lockTimeRangeSwitch().click({ force: true });
+
+    cy.window().then((win) => {
+      const shareConfiguration = win.localStorage.getItem('grafana.dashboard.link.shareConfiguration');
+      const { useAbsoluteTimeRange, useShortUrl, theme }: ShareLinkConfiguration = JSON.parse(shareConfiguration);
+      expect(useAbsoluteTimeRange).eq(false);
+      expect(useShortUrl).eq(true);
+      expect(theme).eq('current');
+    });
+
+    cy.wait('@update')
+      .its('response')
+      .then((rs) => {
+        expect(rs.statusCode).eq(200);
+        const body: { url: string } = rs.body;
+        expect(body.url).contain('goto');
+
+        cy.visit(body.url);
+        cy.url().should('include', 'from=now-6h&to=now');
+      });
   });
 
   //TODO Failing in CI/CD. Fix it

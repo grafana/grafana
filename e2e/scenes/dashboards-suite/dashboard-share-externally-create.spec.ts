@@ -1,3 +1,4 @@
+import { PublicDashboard } from '../../../public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { e2e } from '../utils';
 import '../../utils/support/clipboard';
 
@@ -21,7 +22,7 @@ describe('Shared dashboards', () => {
     e2e.pages.ShareDashboardDrawer.ShareExternally.container().should('not.exist');
   });
 
-  it('Create a shared dashboard', () => {
+  it('Create a shared dashboard and check API', () => {
     openDashboard();
 
     // Open share externally drawer
@@ -45,9 +46,18 @@ describe('Shared dashboards', () => {
       .click({ force: true });
 
     // Create shared dashboard
-    cy.intercept('POST', '/api/dashboards/uid/edediimbjhdz4b/public-dashboards').as('save');
+    cy.intercept('POST', '/api/dashboards/uid/edediimbjhdz4b/public-dashboards').as('create');
     e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.PublicShare.createButton().should('be.enabled').click();
-    cy.wait('@save');
+    cy.wait('@create')
+      .its('response.body')
+      .then((body: PublicDashboard) => {
+        cy.log(JSON.stringify(body));
+        cy.clearCookies()
+          .request(getPublicDashboardAPIUrl(body.accessToken))
+          .then((resp) => {
+            expect(resp.status).to.eq(200);
+          });
+      });
 
     // These elements shouldn't be rendered after creating public dashboard
     e2e.pages.ShareDashboardDrawer.ShareExternally.Creation.willBePublicCheckbox().should('not.exist');
@@ -61,19 +71,19 @@ describe('Shared dashboards', () => {
     e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.toggleAccessButton().should('exist');
   });
 
-  it('Open a shared dashboard', () => {
+  // Skipping as clipboard permissions are failing in CI. Public dashboard creation is checked in previous test on purpose
+  it.skip('Open a shared dashboard', () => {
     openDashboard();
 
-    //TODO Failing in CI/CD. Fix it
-    // cy.wrap(
-    //   Cypress.automation('remote:debugger:protocol', {
-    //     command: 'Browser.grantPermissions',
-    //     params: {
-    //       permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
-    //       origin: window.location.origin,
-    //     },
-    //   })
-    // );
+    cy.wrap(
+      Cypress.automation('remote:debugger:protocol', {
+        command: 'Browser.grantPermissions',
+        params: {
+          permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'],
+          origin: window.location.origin,
+        },
+      })
+    );
 
     // Tag indicating a dashboard is public
     e2e.pages.Dashboard.DashNav.publicDashboardTag().should('exist');
@@ -88,18 +98,17 @@ describe('Shared dashboards', () => {
     e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.revokeAccessButton().should('exist');
     e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.toggleAccessButton().should('exist');
 
-    //TODO Failing in CI/CD. Fix it
-    // e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.copyUrlButton()
-    //   .click()
-    //   .then(() => {
-    //     cy.copyFromClipboard().then((url) => {
-    //       cy.clearCookies()
-    //         .request(getPublicDashboardAPIUrl(String(url)))
-    //         .then((resp) => {
-    //           expect(resp.status).to.eq(200);
-    //         });
-    //     });
-    //   });
+    e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.copyUrlButton()
+      .click()
+      .then(() => {
+        cy.copyFromClipboard().then((url) => {
+          cy.clearCookies()
+            .request(getPublicDashboardAPIUrl(String(url)))
+            .then((resp) => {
+              expect(resp.status).to.eq(200);
+            });
+        });
+      });
   });
 
   it('Disable a shared dashboard', () => {
@@ -127,9 +136,22 @@ describe('Shared dashboards', () => {
     e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.toggleAccessButton()
       .should('be.enabled')
       .click({ force: true });
-    cy.wait('@update');
 
-    e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.copyUrlButton().should('be.enabled');
+    cy.wait('@update')
+      .its('response')
+      .then((rs) => {
+        expect(rs.statusCode).eq(200);
+        const publicDashboard: PublicDashboard = rs.body;
+        cy.clearCookies()
+          .request({ url: getPublicDashboardAPIUrl(publicDashboard.accessToken), failOnStatusCode: false })
+          .then((resp) => {
+            expect(resp.status).to.eq(403);
+          });
+      })
+      .then(() => {
+        e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.toggleAccessButton().contains('Resume access');
+        e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.copyUrlButton().should('be.enabled');
+      });
 
     //TODO Failing in CI/CD. Fix it
     // e2e.pages.ShareDashboardDrawer.ShareExternally.Configuration.copyUrlButton()
@@ -152,7 +174,7 @@ const openDashboard = () => {
     queryParams: { '__feature.scenes': true, '__feature.newDashboardSharingComponent': true },
   });
 };
-// const getPublicDashboardAPIUrl = (url: string): string => {
-//   let accessToken = url.split('/').pop();
-//   return `/api/public/dashboards/${accessToken}`;
-// };
+
+const getPublicDashboardAPIUrl = (accessToken: string): string => {
+  return `/api/public/dashboards/${accessToken}`;
+};
