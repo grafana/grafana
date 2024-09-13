@@ -802,8 +802,9 @@ func scalarInstantVector(f *data.Frame) (*float64, bool) {
 		return &val, true
 	case data.FieldTypeNullableFloat64:
 		return f.Fields[1].At(0).(*float64), true
+	default:
+		return &defaultReturnValue, true
 	}
-	return &defaultReturnValue, true
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
