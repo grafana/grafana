@@ -178,6 +178,44 @@ func TestContactPointService(t *testing.T) {
 		require.ErrorIs(t, err, ErrValidation)
 	})
 
+	t.Run("update renames references when group is renamed", func(t *testing.T) {
+		cfg := createEncryptedConfig(t, secretsService)
+		store := fakes.NewFakeAlertmanagerConfigStore(cfg)
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, store)
+
+		svc := &fakeReceiverService{}
+		sut.receiverService = svc
+
+		newCp := createTestContactPoint()
+		oldName := newCp.Name
+		newName := "new-name"
+
+		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		newCp.Name = newName
+
+		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, receiverProvenance models.Provenance) error {
+			legacy_storage.RenameReceiverInRoute(oldName, newName, route)
+			return nil
+		}
+
+		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		parsed, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(store.LastSaveCommand.AlertmanagerConfiguration))
+		require.NoError(t, err)
+
+		require.Lenf(t, svc.Calls, 1, "service was supposed to be called once")
+		assert.Equal(t, "RenameReceiverInDependentResources", svc.Calls[0].Method)
+		assertInTransaction(t, svc.Calls[0].Args[0].(context.Context))
+		assert.Equal(t, int64(1), svc.Calls[0].Args[1])
+		assert.EqualValues(t, parsed.AlertmanagerConfig.Route, svc.Calls[0].Args[2])
+		assert.Equal(t, oldName, svc.Calls[0].Args[3])
+		assert.Equal(t, newName, svc.Calls[0].Args[4])
+		assert.Equal(t, models.ProvenanceAPI, svc.Calls[0].Args[5])
+	})
+
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
