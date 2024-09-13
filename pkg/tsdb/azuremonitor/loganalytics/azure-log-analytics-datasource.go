@@ -171,7 +171,11 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	basicLogsQuery := false
 	basicLogsEnabled := false
 
-	resultFormat := ParseResultFormat(azureLogAnalyticsTarget.ResultFormat, dataquery.AzureQueryTypeAzureLogAnalytics)
+	var resultFormat dataquery.ResultFormat = ""
+	if azureLogAnalyticsTarget.ResultFormat != nil {
+		resultFormat = *azureLogAnalyticsTarget.ResultFormat
+
+	}
 
 	basicLogsQueryFlag := false
 	if azureLogAnalyticsTarget.BasicLogsQuery != nil {

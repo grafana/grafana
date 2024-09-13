@@ -35,12 +35,8 @@ const FormatAsField = ({
   );
 
   useEffectOnce(() => {
-    if (!resultFormat) {
+    if (!query.azureLogAnalytics && !query.azureMonitor && !query.azureTraces && !query.azureResourceGraph) {
       handleChange({ value: defaultValue });
-    } else {
-      if (!formatOptions.find((item) => item.value === resultFormat)) {
-        handleChange({ value: defaultValue });
-      }
     }
   });
 
@@ -48,7 +44,7 @@ const FormatAsField = ({
     <Field label="Format as" data-testid={selectors.components.queryEditor.logsQueryEditor.formatSelection.input}>
       <Select
         inputId={`${inputId}-format-as-field`}
-        value={resultFormat ?? defaultValue}
+        value={resultFormat}
         onChange={handleChange}
         options={options}
         width={38}
