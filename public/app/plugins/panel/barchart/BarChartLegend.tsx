@@ -1,6 +1,15 @@
+import { includes } from 'lodash';
 import { memo } from 'react';
 
-import { DataFrame, Field, FieldColorModeId, getFieldSeriesColor, ValueMapping } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  FieldColorModeId,
+  getFieldSeriesColor,
+  ThresholdsConfig,
+  ThresholdsMode,
+  ValueMapping,
+} from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
 import { UPlotConfigBuilder, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem, useTheme2 } from '@grafana/ui';
 import { getDisplayValuesForCalcs } from '@grafana/ui/src/components/uPlot/utils';
@@ -36,32 +45,46 @@ export const BarChartLegend = memo(
 
     const thresholdItems: VizLegendItem[] = [];
     if (colorMode === FieldColorModeId.Thresholds) {
-      for (let i = 0; i < data[0].fields.length; i++) {
-        const thresholds = data[0].fields[i].config.thresholds;
-        if (thresholds) {
-          // in case of multiple fields, each field has same thresholds config as in first field (data[0].field[0].config),
-          // so we need to avoid duplicates;
-          // it is the same object, so we can compare by reference;
-          // i === 0 is needed to add thresholds from the first field
-          if ((i === 0 || fieldConfig.thresholds !== thresholds) && thresholds.steps.length > 1) {
-            const config = data[0].fields[i].config;
-            const items = getThresholdItems(config, theme);
-            thresholdItems.push(...items);
+      const thresholdsAbsolute: ThresholdsConfig = { mode: ThresholdsMode.Absolute, steps: [] };
+      const thresholdsPercent: ThresholdsConfig = { mode: ThresholdsMode.Percentage, steps: [] };
+
+      for (let i = 1; i < data[0].fields.length; i++) {
+        const field = data[0].fields[i];
+        // there is no reason to add threshold with only one (Base) step
+        if (field.config.thresholds && field.config.thresholds.steps.length > 1) {
+          if (field.config.thresholds.mode === ThresholdsMode.Absolute) {
+            for (const step of field.config.thresholds.steps) {
+              if (!includes(thresholdsAbsolute.steps, step)) {
+                thresholdsAbsolute.steps.push(step);
+              }
+            }
+          } else {
+            for (const step of field.config.thresholds.steps) {
+              if (!includes(thresholdsPercent.steps, step)) {
+                thresholdsPercent.steps.push(step);
+              }
+            }
+          }
+        }
+      }
+
+      const thresholdAbsoluteItems: VizLegendItem[] = getThresholdItems(fieldConfig, theme, thresholdsAbsolute);
+      const thresholdPercentItems: VizLegendItem[] = getThresholdItems(fieldConfig, theme, thresholdsPercent);
+      thresholdItems.push(...thresholdAbsoluteItems, ...thresholdPercentItems);
+    }
+
+    const valueMappings: ValueMapping[] = [];
+    for (let i = 1; i < data[0].fields.length; i++) {
+      const mappings = data[0].fields[i].config.mappings;
+      if (mappings) {
+        for (const mapping of mappings) {
+          if (!includes(valueMappings, mapping)) {
+            valueMappings.push(mapping);
           }
         }
       }
     }
-
-    const mappings: ValueMapping[] = [];
-    for (let i = 0; i < data[0].fields.length; i++) {
-      const mapping = data[0].fields[i].config.mappings;
-      if (mapping) {
-        if (i === 0 || fieldConfig.mappings !== mapping) {
-          mappings.push(...mapping);
-        }
-      }
-    }
-    const valueMappingItems: VizLegendItem[] = getValueMappingItems(mappings, theme);
+    const valueMappingItems: VizLegendItem[] = getValueMappingItems(valueMappings, theme);
 
     const legendItems = data[0].fields
       .slice(1)

@@ -17,6 +17,7 @@ import {
   cacheFieldDisplayNames,
   outerJoinDataFrames,
   ValueMapping,
+  ThresholdsConfig,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -454,9 +455,13 @@ export function makeFramePerSeries(frames: DataFrame[]) {
   return outFrames;
 }
 
-export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
+export function getThresholdItems(
+  fieldConfig: FieldConfig,
+  theme: GrafanaTheme2,
+  thresholdItems?: ThresholdsConfig
+): VizLegendItem[] {
   const items: VizLegendItem[] = [];
-  const thresholds = fieldConfig.thresholds;
+  const thresholds = thresholdItems ? thresholdItems : fieldConfig.thresholds;
   if (!thresholds || !thresholds.steps.length) {
     return items;
   }
