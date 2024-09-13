@@ -134,10 +134,6 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 		if err != nil {
 			return nil, err
 		}
-		// Stop when last page reached
-		if len(findRes) == 0 {
-			break
-		}
 
 		query.Limit = limit
 		res, err := dr.checkDashboards(ctx, query, findRes)
@@ -147,6 +143,11 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 
 		result = append(result, res...)
 		page++
+
+		// Stop when last page reached
+		if len(findRes) < defaultQueryLimit {
+			break
+		}
 	}
 
 	if len(result) > int(limit) {
@@ -159,6 +160,10 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.checkDashboards")
 	defer span.End()
+
+	if len(searchRes) == 0 {
+		return nil, nil
+	}
 
 	orgId := query.OrgId
 	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
