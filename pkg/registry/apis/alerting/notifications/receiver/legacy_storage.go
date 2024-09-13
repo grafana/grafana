@@ -230,7 +230,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return old, false, err
 	}
-	
+
 	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID, user)
 	if err != nil {
 		return nil, false, err
