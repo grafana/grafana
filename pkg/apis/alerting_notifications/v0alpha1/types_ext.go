@@ -1,6 +1,8 @@
 package v0alpha1
 
-import "fmt"
+import (
+	"fmt"
+)
 
 const InternalPrefix = "grafana.com/"
 const ProvenanceStatusAnnotationKey = InternalPrefix + "provenance"
@@ -59,4 +61,18 @@ func (o *Receiver) SetAccessControl(action string) {
 // Ex. grafana.com/access/canDelete.
 func AccessControlAnnotation(action string) string {
 	return fmt.Sprintf("%s%s/%s", InternalPrefix, "access", action)
+}
+
+func (o *Receiver) SetInUse(routesCnt int, rules []string) {
+	if o.Annotations == nil {
+		o.Annotations = make(map[string]string, 2)
+	}
+	o.Annotations[InUseAnnotation("routes")] = fmt.Sprintf("%d", routesCnt)
+	o.Annotations[InUseAnnotation("rules")] = fmt.Sprintf("%d", len(rules))
+}
+
+// InUseAnnotation returns the key for the in-use annotation for the given resource.
+// Ex. grafana.com/inUse/routes, grafana.com/inUse/rules.
+func InUseAnnotation(resource string) string {
+	return fmt.Sprintf("%s%s/%s", InternalPrefix, "inUse", resource)
 }

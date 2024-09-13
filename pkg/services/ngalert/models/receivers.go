@@ -40,6 +40,12 @@ type ListReceiversQuery struct {
 	Offset int
 }
 
+// ReceiverMetadata contains metadata about a receiver's usage in routes and rules.
+type ReceiverMetadata struct {
+	InUseByRules  []AlertRuleKey
+	InUseByRoutes int
+}
+
 // Receiver is the domain model representation of a receiver / contact point.
 type Receiver struct {
 	UID          string
