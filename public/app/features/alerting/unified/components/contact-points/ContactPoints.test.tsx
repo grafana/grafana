@@ -19,7 +19,8 @@ import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimi
 import setupVanillaAlertmanagerFlavoredServer, {
   VANILLA_ALERTMANAGER_DATASOURCE_UID,
 } from './__mocks__/vanillaAlertmanagerServer';
-import { ContactPointWithMetadata, RouteReference } from './utils';
+import { RECEIVER_META_KEY } from './constants';
+import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -195,6 +196,30 @@ describe('contact points', () => {
 
       const editAction = screen.getByTestId('edit-action');
       expect(editAction).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('should show warning when no receivers are configured', async () => {
+      renderWithProvider(<ContactPoint contactPoint={basicContactPoint} />);
+
+      expect(screen.getByText(/No integrations configured/i)).toBeInTheDocument();
+    });
+
+    it('should not show warning when at least one receiver is configured', async () => {
+      const receiver: ReceiverConfigWithMetadata = {
+        name: 'email',
+        provenance: undefined,
+        type: 'email',
+        disableResolveMessage: false,
+        settings: { addresses: 'test1@test.com,test2@test.com,test3@test.com,test4@test.com' },
+        [RECEIVER_META_KEY]: {
+          name: 'Email',
+          description: 'The email receiver',
+        },
+      };
+      renderWithProvider(
+        <ContactPoint contactPoint={{ ...basicContactPoint, grafana_managed_receiver_configs: [receiver] }} />
+      );
+      expect(screen.queryByText(/No integrations configured/i)).not.toBeInTheDocument();
     });
 
     it('should disable buttons when provisioned', async () => {
