@@ -1,3 +1,4 @@
+import { CSSInterpolation } from '@emotion/css';
 import { css } from '@emotion/react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -31,6 +32,27 @@ function buttonSizeMixin(paddingY: string, paddingX: string, fontSize: string, b
     fontSize: fontSize,
     borderRadius: borderRadius,
   };
+}
+
+function widthMixin(theme: GrafanaTheme2, max: number) {
+  let result: CSSInterpolation = {};
+  for (let i = 1; i <= max; i++) {
+    const width = `${theme.spacing(2 * i)} !important`;
+    result[`.width-${i}`] = {
+      width,
+    };
+    result[`.max-width-${i}`] = {
+      maxWidth: width,
+      flexGrow: 1,
+    };
+    result[`.min-width-${i}`] = {
+      minWidth: width,
+    };
+    result[`.offset-width-${i}`] = {
+      marginLeft: width,
+    };
+  }
+  return result;
 }
 
 export function getUtilityClassStyles(theme: GrafanaTheme2) {
@@ -139,6 +161,31 @@ export function getUtilityClassStyles(theme: GrafanaTheme2) {
     },
     '.typeahead': {
       zIndex: theme.zIndex.typeahead,
+    },
+    ...widthMixin(theme, 30),
+    '.row': {
+      display: 'flex',
+      flexWrap: 'wrap',
+      marginLeft: `calc(${theme.spacing(4)} / -2)`,
+      marginRight: `calc(${theme.spacing(4)} / -2)`,
+    },
+    '.container': {
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      paddingLeft: `calc(${theme.spacing(4)} / 2)`,
+      paddingRight: `calc(${theme.spacing(4)} / 2)`,
+      [theme.breakpoints.up('sm')]: {
+        maxWidth: theme.breakpoints.values.sm,
+      },
+      [theme.breakpoints.up('md')]: {
+        maxWidth: theme.breakpoints.values.md,
+      },
+      [theme.breakpoints.up('lg')]: {
+        maxWidth: theme.breakpoints.values.lg,
+      },
+      [theme.breakpoints.up('xl')]: {
+        maxWidth: theme.breakpoints.values.xl,
+      },
     },
   });
 }

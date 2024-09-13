@@ -113,6 +113,9 @@ export const alertingApi = createApi({
     'GrafanaSlo',
     'RuleGroup',
     'RuleNamespace',
+    'ContactPoint',
+    'ContactPointsStatus',
+    'Receiver',
   ],
   endpoints: () => ({}),
 });

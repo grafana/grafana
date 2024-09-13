@@ -1,3 +1,4 @@
+import { VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
@@ -67,6 +68,42 @@ describe('RowRepeaterBehavior', () => {
       expect(gridItem.state.body?.state.key).toBe('canvas-1-clone-B1');
     });
 
+    it('Should update all rows when a panel is added to a clone', async () => {
+      const originalRow = grid.state.children[1] as SceneGridRow;
+      const clone1 = grid.state.children[2] as SceneGridRow;
+      const clone2 = grid.state.children[3] as SceneGridRow;
+
+      expect(originalRow.state.children.length).toBe(1);
+      expect(clone1.state.children.length).toBe(1);
+      expect(clone2.state.children.length).toBe(1);
+
+      clone1.setState({
+        children: [
+          ...clone1.state.children,
+          new SceneGridItem({
+            x: 0,
+            y: 16,
+            width: 24,
+            height: 5,
+            key: 'griditem-4',
+            body: new SceneCanvasText({
+              text: 'new panel',
+            }),
+          }),
+        ],
+      });
+
+      grid.forceRender();
+
+      // repeater has run so there are new clone row objects
+      const newClone1 = grid.state.children[2] as SceneGridRow;
+      const newClone2 = grid.state.children[3] as SceneGridRow;
+
+      expect(originalRow.state.children.length).toBe(2);
+      expect(newClone1.state.children.length).toBe(2);
+      expect(newClone2.state.children.length).toBe(2);
+    });
+
     it('Should push row at the bottom down', () => {
       // Should push row at the bottom down
       const rowAtTheBottom = grid.state.children[6] as SceneGridRow;
@@ -107,6 +144,26 @@ describe('RowRepeaterBehavior', () => {
       await new Promise((r) => setTimeout(r, 1));
 
       expect(gridStateUpdates.length).toBe(1);
+    });
+
+    it('Should update panels on refresh if variables load on time range change', async () => {
+      const { scene, repeatBehavior } = buildScene({
+        variableQueryTime: 0,
+        variableRefresh: VariableRefresh.onTimeRangeChanged,
+      });
+
+      const notifyPanelsSpy = jest.spyOn(repeatBehavior, 'notifyRepeatedPanelsWaitingForVariables');
+
+      activateFullSceneTree(scene);
+
+      expect(notifyPanelsSpy).toHaveBeenCalledTimes(0);
+
+      scene.state.$timeRange?.onRefresh();
+
+      //make sure notifier is called
+      expect(notifyPanelsSpy).toHaveBeenCalledTimes(1);
+
+      notifyPanelsSpy.mockRestore();
     });
   });
 
@@ -215,6 +272,7 @@ interface SceneOptions {
   maxPerRow?: number;
   itemHeight?: number;
   repeatDirection?: RepeatDirection;
+  variableRefresh?: VariableRefresh;
 }
 
 function buildScene(
@@ -298,6 +356,7 @@ function buildScene(
           isMulti: true,
           includeAll: true,
           delayMs: options.variableQueryTime,
+          refresh: options.variableRefresh,
           optionsToReturn: variableOptions ?? [
             { label: 'A', value: 'A1' },
             { label: 'B', value: 'B1' },

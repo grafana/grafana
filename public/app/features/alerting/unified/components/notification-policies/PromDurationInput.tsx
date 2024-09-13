@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 
 import { Icon, Input } from '@grafana/ui';
 
-import { HoverCard } from '../HoverCard';
+import { PopupCard } from '../HoverCard';
 
 import { PromDurationDocs } from './PromDurationDocs';
 
@@ -10,9 +10,9 @@ export const PromDurationInput = forwardRef<HTMLInputElement, React.ComponentPro
   return (
     <Input
       suffix={
-        <HoverCard content={<PromDurationDocs />} disabled={false}>
+        <PopupCard content={<PromDurationDocs />} disabled={false}>
           <Icon name="info-circle" size="lg" />
-        </HoverCard>
+        </PopupCard>
       }
       {...props}
       ref={ref}

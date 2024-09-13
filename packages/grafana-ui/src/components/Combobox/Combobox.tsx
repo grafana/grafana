@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { SetStateAction, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -11,28 +11,29 @@ import { Input, Props as InputProps } from '../Input/Input';
 
 import { getComboboxStyles } from './getComboboxStyles';
 
-export type Value = string | number;
-export type Option = {
+export type ComboboxOption<T extends string | number = string> = {
   label: string;
-  value: Value;
+  value: T;
   description?: string;
 };
 
-interface ComboboxProps
+interface ComboboxProps<T extends string | number>
   extends Omit<InputProps, 'prefix' | 'suffix' | 'value' | 'addonBefore' | 'addonAfter' | 'onChange'> {
-  onChange: (val: Option | null) => void;
-  value: Value | null;
-  options: Option[];
+  isClearable?: boolean;
+  createCustomValue?: boolean;
+  options: Array<ComboboxOption<T>>;
+  onChange: (option: ComboboxOption<T> | null) => void;
+  value: T | null;
 }
 
-function itemToString(item: Option | null) {
-  return item?.label ?? '';
+function itemToString(item: ComboboxOption<string | number> | null) {
+  return item?.label ?? item?.value.toString() ?? '';
 }
 
-function itemFilter(inputValue: string) {
+function itemFilter<T extends string | number>(inputValue: string) {
   const lowerCasedInputValue = inputValue.toLowerCase();
 
-  return (item: Option) => {
+  return (item: ComboboxOption<T>) => {
     return (
       !inputValue ||
       item?.label?.toLowerCase().includes(lowerCasedInputValue) ||
@@ -51,16 +52,56 @@ const INDEX_WIDTH_CALCULATION = 100;
 // A multiplier guesstimate times the amount of characters. If any padding or image support etc. is added this will need to be updated.
 const WIDTH_MULTIPLIER = 7.3;
 
-export const Combobox = ({ options, onChange, value, id, ...restProps }: ComboboxProps) => {
+/**
+ * A performant Select replacement.
+ *
+ * @alpha
+ */
+export const Combobox = <T extends string | number>({
+  options,
+  onChange,
+  value,
+  isClearable = false,
+  createCustomValue = false,
+  id,
+  'aria-labelledby': ariaLabelledBy,
+  ...restProps
+}: ComboboxProps<T>) => {
   const [items, setItems] = useState(options);
-  const selectedItemIndex = useMemo(
-    () => options.findIndex((option) => option.value === value) || null,
-    [options, value]
-  );
-  const selectedItem = selectedItemIndex ? options[selectedItemIndex] : null;
+
+  const selectedItemIndex = useMemo(() => {
+    if (value === null) {
+      return null;
+    }
+
+    const index = options.findIndex((option) => option.value === value);
+    if (index === -1) {
+      return null;
+    }
+
+    return index;
+  }, [options, value]);
+
+  const selectedItem = useMemo(() => {
+    if (selectedItemIndex !== null) {
+      return options[selectedItemIndex];
+    }
+
+    // Custom value
+    if (value !== null) {
+      return {
+        label: value.toString(),
+        value,
+      };
+    }
+    return null;
+  }, [selectedItemIndex, options, value]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const floatingRef = useRef<HTMLDivElement>(null);
+
+  const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
+  const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
 
   const styles = useStyles2(getComboboxStyles);
   const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
@@ -82,18 +123,36 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
     isOpen,
     highlightedIndex,
     setInputValue,
-    selectItem,
     openMenu,
     closeMenu,
+    selectItem,
   } = useCombobox({
+    menuId,
+    labelId,
     inputId: id,
     items,
     itemToString,
     selectedItem,
-    defaultHighlightedIndex: selectedItemIndex ?? undefined,
+    onSelectedItemChange: ({ selectedItem }) => {
+      onChange(selectedItem);
+    },
+    defaultHighlightedIndex: selectedItemIndex ?? 0,
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
-      setItems(options.filter(itemFilter(inputValue)));
+      const filteredItems = options.filter(itemFilter(inputValue));
+      if (createCustomValue && inputValue && filteredItems.findIndex((opt) => opt.label === inputValue) === -1) {
+        const customValueOption: ComboboxOption<T> = {
+          label: inputValue,
+          // @ts-ignore Type casting needed to make this work when T is a number
+          value: inputValue as unknown as T,
+          description: t('combobox.custom-value.create', 'Create custom value'),
+        };
+
+        setItems([...filteredItems, customValueOption]);
+        return;
+      } else {
+        setItems(filteredItems);
+      }
     },
     onIsOpenChange: ({ isOpen }) => {
       // Default to displaying all values when opening
@@ -101,9 +160,6 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
         setItems(options);
         return;
       }
-    },
-    onSelectedItemChange: ({ selectedItem }) => {
-      onChange(selectedItem);
     },
     onHighlightedIndexChange: ({ highlightedIndex, type }) => {
       if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
@@ -113,8 +169,8 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
   });
 
   const onBlur = useCallback(() => {
-    setInputValue(selectedItem?.label ?? '');
-  }, [selectedItem, setInputValue]);
+    setInputValue(selectedItem?.label ?? value?.toString() ?? '');
+  }, [selectedItem, setInputValue, value]);
 
   // the order of middleware is important!
   const middleware = [
@@ -131,6 +187,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
   ];
   const elements = { reference: inputRef.current, floating: floatingRef.current };
   const { floatingStyles } = useFloating({
+    strategy: 'fixed',
     open: isOpen,
     placement: 'bottom-start',
     middleware,
@@ -147,7 +204,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
       <Input
         suffix={
           <>
-            {!!value && value === selectedItem?.value && (
+            {!!value && value === selectedItem?.value && isClearable && (
               <Icon
                 name="times"
                 className={styles.clear}
@@ -185,24 +242,28 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
            */
           onChange: () => {},
           onBlur,
+          'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
         })}
       />
       <div
-        className={cx(styles.menu, hasMinHeight && styles.menuHeight)}
+        className={cx(styles.menu, hasMinHeight && styles.menuHeight, !isOpen && styles.menuClosed)}
         style={{
           ...floatingStyles,
           maxWidth: popoverMaxWidth,
           minWidth: inputRef.current?.offsetWidth,
           width: popoverWidth,
         }}
-        {...getMenuProps({ ref: floatingRef })}
+        {...getMenuProps({
+          ref: floatingRef,
+          'aria-labelledby': ariaLabelledBy,
+        })}
       >
         {isOpen && (
           <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               return (
                 <li
-                  key={items[virtualRow.index].value}
+                  key={items[virtualRow.index].value + items[virtualRow.index].label}
                   data-index={virtualRow.index}
                   className={cx(
                     styles.option,
@@ -213,7 +274,10 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
                     height: virtualRow.size,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
-                  {...getItemProps({ item: items[virtualRow.index], index: virtualRow.index })}
+                  {...getItemProps({
+                    item: items[virtualRow.index],
+                    index: virtualRow.index,
+                  })}
                 >
                   <div className={styles.optionBody}>
                     <span className={styles.optionLabel}>{items[virtualRow.index].label}</span>
@@ -232,7 +296,7 @@ export const Combobox = ({ options, onChange, value, id, ...restProps }: Combobo
 };
 
 const useDynamicWidth = (
-  items: Option[],
+  items: Array<ComboboxOption<string | number>>,
   range: { startIndex: number; endIndex: number } | null,
   setPopoverWidth: { (value: SetStateAction<number | undefined>): void }
 ) => {

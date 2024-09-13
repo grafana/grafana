@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -178,8 +179,14 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 					require.NoError(t, err)
 					if tc.decrypt {
 						require.Equal(t, "secure url", res.Integrations[0].Settings["url"])
+						require.NotContains(t, res.Integrations[0].SecureSettings, "url")
 					} else {
-						require.Equal(t, definitions.RedactedValue, res.Integrations[0].Settings["url"])
+						require.NotContains(t, res.Integrations[0].Settings, "url")
+
+						// Ensure the encrypted value exists and is not redacted or decrypted.
+						require.NotEmpty(t, res.Integrations[0].SecureSettings["url"])
+						require.NotEqual(t, definitions.RedactedValue, res.Integrations[0].SecureSettings["url"])
+						require.NotEqual(t, "secure url", res.Integrations[0].SecureSettings["url"])
 					}
 				}
 			})
@@ -239,7 +246,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			name:        "delete receiver used by route fails",
 			user:        writer,
 			deleteUID:   legacy_storage.NameToUid("grafana-default-email"),
-			version:     "1fd7897966a2adc5", // Correct version for grafana-default-email.
+			version:     "cd95627c75892a39", // Correct version for grafana-default-email.
 			expectedErr: makeReceiverInUseErr(true, nil),
 		},
 		{
@@ -248,7 +255,7 @@ func TestReceiverService_Delete(t *testing.T) {
 			deleteUID: baseReceiver.UID,
 			existing:  util.Pointer(baseReceiver.Clone()),
 			storeSettings: map[models.AlertRuleKey][]models.NotificationSettings{
-				models.AlertRuleKey{OrgID: 1, UID: "rule1"}: {
+				{OrgID: 1, UID: "rule1"}: {
 					models.NotificationSettingsGen(models.NSMuts.WithReceiver(baseReceiver.Name))(),
 				},
 			},
@@ -342,6 +349,7 @@ func TestReceiverService_Create(t *testing.T) {
 
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()
 	emailIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("email"))()
+	lineIntegration := models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("line"))()
 	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"), models.ReceiverMuts.WithIntegrations(slackIntegration))()
 
 	for _, tc := range []struct {
@@ -349,6 +357,7 @@ func TestReceiverService_Create(t *testing.T) {
 		user                identity.Requester
 		receiver            models.Receiver
 		expectedCreate      models.Receiver
+		expectedStored      *definitions.PostableApiReceiver
 		expectedErr         error
 		expectedProvenances map[string]models.Provenance
 	}{
@@ -414,6 +423,49 @@ func TestReceiverService_Create(t *testing.T) {
 			receiver:    models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithInvalidIntegration("slack")),
 			expectedErr: legacy_storage.ErrReceiverInvalid,
 		},
+		{
+			name: "create integration with no normal settings should not store nil settings",
+			user: writer,
+			receiver: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
+				models.CopyIntegrationWith(lineIntegration,
+					models.IntegrationMuts.WithSettings(
+						map[string]any{ // Line is valid with only the single secure field "token", so Settings will be empty when saving.
+							"token": "secret",
+						},
+					)),
+			)),
+			expectedCreate: models.CopyReceiverWith(baseReceiver, models.ReceiverMuts.WithIntegrations(
+				models.CopyIntegrationWith(lineIntegration,
+					models.IntegrationMuts.WithSettings(
+						map[string]any{}, // Empty settings, not nil.
+					),
+					models.IntegrationMuts.WithSecureSettings(
+						map[string]string{
+							"token": "c2VjcmV0", // base64 encoded "secret".
+						},
+					),
+				),
+			)),
+			expectedStored: &definitions.PostableApiReceiver{
+				Receiver: config.Receiver{
+					Name: lineIntegration.Name,
+				},
+				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+						{
+							UID:                   lineIntegration.UID,
+							Name:                  lineIntegration.Name,
+							Type:                  lineIntegration.Config.Type,
+							DisableResolveMessage: lineIntegration.DisableResolveMessage,
+							Settings:              definitions.RawMessage(`{}`), // Empty settings, not nil.
+							SecureSettings: map[string]string{
+								"token": "c2VjcmV0", // base64 encoded "secret".
+							},
+						},
+					},
+				},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			sut := createReceiverServiceSut(t, &secretsService)
@@ -462,9 +514,19 @@ func TestReceiverService_Create(t *testing.T) {
 			decrypted.Version = tc.expectedCreate.Version // Version is calculated before decryption.
 			assert.Equal(t, decrypted, *stored)
 
-			provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
-			require.NoError(t, err)
-			assert.Equal(t, tc.expectedProvenances, provenances)
+			if tc.expectedProvenances != nil {
+				provenances, err := sut.provisioningStore.GetProvenances(context.Background(), tc.user.GetOrgID(), (&definitions.EmbeddedContactPoint{}).ResourceType())
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedProvenances, provenances)
+			}
+
+			if tc.expectedStored != nil {
+				revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
+				require.NoError(t, err)
+				rcv, err := revision.GetReceiver(legacy_storage.NameToUid(tc.expectedStored.Name))
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedStored, rcv)
+			}
 		})
 	}
 }
@@ -702,7 +764,7 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 	newReceiverName := "new-name"
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName(receiverName), models.IntegrationMuts.WithValidConfig("slack"))()
 	baseReceiver := models.ReceiverGen(models.ReceiverMuts.WithName(receiverName), models.ReceiverMuts.WithIntegrations(slackIntegration))()
-	baseReceiver.Version = "1fd7897966a2adc5" // Correct version for grafana-default-email.
+	baseReceiver.Version = "cd95627c75892a39" // Correct version for grafana-default-email.
 	baseReceiver.Name = newReceiverName       // Done here instead of in a mutator so we keep the same uid.
 
 	store := sut.ruleNotificationsStore.(*fakeConfigStore)
@@ -763,7 +825,8 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 		permissions map[string][]string
 		existing    []models.Receiver
 
-		visible []models.Receiver
+		visible                 []models.Receiver
+		visibleWithProvisioning []models.Receiver
 	}{
 		{
 			name:     "not authorized without permissions",
@@ -812,6 +875,20 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			existing: allReceivers(),
 			visible:  []models.Receiver{recv1, recv3},
 		},
+		{
+			name:                    "provisioning read applies to only provisioning",
+			permissions:             map[string][]string{accesscontrol.ActionAlertingProvisioningRead: nil},
+			existing:                allReceivers(),
+			visible:                 nil,
+			visibleWithProvisioning: allReceivers(),
+		},
+		{
+			name:                    "provisioning read secrets applies to only provisioning",
+			permissions:             map[string][]string{accesscontrol.ActionAlertingProvisioningReadSecrets: nil},
+			existing:                allReceivers(),
+			visible:                 nil,
+			visibleWithProvisioning: allReceivers(),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -838,6 +915,28 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			for _, recv := range allReceivers() {
 				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
 				if isVisible(recv.UID) {
+					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
+					assert.NotNil(t, response)
+				} else {
+					assert.ErrorIsf(t, err, ac.ErrAuthorizationBase, "receiver '%s' should not be visible, but is", recv.Name)
+				}
+			}
+
+			isVisibleInProvisioning := func(uid string) bool {
+				if tc.visibleWithProvisioning == nil {
+					return isVisible(uid)
+				}
+				for _, recv := range tc.visibleWithProvisioning {
+					if recv.UID == uid {
+						return true
+					}
+				}
+				return false
+			}
+			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true)
+			for _, recv := range allReceivers() {
+				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
+				if isVisibleInProvisioning(recv.UID) {
 					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
 					assert.NotNil(t, response)
 				} else {
@@ -871,14 +970,14 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 			hasAccess: nil,
 		},
 		{
-			name:        "global legacy permissions - not authorized without read",
+			name:        "global legacy permissions - authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil},
-			hasAccess:   nil,
+			hasAccess:   allReceivers(),
 		},
 		{
-			name:        "receivers permissions - not authorized without read",
+			name:        "receivers permissions - authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: nil},
-			hasAccess:   nil,
+			hasAccess:   allReceivers(),
 		},
 		{
 			name:        "global legacy permissions - create all",

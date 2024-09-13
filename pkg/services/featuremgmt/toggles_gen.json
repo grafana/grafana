@@ -52,7 +52,8 @@
       "metadata": {
         "name": "adhocFilterOneOf",
         "resourceVersion": "1723119716623",
-        "creationTimestamp": "2024-08-08T12:21:56Z"
+        "creationTimestamp": "2024-08-08T12:21:56Z",
+        "deletionTimestamp": "2024-09-05T12:30:12Z"
       },
       "spec": {
         "description": "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
@@ -158,6 +159,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingFilterV2",
+        "resourceVersion": "1723028774805",
+        "creationTimestamp": "2024-08-07T11:06:14Z"
+      },
+      "spec": {
+        "description": "Enable the new alerting search experience",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true
       }
     },
@@ -333,6 +347,32 @@
         "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "appPlatformAccessTokens",
+        "resourceVersion": "1725549369316",
+        "creationTimestamp": "2024-09-05T15:16:09Z"
+      },
+      "spec": {
+        "description": "Enables the use of access tokens for the App Platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "appSidecar",
+        "resourceVersion": "1722872007883",
+        "creationTimestamp": "2024-08-05T15:33:27Z"
+      },
+      "spec": {
+        "description": "Enable the app sidecar feature that allows rendering 2 apps at the same time",
+        "stage": "experimental",
+        "codeowner": "@grafana/explore-squad"
       }
     },
     {
@@ -1048,6 +1088,45 @@
     },
     {
       "metadata": {
+        "name": "exploreLogsAggregatedMetrics",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to query by aggregated metrics",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreLogsLimitedTimeRange",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to limit the time range",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "exploreLogsShardSplitting",
+        "resourceVersion": "1724938092041",
+        "creationTimestamp": "2024-08-29T13:28:12Z"
+      },
+      "spec": {
+        "description": "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "exploreMetrics",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-04-09T18:15:18Z",
@@ -1271,6 +1350,19 @@
     },
     {
       "metadata": {
+        "name": "groupAttributeSync",
+        "resourceVersion": "1725893018130",
+        "creationTimestamp": "2024-09-09T14:43:38Z"
+      },
+      "spec": {
+        "description": "Enable the groupsync extension for managing Group Attribute Sync feature",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
         "name": "groupByVariable",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-02-14T17:18:04Z"
@@ -1438,6 +1530,21 @@
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesFolders",
+        "resourceVersion": "1725863636605",
+        "creationTimestamp": "2024-09-09T06:29:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-09 06:33:56.605329 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
@@ -1846,6 +1953,18 @@
     },
     {
       "metadata": {
+        "name": "newFiltersUI",
+        "resourceVersion": "1724228641625",
+        "creationTimestamp": "2024-08-21T08:24:01Z"
+      },
+      "spec": {
+        "description": "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad"
+      }
+    },
+    {
+      "metadata": {
         "name": "newFolderPicker",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2024-01-15T11:43:19Z"
@@ -2137,13 +2256,17 @@
     {
       "metadata": {
         "name": "promQLScope",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-01-29T20:22:17Z"
+        "resourceVersion": "1724076197892",
+        "creationTimestamp": "2024-01-29T20:22:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-08-19 14:03:17.892558375 +0000 UTC"
+        }
       },
       "spec": {
         "description": "In-development feature that will allow injection of labels into prometheus queries.",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-metrics"
+        "stage": "GA",
+        "codeowner": "@grafana/observability-metrics",
+        "expression": "true"
       }
     },
     {
@@ -2503,6 +2626,19 @@
     },
     {
       "metadata": {
+        "name": "singleTopNav",
+        "resourceVersion": "1724861961030",
+        "creationTimestamp": "2024-08-28T16:19:21Z"
+      },
+      "spec": {
+        "description": "Unifies the top search bar and breadcrumb bar into one",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-06-06T16:28:52Z"
@@ -2734,6 +2870,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "vizActions",
+        "resourceVersion": "1722461779830",
+        "creationTimestamp": "2024-07-31T21:36:19Z"
+      },
+      "spec": {
+        "description": "Allow actions in visualizations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromAdminPage": true
       }
     },
     {

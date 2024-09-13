@@ -70,6 +70,7 @@ func TestReadDashboard(t *testing.T) {
 		"mixed-datasource-with-variable",
 		"special-datasource-types",
 		"panels-without-datasources",
+		"panel-with-library-panel-field",
 	}
 
 	devdash := "../../../../../devenv/dev-dashboards/"

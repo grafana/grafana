@@ -7,6 +7,9 @@ import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';
 import { ContactPointHeader } from 'app/features/alerting/unified/components/contact-points/ContactPointHeader';
+import { useDeleteContactPointModal } from 'app/features/alerting/unified/components/contact-points/components/Modals';
+import { useDeleteContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
@@ -16,26 +19,19 @@ import { ReceiverMetadataBadge } from '../receivers/grafanaAppReceivers/Receiver
 import { ReceiverPluginMetadata } from '../receivers/grafanaAppReceivers/useReceiversMetadata';
 
 import { RECEIVER_META_KEY, RECEIVER_PLUGIN_META_KEY, RECEIVER_STATUS_KEY } from './constants';
-import { getReceiverDescription, ReceiverConfigWithMetadata, RouteReference } from './utils';
+import { ContactPointWithMetadata, getReceiverDescription, ReceiverConfigWithMetadata } from './utils';
 
 interface ContactPointProps {
-  name: string;
   disabled?: boolean;
-  provisioned?: boolean;
-  receivers: ReceiverConfigWithMetadata[];
-  policies?: RouteReference[];
-  onDelete: (name: string) => void;
+  contactPoint: ContactPointWithMetadata;
 }
 
-export const ContactPoint = ({
-  name,
-  disabled = false,
-  provisioned = false,
-  receivers,
-  policies = [],
-  onDelete,
-}: ContactPointProps) => {
+export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointProps) => {
+  const { grafana_managed_receiver_configs: receivers } = contactPoint;
   const styles = useStyles2(getStyles);
+  const { selectedAlertmanager } = useAlertmanager();
+  const handleDelete = useDeleteContactPoint({ alertmanager: selectedAlertmanager! });
+  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(handleDelete);
 
   // TODO probably not the best way to figure out if we want to show either only the summary or full metadata for the receivers?
   const showFullMetadata = receivers.some((receiver) => Boolean(receiver[RECEIVER_META_KEY]));
@@ -44,12 +40,22 @@ export const ContactPoint = ({
     <div className={styles.contactPointWrapper} data-testid="contact-point">
       <Stack direction="column" gap={0}>
         <ContactPointHeader
-          name={name}
-          policies={policies}
-          provisioned={provisioned}
+          contactPoint={contactPoint}
           disabled={disabled}
-          onDelete={onDelete}
+          onDelete={(contactPointToDelete) =>
+            showDeleteModal({
+              name: contactPointToDelete.id || contactPointToDelete.name,
+              resourceVersion: contactPointToDelete.metadata?.resourceVersion,
+            })
+          }
         />
+        {receivers.length === 0 && (
+          <div className={styles.noIntegrationsContainer}>
+            <MetaText color="warning" icon="exclamation-circle">
+              <Trans i18nKey="alerting.contact-points.no-integrations">No integrations configured</Trans>
+            </MetaText>
+          </div>
+        )}
         {showFullMetadata ? (
           <div>
             {receivers.map((receiver, index) => {
@@ -58,7 +64,6 @@ export const ContactPoint = ({
               const sendingResolved = !Boolean(receiver.disableResolveMessage);
               const pluginMetadata = receiver[RECEIVER_PLUGIN_META_KEY];
               const key = metadata.name + index;
-
               return (
                 <ContactPointReceiver
                   key={key}
@@ -78,6 +83,7 @@ export const ContactPoint = ({
           </div>
         )}
       </Stack>
+      {DeleteModal}
     </div>
   );
 };
@@ -286,5 +292,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadataRow: css({
     borderBottomLeftRadius: `${theme.shape.radius.default}`,
     borderBottomRightRadius: `${theme.shape.radius.default}`,
+  }),
+  noIntegrationsContainer: css({
+    paddingTop: `${theme.spacing(1.5)}`,
+    paddingLeft: `${theme.spacing(1.5)}`,
   }),
 });

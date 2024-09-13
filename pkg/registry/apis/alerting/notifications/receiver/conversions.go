@@ -1,9 +1,11 @@
 package receiver
 
 import (
+	"fmt"
 	"maps"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -13,21 +15,30 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
-func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, namespacer request.NamespaceMapper) (*model.ReceiverList, error) {
+func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, accesses map[string]ngmodels.ReceiverPermissionSet, namespacer request.NamespaceMapper, selector fields.Selector) (*model.ReceiverList, error) {
 	result := &model.ReceiverList{
 		Items: make([]model.Receiver, 0, len(receivers)),
 	}
 	for _, receiver := range receivers {
-		k8sResource, err := convertToK8sResource(orgID, receiver, namespacer)
+		var access *ngmodels.ReceiverPermissionSet
+		if accesses != nil {
+			if a, ok := accesses[receiver.GetUID()]; ok {
+				access = &a
+			}
+		}
+		k8sResource, err := convertToK8sResource(orgID, receiver, access, namespacer)
 		if err != nil {
 			return nil, err
+		}
+		if selector != nil && !selector.Empty() && !selector.Matches(model.SelectableReceiverFields(k8sResource)) {
+			continue
 		}
 		result.Items = append(result.Items, *k8sResource)
 	}
 	return result, nil
 }
 
-func convertToK8sResource(orgID int64, receiver *ngmodels.Receiver, namespacer request.NamespaceMapper) (*model.Receiver, error) {
+func convertToK8sResource(orgID int64, receiver *ngmodels.Receiver, access *ngmodels.ReceiverPermissionSet, namespacer request.NamespaceMapper) (*model.Receiver, error) {
 	spec := model.ReceiverSpec{
 		Title: receiver.Name,
 	}
@@ -52,7 +63,27 @@ func convertToK8sResource(orgID int64, receiver *ngmodels.Receiver, namespacer r
 		Spec: spec,
 	}
 	r.SetProvenanceStatus(string(receiver.Provenance))
+
+	if access != nil {
+		for _, action := range ngmodels.ReceiverPermissions() {
+			mappedAction, ok := permissionMapper[action]
+			if !ok {
+				return nil, fmt.Errorf("unknown action %v", action)
+			}
+			if can, _ := access.Has(action); can {
+				r.SetAccessControl(mappedAction)
+			}
+		}
+	}
+
 	return r, nil
+}
+
+var permissionMapper = map[ngmodels.ReceiverPermission]string{
+	ngmodels.ReceiverPermissionReadSecret: "canReadSecrets",
+	//ngmodels.ReceiverPermissionAdmin:      "canAdmin", // TODO: Add when resource permissions are implemented.
+	ngmodels.ReceiverPermissionWrite:  "canWrite",
+	ngmodels.ReceiverPermissionDelete: "canDelete",
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
