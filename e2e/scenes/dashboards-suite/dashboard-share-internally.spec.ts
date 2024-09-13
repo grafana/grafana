@@ -241,6 +241,6 @@ const openDashboard = () => {
   });
 };
 
-const getShortLinkUrl = (uid: string): string => {
-  return `/goto/${uid}`;
-};
+// const getShortLinkUrl = (uid: string): string => {
+//   return `/goto/${uid}`;
+// };
