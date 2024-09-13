@@ -16,12 +16,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
       type: variable.state.type,
     };
     if (sceneUtils.isQueryVariable(variable)) {
-      let options: VariableOption[] = [];
-      // Not sure if we actually have to still support this option given
-      // that it's not exposed in the UI
-      if (variable.state.refresh === VariableRefresh.never) {
-        options = variableValueOptionsToVariableOptions(variable.state);
-      }
       variables.push({
         ...commonProperties,
         current: {
@@ -30,7 +24,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
           // @ts-expect-error
           text: variable.state.text,
         },
-        options,
+        options: variableValueOptionsToVariableOptions(variable.state),
         query: variable.state.query,
         definition: variable.state.definition,
         datasource: variable.state.datasource,
