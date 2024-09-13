@@ -133,11 +133,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 	org1 := helper.Org1
 
 	type testCase struct {
-		user      apis.User
-		canRead   bool
-		canUpdate bool
-		canCreate bool
-		canDelete bool
+		user           apis.User
+		canRead        bool
+		canUpdate      bool
+		canCreate      bool
+		canDelete      bool
+		canReadSecrets bool
 	}
 	// region users
 	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
@@ -215,8 +216,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canRead: true,
 		},
 		{
-			user:    secretsReader,
-			canRead: true,
+			user:           secretsReader,
+			canRead:        true,
+			canReadSecrets: true,
 		},
 		{
 			user:      creator,
@@ -298,6 +300,16 @@ func TestIntegrationAccessControl(t *testing.T) {
 			}
 
 			if tc.canRead {
+				expectedWithMetadata := expected.DeepCopy()
+				if tc.canUpdate {
+					expectedWithMetadata.SetAccessControl("canWrite")
+				}
+				if tc.canDelete {
+					expectedWithMetadata.SetAccessControl("canDelete")
+				}
+				if tc.canReadSecrets {
+					expectedWithMetadata.SetAccessControl("canReadSecrets")
+				}
 				t.Run("should be able to list receivers", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
 					require.NoError(t, err)
@@ -307,7 +319,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				t.Run("should be able to read receiver by resource identifier", func(t *testing.T) {
 					got, err := client.Get(ctx, expected.Name, v1.GetOptions{})
 					require.NoError(t, err)
-					require.Equal(t, expected, got)
+					require.Equal(t, expectedWithMetadata, got)
 
 					t.Run("should get NotFound if resource does not exist", func(t *testing.T) {
 						_, err := client.Get(ctx, "Notfound", v1.GetOptions{})
@@ -871,6 +883,10 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, receiver.Spec.Integrations, len(integrations))
 
+		// Set access control metadata
+		receiver.SetAccessControl("canWrite")
+		receiver.SetAccessControl("canDelete")
+
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()
 		legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
@@ -931,6 +947,98 @@ func TestIntegrationCRUD(t *testing.T) {
 				require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest, got: %s", err)
 			})
 		}
+	})
+}
+
+func TestIntegrationReceiverListSelector(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	adminK8sClient, err := versioned.NewForConfig(helper.Org1.Admin.NewRestConfig())
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
+
+	require.NoError(t, err)
+	recv1 := &v0alpha1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.ReceiverSpec{
+			Title: "test-receiver-1",
+			Integrations: []v0alpha1.Integration{
+				createIntegration(t, "email"),
+			},
+		},
+	}
+	recv1, err = adminClient.Create(ctx, recv1, v1.CreateOptions{})
+	require.NoError(t, err)
+
+	recv2 := &v0alpha1.Receiver{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "default",
+		},
+		Spec: v0alpha1.ReceiverSpec{
+			Title: "test-receiver-2",
+			Integrations: []v0alpha1.Integration{
+				createIntegration(t, "email"),
+			},
+		},
+	}
+	recv2, err = adminClient.Create(ctx, recv2, v1.CreateOptions{})
+	require.NoError(t, err)
+
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	require.NoError(t, err)
+	require.NoError(t, db.SetProvenance(ctx, &definitions.EmbeddedContactPoint{
+		UID: *recv2.Spec.Integrations[0].Uid,
+	}, helper.Org1.Admin.Identity.GetOrgID(), "API"))
+	recv2, err = adminClient.Get(ctx, recv2.Name, v1.GetOptions{})
+
+	require.NoError(t, err)
+
+	receivers, err := adminClient.List(ctx, v1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, receivers.Items, 3) // Includes default.
+
+	t.Run("should filter by receiver name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "spec.title=" + recv1.Spec.Title,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, recv1.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by metadata name", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: "metadata.name=" + recv2.Name,
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, recv2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should filter by multiple filters", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", recv2.Name, "API"),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, recv2.Name, list.Items[0].Name)
+	})
+
+	t.Run("should be empty when filter does not match", func(t *testing.T) {
+		list, err := adminClient.List(ctx, v1.ListOptions{
+			FieldSelector: fmt.Sprintf("metadata.name=%s,metadata.provenance=%s", recv2.Name, "unknown"),
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
 	})
 }
 
