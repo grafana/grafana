@@ -1,8 +1,9 @@
 ---
-description: Learn how to search for Grafana dashboards
+description: Learn how to search for Grafana dashboards and folders
 keywords:
   - search
   - dashboard
+  - folder
 labels:
   products:
     - cloud
@@ -13,27 +14,43 @@ title: Search
 weight: 80
 ---
 
-# Search dashboards
+# Search dashboards and folders
 
-You can search for dashboards by dashboard name and by panel title. When you search for dashboards, the system returns all dashboards available within the Grafana instance, even if you do not have permission to view the contents of the dashboard.
+You can search for dashboards and dashboard folders by name.
 
-## Search dashboards using dashboard name
+When you search for dashboards, you can also do it by panel title. Whether you search by name or panel title, the system returns all dashboards available within the Grafana instance, even if you do not have permission to view the contents of the dashboard.
 
-Begin typing any part of the dashboard name in the search bar. The search returns results for any partial string match in real-time, as you type.
+## Search by name
 
-Dashboard search is:
+Begin typing any part of the dashboard or folder name in the search bar. The search returns results for any partial string match in real-time, as you type.
+
+The search is:
 
 - Real-time
 - _Not_ case sensitive
-- Functional across stored _and_ file based dashboards.
+- Functional across stored _and_ file based dashboards and folders.
 
 {{% admonition type="note" %}}
-You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard.
+You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard or folder.
 {{% /admonition %}}
 
-The following image shows the search results when you search using dashboard name.
+The following images show:
 
-{{< figure src="/static/img/docs/v91/dashboard-features/search-by-dashboard-name.png" width="700px" >}}
+Searching by dashboard name from the **Dashboards** page.
+
+{{< figure src="/media/docs/grafana/dashboards/search-for-dashboard.png" width="700px" >}}
+
+Searching by folder name from the **Dashboards** page.
+
+{{< figure src="/media/docs/grafana/dashboards/search-folder.png" width="700px" >}}
+
+Searching by dashboard name inside a folder.
+
+{{< figure src="/media/docs/grafana/dashboards/search-in-folder.png" width="700px" >}}
+
+{{% admonition type="note" %}}
+When you search within a folder, its subfolders are not part of the results returned. You need to be on the **Dashboards** page (or the root level) to search for subfolders by name.
+{{% /admonition %}}
 
 ## Search dashboards using panel title
 

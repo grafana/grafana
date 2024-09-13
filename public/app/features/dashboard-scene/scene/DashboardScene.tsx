@@ -935,7 +935,9 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       for (const behavior of child.state.$behaviors) {
         if (behavior instanceof RowRepeaterBehavior) {
           if (behavior.isWaitingForVariables || (behavior.state.variableName === variable.state.name && hasChanged)) {
-            behavior.performRepeat();
+            behavior.performRepeat(true);
+          } else if (!behavior.isWaitingForVariables && behavior.state.variableName === variable.state.name) {
+            behavior.notifyRepeatedPanelsWaitingForVariables(variable);
           }
         }
       }
