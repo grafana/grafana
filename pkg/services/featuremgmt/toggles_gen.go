@@ -774,7 +774,7 @@ const (
 	// FlagHomeSetupGuide
 	// Used in Home for users who want to return to the onboarding flow
 	FlagHomeSetupGuide = "homeSetupGuide"
-	
+
 	// FlagAppPlatformAccessTokens
 	// Enables the use of access tokens for the App Platform
 	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
