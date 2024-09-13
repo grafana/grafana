@@ -1,6 +1,6 @@
 import { getBackendSrv, config } from '@grafana/runtime';
-import { Resource, ResourceClient, ResourceForCreate } from 'app/features/apiserver/types';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
+import { Resource, ResourceClient, ResourceForCreate } from 'app/features/apiserver/types';
 
 export interface FolderAPI {
   createFolder(folder: Folder): Promise<FolderSpec>;
@@ -20,7 +20,7 @@ class LegacyFolderAPI implements FolderAPI {
   constructor() {}
 
   async createFolder(folder: Folder): Promise<FolderSpec> {
-    return getBackendSrv().post<FolderSpec>('/api/folders', folder)
+    return getBackendSrv().post<FolderSpec>('/api/folders', folder);
   }
 }
 
@@ -29,11 +29,11 @@ class K8sFolderAPI implements FolderAPI {
   private client: ResourceClient<FolderSpec>;
 
   constructor() {
-      this.client = new ScopedResourceClient<FolderSpec>({
+    this.client = new ScopedResourceClient<FolderSpec>({
       group: 'folder.grafana.app',
       version: 'v0alpha1',
       resource: 'folders',
-      });
+    });
   }
 
   async createFolder(folder: Folder): Promise<FolderSpec> {

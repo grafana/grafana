@@ -3,8 +3,8 @@ import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime'
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 import { getFolderAPI } from 'app/features/folders/api/folder_api';
+import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import {
   Input,
@@ -282,7 +282,7 @@ export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {
 }
 
 export function createFolder(payload: any) {
-  return getFolderAPI().createFolder(payload)
+  return getFolderAPI().createFolder(payload);
 }
 
 export function moveFolder(uid: string, toFolder: FolderInfo) {
