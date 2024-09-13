@@ -29,6 +29,7 @@ jobs:
                         ) || '' }}" ]; then
             echo "has-secrets=1" >> "$GITHUB_OUTPUT"
           fi
+
   main:
     runs-on: ubuntu-latest
     steps:
@@ -66,6 +67,7 @@ jobs:
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
           token: ${{ steps.generate_token.outputs.token }}
           configPath: "issue-opened"
+
   auto-triage:
     needs: [main, config]
     if: needs.config.outputs.has-secrets && (github.event.issue.author_association == 'NONE' || github.event.issue.author_association == 'FIRST_TIMER' || github.event.issue.author_association == 'FIRST_TIME_CONTRIBUTOR')
