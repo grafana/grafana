@@ -796,10 +796,17 @@ func scalarInstantVector(f *data.Frame) (*float64, bool) {
 	if f.Fields[0].Len() > 1 || (f.Fields[0].Type() != data.FieldTypeNullableTime && f.Fields[0].Type() != data.FieldTypeTime) {
 		return &defaultReturnValue, false
 	}
-	if f.Fields[1].Len() > 1 || f.Fields[1].Type() != data.FieldTypeNullableFloat64 {
+	if f.Fields[1].Len() > 1 || (f.Fields[1].Type() != data.FieldTypeNullableFloat64 && f.Fields[1].Type() != data.FieldTypeFloat64) {
 		return &defaultReturnValue, false
 	}
-	return f.Fields[1].At(0).(*float64), true
+	switch f.Fields[1].Type() {
+	case data.FieldTypeFloat64:
+		val := f.Fields[1].At(0).(float64)
+		return &val, true
+	case data.FieldTypeNullableFloat64:
+		return f.Fields[1].At(0).(*float64), true
+	}
+	return &defaultReturnValue, true
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
