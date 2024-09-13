@@ -45,7 +45,9 @@ refs:
 
 Create data source-managed alert rules for Grafana Mimir or Grafana Loki data sources, which have been configured to support rule creation.
 
-They are only supported for Grafana Mimir or Grafana Loki data sources with the Ruler API enabled. For more information, refer to the [Loki Ruler API](/docs/loki/<GRAFANA_VERSION>/api/#ruler) or [Mimir Ruler API](/docs/mimir/<GRAFANA_VERSION>/references/http-api/#ruler).
+To configure your Grafana Mimir or Loki data source for alert rule creation, enable either the Loki Ruler API or the Mimir Ruler API.
+
+For more information, refer to [Loki Ruler API](/docs/loki/<GRAFANA_VERSION>/api/#ruler) or [Mimir Ruler API](/docs/mimir/<GRAFANA_VERSION>/references/http-api/#ruler).
 
 **Note**:
 
@@ -56,7 +58,7 @@ To make a backup of your configuration and to be able to restore deleted alertin
 
 ## Before you begin
 
-- Verify that you have write permission to the Mimir or Loki data source. Otherwise, you cannot create or update Grafana Mimir-managed alert rules.
+- Verify that you have write permission to the Mimir or Loki data source. Otherwise, you cannot create or update Grafana Mimir or Loki-managed alert rules.
 
 - Enable the Mimir or Loki Ruler API.
 
