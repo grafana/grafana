@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
+	"sync"
 
 	"github.com/Masterminds/semver/v3"
 
@@ -43,6 +44,8 @@ type Service struct {
 	signature *signature.Signature
 	store     pluginstore.Store
 	log       log.Logger
+
+	moduleHashCache sync.Map
 }
 
 // LoadingStrategy calculates the loading strategy for a plugin.
@@ -96,7 +99,17 @@ func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
 // It will read the module hash from the MANIFEST.txt in the [[plugins.FS]] of the provided plugin.
 // If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
 // module.js file, rather than for the provided plugin.
-func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSBase string) (string, error) {
+func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSBase string) (r string, err error) {
+	cachedValue, ok := s.moduleHashCache.Load(p.ID)
+	if ok {
+		return cachedValue.(string), nil
+	}
+
+	// Always store the result in the cache, even if it's an error
+	defer func() {
+		s.moduleHashCache.Store(p.ID, r)
+	}()
+
 	// Ignore unsigned plugins
 	if !p.Signature.IsValid() {
 		return "", nil
