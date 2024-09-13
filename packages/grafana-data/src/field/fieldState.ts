@@ -64,7 +64,7 @@ export function cacheFieldDisplayNames(frames: DataFrame[]) {
  * moves each field's config.custom.hideFrom to field.state.hideFrom
  * and mutates orgiginal field.config.custom.hideFrom to one with explicit overrides only, (without the ad-hoc stateful __system override from legend toggle)
  */
-export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldConfigSource<any>) {
+export function decoupleHideFromState(frames: DataFrame[], fieldConfig: FieldConfigSource) {
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
       const hideFrom = {

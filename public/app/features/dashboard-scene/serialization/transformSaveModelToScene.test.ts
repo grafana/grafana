@@ -746,7 +746,10 @@ describe('transformSaveModelToScene', () => {
 
   describe('Repeating rows', () => {
     it('Should build correct scene model', () => {
-      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
       const body = scene.state.body as SceneGridLayout;
       const row2 = body.state.children[1] as SceneGridRow;
 
@@ -762,7 +765,7 @@ describe('transformSaveModelToScene', () => {
 
   describe('Annotation queries', () => {
     it('Should build correct scene model', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
@@ -790,7 +793,7 @@ describe('transformSaveModelToScene', () => {
   describe('Alerting data layer', () => {
     it('Should add alert states data layer if unified alerting enabled', () => {
       config.unifiedAlertingEnabled = true;
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
@@ -803,7 +806,7 @@ describe('transformSaveModelToScene', () => {
       config.unifiedAlertingEnabled = false;
       const dashboard = { ...dashboard_to_load1 } as unknown as DashboardDataDTO;
       dashboard.panels![0].alert = {};
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);

@@ -94,7 +94,7 @@ export function validateScaleOptions(options?: ScaleDimensionOptions): ScaleDime
 export function validateScaleConfig(copy: ScaleDimensionConfig, options: ScaleDimensionOptions): ScaleDimensionConfig {
   let { min, max } = validateScaleOptions(options);
   if (!copy) {
-    copy = {} as any;
+    copy = {} as ScaleDimensionConfig;
   }
 
   if (copy.max == null) {
