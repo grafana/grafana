@@ -21,12 +21,12 @@ import {
   locationService,
   HistoryWrapper,
   LocationService,
-  setPluginExtensionsHook,
   setBackendSrv,
   getBackendSrv,
   getDataSourceSrv,
   getEchoSrv,
   setLocationService,
+  setPluginLinksHook,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
@@ -89,7 +89,7 @@ export function setupExplore(options?: SetupOptions): {
     request: jest.fn().mockRejectedValue(undefined),
   });
 
-  setPluginExtensionsHook(() => ({ extensions: [], isLoading: false }));
+  setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too

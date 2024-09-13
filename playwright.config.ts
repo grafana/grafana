@@ -71,6 +71,15 @@ export default defineConfig<PluginOptions>({
       dependencies: ['authenticate'],
     },
     {
+      name: 'extensions-test-app',
+      testDir: 'e2e/test-plugins/grafana-extensionstest-app',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+    {
       name: 'benchmarks',
       testDir: path.join(testDirRoot, '/benchmark'),
       use: {

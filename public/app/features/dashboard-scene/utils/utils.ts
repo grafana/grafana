@@ -1,6 +1,7 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import {
+  CancelActivationHandler,
   CustomVariable,
   MultiValueVariable,
   SceneDataTransformer,
@@ -15,7 +16,7 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { RowActions } from '../scene/row-actions/RowActions';
@@ -31,10 +32,6 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
-}
-
-export function getPanelIdForLibraryVizPanel(panel: LibraryVizPanel): number {
-  return parseInt(panel.state.panelKey!.replace('panel-', ''), 10);
 }
 
 /**
@@ -255,9 +252,41 @@ export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
   });
 }
 
-export function getLibraryPanel(vizPanel: VizPanel): LibraryVizPanel | undefined {
-  if (vizPanel.parent instanceof LibraryVizPanel) {
-    return vizPanel.parent;
+export function isLibraryPanel(vizPanel: VizPanel): boolean {
+  return getLibraryPanelBehavior(vizPanel) !== undefined;
+}
+
+export function getLibraryPanelBehavior(vizPanel: VizPanel): LibraryPanelBehavior | undefined {
+  const behavior = vizPanel.state.$behaviors?.find((behaviour) => behaviour instanceof LibraryPanelBehavior);
+
+  if (behavior) {
+    return behavior;
   }
-  return;
+
+  return undefined;
+}
+
+/**
+ * Activates any inactive parents of the scene object.
+ * Useful when rendering a scene object out of context of it's parent
+ * @returns
+ */
+export function activateInActiveParents(so: SceneObject): CancelActivationHandler | undefined {
+  let cancel: CancelActivationHandler | undefined;
+  let parentCancel: CancelActivationHandler | undefined;
+
+  if (so.isActive) {
+    return cancel;
+  }
+
+  if (so.parent) {
+    parentCancel = activateInActiveParents(so.parent);
+  }
+
+  cancel = so.activate();
+
+  return () => {
+    parentCancel?.();
+    cancel();
+  };
 }

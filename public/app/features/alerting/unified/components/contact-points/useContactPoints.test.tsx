@@ -65,10 +65,32 @@ describe('useContactPoints', () => {
     expect(snapshot).toMatchSnapshot();
   });
 
-  it('returns matching responses with and without alertingApiServer', async () => {
+  it('returns ~matching responses with and without alertingApiServer', async () => {
+    // Compare the responses between the two implementations, but do not consider:
+    // - ID: k8s API will return id properties, but the AM config will fall back to the name of the contact point.
+    //       These will be different, so we don't want to compare them
+    // - Metadata: k8s API includes metadata, AM config does not
+
     const snapshotAmConfig = await getHookResponse(false);
     const snapshotAlertingApiServer = await getHookResponse(true);
-    expect(snapshotAmConfig).toEqual(snapshotAlertingApiServer);
+
+    const amContactPoints = snapshotAmConfig.contactPoints.map((receiver) => {
+      const { id, ...rest } = receiver;
+      return rest;
+    });
+
+    const k8sContactPoints = snapshotAlertingApiServer.contactPoints.map((receiver) => {
+      const { id, metadata, ...rest } = receiver;
+      return rest;
+    });
+
+    expect({
+      ...snapshotAmConfig,
+      contactPoints: amContactPoints,
+    }).toEqual({
+      ...snapshotAlertingApiServer,
+      contactPoints: k8sContactPoints,
+    });
   });
 
   describe('when having oncall plugin installed and no alert manager config data', () => {

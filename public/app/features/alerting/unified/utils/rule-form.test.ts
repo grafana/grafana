@@ -8,6 +8,8 @@ import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
   MANUAL_ROUTING_KEY,
   alertingRulerRuleToRuleForm,
+  cleanAnnotations,
+  cleanLabels,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
@@ -252,5 +254,34 @@ describe('getDefautManualRouting', () => {
     expect(getDefautManualRouting()).toBe(true);
     localStorage.removeItem(MANUAL_ROUTING_KEY);
     expect(getDefautManualRouting()).toBe(true);
+  });
+});
+
+describe('cleanAnnotations', () => {
+  it('should remove falsy KVs', () => {
+    const output = cleanAnnotations([{ key: '', value: '' }]);
+    expect(output).toStrictEqual([]);
+  });
+
+  it('should trim keys and values', () => {
+    const output = cleanAnnotations([{ key: ' spaces ', value: ' spaces too  ' }]);
+    expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
+  });
+});
+
+describe('cleanLabels', () => {
+  it('should remove falsy KVs', () => {
+    const output = cleanLabels([{ key: '', value: '' }]);
+    expect(output).toStrictEqual([]);
+  });
+
+  it('should trim keys and values', () => {
+    const output = cleanLabels([{ key: ' spaces ', value: ' spaces too  ' }]);
+    expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
+  });
+
+  it('should leave empty values', () => {
+    const output = cleanLabels([{ key: 'key', value: '' }]);
+    expect(output).toStrictEqual([{ key: 'key', value: '' }]);
   });
 });

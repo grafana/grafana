@@ -14,9 +14,11 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
+import { TraceKeyValuePair } from '@grafana/data';
+
 import { SearchProps, Tag } from '../../useSearch';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
-import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
+import { TNil, TraceSpan } from '../types';
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
@@ -90,7 +92,8 @@ export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
     (span.instrumentationLibraryName && isTextInQuery(queryParts, span.instrumentationLibraryName)) ||
     (span.instrumentationLibraryVersion && isTextInQuery(queryParts, span.instrumentationLibraryVersion)) ||
     (span.traceState && isTextInQuery(queryParts, span.traceState)) ||
-    (span.logs !== null && span.logs.some((log) => isTextInKeyValues(log.fields))) ||
+    (span.logs !== null &&
+      span.logs.some((log) => (log.name && isTextInQuery(queryParts, log.name)) || isTextInKeyValues(log.fields))) ||
     isTextInKeyValues(span.process.tags) ||
     queryParts.some((queryPart) => queryPart === span.spanID);
 

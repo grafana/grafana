@@ -1341,7 +1341,7 @@ Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `e
 
 ### enable_tracing
 
-Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.oentelemetry.*` sections.
+Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.opentelemetry.*` sections.
 
 <hr>
 
@@ -1901,9 +1901,8 @@ Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
 ## [grafana_net]
 
-### url
-
-Default is https://grafana.com.
+Refer to [grafana_com] config as that is the new and preferred config name.
+The grafana_net config is still accepted and parsed to grafana_com config.
 
 <hr>
 
@@ -1912,6 +1911,7 @@ Default is https://grafana.com.
 ### url
 
 Default is https://grafana.com.
+The default authentication identity provider for Grafana Cloud.
 
 <hr>
 
