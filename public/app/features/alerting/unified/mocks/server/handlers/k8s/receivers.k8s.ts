@@ -23,9 +23,9 @@ const mappedReceivers =
         uid: camelCase(contactPoint.name),
         annotations: {
           [PROVENANCE_ANNOTATION]: provenance,
-          [`${ANNOTATION_PREFIX_ACCESS}/canAdmin`]: 'true',
-          [`${ANNOTATION_PREFIX_ACCESS}/canWrite`]: 'true',
-          [`${ANNOTATION_PREFIX_ACCESS}/canDelete`]: 'true',
+          [`${ANNOTATION_PREFIX_ACCESS}canAdmin`]: 'true',
+          [`${ANNOTATION_PREFIX_ACCESS}canWrite`]: 'true',
+          [`${ANNOTATION_PREFIX_ACCESS}canDelete`]: 'true',
         },
       },
       spec: {

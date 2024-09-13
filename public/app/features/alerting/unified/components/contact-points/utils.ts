@@ -3,7 +3,6 @@ import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { canAdminEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   AlertManagerCortexConfig,

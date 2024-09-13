@@ -12,7 +12,6 @@ import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/c
 import {
   ANNOTATION_INUSE_ROUTES,
   ANNOTATION_INUSE_RULES,
-  canAdminEntity,
   canDeleteEntity,
   canEditEntity,
 } from 'app/features/alerting/unified/utils/k8s/utils';
@@ -43,8 +42,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
   const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
   const [ExportDrawer, openExportDrawer] = useExportContactPoint();
 
-  const showManagePermissions =
-    canAdminEntity(contactPoint) && showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
+  const showManagePermissions = showManageContactPointPermissions(selectedAlertmanager!, contactPoint);
 
   const regularPolicyReferences = policies.filter((ref) => ref.route.type !== 'auto-generated');
 
@@ -57,9 +55,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
   );
 
   /** Number of rules that use this contact point for simplified routing */
-  const numberOfRules = (contactPoint.metadata?.annotations?.[ANNOTATION_INUSE_RULES] || '')
-    .split(',')
-    .filter(Boolean).length;
+  const numberOfRules = Number(contactPoint.metadata?.annotations?.[ANNOTATION_INUSE_RULES]) || 0;
 
   /** Is the contact point referenced by anything such as notification policies or as a simplified routing contact point? */
   const isReferencedByAnything = numberOfRules + numberOfPolicies > 0;

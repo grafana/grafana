@@ -44,6 +44,9 @@ type K8sPermission = 'canWrite' | 'canAdmin' | 'canDelete';
 
 export const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
 
+/**
+ * Checks annotations on a k8s entity to see if the requesting user has the required permission
+ */
 const getContactPointPermission = (k8sEntity: EntityToCheck, permission: K8sPermission) =>
   k8sEntity.metadata?.annotations?.[ANNOTATION_PREFIX_ACCESS + permission] === 'true';
 
@@ -53,5 +56,8 @@ export const canAdminEntity = (k8sEntity: EntityToCheck) => getContactPointPermi
 
 export const canDeleteEntity = (k8sEntity: EntityToCheck) => getContactPointPermission(k8sEntity, 'canDelete');
 
+/** Annotation key that indicates how many notification policy routes are using this entity */
 export const ANNOTATION_INUSE_ROUTES = 'grafana.com/inUse/routes';
+
+/** Annotation key that indicates how many alert rules are using this entity */
 export const ANNOTATION_INUSE_RULES = 'grafana.com/inUse/rules';

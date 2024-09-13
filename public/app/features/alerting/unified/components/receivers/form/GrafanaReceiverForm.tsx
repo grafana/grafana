@@ -6,12 +6,9 @@ import {
   useCreateContactPoint,
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import {
-  canEditEntity,
-  showManageContactPointPermissions,
-} from 'app/features/alerting/unified/components/contact-points/utils';
+import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { canEditEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
