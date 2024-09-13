@@ -3547,7 +3547,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.9.1":
+"@grafana/faro-core@npm:^1.10.0, @grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.9.1":
   version: 1.10.0
   resolution: "@grafana/faro-core@npm:1.10.0"
   dependencies:
@@ -3557,7 +3557,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.9.1, @grafana/faro-web-sdk@npm:^1.3.6, @grafana/faro-web-sdk@npm:^1.9.1":
+"@grafana/faro-web-sdk@npm:1.9.1":
   version: 1.9.1
   resolution: "@grafana/faro-web-sdk@npm:1.9.1"
   dependencies:
@@ -3565,6 +3565,17 @@ __metadata:
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^4.0.1"
   checksum: 10/436fa2da908b9aa20ce9700f3589e25f1c65eef1c855094d506afd6168278971bf347ca2f18b3f18dc0990a4551726670b9e481dd52124ae44b0d1909e879ea4
+  languageName: node
+  linkType: hard
+
+"@grafana/faro-web-sdk@npm:^1.3.6, @grafana/faro-web-sdk@npm:^1.9.1":
+  version: 1.10.0
+  resolution: "@grafana/faro-web-sdk@npm:1.10.0"
+  dependencies:
+    "@grafana/faro-core": "npm:^1.10.0"
+    ua-parser-js: "npm:^1.0.32"
+    web-vitals: "npm:^4.0.1"
+  checksum: 10/01f2cd2a1d3e9f0f3ede733a9a354643f31b2600ec62bd41c64caf256846fc8ae1a857ea3952a641df4e74971786cc605293248bd3bd8bff1debace369069e1e
   languageName: node
   linkType: hard
 
