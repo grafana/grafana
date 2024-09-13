@@ -13,7 +13,7 @@ import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { fieldMatchers } from '../transformations/matchers';
 import { ScopedVars, DataContextScopedVar } from '../types/ScopedVars';
 import { DataFrame, NumericRange, FieldType, Field, ValueLinkConfig, FieldConfig } from '../types/dataFrame';
-import { LinkModel, DataLink } from '../types/dataLink';
+import { LinkModel, DataLink, VariableInterpolation } from '../types/dataLink';
 import { DisplayProcessor, DisplayValue, DecimalCount } from '../types/displayValue';
 import { FieldColorModeId } from '../types/fieldColor';
 import {
@@ -461,7 +461,7 @@ export const getLinksSupplier =
       return [];
     }
 
-    console.log('getLinksSupplier', field);
+    //console.log('getLinksSupplier', field);
 
     const linkModels = field.config.links.map((link: DataLink) => {
       const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
@@ -496,8 +496,12 @@ export const getLinksSupplier =
         __dataContext: dataContext,
       };
 
-      const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) =>
-        replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
+      const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) => {
+        let variables: VariableInterpolation[] = [];
+        const replaceStr = replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format, variables);
+        console.log('replace array', variables);
+        return replaceStr;
+      };
 
       // We are not displaying reduction result
       if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
@@ -518,14 +522,14 @@ export const getLinksSupplier =
 
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
+        href = boundReplaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
         href = locationUtil.processUrl(href);
       }
 
       if (link.onClick) {
         linkModel = {
           href,
-          title: replaceVariables(link.title || '', dataLinkScopedVars),
+          title: boundReplaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           onClick: (evt: MouseEvent, origin: Field) => {
             link.onClick!({
@@ -539,7 +543,7 @@ export const getLinksSupplier =
       } else {
         linkModel = {
           href,
-          title: replaceVariables(link.title || '', dataLinkScopedVars),
+          title: boundReplaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
           origin: field,
         };
