@@ -33,7 +33,7 @@ type FrameIterateCallback = (frames: DataFrame[], seriesIndex: number) => void;
 
 export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
   private unfilteredChildren: SceneFlexItem[] = [];
-  private sortedSeries: DataFrame[] = [];
+  private series: DataFrame[] = [];
   private getFilter: () => string;
 
   public constructor({ getFilter, ...state }: ByFrameRepeaterState & { getFilter: () => string }) {
@@ -71,14 +71,13 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
 
   private performRepeat(data: PanelData) {
     const newChildren: SceneFlexItem[] = [];
-    const sortedSeries = data.series;
+    this.series = data.series;
 
-    for (let seriesIndex = 0; seriesIndex < sortedSeries.length; seriesIndex++) {
-      const layoutChild = this.state.getLayoutChild(data, sortedSeries[seriesIndex], seriesIndex);
+    for (let seriesIndex = 0; seriesIndex < this.series.length; seriesIndex++) {
+      const layoutChild = this.state.getLayoutChild(data, this.series[seriesIndex], seriesIndex);
       newChildren.push(layoutChild);
     }
 
-    this.sortedSeries = sortedSeries;
     this.unfilteredChildren = newChildren;
 
     if (this.getFilter()) {
@@ -115,8 +114,8 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
     if (!data) {
       return;
     }
-    for (let seriesIndex = 0; seriesIndex < this.sortedSeries.length; seriesIndex++) {
-      callback(this.sortedSeries, seriesIndex);
+    for (let seriesIndex = 0; seriesIndex < this.series.length; seriesIndex++) {
+      callback(this.series, seriesIndex);
     }
   };
 

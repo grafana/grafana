@@ -36,8 +36,6 @@ export const TRAIL_BOOKMARKS_KEY = 'grafana.trails.bookmarks';
 
 export const TRAIL_BREAKDOWN_VIEW_KEY = 'grafana.trails.breakdown.view';
 
-export const TRAIL_BREAKDOWN_SORT_KEY = 'grafana.trails.breakdown.sort';
-
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 
 export function getVariablesWithMetricConstant(metric: string) {
