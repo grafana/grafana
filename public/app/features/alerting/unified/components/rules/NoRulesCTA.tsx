@@ -15,7 +15,7 @@ export const NoRulesSplash = () => {
         button={
           canCreateAnything ? (
             <Stack direction="row" alignItems="center" justifyContent="center">
-              {canCreateGrafanaRules && (
+              {canCreateAnything && (
                 <LinkButton variant="primary" icon="plus" size="lg" href="alerting/new/alerting">
                   <Trans i18nKey='alerting.list-view".empty.new-alert-rule'>New alert rule</Trans>
                 </LinkButton>
