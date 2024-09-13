@@ -8,6 +8,7 @@ import (
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
 	AlertInstanceKey  `xorm:"extends"`
+	RuleGroup         string `xorm:"-"`
 	Labels            InstanceLabels
 	CurrentState      InstanceStateType
 	CurrentReason     string
@@ -19,10 +20,22 @@ type AlertInstance struct {
 	ResultFingerprint string
 }
 
+func (a *AlertInstance) GetKeyWithGroup() AlertInstanceKeyWithGroup {
+	return AlertInstanceKeyWithGroup{
+		AlertInstanceKey: a.AlertInstanceKey,
+		RuleGroup:        a.RuleGroup,
+	}
+}
+
 type AlertInstanceKey struct {
 	RuleOrgID  int64  `xorm:"rule_org_id"`
 	RuleUID    string `xorm:"rule_uid"`
 	LabelsHash string
+}
+
+type AlertInstanceKeyWithGroup struct {
+	AlertInstanceKey
+	RuleGroup string
 }
 
 // InstanceStateType is an enum for instance states.

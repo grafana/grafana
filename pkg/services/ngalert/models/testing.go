@@ -844,6 +844,7 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 			RuleUID:    util.GenerateShortUID(),
 			LabelsHash: util.GenerateShortUID(),
 		},
+		RuleGroup:         util.GenerateShortUID(),
 		Labels:            labels,
 		CurrentState:      randState(),
 		CurrentReason:     "TEST-REASON-" + util.GenerateShortUID(),

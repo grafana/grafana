@@ -267,7 +267,7 @@ func TestAlertRule(t *testing.T) {
 }
 
 func blankRuleForTests(ctx context.Context, key models.AlertRuleKey) *alertRule {
-	return newAlertRule(ctx, key, nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
+	return newAlertRule(ctx, key, "", nil, false, 0, nil, nil, nil, nil, nil, nil, log.NewNopLogger(), nil, nil, nil)
 }
 
 func TestRuleRoutine(t *testing.T) {

@@ -22,8 +22,9 @@ import (
 )
 
 type State struct {
-	OrgID        int64
-	AlertRuleUID string
+	OrgID          int64
+	AlertRuleUID   string
+	AlertRuleGroup string
 
 	// CacheID is a unique, opaque identifier for the state, and is used to find the state
 	// in the state cache. It tends to be derived from the state's labels.
@@ -88,7 +89,24 @@ func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
 	if err != nil {
 		return models.AlertInstanceKey{}, err
 	}
-	return models.AlertInstanceKey{RuleOrgID: a.OrgID, RuleUID: a.AlertRuleUID, LabelsHash: labelsHash}, nil
+	return models.AlertInstanceKey{
+		RuleOrgID:  a.OrgID,
+		RuleUID:    a.AlertRuleUID,
+		LabelsHash: labelsHash,
+	}, nil
+}
+
+func (a *State) GetAlertInstanceKeyWithGroup() (models.AlertInstanceKeyWithGroup, error) {
+	key, err := a.GetAlertInstanceKey()
+
+	if err != nil {
+		return models.AlertInstanceKeyWithGroup{}, err
+	}
+
+	return models.AlertInstanceKeyWithGroup{
+		AlertInstanceKey: key,
+		RuleGroup:        a.AlertRuleGroup,
+	}, nil
 }
 
 // SetAlerting sets the state to Alerting. It changes both the start and end time.

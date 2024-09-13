@@ -54,10 +54,10 @@ func (a *SyncStatePersister) deleteAlertStates(ctx context.Context, states []Sta
 	}
 	logger := a.log.FromContext(ctx)
 	logger.Debug("Deleting alert states", "count", len(states))
-	toDelete := make([]ngModels.AlertInstanceKey, 0, len(states))
+	toDelete := make([]ngModels.AlertInstanceKeyWithGroup, 0, len(states))
 
 	for _, s := range states {
-		key, err := s.GetAlertInstanceKey()
+		key, err := s.GetAlertInstanceKeyWithGroup()
 		if err != nil {
 			a.log.Error("Failed to delete alert instance with invalid labels", "cacheID", s.CacheID, "labels", s.Labels.String(), "error", err)
 			continue
@@ -96,6 +96,7 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 		}
 		instance := ngModels.AlertInstance{
 			AlertInstanceKey:  key,
+			RuleGroup:         s.AlertRuleGroup,
 			Labels:            ngModels.InstanceLabels(s.Labels),
 			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
 			CurrentReason:     s.StateReason,
