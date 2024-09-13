@@ -110,10 +110,6 @@ type Interactions = {
       | 'close'
     )
   };
-  sorting_changed: {
-      // type of sorting
-      sortBy: string
-  };
   wasm_not_supported: {},
 };
 

@@ -16,11 +16,10 @@ import {
 import { Alert, Button } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { getLabelValueFromDataFrame } from '../services/levels';
 import { fuzzySearch } from '../services/search';
-import { sortSeries } from '../services/sorting';
 
 import { BreakdownSearchReset } from './BreakdownSearchScene';
-import { getLabelValue } from './SortByScene';
 import { findSceneObjectsByType } from './utils';
 
 interface ByFrameRepeaterState extends SceneObjectState {
@@ -34,18 +33,12 @@ type FrameIterateCallback = (frames: DataFrame[], seriesIndex: number) => void;
 
 export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
   private unfilteredChildren: SceneFlexItem[] = [];
-  private sortBy: string;
   private sortedSeries: DataFrame[] = [];
   private getFilter: () => string;
 
-  public constructor({
-    sortBy,
-    getFilter,
-    ...state
-  }: ByFrameRepeaterState & { sortBy: string; getFilter: () => string }) {
+  public constructor({ getFilter, ...state }: ByFrameRepeaterState & { getFilter: () => string }) {
     super(state);
 
-    this.sortBy = sortBy;
     this.getFilter = getFilter;
 
     this.addActivationHandler(() => {
@@ -76,17 +69,9 @@ export class ByFrameRepeater extends SceneObjectBase<ByFrameRepeaterState> {
     });
   }
 
-  public sort = (sortBy: string) => {
-    const data = sceneGraph.getData(this);
-    this.sortBy = sortBy;
-    if (data.state.data) {
-      this.performRepeat(data.state.data);
-    }
-  };
-
   private performRepeat(data: PanelData) {
     const newChildren: SceneFlexItem[] = [];
-    const sortedSeries = sortSeries(data.series, this.sortBy);
+    const sortedSeries = data.series;
 
     for (let seriesIndex = 0; seriesIndex < sortedSeries.length; seriesIndex++) {
       const layoutChild = this.state.getLayoutChild(data, sortedSeries[seriesIndex], seriesIndex);
@@ -199,3 +184,7 @@ const styles = {
     marginLeft: '1.5rem',
   }),
 };
+
+function getLabelValue(frame: DataFrame) {
+  return getLabelValueFromDataFrame(frame) ?? 'No labels';
+}
