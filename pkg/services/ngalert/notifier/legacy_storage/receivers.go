@@ -172,7 +172,6 @@ func receiverUseCounts(routes []*definitions.Route, m map[string]int) {
 		m[route.Receiver]++
 		receiverUseCounts(route.Routes, m)
 	}
-	return
 }
 
 // validateAndSetIntegrationUIDs validates existing integration UIDs and generates them if they are empty.
