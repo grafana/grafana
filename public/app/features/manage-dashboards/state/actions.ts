@@ -3,7 +3,7 @@ import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime'
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
+import { PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import {
   Input,
