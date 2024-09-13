@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { config, usePluginLinks } from '@grafana/runtime';
 
 import { updateScopes } from './utils/actions';
 import { expectDashboardReload, expectNotDashboardReload } from './utils/assertions';
@@ -11,7 +11,7 @@ jest.mock('@grafana/runtime', () => ({
   useChromeHeaderHeight: jest.fn(),
   getBackendSrv: () => ({ get: getMock }),
   getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
-  usePluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 describe('Dashboard reload', () => {
