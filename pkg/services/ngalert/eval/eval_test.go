@@ -63,6 +63,52 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			},
 		},
 		{
+			desc: "query service dataframe works as instant vector",
+			execResults: ExecutionResults{
+				Condition: func() []*data.Frame {
+					f := data.NewFrame("",
+						data.NewField("", nil, []*time.Time{util.Pointer(time.Now())}),
+						data.NewField("", nil, []*float64{util.Pointer(0.0)}),
+					)
+					f.Meta = &data.FrameMeta{
+						Custom: map[string]any{
+							"resultType": "scalar",
+						},
+					}
+					return []*data.Frame{f}
+				}(),
+			},
+			expectResultLength: 1,
+			expectResults: Results{
+				{
+					State: Normal,
+				},
+			},
+		},
+		{
+			desc: "query service dataframe works as instant vector when alerting",
+			execResults: ExecutionResults{
+				Condition: func() []*data.Frame {
+					f := data.NewFrame("",
+						data.NewField("", nil, []*time.Time{util.Pointer(time.Now())}),
+						data.NewField("", nil, []*float64{util.Pointer(1.0)}),
+					)
+					f.Meta = &data.FrameMeta{
+						Custom: map[string]any{
+							"resultType": "scalar",
+						},
+					}
+					return []*data.Frame{f}
+				}(),
+			},
+			expectResultLength: 1,
+			expectResults: Results{
+				{
+					State: Alerting,
+				},
+			},
+		},
+		{
 			desc: "nil value single instance is single a NoData state result",
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{

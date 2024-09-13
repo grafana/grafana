@@ -39,9 +39,11 @@ const (
 var (
 	ErrLokiStoreInternal = errutil.Internal("annotations.loki.internal")
 	ErrLokiStoreNotFound = errutil.NotFound("annotations.loki.notFound")
-
-	errMissingRule = errors.New("rule not found")
 )
+
+type RuleStore interface {
+	GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (result *ngmodels.AlertRule, err error)
+}
 
 type lokiQueryClient interface {
 	RangeQuery(ctx context.Context, query string, start, end, limit int64) (historian.QueryRes, error)
@@ -50,12 +52,13 @@ type lokiQueryClient interface {
 
 // LokiHistorianStore is a read store that queries Loki for alert state history.
 type LokiHistorianStore struct {
-	client lokiQueryClient
-	db     db.DB
-	log    log.Logger
+	client    lokiQueryClient
+	db        db.DB
+	log       log.Logger
+	ruleStore RuleStore
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, log log.Logger, tracer tracing.Tracer) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer) *LokiHistorianStore {
 	if !useStore(cfg, ft) {
 		return nil
 	}
@@ -66,9 +69,10 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	}
 
 	return &LokiHistorianStore{
-		client: historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log, tracer),
-		db:     db,
-		log:    log,
+		client:    historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log, tracer),
+		db:        db,
+		log:       log,
+		ruleStore: ruleStore,
 	}
 }
 
@@ -90,9 +94,9 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	rule := &ngmodels.AlertRule{}
 	if query.AlertID != 0 {
 		var err error
-		rule, err = getRule(ctx, r.db, query.OrgID, query.AlertID)
+		rule, err = r.ruleStore.GetRuleByID(ctx, ngmodels.GetAlertRuleByIDQuery{OrgID: query.OrgID, ID: query.AlertID})
 		if err != nil {
-			if errors.Is(err, errMissingRule) {
+			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 				return make([]*annotations.ItemDTO, 0), ErrLokiStoreNotFound.Errorf("rule with ID %d does not exist", query.AlertID)
 			}
 			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query rule: %w", err)
@@ -193,22 +197,6 @@ func (r *LokiHistorianStore) GetTags(ctx context.Context, query *annotations.Tag
 }
 
 // util
-
-func getRule(ctx context.Context, sql db.DB, orgID int64, ruleID int64) (*ngmodels.AlertRule, error) {
-	rule := &ngmodels.AlertRule{OrgID: orgID, ID: ruleID}
-	err := sql.WithDbSession(ctx, func(sess *db.Session) error {
-		exists, err := sess.Get(rule)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return errMissingRule
-		}
-		return nil
-	})
-
-	return rule, err
-}
 
 func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
 	orgFilter := resources.CanAccessOrgAnnotations && entry.DashboardUID == ""
