@@ -246,6 +246,10 @@ func (a *dashboardSqlAccess) Read(ctx context.Context, req *resource.ReadRequest
 	return a.ReadResource(ctx, req), nil
 }
 
+func (a *dashboardSqlAccess) Filter(ctx context.Context, req *resource.FilterRequest) (*resource.FilterResponse, error) {
+	return nil, fmt.Errorf("not yet (filter)")
+}
+
 func (a *dashboardSqlAccess) History(ctx context.Context, req *resource.HistoryRequest) (*resource.HistoryResponse, error) {
 	info, err := claims.ParseNamespace(req.Key.Namespace)
 	if err == nil {

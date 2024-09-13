@@ -37,6 +37,10 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	auth := &grpcUtils.Authenticator{}
 
 	channel.RegisterService(
+		&ResourceIndex_ServiceDesc,
+		server,
+	)
+	channel.RegisterService(
 		grpchan.InterceptServer(
 			&ResourceStore_ServiceDesc,
 			grpcAuth.UnaryServerInterceptor(auth.Authenticate),

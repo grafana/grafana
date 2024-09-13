@@ -195,6 +195,11 @@ func ProvideService(
 
 	// register with grafana http server for now
 	s.rr.Get("/apis/filter", func(c *contextmodel.ReqContext) {
+		if c.SignedInUser != nil {
+			ctx := identity.WithRequester(c.Req.Context(), c.SignedInUser)
+			c.Req = c.Req.WithContext(ctx)
+		}
+
 		urlQuery := c.Req.URL.Query().Get("query")
 		fmt.Println("urlQuery: ", urlQuery)
 		filterRequest := &resource.FilterRequest{Query: urlQuery}

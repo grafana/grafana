@@ -99,6 +99,27 @@ type ResourceServerOptions struct {
 	Now func() int64
 }
 
+type indexServer struct {
+	Backend StorageBackend
+}
+
+func (s indexServer) Filter(ctx context.Context, req *FilterRequest) (*FilterResponse, error) {
+	res := &FilterResponse{}
+	return res, nil
+}
+
+func (s indexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
+	return nil, nil
+}
+
+func (s indexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
+	return nil, nil
+}
+
+func NewResourceIndexServer(backend StorageBackend) ResourceIndexServer {
+	return indexServer{Backend: backend}
+}
+
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
@@ -107,9 +128,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
-	if opts.Index == nil {
-		opts.Index = &noopService{}
-	}
+
+	opts.Index = NewResourceIndexServer(opts.Backend)
+
 	if opts.Diagnostics == nil {
 		opts.Diagnostics = &noopService{}
 	}
@@ -607,6 +628,7 @@ func (s *server) Filter(ctx context.Context, req *FilterRequest) (*FilterRespons
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+	fmt.Println("calling index.Filter()")
 	return s.index.Filter(ctx, req)
 }
 

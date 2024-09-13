@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 )
 
 var (
@@ -36,6 +37,7 @@ func (n *noopService) Read(context.Context, *ReadRequest) (*ReadResponse, error)
 }
 
 func (n *noopService) Filter(context.Context, *FilterRequest) (*FilterResponse, error) {
+	fmt.Println("THE OLD FILTER")
 	return nil, ErrNotImplementedYet
 }
 
