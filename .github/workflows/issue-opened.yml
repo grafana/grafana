@@ -61,7 +61,7 @@ jobs:
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          # Secrets placed in the ci/repo/grafana/<repo>/<path> path in Vault
+          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
           repo_secrets: |
             AUTOTRIAGER_OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
             AUTOTRIAGER_SLACK_WEBHOOK_URL=plugins_platform_issue_triager:AUTOTRIAGER_SLACK_WEBHOOK_URL
