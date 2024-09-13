@@ -143,7 +143,7 @@
     "@types/d3": "7.4.3",
     "@types/hoist-non-react-statics": "3.3.5",
     "@types/is-hotkey": "0.1.10",
-    "@types/jest": "29.5.12",
+    "@types/jest": "29.5.13",
     "@types/mock-raf": "1.0.6",
     "@types/node": "20.16.5",
     "@types/prismjs": "1.26.4",
