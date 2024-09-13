@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
 var (
@@ -78,7 +77,7 @@ func NewCalculator(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever) *Si
 	}
 }
 
-func DefaultCalculator(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) *Signature {
+func DefaultCalculator(cfg *config.PluginManagementCfg) *Signature {
 	return &Signature{
 		kr:  statickey.New(),
 		cfg: cfg,
