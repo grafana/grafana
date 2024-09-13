@@ -8,7 +8,6 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
-import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { HOME_ROUTE, TRAILS_ROUTE } from './shared';
 import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
@@ -40,7 +39,8 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
             <Page
               navId="explore/metrics"
               layout={PageLayoutType.Standard}
-              renderTitle={() => <MetricsHeader />}
+              // Returning null to prevent default behavior which renders a header
+              renderTitle={() => null}
               subTitle=""
             >
               <home.Component model={home} />
@@ -72,6 +72,7 @@ function DataTrailView({ trail }: { trail: DataTrail }) {
     <UrlSyncContextProvider scene={trail}>
       <Page navId="explore/metrics" pageNav={{ text: getMetricName(metric) }} layout={PageLayoutType.Custom}>
         <trail.Component model={trail} />
+        {/* data trail scene object above */}
       </Page>
     </UrlSyncContextProvider>
   );

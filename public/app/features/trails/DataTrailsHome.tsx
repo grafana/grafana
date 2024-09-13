@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
+import { Trans } from 'react-i18next';
 import { Redirect } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Button, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Button, Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 
 import { DataTrail } from './DataTrail';
@@ -21,6 +22,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     super(state);
   }
 
+  // button: new metric exploration
   public onNewMetricsTrail = () => {
     const app = getAppFor(this);
     const trail = newMetricsTrail(getDatasourceForNewTrail());
@@ -29,6 +31,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     app.goToUrlForTrail(trail);
   };
 
+  // called when you click on a recent metric exploration card
   public onSelectRecentTrail = (trail: DataTrail) => {
     const app = getAppFor(this);
     reportExploreMetrics('exploration_started', { cause: 'recent_clicked' });
@@ -36,6 +39,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     app.goToUrlForTrail(trail);
   };
 
+  // called when you click on a bookmark card
   public onSelectBookmark = (bookmarkIndex: number) => {
     const app = getAppFor(this);
     reportExploreMetrics('exploration_started', { cause: 'bookmark_clicked' });
@@ -54,20 +58,48 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
       setLastDelete(Date.now()); // trigger re-render
     };
 
+    // current/old code: if there are no recent trails, show metrics select page (all metrics)
+    // probably need to change this logic to - if there are recent trails, show the sparklines, etc
     // If there are no recent trails, don't show home page and create a new trail
-    if (!getTrailStore().recent.length) {
-      const trail = newMetricsTrail(getDatasourceForNewTrail());
-      return <Redirect to={getUrlForTrail(trail)} />;
-    }
+    // if (!getTrailStore().recent.length) {
+    //   const trail = newMetricsTrail(getDatasourceForNewTrail());
+    //   return <Redirect to={getUrlForTrail(trail)} />;
+    // }
 
     return (
       <div className={styles.container}>
-        <Stack direction={'column'} gap={1} alignItems={'start'}>
-          <Button icon="plus" size="md" variant="primary" onClick={model.onNewMetricsTrail}>
-            New metric exploration
-          </Button>
-        </Stack>
-
+        <div className={styles.homepageBox}>
+          <Stack direction="column" alignItems="center" gap={2}>
+            <div className={styles.rocket}>
+              <Icon name="rocket" style={{ width: '100%', height: 'auto' }} size="xxxl" />
+            </div>
+            <Text element="h1" textAlignment="center" weight="medium">
+              {/* have to add i18nKey */}
+              <Trans>Start your metrics exploration!</Trans>
+            </Text>
+            {/* <Box marginBottom={1} paddingX={4} > */}
+            <Box paddingX={4} gap={3}>
+              <Text element="p" textAlignment="center" color="secondary">
+                {/* have to add i18nKey */}
+                <Trans>Explore your Prometheus-compatible metrics without writing a query.</Trans>
+                <TextLink
+                  href="https://grafana.com/docs/grafana/latest/explore/explore-metrics/"
+                  external
+                  style={{ marginLeft: '8px' }}
+                >
+                  Learn more
+                </TextLink>
+              </Text>
+            </Box>
+            <Button size="lg" variant="primary" onClick={model.onNewMetricsTrail}>
+              <div className={styles.startButton}>
+                <Trans>Let's start!</Trans>
+              </div>
+              <Icon name="arrow-right" size="lg" style={{ marginLeft: '8px' }} />
+            </Button>
+          </Stack>
+        </div>
+        {/* separate recent metircs + bookmarks code into separate components, then can conditionally render based on if there's a length */}
         <Stack gap={5}>
           <div className={styles.column}>
             <Text variant="h4">Recent metrics explorations</Text>
@@ -112,7 +144,26 @@ function getAppFor(model: SceneObject) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    homepageBox: css({
+      backgroundColor: theme.colors.background.secondary,
+      display: 'flex',
+      width: '725px',
+      height: '294px',
+      padding: '40px 32px',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '24px',
+      flexShrink: 0,
+    }),
+    rocket: css({
+      vectorEffect: 'non-scaling-stroke', // currently not working
+    }),
+    startButton: css({
+      fontWeight: theme.typography.fontWeightLight,
+    }),
     container: css({
+      alignItems: 'center',
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',
