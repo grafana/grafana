@@ -168,7 +168,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
       // update otel variables when changed
       if (this.state.useOtelExperience && (name === VAR_OTEL_DEPLOYMENT_ENV || name === VAR_OTEL_RESOURCES)) {
-        // HERE WE UPDATE THE OTEL EXPERIENCE ENGINE
         // for state and variables
         const timeRange: RawTimeRange | undefined = this.state.$timeRange?.state;
         const datasourceUid = sceneGraph.interpolate(this, VAR_DATASOURCE_EXPR);
@@ -315,7 +314,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
       const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange);
       const hasOtelResources = otelTargets.job !== '' && otelTargets.instance !== '';
-      // const isStandard = await isOtelStandardization(datasourceUid, timeRange);
       if (
         otelResourcesVariable instanceof AdHocFiltersVariable &&
         otelDepEnvVariable instanceof CustomVariable &&
@@ -325,11 +323,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         // HERE WE START THE OTEL EXPERIENCE ENGINE
         // 1. Set deployment variable values
         // 2. update all other variables and state
-        // Note** isStandard is not reliable because of an issue where there are
-        // multiple target_info series with job&instance pairs due to staleness which breaks the join.
-        // We handle this by now using topk to choose 1 series to allow for the join
-        if (hasOtelResources && deploymentEnvironments.length > 0 /*&& isStandard*/) {
-          // *** apply VAR FILTERS manually
+        if (hasOtelResources && deploymentEnvironments.length > 0) {
+          // apply VAR FILTERS manually
           // otherwise they will appear anywhere the query contains {} characters
           filtersVariable.setState({
             addFilterButtonText: 'Select metric attributes',
@@ -357,12 +352,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
           const depEnvInitialValue = notInitialvalue ? otelDepEnvValue : defaultDepEnv;
 
           otelDepEnvVariable?.setState({
-            // cannot have an undefined custom value
-            // this breaks everything
-            // create an issue for this
-            // set with the previous state
             value: depEnvInitialValue,
-            query: varQuery,
             options: options,
             hide: VariableHide.dontHide,
           });
@@ -497,7 +487,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // and use these new targets to reduce the metrics
     // for initialization we also update the following
     // - has otel resources flag
-    // - isStandardOtel flag
     // - and default to useOtelExperience
     const otelTargets = await totalOtelResources(datasourceUid, timeRange, resourcesObject.filters);
 
@@ -507,8 +496,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         otelTargets,
         otelJoinQuery,
         hasOtelResources,
-        // we handle non-standard data sources by using topk to choose 1 series in the join query
-        isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
+        isStandardOtel: deploymentEnvironments.length > 0,
         useOtelExperience: true,
       });
     } else {
@@ -516,10 +504,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState({
         otelTargets,
         otelJoinQuery,
-        // hasOtelResources,
-        // // we handle non-standard data sources by using topk to choose 1 series in the join query
-        // isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
-        // useOtelExperience: true,
       });
     }
   }
@@ -556,8 +540,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     if (hasOtelResources && deploymentEnvironments) {
       this.setState({
         hasOtelResources,
-        // we handle non-standard data sources by using topk to choose 1 series in the join query
-        isStandardOtel: /* isStandard && */ deploymentEnvironments.length > 0,
+        isStandardOtel: deploymentEnvironments.length > 0,
         useOtelExperience: false,
         otelTargets: { job: '', instance: '' },
         otelJoinQuery: '',
@@ -566,7 +549,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       // partial reset when a user turns off the otel experience
       this.setState({
         otelTargets: { job: '', instance: '' },
-        // otelResources: [],
         otelJoinQuery: '',
       });
     }
