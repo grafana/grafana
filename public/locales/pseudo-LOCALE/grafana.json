@@ -220,7 +220,6 @@
       }
     }
   },
-  "Always keep selected metric graph in-view": "Åľŵäyş ĸęęp şęľęčŧęđ męŧřįč ģřäpĥ įŉ-vįęŵ",
   "annotations": {
     "empty-state": {
       "button-title": "Åđđ äŉŉőŧäŧįőŉ qūęřy",
@@ -920,7 +919,6 @@
       "export-as-json-tooltip": "Ēχpőřŧ"
     }
   },
-  "Filter by": "Fįľŧęř þy",
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
@@ -1009,7 +1007,6 @@
       "refresh": "Ŗęƒřęşĥ"
     }
   },
-  "Labels": "Ŀäþęľş",
   "ldap-drawer": {
     "attributes-section": {
       "description": "Ŝpęčįƒy ŧĥę ĿĐÅP äŧŧřįþūŧęş ŧĥäŧ mäp ŧő ŧĥę ūşęř&ľşqūő;ş ģįvęŉ ŉämę, şūřŉämę, äŉđ ęmäįľ äđđřęşş, ęŉşūřįŉģ ŧĥę äppľįčäŧįőŉ čőřřęčŧľy řęŧřįęvęş äŉđ đįşpľäyş ūşęř įŉƒőřmäŧįőŉ.",
@@ -1238,7 +1235,6 @@
       "older-logs": "Øľđęř ľőģş"
     }
   },
-  "Metric attributes": "Męŧřįč äŧŧřįþūŧęş",
   "migrate-to-cloud": {
     "build-snapshot": {
       "description": "Ŧĥįş ŧőőľ čäŉ mįģřäŧę şőmę řęşőūřčęş ƒřőm ŧĥįş įŉşŧäľľäŧįőŉ ŧő yőūř čľőūđ şŧäčĸ. Ŧő ģęŧ şŧäřŧęđ, yőū'ľľ ŉęęđ ŧő čřęäŧę ä şŉäpşĥőŧ őƒ ŧĥįş įŉşŧäľľäŧįőŉ. Cřęäŧįŉģ ä şŉäpşĥőŧ ŧypįčäľľy ŧäĸęş ľęşş ŧĥäŉ ŧŵő mįŉūŧęş. Ŧĥę şŉäpşĥőŧ įş şŧőřęđ äľőŉģşįđę ŧĥįş Ğřäƒäŉä įŉşŧäľľäŧįőŉ.",
@@ -2425,7 +2421,6 @@
     },
     "title": "Přęƒęřęŉčęş"
   },
-  "Show previews of metric graphs": "Ŝĥőŵ přęvįęŵş őƒ męŧřįč ģřäpĥş",
   "silences": {
     "empty-state": {
       "button-title": "Cřęäŧę şįľęŉčę",
@@ -2554,10 +2549,19 @@
   "trails": {
     "metric-overview": {
       "description-label": "Đęşčřįpŧįőŉ",
+      "labels": "Ŀäþęľş",
+      "metric-attributes": "Męŧřįč äŧŧřįþūŧęş",
       "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
       "type-label": "Ŧypę",
       "unit-label": "Ůŉįŧ",
       "unknown-type": "Ůŉĸŉőŵŉ"
+    },
+    "metric-select": {
+      "filter-by": "Fįľŧęř þy"
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "Åľŵäyş ĸęęp şęľęčŧęđ męŧřįč ģřäpĥ įŉ-vįęŵ",
+      "show-previews-of-metric-graphs": "Ŝĥőŵ přęvįęŵş őƒ męŧřįč ģřäpĥş"
     }
   },
   "transformations": {

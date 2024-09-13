@@ -559,7 +559,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
             <Field
               label={
                 <div className={styles.displayOptionTooltip}>
-                  <Trans i18nKey="">Filter by</Trans>
+                  <Trans i18nKey="trails.metric-select.filter-by">Filter by</Trans>
                   <IconButton
                     name={'info-circle'}
                     size="sm"

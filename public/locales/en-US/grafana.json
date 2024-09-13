@@ -220,7 +220,6 @@
       }
     }
   },
-  "Always keep selected metric graph in-view": "Always keep selected metric graph in-view",
   "annotations": {
     "empty-state": {
       "button-title": "Add annotation query",
@@ -920,7 +919,6 @@
       "export-as-json-tooltip": "Export"
     }
   },
-  "Filter by": "Filter by",
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -1009,7 +1007,6 @@
       "refresh": "Refresh"
     }
   },
-  "Labels": "Labels",
   "ldap-drawer": {
     "attributes-section": {
       "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
@@ -1238,7 +1235,6 @@
       "older-logs": "Older logs"
     }
   },
-  "Metric attributes": "Metric attributes",
   "migrate-to-cloud": {
     "build-snapshot": {
       "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
@@ -2425,7 +2421,6 @@
     },
     "title": "Preferences"
   },
-  "Show previews of metric graphs": "Show previews of metric graphs",
   "silences": {
     "empty-state": {
       "button-title": "Create silence",
@@ -2554,10 +2549,19 @@
   "trails": {
     "metric-overview": {
       "description-label": "Description",
+      "labels": "Labels",
+      "metric-attributes": "Metric attributes",
       "no-description": "No description available",
       "type-label": "Type",
       "unit-label": "Unit",
       "unknown-type": "Unknown"
+    },
+    "metric-select": {
+      "filter-by": "Filter by"
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
+      "show-previews-of-metric-graphs": "Show previews of metric graphs"
     }
   },
   "transformations": {
