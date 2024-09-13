@@ -86,12 +86,17 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 // The module hash is read from the plugin's MANIFEST.txt file.
 // The plugin can also be a nested plugin.
 // If the plugin is unsigned, an empty string is returned.
+// The results are cached to avoid repeated reads from the MANIFEST.txt file.
 func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
+	cachedValue, ok := s.moduleHashCache.Load(p.ID)
+	if ok {
+		return cachedValue.(string)
+	}
 	mh, err := s.moduleHash(ctx, p, "")
 	if err != nil {
 		s.log.Error("Failed to calculate module hash", "plugin", p.ID, "error", err)
-		return ""
 	}
+	s.moduleHashCache.Store(p.ID, mh)
 	return mh
 }
 
@@ -100,20 +105,6 @@ func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
 // If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
 // module.js file, rather than for the provided plugin.
 func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSBase string) (r string, err error) {
-	// Use cache only for non-recursive calls.
-	// Recursive calls are to find the top-level parent plugin in order to get the hash from its MODULE.txt.
-	if childFSBase == "" {
-		cachedValue, ok := s.moduleHashCache.Load(p.ID)
-		if ok {
-			return cachedValue.(string), nil
-		}
-
-		// Always store the result in the cache, even if it's an error
-		defer func() {
-			s.moduleHashCache.Store(p.ID, r)
-		}()
-	}
-
 	// Ignore unsigned plugins
 	if !p.Signature.IsValid() {
 		return "", nil
