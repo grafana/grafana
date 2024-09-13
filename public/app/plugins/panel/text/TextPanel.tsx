@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, InterpolateFunction } from '@grafana/data';
@@ -12,6 +12,10 @@ import { defaultCodeOptions, Options, TextMode } from './panelcfg.gen';
 export interface Props extends PanelProps<Options> {}
 
 export function TextPanel(props: Props) {
+  useLayoutEffect(() => {
+    console.log(+new Date() - performance.timeOrigin);
+  }, []);
+
   const styles = useStyles2(getStyles);
   const [processed, setProcessed] = useState<Options>({
     mode: props.options.mode,
