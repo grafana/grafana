@@ -88,11 +88,7 @@ export const getPluginExtensions: GetExtensions = ({
 
       const path = overrides?.path || addedLink.path;
       const extension: PluginExtensionLink = {
-        id: generateExtensionId(pluginId, {
-          ...addedLink,
-          extensionPointId,
-          type: PluginExtensionTypes.link,
-        }),
+        id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
         type: PluginExtensionTypes.link,
         pluginId: pluginId,
         onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, frozenContext),
@@ -125,11 +121,7 @@ export const getPluginExtensions: GetExtensions = ({
       extensionsByPlugin[addedComponent.pluginId] = 0;
     }
     const extension: PluginExtensionComponent = {
-      id: generateExtensionId(addedComponent.pluginId, {
-        ...addedComponent,
-        extensionPointId,
-        type: PluginExtensionTypes.component,
-      }),
+      id: generateExtensionId(addedComponent.pluginId, extensionPointId, addedComponent.title),
       type: PluginExtensionTypes.component,
       pluginId: addedComponent.pluginId,
       title: addedComponent.title,

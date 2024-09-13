@@ -4,7 +4,7 @@
 
 ## Usage
 
-For styling components, use [Emotion's `css` function](https://emotion.sh/docs/emotion#css).
+For styling components, use [Emotion's `css` function](https://emotion.sh/docs/@emotion/css#css).
 
 ### Basic styling
 

@@ -20,6 +20,8 @@ import {
 import { reportInteraction } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+// TODO: instead of depending on the service as a singleton, inject it as an argument from the React context
+import { sidecarService } from 'app/core/services/SidecarService';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -48,9 +50,8 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   };
 }
 
-// Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
-export function getEventHelpers(pluginId: string, context?: Readonly<object>): PluginExtensionEventHelpers {
-  const openModal: PluginExtensionEventHelpers['openModal'] = async (options) => {
+export function createOpenModalFunction(pluginId: string): PluginExtensionEventHelpers['openModal'] {
+  return async (options) => {
     const { title, body, width, height } = options;
 
     appEvents.publish(
@@ -59,8 +60,6 @@ export function getEventHelpers(pluginId: string, context?: Readonly<object>): P
       })
     );
   };
-
-  return { openModal, context };
 }
 
 type ModalWrapperProps = {
@@ -161,8 +160,8 @@ export function deepFreeze(value?: object | Record<string | symbol, unknown> | u
   return Object.freeze(clonedValue);
 }
 
-export function generateExtensionId(pluginId: string, extensionConfig: PluginExtensionConfig): string {
-  const str = `${pluginId}${extensionConfig.extensionPointId}${extensionConfig.title}`;
+export function generateExtensionId(pluginId: string, extensionPointId: string, title: string): string {
+  const str = `${pluginId}${extensionPointId}${title}`;
 
   return Array.from(str)
     .reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
@@ -298,7 +297,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
 
 export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkRegistryItem, context?: object) {
   try {
-    const overrides = config.configure?.(context);
+    const overrides = config.configure?.(context, { isAppOpened: () => isAppOpened(pluginId) });
 
     // Hiding the extension
     if (overrides === undefined) {
@@ -369,7 +368,15 @@ export function getLinkExtensionOnClick(
         category: config.category,
       });
 
-      const result = onClick(event, getEventHelpers(pluginId, context));
+      const helpers: PluginExtensionEventHelpers = {
+        context,
+        openModal: createOpenModalFunction(pluginId),
+        isAppOpened: () => isAppOpened(pluginId),
+        openAppInSideview: () => openAppInSideview(pluginId),
+        closeAppInSideview: () => closeAppInSideview(pluginId),
+      };
+
+      const result = onClick(event, helpers);
 
       if (isPromise(result)) {
         result.catch((e) => {
@@ -395,3 +402,9 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
     })
   );
 }
+
+export const openAppInSideview = (pluginId: string) => sidecarService.openApp(pluginId);
+
+export const closeAppInSideview = (pluginId: string) => sidecarService.closeApp(pluginId);
+
+export const isAppOpened = (pluginId: string) => sidecarService.isAppOpened(pluginId);

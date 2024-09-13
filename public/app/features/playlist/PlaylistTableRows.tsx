@@ -102,30 +102,31 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    row: css`
-      padding: 6px;
-      background: ${theme.colors.background.secondary};
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 3px;
+    row: css({
+      padding: theme.spacing(0.75),
+      background: theme.colors.background.secondary,
+      borderRadius: theme.shape.radius.default,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: '3px',
 
-      border: 1px solid ${theme.colors.border.medium};
-      &:hover {
-        border: 1px solid ${theme.colors.border.strong};
-      }
-    `,
-    rightMargin: css`
-      margin-right: 5px;
-    `,
-    actions: css`
-      align-items: center;
-      justify-content: center;
-      display: flex;
-    `,
-    settings: css`
-      label: settings;
-      text-align: right;
-    `,
+      border: `1px solid ${theme.colors.border.medium}`,
+      '&:hover': {
+        border: `1px solid ${theme.colors.border.strong}`,
+      },
+    }),
+    rightMargin: css({
+      marginRight: '5px',
+    }),
+    actions: css({
+      alignItems: 'center',
+      justifyContent: 'center',
+      display: 'flex',
+    }),
+    settings: css({
+      label: 'settings',
+      textAlign: 'right',
+    }),
   };
 }
