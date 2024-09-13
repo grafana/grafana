@@ -287,11 +287,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
-    optionsPane: new PanelOptionsPane({
-      panelRef: panel.getRef(),
-      searchQuery: '',
-      listMode: OptionFilter.All,
-    }),
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,
