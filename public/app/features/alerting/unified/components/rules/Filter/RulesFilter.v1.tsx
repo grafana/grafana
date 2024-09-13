@@ -404,8 +404,8 @@ const helpStyles = (theme: GrafanaTheme2) => ({
 });
 
 function usePluginsFilterStatus() {
-  const { extensions } = useAlertingHomePageExtensions();
-  return { pluginsFilterEnabled: extensions.length > 0 };
+  const { components } = useAlertingHomePageExtensions();
+  return { pluginsFilterEnabled: components.length > 0 };
 }
 
 export default RulesFilter;
