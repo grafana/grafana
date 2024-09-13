@@ -21,6 +21,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { DashboardDataDTO } from 'app/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
@@ -183,7 +184,7 @@ describe('transformSceneToSaveModel', () => {
         },
         links: [{ ...NEW_LINK, title: 'Link 1' }],
       };
-      const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
@@ -192,7 +193,7 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
@@ -201,7 +202,10 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Given a scene with rows', () => {
     it('Should transform back to persisted model', () => {
-      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
 
       const saveModel = transformSceneToSaveModel(scene);
 
@@ -213,7 +217,10 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('Should remove repeated rows in save model', () => {
-      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
 
       const variable = scene.state.$variables?.state.variables[0] as MultiValueVariable;
       variable.changeValueTo(['a', 'b', 'c']);
@@ -418,7 +425,7 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Annotations', () => {
     it('should transform annotations to save model', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel.annotations?.list?.length).toBe(4);
@@ -426,7 +433,7 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('should transform annotations to save model after state changes', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       const layers = (scene.state.$data as DashboardDataLayerSet)?.state.annotationLayers;
       const enabledLayer = layers[1];
@@ -669,7 +676,7 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('attaches snapshot data to panels using Grafana snapshot query', async () => {
-      const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as DashboardDataDTO, meta: {} });
 
       activateFullSceneTree(scene);
 
@@ -724,7 +731,10 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('handles basic rows', async () => {
-      const scene = transformSaveModelToScene({ dashboard: snapshotableWithRowsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: snapshotableWithRowsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
 
       activateFullSceneTree(scene);
 
@@ -931,7 +941,7 @@ describe('transformSceneToSaveModel', () => {
       let snapshot: Dashboard = {} as Dashboard;
 
       beforeEach(() => {
-        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as DashboardDataDTO, meta: {} });
         activateFullSceneTree(scene);
         snapshot = transformSceneToSaveModel(scene, true);
       });
@@ -995,7 +1005,7 @@ describe('transformSceneToSaveModel', () => {
       });
 
       it('should remove links', async () => {
-        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as DashboardDataDTO, meta: {} });
         activateFullSceneTree(scene);
         const snapshot = transformSceneToSaveModel(scene, true);
         expect(snapshot.links?.length).toBe(1);
@@ -1007,7 +1017,10 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Given a scene with repeated panels and non-repeated panels', () => {
     it('should save repeated panels itemHeight as height', () => {
-      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
       const gridItem = sceneGraph.findByKey(scene, 'grid-item-2') as DashboardGridItem;
       expect(gridItem).toBeInstanceOf(DashboardGridItem);
       expect(gridItem.state.height).toBe(10);
@@ -1020,7 +1033,10 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('should not save non-repeated panels itemHeight as height', () => {
-      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
       const gridItem = sceneGraph.findByKey(scene, 'grid-item-15') as DashboardGridItem;
       expect(gridItem).toBeInstanceOf(DashboardGridItem);
       expect(gridItem.state.height).toBe(2);
