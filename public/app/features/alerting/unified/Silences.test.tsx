@@ -4,7 +4,7 @@ import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testin
 import { dateTime } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockAlertRuleApi, setupMswServer, setupScenarios } from 'app/features/alerting/unified/mockApi';
 import { waitForServerRequest } from 'app/features/alerting/unified/mocks/server/events';
 import {
   MOCK_DATASOURCE_NAME_BROKEN_ALERTMANAGER,
@@ -337,6 +337,14 @@ describe('Silence create/edit', () => {
     mockAlertRuleApi(server).getAlertRule(MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID, grafanaRulerRule);
     renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID}/edit`);
     expect(await screen.findByLabelText(/alert rule/i)).toHaveValue(grafanaRulerRule.grafana_alert.title);
+  });
+
+  it('shows empty state when no silences exist', async () => {
+    setupScenarios(['noSilences']);
+
+    renderSilences();
+
+    expect(await screen.findByText(/you haven't created any silences yet/i)).toBeInTheDocument();
   });
 
   it(
