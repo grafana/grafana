@@ -4,6 +4,7 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
+import { getFolderAPI } from 'app/features/folders/api/folder_api';
 
 import {
   Input,
@@ -281,7 +282,7 @@ export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {
 }
 
 export function createFolder(payload: any) {
-  return getBackendSrv().post('/api/folders', payload);
+  return getFolderAPI().createFolder(payload)
 }
 
 export function moveFolder(uid: string, toFolder: FolderInfo) {
