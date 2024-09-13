@@ -9,13 +9,14 @@ import {
   SceneGridRow,
   SceneObjectBase,
   SceneObjectState,
+  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
   VizPanelMenu,
 } from '@grafana/scenes';
 
-import { getMultiVariableValues } from '../utils/utils';
+import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { repeatPanelMenuBehavior } from './PanelMenuBehavior';
@@ -37,11 +38,29 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
   public isWaitingForVariables = false;
   private _prevRepeatValues?: VariableValueSingle[];
+  private _clonedRows?: SceneGridRow[];
 
   public constructor(state: RowRepeaterBehaviorState) {
     super(state);
 
     this.addActivationHandler(() => this._activationHandler());
+  }
+
+  public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {
+    const allRows = [this._getRow(), ...(this._clonedRows ?? [])];
+
+    for (const row of allRows) {
+      for (const gridItem of row.state.children) {
+        if (!(gridItem instanceof DashboardGridItem)) {
+          continue;
+        }
+
+        const queryRunner = getQueryRunnerFor(gridItem.state.body);
+        if (queryRunner) {
+          queryRunner.variableDependency?.variableUpdateCompleted(variable, false);
+        }
+      }
+    }
   }
 
   private _activationHandler() {
@@ -143,7 +162,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
     this._prevRepeatValues = values;
 
-    const rows: SceneGridRow[] = [];
+    this._clonedRows = [];
     const rowContent = rowToRepeat.state.children;
     const rowContentHeight = getRowContentHeight(rowContent);
 
@@ -205,10 +224,10 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         rowContentHeight,
         children
       );
-      rows.push(rowClone);
+      this._clonedRows.push(rowClone);
     }
 
-    updateLayout(layout, rows, maxYOfRows, rowToRepeat);
+    updateLayout(layout, this._clonedRows, maxYOfRows, rowToRepeat);
 
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
