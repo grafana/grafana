@@ -18,13 +18,12 @@ import (
 type DefaultConstructor struct {
 	pluginFactoryFunc   pluginFactoryFunc
 	signatureCalculator plugins.SignatureCalculator
-	features            config.Features
 	log                 log.Logger
 }
 
 // DefaultConstructFunc is the default ConstructFunc used for the Construct step of the Bootstrap stage.
-func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service, features config.Features) ConstructFunc {
-	return NewDefaultConstructor(signatureCalculator, assetPath, features).Construct
+func DefaultConstructFunc(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) ConstructFunc {
+	return NewDefaultConstructor(signatureCalculator, assetPath).Construct
 }
 
 // DefaultDecorateFuncs are the default DecorateFuncs used for the Decorate step of the Bootstrap stage.
@@ -38,11 +37,10 @@ func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
 }
 
 // NewDefaultConstructor returns a new DefaultConstructor.
-func NewDefaultConstructor(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service, features config.Features) *DefaultConstructor {
+func NewDefaultConstructor(signatureCalculator plugins.SignatureCalculator, assetPath *assetpath.Service) *DefaultConstructor {
 	return &DefaultConstructor{
 		pluginFactoryFunc:   NewDefaultPluginFactory(assetPath).createPlugin,
 		signatureCalculator: signatureCalculator,
-		features:            features,
 		log:                 log.New("plugins.construct"),
 	}
 }
