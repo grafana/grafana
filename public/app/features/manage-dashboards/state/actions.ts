@@ -260,35 +260,9 @@ const getDataSourceDescription = (input: { usage?: InputUsage }): string | undef
   return undefined;
 };
 
-export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {
-  const result = {
-    totalCount: folderUIDs.length,
-    successCount: 0,
-  };
-
-  for (const folderUID of folderUIDs) {
-    try {
-      const newFolderDTO = await moveFolder(folderUID, toFolder);
-      if (newFolderDTO !== null) {
-        result.successCount += 1;
-      }
-    } catch (err) {
-      console.error('Failed to move a folder', err);
-    }
-  }
-
-  return result;
-}
-
+/** @deprecated Use RTK Query methods from features/browse-dashboards/api/browseDashboardsAPI.ts instead */
 export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
-}
-
-export function moveFolder(uid: string, toFolder: FolderInfo) {
-  const payload = {
-    parentUid: toFolder.uid,
-  };
-  return getBackendSrv().post(`/api/folders/${uid}/move`, payload, { showErrorAlert: false });
 }
 
 export const SLICE_FOLDER_RESULTS_TO = 1000;
