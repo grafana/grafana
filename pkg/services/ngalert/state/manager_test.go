@@ -2271,6 +2271,51 @@ func TestResetStateByRuleUID(t *testing.T) {
 	}
 }
 
+func TestManager_GetStatesForRuleGroup(t *testing.T) {
+	state1 := &state.State{
+		AlertRuleGroup: "group1",
+		AlertRuleUID:   "uid1",
+		OrgID:          1,
+	}
+	state2 := &state.State{
+		AlertRuleGroup: "group2",
+		AlertRuleUID:   "uid2",
+		OrgID:          1,
+	}
+
+	testCases := []struct {
+		desc              string
+		state             []*state.State
+		filterByRuleGroup string
+		expectedState     []*state.State
+	}{
+		{
+			desc:              "should return states for the given rule group",
+			state:             []*state.State{state1, state2},
+			filterByRuleGroup: "group1",
+			expectedState:     []*state.State{state1},
+		},
+		{
+			desc:              "should return empty result when there is no such group",
+			state:             []*state.State{state1, state2},
+			filterByRuleGroup: "non-existing-group",
+			expectedState:     nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			cfg := state.ManagerCfg{}
+			st := state.NewManager(cfg, state.NewNoopPersister())
+
+			st.Put(tc.state)
+
+			states := st.GetStatesForRuleGroup(1, tc.filterByRuleGroup)
+			require.Equal(t, tc.expectedState, states)
+		})
+	}
+}
+
 func setCacheID(s *state.State) *state.State {
 	if s.CacheID != 0 {
 		return s

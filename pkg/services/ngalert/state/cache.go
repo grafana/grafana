@@ -288,13 +288,16 @@ func (c *cache) get(orgID int64, alertRuleUID string, stateId data.Fingerprint) 
 	return nil
 }
 
-func (c *cache) getAll(orgID int64, skipNormalState bool) []*State {
+func (c *cache) getAll(orgID int64, group string, skipNormalState bool) []*State {
 	var states []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
 		for _, v2 := range v1.states {
 			if skipNormalState && IsNormalStateWithNoReason(v2) {
+				continue
+			}
+			if group != "" && v2.AlertRuleGroup != group {
 				continue
 			}
 			states = append(states, v2)
