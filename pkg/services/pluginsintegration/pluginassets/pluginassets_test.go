@@ -235,6 +235,8 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"),
 		},
 		{
+			// parentPluginID           (/)
+			// └── pluginID             (/datasource)
 			name: "nested plugin should return module hash from parent MANIFEST.txt",
 			store: []pluginstore.Plugin{
 				newPlugin(
@@ -254,7 +256,9 @@ func TestService_ModuleHash(t *testing.T) {
 			expModuleHash: newSRIHash(t, "04d70db091d96c4775fb32ba5a8f84cc22893eb43afdb649726661d4425c6711"),
 		},
 		{
-			name: "deeply nested plugin should return module hash from parent MANIFEST.txt",
+			// parentPluginID           (/)
+			// └── pluginID             (/panels/one)
+			name: "nested plugin deeper than one subfolder should return module hash from parent MANIFEST.txt",
 			store: []pluginstore.Plugin{
 				newPlugin(
 					parentPluginID,
@@ -267,6 +271,34 @@ func TestService_ModuleHash(t *testing.T) {
 				withSignatureStatus(plugins.SignatureStatusValid),
 				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested", "panels", "one"))),
 				withParent(parentPluginID),
+			),
+			cdn:           false,
+			features:      &config.Features{FilesystemSriChecksEnabled: true},
+			expModuleHash: newSRIHash(t, "cbd1ac2284645a0e1e9a8722a729f5bcdd2b831222728709c6360beecdd6143f"),
+		},
+		{
+			// grand-parent-app         (/)
+			// ├── parent-datasource    (/datasource)
+			// │   └── child-panel      (/datasource/panels/one)
+			name: "nested plugin of a nested plugin should return module hash from parent MANIFEST.txt",
+			store: []pluginstore.Plugin{
+				newPlugin(
+					"grand-parent-app",
+					withSignatureStatus(plugins.SignatureStatusValid),
+					withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-deeply-nested"))),
+				),
+				newPlugin(
+					"parent-datasource",
+					withSignatureStatus(plugins.SignatureStatusValid),
+					withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-deeply-nested", "datasource"))),
+					withParent("grand-parent-app"),
+				),
+			},
+			plugin: newPlugin(
+				"child-panel",
+				withSignatureStatus(plugins.SignatureStatusValid),
+				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-deeply-nested", "datasource", "panels", "one"))),
+				withParent("parent-datasource"),
 			),
 			cdn:           false,
 			features:      &config.Features{FilesystemSriChecksEnabled: true},

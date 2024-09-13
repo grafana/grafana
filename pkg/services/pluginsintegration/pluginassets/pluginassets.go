@@ -100,15 +100,19 @@ func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
 // If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
 // module.js file, rather than for the provided plugin.
 func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSBase string) (r string, err error) {
-	cachedValue, ok := s.moduleHashCache.Load(p.ID)
-	if ok {
-		return cachedValue.(string), nil
-	}
+	// Use cache only for non-recursive calls.
+	// Recursive calls are to find the top-level parent plugin in order to get the hash from its MODULE.txt.
+	if childFSBase == "" {
+		cachedValue, ok := s.moduleHashCache.Load(p.ID)
+		if ok {
+			return cachedValue.(string), nil
+		}
 
-	// Always store the result in the cache, even if it's an error
-	defer func() {
-		s.moduleHashCache.Store(p.ID, r)
-	}()
+		// Always store the result in the cache, even if it's an error
+		defer func() {
+			s.moduleHashCache.Store(p.ID, r)
+		}()
+	}
 
 	// Ignore unsigned plugins
 	if !p.Signature.IsValid() {
@@ -137,7 +141,10 @@ func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSB
 		//
 		// Recursively call moduleHash with the parent plugin and with the children plugin folder path
 		// to get the correct module hash for the nested plugin.
-		return s.moduleHash(ctx, parent, p.Base())
+		if childFSBase == "" {
+			childFSBase = p.Base()
+		}
+		return s.moduleHash(ctx, parent, childFSBase)
 	}
 
 	manifest, err := s.signature.ReadPluginManifestFromFS(ctx, p.FS)
