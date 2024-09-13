@@ -42,6 +42,10 @@ func (_m *FakeQueryService) QueryData(ctx context.Context, _a1 identity.Requeste
 	return r0, r1
 }
 
+func (_m *FakeQueryService) QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.ConvertQueryRequest) (*dtos.ConvertQueryRequest, error) {
+	return nil, nil
+}
+
 // Run provides a mock function with given fields: ctx
 func (_m *FakeQueryService) Run(ctx context.Context) error {
 	ret := _m.Called(ctx)

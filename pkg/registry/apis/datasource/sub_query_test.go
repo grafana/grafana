@@ -71,6 +71,10 @@ func (m mockClient) CheckHealth(ctx context.Context, req *backend.CheckHealthReq
 	return nil, nil
 }
 
+func (m mockClient) ConvertObjects(context.Context, *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	return nil, nil
+}
+
 type mockResponder struct {
 }
 

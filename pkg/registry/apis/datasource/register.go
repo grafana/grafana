@@ -101,10 +101,6 @@ type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-}
-
-type PluginClientWithConversion interface {
-	PluginClient
 	backend.ConversionHandler
 }
 

@@ -27,7 +27,7 @@ var (
 
 func (r *subQueryConvertREST) New() runtime.Object {
 	// This is added as the "ResponseType" regarless what ProducesObject() says :)
-	return &query.QueryDataResponse{}
+	return &query.QueryDataRequest{}
 }
 
 func (r *subQueryConvertREST) Destroy() {}
@@ -37,7 +37,7 @@ func (r *subQueryConvertREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subQueryConvertREST) ProducesObject(verb string) interface{} {
-	return &query.QueryDataResponse{}
+	return &query.QueryDataRequest{}
 }
 
 func (r *subQueryConvertREST) ConnectMethods() []string {
@@ -61,7 +61,7 @@ func (r *subQueryConvertREST) Connect(ctx context.Context, name string, opts run
 			return
 		}
 
-		queries, dsRef, err := data.ToDataSourceQueries(dqr)
+		_, dsRef, err := data.ToDataSourceQueries(dqr)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -78,54 +78,38 @@ func (r *subQueryConvertREST) Connect(ctx context.Context, name string, opts run
 			responder.Error(err)
 			return
 		}
-		convertRequest := &backend.ConversionRequest{
-			PluginContext: pluginCtx,
-			TargetVersion: backend.GroupVersion{
-				Group:   "query.grafana.app",
-				Version: "v0alpha1",
-			},
-			Objects: make([]backend.RawObject, 0, len(queries)),
-		}
-
-		for _, query := range queries {
-			raw, err := json.Marshal(query)
-			if err != nil {
-				responder.Error(fmt.Errorf("marshal: %w", err))
-				return
-			}
-			convertRequest.Objects = append(convertRequest.Objects, backend.RawObject{
-				Raw:         raw,
-				ContentType: "application/json",
-			})
-		}
-
-		cli, ok := r.builder.client.(PluginClientWithConversion)
-		if !ok {
-			responder.Error(fmt.Errorf("datasource does not support conversion"))
+		raw, err := json.Marshal(dqr)
+		if err != nil {
+			responder.Error(fmt.Errorf("marshal: %w", err))
 			return
 		}
+		convertRequest := &backend.ConversionRequest{
+			PluginContext: pluginCtx,
+			Objects: []backend.RawObject{
+				{
+					Raw:         raw,
+					ContentType: "application/json",
+				},
+			},
+		}
 
-		convertResponse, err := cli.ConvertObjects(ctx, convertRequest)
+		convertResponse, err := r.builder.client.ConvertObjects(ctx, convertRequest)
 		if err != nil {
 			// TODO: Use convertResponse.Result to return an error?
 			responder.Error(err)
 			return
 		}
 
-		// TODO: Define object
+		obj := convertResponse.Objects[0]
 		r := &query.QueryDataRequest{}
-		for _, obj := range convertResponse.Objects {
-			if obj.ContentType != "application/json" {
-				responder.Error(fmt.Errorf("unsupported content type %s", obj.ContentType))
-				return
-			}
-			query := &data.DataQuery{}
-			err := json.Unmarshal(obj.Raw, query)
-			if err != nil {
-				responder.Error(fmt.Errorf("unmarshal: %w", err))
-				return
-			}
-			r.Queries = append(r.Queries, *query)
+		if obj.ContentType != "application/json" {
+			responder.Error(fmt.Errorf("unsupported content type %s", obj.ContentType))
+			return
+		}
+		err = json.Unmarshal(obj.Raw, r)
+		if err != nil {
+			responder.Error(fmt.Errorf("unmarshal: %w", err))
+			return
 		}
 		responder.Object(http.StatusOK, r)
 	}), nil

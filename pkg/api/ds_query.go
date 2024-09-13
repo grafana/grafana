@@ -55,24 +55,6 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 	return routing.Wrap(hs.QueryMetricsV2)
 }
 
-func (hs *HTTPServer) getDSQueryConvertEndpoint() web.Handler {
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagQueryServiceRewrite) {
-		// rewrite requests from /ds/query to the new query service
-		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
-		return func(w http.ResponseWriter, r *http.Request) {
-			user, err := identity.GetRequester(r.Context())
-			if err != nil || user == nil {
-				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
-				return
-			}
-			// TODO: This is not implemented in the new query service yet
-			r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.GetOrgID()) + "/query/convert"
-			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
-		}
-	}
-	return routing.Wrap(hs.QueryConvert)
-}
-
 // QueryMetricsV2 returns query metrics.
 // swagger:route POST /ds/query ds queryMetricsWithExpressions
 //

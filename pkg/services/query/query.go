@@ -10,7 +10,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"golang.org/x/sync/errgroup"
@@ -121,25 +120,18 @@ func (s *ServiceImpl) QueryConvert(ctx context.Context, user identity.Requester,
 	if err != nil {
 		return nil, err
 	}
+	raw, err := json.Marshal(reqDTO)
+	if err != nil {
+		return nil, err
+	}
 	convertRequest := &backend.ConversionRequest{
 		PluginContext: pCtx,
-		UID:           uuid.New().String(),
-		TargetVersion: backend.GroupVersion{
-			Group:   "query",
-			Version: "v0alpha1",
+		Objects: []backend.RawObject{
+			{
+				Raw:         raw,
+				ContentType: "application/json",
+			},
 		},
-		Objects: make([]backend.RawObject, 0, len(reqDTO.Queries)),
-	}
-
-	for _, query := range reqDTO.Queries {
-		raw, err := json.Marshal(query)
-		if err != nil {
-			return nil, err
-		}
-		convertRequest.Objects = append(convertRequest.Objects, backend.RawObject{
-			Raw:         raw,
-			ContentType: "application/json",
-		})
 	}
 
 	convertResponse, err := s.pluginClient.ConvertObjects(ctx, convertRequest)
@@ -147,21 +139,17 @@ func (s *ServiceImpl) QueryConvert(ctx context.Context, user identity.Requester,
 		// TODO: Use convertResponse.Result to return an error?
 		return nil, err
 	}
-	convertedQueries := make([]*simplejson.Json, 0, len(convertResponse.Objects))
-	for _, obj := range convertResponse.Objects {
-		// var q backend.DataQuery
-		// if err := json.Unmarshal(obj.Raw, q); err != nil {
-		// 	return nil, err
-		// }
-		q, err := simplejson.NewJson(obj.Raw)
-		if err != nil {
-			return nil, err
-		}
-		convertedQueries = append(convertedQueries, q)
+	obj := convertResponse.Objects[0]
+	r := &dtos.ConvertQueryRequest{}
+	if obj.ContentType != "application/json" {
+		return nil, err
 	}
-	reqDTO.Queries = convertedQueries
+	err = json.Unmarshal(obj.Raw, r)
+	if err != nil {
+		return nil, err
+	}
 
-	return &reqDTO, nil
+	return r, nil
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers
