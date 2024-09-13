@@ -175,7 +175,7 @@ update-workspace:
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: gen-go update-workspace ## Build all Go binaries.
+build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
