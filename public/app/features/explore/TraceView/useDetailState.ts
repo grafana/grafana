@@ -1,9 +1,9 @@
 import { useCallback, useState, useEffect } from 'react';
 
-import { DataFrame } from '@grafana/data';
+import { DataFrame, TraceLog } from '@grafana/data';
 
 import { DetailState } from './components';
-import { TraceLog, TraceSpanReference } from './components/types/trace';
+import { TraceSpanReference } from './components/types/trace';
 /**
  * Keeps state of the span detail. This means whether span details are open but also state of each detail subitem
  * like logs or tags.
