@@ -122,11 +122,18 @@
     "contactPointFilter": {
       "label": ""
     },
-    "grafana-rules": {
-      "export-rules": "",
-      "loading": "",
-      "new-recording-rule": "",
-      "title": ""
+    "list-view": {
+      "section": {
+        "dataSourceManaged": {
+          "title": ""
+        },
+        "grafanaManaged": {
+          "export-rules": "",
+          "loading": "",
+          "new-recording-rule": "",
+          "title": ""
+        }
+      }
     },
     "mute_timings": {
       "error-loading": {
@@ -215,6 +222,19 @@
       "update-rule": {
         "success": ""
       }
+    },
+    "search": {
+      "property": {
+        "data-source": "",
+        "evaluation-group": "",
+        "labels": "",
+        "namespace": "",
+        "rule-health": "",
+        "rule-name": "",
+        "rule-type": "",
+        "state": ""
+      },
+      "save-query": ""
     }
   },
   "annotations": {
@@ -352,11 +372,15 @@
     }
   },
   "common": {
+    "apply": "",
     "cancel": "",
+    "clear": "",
+    "close": "",
     "locale": {
       "default": "默认"
     },
-    "save": "保存"
+    "save": "保存",
+    "search": ""
   },
   "configuration-tracker": {
     "config-card": {
@@ -1101,7 +1125,6 @@
       "discard-success": "",
       "error-fetching": "",
       "error-saving": "",
-      "error-update": "",
       "error-validate-form": "",
       "feature-flag-disabled": "",
       "saved": ""
@@ -1878,9 +1901,11 @@
     },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "",
         "dependencies": "",
         "downloads": "",
         "from": "",
+        "links": "",
         "reportAbuse": "",
         "signature": "",
         "status": "",
@@ -2029,13 +2054,16 @@
       "copy-link-button": "",
       "email-share-type-option-description": "",
       "email-share-type-option-label": "",
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
       "pause-access-button": "",
       "pause-access-tooltip": "",
       "public-share-type-option-description": "",
       "public-share-type-option-label": "",
       "resume-access-button": "",
       "revoke-access-button": "",
-      "revoke-access-description": ""
+      "revoke-access-description": "",
+      "unsupported-data-source-alert-desc": ""
     },
     "sharing": {
       "success-creation": ""
@@ -2237,6 +2265,11 @@
     "search-input": {
       "include-panels-placeholder": "搜索仪表板和面板",
       "placeholder": "搜索仪表板"
+    }
+  },
+  "select": {
+    "select-menu": {
+      "selected-count": ""
     }
   },
   "service-accounts": {

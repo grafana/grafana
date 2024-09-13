@@ -24,10 +24,14 @@ export interface ShareDrawerMenuItem {
   onClick: (d: DashboardScene) => void;
 }
 
-const customShareDrawerItem: ShareDrawerMenuItem[] = [];
+let customShareDrawerItems: ShareDrawerMenuItem[] = [];
 
 export function addDashboardShareDrawerItem(item: ShareDrawerMenuItem) {
-  customShareDrawerItem.push(item);
+  customShareDrawerItems.push(item);
+}
+
+export function resetDashboardShareDrawerItems() {
+  customShareDrawerItems = [];
 }
 
 export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
@@ -59,7 +63,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
       },
     });
 
-    customShareDrawerItem.forEach((d) => menuItems.push(d));
+    customShareDrawerItems.forEach((d) => menuItems.push(d));
 
     menuItems.push({
       shareId: shareDashboardType.snapshot,
@@ -88,7 +92,7 @@ export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardSc
     <Menu data-testid={newShareButtonSelector.container}>
       {buildMenuItems().map((item) => (
         <Menu.Item
-          key={item.label}
+          key={item.shareId}
           testId={item.testId}
           label={item.label}
           icon={item.icon}

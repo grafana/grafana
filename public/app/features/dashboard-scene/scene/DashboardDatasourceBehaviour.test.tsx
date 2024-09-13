@@ -569,6 +569,87 @@ describe('DashboardDatasourceBehaviour', () => {
 
       expect(spy).toHaveBeenCalledTimes(1);
     });
+
+    it('should wait for library panel to load before running queries', async () => {
+      const libPanelBehavior = new LibraryPanelBehavior({
+        isLoaded: false,
+        title: 'Panel title',
+        uid: 'fdcvggvfy2qdca',
+        name: 'My Library Panel',
+        _loadedPanel: undefined,
+      });
+
+      const sourcePanel = new VizPanel({
+        key: 'panel-1',
+        title: 'Panel A',
+        pluginId: 'table',
+        $behaviors: [libPanelBehavior],
+        $data: new SceneQueryRunner({
+          datasource: { uid: 'grafana' },
+          queries: [{ refId: 'A', queryType: 'randomWalk' }],
+        }),
+      });
+
+      // query references inexistent panel
+      const dashboardDSPanel = new VizPanel({
+        title: 'Panel B',
+        pluginId: 'table',
+        key: 'panel-2',
+        $data: new SceneQueryRunner({
+          datasource: { uid: SHARED_DASHBOARD_QUERY },
+          queries: [{ refId: 'A', panelId: 1 }],
+          $behaviors: [new DashboardDatasourceBehaviour({})],
+        }),
+      });
+
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        meta: {
+          canEdit: true,
+        },
+        body: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              key: 'griditem-1',
+              x: 0,
+              y: 0,
+              width: 10,
+              height: 12,
+              body: sourcePanel,
+            }),
+            new DashboardGridItem({
+              key: 'griditem-2',
+              x: 0,
+              y: 0,
+              width: 10,
+              height: 12,
+              body: dashboardDSPanel,
+            }),
+          ],
+        }),
+      });
+
+      activateFullSceneTree(scene);
+
+      // spy on runQueries
+      const spyRunQueries = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(spyRunQueries).not.toHaveBeenCalled();
+
+      // Simulate library panel being loaded
+      libPanelBehavior.setState({
+        isLoaded: true,
+        title: 'Panel title',
+        uid: 'fdcvggvfy2qdca',
+        name: 'My Library Panel',
+        _loadedPanel: undefined,
+      });
+
+      expect(spyRunQueries).toHaveBeenCalledTimes(1);
+    });
   });
 });
 
