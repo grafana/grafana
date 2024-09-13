@@ -490,37 +490,62 @@ func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string
 		return nil, err
 	}
 	for _, secretKey := range secretKeys {
-		foundSecretKey, secretValue, err := getCaseInsensitive(e.Settings, secretKey)
+		secretValue, err := extractCaseInsensitive(e.Settings, secretKey)
 		if err != nil {
 			return nil, err
 		}
-		e.Settings.Del(foundSecretKey)
+		if secretValue == "" {
+			continue
+		}
 		s[secretKey] = secretValue
 	}
 	return s, nil
 }
 
-// getCaseInsensitive returns the value of the specified key, preferring an exact match but accepting a case-insensitive match.
+// extractCaseInsensitive returns the value of the specified key, preferring an exact match but accepting a case-insensitive match.
 // If no key matches, the second return value is an empty string.
-func getCaseInsensitive(jsonObj *simplejson.Json, key string) (string, string, error) {
-	// Check for an exact key match first.
-	if value, ok := jsonObj.CheckGet(key); ok {
-		return key, value.MustString(), nil
+func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error) {
+	if key == "" {
+		return "", nil
 	}
-
-	// If no exact match is found, look for a case-insensitive match.
-	settingsMap, err := jsonObj.Map()
-	if err != nil {
-		return "", "", err
-	}
-
-	for k, v := range settingsMap {
-		if strings.EqualFold(k, key) {
-			return k, v.(string), nil
+	path := strings.Split(key, ".")
+	getNodeCaseInsensitive := func(n *simplejson.Json, field string) (string, *simplejson.Json, error) {
+		// Check for an exact key match first.
+		if value, ok := n.CheckGet(field); ok {
+			return field, value, nil
 		}
+
+		// If no exact match is found, look for a case-insensitive match.
+		settingsMap, err := n.Map()
+		if err != nil {
+			return "", nil, err
+		}
+
+		for k := range settingsMap {
+			if strings.EqualFold(k, field) {
+				return k, n.GetPath(k), nil
+			}
+		}
+		return "", nil, nil
 	}
 
-	return key, "", nil
+	node := jsonObj
+	for idx, segment := range path {
+		_, value, err := getNodeCaseInsensitive(node, segment)
+		if err != nil {
+			return "", err
+		}
+		if value == nil {
+			return "", nil
+		}
+		if idx == len(path)-1 {
+			resultValue := value.MustString()
+			node.Del(segment)
+			return resultValue, nil
+		}
+		node = value
+	}
+	return "", nil
 }
 
 // convertRecSvcErr converts errors from notifier.ReceiverService to errors expected from ContactPointService.

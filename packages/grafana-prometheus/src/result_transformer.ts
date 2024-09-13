@@ -212,6 +212,8 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
 
     // Fill valueField, timeField and labelFields with values
     dataFramesByRefId[refId].forEach((df) => {
+      timeField.config.interval ??= df.fields[0]?.config.interval;
+
       const timeFields = df.fields[0]?.values ?? [];
       const dataFields = df.fields[1]?.values ?? [];
       timeFields.forEach((value) => timeField.values.push(value));

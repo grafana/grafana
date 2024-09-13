@@ -398,12 +398,15 @@ export const RowsList = (props: RowsListProps) => {
     }
   };
 
+  // Key the virtualizer for expanded rows
+  const expandedKey = Object.keys(tableState.expanded).join('|');
+
   return (
     <>
       <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
         <VariableSizeList
-          // This component needs an unmount/remount when row height or page changes
-          key={rowHeight + pageIndex}
+          // This component needs an unmount/remount when row height, page changes, or expanded rows change
+          key={`${rowHeight}${pageIndex}${expandedKey}`}
           height={listHeight}
           itemCount={itemCount}
           itemSize={getItemSize}
