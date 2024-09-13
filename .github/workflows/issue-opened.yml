@@ -1,7 +1,12 @@
 name: Run commands when issues are opened
+
+# important: this workflow uses a github app that is strictly limited
+# to issues. If you want to change the triggers for this workflow,
+# please review if the permissions are still sufficient.
 on:
   issues:
     types: [opened]
+
 concurrency:
   group: issue-opened-${{ github.event.issue.number }}
 
