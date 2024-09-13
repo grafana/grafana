@@ -783,6 +783,56 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName), "old receiver name '%s' should not be used by routes", receiverName)
 		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName), "new receiver name '%s' should be used by routes", newReceiverName)
 	})
+
+	t.Run("returns ErrReceiverDependentResourcesProvenance if route has different provenance status", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService)
+		provenanceStore := sut.provisioningStore.(*fakes.FakeProvisioningStore)
+		provenanceStore.Records[1] = map[string]models.Provenance{
+			(&definitions.Route{}).ResourceType(): models.ProvenanceFile,
+		}
+
+		ruleStore := &fakeAlertRuleNotificationStore{
+			RenameReceiverInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+				assertInTransaction(t, ctx)
+				return nil, nil, nil
+			},
+		}
+		sut.ruleNotificationsStore = ruleStore
+
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		require.ErrorIs(t, err, ErrReceiverDependentResourcesProvenance)
+
+		require.Len(t, ruleStore.Calls, 1)
+		assert.Equal(t, "RenameReceiverInNotificationSettings", ruleStore.Calls[0].Method)
+		assert.Equal(t, writer.OrgID, ruleStore.Calls[0].Args[1])
+		assert.Equal(t, receiverName, ruleStore.Calls[0].Args[2])
+		assert.Equal(t, newReceiverName, ruleStore.Calls[0].Args[3])
+		assert.NotNil(t, ruleStore.Calls[0].Args[4])
+		assert.True(t, ruleStore.Calls[0].Args[5].(bool)) // still check if there are rules that have incompatible provenance
+	})
+
+	t.Run("returns ErrReceiverDependentResourcesProvenance if rules have different provenance status", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService)
+
+		ruleStore := &fakeAlertRuleNotificationStore{
+			RenameReceiverInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+				assertInTransaction(t, ctx)
+				return nil, []models.AlertRuleKey{models.GenerateRuleKey(orgID)}, nil
+			},
+		}
+		sut.ruleNotificationsStore = ruleStore
+
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		require.ErrorIs(t, err, ErrReceiverDependentResourcesProvenance)
+
+		require.Len(t, ruleStore.Calls, 1)
+		assert.Equal(t, "RenameReceiverInNotificationSettings", ruleStore.Calls[0].Method)
+		assert.Equal(t, writer.OrgID, ruleStore.Calls[0].Args[1])
+		assert.Equal(t, receiverName, ruleStore.Calls[0].Args[2])
+		assert.Equal(t, newReceiverName, ruleStore.Calls[0].Args[3])
+		assert.NotNil(t, ruleStore.Calls[0].Args[4])
+		assert.Falsef(t, ruleStore.Calls[0].Args[5].(bool), "dryrun expected to be false")
+	})
 }
 
 func TestReceiverServiceAC_Read(t *testing.T) {
@@ -1513,4 +1563,8 @@ func newNopTransactionManager() *NopTransactionManager {
 
 func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
 	return work(context.WithValue(ctx, NopTransactionManager{}, struct{}{}))
+}
+
+func assertInTransaction(t *testing.T, ctx context.Context) {
+	assert.Truef(t, ctx.Value(NopTransactionManager{}) != nil, "Expected to be executed in transaction but there is none")
 }
