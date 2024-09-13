@@ -192,8 +192,8 @@ func newPlugin(pluginID string, angular bool, cbs ...func(p pluginstore.Plugin) 
 	return p
 }
 
-func newCfg(ps setting.PluginSettings) *setting.Cfg {
-	return &setting.Cfg{
+func newCfg(ps setting.PluginSettings) *config.PluginManagementCfg {
+	return &config.PluginManagementCfg{
 		PluginSettings: ps,
 	}
 }

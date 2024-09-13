@@ -296,7 +296,7 @@ func TestCalculate(t *testing.T) {
 			},
 			FS: mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-with-module-js")),
 		}
-		const validModuleHash = "sha256-WJG1tSLV3whtD/CxEPvZ0hu0/HFjrzTQgoai6Eb2vgM="
+		// const validModuleHash = "sha256-WJG1tSLV3whtD/CxEPvZ0hu0/HFjrzTQgoai6Eb2vgM="
 
 		pluginSourceExternal := fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -330,7 +330,7 @@ func TestCalculate(t *testing.T) {
 					Status:     plugins.SignatureStatusValid,
 					Type:       plugins.SignatureTypePrivate,
 					SigningOrg: "giuseppeguerra",
-					ModuleHash: validModuleHash,
+					// ModuleHash: validModuleHash,
 				},
 			},
 			{
@@ -355,7 +355,7 @@ func TestCalculate(t *testing.T) {
 					Status:     plugins.SignatureStatusValid,
 					Type:       "",
 					SigningOrg: "",
-					ModuleHash: validModuleHash,
+					// ModuleHash: validModuleHash,
 				},
 			},
 			{
@@ -372,7 +372,7 @@ func TestCalculate(t *testing.T) {
 					Status:     plugins.SignatureStatusValid,
 					Type:       "",
 					SigningOrg: "",
-					ModuleHash: validModuleHash,
+					// ModuleHash: validModuleHash,
 				},
 			},
 			{
@@ -392,7 +392,7 @@ func TestCalculate(t *testing.T) {
 					Status:     plugins.SignatureStatusValid,
 					Type:       plugins.SignatureTypeGrafana,
 					SigningOrg: "Grafana Labs",
-					ModuleHash: "",
+					// ModuleHash: "",
 				},
 			},
 			{
@@ -407,8 +407,8 @@ func TestCalculate(t *testing.T) {
 				},
 				pluginSource: pluginSourceExternal,
 				expSignature: plugins.Signature{
-					Status:     plugins.SignatureStatusUnsigned,
-					ModuleHash: "",
+					Status: plugins.SignatureStatusUnsigned,
+					// ModuleHash: "",
 				},
 			},
 			{
@@ -425,8 +425,8 @@ func TestCalculate(t *testing.T) {
 				},
 				pluginSource: pluginSourceExternal,
 				expSignature: plugins.Signature{
-					Status:     plugins.SignatureStatusUnsigned,
-					ModuleHash: "",
+					Status: plugins.SignatureStatusUnsigned,
+					// ModuleHash: "",
 				},
 			},
 		} {
@@ -1041,84 +1041,4 @@ syrhBXja
 	err := s.validateManifest(context.Background(), *m, block)
 	require.Error(t, err)
 	require.ErrorIs(t, err, openpgpErrors.ErrKeyRevoked)
-}
-
-func TestModuleHash(t *testing.T) {
-	t.Run("simple", func(t *testing.T) {
-		m := &PluginManifest{
-			SignatureType: plugins.SignatureTypeGrafana,
-			Files: map[string]string{
-				"module.js":   "ddfcb449445064e6c39f0c20b15be3cb6a55837cf4781df23d02de005f436811",
-				"plugin.json": "8753e13da61ea5aca20bf50c7cec6255bf6d1bb0c01640244ffc289c89b6857a",
-			},
-		}
-		mh, err := m.ModuleHash()
-		require.NoError(t, err)
-		require.Equal(t, "sha256-3fy0SURQZObDnwwgsVvjy2pVg3z0eB3yPQLeAF9DaBE=", mh)
-	})
-
-	t.Run("no module.js", func(t *testing.T) {
-		m := &PluginManifest{
-			SignatureType: plugins.SignatureTypeGrafana,
-			Files: map[string]string{
-				"other.js":    "ddfcb449445064e6c39f0c20b15be3cb6a55837cf4781df23d02de005f436811",
-				"plugin.json": "8753e13da61ea5aca20bf50c7cec6255bf6d1bb0c01640244ffc289c89b6857a",
-			},
-		}
-		mh, err := m.ModuleHash()
-		require.NoError(t, err)
-		require.Empty(t, mh)
-	})
-
-	t.Run("MANIFEST.txt", func(t *testing.T) {
-		const txt = `-----BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA512
-
-{
-  "manifestVersion": "2.0.0",
-  "signatureType": "community",
-  "signedByOrg": "heywesty",
-  "signedByOrgName": "heywesty",
-  "plugin": "heywesty-trafficlight-panel",
-  "version": "0.4.0",
-  "time": 1720862334738,
-  "keyId": "7e4d0c6a708866e7",
-  "files": {
-    "module.js.map": "bd31041ac15515f895b5b354f6f3ff8c605cea7a12f8555f28e03f7e29e7d9ca",
-    "README.md": "a751f95de1431f50f82113f32a43d51bd09da3ca0a8eeeec30e986230f47781f",
-    "LICENSE": "9cf6720687343442c592f1db3d5913679f11c7560bf831c473ce9c9bb0ad04b8",
-    "img/screenshots/traffic-lights.png": "4b2236bc804637ac4479e8d1e58dd9e4d8ac5f61caddbcb42c6c83fa8ccf1b18",
-    "img/screenshots/traffic-lights-single-row.png": "a389dbaf4ce45ff540aec610be03245b00f21f38f5fa3f15e85bcfb48b500da5",
-    "img/screenshots/traffic-lights-threshold-overrides.png": "8ff06f20bfd4fd5acde12643198acdb92b77e8a4a697468ea2ee12411320341f",
-    "img/screenshots/traffic-lights-grid-layout.png": "62c4b76e154b6fb60153cc808d80584742e7d2ff37c031de5e4f468f0c0a8bde",
-    "img/logo.svg": "0a96484168a11d6771dfd7cf5ebfe9b1ff6682bfea3e96d21118b3d924030584",
-    "plugin.json": "8753e13da61ea5aca20bf50c7cec6255bf6d1bb0c01640244ffc289c89b6857a",
-    "module.js": "ddfcb449445064e6c39f0c20b15be3cb6a55837cf4781df23d02de005f436811",
-    "CHANGELOG.md": "65d1995c282991cda3c0189c09c2b9d8c7a35f540b0ba93b52f7d0482e022e51"
-  }
-}
------BEGIN PGP SIGNATURE-----
-Version: OpenPGP.js v4.10.11
-Comment: https://openpgpjs.org
-
-wrkEARMKAAYFAmaSRn4AIQkQfk0ManCIZucWIQTzOyW2kQdOhGNlcPN+TQxq
-cIhm55JUAgkB+L9ZLBxE3JyZH5+HY+1GYyqtCMuCmaTAozD7LS82avm5/xei
-+4UBAgavKjAeo/5aI5YH3YfQBuW4+/E8hTD0EkcCCQB37pIu1LJLj3VeWEc5
-D6d4dEMg3UTtjf+6toxod2NrzKEMaskD0aXsHI/2aDjTEHcmP9F+bV0gKEeG
-YK47Foq7NA==
-=VibA
------END PGP SIGNATURE-----
-`
-		s := provideDefaultTestService()
-		manifest, err := s.readPluginManifest(context.Background(), []byte(txt))
-
-		require.NoError(t, err)
-		require.NotNil(t, manifest)
-		require.Equal(t, "heywesty-trafficlight-panel", manifest.Plugin)
-		require.Equal(t, "0.4.0", manifest.Version)
-		require.Len(t, manifest.Files, 11)
-		mh, err := manifest.ModuleHash()
-		require.NoError(t, err)
-		require.Equal(t, "sha256-3fy0SURQZObDnwwgsVvjy2pVg3z0eB3yPQLeAF9DaBE=", mh)
-	})
 }

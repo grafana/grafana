@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -673,10 +675,9 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 
 func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
 	return &plugins.Plugin{
-		JSONData:   jd,
-		Class:      class,
-		FS:         files,
-		ModuleHash: "sha256-test",
+		JSONData: jd,
+		Class:    class,
+		FS:       files,
 	}
 }
 
@@ -819,7 +820,6 @@ func Test_PluginsSettings(t *testing.T) {
 				},
 				SecureJsonFields: map[string]bool{},
 				LoadingStrategy:  plugins.LoadingStrategyScript,
-				ModuleHash:       p1.ModuleHash,
 			},
 		},
 		{
@@ -844,8 +844,10 @@ func Test_PluginsSettings(t *testing.T) {
 						ErrorCode: tc.errCode,
 					})
 				}
-				pluginCDN := pluginscdn.ProvideService(&config.PluginManagementCfg{})
-				hs.pluginAssets = pluginassets.ProvideService(hs.Cfg, pluginCDN)
+				pCfg := &config.PluginManagementCfg{}
+				pluginCDN := pluginscdn.ProvideService(pCfg)
+				sig := signature.ProvideService(pCfg, statickey.New(), pluginCDN)
+				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				var err error
 				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())
