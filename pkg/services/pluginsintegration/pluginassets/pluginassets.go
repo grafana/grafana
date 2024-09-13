@@ -7,14 +7,12 @@ import (
 	"fmt"
 	"path"
 	"path/filepath"
-	"sync"
 
 	"github.com/Masterminds/semver/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
@@ -28,24 +26,20 @@ var (
 	scriptLoadingMinSupportedVersion = semver.MustParse(CreatePluginVersionScriptSupportEnabled)
 )
 
-func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, sig *signature.Signature, store pluginstore.Store) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, store pluginstore.Store) *Service {
 	return &Service{
-		cfg:       cfg,
-		cdn:       cdn,
-		signature: sig,
-		store:     store,
-		log:       log.New("pluginassets"),
+		cfg:   cfg,
+		cdn:   cdn,
+		store: store,
+		log:   log.New("pluginassets"),
 	}
 }
 
 type Service struct {
-	cfg       *config.PluginManagementCfg
-	cdn       *pluginscdn.Service
-	signature *signature.Signature
-	store     pluginstore.Store
-	log       log.Logger
-
-	moduleHashCache sync.Map
+	cfg   *config.PluginManagementCfg
+	cdn   *pluginscdn.Service
+	store pluginstore.Store
+	log   log.Logger
 }
 
 // LoadingStrategy calculates the loading strategy for a plugin.
@@ -88,15 +82,10 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 // If the plugin is unsigned, an empty string is returned.
 // The results are cached to avoid repeated reads from the MANIFEST.txt file.
 func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
-	cachedValue, ok := s.moduleHashCache.Load(p.ID)
-	if ok {
-		return cachedValue.(string)
-	}
 	mh, err := s.moduleHash(ctx, p, "")
 	if err != nil {
 		s.log.Error("Failed to calculate module hash", "plugin", p.ID, "error", err)
 	}
-	s.moduleHashCache.Store(p.ID, mh)
 	return mh
 }
 
@@ -138,14 +127,6 @@ func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSB
 		return s.moduleHash(ctx, parent, childFSBase)
 	}
 
-	manifest, err := s.signature.ReadPluginManifestFromFS(ctx, p.FS)
-	if err != nil {
-		return "", fmt.Errorf("read plugin manifest: %w", err)
-	}
-	if !manifest.IsV2() {
-		return "", nil
-	}
-
 	var childPath string
 	if childFSBase != "" {
 		// Calculate the relative path of the child plugin folder from the parent plugin folder.
@@ -156,7 +137,7 @@ func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSB
 		// MANIFETS.txt uses forward slashes as path separators.
 		childPath = filepath.ToSlash(childPath)
 	}
-	moduleHash, ok := manifest.Files[path.Join(childPath, "module.js")]
+	moduleHash, ok := p.SignatureFiles[path.Join(childPath, "module.js")]
 	if !ok {
 		return "", nil
 	}

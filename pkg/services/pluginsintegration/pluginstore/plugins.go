@@ -22,9 +22,10 @@ type Plugin struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature     plugins.SignatureStatus
-	SignatureType plugins.SignatureType
-	SignatureOrg  string
+	Signature      plugins.SignatureStatus
+	SignatureType  plugins.SignatureType
+	SignatureOrg   string
+	SignatureFiles map[string]string
 
 	Error *plugins.Error
 
