@@ -76,8 +76,8 @@ Additionally, you can also add [expressions to transform your data](ref:expressi
 {{< figure src="/media/docs/alerting/grafana-managed-alerting-architecture.png" max-width="750px" caption="How Grafana-managed alerting works by default" >}}
 
 1. Alert rules are created within Grafana based on one or more data sources.
-2. Alert rules are evaluated by the Alert Rule Evaluation Engine from within Grafana.
-3. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
+1. Alert rules are evaluated by the Alert Rule Evaluation Engine from within Grafana.
+1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
 ### Supported data sources
 
@@ -96,9 +96,9 @@ They are only supported for Grafana Mimir or Grafana Loki data sources with the 
 {{< figure src="/media/docs/alerting/mimir-managed-alerting-architecture-v2.png" max-width="750px" caption="Mimir-managed alerting architecture" >}}
 
 1. Alert rules are created and stored within the data source itself.
-2. Alert rules can only query Prometheus-based data. It can use either queries or [recording rules](#recording-rules).
-3. Alert rules are evaluated by the Alert Rule Evaluation Engine.
-4. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
+1. Alert rules can only query Prometheus-based data. It can use either queries or [recording rules](#recording-rules).
+1. Alert rules are evaluated by the Alert Rule Evaluation Engine.
+1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
 ## Recording rules
 
