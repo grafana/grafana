@@ -1,0 +1,78 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 2616,
+    "links": [],
+    "panels": [
+      {
+        "datasource": {
+          "type": "grafana-testdata-datasource",
+          "uid": "gdev-testdata"
+        },
+        "fieldConfig": {
+          "defaults": {},
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "code": {
+            "language": "plaintext",
+            "showLineNumbers": false,
+            "showMiniMap": false
+          },
+          "content": "Text",
+          "mode": "markdown"
+        },
+        "pluginVersion": "11.2.0-pre",
+        "targets": [
+          {
+            "refId": "A"
+          }
+        ],
+        "title": "Panel Title",
+        "type": "text"
+      }
+    ],
+    "preload": false,
+    "schemaVersion": 39,
+    "tags": [
+      "gdev",
+      "gdev-benchmark"
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Benchmark: Text panel",
+    "uid": "cdt8wrar2blkwf",
+    "version": 1,
+    "weekStart": ""
+  }

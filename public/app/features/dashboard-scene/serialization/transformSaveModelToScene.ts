@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash';
 
 import { DataFrameDTO, DataFrameJSON } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -19,6 +19,7 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   UserActionEvent,
+  SceneInteractionProfileEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
@@ -208,7 +209,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       name: 'Alert States',
     });
   }
-
   const dashboardScene = new DashboardScene({
     description: oldModel.description,
     editable: oldModel.editable,
@@ -239,7 +239,10 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
-      new behaviors.SceneQueryController(),
+      new behaviors.SceneQueryController({
+        enableProfiling: true, // TODO config for this
+        onProfileComplete: reportDashboardInteractions,
+      }),
       registerDashboardMacro,
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
@@ -402,4 +405,30 @@ function trackIfEmpty(grid: SceneGridLayout) {
   return () => {
     sub.unsubscribe();
   };
+}
+
+function reportDashboardInteractions(e: SceneInteractionProfileEvent) {
+  let interactionType = '';
+
+  if (e.origin === 'SceneTimeRange') {
+    interactionType = 'time-range-change';
+  } else if (e.origin === 'SceneRefreshPicker') {
+    interactionType = 'refresh';
+  } else if (e.origin === 'DashboardScene') {
+    interactionType = 'view';
+  } else if (e.origin.indexOf('Variable') > -1) {
+    interactionType = 'variable-change';
+  }
+
+  if (interactionType !== '') {
+    reportInteraction('dashboard-render', {
+      interactionType,
+      duration: e.duration,
+      networkDuration: e.networkDuration,
+      totalJSHeapSize: e.totalJSHeapSize,
+      usedJSHeapSize: e.usedJSHeapSize,
+      jsHeapSizeLimit: e.jsHeapSizeLimit,
+      crumbs: e.crumbs,
+    });
+  }
 }

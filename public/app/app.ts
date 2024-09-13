@@ -65,6 +65,7 @@ import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
+import { DashboardBenchmarkBackend } from './core/services/echo/backends/DashboardBenchmarkBackend';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import { ApplicationInsightsBackend } from './core/services/echo/backends/analytics/ApplicationInsightsBackend';
 import { GA4EchoBackend } from './core/services/echo/backends/analytics/GA4Backend';
@@ -290,7 +291,12 @@ function initExtensions() {
 }
 
 function initEchoSrv() {
-  setEchoSrv(new Echo({ debug: process.env.NODE_ENV === 'development' }));
+  const echo = new Echo({ debug: process.env.NODE_ENV === 'development' });
+
+  // TODO: Run only when performing benchmark run
+  // @ts-ignore
+  window.__grafanaEcho = echo;
+  setEchoSrv(echo);
 
   window.addEventListener('load', (e) => {
     const loadMetricName = 'frontend_boot_load_time_seconds';
@@ -307,6 +313,9 @@ function initEchoSrv() {
       reportMetricPerformanceMark(cssLoadMetricName);
     }
   });
+
+  // TODO: Run only when performing benchmark run
+  registerEchoBackend(new DashboardBenchmarkBackend({}));
 
   if (contextSrv.user.orgRole !== '') {
     registerEchoBackend(new PerformanceBackend({}));
