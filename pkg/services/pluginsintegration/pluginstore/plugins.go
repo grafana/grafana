@@ -10,7 +10,7 @@ import (
 type Plugin struct {
 	plugins.JSONData
 
-	fs                plugins.FS
+	FS                plugins.FS
 	supportsStreaming bool
 
 	Class plugins.Class
@@ -29,9 +29,8 @@ type Plugin struct {
 	Error *plugins.Error
 
 	// SystemJS fields
-	Module     string
-	BaseURL    string
-	ModuleHash string
+	Module  string
+	BaseURL string
 
 	Angular plugins.AngularMeta
 
@@ -43,7 +42,7 @@ func (p Plugin) SupportsStreaming() bool {
 }
 
 func (p Plugin) Base() string {
-	return p.fs.Base()
+	return p.FS.Base()
 }
 
 func (p Plugin) IsApp() bool {
@@ -62,7 +61,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 	}
 
 	dto := Plugin{
-		fs:                p.FS,
+		FS:                p.FS,
 		supportsStreaming: supportsStreaming,
 		Class:             p.Class,
 		JSONData:          p.JSONData,
@@ -75,7 +74,6 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		Error:             p.Error,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
-		ModuleHash:        p.ModuleHash,
 		ExternalService:   p.ExternalService,
 		Angular:           p.Angular,
 	}

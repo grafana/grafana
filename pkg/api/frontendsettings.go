@@ -146,6 +146,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			AliasIDs:        panel.AliasIDs,
 			Info:            panel.Info,
 			Module:          panel.Module,
+			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
 			BaseURL:         panel.BaseURL,
 			SkipDataQuery:   panel.SkipDataQuery,
 			HideFromList:    panel.HideFromList,
@@ -154,7 +155,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Sort:            getPanelSort(panel.ID),
 			Angular:         panel.Angular,
 			LoadingStrategy: hs.pluginAssets.LoadingStrategy(c.Req.Context(), panel),
-			ModuleHash:      panel.ModuleHash,
 		}
 	}
 
@@ -455,9 +455,9 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			JSONData:                  plugin.JSONData,
 			Signature:                 plugin.Signature,
 			Module:                    plugin.Module,
+			ModuleHash:                hs.pluginAssets.ModuleHash(c.Req.Context(), plugin),
 			BaseURL:                   plugin.BaseURL,
 			Angular:                   plugin.Angular,
-			ModuleHash:                plugin.ModuleHash,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           hs.pluginAssets.LoadingStrategy(c.Req.Context(), plugin),
 		}
@@ -538,12 +538,12 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 				Name:     ds.Name,
 				JSONData: make(map[string]any),
 				PluginMeta: &plugins.PluginMetaDTO{
-					JSONData:   ds.JSONData,
-					Signature:  ds.Signature,
-					Module:     ds.Module,
-					BaseURL:    ds.BaseURL,
-					Angular:    ds.Angular,
-					ModuleHash: ds.ModuleHash,
+					JSONData:  ds.JSONData,
+					Signature: ds.Signature,
+					Module:    ds.Module,
+					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
+					BaseURL: ds.BaseURL,
+					Angular: ds.Angular,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
@@ -565,7 +565,7 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		Preload:         false,
 		Angular:         plugin.Angular,
 		LoadingStrategy: hs.pluginAssets.LoadingStrategy(ctx, plugin),
-		ModuleHash:      plugin.ModuleHash,
+		ModuleHash:      hs.pluginAssets.ModuleHash(ctx, plugin),
 	}
 
 	if settings.Enabled {

@@ -2,14 +2,21 @@ package pluginassets
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"path"
+	"path/filepath"
 
 	"github.com/Masterminds/semver/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -21,18 +28,22 @@ var (
 	scriptLoadingMinSupportedVersion = semver.MustParse(CreatePluginVersionScriptSupportEnabled)
 )
 
-func ProvideService(cfg *setting.Cfg, cdn *pluginscdn.Service) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service, sig *signature.Signature, store pluginstore.Store) *Service {
 	return &Service{
-		cfg: cfg,
-		cdn: cdn,
-		log: log.New("pluginassets"),
+		cfg:       cfg,
+		cdn:       cdn,
+		signature: sig,
+		store:     store,
+		log:       log.New("pluginassets"),
 	}
 }
 
 type Service struct {
-	cfg *setting.Cfg
-	cdn *pluginscdn.Service
-	log log.Logger
+	cfg       *config.PluginManagementCfg
+	cdn       *pluginscdn.Service
+	signature *signature.Signature
+	store     pluginstore.Store
+	log       log.Logger
 }
 
 // LoadingStrategy calculates the loading strategy for a plugin.
@@ -69,6 +80,82 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 	return plugins.LoadingStrategyFetch
 }
 
+// ModuleHash returns the module.js SHA256 hash for a plugin in the format expected by the browser for SRI checks.
+// The module hash is read from the plugin's MANIFEST.txt file.
+// The plugin can also be a nested plugin.
+// If the plugin is unsigned, an empty string is returned.
+func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
+	mh, err := s.moduleHash(ctx, p, "")
+	if err != nil {
+		s.log.Error("Failed to calculate module hash", "plugin", p.ID, "error", err)
+		return ""
+	}
+	return mh
+}
+
+// moduleHash is the underlying function for ModuleHash. See its documentation for more information.
+// It will read the module hash from the MANIFEST.txt in the [[plugins.FS]] of the provided plugin.
+// If childFSBase is provided, the function will try to get the hash from MANIFEST.txt for the provided children's
+// module.js file, rather than for the provided plugin.
+func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSBase string) (string, error) {
+	// Ignore unsigned plugins
+	if !p.Signature.IsValid() {
+		return "", nil
+	}
+
+	// Always calculate the hash for CDN plugins.
+	// Do not calculate the hash for filesystem plugins, unless the corresponding feature toggle is enabled.
+	if !s.cdnEnabled(p.ID, p.Class) && !s.cfg.Features.FilesystemSriChecksEnabled {
+		return "", nil
+	}
+
+	if p.Parent != nil {
+		// Nested plugin
+		parent, ok := s.store.Plugin(ctx, p.Parent.ID)
+		if !ok {
+			return "", fmt.Errorf("parent plugin plugin %q for child plugin %q not found", p.Parent.ID, p.ID)
+		}
+
+		// The module hash is contained within the parent's MANIFEST.txt file.
+		// For example, the parent's MANIFEST.txt will contain an entry similar to this:
+		//
+		// ```
+		// "datasource/module.js": "1234567890abcdef..."
+		// ```
+		//
+		// Recursively call moduleHash with the parent plugin and with the children plugin folder path
+		// to get the correct module hash for the nested plugin.
+		return s.moduleHash(ctx, parent, p.Base())
+	}
+
+	manifest, err := s.signature.ReadPluginManifestFromFS(ctx, p.FS)
+	if err != nil {
+		if errors.Is(err, signature.ErrSignatureTypeUnsigned) {
+			return "", nil
+		}
+		return "", fmt.Errorf("read plugin manifest: %w", err)
+	}
+	if !manifest.IsV2() {
+		return "", nil
+	}
+
+	var childPath string
+	if childFSBase != "" {
+		// Calculate the relative path of the child plugin folder from the parent plugin folder.
+		childPath, err = p.FS.Rel(childFSBase)
+		if err != nil {
+			return "", fmt.Errorf("rel path: %w", err)
+		}
+		// MANIFETS.txt uses forward slashes as path separators.
+		childPath = filepath.ToSlash(childPath)
+	}
+	moduleHash, ok := manifest.Files[path.Join(childPath, "module.js")]
+	if !ok {
+		return "", nil
+	}
+	return s.convertHashForSRI(moduleHash)
+}
+
 func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
 	if cpv, ok := ps[CreatePluginVersionCfgKey]; ok {
 		createPluginVer, err := semver.NewVersion(cpv)
@@ -85,4 +172,13 @@ func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
 
 func (s *Service) cdnEnabled(pluginID string, class plugins.Class) bool {
 	return s.cdn.PluginSupported(pluginID) || class == plugins.ClassCDN
+}
+
+// convertHashForSRI takes a sha256 hash string and returns it as expected by the browser for SRI checks.
+func (s *Service) convertHashForSRI(h string) (string, error) {
+	hb, err := hex.DecodeString(h)
+	if err != nil {
+		return "", fmt.Errorf("hex decode string: %w", err)
+	}
+	return "sha256-" + base64.StdEncoding.EncodeToString(hb), nil
 }

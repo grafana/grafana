@@ -52,9 +52,8 @@ type Plugin struct {
 	Error         *Error
 
 	// SystemJS fields
-	Module     string
-	BaseURL    string
-	ModuleHash string
+	Module  string
+	BaseURL string
 
 	Angular AngularMeta
 

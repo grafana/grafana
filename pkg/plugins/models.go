@@ -167,7 +167,6 @@ type Signature struct {
 	Status     SignatureStatus
 	Type       SignatureType
 	SigningOrg string
-	ModuleHash string
 }
 
 type PluginMetaDTO struct {
