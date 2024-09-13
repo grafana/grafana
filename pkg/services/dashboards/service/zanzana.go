@@ -166,11 +166,11 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 	}
 
 	concurrentRequests := dr.cfg.Zanzana.ConcurrentChecks
+	var wg sync.WaitGroup
 	res := make([]dashboards.DashboardSearchProjection, 0)
 	resToCheck := make(chan dashboards.DashboardSearchProjection, concurrentRequests)
 	allowedResults := make(chan dashboards.DashboardSearchProjection, len(searchRes))
-	errChan := make(chan error, len(searchRes))
-	var wg sync.WaitGroup
+
 	for i := 0; i < int(concurrentRequests); i++ {
 		wg.Add(1)
 		go func() {
@@ -179,20 +179,20 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 				if len(allowedResults) >= int(query.Limit) {
 					return
 				}
+
 				objectType := zanzana.TypeDashboard
 				if d.IsFolder {
 					objectType = zanzana.TypeFolder
 				}
-				object := zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10))
+
 				req := accesscontrol.CheckRequest{
 					User:     query.SignedInUser.GetUID(),
 					Relation: "read",
-					Object:   object,
+					Object:   zanzana.NewScopedTupleEntry(objectType, d.UID, "", strconv.FormatInt(orgId, 10)),
 				}
 
 				allowed, err := dr.ac.Check(ctx, req)
 				if err != nil {
-					errChan <- err
 					dr.log.Error("error checking access", "error", err)
 				} else if allowed {
 					allowedResults <- d
@@ -208,6 +208,7 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 
 	wg.Wait()
 	close(allowedResults)
+
 	for r := range allowedResults {
 		if len(res) >= int(query.Limit) {
 			break
@@ -235,36 +236,42 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 }
 
 func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]string, error) {
-	var wg sync.WaitGroup
-	resChan := make(chan []string, 2)
-	errChan := make(chan error, 2)
+	tasks := make([]func() ([]string, error), 0)
 
 	// For some search types we need dashboards or folders only
 	if query.Type != searchstore.TypeFolder && query.Type != searchstore.TypeAlertFolder {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			dashboardUIDs, err := dr.listResources(ctx, query, zanzana.TypeDashboard)
-			if err != nil {
-				errChan <- err
-				return
-			}
-			resChan <- dashboardUIDs
-			errChan <- nil
-		}()
+		tasks = append(tasks, func() ([]string, error) {
+			return dr.listResources(ctx, query, zanzana.TypeDashboard)
+		})
 	}
 
 	if query.Type != searchstore.TypeDashboard {
+		tasks = append(tasks, func() ([]string, error) {
+			return dr.listResources(ctx, query, zanzana.TypeFolder)
+		})
+	}
+
+	uids, err := runBatch(tasks)
+	if err != nil {
+		return nil, err
+	}
+
+	return uids, nil
+}
+
+func runBatch(tasks []func() ([]string, error)) ([]string, error) {
+	var wg sync.WaitGroup
+	tasksNum := len(tasks)
+	resChan := make(chan []string, tasksNum)
+	errChan := make(chan error, tasksNum)
+
+	for _, task := range tasks {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			folderUIDs, err := dr.listResources(ctx, query, zanzana.TypeFolder)
-			if err != nil {
-				errChan <- err
-				return
-			}
-			resChan <- folderUIDs
-			errChan <- nil
+			res, err := task()
+			resChan <- res
+			errChan <- err
 		}()
 	}
 
@@ -278,12 +285,11 @@ func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query *da
 		}
 	}
 
-	uids := make([]string, 0)
+	result := make([]string, 0)
 	for res := range resChan {
-		uids = append(uids, res...)
+		result = append(result, res...)
 	}
-
-	return uids, nil
+	return result, nil
 }
 
 func (dr *DashboardServiceImpl) listResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
