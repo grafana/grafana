@@ -135,11 +135,33 @@ func TestService_AddDataSource(t *testing.T) {
 				OrgID:      1,
 				Type:       "test", // required to validate apiserver
 				Name:       "test",
-				APIVersion: "v0alpha1",
+				APIVersion: "v1",
 			}
 			_, err := dsService.AddDataSource(context.Background(), cmd)
 			require.NoError(t, err)
 			require.True(t, validateExecuted)
+		})
+
+		t.Run("should ignore if AdmissionHandler is not implemented for v0alpha1", func(t *testing.T) {
+			dsService := initDSService(t)
+			dsService.pluginStore = &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Type: plugins.TypeDataSource,
+						Name: "test",
+					},
+				}},
+			}
+			dsService.pluginClient = &pluginfakes.FakePluginClient{}
+			cmd := &datasources.AddDataSourceCommand{
+				OrgID:      1,
+				Type:       "test", // required to validate apiserver
+				Name:       "test",
+				APIVersion: "v0alpha1",
+			}
+			_, err := dsService.AddDataSource(context.Background(), cmd)
+			require.NoError(t, err)
 		})
 
 		t.Run("should fail at validation", func(t *testing.T) {
