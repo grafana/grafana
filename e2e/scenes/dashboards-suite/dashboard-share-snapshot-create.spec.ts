@@ -1,4 +1,5 @@
 import { SnapshotCreateResponse } from '../../../public/app/features/dashboard/services/SnapshotSrv';
+import { fromBaseUrl } from '../../utils/support/url';
 import { e2e } from '../utils';
 import '../../utils/support/clipboard';
 
@@ -49,7 +50,7 @@ describe('Snapshots', () => {
       .then((rs) => {
         expect(rs.statusCode).eq(200);
         const body: SnapshotCreateResponse = rs.body;
-        cy.visit(body.url);
+        cy.visit(fromBaseUrl(body.url));
 
         // Validate the dashboard controls are rendered
         e2e.pages.Dashboard.Controls().should('exist');

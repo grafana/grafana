@@ -1,4 +1,5 @@
 import { ShareLinkConfiguration } from '../../../public/app/features/dashboard-scene/sharing/ShareButton/utils';
+import { fromBaseUrl } from '../../utils/support/url';
 import { e2e } from '../utils';
 import '../../utils/support/clipboard';
 
@@ -51,7 +52,7 @@ describe('Share internally', () => {
         expect(rs.statusCode).eq(200);
         const body: { url: string } = rs.body;
         expect(body.url).contain('goto');
-        cy.visit(body.url);
+        cy.visit(fromBaseUrl(body.url));
 
         cy.url().should('not.include', 'from=now-6h&to=now');
       });
@@ -86,7 +87,7 @@ describe('Share internally', () => {
         const body: { url: string } = rs.body;
         expect(body.url).contain('goto');
 
-        cy.visit(body.url);
+        cy.visit(fromBaseUrl(body.url));
         cy.url().should('include', 'from=now-6h&to=now');
       });
 
@@ -142,7 +143,7 @@ describe('Share internally', () => {
         const body: { url: string } = rs.body;
         expect(body.url).contain('goto');
 
-        cy.visit(body.url);
+        cy.visit(fromBaseUrl(body.url));
         cy.url().should('include', 'from=now-6h&to=now');
       });
   });
