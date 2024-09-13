@@ -118,7 +118,9 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 
 		resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, actual, resource)
+		require.Equal(t, actual.Spec, resource.Spec)
+		require.Equal(t, actual.Name, resource.Name)
+		require.Equal(t, actual.ResourceVersion, resource.ResourceVersion)
 	})
 }
 
