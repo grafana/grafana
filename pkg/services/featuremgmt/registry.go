@@ -1212,6 +1212,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
+			Expression:   "false", // disabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
