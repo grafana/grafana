@@ -136,6 +136,13 @@
         }
       }
     },
+    "list-view\"": {
+      "empty": {
+        "new-alert-rule": "New alert rule",
+        "new-recording-rule": "New recording rule",
+        "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
+      }
+    },
     "mute_timings": {
       "error-loading": {
         "description": "Could not load mute timings. Please try again later.",

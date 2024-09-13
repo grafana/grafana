@@ -136,6 +136,13 @@
         }
       }
     },
+    "list-view\"": {
+      "empty": {
+        "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
+        "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
+        "provisioning": "Ÿőū čäŉ äľşő đęƒįŉę řūľęş ŧĥřőūģĥ ƒįľę přővįşįőŉįŉģ őř Ŧęřřäƒőřm. <2>Ŀęäřŉ mőřę</2>"
+      }
+    },
     "mute_timings": {
       "error-loading": {
         "description": "Cőūľđ ŉőŧ ľőäđ mūŧę ŧįmįŉģş. Pľęäşę ŧřy äģäįŉ ľäŧęř.",
