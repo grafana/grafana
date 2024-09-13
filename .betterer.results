@@ -4300,9 +4300,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./TNil\`)", "3"],
       [0, 0, 0, "Do not re-export imported variable (\`./links\`)", "4"]
     ],
-    "public/app/features/explore/TraceView/components/types/trace.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/explore/TraceView/components/utils/DraggableManager/demo/DraggableManagerDemo.tsx:5381": [
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "0"],
       [0, 0, 0, "No untranslated strings. Wrap text with <Trans />", "1"],
@@ -6510,9 +6507,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/jaeger/_importedDependencies/types/index.tsx:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./trace\`)", "0"]
     ],
-    "public/app/plugins/datasource/jaeger/_importedDependencies/types/trace.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/jaeger/components/QueryEditor.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
     ],
@@ -6523,9 +6517,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/jaeger/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/plugins/datasource/jaeger/types.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/loki/LanguageProvider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
