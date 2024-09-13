@@ -796,9 +796,6 @@ func scalarInstantVector(f *data.Frame) (*float64, bool) {
 	if f.Fields[0].Len() > 1 || (f.Fields[0].Type() != data.FieldTypeNullableTime && f.Fields[0].Type() != data.FieldTypeTime) {
 		return &defaultReturnValue, false
 	}
-	if f.Fields[1].Len() > 1 || (f.Fields[1].Type() != data.FieldTypeNullableFloat64 && f.Fields[1].Type() != data.FieldTypeFloat64) {
-		return &defaultReturnValue, false
-	}
 	switch f.Fields[1].Type() {
 	case data.FieldTypeFloat64:
 		val := f.Fields[1].At(0).(float64)
