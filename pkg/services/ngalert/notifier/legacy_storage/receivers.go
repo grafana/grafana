@@ -17,57 +17,57 @@ func (rev *ConfigRevision) DeleteReceiver(uid string) {
 	})
 }
 
-func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) error {
+func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*definitions.PostableApiReceiver, error) {
 	// Check if the receiver already exists.
 	_, err := rev.GetReceiver(receiver.GetUID())
 	if err == nil {
-		return ErrReceiverExists.Errorf("")
+		return nil, ErrReceiverExists.Errorf("")
 	}
 	if !errors.Is(err, ErrReceiverNotFound) {
-		return err
+		return nil, err
 	}
 
 	if err := validateAndSetIntegrationUIDs(receiver); err != nil {
-		return err
+		return nil, err
 	}
 
 	postable, err := ReceiverToPostableApiReceiver(receiver)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, postable)
 
 	if err := rev.ValidateReceiver(postable); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return postable, nil
 }
 
-func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) error {
+func (rev *ConfigRevision) UpdateReceiver(receiver *models.Receiver) (*definitions.PostableApiReceiver, error) {
 	existing, err := rev.GetReceiver(receiver.GetUID())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := validateAndSetIntegrationUIDs(receiver); err != nil {
-		return err
+		return nil, err
 	}
 
 	postable, err := ReceiverToPostableApiReceiver(receiver)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Update receiver in the configuration.
 	*existing = *postable
 
 	if err := rev.ValidateReceiver(existing); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return postable, nil
 }
 
 // ReceiverNameUsedByRoutes checks if a receiver name is used in any routes.

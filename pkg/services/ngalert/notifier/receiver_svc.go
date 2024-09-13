@@ -336,11 +336,10 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
-	err = revision.CreateReceiver(&createdReceiver)
+	created, err := revision.CreateReceiver(&createdReceiver)
 	if err != nil {
 		return nil, err
 	}
-	createdReceiver.Version = createdReceiver.Fingerprint()
 
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err = rs.cfgStore.Save(ctx, revision, orgID)
@@ -352,7 +351,12 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	return &createdReceiver, nil
+
+	result, err := PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error) {
@@ -406,11 +410,10 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
-	err = revision.UpdateReceiver(&updatedReceiver)
+	updated, err := revision.UpdateReceiver(&updatedReceiver)
 	if err != nil {
 		return nil, err
 	}
-	updatedReceiver.Version = updatedReceiver.Fingerprint()
 
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// If the name of the receiver changed, we must update references to it in both routes and notification settings.
@@ -434,7 +437,12 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	return &updatedReceiver, nil
+
+	result, err := PostableApiReceiverToReceiver(updated, updatedReceiver.Provenance)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name string) ([]models.AlertRuleKey, error) {
