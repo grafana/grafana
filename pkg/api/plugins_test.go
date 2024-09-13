@@ -846,7 +846,7 @@ func Test_PluginsSettings(t *testing.T) {
 				}
 				pCfg := &config.PluginManagementCfg{}
 				pluginCDN := pluginscdn.ProvideService(pCfg)
-				sig := signature.ProvideService(pCfg, statickey.New(), pluginCDN)
+				sig := signature.ProvideService(pCfg, statickey.New())
 				hs.pluginAssets = pluginassets.ProvideService(pCfg, pluginCDN, sig, hs.pluginStore)
 				hs.pluginErrorResolver = pluginerrs.ProvideStore(errTracker)
 				var err error

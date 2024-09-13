@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,7 +25,7 @@ func provideDefaultTestService() *Signature {
 }
 
 func provideTestServiceWithConfig(cfg *config.PluginManagementCfg) *Signature {
-	return ProvideService(cfg, statickey.New(), pluginscdn.ProvideService(cfg))
+	return ProvideService(cfg, statickey.New())
 }
 
 func TestReadPluginManifest(t *testing.T) {
@@ -985,7 +984,7 @@ pHo=
 }
 
 func Test_VerifyRevokedKey(t *testing.T) {
-	s := ProvideService(&config.PluginManagementCfg{}, &revokedKeyProvider{}, pluginscdn.ProvideService(&config.PluginManagementCfg{}))
+	s := ProvideService(&config.PluginManagementCfg{}, &revokedKeyProvider{})
 	m := createV2Manifest(t)
 	txt := `-----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
