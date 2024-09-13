@@ -348,6 +348,7 @@ var ResourceStore_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
+	ResourceIndex_Filter_FullMethodName  = "/resource.ResourceIndex/Filter"
 	ResourceIndex_History_FullMethodName = "/resource.ResourceIndex/History"
 	ResourceIndex_Origin_FullMethodName  = "/resource.ResourceIndex/Origin"
 )
@@ -359,6 +360,7 @@ const (
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexClient interface {
+	Filter(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*FilterResponse, error)
 	// Show resource history (and trash)
 	History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -371,6 +373,16 @@ type resourceIndexClient struct {
 
 func NewResourceIndexClient(cc grpc.ClientConnInterface) ResourceIndexClient {
 	return &resourceIndexClient{cc}
+}
+
+func (c *resourceIndexClient) Filter(ctx context.Context, in *FilterRequest, opts ...grpc.CallOption) (*FilterResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FilterResponse)
+	err := c.cc.Invoke(ctx, ResourceIndex_Filter_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *resourceIndexClient) History(ctx context.Context, in *HistoryRequest, opts ...grpc.CallOption) (*HistoryResponse, error) {
@@ -400,6 +412,7 @@ func (c *resourceIndexClient) Origin(ctx context.Context, in *OriginRequest, opt
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 type ResourceIndexServer interface {
+	Filter(context.Context, *FilterRequest) (*FilterResponse, error)
 	// Show resource history (and trash)
 	History(context.Context, *HistoryRequest) (*HistoryResponse, error)
 	// Used for efficient provisioning
@@ -410,6 +423,9 @@ type ResourceIndexServer interface {
 type UnimplementedResourceIndexServer struct {
 }
 
+func (UnimplementedResourceIndexServer) Filter(context.Context, *FilterRequest) (*FilterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Filter not implemented")
+}
 func (UnimplementedResourceIndexServer) History(context.Context, *HistoryRequest) (*HistoryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method History not implemented")
 }
@@ -426,6 +442,24 @@ type UnsafeResourceIndexServer interface {
 
 func RegisterResourceIndexServer(s grpc.ServiceRegistrar, srv ResourceIndexServer) {
 	s.RegisterService(&ResourceIndex_ServiceDesc, srv)
+}
+
+func _ResourceIndex_Filter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FilterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ResourceIndexServer).Filter(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ResourceIndex_Filter_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ResourceIndexServer).Filter(ctx, req.(*FilterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ResourceIndex_History_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -471,6 +505,10 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "resource.ResourceIndex",
 	HandlerType: (*ResourceIndexServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Filter",
+			Handler:    _ResourceIndex_Filter_Handler,
+		},
 		{
 			MethodName: "History",
 			Handler:    _ResourceIndex_History_Handler,
