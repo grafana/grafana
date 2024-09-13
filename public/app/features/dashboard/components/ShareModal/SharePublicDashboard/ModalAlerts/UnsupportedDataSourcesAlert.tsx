@@ -33,7 +33,11 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
         )}
       </p>
       <a
-        href="https://grafana.com/docs/grafana/next/dashboards/dashboard-public/"
+        href={
+          config.featureToggles.newDashboardSharingComponent
+            ? 'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/shared-dashboards/'
+            : 'https://grafana.com/docs/grafana/next/dashboards/dashboard-public/'
+        }
         target="blank"
         className={cx('text-link', styles.unsupportedDataSourceDescription)}
       >
