@@ -125,6 +125,11 @@
       "label": "Contact point"
     },
     "list-view": {
+      "empty": {
+        "new-alert-rule": "New alert rule",
+        "new-recording-rule": "New recording rule",
+        "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
+      },
       "section": {
         "dataSourceManaged": {
           "title": "Data source-managed"
