@@ -193,6 +193,18 @@ func ProvideService(
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
 
+	// register with grafana http server for now
+	s.rr.Get("/apis/filter", func(c *contextmodel.ReqContext) {
+		urlQuery := c.Req.URL.Query().Get("query")
+		fmt.Println("urlQuery: ", urlQuery)
+		filterRequest := &resource.FilterRequest{Query: urlQuery}
+		r, err := unified.Filter(c.Context.Req.Context(), filterRequest)
+		if err != nil {
+			panic(err)
+		}
+		c.JSON(200, r)
+	})
+
 	s.rr.Group("/apis", proxyHandler)
 	s.rr.Group("/livez", proxyHandler)
 	s.rr.Group("/readyz", proxyHandler)

@@ -603,6 +603,13 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	}
 }
 
+func (s *server) Filter(ctx context.Context, req *FilterRequest) (*FilterResponse, error) {
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+	return s.index.Filter(ctx, req)
+}
+
 // History implements ResourceServer.
 func (s *server) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
 	if err := s.Init(ctx); err != nil {
