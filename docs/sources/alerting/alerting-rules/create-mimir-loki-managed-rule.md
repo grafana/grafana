@@ -43,32 +43,34 @@ refs:
 
 # Configure data source-managed alert rules
 
-Create alert rules for an external Grafana Mimir or Loki instance that has ruler API enabled; these are called data source-managed alert rules.
+Create data source-managed alert rules for Grafana Mimir or Grafana Loki data sources, which have been configured to support rule creation.
+
+To configure your Grafana Mimir or Loki data source for alert rule creation, enable either the Loki Ruler API or the Mimir Ruler API.
+
+For more information, refer to [Loki Ruler API](/docs/loki/<GRAFANA_VERSION>/api/#ruler) or [Mimir Ruler API](/docs/mimir/<GRAFANA_VERSION>/references/http-api/#ruler).
 
 **Note**:
 
-Alert rules for an external Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
+Alert rules for a Grafana Mimir or Loki instance can be edited or deleted by users with Editor or Admin roles.
 
 If you delete an alerting resource created in the UI, you can no longer retrieve it.
 To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
 ## Before you begin
 
-- Verify that you have write permission to the Prometheus or Loki data source. Otherwise, you will not be able to create or update Grafana Mimir managed alert rules.
+- Verify that you have write permission to the Mimir or Loki data source. Otherwise, you cannot create or update Grafana Mimir or Loki-managed alert rules.
 
-- For Grafana Mimir and Loki data sources, enable the Ruler API by configuring their respective services.
+- Enable the Mimir or Loki Ruler API.
 
   - **Loki** - The `local` rule storage type, default for the Loki data source, supports only viewing of rules. To edit rules, configure one of the other rule storage types.
 
   - **Grafana Mimir** - use the `/prometheus` prefix. The Prometheus data source supports both Grafana Mimir and Prometheus, and Grafana expects that both the [Query API](/docs/mimir/latest/operators-guide/reference-http-api/#querier--query-frontend) and [Ruler API](/docs/mimir/latest/operators-guide/reference-http-api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
 
-Watch this video to learn more about how to create a Mimir managed alert rule: {{< vimeo 720001865 >}}
+Watch this video to learn more about how to create a Mimir-managed alert rule: {{< vimeo 720001865 >}}
 
 {{% admonition type="note" %}}
-If you do not want to manage alert rules for a particular Loki or Prometheus data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
+If you do not want to manage alert rules for a particular Loki or Mimir data source, go to its settings and clear the **Manage alerts via Alerting UI** checkbox.
 {{% /admonition %}}
-
-In the following sections, we’ll guide you through the process of creating your data source-managed alert rules.
 
 To create a data source-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
 
