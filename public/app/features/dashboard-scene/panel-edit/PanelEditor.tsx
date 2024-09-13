@@ -52,7 +52,6 @@ export interface PanelEditorState extends SceneObjectState {
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
-  private _originalState!: VizPanelState;
   private _originalLayoutElementState!: DashboardGridItemState;
   private _layoutElement!: DashboardGridItem;
   private _originalSaveModel!: Panel;
@@ -102,7 +101,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._originalSaveModel = vizPanelToPanel(panel);
 
     if (panel.parent instanceof DashboardGridItem) {
-      this._originalState = sceneUtils.cloneSceneObjectState(panel.state);
       this._originalLayoutElementState = sceneUtils.cloneSceneObjectState(panel.parent.state);
       this._layoutElement = panel.parent;
     }
