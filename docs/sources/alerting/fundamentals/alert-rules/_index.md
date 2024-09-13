@@ -69,15 +69,15 @@ Grafana supports two different alert rule types: Grafana-managed alert rules and
 
 ## Grafana-managed alert rules
 
-Grafana-managed alert rules are the most flexible alert rule type. They allow you to create alerts that can act on data from any of the [supported data sources](#supported-data-sources), and use multiple data sources in a single alert rule.
+Grafana-managed alert rules are the most flexible alert rule type. They allow you to create alert rules that can act on data from any of the [supported data sources](#supported-data-sources), and use multiple data sources in a single alert rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported.
 
 Additionally, you can also add [expressions to transform your data](ref:expression-queries), set custom alert conditions, and include [images in alert notifications](ref:notification-images).
 
 {{< figure src="/media/docs/alerting/grafana-managed-alerting-architecture.png" max-width="750px" caption="How Grafana-managed alerting works by default" >}}
 
 1. Alert rules are created within Grafana based on one or more data sources.
-1. Alert rules are evaluated by the Alert Rule Evaluation Engine from within Grafana.
-1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
+2. Alert rules are evaluated by the Alert Rule Evaluation Engine from within Grafana.
+3. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
 ### Supported data sources
 
@@ -87,16 +87,18 @@ Find the public data sources supporting Alerting in the [Grafana Plugins directo
 
 ## Data source-managed alert rules
 
-Data source-managed alert rules can improve query performance via [recording rules](#recording-rules) and ensure high-availability and fault tolerance when implementing a distributed architecture.
+Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources which have been configured to support rule creation.
 
-They are only supported for Prometheus-based or Loki data sources with the Ruler API enabled. For more information, refer to the [Loki Ruler API](/docs/loki/<GRAFANA_VERSION>/api/#ruler) or [Mimir Ruler API](/docs/mimir/<GRAFANA_VERSION>/references/http-api/#ruler).
+They can improve query performance via [recording rules](#recording-rules) and ensure high-availability and fault tolerance when implementing a distributed architecture.
+
+They are only supported for Grafana Mimir or Grafana Loki data sources with the Ruler API enabled. For more information, refer to the [Loki Ruler API](/docs/loki/<GRAFANA_VERSION>/api/#ruler) or [Mimir Ruler API](/docs/mimir/<GRAFANA_VERSION>/references/http-api/#ruler).
 
 {{< figure src="/media/docs/alerting/mimir-managed-alerting-architecture-v2.png" max-width="750px" caption="Mimir-managed alerting architecture" >}}
 
 1. Alert rules are created and stored within the data source itself.
-1. Alert rules can only query Prometheus-based data. It can use either queries or [recording rules](#recording-rules).
-1. Alert rules are evaluated by the Alert Rule Evaluation Engine.
-1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
+2. Alert rules can only query Prometheus-based data. It can use either queries or [recording rules](#recording-rules).
+3. Alert rules are evaluated by the Alert Rule Evaluation Engine.
+4. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
 ## Recording rules
 
