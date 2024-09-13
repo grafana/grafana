@@ -286,7 +286,7 @@ If your Grafana instance needs to interact with services exposing certificates i
 
 You might need to configure this if you:
 
-- have plugins that require connectivity to other self hosted systems. For example, if you've installed the Grafana Enterprise Metrics (GEM) plugin, and your GEM cluster is using a private certificate.
+- have plugins that require connectivity to other self hosted systems. For example, if you've installed the Grafana Enterprise Metrics, Logs, or Traces (GEM, GEL, GET) plugins, and your GEM (or GEL/GET) cluster is using a private certificate.
 - want to connect to data sources which are listening on HTTPS with a private certificate.
 - are using a backend database for persistence, or caching service that uses private certificates for encryption in transit.
 
