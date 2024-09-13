@@ -83,24 +83,17 @@ export async function totalOtelResources(
     // - both job and instance labels
     // - only job label
     // - only instance label
-    // Here we make sure either of them are present
+    // Here we make sure both of them are present
     // because we use this collection to filter metric names
-    if (result.metric.job) {
+    if (result.metric.job && result.metric.instance) {
       jobs.push(result.metric.job);
-    }
-
-    if (result.metric.instance) {
       instances.push(result.metric.instance);
     }
   });
 
-  // use these filters to reduce metrics
-  const jobsRegex = jobs.length > 0 ? `"${jobs.join('|')}"` : '';
-  const instancesRegex = instances.length > 0 ? `"${instances.join('|')}"` : '';
-
   const otelTargets: OtelTargetType = {
-    job: jobsRegex,
-    instance: instancesRegex,
+    jobs,
+    instances,
   };
 
   return otelTargets;

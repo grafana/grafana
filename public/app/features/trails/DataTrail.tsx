@@ -313,7 +313,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
       const otelTargets = await totalOtelResources(datasourceUid, timeRange);
       const deploymentEnvironments = await getDeploymentEnvironments(datasourceUid, timeRange);
-      const hasOtelResources = otelTargets.job !== '' && otelTargets.instance !== '';
+      const hasOtelResources = otelTargets.jobs.length > 0 && otelTargets.instances.length > 0;
       if (
         otelResourcesVariable instanceof AdHocFiltersVariable &&
         otelDepEnvVariable instanceof CustomVariable &&
@@ -542,13 +542,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
         hasOtelResources,
         isStandardOtel: deploymentEnvironments.length > 0,
         useOtelExperience: false,
-        otelTargets: { job: '', instance: '' },
+        otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
       });
     } else {
       // partial reset when a user turns off the otel experience
       this.setState({
-        otelTargets: { job: '', instance: '' },
+        otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
       });
     }

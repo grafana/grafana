@@ -2,7 +2,10 @@ export type OtelResponse = {
   data: {
     result: [
       {
-        metric: OtelTargetType;
+        metric: {
+          job: string;
+          instance: string;
+        };
       },
     ];
   };
@@ -19,8 +22,8 @@ export type LabelResponse = {
 };
 
 export type OtelTargetType = {
-  job: string;
-  instance: string;
+  jobs: string[];
+  instances: string[];
 };
 
 export type OtelResourcesObject = {

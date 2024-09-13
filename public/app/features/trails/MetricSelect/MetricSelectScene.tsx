@@ -34,6 +34,7 @@ import { StatusWrapper } from '../StatusWrapper';
 import { Node, Parser } from '../groop/parser';
 import { getMetricDescription } from '../helpers/MetricDatasourceHelper';
 import { reportExploreMetrics } from '../interactions';
+import { limitOtelMatchTerms } from '../otel/util';
 import {
   getVariablesWithMetricConstant,
   MetricSelectedEvent,
@@ -184,8 +185,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       trail.subscribeToState(({ otelTargets }, oldState) => {
         // if the otel targets have changed, get the new list of metrics
         if (
-          otelTargets?.instance !== oldState.otelTargets?.instance &&
-          otelTargets?.job !== oldState.otelTargets?.job
+          otelTargets?.instances !== oldState.otelTargets?.instances &&
+          otelTargets?.jobs !== oldState.otelTargets?.jobs
         ) {
           this._debounceRefreshMetricNames();
         }
@@ -219,27 +220,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       return;
     }
 
-    const matchTerms = [];
-
-    let noOtelMetrics = false;
-
-    if (trail.state.useOtelExperience) {
-      const jobsRegex = trail.state.otelTargets?.job;
-      const instancesRegex = trail.state.otelTargets?.instance;
-      // no targets have this combination of filters so there are no metrics that can be joined
-      // show no metrics
-      if (jobsRegex && instancesRegex) {
-        // add the job and instance filters
-        // but be careful, because these might get overriden
-        // I think it will be fine that they are overidden
-        // NOTE: test the limit of size of filters we can add, limit otel filters if there are too many
-        // test this with a customer with a larger amount of targets
-        matchTerms.push(`job=~${trail.state.otelTargets?.job}`);
-        matchTerms.push(`instance=~${trail.state.otelTargets?.instance}`);
-      } else {
-        noOtelMetrics = true;
-      }
-    }
+    const matchTerms: string[] = [];
 
     const filtersVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
     const hasFilters = filtersVar instanceof AdHocFiltersVariable && filtersVar.getValue()?.valueOf();
@@ -250,6 +231,26 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
     const metricSearchRegex = createPromRegExp(trail.state.metricSearch);
     if (metricSearchRegex) {
       matchTerms.push(`__name__=~"${metricSearchRegex}"`);
+    }
+
+    let noOtelMetrics = false;
+    let missingOtelTargets = false;
+
+    if (trail.state.useOtelExperience) {
+      const jobsList = trail.state.otelTargets?.jobs;
+      const instancesList = trail.state.otelTargets?.instances;
+      // no targets have this combination of filters so there are no metrics that can be joined
+      // show no metrics
+      if (jobsList && jobsList.length > 0 && instancesList && instancesList.length > 0) {
+        const otelMatches = limitOtelMatchTerms(matchTerms, jobsList, instancesList, missingOtelTargets);
+
+        missingOtelTargets = otelMatches.missingOtelTargets;
+
+        matchTerms.push(otelMatches.jobsRegex);
+        matchTerms.push(otelMatches.instancesRegex);
+      } else {
+        noOtelMetrics = true;
+      }
     }
 
     const match = `{${matchTerms.join(',')}}`;
@@ -283,6 +284,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
       if (noOtelMetrics) {
         metricNames = [];
         metricNamesWarning = undefined;
+      }
+
+      if (missingOtelTargets) {
+        metricNamesWarning +=
+          'The list of metrics is not complete. Select more OTel resource attributes to see a full list of metrics.';
       }
 
       let bodyLayout = this.state.body;

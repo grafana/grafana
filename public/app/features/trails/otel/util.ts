@@ -127,3 +127,69 @@ export function getOtelResourcesObject(scene: SceneObject, firstQueryVal?: strin
   }
   return otelResourcesObject;
 }
+
+/**
+ * This function checks that when adding OTel job and instance filters
+ * to the label values request for a list of metrics,
+ * the total character count of the request does not exceed 2000 characters
+ *
+ * @param matchTerms __name__ and other Prom filters
+ * @param jobsList list of jobs in target_info
+ * @param instancesList list of instances in target_info
+ * @param missingOtelTargets flag to indicate truncated job and instance filters
+ * @returns
+ */
+export function limitOtelMatchTerms(
+  matchTerms: string[],
+  jobsList: string[],
+  instancesList: string[],
+  missingOtelTargets: boolean
+): { missingOtelTargets: boolean; jobsRegex: string; instancesRegex: string } {
+  const charLimit = 2000;
+
+  let initialCharAmount = matchTerms.join(',').length;
+
+  // start to add values to the regex and start quote
+  let jobsRegex = 'job=~"';
+  let instancesRegex = 'instance=~"';
+
+  // iterate through the jobs and instances,
+  // count the chars as they are added,
+  // stop before the total count reaches 2000
+  // show a warning that there are missing OTel targets and
+  // the user must select more OTel resource attributes
+  for (let i = 0; i < jobsList.length; i++) {
+    // use or character for the count
+    const orChars = i === 0 ? 0 : 2;
+    // count all the characters that will go into the match terms
+    const checkCharAmount =
+      initialCharAmount +
+      jobsRegex.length +
+      jobsList[i].length +
+      instancesRegex.length +
+      instancesList[i].length +
+      orChars;
+
+    if (checkCharAmount <= charLimit) {
+      if (i === 0) {
+        jobsRegex += `${jobsList[i]}`;
+        instancesRegex += `${instancesList[i]}`;
+      } else {
+        jobsRegex += `|${jobsList[i]}`;
+        instancesRegex += `|${instancesList[i]}`;
+      }
+    } else {
+      missingOtelTargets = true;
+      break;
+    }
+  }
+  // complete the quote after values have been added
+  jobsRegex += '"';
+  instancesRegex += '"';
+
+  return {
+    missingOtelTargets,
+    jobsRegex,
+    instancesRegex,
+  };
+}

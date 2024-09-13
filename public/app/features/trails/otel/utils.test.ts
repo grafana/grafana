@@ -1,6 +1,6 @@
 import { MetricFindValue } from '@grafana/data';
 
-import { sortResources, getOtelJoinQuery, blessedList } from './util';
+import { sortResources, getOtelJoinQuery, blessedList, limitOtelMatchTerms } from './util';
 
 describe('sortResources', () => {
   it('should sort and filter resources correctly', () => {
@@ -115,5 +115,77 @@ describe('getOtelJoinQuery', () => {
     const result = getOtelJoinQuery(otelResourcesObject);
 
     expect(result).toBe('');
+  });
+});
+
+describe('limitOtelMatchTerms', () => {
+  it('should limit the OTel match terms if the total match term character count exceeds 2000', () => {
+    // the initial match is 1980 characters
+    const promMatchTerms: string[] = [
+      `${[...Array(1979).keys()]
+        .map((el) => {
+          return '0';
+        })
+        .join('')}"`,
+    ];
+    // job=~"" is 7 chars
+    // instance=~"" is 12 characters
+
+    // 7 + 12 + 1979 = 1998
+    // so we have room to add 2 more characters
+    // attribute values that are b will be left out
+    const jobs = ['a', 'b', 'c'];
+    const instances = ['d', 'e', 'f'];
+
+    const missingOtelTargets = false;
+
+    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances, missingOtelTargets);
+
+    expect(result.missingOtelTargets).toEqual(true);
+    expect(result.jobsRegex).toEqual('job=~"a"');
+    expect(result.instancesRegex).toEqual('instance=~"d"');
+  });
+
+  it('should include | char in the count', () => {
+    // the initial match is 1980 characters
+    const promMatchTerms: string[] = [
+      `${[...Array(1975).keys()]
+        .map((el) => {
+          return '0';
+        })
+        .join('')}"`,
+    ];
+    // job=~"" is 7 chars
+    // instance=~"" is 12 characters
+
+    // 7 + 12 + 1975 = 1994
+    // so we have room to add 6 more characters
+    // the extra 6 characters will be 'a|b' and 'd|e'
+    const jobs = ['a', 'b', 'c'];
+    const instances = ['d', 'e', 'f'];
+
+    const missingOtelTargets = false;
+
+    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances, missingOtelTargets);
+
+    expect(result.missingOtelTargets).toEqual(true);
+    expect(result.jobsRegex).toEqual('job=~"a|b"');
+    expect(result.instancesRegex).toEqual('instance=~"d|e"');
+  });
+
+  it('should add all OTel job and instance matches if the character count is less that 2000', () => {
+    const promMatchTerms: string[] = [];
+
+    const jobs = ['job1', 'job2', 'job3', 'job4', 'job5'];
+
+    const instances = ['instance1', 'instance2', 'instance3', 'instance4', 'instance5'];
+
+    const missingOtelTargets = false;
+
+    const result = limitOtelMatchTerms(promMatchTerms, jobs, instances, missingOtelTargets);
+
+    expect(result.missingOtelTargets).toEqual(false);
+    expect(result.jobsRegex).toEqual('job=~"job1|job2|job3|job4|job5"');
+    expect(result.instancesRegex).toEqual('instance=~"instance1|instance2|instance3|instance4|instance5"');
   });
 });

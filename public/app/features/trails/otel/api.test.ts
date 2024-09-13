@@ -62,8 +62,8 @@ describe('OTEL API', () => {
       const result = await totalOtelResources(dataSourceUid, timeRange);
 
       expect(result).toEqual({
-        job: '"job1|job2"',
-        instance: '"instance1|instance2"',
+        jobs: ['job1', 'job2'],
+        instances: ['instance1', 'instance2'],
       });
     });
   });
