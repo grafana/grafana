@@ -174,7 +174,7 @@ func (s *Service) cdnEnabled(pluginID string, class plugins.Class) bool {
 	return s.cdn.PluginSupported(pluginID) || class == plugins.ClassCDN
 }
 
-// convertHashForSRI takes a sha256 hash string and returns it as expected by the browser for SRI checks.
+// convertHashForSRI takes a SHA256 hash string and returns it as expected by the browser for SRI checks.
 func (s *Service) convertHashForSRI(h string) (string, error) {
 	hb, err := hex.DecodeString(h)
 	if err != nil {
