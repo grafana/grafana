@@ -139,17 +139,21 @@ func (s *ServiceImpl) QueryConvert(ctx context.Context, user identity.Requester,
 		// TODO: Use convertResponse.Result to return an error?
 		return nil, err
 	}
-	obj := convertResponse.Objects[0]
-	r := &dtos.ConvertQueryRequest{}
-	if obj.ContentType != "application/json" {
-		return nil, err
-	}
-	err = json.Unmarshal(obj.Raw, r)
-	if err != nil {
-		return nil, err
+	queries := []*simplejson.Json{}
+	for _, obj := range convertResponse.Objects {
+		if obj.ContentType != "application/json" {
+			return nil, fmt.Errorf("unsupported content type %s", obj.ContentType)
+		}
+		q, err := simplejson.NewJson(obj.Raw)
+		if err != nil {
+			return nil, err
+		}
+		queries = append(queries, q)
 	}
 
-	return r, nil
+	return &dtos.ConvertQueryRequest{
+		Queries: queries,
+	}, nil
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers

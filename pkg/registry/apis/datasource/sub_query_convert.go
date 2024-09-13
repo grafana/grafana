@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -100,16 +101,19 @@ func (r *subQueryConvertREST) Connect(ctx context.Context, name string, opts run
 			return
 		}
 
-		obj := convertResponse.Objects[0]
 		r := &query.QueryDataRequest{}
-		if obj.ContentType != "application/json" {
-			responder.Error(fmt.Errorf("unsupported content type %s", obj.ContentType))
-			return
-		}
-		err = json.Unmarshal(obj.Raw, r)
-		if err != nil {
-			responder.Error(fmt.Errorf("unmarshal: %w", err))
-			return
+		for _, obj := range convertResponse.Objects {
+			if obj.ContentType != "application/json" {
+				responder.Error(fmt.Errorf("unsupported content type %s", obj.ContentType))
+				return
+			}
+			q := &v0alpha1.DataQuery{}
+			err = json.Unmarshal(obj.Raw, q)
+			if err != nil {
+				responder.Error(fmt.Errorf("unmarshal: %w", err))
+				return
+			}
+			r.Queries = append(r.Queries, *q)
 		}
 		responder.Object(http.StatusOK, r)
 	}), nil
