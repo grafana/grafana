@@ -33,6 +33,7 @@ jobs:
   main:
     runs-on: ubuntu-latest
     needs: config
+    if: needs.config.outputs.has-secrets
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
