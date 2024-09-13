@@ -211,6 +211,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			}
 			rulesStates.states[cacheID] = &State{
 				AlertRuleUID:         entry.RuleUID,
+				AlertRuleGroup:       ruleForEntry.RuleGroup,
 				OrgID:                entry.RuleOrgID,
 				CacheID:              cacheID,
 				Labels:               lbs,

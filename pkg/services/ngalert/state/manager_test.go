@@ -55,6 +55,7 @@ func TestWarmStateCache(t *testing.T) {
 	expectedEntries := []*state.State{
 		{
 			AlertRuleUID:       rule.UID,
+			AlertRuleGroup:     rule.RuleGroup,
 			OrgID:              rule.OrgID,
 			Labels:             data.Labels{"test1": "testValue1"},
 			State:              eval.Normal,
@@ -68,6 +69,7 @@ func TestWarmStateCache(t *testing.T) {
 			ResultFingerprint:  data.Fingerprint(math.MaxUint64),
 		}, {
 			AlertRuleUID:       rule.UID,
+			AlertRuleGroup:     rule.RuleGroup,
 			OrgID:              rule.OrgID,
 			Labels:             data.Labels{"test2": "testValue2"},
 			State:              eval.Alerting,
@@ -82,6 +84,7 @@ func TestWarmStateCache(t *testing.T) {
 		},
 		{
 			AlertRuleUID:       rule.UID,
+			AlertRuleGroup:     rule.RuleGroup,
 			OrgID:              rule.OrgID,
 			Labels:             data.Labels{"test3": "testValue3"},
 			State:              eval.NoData,
@@ -96,6 +99,7 @@ func TestWarmStateCache(t *testing.T) {
 		},
 		{
 			AlertRuleUID:       rule.UID,
+			AlertRuleGroup:     rule.RuleGroup,
 			OrgID:              rule.OrgID,
 			Labels:             data.Labels{"test4": "testValue4"},
 			State:              eval.Error,
@@ -110,6 +114,7 @@ func TestWarmStateCache(t *testing.T) {
 		},
 		{
 			AlertRuleUID:       rule.UID,
+			AlertRuleGroup:     rule.RuleGroup,
 			OrgID:              rule.OrgID,
 			Labels:             data.Labels{"test5": "testValue5"},
 			State:              eval.Pending,
@@ -326,9 +331,10 @@ func TestProcessEvalResults(t *testing.T) {
 	t3 := tn(3)
 	m := models.RuleMuts
 	baseRule := &models.AlertRule{
-		OrgID: 1,
-		Title: "test_title",
-		UID:   "test_alert_rule_uid",
+		OrgID:     1,
+		Title:     "test_title",
+		UID:       "test_alert_rule_uid",
+		RuleGroup: "test_rule_group",
 		Data: []models.AlertQuery{{
 			RefID:         "A",
 			DatasourceUID: "datasource_uid_1",
@@ -1540,6 +1546,9 @@ func TestProcessEvalResults(t *testing.T) {
 				if s.AlertRuleUID == "" {
 					s.AlertRuleUID = tc.alertRule.UID
 				}
+				if s.AlertRuleGroup == "" {
+					s.AlertRuleGroup = tc.alertRule.RuleGroup
+				}
 				if s.OrgID == 0 {
 					s.OrgID = tc.alertRule.OrgID
 				}
@@ -1774,11 +1783,12 @@ func TestStaleResultsHandler(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					AlertRuleUID: rule.UID,
-					OrgID:        1,
-					Labels:       data.Labels(labels1),
-					Values:       make(map[string]float64),
-					State:        eval.Normal,
+					AlertRuleUID:   rule.UID,
+					AlertRuleGroup: rule.RuleGroup,
+					OrgID:          1,
+					Labels:         data.Labels(labels1),
+					Values:         make(map[string]float64),
+					State:          eval.Normal,
 					LatestResult: &state.Evaluation{
 						EvaluationTime:  evaluationTime,
 						EvaluationState: eval.Normal,
