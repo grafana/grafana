@@ -129,7 +129,12 @@ const CreateSnapshotActions = ({
   onCreateClick: (isExternal?: boolean) => void;
 }) => (
   <Stack gap={1} flex={1} direction={{ xs: 'column', sm: 'row' }}>
-    <Button variant="primary" disabled={isLoading} onClick={() => onCreateClick()}>
+    <Button
+      variant="primary"
+      disabled={isLoading}
+      onClick={() => onCreateClick()}
+      data-testid={selectors.publishSnapshot}
+    >
       <Trans i18nKey="snapshot.share.local-button">Publish snapshot</Trans>
     </Button>
     {sharingOptions?.externalEnabled && (
@@ -154,7 +159,13 @@ const UpsertSnapshotActions = ({
   onNewSnapshotClick: () => void;
 }) => (
   <Stack justifyContent="flex-start" gap={1} direction={{ xs: 'column', sm: 'row' }}>
-    <ClipboardButton icon="link" variant="primary" fill="outline" getText={() => url}>
+    <ClipboardButton
+      icon="link"
+      variant="primary"
+      fill="outline"
+      getText={() => url}
+      data-testid={selectors.copyUrlButton}
+    >
       <Trans i18nKey="snapshot.share.copy-link-button">Copy link</Trans>
     </ClipboardButton>
     <Button icon="trash-alt" variant="destructive" fill="outline" onClick={onDeleteClick}>
