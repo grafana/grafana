@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"path"
 	"path/filepath"
@@ -130,9 +129,6 @@ func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSB
 
 	manifest, err := s.signature.ReadPluginManifestFromFS(ctx, p.FS)
 	if err != nil {
-		if errors.Is(err, signature.ErrSignatureTypeUnsigned) {
-			return "", nil
-		}
 		return "", fmt.Errorf("read plugin manifest: %w", err)
 	}
 	if !manifest.IsV2() {
@@ -153,7 +149,7 @@ func (s *Service) moduleHash(ctx context.Context, p pluginstore.Plugin, childFSB
 	if !ok {
 		return "", nil
 	}
-	return s.convertHashForSRI(moduleHash)
+	return convertHashForSRI(moduleHash)
 }
 
 func (s *Service) compatibleCreatePluginVersion(ps map[string]string) bool {
@@ -175,7 +171,7 @@ func (s *Service) cdnEnabled(pluginID string, class plugins.Class) bool {
 }
 
 // convertHashForSRI takes a SHA256 hash string and returns it as expected by the browser for SRI checks.
-func (s *Service) convertHashForSRI(h string) (string, error) {
+func convertHashForSRI(h string) (string, error) {
 	hb, err := hex.DecodeString(h)
 	if err != nil {
 		return "", fmt.Errorf("hex decode string: %w", err)
