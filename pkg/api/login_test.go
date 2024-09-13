@@ -75,15 +75,6 @@ func getBody(resp *httptest.ResponseRecorder) (string, error) {
 	return string(responseData), nil
 }
 
-type redirectCase struct {
-	desc        string
-	url         string
-	status      int
-	appURL      string
-	appSubURL   string
-	redirectURL string
-}
-
 var oAuthInfos = map[string]*social.OAuthInfo{
 	"github": {
 		ClientId:     "fake",
