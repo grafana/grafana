@@ -222,6 +222,19 @@
       "update-rule": {
         "success": ""
       }
+    },
+    "search": {
+      "property": {
+        "data-source": "",
+        "evaluation-group": "",
+        "labels": "",
+        "namespace": "",
+        "rule-health": "",
+        "rule-name": "",
+        "rule-type": "",
+        "state": ""
+      },
+      "save-query": ""
     }
   },
   "annotations": {
@@ -359,11 +372,15 @@
     }
   },
   "common": {
+    "apply": "",
     "cancel": "",
+    "clear": "",
+    "close": "",
     "locale": {
       "default": "默认"
     },
-    "save": "保存"
+    "save": "保存",
+    "search": ""
   },
   "configuration-tracker": {
     "config-card": {
@@ -1884,9 +1901,11 @@
     },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "",
         "dependencies": "",
         "downloads": "",
         "from": "",
+        "links": "",
         "reportAbuse": "",
         "signature": "",
         "status": "",

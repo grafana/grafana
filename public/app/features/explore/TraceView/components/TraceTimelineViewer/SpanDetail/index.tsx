@@ -17,7 +17,15 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
+import {
+  DataFrame,
+  dateTimeFormat,
+  GrafanaTheme2,
+  IconName,
+  LinkModel,
+  TraceKeyValuePair,
+  TraceLog,
+} from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -30,7 +38,7 @@ import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
-import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';

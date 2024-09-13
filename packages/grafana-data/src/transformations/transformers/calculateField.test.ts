@@ -7,6 +7,7 @@ import { BinaryOperationID } from '../../utils/binaryOperators';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { UnaryOperationID } from '../../utils/unaryOperators';
 import { ReducerID } from '../fieldReducer';
+import { FieldMatcherID } from '../matchers/ids';
 import { transformDataFrame } from '../transformDataFrame';
 
 import {
@@ -191,6 +192,72 @@ describe('calculateField transformer w/ timeseries', () => {
         },
         {
           'B + 2': 202,
+          TheTime: 2000,
+        },
+      ]);
+    });
+  });
+
+  it('all numbers + static number', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: { matcher: { id: FieldMatcherID.byType, options: FieldType.number } },
+          operator: BinaryOperationID.Add,
+          right: '2',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      const rows = new DataFrameView(filtered).toArray();
+      expect(rows).toEqual([
+        {
+          'B + 2': 4,
+          'C + 2': 5,
+          TheTime: 1000,
+        },
+        {
+          'B + 2': 202,
+          'C + 2': 302,
+          TheTime: 2000,
+        },
+      ]);
+    });
+  });
+
+  it('all numbers + field number', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.BinaryOperation,
+        binary: {
+          left: { matcher: { id: FieldMatcherID.byType, options: FieldType.number } },
+          operator: BinaryOperationID.Add,
+          right: 'C',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      const rows = new DataFrameView(filtered).toArray();
+      expect(rows).toEqual([
+        {
+          'B + C': 5,
+          'C + C': 6,
+          TheTime: 1000,
+        },
+        {
+          'B + C': 500,
+          'C + C': 600,
           TheTime: 2000,
         },
       ]);
