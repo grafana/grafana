@@ -772,7 +772,7 @@ const (
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
 
 	// FlagHomeSetupGuide
-	// Used in Home for users who want to return to the onboarding flow
+	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
 	FlagHomeSetupGuide = "homeSetupGuide"
 
 	// FlagAppPlatformAccessTokens
