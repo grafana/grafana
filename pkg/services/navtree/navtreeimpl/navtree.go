@@ -416,6 +416,12 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			Text: "Contact points", SubTitle: "Choose how to notify your  contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
 		})
+	}
+
+	if hasAccess(ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+	)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 
