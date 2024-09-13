@@ -13,7 +13,7 @@ import {
   locationService,
   setAppEvents,
   setDataSourceSrv,
-  usePluginLinkExtensions,
+  usePluginLinks,
 } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -52,7 +52,7 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn(),
-  usePluginLinkExtensions: jest.fn(),
+  usePluginLinks: jest.fn(),
   useReturnToPrevious: jest.fn(),
 }));
 jest.mock('./api/buildInfo');
@@ -72,7 +72,7 @@ setupPluginsExtensionsHook();
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
   getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
-  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
+  usePluginLinksMock: jest.mocked(usePluginLinks),
   rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
@@ -168,8 +168,8 @@ describe('RuleList', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
-    mocks.usePluginLinkExtensionsMock.mockReturnValue({
-      extensions: [
+    mocks.usePluginLinksMock.mockReturnValue({
+      links: [
         {
           pluginId: 'grafana-ml-app',
           id: '1',
