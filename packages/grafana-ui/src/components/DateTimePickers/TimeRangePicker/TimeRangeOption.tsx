@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2, TimeOption } from '@grafana/data';
@@ -60,6 +60,8 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
         checked={selected}
         name={name}
         type="checkbox"
+        data-role="item"
+        tabIndex={-1}
         id={id}
         onChange={() => onSelect(value)}
       />

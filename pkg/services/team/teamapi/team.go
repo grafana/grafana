@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
@@ -49,20 +49,12 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 	// if the request is authenticated using API tokens
 	// the SignedInUser is an empty struct therefore
 	// an additional check whether it is an actual user is required
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
-	switch namespace {
-	case identity.NamespaceUser:
-		userID, err := strconv.ParseInt(identifier, 10, 64)
-		if err != nil {
-			c.Logger.Error("Could not add creator to team because user id is not a number", "error", err)
-			break
-		}
+	if c.SignedInUser.IsIdentityType(claims.TypeUser) {
+		userID, _ := c.SignedInUser.GetInternalID()
 		if err := addOrUpdateTeamMember(c.Req.Context(), tapi.teamPermissionsService, userID, c.SignedInUser.GetOrgID(),
 			t.ID, dashboardaccess.PERMISSION_ADMIN.String()); err != nil {
 			c.Logger.Error("Could not add creator to team", "error", err)
 		}
-	default:
-		c.Logger.Warn("Could not add creator to team because is not a real user")
 	}
 
 	return response.JSON(http.StatusOK, &util.DynMap{

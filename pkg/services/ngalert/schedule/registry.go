@@ -15,10 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-var errRuleDeleted = errors.New("rule deleted")
+var (
+	errRuleDeleted   = errors.New("rule deleted")
+	errRuleRestarted = errors.New("rule restarted")
+)
 
 type ruleFactory interface {
-	new(context.Context) Rule
+	new(context.Context, *models.AlertRule) Rule
 }
 
 type ruleRegistry struct {
@@ -30,15 +33,16 @@ func newRuleRegistry() ruleRegistry {
 	return ruleRegistry{rules: make(map[models.AlertRuleKey]Rule)}
 }
 
-// getOrCreate gets rule routine from registry by the key. If it does not exist, it creates a new one.
+// getOrCreate gets a rule routine from registry for the provided rule. If it does not exist, it creates a new one.
 // Returns a pointer to the rule routine and a flag that indicates whether it is a new struct or not.
-func (r *ruleRegistry) getOrCreate(context context.Context, key models.AlertRuleKey, factory ruleFactory) (Rule, bool) {
+func (r *ruleRegistry) getOrCreate(context context.Context, item *models.AlertRule, factory ruleFactory) (Rule, bool) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	key := item.GetKey()
 	rule, ok := r.rules[key]
 	if !ok {
-		rule = factory.new(context)
+		rule = factory.new(context, item)
 		r.rules[key] = rule
 	}
 	return rule, !ok
@@ -84,6 +88,10 @@ type Evaluation struct {
 	scheduledAt time.Time
 	rule        *models.AlertRule
 	folderTitle string
+}
+
+func (e *Evaluation) Fingerprint() fingerprint {
+	return ruleWithFolder{e.rule, e.folderTitle}.Fingerprint()
 }
 
 type alertRulesRegistry struct {

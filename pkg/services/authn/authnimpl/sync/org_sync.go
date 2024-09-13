@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -14,8 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service, cfg *setting.Cfg) *OrgSync {
-	return &OrgSync{userService, orgService, accessControl, cfg, log.New("org.sync")}
+func ProvideOrgSync(userService user.Service, orgService org.Service, accessControl accesscontrol.Service, cfg *setting.Cfg, tracer tracing.Tracer) *OrgSync {
+	return &OrgSync{userService, orgService, accessControl, cfg, log.New("org.sync"), tracer}
 }
 
 type OrgSync struct {
@@ -23,25 +25,28 @@ type OrgSync struct {
 	orgService    org.Service
 	accessControl accesscontrol.Service
 	cfg           *setting.Cfg
-
-	log log.Logger
+	log           log.Logger
+	tracer        tracing.Tracer
 }
 
 func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "org.sync.SyncOrgRolesHook")
+	defer span.End()
+
 	if !id.ClientParams.SyncOrgRoles {
 		return nil
 	}
 
 	ctxLogger := s.log.FromContext(ctx).New("id", id.ID, "login", id.Login)
 
-	if !id.ID.IsNamespace(authn.NamespaceUser) {
-		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "namespace", id.ID.Namespace())
+	if !id.IsIdentityType(claims.TypeUser) {
+		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "type", id.GetIdentityType())
 		return nil
 	}
 
-	userID, err := id.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
-		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "namespace", id.ID.Namespace(), "err", err)
+		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "type", id.GetIdentityType(), "err", err)
 		return nil
 	}
 
@@ -131,20 +136,23 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 }
 
 func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.Identity, r *authn.Request, err error) {
+	ctx, span := s.tracer.Start(ctx, "org.sync.SetDefaultOrgHook")
+	defer span.End()
+
 	if s.cfg.LoginDefaultOrgId < 1 || currentIdentity == nil || err != nil {
 		return
 	}
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	if !currentIdentity.ID.IsNamespace(authn.NamespaceUser) {
-		ctxLogger.Debug("Skipping default org sync, not a user", "namespace", currentIdentity.ID.Namespace())
+	if !currentIdentity.IsIdentityType(claims.TypeUser) {
+		ctxLogger.Debug("Skipping default org sync, not a user", "type", currentIdentity.GetIdentityType())
 		return
 	}
 
-	userID, err := currentIdentity.ID.ParseInt()
+	userID, err := currentIdentity.GetInternalID()
 	if err != nil {
-		ctxLogger.Debug("Skipping default org sync, invalid ID for identity", "id", currentIdentity.ID, "namespace", currentIdentity.ID.Namespace(), "err", err)
+		ctxLogger.Debug("Skipping default org sync, invalid ID for identity", "id", currentIdentity.ID, "type", currentIdentity.GetIdentityType(), "err", err)
 		return
 	}
 
@@ -166,6 +174,9 @@ func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.
 }
 
 func (s *OrgSync) validateUsingOrg(ctx context.Context, userID int64, orgID int64) (bool, error) {
+	ctx, span := s.tracer.Start(ctx, "org.sync.validateUsingOrg")
+	defer span.End()
+
 	query := org.GetUserOrgListQuery{UserID: userID}
 
 	result, err := s.orgService.GetUserOrgList(ctx, &query)

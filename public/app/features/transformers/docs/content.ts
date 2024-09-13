@@ -64,11 +64,10 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Field name** - Select the names of fields you want to use in the calculation for the new field.
 - **Calculation** - If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
 - **Operation** - If you select **Binary operation** or **Unary operation** mode, then the **Operation** fields appear. These fields allow you to apply basic math operations on values in a single row from selected fields. You can also use numerical values for binary operations.
+  - **All number fields** - Set the left side of a **Binary operation** to apply the calculation to all number fields.
 - **As percentile** - If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias** - (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields** - (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
-
-> **Note:** **Cumulative functions** and **Window functions** modes are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`addFieldFromCalculationStatFunctions\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 
 In the example below, we added two fields together and named them Sum.
 
@@ -196,6 +195,9 @@ This transformation has the following options:
   - **Numeric** - attempts to make the values numbers
   - **String** - will make the values strings
   - **Time** - attempts to parse the values as time
+    - The input will be parsed according to the [Moment.js parsing format](https://momentjs.com/docs/#/parsing/)
+    - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
+      You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
@@ -504,9 +506,7 @@ Use this transformation to customize the output of a string field. This transfor
 - **Trim** - Removes all leading and trailing spaces from the string.
 - **Substring** - Returns a substring of the string, using the specified start and end positions.
 
-This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.
-
-> **Note:** This transformation is currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available. Enable the \`formatString\` feature toggle in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.`;
+This transformation provides a convenient way to standardize and tailor the presentation of string data for better visualization and analysis.`;
     },
   },
   formatTime: {
@@ -634,7 +634,7 @@ Use this transformation to construct a matrix by specifying fields from your que
     },
   },
   groupToNestedTable: {
-    name: 'Group to nested table',
+    name: 'Group to nested tables',
     getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
       return `
   Use this transformation to group the data by a specified field (column) value and process calculations on each group. Records are generated that share the same grouped field value, to be displayed in a nested table.
@@ -1520,6 +1520,35 @@ ${buildImageContent(
         url: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/',
       },
     ],
+  },
+  transpose: {
+    name: 'Transpose',
+    getHelperDocs: function (imageRenderType: ImageRenderType = ImageRenderType.ShortcodeFigure) {
+      return `
+Use this transformation to pivot the data frame, converting rows into columns and columns into rows. This transformation is particularly useful when you want to switch the orientation of your data to better suit your visualization needs.
+If you have multiple types it will default to string type.
+
+**Before Transformation:**
+
+| env  | January   | February |
+| ---- | --------- | -------- |
+| prod | 1 | 2 |
+| dev | 3 | 4 |
+
+**After applying transpose transformation:**
+
+| Field  | prod   | dev |
+| ---- | --------- | -------- |
+| January | 1 | 3 |
+| February  | 2 | 4 |
+
+${buildImageContent(
+  '/media/docs/grafana/transformations/screenshot-grafana-11-2-transpose-transformation.png',
+  imageRenderType,
+  'Before and after transpose transformation'
+)}
+  `;
+    },
   },
   regression: {
     name: 'Regression analysis',

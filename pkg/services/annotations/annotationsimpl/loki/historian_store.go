@@ -8,14 +8,16 @@ import (
 	"sort"
 	"time"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
-	"golang.org/x/exp/constraints"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -24,9 +26,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -37,22 +39,26 @@ const (
 var (
 	ErrLokiStoreInternal = errutil.Internal("annotations.loki.internal")
 	ErrLokiStoreNotFound = errutil.NotFound("annotations.loki.notFound")
-
-	errMissingRule = errors.New("rule not found")
 )
+
+type RuleStore interface {
+	GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (result *ngmodels.AlertRule, err error)
+}
 
 type lokiQueryClient interface {
 	RangeQuery(ctx context.Context, query string, start, end, limit int64) (historian.QueryRes, error)
+	MaxQuerySize() int
 }
 
 // LokiHistorianStore is a read store that queries Loki for alert state history.
 type LokiHistorianStore struct {
-	client lokiQueryClient
-	db     db.DB
-	log    log.Logger
+	client    lokiQueryClient
+	db        db.DB
+	log       log.Logger
+	ruleStore RuleStore
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, log log.Logger) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer) *LokiHistorianStore {
 	if !useStore(cfg, ft) {
 		return nil
 	}
@@ -63,9 +69,10 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 	}
 
 	return &LokiHistorianStore{
-		client: historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log),
-		db:     db,
-		log:    log,
+		client:    historian.NewLokiClient(lokiCfg, historian.NewRequester(), ngmetrics.NewHistorianMetrics(prometheus.DefaultRegisterer, subsystem), log, tracer),
+		db:        db,
+		log:       log,
+		ruleStore: ruleStore,
 	}
 }
 
@@ -87,18 +94,26 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	rule := &ngmodels.AlertRule{}
 	if query.AlertID != 0 {
 		var err error
-		rule, err = getRule(ctx, r.db, query.OrgID, query.AlertID)
+		rule, err = r.ruleStore.GetRuleByID(ctx, ngmodels.GetAlertRuleByIDQuery{OrgID: query.OrgID, ID: query.AlertID})
 		if err != nil {
-			if errors.Is(err, errMissingRule) {
+			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 				return make([]*annotations.ItemDTO, 0), ErrLokiStoreNotFound.Errorf("rule with ID %d does not exist", query.AlertID)
 			}
 			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query rule: %w", err)
 		}
 	}
 
-	logQL, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID))
+	// No folders in the filter because it filter by Dashboard UID, and the request is already authorized.
+	logQL, err := historian.BuildLogQuery(buildHistoryQuery(query, accessResources.Dashboards, rule.UID), nil, r.client.MaxQuerySize())
 	if err != nil {
+		grafanaErr := errutil.Error{}
+		if errors.As(err, &grafanaErr) {
+			return make([]*annotations.ItemDTO, 0), err
+		}
 		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to build loki query: %w", err)
+	}
+	if len(logQL) > 1 {
+		r.log.FromContext(ctx).Info("Execute query in multiple batches", "batches", logQL, "maxQueryLimit", r.client.MaxQuerySize())
 	}
 
 	now := time.Now().UTC()
@@ -112,18 +127,17 @@ func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQue
 	// query.From and query.To are always in milliseconds, convert them to nanoseconds for loki
 	from := query.From * 1e6
 	to := query.To * 1e6
-
-	res, err := r.client.RangeQuery(ctx, logQL, from, to, query.Limit)
-	if err != nil {
-		return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query loki: %w", err)
-	}
-
 	items := make([]*annotations.ItemDTO, 0)
-	for _, stream := range res.Data.Result {
-		items = append(items, r.annotationsFromStream(stream, *accessResources)...)
+	for _, q := range logQL {
+		res, err := r.client.RangeQuery(ctx, q, from, to, query.Limit)
+		if err != nil {
+			return make([]*annotations.ItemDTO, 0), ErrLokiStoreInternal.Errorf("failed to query loki: %w", err)
+		}
+		for _, stream := range res.Data.Result {
+			items = append(items, r.annotationsFromStream(stream, *accessResources)...)
+		}
 	}
 	sort.Sort(annotations.SortedItems(items))
-
 	return items, err
 }
 
@@ -183,22 +197,6 @@ func (r *LokiHistorianStore) GetTags(ctx context.Context, query *annotations.Tag
 }
 
 // util
-
-func getRule(ctx context.Context, sql db.DB, orgID int64, ruleID int64) (*ngmodels.AlertRule, error) {
-	rule := &ngmodels.AlertRule{OrgID: orgID, ID: ruleID}
-	err := sql.WithDbSession(ctx, func(sess *db.Session) error {
-		exists, err := sess.Get(rule)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return errMissingRule
-		}
-		return nil
-	})
-
-	return rule, err
-}
 
 func hasAccess(entry historian.LokiEntry, resources accesscontrol.AccessResources) bool {
 	orgFilter := resources.CanAccessOrgAnnotations && entry.DashboardUID == ""

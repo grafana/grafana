@@ -1,4 +1,4 @@
-import React, { Ref } from 'react';
+import { Ref } from 'react';
 
 export default function ReactInlineSVG({
   src,

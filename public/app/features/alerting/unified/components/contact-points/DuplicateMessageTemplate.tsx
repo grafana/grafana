@@ -1,4 +1,3 @@
-import React from 'react';
 import { RouteChildrenProps } from 'react-router-dom';
 
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -31,7 +30,13 @@ const NewMessageTemplate = ({ match }: Props) => {
     return null;
   }
 
-  return <DuplicateTemplateView alertManagerSourceName={selectedAlertmanager!} config={data} templateName={name} />;
+  return (
+    <DuplicateTemplateView
+      alertManagerSourceName={selectedAlertmanager!}
+      config={data}
+      templateName={decodeURIComponent(name)}
+    />
+  );
 };
 
 export default NewMessageTemplate;

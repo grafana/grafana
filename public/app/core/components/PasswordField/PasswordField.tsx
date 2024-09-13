@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { forwardRef, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Input, IconButton } from '@grafana/ui';
@@ -6,7 +6,7 @@ import { Props as InputProps } from '@grafana/ui/src/components/Input/Input';
 
 interface Props extends Omit<InputProps, 'type'> {}
 
-export const PasswordField = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+export const PasswordField = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (

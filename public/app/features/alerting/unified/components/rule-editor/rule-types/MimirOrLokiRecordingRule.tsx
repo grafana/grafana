@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { RuleFormType } from '../../../types/rule-form';
 
 import { DisabledTooltip } from './DisabledTooltip';

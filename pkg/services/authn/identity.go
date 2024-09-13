@@ -5,10 +5,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/claims"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -16,16 +18,15 @@ import (
 
 const GlobalOrgID = int64(0)
 
-type Requester = identity.Requester
-
-var _ Requester = (*Identity)(nil)
+var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
 	// ID is the unique identifier for the entity in the Grafana database.
-	// It is in the format <namespace>:<id> where namespace is one of the
-	// Namespace* constants. For example, "user:1" or "api-key:1".
-	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
-	ID NamespaceID
+	ID string
+	// UID is a unique identifier stored for the entity in Grafana database. Not all entities support uid so it can be empty.
+	UID string
+	// Type is the IdentityType of entity.
+	Type claims.IdentityType
 	// OrgID is the active organization for the entity.
 	OrgID int64
 	// OrgName is the name of the active organization.
@@ -48,6 +49,8 @@ type Identity struct {
 	// AuthId is the unique identifier for the entity in the external system.
 	// Empty if the identity is provided by Grafana.
 	AuthID string
+	// AllowedKubernetesNamespace
+	AllowedKubernetesNamespace string
 	// IsDisabled is true if the entity is disabled.
 	IsDisabled bool
 	// HelpFlags1 is the help flags for the entity.
@@ -69,27 +72,76 @@ type Identity struct {
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
-	IDToken string
-	// UserUID is the unique identifier for the entity in the Grafana database.
-	UserUID string
+	IDToken       string
+	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
+
+	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
 }
 
-func (i *Identity) GetID() NamespaceID {
-	return i.ID
+// Access implements claims.AuthInfo.
+func (i *Identity) GetAccess() claims.AccessClaims {
+	if i.AccessTokenClaims != nil {
+		return authn.NewAccessClaims(*i.AccessTokenClaims)
+	}
+	return &identity.IDClaimsWrapper{Source: i}
 }
 
-func (i *Identity) GetNamespacedID() (namespace identity.Namespace, identifier string) {
-	return i.ID.Namespace(), i.ID.ID()
+// Identity implements claims.AuthInfo.
+func (i *Identity) GetIdentity() claims.IdentityClaims {
+	if i.IDTokenClaims != nil {
+		return authn.NewIdentityClaims(*i.IDTokenClaims)
+	}
+	return &identity.IDClaimsWrapper{Source: i}
 }
 
-func (i *Identity) GetUID() NamespaceID {
-	ns, uid := i.GetNamespacedUID()
-	return identity.NewNamespaceIDString(ns, uid)
+// GetRawIdentifier implements Requester.
+func (i *Identity) GetRawIdentifier() string {
+	return i.UID
 }
 
-func (i *Identity) GetNamespacedUID() (namespace identity.Namespace, identifier string) {
-	return i.ID.Namespace(), i.UserUID
+// GetInternalID implements Requester.
+func (i *Identity) GetInternalID() (int64, error) {
+	return identity.IntIdentifier(i.GetID())
+}
+
+// GetIdentityType implements Requester.
+func (i *Identity) GetIdentityType() claims.IdentityType {
+	return i.Type
+}
+
+// GetIdentityType implements Requester.
+func (i *Identity) IsIdentityType(expected ...claims.IdentityType) bool {
+	return claims.IsIdentityType(i.GetIdentityType(), expected...)
+}
+
+// GetExtra implements identity.Requester.
+func (i *Identity) GetExtra() map[string][]string {
+	extra := map[string][]string{}
+	if i.IDToken != "" {
+		extra["id-token"] = []string{i.IDToken}
+	}
+	if i.GetOrgRole().IsValid() {
+		extra["user-instance-role"] = []string{string(i.GetOrgRole())}
+	}
+	return extra
+}
+
+// GetGroups implements identity.Requester.
+func (i *Identity) GetGroups() []string {
+	return []string{} // teams?
+}
+
+// GetName implements identity.Requester.
+func (i *Identity) GetName() string {
+	return i.Name
+}
+
+func (i *Identity) GetID() string {
+	return identity.NewTypedIDString(i.Type, i.ID)
+}
+
+func (i *Identity) GetUID() string {
+	return identity.NewTypedIDString(i.Type, i.UID)
 }
 
 func (i *Identity) GetAuthID() string {
@@ -101,14 +153,14 @@ func (i *Identity) GetAuthenticatedBy() string {
 }
 
 func (i *Identity) GetCacheKey() string {
-	namespace, id := i.GetNamespacedID()
+	id := i.ID
 	if !i.HasUniqueId() {
 		// Hack use the org role as id for identities that do not have a unique id
 		// e.g. anonymous and render key.
 		id = string(i.GetOrgRole())
 	}
 
-	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), namespace, id)
+	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), i.Type, id)
 }
 
 func (i *Identity) GetDisplayName() string {
@@ -133,6 +185,10 @@ func (i *Identity) GetIsGrafanaAdmin() bool {
 
 func (i *Identity) GetLogin() string {
 	return i.Login
+}
+
+func (i *Identity) GetAllowedKubernetesNamespace() string {
+	return i.AllowedKubernetesNamespace
 }
 
 func (i *Identity) GetOrgID() int64 {
@@ -193,8 +249,7 @@ func (i *Identity) HasRole(role org.RoleType) bool {
 }
 
 func (i *Identity) HasUniqueId() bool {
-	namespace, _ := i.GetNamespacedID()
-	return namespace == NamespaceUser || namespace == NamespaceServiceAccount || namespace == NamespaceAPIKey
+	return i.IsIdentityType(claims.TypeUser, claims.TypeAPIKey, claims.TypeServiceAccount)
 }
 
 func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
@@ -212,8 +267,6 @@ func (i *Identity) IsNil() bool {
 
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
-	namespace, id := i.GetNamespacedID()
-
 	u := &user.SignedInUser{
 		OrgID:           i.OrgID,
 		OrgName:         i.OrgName,
@@ -224,43 +277,36 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
-		IsAnonymous:     namespace == NamespaceAnonymous,
+		IsAnonymous:     i.IsIdentityType(claims.TypeAnonymous),
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
 		LastSeenAt:      i.LastSeenAt,
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
-		NamespacedID:    i.ID,
+		FallbackType:    i.Type,
 	}
 
-	if namespace == NamespaceAPIKey {
-		u.ApiKeyID = intIdentifier(id)
+	if i.IsIdentityType(claims.TypeAPIKey) {
+		id, _ := i.GetInternalID()
+		u.ApiKeyID = id
 	} else {
-		u.UserID = intIdentifier(id)
-		u.IsServiceAccount = namespace == NamespaceServiceAccount
+		id, _ := i.GetInternalID()
+		u.UserID = id
+		u.UserUID = i.UID
+		u.IsServiceAccount = i.IsIdentityType(claims.TypeServiceAccount)
 	}
 
 	return u
 }
 
-func intIdentifier(identifier string) int64 {
-	id, err := strconv.ParseInt(identifier, 10, 64)
-	if err != nil {
-		// FIXME (kalleep): Improve error handling
-		return -1
-	}
-
-	return id
-}
-
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
-	_, id := i.GetNamespacedID()
+	id, _ := strconv.ParseInt(i.ID, 10, 64)
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
-		UserId:         intIdentifier(id),
+		UserId:         id,
 		Email:          i.Email,
 		Login:          i.Login,
 		Name:           i.Name,

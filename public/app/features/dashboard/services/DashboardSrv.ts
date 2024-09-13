@@ -1,12 +1,10 @@
-import { lastValueFrom } from 'rxjs';
-
 import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { saveDashboard } from 'app/features/manage-dashboards/state/actions';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardMeta } from 'app/types';
 
 import { RemovePanelEvent } from '../../../types/events';
@@ -26,15 +24,6 @@ export interface SaveDashboardOptions {
   /** Set the dashboard refresh interval.
    *  If this is lower than the minimum refresh interval, Grafana will ignore it and will enforce the minimum refresh interval. */
   refresh?: string;
-}
-
-interface SaveDashboardResponse {
-  id: number;
-  slug: string;
-  status: string;
-  uid: string;
-  url: string;
-  version: number;
 }
 
 export class DashboardSrv {
@@ -65,7 +54,7 @@ export class DashboardSrv {
 
   saveJSONDashboard(json: string) {
     const parsedJson = JSON.parse(json);
-    return saveDashboard({
+    return getDashboardAPI().saveDashboard({
       dashboard: parsedJson,
       folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
     });
@@ -75,17 +64,12 @@ export class DashboardSrv {
     data: SaveDashboardOptions,
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
-    return lastValueFrom(
-      getBackendSrv().fetch<SaveDashboardResponse>({
-        url: '/api/dashboards/db/',
-        method: 'POST',
-        data: {
-          ...data,
-          dashboard: data.dashboard.getSaveModelClone(),
-        },
-        ...requestOptions,
-      })
-    );
+    return getDashboardAPI().saveDashboard({
+      message: data.message,
+      folderUid: data.folderUid,
+      dashboard: data.dashboard.getSaveModelClone(),
+      showErrorAlert: requestOptions?.showErrorAlert,
+    });
   }
 
   starDashboard(dashboardUid: string, isStarred: boolean) {

@@ -1,8 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { default as React, useState } from 'react';
+import { useState } from 'react';
 import { Props } from 'react-virtualized-auto-sizer';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { PayloadEditor, RESET_TO_DEFAULT } from './PayloadEditor';
 
@@ -47,13 +45,10 @@ const PayloadEditorWithState = () => {
     />
   );
 };
-const renderWithProvider = () => {
-  render(<PayloadEditorWithState />, { wrapper: TestProvider });
-};
 
 describe('Payload editor', () => {
   it('Should render default payload by default', async () => {
-    renderWithProvider();
+    render(<PayloadEditorWithState />);
     await waitFor(() => {
       expect(screen.getByTestId('mockeditor')).toHaveValue(
         `[  {    "annotations": {      "summary": "Instance instance1 has been down for more than 5 minutes"    },    "labels": {      "instance": "instance1"    },    "startsAt": "2023-04-25T15:28:56.440Z"  }]`
@@ -62,20 +57,20 @@ describe('Payload editor', () => {
   });
 
   it('Should render default payload after clicking reset to default button', async () => {
-    renderWithProvider();
+    const { user } = render(<PayloadEditorWithState />);
     await waitFor(() => {
       expect(screen.getByTestId('mockeditor')).toHaveValue(
         '[  {    "annotations": {      "summary": "Instance instance1 has been down for more than 5 minutes"    },    "labels": {      "instance": "instance1"    },    "startsAt": "2023-04-25T15:28:56.440Z"  }]'
       );
     });
-    await userEvent.type(screen.getByTestId('mockeditor'), 'this is the something');
+    await user.type(screen.getByTestId('mockeditor'), 'this is the something');
     expect(screen.getByTestId('mockeditor')).toHaveValue(
       '[  {    "annotations": {      "summary": "Instance instance1 has been down for more than 5 minutes"    },    "labels": {      "instance": "instance1"    },    "startsAt": "2023-04-25T15:28:56.440Z"  }]this is the something'
     );
 
     // click edit payload > reset to defaults
-    await userEvent.click(screen.getByRole('button', { name: 'Edit payload' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: RESET_TO_DEFAULT }));
+    await user.click(screen.getByRole('button', { name: 'Edit payload' }));
+    await user.click(screen.getByRole('menuitem', { name: RESET_TO_DEFAULT }));
     await waitFor(() =>
       expect(screen.queryByTestId('mockeditor')).toHaveValue(
         '[  {    "annotations": {      "summary": "Instance instance1 has been down for more than 5 minutes"    },    "labels": {      "instance": "instance1"    },    "startsAt": "2023-04-25T15:28:56.440Z"  }]'

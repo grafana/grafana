@@ -1,45 +1,36 @@
-import React, { Fragment, useMemo, useState } from 'react';
+import { Fragment, useState } from 'react';
 
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
-import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction } from '../../hooks/useAbilities';
-import { deleteTemplateAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
+import { PROVENANCE_NONE } from '../../utils/k8s/constants';
 import { makeAMLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
 import { ProvisioningBadge } from '../Provisioning';
+import { NotificationTemplate, useDeleteNotificationTemplate } from '../contact-points/useNotificationTemplates';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { TemplateEditor } from './TemplateEditor';
 
 interface Props {
-  config: AlertManagerCortexConfig;
   alertManagerName: string;
+  templates: NotificationTemplate[];
 }
 
-export const TemplatesTable = ({ config, alertManagerName }: Props) => {
-  const dispatch = useDispatch();
+export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
+  const deleteTemplate = useDeleteNotificationTemplate({ alertmanager: alertManagerName });
+
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
 
-  const templateRows = useMemo(() => {
-    const templates = Object.entries(config.template_files);
-
-    return templates.map(([name, template]) => ({
-      name,
-      template,
-      provenance: (config.template_file_provenances ?? {})[name],
-    }));
-  }, [config]);
   const [templateToDelete, setTemplateToDelete] = useState<string>();
 
-  const deleteTemplate = () => {
+  const onDeleteTemplate = async () => {
     if (templateToDelete) {
-      dispatch(deleteTemplateAction(templateToDelete, alertManagerName));
+      await deleteTemplate({ name: templateToDelete });
     }
     setTemplateToDelete(undefined);
   };
@@ -68,13 +59,14 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
           </tr>
         </thead>
         <tbody>
-          {!templateRows.length && (
+          {!templates.length && (
             <tr className={tableStyles.evenRow}>
               <td colSpan={3}>No templates defined.</td>
             </tr>
           )}
-          {templateRows.map(({ name, template, provenance }, idx) => {
-            const isExpanded = !!expandedTemplates[name];
+          {templates.map(({ name, template, provenance }, idx) => {
+            const isProvisioned = provenance !== PROVENANCE_NONE;
+            const isExpanded = expandedTemplates[name];
             return (
               <Fragment key={name}>
                 <tr key={name} className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
@@ -85,10 +77,10 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
                     />
                   </td>
                   <td>
-                    {name} {provenance && <ProvisioningBadge />}
+                    {name} {isProvisioned && <ProvisioningBadge />}
                   </td>
                   <td className={tableStyles.actionsCell}>
-                    {provenance && (
+                    {isProvisioned && (
                       <ActionIcon
                         to={makeAMLink(
                           `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
@@ -98,7 +90,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
                         icon="file-alt"
                       />
                     )}
-                    {!provenance && (
+                    {!isProvisioned && (
                       <Authorize actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
                         <ActionIcon
                           to={makeAMLink(
@@ -120,7 +112,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
                         icon="copy"
                       />
                     </Authorize>
-                    {!provenance && (
+                    {!isProvisioned && (
                       <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
                         <ActionIcon
                           onClick={() => setTemplateToDelete(name)}
@@ -163,7 +155,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
           title="Delete template"
           body={`Are you sure you want to delete template "${templateToDelete}"?`}
           confirmText="Yes, delete"
-          onConfirm={deleteTemplate}
+          onConfirm={onDeleteTemplate}
           onDismiss={() => setTemplateToDelete(undefined)}
         />
       )}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { VizPanel, SceneObject, SceneGridRow, getUrlSyncManager } from '@grafana/scenes';
+import { VizPanel, SceneObject, SceneGridRow, UrlSyncManager } from '@grafana/scenes';
 
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -13,11 +13,18 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
   const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
-    getUrlSyncManager().initSync(dashboard);
+    const urlSyncManager = new UrlSyncManager();
+    urlSyncManager.initSync(dashboard);
 
     const cleanUp = dashboard.activate();
 
-    const panel = findVizPanelByKey(dashboard, panelId);
+    let panel: VizPanel | null = null;
+    try {
+      panel = findVizPanelByKey(dashboard, panelId);
+    } catch (e) {
+      // do nothing, just the panel is not found or not a VizPanel
+    }
+
     if (panel) {
       activateParents(panel);
       setPanel(panel);
@@ -29,6 +36,8 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
           setError('Panel not found');
         }
       });
+    } else {
+      setError('Panel not found');
     }
 
     return cleanUp;

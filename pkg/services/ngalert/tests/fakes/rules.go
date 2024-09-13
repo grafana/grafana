@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"slices"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -140,7 +141,7 @@ func (f *RuleStore) GetAlertRuleByUID(_ context.Context, q *models.GetAlertRuleB
 			return rule, nil
 		}
 	}
-	return nil, nil
+	return nil, models.ErrAlertRuleNotFound
 }
 
 func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error) {
@@ -198,33 +199,21 @@ func (f *RuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQu
 		return true
 	}
 
-	hasNamespace := func(r *models.AlertRule, namespaceUIDs []string) bool {
-		if len(namespaceUIDs) > 0 {
-			var ok bool
-			for _, uid := range q.NamespaceUIDs {
-				if uid == r.NamespaceUID {
-					ok = true
-					break
-				}
-			}
-			if !ok {
-				return false
-			}
-		}
-		return true
-	}
-
 	ruleList := models.RulesGroup{}
 	for _, r := range f.Rules[q.OrgID] {
 		if !hasDashboard(r, q.DashboardUID, q.PanelID) {
 			continue
 		}
-		if !hasNamespace(r, q.NamespaceUIDs) {
+		if len(q.NamespaceUIDs) > 0 && !slices.Contains(q.NamespaceUIDs, r.NamespaceUID) {
 			continue
 		}
-		if q.RuleGroup != "" && r.RuleGroup != q.RuleGroup {
+		if len(q.RuleGroups) > 0 && !slices.Contains(q.RuleGroups, r.RuleGroup) {
 			continue
 		}
+		if len(q.RuleUIDs) > 0 && !slices.Contains(q.RuleUIDs, r.UID) {
+			continue
+		}
+
 		ruleList = append(ruleList, r)
 	}
 
@@ -326,19 +315,24 @@ func (f *RuleStore) UpdateRuleGroup(ctx context.Context, orgID int64, namespaceU
 	return nil
 }
 
-func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, orgID int64, namespaceUID string) ([]models.AlertRuleKeyWithVersion, error) {
+func (f *RuleStore) IncreaseVersionForAllRulesInNamespaces(_ context.Context, orgID int64, namespaceUIDs []string) ([]models.AlertRuleKeyWithVersion, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
 	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
-		Name:   "IncreaseVersionForAllRulesInNamespace",
-		Params: []any{orgID, namespaceUID},
+		Name:   "IncreaseVersionForAllRulesInNamespaces",
+		Params: []any{orgID, namespaceUIDs},
 	})
 
 	var result []models.AlertRuleKeyWithVersion
 
+	namespaceUIDsMap := make(map[string]struct{}, len(namespaceUIDs))
+	for _, namespaceUID := range namespaceUIDs {
+		namespaceUIDsMap[namespaceUID] = struct{}{}
+	}
+
 	for _, rule := range f.Rules[orgID] {
-		if rule.NamespaceUID == namespaceUID && rule.OrgID == orgID {
+		if _, ok := namespaceUIDsMap[rule.NamespaceUID]; ok && rule.OrgID == orgID {
 			rule.Version++
 			rule.Updated = time.Now()
 			result = append(result, models.AlertRuleKeyWithVersion{

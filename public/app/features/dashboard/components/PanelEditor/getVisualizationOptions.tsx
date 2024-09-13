@@ -1,5 +1,4 @@
 import { get as lodashGet } from 'lodash';
-import React from 'react';
 
 import {
   EventBus,
@@ -18,7 +17,7 @@ import {
 import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
-import { LibraryVizPanel } from 'app/features/dashboard-scene/scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -136,7 +135,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
         description: fieldOption.description,
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
-          const onChange = (v: any) => {
+          const onChange = (v: unknown) => {
             onFieldConfigsChange(
               updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom)
             );
@@ -151,7 +150,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
   return Object.values(categoryIndex);
 }
 
-export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryVizPanel): OptionsPaneCategoryDescriptor {
+export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBehavior): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Library panel options',
     id: 'Library panel options',

@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	grafanaAlertmanagerConfigPath = "/api/v1/grafana/config"
+	grafanaAlertmanagerConfigPath    = "/api/v1/grafana/config"
+	grafanaAlertmanagerReceiversPath = "/api/v1/grafana/receivers"
 )
 
 type UserGrafanaConfig struct {
@@ -19,6 +20,13 @@ type UserGrafanaConfig struct {
 	Hash                      string                        `json:"configuration_hash"`
 	CreatedAt                 int64                         `json:"created"`
 	Default                   bool                          `json:"default"`
+	Promoted                  bool                          `json:"promoted"`
+	ExternalURL               string                        `json:"external_url"`
+	StaticHeaders             map[string]string             `json:"static_headers"`
+}
+
+func (mc *Mimir) ShouldPromoteConfig() bool {
+	return mc.promoteConfig
 }
 
 func (mc *Mimir) GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error) {
@@ -46,6 +54,9 @@ func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimo
 		Hash:                      hash,
 		CreatedAt:                 createdAt,
 		Default:                   isDefault,
+		Promoted:                  mc.promoteConfig,
+		ExternalURL:               mc.externalURL,
+		StaticHeaders:             mc.staticHeaders,
 	})
 	if err != nil {
 		return err
@@ -56,4 +67,17 @@ func (mc *Mimir) CreateGrafanaAlertmanagerConfig(ctx context.Context, cfg *apimo
 
 func (mc *Mimir) DeleteGrafanaAlertmanagerConfig(ctx context.Context) error {
 	return mc.doOK(ctx, grafanaAlertmanagerConfigPath, http.MethodDelete, nil)
+}
+
+func (mc *Mimir) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
+	response := []apimodels.Receiver{}
+
+	// nolint:bodyclose
+	// closed within `do`
+	_, err := mc.do(ctx, grafanaAlertmanagerReceiversPath, http.MethodGet, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
 }

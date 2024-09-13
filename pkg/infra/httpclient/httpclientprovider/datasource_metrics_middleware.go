@@ -3,9 +3,9 @@ package httpclientprovider
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -33,10 +33,13 @@ var (
 
 	datasourceResponseHistogram = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Name:      "datasource_response_size_bytes",
-			Help:      "histogram of data source response sizes returned to Grafana",
-			Buckets:   []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
+			Namespace:                       "grafana",
+			Name:                            "datasource_response_size_bytes",
+			Help:                            "histogram of data source response sizes returned to Grafana",
+			Buckets:                         []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  100,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},
 	)
 
@@ -109,7 +112,7 @@ func executeMiddleware(next http.RoundTripper, labels prometheus.Labels) http.Ro
 		}
 
 		if res != nil && res.StatusCode != http.StatusSwitchingProtocols {
-			res.Body = httpclient.CountBytesReader(res.Body, func(bytesRead int64) {
+			res.Body = sdkhttpclient.CountBytesReader(res.Body, func(bytesRead int64) {
 				responseSizeHistogram.Observe(float64(bytesRead))
 			})
 		}

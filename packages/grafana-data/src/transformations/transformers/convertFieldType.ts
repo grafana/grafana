@@ -2,9 +2,9 @@ import { map } from 'rxjs/operators';
 
 import { TimeZone } from '@grafana/schema';
 
-import { DateTimeOptionsWhenParsing, dateTimeParse } from '../../datetime';
-import { SynchronousDataTransformerInfo } from '../../types';
+import { dateTimeParse, DateTimeOptionsWhenParsing } from '../../datetime/parser';
 import { DataFrame, EnumFieldConfig, Field, FieldType } from '../../types/dataFrame';
+import { SynchronousDataTransformerInfo } from '../../types/transformations';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 

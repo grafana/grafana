@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { connect } from 'react-redux';
 
 import { EventBusSrv, getTimeZone } from '@grafana/data';

@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
@@ -9,8 +8,8 @@ interface DotStylesProps {
   includeState?: boolean;
 }
 
-const AlertStateDot = (props: DotStylesProps) => {
-  const styles = useStyles2(getDotStyles, props);
+const AlertStateDot = ({ color, includeState }: DotStylesProps) => {
+  const styles = useStyles2(getDotStyles, { color, includeState });
 
   return (
     <Stack direction="row" gap={0.5}>

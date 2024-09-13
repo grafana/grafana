@@ -10,6 +10,7 @@ import (
 	sdktracing "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -145,6 +146,9 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 	if healthHandler, ok := svc.(backend.CheckHealthHandler); ok {
 		opts.CheckHealthHandler = healthHandler
 	}
+	if storageHandler, ok := svc.(backend.AdmissionHandler); ok {
+		opts.AdmissionHandler = storageHandler
+	}
 
 	if opts.QueryDataHandler != nil || opts.CallResourceHandler != nil ||
 		opts.CheckHealthHandler != nil || opts.StreamHandler != nil {
@@ -212,13 +216,13 @@ func NewPlugin(pluginID string, cfg *setting.Cfg, httpClientProvider *httpclient
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
 	case Elasticsearch:
-		svc = elasticsearch.ProvideService(httpClientProvider, tracer)
+		svc = elasticsearch.ProvideService(httpClientProvider)
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
 		svc = influxdb.ProvideService(httpClientProvider, features)
 	case Loki:
-		svc = loki.ProvideService(httpClientProvider, features, tracer)
+		svc = loki.ProvideService(httpClientProvider, tracer)
 	case OpenTSDB:
 		svc = opentsdb.ProvideService(httpClientProvider)
 	case Prometheus:

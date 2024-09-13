@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
@@ -11,7 +11,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { isTooltipScrollable, prepareGraphableFields } from '../timeseries/utils';
+import { prepareGraphableFields } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -123,14 +123,12 @@ export const TrendPanel = ({
                 render={(u, dataIdxs, seriesIdx, isPinned = false) => {
                   return (
                     <TimeSeriesTooltip
-                      frames={info.frames!}
-                      seriesFrame={alignedDataFrame}
+                      series={alignedDataFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       mode={options.tooltip.mode}
                       sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
-                      scrollable={isTooltipScrollable(options.tooltip)}
                       maxHeight={options.tooltip.maxHeight}
                     />
                   );

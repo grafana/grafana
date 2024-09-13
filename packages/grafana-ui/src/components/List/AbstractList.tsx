@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 
 import { stylesFactory } from '../../themes';
 

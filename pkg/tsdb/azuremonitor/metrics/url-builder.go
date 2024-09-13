@@ -3,6 +3,8 @@ package metrics
 import (
 	"fmt"
 	"strings"
+
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 )
 
 // urlBuilder builds the URL for calling the Azure Monitor API
@@ -33,18 +35,25 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 
 	if metricNamespace == nil || *metricNamespace == "" {
 		if params.MetricDefinition == nil || *params.MetricDefinition == "" {
-			return nil, fmt.Errorf("no metricNamespace or metricDefiniton value provided")
+			return nil, errorsource.DownstreamError(fmt.Errorf("no metricNamespace or metricDefiniton value provided"), false)
 		}
 		metricNamespace = params.MetricDefinition
 	}
 
 	metricNamespaceArray := strings.Split(*metricNamespace, "/")
+
+	provider := ""
+	if len(metricNamespaceArray) > 1 {
+		provider = metricNamespaceArray[0]
+		metricNamespaceArray = metricNamespaceArray[1:]
+	} else {
+		return nil, errorsource.DownstreamError(fmt.Errorf("metricNamespace is not in the correct format"), false)
+	}
+
 	var resourceNameArray []string
 	if params.ResourceName != nil && *params.ResourceName != "" {
 		resourceNameArray = strings.Split(*params.ResourceName, "/")
 	}
-	provider := metricNamespaceArray[0]
-	metricNamespaceArray = metricNamespaceArray[1:]
 
 	if strings.HasPrefix(strings.ToLower(*metricNamespace), "microsoft.storage/storageaccounts/") &&
 		params.ResourceName != nil &&
@@ -66,7 +75,11 @@ func (params *urlBuilder) buildResourceURI() (*string, error) {
 	}
 
 	for i, namespace := range metricNamespaceArray {
-		urlArray = append(urlArray, namespace, resourceNameArray[i])
+		if i < len(resourceNameArray) {
+			urlArray = append(urlArray, namespace, resourceNameArray[i])
+		} else {
+			return nil, errorsource.DownstreamError(fmt.Errorf("resourceNameArray does not have enough elements"), false)
+		}
 	}
 
 	resourceURI := strings.Join(urlArray, "/")

@@ -14,16 +14,16 @@
 
 import { css } from '@emotion/css';
 import classNames from 'classnames';
-import React from 'react';
+import { PureComponent } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TraceKeyValuePair, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { TimeZone } from '@grafana/schema';
 import { Button, clearButtonStyles, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
 import { SpanLinkFunc } from '../types';
-import { TraceLog, TraceSpan, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
+import { TraceSpan, TraceLink, TraceSpanReference } from '../types/trace';
 
 import SpanDetail, { TraceFlameGraphs } from './SpanDetail';
 import DetailState from './SpanDetail/DetailState';
@@ -105,7 +105,7 @@ export type SpanDetailRowProps = {
   setRedrawListView: (redraw: {}) => void;
 };
 
-export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
+export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
   _detailToggle = () => {
     this.props.onDetailToggled(this.props.span.spanID);
   };

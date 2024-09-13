@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { groupBy } from 'lodash';
-import React, { FormEvent, useCallback, useState } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { AlertState, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Field, Icon, Input, Label, LoadingPlaceholder, Tooltip, useStyles2, Stack } from '@grafana/ui';
@@ -82,7 +83,7 @@ const StateHistory = ({ alertId }: Props) => {
         <Field
           label={
             <Label>
-              <Stack gap={0.5}>
+              <Stack gap={0.5} alignItems="center">
                 <span>Filter group</span>
                 <Tooltip
                   content={

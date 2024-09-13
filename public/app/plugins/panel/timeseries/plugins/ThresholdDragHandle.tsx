@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Draggable, { DraggableBounds } from 'react-draggable';
 
 import { Threshold, GrafanaTheme2 } from '@grafana/data';

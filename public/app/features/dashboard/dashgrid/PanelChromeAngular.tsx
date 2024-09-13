@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { Subscription } from 'rxjs';
 
@@ -209,7 +209,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
         hoverHeader={panelChromeProps.hasOverlayHeader()}
         displayMode={transparent ? 'transparent' : 'default'}
         onCancelQuery={panelChromeProps.onCancelQuery}
-        onOpenMenu={panelChromeProps.onOpenMenu}
       >
         {() => <div ref={(element) => (this.element = element)} className="panel-height-helper" />}
       </PanelChrome>

@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import Prism, { Grammar, LanguageMap } from 'prismjs';
-import React, { memo, useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
+import * as React from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
@@ -131,6 +132,9 @@ export const DataLinkInput = memo(
 
       switch (event.key) {
         case 'Backspace':
+          if (stateRef.current.linkUrl.focusText.getText().length === 1) {
+            next();
+          }
         case 'Escape':
           setShowingSuggestions(false);
           return setSuggestionsIndex(0);

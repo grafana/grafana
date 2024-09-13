@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { PluginState, TransformerRegistryItem, TransformerUIProps, TransformerCategory } from '@grafana/data';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

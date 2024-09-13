@@ -62,6 +62,8 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
 
   const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};
 
+  delete params['shareView'];
+
   if (options.updateQuery) {
     for (const key in options.updateQuery) {
       // removing params with null | undefined
@@ -90,7 +92,7 @@ export function getViewPanelUrl(vizPanel: VizPanel) {
 }
 
 export function getEditPanelUrl(panelId: number) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId });
+  return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });
 }
 
 export function getInspectUrl(vizPanel: VizPanel, inspectTab?: InspectTab) {

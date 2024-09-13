@@ -1,6 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import {
   Field,
@@ -11,6 +10,7 @@ import {
   FieldType,
   createDataFrame,
   DataFrameType,
+  CoreApp,
 } from '@grafana/data';
 
 import { LogDetails, Props } from './LogDetails';
@@ -32,6 +32,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     onClickHideField: () => {},
     theme,
     styles,
+    app: CoreApp.Explore,
     ...(propOverrides || {}),
   };
 

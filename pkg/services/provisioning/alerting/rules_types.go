@@ -32,11 +32,11 @@ type AlertRuleGroupV1 struct {
 	Rules    []AlertRuleV1      `json:"rules" yaml:"rules"`
 }
 
-func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFolderTitle, error) {
-	ruleGroup := models.AlertRuleGroupWithFolderTitle{AlertRuleGroup: &models.AlertRuleGroup{}}
+func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFolderFullpath, error) {
+	ruleGroup := models.AlertRuleGroupWithFolderFullpath{AlertRuleGroup: &models.AlertRuleGroup{}}
 	ruleGroup.Title = ruleGroupV1.Name.Value()
 	if strings.TrimSpace(ruleGroup.Title) == "" {
-		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no name set")
+		return models.AlertRuleGroupWithFolderFullpath{}, errors.New("rule group has no name set")
 	}
 	ruleGroup.OrgID = ruleGroupV1.OrgID.Value()
 	if ruleGroup.OrgID < 1 {
@@ -44,17 +44,17 @@ func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFold
 	}
 	interval, err := model.ParseDuration(ruleGroupV1.Interval.Value())
 	if err != nil {
-		return models.AlertRuleGroupWithFolderTitle{}, err
+		return models.AlertRuleGroupWithFolderFullpath{}, err
 	}
 	ruleGroup.Interval = int64(time.Duration(interval).Seconds())
-	ruleGroup.FolderTitle = ruleGroupV1.Folder.Value()
-	if strings.TrimSpace(ruleGroup.FolderTitle) == "" {
-		return models.AlertRuleGroupWithFolderTitle{}, errors.New("rule group has no folder set")
+	ruleGroup.FolderFullpath = ruleGroupV1.Folder.Value()
+	if strings.TrimSpace(ruleGroup.FolderFullpath) == "" {
+		return models.AlertRuleGroupWithFolderFullpath{}, errors.New("rule group has no folder set")
 	}
 	for _, ruleV1 := range ruleGroupV1.Rules {
 		rule, err := ruleV1.mapToModel(ruleGroup.OrgID)
 		if err != nil {
-			return models.AlertRuleGroupWithFolderTitle{}, err
+			return models.AlertRuleGroupWithFolderFullpath{}, err
 		}
 		ruleGroup.Rules = append(ruleGroup.Rules, rule)
 	}
@@ -66,7 +66,8 @@ type AlertRuleV1 struct {
 	Title                values.StringValue      `json:"title" yaml:"title"`
 	Condition            values.StringValue      `json:"condition" yaml:"condition"`
 	Data                 []QueryV1               `json:"data" yaml:"data"`
-	DashboardUID         values.StringValue      `json:"dasboardUid" yaml:"dashboardUid"`
+	DasboardUID          values.StringValue      `json:"dasboardUid" yaml:"dasboardUid"` // TODO: Grandfathered typo support. TODO: This should be removed in V2.
+	DashboardUID         values.StringValue      `json:"dashboardUid" yaml:"dashboardUid"`
 	PanelID              values.Int64Value       `json:"panelId" yaml:"panelId"`
 	NoDataState          values.StringValue      `json:"noDataState" yaml:"noDataState"`
 	ExecErrState         values.StringValue      `json:"execErrState" yaml:"execErrState"`
@@ -75,6 +76,14 @@ type AlertRuleV1 struct {
 	Labels               values.StringMapValue   `json:"labels" yaml:"labels"`
 	IsPaused             values.BoolValue        `json:"isPaused" yaml:"isPaused"`
 	NotificationSettings *NotificationSettingsV1 `json:"notification_settings" yaml:"notification_settings"`
+	Record               *RecordV1               `json:"record" yaml:"record"`
+}
+
+func withFallback(value, fallback string) *string {
+	if value == "" {
+		return &fallback
+	}
+	return &value
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -93,8 +102,9 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 	}
 	alertRule.For = time.Duration(duration)
+	dasboardUID := rule.DasboardUID.Value()
 	dashboardUID := rule.DashboardUID.Value()
-	alertRule.DashboardUID = &dashboardUID
+	alertRule.DashboardUID = withFallback(dashboardUID, dasboardUID) // Use correct spelling over supported typo.
 	panelID := rule.PanelID.Value()
 	alertRule.PanelID = &panelID
 	execErrStateValue := strings.TrimSpace(rule.ExecErrState.Value())
@@ -138,6 +148,13 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
 		}
 		alertRule.NotificationSettings = append(alertRule.NotificationSettings, ns)
+	}
+	if rule.Record != nil {
+		record, err := rule.Record.mapToModel()
+		if err != nil {
+			return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: %w", alertRule.Title, err)
+		}
+		alertRule.Record = &record
 	}
 	return alertRule, nil
 }
@@ -244,5 +261,17 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 		GroupInterval:     gi,
 		RepeatInterval:    ri,
 		MuteTimeIntervals: mute,
+	}, nil
+}
+
+type RecordV1 struct {
+	Metric values.StringValue `json:"metric" yaml:"metric"`
+	From   values.StringValue `json:"from" yaml:"from"`
+}
+
+func (record *RecordV1) mapToModel() (models.Record, error) {
+	return models.Record{
+		Metric: record.Metric.Value(),
+		From:   record.From.Value(),
 	}, nil
 }

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useId } from 'react';
+import { useId } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import {

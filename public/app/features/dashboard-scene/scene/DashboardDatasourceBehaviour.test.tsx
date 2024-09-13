@@ -21,7 +21,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
-import { LibraryVizPanel } from './LibraryVizPanel';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 
 const grafanaDs = {
   id: 1,
@@ -279,6 +279,7 @@ describe('DashboardDatasourceBehaviour', () => {
         panel: dashboardDSPanel.clone(),
         $data: dashboardDSPanel.state.$data?.clone(),
         sourcePanel: dashboardDSPanel.getRef(),
+        pluginId: dashboardDSPanel.state.pluginId,
       });
 
       vizPanelManager.activate();
@@ -490,16 +491,102 @@ describe('DashboardDatasourceBehaviour', () => {
   });
 
   describe('Library panels', () => {
-    it('should wait for library panel to be loaded', async () => {
-      const sourcePanel = new LibraryVizPanel({
-        name: 'My Library Panel',
+    it('should re-run queries when library panel re-runs query', async () => {
+      const libPanelBehavior = new LibraryPanelBehavior({
+        isLoaded: false,
         title: 'Panel title',
         uid: 'fdcvggvfy2qdca',
-        panelKey: 'lib-panel',
-        panel: new VizPanel({
-          key: 'panel-1',
-          title: 'Panel A',
-          pluginId: 'table',
+        name: 'My Library Panel',
+        _loadedPanel: undefined,
+      });
+
+      const sourcePanel = new VizPanel({
+        key: 'panel-1',
+        title: 'Panel A',
+        pluginId: 'table',
+        $behaviors: [libPanelBehavior],
+        $data: new SceneQueryRunner({
+          datasource: { uid: 'grafana' },
+          queries: [{ refId: 'A', queryType: 'randomWalk' }],
+        }),
+      });
+
+      // query references inexistent panel
+      const dashboardDSPanel = new VizPanel({
+        title: 'Panel B',
+        pluginId: 'table',
+        key: 'panel-2',
+        $data: new SceneQueryRunner({
+          datasource: { uid: SHARED_DASHBOARD_QUERY },
+          queries: [{ refId: 'A', panelId: 1 }],
+          $behaviors: [new DashboardDatasourceBehaviour({})],
+        }),
+      });
+
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        meta: {
+          canEdit: true,
+        },
+        body: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              key: 'griditem-1',
+              x: 0,
+              y: 0,
+              width: 10,
+              height: 12,
+              body: sourcePanel,
+            }),
+            new DashboardGridItem({
+              key: 'griditem-2',
+              x: 0,
+              y: 0,
+              width: 10,
+              height: 12,
+              body: dashboardDSPanel,
+            }),
+          ],
+        }),
+      });
+
+      const sceneDeactivate = activateFullSceneTree(scene);
+
+      // spy on runQueries
+      const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
+
+      // deactivate scene to mimic going into panel edit
+      sceneDeactivate();
+
+      // run source panel queries and update request ID
+      (sourcePanel.state.$data as SceneQueryRunner).runQueries();
+
+      // // activate scene to mimic coming back from panel edit
+      activateFullSceneTree(scene);
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should wait for library panel to load before running queries', async () => {
+      const libPanelBehavior = new LibraryPanelBehavior({
+        isLoaded: false,
+        title: 'Panel title',
+        uid: 'fdcvggvfy2qdca',
+        name: 'My Library Panel',
+        _loadedPanel: undefined,
+      });
+
+      const sourcePanel = new VizPanel({
+        key: 'panel-1',
+        title: 'Panel A',
+        pluginId: 'table',
+        $behaviors: [libPanelBehavior],
+        $data: new SceneQueryRunner({
+          datasource: { uid: 'grafana' },
+          queries: [{ refId: 'A', queryType: 'randomWalk' }],
         }),
       });
 
@@ -546,27 +633,22 @@ describe('DashboardDatasourceBehaviour', () => {
       activateFullSceneTree(scene);
 
       // spy on runQueries
-      const spy = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
+      const spyRunQueries = jest.spyOn(dashboardDSPanel.state.$data as SceneQueryRunner, 'runQueries');
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(spy).not.toHaveBeenCalled();
+      expect(spyRunQueries).not.toHaveBeenCalled();
 
       // Simulate library panel being loaded
-      sourcePanel.setState({
+      libPanelBehavior.setState({
         isLoaded: true,
-        panel: new VizPanel({
-          title: 'Panel A',
-          pluginId: 'table',
-          key: 'panel-1',
-          $data: new SceneQueryRunner({
-            datasource: { uid: 'grafana' },
-            queries: [{ refId: 'A', queryType: 'randomWalk' }],
-          }),
-        }),
+        title: 'Panel title',
+        uid: 'fdcvggvfy2qdca',
+        name: 'My Library Panel',
+        _loadedPanel: undefined,
       });
 
-      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spyRunQueries).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -8,17 +8,19 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/mail"
 	"net/textproto"
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	gomail "gopkg.in/mail.v2"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -47,40 +49,47 @@ func (sc *SmtpClient) Send(ctx context.Context, messages ...*Message) (int, erro
 	defer span.End()
 
 	sentEmailsCount := 0
+
 	dialer, err := sc.createDialer()
 	if err != nil {
 		return sentEmailsCount, err
 	}
 
 	for _, msg := range messages {
-		span.SetAttributes(
-			attribute.String("smtp.sender", msg.From),
-			attribute.StringSlice("smtp.recipients", msg.To),
-		)
-
-		m := sc.buildEmail(ctx, msg)
-
-		innerError := dialer.DialAndSend(m)
-		emailsSentTotal.Inc()
-		if innerError != nil {
-			// As gomail does not returned typed errors we have to parse the error
-			// to catch invalid error when the address is invalid.
-			// https://github.com/go-gomail/gomail/blob/81ebce5c23dfd25c6c67194b37d3dd3f338c98b1/send.go#L113
-			if !strings.HasPrefix(innerError.Error(), "gomail: invalid address") {
-				emailsSentFailed.Inc()
-			}
-
-			err = fmt.Errorf("failed to send notification to email addresses: %s: %w", strings.Join(msg.To, ";"), innerError)
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-
-			continue
+		err := sc.sendMessage(ctx, dialer, msg)
+		if err != nil {
+			return sentEmailsCount, err
 		}
 
 		sentEmailsCount++
 	}
 
-	return sentEmailsCount, err
+	return sentEmailsCount, nil
+}
+
+func (sc *SmtpClient) sendMessage(ctx context.Context, dialer *gomail.Dialer, msg *Message) error {
+	ctx, span := tracer.Start(ctx, "notifications.SmtpClient.sendMessage", trace.WithAttributes(
+		attribute.String("smtp.sender", msg.From),
+		attribute.StringSlice("smtp.recipients", msg.To),
+	))
+	defer span.End()
+
+	m := sc.buildEmail(ctx, msg)
+
+	err := dialer.DialAndSend(m)
+	emailsSentTotal.Inc()
+	if err != nil {
+		// As gomail does not returned typed errors we have to parse the error
+		// to catch invalid error when the address is invalid.
+		// https://github.com/go-gomail/gomail/blob/81ebce5c23dfd25c6c67194b37d3dd3f338c98b1/send.go#L113
+		if !strings.HasPrefix(err.Error(), "gomail: invalid address") {
+			emailsSentFailed.Inc()
+		}
+
+		return tracing.Errorf(span, "failed to send email: %w", err)
+	}
+
+	return nil
 }
 
 // buildEmail converts the Message DTO to a gomail message.
@@ -93,6 +102,15 @@ func (sc *SmtpClient) buildEmail(ctx context.Context, msg *Message) *gomail.Mess
 	m.SetHeader("From", msg.From)
 	m.SetHeader("To", msg.To...)
 	m.SetHeader("Subject", msg.Subject)
+
+	from, err := mail.ParseAddress(msg.From)
+	if err == nil {
+		at := strings.LastIndex(from.Address, "@")
+		if at >= 0 {
+			domain := from.Address[at+1:]
+			m.SetHeader("Message-ID", fmt.Sprintf("<%s@%s>", uuid.NewString(), domain))
+		}
+	}
 
 	if sc.cfg.EnableTracing {
 		otel.GetTextMapPropagator().Inject(ctx, gomailHeaderCarrier{m})

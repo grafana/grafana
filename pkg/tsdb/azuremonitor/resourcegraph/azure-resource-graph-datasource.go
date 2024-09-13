@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -58,20 +59,19 @@ func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, r
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
+func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
 
-	queries, err := e.buildQueries(originalQueries, dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, query := range queries {
-		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
+	for _, query := range originalQueries {
+		graphQuery, err := e.buildQuery(query, dsInfo)
 		if err != nil {
-			result.Responses[query.RefID] = backend.DataResponse{Error: err}
+			return nil, err
+		}
+		res, err := e.executeQuery(ctx, graphQuery, dsInfo, client, url)
+		if err != nil {
+			errorsource.AddErrorToResponse(query.RefID, result, err)
 			continue
 		}
 		result.Responses[query.RefID] = *res
@@ -87,40 +87,33 @@ type argJSONQuery struct {
 	} `json:"azureResourceGraph"`
 }
 
-func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureResourceGraphQuery, error) {
-	var azureResourceGraphQueries []*AzureResourceGraphQuery
-
-	for _, query := range queries {
-		queryJSONModel := argJSONQuery{}
-		err := json.Unmarshal(query.JSON, &queryJSONModel)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode the Azure Resource Graph query object from JSON: %w", err)
-		}
-
-		azureResourceGraphTarget := queryJSONModel.AzureResourceGraph
-
-		resultFormat := azureResourceGraphTarget.ResultFormat
-		if resultFormat == "" {
-			resultFormat = "table"
-		}
-
-		interpolatedQuery, err := macros.KqlInterpolate(query, dsInfo, azureResourceGraphTarget.Query)
-
-		if err != nil {
-			return nil, err
-		}
-
-		azureResourceGraphQueries = append(azureResourceGraphQueries, &AzureResourceGraphQuery{
-			RefID:             query.RefID,
-			ResultFormat:      resultFormat,
-			JSON:              query.JSON,
-			InterpolatedQuery: interpolatedQuery,
-			TimeRange:         query.TimeRange,
-			QueryType:         query.QueryType,
-		})
+func (e *AzureResourceGraphDatasource) buildQuery(query backend.DataQuery, dsInfo types.DatasourceInfo) (*AzureResourceGraphQuery, error) {
+	queryJSONModel := argJSONQuery{}
+	err := json.Unmarshal(query.JSON, &queryJSONModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode the Azure Resource Graph query object from JSON: %w", err)
 	}
 
-	return azureResourceGraphQueries, nil
+	azureResourceGraphTarget := queryJSONModel.AzureResourceGraph
+
+	resultFormat := azureResourceGraphTarget.ResultFormat
+	if resultFormat == "" {
+		resultFormat = "table"
+	}
+
+	interpolatedQuery, err := macros.KqlInterpolate(query, dsInfo, azureResourceGraphTarget.Query)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AzureResourceGraphQuery{
+		RefID:             query.RefID,
+		ResultFormat:      resultFormat,
+		JSON:              query.JSON,
+		InterpolatedQuery: interpolatedQuery,
+		TimeRange:         query.TimeRange,
+		QueryType:         query.QueryType,
+	}, nil
 }
 
 func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo types.DatasourceInfo, client *http.Client, dsURL string) (*backend.DataResponse, error) {
@@ -166,7 +159,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errorsource.DownstreamError(err, false)
 	}
 
 	defer func() {
@@ -226,7 +219,7 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	}()
 
 	if res.StatusCode/100 != 2 {
-		return AzureResourceGraphResponse{}, fmt.Errorf("%s. Azure Resource Graph error: %s", res.Status, string(body))
+		return AzureResourceGraphResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("%s. Azure Resource Graph error: %s", res.Status, string(body)), false)
 	}
 
 	var data AzureResourceGraphResponse

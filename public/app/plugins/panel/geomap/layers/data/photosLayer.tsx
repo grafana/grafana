@@ -1,6 +1,6 @@
 import { FeatureLike } from 'ol/Feature';
 import Map from 'ol/Map';
-import VectorLayer from 'ol/layer/Vector';
+import VectorImage from 'ol/layer/VectorImage';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
 
@@ -86,7 +86,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
 
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
-    const vectorLayer = new VectorLayer({
+    const vectorLayer = new VectorImage({
       source,
     });
 

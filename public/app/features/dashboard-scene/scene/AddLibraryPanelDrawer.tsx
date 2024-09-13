@@ -1,6 +1,11 @@
-import React from 'react';
-
-import { SceneComponentProps, SceneGridLayout, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneGridLayout,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import { LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
@@ -10,12 +15,14 @@ import {
 } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { NEW_PANEL_HEIGHT, NEW_PANEL_WIDTH, getDashboardSceneFor, getVizPanelKeyForPanelId } from '../utils/utils';
+import { NEW_PANEL_HEIGHT, NEW_PANEL_WIDTH, getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
 import { DashboardGridItem } from './DashboardGridItem';
-import { LibraryVizPanel } from './LibraryVizPanel';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 
-export interface AddLibraryPanelDrawerState extends SceneObjectState {}
+export interface AddLibraryPanelDrawerState extends SceneObjectState {
+  panelToReplaceRef?: SceneObjectRef<VizPanel>;
+}
 
 export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawerState> {
   public onClose = () => {
@@ -32,23 +39,37 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
 
     const panelId = dashboardSceneGraph.getNextPanelId(dashboard);
 
-    const body = new LibraryVizPanel({
-      title: 'Panel Title',
-      uid: panelInfo.uid,
-      name: panelInfo.name,
-      panelKey: getVizPanelKeyForPanelId(panelId),
+    const body = getDefaultVizPanel(dashboard);
+    body.setState({
+      $behaviors: [new LibraryPanelBehavior({ uid: panelInfo.uid, name: panelInfo.name })],
     });
 
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: body,
-      key: `grid-item-${panelId}`,
-    });
+    const panelToReplace = this.state.panelToReplaceRef?.resolve();
 
-    layout.setState({ children: [newGridItem, ...layout.state.children] });
+    if (panelToReplace) {
+      const gridItemToReplace = panelToReplace.parent;
+
+      if (!(gridItemToReplace instanceof DashboardGridItem)) {
+        throw new Error('Trying to replace a panel that does not have a DashboardGridItem');
+      }
+
+      gridItemToReplace.setState({ body });
+    } else {
+      const newGridItem = new DashboardGridItem({
+        height: NEW_PANEL_HEIGHT,
+        width: NEW_PANEL_WIDTH,
+        x: 0,
+        y: 0,
+        body: body,
+        key: `grid-item-${panelId}`,
+      });
+
+      layout.setState({ children: [newGridItem, ...layout.state.children] });
+
+      if (!dashboard.state.isEditing) {
+        dashboard.onEnterEditMode();
+      }
+    }
 
     this.onClose();
   };

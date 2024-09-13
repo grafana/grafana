@@ -173,7 +173,10 @@ function updateRichHistory(
  */
 function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalStorageDTO[] {
   const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
-  const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
+  // We don't care about timezones that much here when creating the time stamp for deletion. First, not sure if we
+  // should be deleting entries based on timezone change that may serve only for querying and also the timezone
+  // difference would not change that much what is or isn't deleted compared to the default 2 weeks retention.
+  const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, { isLastTs: false });
 
   /* Keep only queries, that are within the selected retention period or that are starred.
    * If no queries, initialize with empty array

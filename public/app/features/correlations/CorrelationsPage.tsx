@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { negate } from 'lodash';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError, reportInteraction } from '@grafana/runtime';

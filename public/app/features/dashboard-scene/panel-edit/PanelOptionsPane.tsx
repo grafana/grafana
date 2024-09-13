@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -43,7 +43,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
     const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
-    const { pluginId } = vizManager.state.panel.useState();
+    const { pluginId } = vizManager.useState();
     const { data } = sceneGraph.getData(vizManager.state.panel).useState();
     const styles = useStyles2(getStyles);
 

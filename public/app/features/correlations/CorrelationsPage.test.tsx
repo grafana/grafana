@@ -1,7 +1,6 @@
 import { render, waitFor, screen, within, Matcher, getByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { merge, uniqueId } from 'lodash';
-import React from 'react';
 import { openMenu } from 'react-select-event';
 import { Observable } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -362,10 +361,10 @@ describe('CorrelationsPage', () => {
             uid: '1',
             label: 'Some label',
             provisioned: false,
+            type: 'query',
             config: {
               field: 'line',
               target: {},
-              type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
               ],
@@ -376,7 +375,8 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '2',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: {}, type: 'query' },
+            type: 'query',
+            config: { field: 'label', target: {} },
             provisioned: false,
           },
         ]
@@ -599,10 +599,10 @@ describe('CorrelationsPage', () => {
             uid: '1',
             label: 'Loki to Loki',
             provisioned: false,
+            type: 'query',
             config: {
               field: 'line',
               target: {},
-              type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
               ],
@@ -614,10 +614,10 @@ describe('CorrelationsPage', () => {
             uid: '2',
             label: 'Loki to Prometheus',
             provisioned: false,
+            type: 'query',
             config: {
               field: 'line',
               target: {},
-              type: 'query',
               transformations: [
                 { type: SupportedTransformationType.Regex, expression: 'url=http[s]?://(S*)', mapValue: 'path' },
               ],
@@ -628,7 +628,8 @@ describe('CorrelationsPage', () => {
             targetUID: 'loki',
             uid: '3',
             label: 'Prometheus to Loki',
-            config: { field: 'label', target: {}, type: 'query' },
+            type: 'query',
+            config: { field: 'label', target: {} },
             provisioned: false,
           },
           {
@@ -636,7 +637,8 @@ describe('CorrelationsPage', () => {
             targetUID: 'prometheus',
             uid: '4',
             label: 'Prometheus to Prometheus',
-            config: { field: 'label', target: {}, type: 'query' },
+            type: 'query',
+            config: { field: 'label', target: {} },
             provisioned: false,
           },
         ]
@@ -661,10 +663,10 @@ describe('CorrelationsPage', () => {
         uid: '1',
         label: 'Some label',
         provisioned: true,
+        type: 'query',
         config: {
           field: 'line',
           target: {},
-          type: 'query',
           transformations: [{ type: SupportedTransformationType.Regex, expression: '(?:msg)=' }],
         },
       },

@@ -15,9 +15,16 @@ import {
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
 } from '../history/RichHistoryStorage';
+import { createRetentionPeriodBoundary } from '../history/richHistoryLocalStorageUtils';
 import { getLocalRichHistoryStorage, getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { contextSrv } from '../services/context_srv';
 
-import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
+import {
+  RichHistorySearchBackendFilters,
+  RichHistorySearchFilters,
+  RichHistorySettings,
+  SortOrder,
+} from './richHistoryTypes';
 
 export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
 
@@ -100,7 +107,22 @@ export async function addToRichHistory(
 }
 
 export async function getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults> {
-  return await getRichHistoryStorage().getRichHistory(filters);
+  // Transforming from frontend filters where from and to are days from now to absolute timestamps.
+  const filtersCopy: RichHistorySearchBackendFilters = {
+    ...filters,
+    from:
+      filters.to === undefined
+        ? filters.to
+        : createRetentionPeriodBoundary(filters.to, {
+            isLastTs: true,
+            tz: contextSrv.user?.timezone,
+          }),
+    to:
+      filters.from === undefined
+        ? filters.from
+        : createRetentionPeriodBoundary(filters.from, { isLastTs: true, tz: contextSrv.user?.timezone }),
+  };
+  return await getRichHistoryStorage().getRichHistory(filtersCopy);
 }
 
 export async function updateRichHistorySettings(settings: RichHistorySettings): Promise<void> {

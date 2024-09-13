@@ -12,7 +12,13 @@ export type UsePluginExtensions<T = PluginExtension> = (
 
 export type GetPluginExtensionsOptions = {
   extensionPointId: string;
+  // Make sure this object is properly memoized and not mutated.
   context?: object | Record<string | symbol, unknown>;
+  limitPerPlugin?: number;
+};
+
+export type UsePluginComponentOptions = {
+  extensionPointId: string;
   limitPerPlugin?: number;
 };
 
@@ -23,6 +29,27 @@ export type GetPluginExtensionsResult<T = PluginExtension> = {
 export type UsePluginExtensionsResult<T = PluginExtension> = {
   extensions: T[];
   isLoading: boolean;
+};
+
+export type UsePluginComponentResult<Props = {}> = {
+  component: React.ComponentType<Props> | undefined | null;
+  isLoading: boolean;
+};
+
+export type UsePluginComponentsResult<Props = {}> = {
+  components: Array<React.ComponentType<Props>>;
+  isLoading: boolean;
+};
+
+export type UsePluginLinksOptions = {
+  extensionPointId: string;
+  context?: object | Record<string | symbol, unknown>;
+  limitPerPlugin?: number;
+};
+
+export type UsePluginLinksResult = {
+  isLoading: boolean;
+  links: PluginExtensionLink[];
 };
 
 let singleton: GetPluginExtensions | undefined;

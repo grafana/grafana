@@ -35,6 +35,15 @@ composableKinds: PanelCfg: {
 					enableLogDetails:     bool
 					sortOrder:            common.LogsSortOrder
 					dedupStrategy:        common.LogsDedupStrategy
+					// TODO: figure out how to define callbacks
+					onClickFilterLabel?:     _
+					onClickFilterOutLabel?:  _
+					isFilterLabelActive?:    _
+					onClickFilterString?:    _
+					onClickFilterOutString?: _
+					onClickShowField?:       _
+					onClickHideField?:       _
+					displayedFields?: [...string]
 				} @cuetsy(kind="interface")
 			}
 		}]

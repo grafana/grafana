@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestApplyQueryFilters(t *testing.T) {
+func TestApplyQueryFiltersAndGroupBy_Filters(t *testing.T) {
 	tests := []struct {
 		name         string
 		query        string
@@ -68,7 +68,7 @@ func TestApplyQueryFilters(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			name:  "Adhoc and Scope filter conflict - adhoc wins",
+			name:  "Adhoc and Scope filter conflict - adhoc wins (if not oneOf or notOneOf)",
 			query: `http_requests_total{job="prometheus"}`,
 			scopeFilters: []ScopeFilter{
 				{Key: "status", Value: "404", Operator: FilterOperatorEquals},
@@ -88,11 +88,118 @@ func TestApplyQueryFilters(t *testing.T) {
 			expected:  `capacity_bytes{job="alloy"} + available_bytes{job="alloy"} / 1024`,
 			expectErr: false,
 		},
+		{
+			name:  "OneOf Operator is combined into a single regex filter",
+			query: `http_requests_total{job="prometheus"}`,
+			scopeFilters: []ScopeFilter{
+				{Key: "status", Values: []string{"404", "400"}, Operator: FilterOperatorOneOf},
+			},
+			expected:  `http_requests_total{job="prometheus",status=~"404|400"}`,
+			expectErr: false,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			expr, err := ApplyQueryFilters(tt.query, tt.scopeFilters, tt.adhocFilters)
+			expr, err := ApplyFiltersAndGroupBy(tt.query, tt.scopeFilters, tt.adhocFilters, nil)
+
+			if tt.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, expr)
+			}
+		})
+	}
+}
+
+func TestApplyQueryFiltersAndGroupBy_GroupBy(t *testing.T) {
+	tests := []struct {
+		name      string
+		query     string
+		groupBy   []string
+		expected  string
+		expectErr bool
+	}{
+		{
+			name:      "GroupBy with no aggregate expression",
+			groupBy:   []string{"job"},
+			query:     `http_requests_total`,
+			expected:  `http_requests_total`,
+			expectErr: false,
+		},
+		{
+			name:      "No GroupBy with aggregate expression",
+			query:     `sum by () (http_requests_total)`,
+			expected:  `sum(http_requests_total)`,
+			expectErr: false,
+		},
+		{
+			name:      "GroupBy with aggregate expression with no existing group by",
+			groupBy:   []string{"job"},
+			query:     `sum(http_requests_total)`,
+			expected:  `sum by (job) (http_requests_total)`,
+			expectErr: false,
+		},
+		{
+			name:      "GroupBy with aggregate expression with existing group by",
+			groupBy:   []string{"status"},
+			query:     `sum by (job) (http_requests_total)`,
+			expected:  `sum by (job, status) (http_requests_total)`,
+			expectErr: false,
+		},
+		{
+			name:      "GroupBy with aggregate expression with existing group by (already exists)",
+			groupBy:   []string{"job"},
+			query:     `sum by (job) (http_requests_total)`,
+			expected:  `sum by (job) (http_requests_total)`,
+			expectErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := ApplyFiltersAndGroupBy(tt.query, nil, nil, tt.groupBy)
+
+			if tt.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, expr, tt.expected)
+			}
+		})
+	}
+}
+
+func TestApplyQueryFiltersAndGroupBy(t *testing.T) {
+	tests := []struct {
+		name         string
+		query        string
+		adhocFilters []ScopeFilter
+		scopeFilters []ScopeFilter
+		groupby      []string
+		expected     string
+		expectErr    bool
+	}{
+
+		{
+			name:  "Adhoc filters with more complex expression",
+			query: `sum(capacity_bytes{job="prometheus"} + available_bytes{job="grafana"}) / 1024`,
+			adhocFilters: []ScopeFilter{
+				{Key: "job", Value: "alloy", Operator: FilterOperatorEquals},
+			},
+			scopeFilters: []ScopeFilter{
+				{Key: "vol", Value: "/", Operator: FilterOperatorEquals},
+			},
+			groupby:   []string{"job"},
+			expected:  `sum by (job) (capacity_bytes{job="alloy",vol="/"} + available_bytes{job="alloy",vol="/"}) / 1024`,
+			expectErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expr, err := ApplyFiltersAndGroupBy(tt.query, tt.scopeFilters, tt.adhocFilters, tt.groupby)
 
 			if tt.expectErr {
 				require.Error(t, err)

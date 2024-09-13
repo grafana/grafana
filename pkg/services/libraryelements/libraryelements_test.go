@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -88,7 +89,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			// nolint:staticcheck
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
+			dashInDB := createDashboard(t, sc.replStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -163,7 +164,7 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			// nolint:staticcheck
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
+			dashInDB := createDashboard(t, sc.replStore, sc.user, &dash, sc.folder.ID, sc.folder.UID)
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -278,10 +279,11 @@ type scenarioContext struct {
 	folder        *folder.Folder
 	initialResult libraryElementResult
 	sqlStore      db.DB
+	replStore     db.ReplDB
 	log           log.Logger
 }
 
-func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64, folderUID string) *dashboards.Dashboard {
+func createDashboard(t *testing.T, sqlStore db.ReplDB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64, folderUID string) *dashboards.Dashboard {
 	// nolint:staticcheck
 	dash.FolderID = folderID
 	dash.FolderUID = folderUID
@@ -296,13 +298,13 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 	require.NoError(t, err)
 	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
@@ -321,15 +323,15 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 
 	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
-	ac := actest.FakeAccessControl{}
+	ac := actest.FakeAccessControl{ExpectedEvaluate: true}
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sc.replStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	t.Logf("Creating folder with title and UID %q", title)
-	ctx := appcontext.WithUser(context.Background(), &sc.user)
+	ctx := identity.WithRequester(context.Background(), &sc.user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
 		OrgID: sc.user.OrgID, Title: title, UID: title, SignedInUser: &sc.user,
 	})
@@ -379,7 +381,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	t.Helper()
 
 	features := featuremgmt.WithFeatures()
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, cfg := db.InitTestReplDBWithCfg(t)
 	ac := actest.FakeAccessControl{}
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
@@ -426,7 +428,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			LastSeenAt: time.Now(),
 			// Allow user to create folders
 			Permissions: map[int64]map[string][]string{
-				1: {dashboards.ActionFoldersCreate: {}},
+				1: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersAll}},
 			},
 		}
 		req := &http.Request{
@@ -434,17 +436,17 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 				"Content-Type": []string{"application/json"},
 			},
 		}
-		ctx := appcontext.WithUser(context.Background(), &usr)
+		ctx := identity.WithRequester(context.Background(), &usr)
 		req = req.WithContext(ctx)
 		webCtx := web.Context{Req: req}
 
 		features := featuremgmt.WithFeatures()
 		tracer := tracing.InitializeTracerForTest()
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+		sqlStore, cfg := db.InitTestReplDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
-		ac := acimpl.ProvideAccessControl(features)
+		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 		folderPermissions := acmock.NewMockedPermissionsService()
 		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		dashboardPermissions := acmock.NewMockedPermissionsService()
@@ -461,7 +463,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Cfg:           cfg,
 			features:      featuremgmt.WithFeatures(),
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest()),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
@@ -483,10 +485,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 
 		sc := scenarioContext{
-			user:     usr,
-			ctx:      &webCtx,
-			service:  &service,
-			sqlStore: sqlStore,
+			user:      usr,
+			ctx:       &webCtx,
+			service:   &service,
+			sqlStore:  sqlStore.DB(),
+			replStore: sqlStore,
 			reqContext: &contextmodel.ReqContext{
 				Context:      &webCtx,
 				SignedInUser: &usr,

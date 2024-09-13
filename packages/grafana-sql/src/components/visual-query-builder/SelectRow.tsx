@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -150,7 +150,7 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
               />
             </EditorField>
             <Button
-              aria-label="Remove"
+              title="Remove column"
               type="button"
               icon="trash-alt"
               variant="secondary"
@@ -164,9 +164,9 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
         type="button"
         onClick={addColumn}
         variant="secondary"
+        title="Add column"
         size="md"
         icon="plus"
-        aria-label="Add"
         className={styles.addButton}
       />
     </Stack>

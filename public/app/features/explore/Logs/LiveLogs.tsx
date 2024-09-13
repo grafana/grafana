@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { PureComponent } from 'react';
+import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
 import { LogRowModel, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';

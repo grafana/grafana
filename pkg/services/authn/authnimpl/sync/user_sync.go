@@ -4,14 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
+	"github.com/grafana/authlib/claims"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -47,15 +51,14 @@ var (
 	errSignupNotAllowed  = errors.New("system administrator has disabled signup")
 )
 
-func ProvideUserSync(userService user.Service,
-	userProtectionService login.UserProtectionService,
-	authInfoService login.AuthInfoService, quotaService quota.Service) *UserSync {
+func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService, quotaService quota.Service, tracer tracing.Tracer) *UserSync {
 	return &UserSync{
 		userService:           userService,
 		authInfoService:       authInfoService,
 		userProtectionService: userProtectionService,
 		quotaService:          quotaService,
 		log:                   log.New("user.sync"),
+		tracer:                tracer,
 	}
 }
 
@@ -65,10 +68,14 @@ type UserSync struct {
 	userProtectionService login.UserProtectionService
 	quotaService          quota.Service
 	log                   log.Logger
+	tracer                tracing.Tracer
 }
 
 // SyncUserHook syncs a user with the database
 func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "user.sync.SyncUserHook")
+	defer span.End()
+
 	if !id.ClientParams.SyncUser {
 		return nil
 	}
@@ -105,22 +112,25 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	return nil
 }
 
-func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	if !identity.ClientParams.FetchSyncedUser {
+func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "user.sync.FetchSyncedUserHook")
+	defer span.End()
+
+	if !id.ClientParams.FetchSyncedUser {
 		return nil
 	}
 
-	if !identity.ID.IsNamespace(authn.NamespaceUser, authn.NamespaceServiceAccount) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
-	userID, err := identity.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", identity.ID, "err", err)
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
 	}
 
-	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
 		UserID: userID,
 		OrgID:  r.OrgID,
 	})
@@ -131,33 +141,37 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 		return errFetchingSignedInUser.Errorf("failed to resolve user: %w", err)
 	}
 
-	if identity.ClientParams.AllowGlobalOrg && identity.OrgID == authn.GlobalOrgID {
+	if id.ClientParams.AllowGlobalOrg && id.OrgID == authn.GlobalOrgID {
 		usr.Teams = nil
 		usr.OrgName = ""
 		usr.OrgRole = org.RoleNone
 		usr.OrgID = authn.GlobalOrgID
 	}
 
-	syncSignedInUserToIdentity(usr, identity)
+	syncSignedInUserToIdentity(usr, id)
 	return nil
 }
 
-func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "user.sync.SyncLastSeenHook")
+	defer span.End()
+
 	if r.GetMeta(authn.MetaKeyIsLogin) != "" {
 		// Do not sync last seen for login requests
 		return nil
 	}
 
-	if !identity.ID.IsNamespace(authn.NamespaceUser, authn.NamespaceServiceAccount) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
-	userID, err := identity.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", identity.ID, "err", err)
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
 	}
 
+	goCtx := context.WithoutCancel(ctx)
 	go func(userID int64) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -165,7 +179,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			}
 		}()
 
-		if err := s.userService.UpdateLastSeenAt(context.Background(),
+		if err := s.userService.UpdateLastSeenAt(goCtx,
 			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
 			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
@@ -175,18 +189,21 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 	return nil
 }
 
-func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	if !identity.ClientParams.EnableUser {
+func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	ctx, span := s.tracer.Start(ctx, "user.sync.EnableUserHook")
+	defer span.End()
+
+	if !id.ClientParams.EnableUser {
 		return nil
 	}
 
-	if !identity.ID.IsNamespace(authn.NamespaceUser) {
+	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		return nil
 	}
 
-	userID, err := identity.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", identity.ID, "err", err)
+		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
 	}
 
@@ -195,6 +212,9 @@ func (s *UserSync) EnableUserHook(ctx context.Context, identity *authn.Identity,
 }
 
 func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
+	ctx, span := s.tracer.Start(ctx, "user.sync.upsertAuthConnection")
+	defer span.End()
+
 	if identity.AuthenticatedBy == "" {
 		return nil
 	}
@@ -221,6 +241,9 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 }
 
 func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
+	ctx, span := s.tracer.Start(ctx, "user.sync.updateUserAttributes")
+	defer span.End()
+
 	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthenticatedBy); errProtection != nil {
 		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
 	}
@@ -272,6 +295,8 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.sync.createUser")
+	defer span.End()
 	// FIXME(jguer): this should be done in the user service
 	// quota check: we can have quotas on both global and org level
 	// therefore we need to query check quota for both user and org services
@@ -311,6 +336,9 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 }
 
 func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user.User, *login.UserAuth, error) {
+	ctx, span := s.tracer.Start(ctx, "user.sync.getUser")
+	defer span.End()
+
 	// Check auth info fist
 	if identity.AuthID != "" && identity.AuthenticatedBy != "" {
 		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthenticatedBy}
@@ -360,11 +388,14 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 }
 
 func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupParams) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.sync.lookupByOneOf")
+	defer span.End()
+
 	var usr *user.User
 	var err error
 
 	// If not found, try to find the user by email address
-	if usr == nil && params.Email != nil && *params.Email != "" {
+	if params.Email != nil && *params.Email != "" {
 		usr, err = s.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: *params.Email})
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
@@ -389,7 +420,9 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = authn.NewNamespaceID(authn.NamespaceUser, usr.ID)
+	id.ID = strconv.FormatInt(usr.ID, 10)
+	id.UID = usr.UID
+	id.Type = claims.TypeUser
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
@@ -398,17 +431,18 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.
-func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity) {
-	identity.Name = usr.Name
-	identity.Login = usr.Login
-	identity.Email = usr.Email
-	identity.OrgID = usr.OrgID
-	identity.OrgName = usr.OrgName
-	identity.OrgRoles = map[int64]org.RoleType{identity.OrgID: usr.OrgRole}
-	identity.HelpFlags1 = usr.HelpFlags1
-	identity.Teams = usr.Teams
-	identity.LastSeenAt = usr.LastSeenAt
-	identity.IsDisabled = usr.IsDisabled
-	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
-	identity.EmailVerified = usr.EmailVerified
+func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
+	id.UID = usr.UserUID
+	id.Name = usr.Name
+	id.Login = usr.Login
+	id.Email = usr.Email
+	id.OrgID = usr.OrgID
+	id.OrgName = usr.OrgName
+	id.OrgRoles = map[int64]org.RoleType{id.OrgID: usr.OrgRole}
+	id.HelpFlags1 = usr.HelpFlags1
+	id.Teams = usr.Teams
+	id.LastSeenAt = usr.LastSeenAt
+	id.IsDisabled = usr.IsDisabled
+	id.IsGrafanaAdmin = &usr.IsGrafanaAdmin
+	id.EmailVerified = usr.EmailVerified
 }

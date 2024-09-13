@@ -1,11 +1,13 @@
 package v0alpha1
 
 import (
+	"fmt"
+	"time"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 const (
@@ -14,10 +16,28 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var ExternalNameResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var ExternalNameResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"externalnames", "externalname", "ExternalName",
 	func() runtime.Object { return &ExternalName{} },
 	func() runtime.Object { return &ExternalNameList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Host", Type: "string", Format: "string", Description: "The service host"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*ExternalName)
+			if !ok {
+				return nil, fmt.Errorf("expected external name")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.Host,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	}, // default table converter
 )
 
 var (

@@ -1,14 +1,15 @@
-import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
+import { Store } from '@reduxjs/toolkit';
 import { render, RenderOptions } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory, MemoryHistoryBuildOptions } from 'history';
-import React, { Fragment, PropsWithChildren } from 'react';
+import { Fragment, PropsWithChildren } from 'react';
+import * as React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { PreloadedState } from 'redux';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { HistoryWrapper, setLocationService } from '@grafana/runtime';
+import { HistoryWrapper, LocationServiceProvider, setLocationService } from '@grafana/runtime';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
@@ -19,11 +20,11 @@ interface ExtendedRenderOptions extends RenderOptions {
    * Optional store to use for rendering. If not provided, a fresh store will be generated
    * via `configureStore` method
    */
-  store?: ToolkitStore;
+  store?: Store<StoreState>;
   /**
    * Partial state to use for preloading store when rendering tests
    */
-  preloadedState?: PreloadedState<StoreState>;
+  preloadedState?: Partial<StoreState>;
   /**
    * Should the wrapper be generated with a wrapping Router component?
    * Useful if you're testing something that needs more nuanced routing behaviour
@@ -46,19 +47,24 @@ const getWrapper = ({
   historyOptions,
   grafanaContext,
 }: ExtendedRenderOptions & {
-  grafanaContext?: GrafanaContextType;
+  grafanaContext?: Partial<GrafanaContextType>;
 }) => {
   const reduxStore = store || configureStore();
-  /**
-   * Conditional router - either a MemoryRouter or just a Fragment
-   */
-  const PotentialRouter = renderWithRouter ? Router : Fragment;
 
   // Create a fresh location service for each test - otherwise we run the risk
   // of it being stateful in between runs
   const history = createMemoryHistory(historyOptions);
   const locationService = new HistoryWrapper(history);
   setLocationService(locationService);
+
+  /**
+   * Conditional router - either a MemoryRouter or just a Fragment
+   */
+  const PotentialRouter = renderWithRouter
+    ? ({ children }: PropsWithChildren) => <Router history={history}>{children}</Router>
+    : ({ children }: PropsWithChildren) => <Fragment>{children}</Fragment>;
+
+  const PotentialCompatRouter = renderWithRouter ? CompatRouter : Fragment;
 
   const context = {
     ...getGrafanaContextMock(),
@@ -73,8 +79,12 @@ const getWrapper = ({
     return (
       <Provider store={reduxStore}>
         <GrafanaContext.Provider value={context}>
-          <PotentialRouter history={history}>
-            <ModalsContextProvider>{children}</ModalsContextProvider>
+          <PotentialRouter>
+            <LocationServiceProvider service={locationService}>
+              <PotentialCompatRouter>
+                <ModalsContextProvider>{children}</ModalsContextProvider>
+              </PotentialCompatRouter>
+            </LocationServiceProvider>
           </PotentialRouter>
         </GrafanaContext.Provider>
       </Provider>
@@ -91,12 +101,14 @@ const customRender = (
   ui: React.ReactElement,
   { renderWithRouter = true, ...renderOptions }: ExtendedRenderOptions = {}
 ) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const store = renderOptions.preloadedState ? configureStore(renderOptions?.preloadedState as any) : undefined;
+  const user = userEvent.setup();
+  const store = renderOptions.preloadedState ? configureStore(renderOptions?.preloadedState) : undefined;
   const AllTheProviders = renderOptions.wrapper || getWrapper({ store, renderWithRouter, ...renderOptions });
 
   return {
     ...render(ui, { wrapper: AllTheProviders, ...renderOptions }),
+    /** Instance of `userEvent.setup()` ready for use to interact with rendered component */
+    user,
     store,
   };
 };

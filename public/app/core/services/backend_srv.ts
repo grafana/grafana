@@ -15,24 +15,20 @@ import {
 } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
 
-import { AppEvents, DataQueryErrorType } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, deprecationWarning } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
 import { ShowModalReactEvent } from '../../types/events';
-import {
-  isContentTypeApplicationJson,
-  parseInitFromOptions,
-  parseResponseBody,
-  parseUrlFromOptions,
-} from '../utils/fetch';
+import { isContentTypeJson, parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 
 import { FetchQueue } from './FetchQueue';
@@ -228,7 +224,7 @@ export class BackendSrv implements BackendService {
       mergeMap(async (response) => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
 
-        const responseType = options.responseType ?? (isContentTypeApplicationJson(headers) ? 'json' : undefined);
+        const responseType = options.responseType ?? (isContentTypeJson(headers) ? 'json' : undefined);
 
         const data = await parseResponseBody<T>(response, responseType);
         const fetchResponse: FetchResponse<T> = {
@@ -512,8 +508,12 @@ export class BackendSrv implements BackendService {
     return this.get('/api/search', query);
   }
 
+  /** @deprecated */
   getDashboardByUid(uid: string): Promise<DashboardDTO> {
-    return this.get<DashboardDTO>(`/api/dashboards/uid/${uid}`);
+    // NOTE: When this is removed, we can also remove most instances of:
+    // jest.mock('app/features/live/dashboard/dashboardWatcher
+    deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
+    return getDashboardAPI().getDashboardDTO(uid);
   }
 
   validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
@@ -522,7 +522,7 @@ export class BackendSrv implements BackendService {
     //  config.featureToggles.showDashboardValidationWarnings
     return Promise.resolve({
       isValid: false,
-      message: 'dashboard validation is supported',
+      message: 'dashboard validation is not supported',
     });
   }
 

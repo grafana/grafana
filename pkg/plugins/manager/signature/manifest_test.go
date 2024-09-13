@@ -351,6 +351,10 @@ func (f fsPathSeparatorFiles) Files() ([]string, error) {
 	return files, nil
 }
 
+func (f fsPathSeparatorFiles) Rel(base string) (string, error) {
+	return filepath.Rel(f.Base(), strings.ReplaceAll(base, f.separator, string(filepath.Separator)))
+}
+
 func (f fsPathSeparatorFiles) Open(name string) (fs.File, error) {
 	return f.FS.Open(strings.ReplaceAll(name, f.separator, string(filepath.Separator)))
 }
@@ -381,11 +385,13 @@ func TestFSPathSeparatorFiles(t *testing.T) {
 }
 
 func fileList(manifest *PluginManifest) []string {
-	var keys []string
+	keys := make([]string, 0, len(manifest.Files))
 	for k := range manifest.Files {
 		keys = append(keys, k)
 	}
+
 	sort.Strings(keys)
+
 	return keys
 }
 

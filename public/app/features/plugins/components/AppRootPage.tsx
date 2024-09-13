@@ -1,6 +1,7 @@
 // Libraries
 import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import * as React from 'react';
 import { useLocation, useRouteMatch } from 'react-router-dom';
 
 import {
@@ -23,6 +24,12 @@ import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 import { getMessageFromError } from 'app/core/utils/errors';
 
+import {
+  ExtensionRegistriesProvider,
+  useAddedLinksRegistry,
+  useAddedComponentsRegistry,
+  useExposedComponentsRegistry,
+} from '../extensions/ExtensionRegistriesContext';
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
 import { buildPluginSectionNav, pluginsLogger } from '../utils';
@@ -32,8 +39,9 @@ import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 interface Props {
   // The ID of the plugin we would like to load and display
   pluginId: string;
-  // The root navModelItem for the plugin (root = lives directly under 'home')
-  pluginNavSection: NavModelItem;
+  // The root navModelItem for the plugin (root = lives directly under 'home'). In case app does not need a nva model,
+  // for example it's in some way embedded or shown in a sideview this can be undefined.
+  pluginNavSection?: NavModelItem;
 }
 
 interface State {
@@ -47,12 +55,15 @@ interface State {
 const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
 
 export function AppRootPage({ pluginId, pluginNavSection }: Props) {
+  const addedLinksRegistry = useAddedLinksRegistry();
+  const addedComponentsRegistry = useAddedComponentsRegistry();
+  const exposedComponentsRegistry = useExposedComponentsRegistry();
   const match = useRouteMatch();
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
   const { plugin, loading, loadingError, pluginNav } = state;
-  const navModel = buildPluginSectionNav(pluginNavSection, pluginNav, currentUrl);
+  const navModel = buildPluginSectionNav(currentUrl, pluginNavSection);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel), [navModel]);
   const grafanaContext = useGrafana();
@@ -87,13 +98,21 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   const pluginRoot = plugin.root && (
     <PluginContextProvider meta={plugin.meta}>
-      <plugin.root
-        meta={plugin.meta}
-        basename={match.url}
-        onNavChanged={onNavChanged}
-        query={queryParams}
-        path={location.pathname}
-      />
+      <ExtensionRegistriesProvider
+        registries={{
+          addedLinksRegistry: addedLinksRegistry.readOnly(),
+          addedComponentsRegistry: addedComponentsRegistry.readOnly(),
+          exposedComponentsRegistry: exposedComponentsRegistry.readOnly(),
+        }}
+      >
+        <plugin.root
+          meta={plugin.meta}
+          basename={match.url}
+          onNavChanged={onNavChanged}
+          query={queryParams}
+          path={location.pathname}
+        />
+      </ExtensionRegistriesProvider>
     </PluginContextProvider>
   );
 

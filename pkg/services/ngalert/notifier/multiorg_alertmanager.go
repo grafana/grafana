@@ -10,7 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingCluster "github.com/grafana/alerting/cluster"
-	"github.com/grafana/grafana/pkg/util/errutil"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
@@ -67,7 +68,7 @@ type Alertmanager interface {
 
 	// Receivers
 	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
-	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
+	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
 	// Lifecycle
@@ -142,13 +143,17 @@ func NewMultiOrgAlertmanager(
 		peer:           &NilPeer{},
 	}
 
-	if err := moa.setupClustering(cfg); err != nil {
-		return nil, err
+	if cfg.UnifiedAlerting.SkipClustering {
+		l.Info("Skipping setting up clustering for MOA")
+	} else {
+		if err := moa.setupClustering(cfg); err != nil {
+			return nil, err
+		}
 	}
 
 	// Set up the default per tenant Alertmanager factory.
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
-		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
+		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID), l)
 		stateStore := NewFileStore(orgID, kvStore)
 		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, stateStore, moa.peer, moa.decryptFn, moa.ns, m, featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting))
 	}
@@ -169,13 +174,15 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
-			addr:     cfg.UnifiedAlerting.HARedisAddr,
-			name:     cfg.UnifiedAlerting.HARedisPeerName,
-			prefix:   cfg.UnifiedAlerting.HARedisPrefix,
-			password: cfg.UnifiedAlerting.HARedisPassword,
-			username: cfg.UnifiedAlerting.HARedisUsername,
-			db:       cfg.UnifiedAlerting.HARedisDB,
-			maxConns: cfg.UnifiedAlerting.HARedisMaxConns,
+			addr:       cfg.UnifiedAlerting.HARedisAddr,
+			name:       cfg.UnifiedAlerting.HARedisPeerName,
+			prefix:     cfg.UnifiedAlerting.HARedisPrefix,
+			password:   cfg.UnifiedAlerting.HARedisPassword,
+			username:   cfg.UnifiedAlerting.HARedisUsername,
+			db:         cfg.UnifiedAlerting.HARedisDB,
+			maxConns:   cfg.UnifiedAlerting.HARedisMaxConns,
+			tlsEnabled: cfg.UnifiedAlerting.HARedisTLSEnabled,
+			tls:        cfg.UnifiedAlerting.HARedisTLSConfig,
 		}, clusterLogger, moa.metrics.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
 		if err != nil {
 			return fmt.Errorf("unable to initialize redis: %w", err)
@@ -204,12 +211,11 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			true,
 			cfg.UnifiedAlerting.HALabel,
 		)
-
 		if err != nil {
 			return fmt.Errorf("unable to initialize gossip mesh: %w", err)
 		}
 
-		err = peer.Join(alertingCluster.DefaultReconnectInterval, alertingCluster.DefaultReconnectTimeout)
+		err = peer.Join(alertingCluster.DefaultReconnectInterval, cfg.UnifiedAlerting.HAReconnectTimeout)
 		if err != nil {
 			moa.logger.Error("Msg", "Unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
 		}
@@ -351,7 +357,8 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 // active organizations. The original intention for this was the cleanup deleted orgs, that have had their states
 // saved to the kvstore after deletion on instance shutdown.
 func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
-	activeOrganizations map[int64]struct{}) {
+	activeOrganizations map[int64]struct{},
+) {
 	storedFiles := []string{NotificationLogFilename, SilencesFilename}
 	for _, fileName := range storedFiles {
 		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)

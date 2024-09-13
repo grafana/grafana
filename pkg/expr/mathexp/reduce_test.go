@@ -3,6 +3,7 @@ package mathexp
 import (
 	"math"
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 
@@ -89,6 +90,100 @@ func TestSeriesReduce(t *testing.T) {
 			errIs:       require.NoError,
 			resultsIs:   require.Equal,
 			results:     resultValuesNoErr(makeNumber("", nil, NaN)),
+		},
+		{
+			name:        "median empty series",
+			red:         "median",
+			varToReduce: "A",
+			vars:        seriesEmpty,
+			errIs:       require.NoError,
+			resultsIs:   require.Equal,
+			results:     resultValuesNoErr(makeNumber("", nil, NaN)),
+		},
+		{
+			name:        "median series with a nil value",
+			red:         "median",
+			varToReduce: "A",
+			vars:        seriesWithNil,
+			errIs:       require.NoError,
+			resultsIs:   require.Equal,
+			results:     resultValuesNoErr(makeNumber("", nil, NaN)),
+		},
+		{
+			name:        "median series even number of elements",
+			red:         "median",
+			varToReduce: "A",
+			vars: Vars{
+				"A": resultValuesNoErr(
+					makeSeries("temp", nil, tp{
+						time.Unix(5, 0), float64Pointer(20),
+					}, tp{
+						time.Unix(10, 0), float64Pointer(10),
+					}),
+				),
+			},
+			errIs:     require.NoError,
+			resultsIs: require.Equal,
+			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(15))),
+		},
+		{
+			name:        "median series odd number of elements",
+			red:         "median",
+			varToReduce: "A",
+			vars: Vars{
+				"A": resultValuesNoErr(
+					makeSeries("temp", nil, tp{
+						time.Unix(5, 0), float64Pointer(20),
+					}, tp{
+						time.Unix(10, 0), float64Pointer(10),
+					}, tp{
+						time.Unix(15, 0), float64Pointer(5),
+					}),
+				),
+			},
+			errIs:     require.NoError,
+			resultsIs: require.Equal,
+			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(10))),
+		},
+		{
+			name:        "median series with repeated values",
+			red:         "median",
+			varToReduce: "A",
+			vars: Vars{
+				"A": resultValuesNoErr(
+					makeSeries("temp", nil, tp{
+						time.Unix(5, 0), float64Pointer(5),
+					}, tp{
+						time.Unix(10, 0), float64Pointer(5),
+					}, tp{
+						time.Unix(15, 0), float64Pointer(5),
+					}),
+				),
+			},
+			errIs:     require.NoError,
+			resultsIs: require.Equal,
+			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(5))),
+		},
+		{
+			name:        "median series with negative values",
+			red:         "median",
+			varToReduce: "A",
+			vars: Vars{
+				"A": resultValuesNoErr(
+					makeSeries("temp", nil, tp{
+						time.Unix(5, 0), float64Pointer(-1),
+					}, tp{
+						time.Unix(10, 0), float64Pointer(-3),
+					}, tp{
+						time.Unix(10, 0), float64Pointer(-4),
+					}, tp{
+						time.Unix(15, 0), float64Pointer(-2),
+					}),
+				),
+			},
+			errIs:     require.NoError,
+			resultsIs: require.Equal,
+			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(-2.5))),
 		},
 		{
 			name:        "min series with a nil value",
@@ -258,6 +353,27 @@ func TestSeriesReduceDropNN(t *testing.T) {
 			results:     resultValuesNoErr(makeNumber("", nil, nil)),
 		},
 		{
+			name:        "DropNN: median series with a nil value and real value",
+			red:         "median",
+			varToReduce: "A",
+			vars:        seriesWithNil,
+			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(2))),
+		},
+		{
+			name:        "DropNN: median empty series",
+			red:         "median",
+			varToReduce: "A",
+			vars:        seriesEmpty,
+			results:     resultValuesNoErr(makeNumber("", nil, nil)),
+		},
+		{
+			name:        "DropNN: median series that becomes empty after filtering non-number",
+			red:         "median",
+			varToReduce: "A",
+			vars:        seriesNonNumbers,
+			results:     resultValuesNoErr(makeNumber("", nil, nil)),
+		},
+		{
 			name:        "DropNN: mean series that becomes empty after filtering non-number",
 			red:         "mean",
 			varToReduce: "A",
@@ -352,6 +468,41 @@ func TestSeriesReduceReplaceNN(t *testing.T) {
 			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(replaceWith))),
 		},
 		{
+			name:        "replaceNN: median series with a nil value and real value",
+			red:         "median",
+			varToReduce: "A",
+			vars: Vars{
+				"A": resultValuesNoErr(
+					makeSeries("temp", nil, tp{
+						time.Unix(5, 0), float64Pointer(2),
+					}, tp{
+						time.Unix(10, 0), nil,
+					}, tp{
+						time.Unix(15, 0), float64Pointer(5),
+					}),
+				),
+			},
+			results: resultValuesNoErr(
+				makeNumber("", nil, float64Pointer(
+					sortedFloat64([]float64{2, 5, replaceWith})[1]),
+				),
+			),
+		},
+		{
+			name:        "replaceNN: median empty series",
+			red:         "median",
+			varToReduce: "A",
+			vars:        seriesEmpty,
+			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(replaceWith))),
+		},
+		{
+			name:        "replaceNN: median series that becomes empty after filtering non-number",
+			red:         "median",
+			varToReduce: "A",
+			vars:        seriesNonNumbers,
+			results:     resultValuesNoErr(makeNumber("", nil, float64Pointer(replaceWith))),
+		},
+		{
 			name:        "replaceNN: count empty series",
 			red:         "count",
 			varToReduce: "A",
@@ -385,4 +536,10 @@ func TestSeriesReduceReplaceNN(t *testing.T) {
 			}
 		})
 	}
+}
+
+func sortedFloat64(f []float64) []float64 {
+	f = append([]float64(nil), f...)
+	sort.Float64s(f)
+	return f
 }

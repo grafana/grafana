@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Router } from 'react-router-dom';
 import { Observable } from 'rxjs';
 
@@ -49,7 +48,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: 'Some completed genereated text',
         setMessages: jest.fn(),
-        setStopGeneration: jest.fn(),
+        stopGeneration: jest.fn(),
         value: {
           enabled: false,
           stream: new Observable().subscribe(),
@@ -75,9 +74,9 @@ describe('GenAIButton', () => {
         messages: [],
         error: undefined,
         streamStatus: StreamStatus.IDLE,
-        reply: 'Some completed genereated text',
+        reply: 'Some completed generated text',
         setMessages: setMessagesMock,
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -85,7 +84,7 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should render text ', async () => {
+    it('should render text', async () => {
       setup();
 
       waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
@@ -134,6 +133,23 @@ describe('GenAIButton', () => {
 
       await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
     });
+
+    it('should display the tooltip if provided', async () => {
+      const { getByRole, getByTestId } = setup({
+        tooltip: 'This is a tooltip',
+        onGenerate,
+        messages: [],
+        eventTrackingSrc,
+      });
+
+      // Wait for the check to be completed
+      const button = getByRole('button');
+      await userEvent.hover(button);
+
+      const tooltip = await waitFor(() => getByTestId(selectors.components.Tooltip.container));
+      expect(tooltip).toBeVisible();
+      expect(tooltip).toHaveTextContent('This is a tooltip');
+    });
   });
 
   describe('when it is generating data', () => {
@@ -146,7 +162,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.GENERATING,
         reply: 'Some incomplete generated text',
         setMessages: jest.fn(),
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -154,7 +170,7 @@ describe('GenAIButton', () => {
       });
     });
 
-    it('should render loading text ', async () => {
+    it('should render loading text', async () => {
       setup();
 
       waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
@@ -188,7 +204,6 @@ describe('GenAIButton', () => {
       await fireEvent.click(generateButton);
 
       expect(setShouldStopMock).toHaveBeenCalledTimes(1);
-      expect(setShouldStopMock).toHaveBeenCalledWith(true);
       expect(onGenerate).not.toHaveBeenCalled();
     });
   });
@@ -197,18 +212,27 @@ describe('GenAIButton', () => {
     const setShouldStopMock = jest.fn();
 
     beforeEach(() => {
-      jest.mocked(useOpenAIStream).mockReturnValue({
+      const reply = 'Some completed generated text';
+      const returnValue = {
         messages: [],
         error: undefined,
         streamStatus: StreamStatus.COMPLETED,
-        reply: 'Some completed generated text',
+        reply,
         setMessages: jest.fn(),
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
         },
-      });
+      };
+
+      jest
+        .mocked(useOpenAIStream)
+        .mockImplementationOnce((options) => {
+          options?.onResponse?.(reply);
+          return returnValue;
+        })
+        .mockImplementation(() => returnValue);
     });
 
     it('should render improve text ', async () => {
@@ -244,7 +268,7 @@ describe('GenAIButton', () => {
         streamStatus: StreamStatus.IDLE,
         reply: '',
         setMessages: setMessagesMock,
-        setStopGeneration: setShouldStopMock,
+        stopGeneration: setShouldStopMock,
         value: {
           enabled: true,
           stream: new Observable().subscribe(),
@@ -289,7 +313,30 @@ describe('GenAIButton', () => {
       await userEvent.hover(tooltip);
       expect(tooltip).toBeVisible();
       expect(tooltip).toHaveTextContent(
-        'Failed to generate content using OpenAI. Please try again or if the problem persist, contact your organization admin.'
+        'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
+      );
+    });
+
+    it('error message should overwrite the tooltip content passed in tooltip prop', async () => {
+      const { getByRole, getByTestId } = setup({
+        tooltip: 'This is a tooltip',
+        onGenerate,
+        messages: [],
+        eventTrackingSrc,
+      });
+
+      // Wait for the check to be completed
+      const button = getByRole('button');
+      await userEvent.hover(button);
+
+      const tooltip = await waitFor(() => getByTestId(selectors.components.Tooltip.container));
+      expect(tooltip).toBeVisible();
+
+      // The tooltip keeps interactive to be able to click the link
+      await userEvent.hover(tooltip);
+      expect(tooltip).toBeVisible();
+      expect(tooltip).toHaveTextContent(
+        'Failed to generate content using OpenAI. Please try again or if the problem persists, contact your organization admin.'
       );
     });
 

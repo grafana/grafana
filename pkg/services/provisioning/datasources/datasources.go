@@ -12,7 +12,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-type Store interface {
+type BaseDataSourceService interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 	GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error)
 	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
@@ -35,8 +35,8 @@ var (
 
 // Provision scans a directory for provisioning config files
 // and provisions the datasource in those files.
-func Provision(ctx context.Context, configDirectory string, store Store, correlationsStore CorrelationsStore, orgService org.Service) error {
-	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), store, correlationsStore, orgService)
+func Provision(ctx context.Context, configDirectory string, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) error {
+	dc := newDatasourceProvisioner(log.New("provisioning.datasources"), dsService, correlationsStore, orgService)
 	return dc.applyChanges(ctx, configDirectory)
 }
 
@@ -45,15 +45,15 @@ func Provision(ctx context.Context, configDirectory string, store Store, correla
 type DatasourceProvisioner struct {
 	log               log.Logger
 	cfgProvider       *configReader
-	store             Store
+	dsService         BaseDataSourceService
 	correlationsStore CorrelationsStore
 }
 
-func newDatasourceProvisioner(log log.Logger, store Store, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
+func newDatasourceProvisioner(log log.Logger, dsService BaseDataSourceService, correlationsStore CorrelationsStore, orgService org.Service) DatasourceProvisioner {
 	return DatasourceProvisioner{
 		log:               log,
 		cfgProvider:       &configReader{log: log, orgService: orgService},
-		store:             store,
+		dsService:         dsService,
 		correlationsStore: correlationsStore,
 	}
 }
@@ -65,7 +65,7 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 
 	for _, ds := range cfg.Datasources {
 		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
-		dataSource, err := dc.store.GetDataSource(ctx, cmd)
+		dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
 		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return err
 		}
@@ -73,14 +73,14 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			insertCmd := createInsertCommand(ds)
 			dc.log.Info("inserting datasource from configuration", "name", insertCmd.Name, "uid", insertCmd.UID)
-			_, err = dc.store.AddDataSource(ctx, insertCmd)
+			_, err = dc.dsService.AddDataSource(ctx, insertCmd)
 			if err != nil {
 				return err
 			}
 		} else {
 			updateCmd := createUpdateCommand(ds, dataSource.ID)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
-			if _, err := dc.store.UpdateDataSource(ctx, updateCmd); err != nil {
+			if _, err := dc.dsService.UpdateDataSource(ctx, updateCmd); err != nil {
 				if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
 					dc.log.Debug("ignoring old version of datasource", "name", updateCmd.Name, "uid", updateCmd.UID)
 				} else {
@@ -96,7 +96,7 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg *configs) error {
 	for _, ds := range cfg.Datasources {
 		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
-		dataSource, err := dc.store.GetDataSource(ctx, cmd)
+		dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
 
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return err
@@ -154,7 +154,7 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 		}
 	}
 
-	prunableProvisionedDataSources, err := dc.store.GetPrunableProvisionedDataSources(ctx)
+	prunableProvisionedDataSources, err := dc.dsService.GetPrunableProvisionedDataSources(ctx)
 	if err != nil {
 		return err
 	}
@@ -192,6 +192,13 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 }
 
 func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+	// we look for a correlation type at the root if it is defined, if not use default
+	// we ignore the legacy config.type value - the only valid value at that version was "query"
+	var corrType = correlation["type"]
+	if corrType == nil || corrType == "" {
+		corrType = correlations.TypeQuery
+	}
+
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	createCommand := correlations.CreateCorrelationCommand{
 		SourceUID:   SourceUID,
@@ -199,6 +206,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 		Description: correlation["description"].(string),
 		OrgId:       OrgId,
 		Provisioned: true,
+		Type:        corrType.(correlations.CorrelationType),
 	}
 
 	targetUID, ok := correlation["targetUID"].(string)
@@ -222,11 +230,6 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 		}
 
 		createCommand.Config = config
-	} else {
-		// when provisioning correlations without config we default to type="query"
-		createCommand.Config = correlations.CorrelationConfig{
-			Type: correlations.ConfigTypeQuery,
-		}
 	}
 	if err := createCommand.Validate(); err != nil {
 		return correlations.CreateCorrelationCommand{}, err
@@ -238,17 +241,21 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig, willExistAfterProvisioning map[DataSourceMapKey]bool) error {
 	for _, ds := range dsToDelete {
 		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgID: ds.OrgID}
-		_, err := dc.store.GetDataSource(ctx, getDsQuery)
+		existingDs, err := dc.dsService.GetDataSource(ctx, getDsQuery)
 
-		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return err
+		if err != nil {
+			if errors.Is(err, datasources.ErrDataSourceNotFound) {
+				continue
+			} else {
+				return err
+			}
 		}
 
 		// Skip publishing the event as the data source is not really deleted, it will be re-created during provisioning
 		// This is to avoid cleaning up any resources related to the data source (e.g. correlations)
 		skipPublish := willExistAfterProvisioning[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}]
-		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name, SkipPublish: skipPublish}
-		if err := dc.store.DeleteDataSource(ctx, cmd); err != nil {
+		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name, UID: existingDs.UID, SkipPublish: skipPublish}
+		if err := dc.dsService.DeleteDataSource(ctx, cmd); err != nil {
 			return err
 		}
 

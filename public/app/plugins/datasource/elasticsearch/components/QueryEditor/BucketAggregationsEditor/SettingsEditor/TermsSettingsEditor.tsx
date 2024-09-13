@@ -1,5 +1,5 @@
 import { uniqueId } from 'lodash';
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Select, Input } from '@grafana/ui';

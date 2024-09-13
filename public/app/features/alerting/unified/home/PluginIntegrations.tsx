@@ -1,21 +1,17 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
-import { PluginExtensionPoints } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
-import { usePluginComponentExtensions } from '@grafana/runtime';
 import { Stack, Text } from '@grafana/ui';
 import { useStyles2 } from '@grafana/ui/';
+
+import { useAlertingHomePageExtensions } from '../plugins/useAlertingHomePageExtensions';
 
 export function PluginIntegrations() {
   const styles = useStyles2(getStyles);
 
-  const { extensions } = usePluginComponentExtensions({
-    extensionPointId: PluginExtensionPoints.AlertingHomePage,
-    limitPerPlugin: 1,
-  });
+  const { components } = useAlertingHomePageExtensions();
 
-  if (extensions.length === 0) {
+  if (components.length === 0) {
     return null;
   }
 
@@ -25,9 +21,9 @@ export function PluginIntegrations() {
         Speed up your alerts creation now by using one of our tailored apps
       </Text>
       <Stack gap={2} wrap="wrap" direction="row">
-        {extensions.map((extension) => (
-          <div key={extension.id} className={styles.box}>
-            <extension.component />
+        {components.map((Component, i) => (
+          <div key={i} className={styles.box}>
+            <Component />
           </div>
         ))}
       </Stack>

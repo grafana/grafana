@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -9,8 +9,6 @@ import { useDispatch } from 'app/types';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
-
-import { checkForPathSeparator } from './util';
 
 interface Props {
   rulesSourceName: string;
@@ -74,9 +72,6 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
-            validate: {
-              pathSeparator: checkForPathSeparator,
-            },
           }}
         />
       </Field>
@@ -98,9 +93,6 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
-            validate: {
-              pathSeparator: checkForPathSeparator,
-            },
           }}
         />
       </Field>

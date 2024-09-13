@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataSourceSettings } from '@grafana/data';
 import { ConfigSubSection, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';

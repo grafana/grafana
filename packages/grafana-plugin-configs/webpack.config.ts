@@ -59,7 +59,6 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
       'redux',
       'rxjs',
       'react-router',
-      'react-router-dom',
       'd3',
       'angular',
       '@grafana/ui',
@@ -99,6 +98,11 @@ const config = async (env: Record<string, unknown>): Promise<Configuration> => {
                   tsx: true,
                   decorators: false,
                   dynamicImport: true,
+                },
+                transform: {
+                  react: {
+                    runtime: 'automatic',
+                  },
                 },
               },
             },

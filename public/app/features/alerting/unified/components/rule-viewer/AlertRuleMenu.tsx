@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { AppEvents } from '@grafana/data';
 import { ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
@@ -11,20 +9,20 @@ import { CombinedRule, RuleIdentifier } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { AlertRuleAction, useAlertRuleAbility } from '../../hooks/useAbilities';
-import { createShareLink, isLocalDevEnv, isOpenSourceEdition, makeRuleBasedSilenceLink } from '../../utils/misc';
+import { createShareLink, isLocalDevEnv, isOpenSourceEdition } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { DeclareIncidentMenuItem } from '../bridges/DeclareIncidentButton';
 
 interface Props {
   rule: CombinedRule;
   identifier: RuleIdentifier;
   showCopyLinkButton?: boolean;
+  handleSilence: () => void;
   handleDelete: (rule: CombinedRule) => void;
   handleDuplicateRule: (identifier: RuleIdentifier) => void;
   onPauseChange?: () => void;
   buttonSize?: ComponentSize;
-  hideLabels?: boolean;
 }
 
 /**
@@ -35,6 +33,7 @@ const AlertRuleMenu = ({
   rule,
   identifier,
   showCopyLinkButton,
+  handleSilence,
   handleDelete,
   handleDuplicateRule,
   onPauseChange,
@@ -77,13 +76,7 @@ const AlertRuleMenu = ({
   const menuItems = (
     <>
       {canPause && <MenuItemPauseRule rule={rule} onPauseChange={onPauseChange} />}
-      {canSilence && (
-        <Menu.Item
-          label="Silence notifications"
-          icon="bell-slash"
-          url={makeRuleBasedSilenceLink(identifier.ruleSourceName, rule)}
-        />
-      )}
+      {canSilence && <Menu.Item label="Silence notifications" icon="bell-slash" onClick={handleSilence} />}
       {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={rule.name} url={''} />}
       {canDuplicate && <Menu.Item label="Duplicate" icon="copy" onClick={() => handleDuplicateRule(identifier)} />}
       {showDivider && <Menu.Divider />}
@@ -129,9 +122,12 @@ type PropsWithIdentifier = { identifier: RuleIdentifier };
 
 const ExportMenuItem = ({ identifier }: PropsWithIdentifier) => {
   const returnTo = location.pathname + location.search;
-  const url = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`, {
-    returnTo,
-  });
+  const url = createRelativeUrl(
+    `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
+    {
+      returnTo,
+    }
+  );
 
   return <Menu.Item key="with-modifications" label="With modifications" icon="file-edit-alt" url={url} />;
 };

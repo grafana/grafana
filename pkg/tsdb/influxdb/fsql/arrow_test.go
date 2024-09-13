@@ -60,7 +60,7 @@ func TestNewQueryDataResponse(t *testing.T) {
 		newJSONArray(`[0, 1, 2]`, &arrow.TimestampType{}),
 	}
 
-	var arr []arrow.Array
+	arr := make([]arrow.Array, 0, len(strValues))
 	for _, v := range strValues {
 		tarr, _, err := array.FromJSON(
 			alloc,
@@ -315,7 +315,7 @@ func TestNewFrame(t *testing.T) {
 		},
 	}
 	if !cmp.Equal(expected, actual, cmp.Comparer(cmpFrame)) {
-		log.Fatalf(cmp.Diff(expected, actual))
+		log.Fatal(cmp.Diff(expected, actual))
 	}
 }
 

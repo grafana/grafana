@@ -1,9 +1,9 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ExemplarSetting.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker } from '@grafana/runtime';
+import { config, DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, Input, Switch, useTheme2 } from '@grafana/ui';
 
 import { ExemplarTraceIdDestination } from '../types';
@@ -56,6 +56,11 @@ export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) 
           interactive={true}
         >
           <DataSourcePicker
+            filter={
+              config.featureToggles.azureMonitorPrometheusExemplars
+                ? undefined
+                : (ds) => ds.type !== 'grafana-azure-monitor-datasource'
+            }
             tracing={true}
             current={value.datasourceUid}
             noDefault={true}

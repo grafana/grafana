@@ -11,19 +11,16 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
-	"github.com/grafana/grafana/pkg/apiserver/builder"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	"github.com/grafana/grafana/pkg/registry/apis/example"
-	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/query/client"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
@@ -34,8 +31,13 @@ type APIServerFactory interface {
 	// Given the flags, what can we produce
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
+	// Optional override for apiserver's BuildHandlerChainFunc, return nil if you want to use the grafana's default chain func defined in pkg/services/apiserver/builder/helper.go
+	GetBuildHandlerChainFunc(tracer tracing.Tracer, builders []builder.APIGroupBuilder) builder.BuildHandlerChainFunc
+
 	// Make an API server for a given group+version
 	MakeAPIServer(ctx context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
+
+	Shutdown()
 }
 
 // Zero dependency provider for testing
@@ -46,6 +48,10 @@ func GetDummyAPIFactory() APIServerFactory {
 type DummyAPIFactory struct{}
 
 func (p *DummyAPIFactory) GetOptions() options.OptionsProvider {
+	return nil
+}
+
+func (p *DummyAPIFactory) GetBuildHandlerChainFunc(_ tracing.Tracer, builders []builder.APIGroupBuilder) builder.BuildHandlerChainFunc {
 	return nil
 }
 
@@ -73,9 +79,6 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 	}
 
 	switch gv.Group {
-	case "example.grafana.app":
-		return example.NewTestingAPIBuilder(), nil
-
 	// Only works with testdata
 	case "query.grafana.app":
 		return query.NewQueryAPIBuilder(
@@ -89,13 +92,6 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 			tracer,
 		)
 
-	case "featuretoggle.grafana.app":
-		return featuretoggle.NewFeatureFlagAPIBuilder(
-			featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil), // none... for now
-			&actest.FakeAccessControl{ExpectedEvaluate: false},
-			&setting.Cfg{},
-		), nil
-
 	case "testdata.datasource.grafana.app":
 		return datasource.NewDataSourceAPIBuilder(
 			plugins.JSONData{
@@ -107,11 +103,14 @@ func (p *DummyAPIFactory) MakeAPIServer(_ context.Context, tracer tracing.Tracer
 			},
 			&pluginDatasourceImpl{}, // stub
 			&actest.FakeAccessControl{ExpectedEvaluate: true},
+			true, // show query types
 		)
 	}
 
 	return nil, fmt.Errorf("unsupported group")
 }
+
+func (p *DummyAPIFactory) Shutdown() {}
 
 // Simple stub for standalone datasource testing
 type pluginDatasourceImpl struct {

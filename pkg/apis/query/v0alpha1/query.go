@@ -27,14 +27,14 @@ type QueryDataResponse struct {
 	backend.QueryDataResponse `json:",inline"`
 }
 
-// If errors exist, return multi-status
+// GetResponseCode return the right status code for the response by checking the responses.
 func GetResponseCode(rsp *backend.QueryDataResponse) int {
 	if rsp == nil {
-		return http.StatusInternalServerError
+		return http.StatusBadRequest
 	}
-	for _, v := range rsp.Responses {
-		if v.Error != nil {
-			return http.StatusMultiStatus
+	for _, res := range rsp.Responses {
+		if res.Error != nil {
+			return http.StatusBadRequest
 		}
 	}
 	return http.StatusOK

@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 
 import { SceneObject } from '@grafana/scenes';
 import { Icon, ModalsController } from '@grafana/ui';

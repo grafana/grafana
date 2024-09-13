@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { cloneElement, useCallback } from 'react';
 
 import { useReturnToPrevious } from '@grafana/runtime';
 
@@ -15,5 +15,5 @@ export const WithReturnButton = ({ component, title = 'previous page' }: WithRet
     returnToPrevious(title);
   }, [returnToPrevious, title]);
 
-  return React.cloneElement(component, { onClick: returnToThisURL });
+  return cloneElement(component, { onClick: returnToThisURL });
 };

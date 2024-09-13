@@ -12,18 +12,19 @@ import (
 const forwardIDHeaderName = "X-Grafana-Id"
 
 // NewForwardIDMiddleware creates a new plugins.ClientMiddleware that will
-// set grafana id header on outgoing plugins.Client requests if the
-// feature toggle FlagIdForwarding is enabled
+// set grafana id header on outgoing plugins.Client requests
 func NewForwardIDMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &ForwardIDMiddleware{
-			next: next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 		}
 	})
 }
 
 type ForwardIDMiddleware struct {
-	next plugins.Client
+	baseMiddleware
 }
 
 func (m *ForwardIDMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req backend.ForwardHTTPHeaders) error {
@@ -33,7 +34,6 @@ func (m *ForwardIDMiddleware) applyToken(ctx context.Context, pCtx backend.Plugi
 		return nil
 	}
 
-	// token will only be present if faeturemgmt.FlagIdForwarding is enabled
 	if token := reqCtx.SignedInUser.GetIDToken(); token != "" {
 		req.SetHTTPHeader(forwardIDHeaderName, token)
 	}
@@ -78,20 +78,4 @@ func (m *ForwardIDMiddleware) CheckHealth(ctx context.Context, req *backend.Chec
 	}
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *ForwardIDMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

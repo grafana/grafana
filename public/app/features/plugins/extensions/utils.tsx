@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
 import { isArray, isObject } from 'lodash';
-import React from 'react';
+import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
   type PluginExtensionLinkConfig,
-  type PluginExtensionComponentConfig,
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
@@ -15,11 +14,19 @@ import {
   PluginContextProvider,
   PluginExtensionLink,
   PanelMenuItem,
+  PluginExtensionAddedLinkConfig,
+  urlUtil,
 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+// TODO: instead of depending on the service as a singleton, inject it as an argument from the React context
+import { sidecarService } from 'app/core/services/SidecarService';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
+
+import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
 
 export function logWarning(message: string) {
   console.warn(`[Plugin Extensions] ${message}`);
@@ -29,12 +36,6 @@ export function isPluginExtensionLinkConfig(
   extension: PluginExtensionConfig | undefined
 ): extension is PluginExtensionLinkConfig {
   return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
-}
-
-export function isPluginExtensionComponentConfig(
-  extension: PluginExtensionConfig | undefined
-): extension is PluginExtensionComponentConfig {
-  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.component;
 }
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
@@ -49,9 +50,8 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   };
 }
 
-// Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
-export function getEventHelpers(pluginId: string, context?: Readonly<object>): PluginExtensionEventHelpers {
-  const openModal: PluginExtensionEventHelpers['openModal'] = async (options) => {
+export function createOpenModalFunction(pluginId: string): PluginExtensionEventHelpers['openModal'] {
+  return async (options) => {
     const { title, body, width, height } = options;
 
     appEvents.publish(
@@ -60,8 +60,6 @@ export function getEventHelpers(pluginId: string, context?: Readonly<object>): P
       })
     );
   };
-
-  return { openModal, context };
 }
 
 type ModalWrapperProps = {
@@ -162,8 +160,8 @@ export function deepFreeze(value?: object | Record<string | symbol, unknown> | u
   return Object.freeze(clonedValue);
 }
 
-export function generateExtensionId(pluginId: string, extensionConfig: PluginExtensionConfig): string {
-  const str = `${pluginId}${extensionConfig.extensionPointId}${extensionConfig.title}`;
+export function generateExtensionId(pluginId: string, extensionPointId: string, title: string): string {
+  const str = `${pluginId}${extensionPointId}${title}`;
 
   return Array.from(str)
     .reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
@@ -225,11 +223,10 @@ export function isReadOnlyProxy(value: unknown): boolean {
   return isRecord(value) && value[_isProxy] === true;
 }
 
-export function createExtensionLinkConfig<T extends object>(
-  config: Omit<PluginExtensionLinkConfig<T>, 'type'>
-): PluginExtensionLinkConfig {
-  const linkConfig: PluginExtensionLinkConfig<T> = {
-    type: PluginExtensionTypes.link,
+export function createAddedLinkConfig<T extends object>(
+  config: PluginExtensionAddedLinkConfig<T>
+): PluginExtensionAddedLinkConfig {
+  const linkConfig: PluginExtensionAddedLinkConfig<T> = {
     ...config,
   };
   assertLinkConfig(linkConfig);
@@ -237,12 +234,8 @@ export function createExtensionLinkConfig<T extends object>(
 }
 
 function assertLinkConfig<T extends object>(
-  config: PluginExtensionLinkConfig<T>
-): asserts config is PluginExtensionLinkConfig {
-  if (config.type !== PluginExtensionTypes.link) {
-    throw Error('config is not a extension link');
-  }
-}
+  config: PluginExtensionAddedLinkConfig<T>
+): asserts config is PluginExtensionAddedLinkConfig {}
 
 export function truncateTitle(title: string, length: number): string {
   if (title.length < length) {
@@ -301,3 +294,117 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
 
   return subMenu;
 }
+
+export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkRegistryItem, context?: object) {
+  try {
+    const overrides = config.configure?.(context, { isAppOpened: () => isAppOpened(pluginId) });
+
+    // Hiding the extension
+    if (overrides === undefined) {
+      return undefined;
+    }
+
+    let {
+      title = config.title,
+      description = config.description,
+      path = config.path,
+      icon = config.icon,
+      category = config.category,
+      ...rest
+    } = overrides;
+
+    assertIsNotPromise(
+      overrides,
+      `The configure() function for "${config.title}" returned a promise, skipping updates.`
+    );
+
+    path && assertLinkPathIsValid(pluginId, path);
+    assertStringProps({ title, description }, ['title', 'description']);
+
+    if (Object.keys(rest).length > 0) {
+      logWarning(
+        `Extension "${config.title}", is trying to override restricted properties: ${Object.keys(rest).join(
+          ', '
+        )} which will be ignored.`
+      );
+    }
+
+    return {
+      title,
+      description,
+      path,
+      icon,
+      category,
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      logWarning(error.message);
+    }
+
+    // If there is an error, we hide the extension
+    // (This seems to be safest option in case the extension is doing something wrong.)
+    return undefined;
+  }
+}
+
+export function getLinkExtensionOnClick(
+  pluginId: string,
+  extensionPointId: string,
+  config: AddedLinkRegistryItem,
+  context?: object
+): ((event?: React.MouseEvent) => void) | undefined {
+  const { onClick } = config;
+
+  if (!onClick) {
+    return;
+  }
+
+  return function onClickExtensionLink(event?: React.MouseEvent) {
+    try {
+      reportInteraction('ui_extension_link_clicked', {
+        pluginId: pluginId,
+        extensionPointId,
+        title: config.title,
+        category: config.category,
+      });
+
+      const helpers: PluginExtensionEventHelpers = {
+        context,
+        openModal: createOpenModalFunction(pluginId),
+        isAppOpened: () => isAppOpened(pluginId),
+        openAppInSideview: () => openAppInSideview(pluginId),
+        closeAppInSideview: () => closeAppInSideview(pluginId),
+      };
+
+      const result = onClick(event, helpers);
+
+      if (isPromise(result)) {
+        result.catch((e) => {
+          if (e instanceof Error) {
+            logWarning(e.message);
+          }
+        });
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        logWarning(error.message);
+      }
+    }
+  };
+}
+
+export function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
+  return urlUtil.appendQueryToUrl(
+    path,
+    urlUtil.toUrlParams({
+      uel_pid: pluginId,
+      uel_epid: extensionPointId,
+    })
+  );
+}
+
+export const openAppInSideview = (pluginId: string) => sidecarService.openApp(pluginId);
+
+export const closeAppInSideview = (pluginId: string) => sidecarService.closeApp(pluginId);
+
+export const isAppOpened = (pluginId: string) => sidecarService.isAppOpened(pluginId);

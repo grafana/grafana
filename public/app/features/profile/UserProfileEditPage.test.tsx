@@ -1,6 +1,5 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
-import React from 'react';
 
 import { OrgRole, PluginExtensionComponent, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -20,6 +19,12 @@ const mockUseQueryParams = useQueryParams as { useQueryParams: typeof useQueryPa
 jest.mock('app/core/hooks/useQueryParams', () => ({
   __esModule: true,
   useQueryParams: () => [{}],
+}));
+
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: () => ({
+    getDashboardDTO: jest.fn().mockResolvedValue({}),
+  }),
 }));
 
 const defaultProps: Props = {
@@ -128,7 +133,7 @@ enum ExtensionPointComponentTabs {
   Two = '2',
 }
 
-const _createTabName = (tab: ExtensionPointComponentTabs) => `Tab ${tab}`;
+const _createTabName = (tab: ExtensionPointComponentTabs) => tab;
 const _createTabContent = (tabId: ExtensionPointComponentId) => `this is settings for component ${tabId}`;
 
 const generalTabName = 'General';

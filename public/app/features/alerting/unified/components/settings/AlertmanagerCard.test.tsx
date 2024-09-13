@@ -1,6 +1,5 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { render } from 'test/test-utils';
 
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
@@ -146,6 +145,24 @@ describe('Alertmanager card', () => {
 
     render(cardWithStatus('inconclusive'));
     expect(screen.getByText(/Inconclusive/)).toBeInTheDocument();
+  });
+
+  it('should not render the enable / disable buttons or status when disabled', () => {
+    render(
+      <AlertmanagerCard
+        name="Foo"
+        receiving={true}
+        status="active"
+        showStatus={false}
+        onEditConfiguration={jest.fn()}
+      />
+    );
+
+    const enableButton = screen.queryByRole('button', { name: 'Enable' });
+    expect(enableButton).not.toBeInTheDocument();
+
+    // should also not show the status for external alertmanagers
+    expect(screen.queryByText(/Receiving/)).not.toBeInTheDocument();
   });
 });
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
@@ -98,7 +97,7 @@ export function SmartAlertTypeDetector({
     <Stack direction="column" gap={1} alignItems="flex-start">
       <Stack direction="column" gap={0}>
         <Text variant="h5">Rule type</Text>
-        <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Stack direction="row" gap={0.5} alignItems="center">
           <Text variant="bodySmall" color="secondary">
             Select where the alert rule will be managed.
           </Text>

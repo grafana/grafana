@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';

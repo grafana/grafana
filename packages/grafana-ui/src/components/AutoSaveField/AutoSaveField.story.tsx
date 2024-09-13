@@ -1,5 +1,5 @@
-import { Story, Meta } from '@storybook/react';
-import React, { useState } from 'react';
+import { StoryFn, Meta } from '@storybook/react';
+import { useState } from 'react';
 
 import { Checkbox } from '../Forms/Checkbox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
@@ -72,7 +72,7 @@ const themeOptions = [
   { value: 'system', label: 'System' },
 ];
 
-export const Basic: Story = (args) => {
+export const Basic: StoryFn = (args) => {
   const [inputValue, setInputValue] = useState('');
   return (
     <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} {...args}>
@@ -96,7 +96,7 @@ Basic.args = {
   inputSuccessful: false,
 };
 
-export const AllComponents: Story = (args) => {
+export const AllComponents: StoryFn = (args) => {
   const [selected, setSelected] = useState('');
   const [checkBoxTest, setCheckBoxTest] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');

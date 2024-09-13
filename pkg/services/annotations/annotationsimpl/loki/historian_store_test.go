@@ -3,14 +3,16 @@ package loki
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"math/rand"
 	"net/url"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -27,10 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -42,7 +44,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql, cfg := db.InitTestDBWithCfg(t)
+	sql, cfg := db.InitTestReplDBWithCfg(t)
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
@@ -104,6 +106,35 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			)
 			require.NoError(t, err)
 			require.Len(t, res, numTransitions)
+		})
+
+		t.Run("should return ErrLokiStoreNotFound if rule is not found", func(t *testing.T) {
+			var rules = slices.Concat(maps.Values(dashboardRules)...)
+			id := rand.Int63n(1000) // in Postgres ID is integer, so limit range
+			// make sure id is not known
+			for slices.IndexFunc(rules, func(rule *ngmodels.AlertRule) bool {
+				return rule.ID == id
+			}) >= 0 {
+				id = rand.Int63n(1000)
+			}
+
+			query := annotations.ItemQuery{
+				OrgID:   1,
+				AlertID: id,
+				From:    start.UnixMilli(),
+				To:      start.Add(time.Second * time.Duration(numTransitions+1)).UnixMilli(),
+			}
+			_, err := store.Get(
+				context.Background(),
+				&query,
+				&annotation_ac.AccessResources{
+					Dashboards: map[string]int64{
+						dashboard1.UID: dashboard1.ID,
+					},
+					CanAccessDashAnnotations: true,
+				},
+			)
+			require.ErrorIs(t, err, ErrLokiStoreNotFound)
 		})
 
 		t.Run("can query history by dashboard id", func(t *testing.T) {
@@ -573,19 +604,21 @@ func TestBuildTransition(t *testing.T) {
 	})
 }
 
-func createTestLokiStore(t *testing.T, sql db.DB, client lokiQueryClient) *LokiHistorianStore {
+func createTestLokiStore(t *testing.T, sql *sqlstore.ReplStore, client lokiQueryClient) *LokiHistorianStore {
 	t.Helper()
+	ruleStore := store.SetupStoreForTesting(t, sql)
 
 	return &LokiHistorianStore{
-		client: client,
-		db:     sql,
-		log:    log.NewNopLogger(),
+		client:    client,
+		db:        sql,
+		log:       log.NewNopLogger(),
+		ruleStore: ruleStore,
 	}
 }
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRule(t *testing.T, sql db.DB, title string, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
+func createAlertRule(t *testing.T, sql *sqlstore.ReplStore, title string, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	if generator == nil {
@@ -593,7 +626,7 @@ func createAlertRule(t *testing.T, sql db.DB, title string, generator *ngmodels.
 		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(nil, nil), g.WithOrgID(1))
 	}
 
-	rule := generator.GenerateRef()
+	rule := generator.Generate()
 	// ensure rule has correct values
 	if rule.Title != title {
 		rule.Title = title
@@ -602,32 +635,17 @@ func createAlertRule(t *testing.T, sql db.DB, title string, generator *ngmodels.
 	rule.DashboardUID = nil
 	rule.PanelID = nil
 
-	err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Table(ngmodels.AlertRule{}).InsertOne(rule)
-		if err != nil {
-			return err
-		}
-
-		dbRule := &ngmodels.AlertRule{}
-		exist, err := sess.Table(ngmodels.AlertRule{}).ID(rule.ID).Get(dbRule)
-		if err != nil {
-			return err
-		}
-		if !exist {
-			return errors.New("cannot read inserted record")
-		}
-		rule = dbRule
-
-		return nil
-	})
+	ruleStore := store.SetupStoreForTesting(t, sql)
+	ids, err := ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{rule})
 	require.NoError(t, err)
-
-	return rule
+	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
+	require.NoError(t, err)
+	return result
 }
 
 // createAlertRuleFromDashboard creates an alert rule with a linked dashboard and panel in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboard dashboards.Dashboard, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
+func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.ReplStore, title string, dashboard dashboards.Dashboard, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	panelID := new(int64)
@@ -638,7 +656,7 @@ func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboa
 		generator = g.With(g.WithTitle(title), g.WithDashboardAndPanel(&dashboard.UID, panelID), g.WithOrgID(1))
 	}
 
-	rule := generator.GenerateRef()
+	rule := generator.Generate()
 	// ensure rule has correct values
 	if rule.Title != title {
 		rule.Title = title
@@ -649,28 +667,12 @@ func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboa
 	if rule.PanelID == nil || (rule.PanelID != nil && *rule.PanelID != *panelID) {
 		rule.PanelID = panelID
 	}
-
-	err := sql.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Table(ngmodels.AlertRule{}).InsertOne(rule)
-		if err != nil {
-			return err
-		}
-
-		dbRule := &ngmodels.AlertRule{}
-		exist, err := sess.Table(ngmodels.AlertRule{}).ID(rule.ID).Get(dbRule)
-		if err != nil {
-			return err
-		}
-		if !exist {
-			return errors.New("cannot read inserted record")
-		}
-		rule = dbRule
-
-		return nil
-	})
+	ruleStore := store.SetupStoreForTesting(t, sql)
+	ids, err := ruleStore.InsertAlertRules(context.Background(), []ngmodels.AlertRule{rule})
 	require.NoError(t, err)
-
-	return rule
+	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
+	require.NoError(t, err)
+	return result
 }
 
 func ruleMetaFromRule(t *testing.T, rule *ngmodels.AlertRule) historymodel.RuleMeta {
@@ -778,6 +780,7 @@ func NewFakeLokiClient() *FakeLokiClient {
 			ReadPathURL:    url,
 			Encoder:        historian.JsonEncoder{},
 			MaxQueryLength: 721 * time.Hour,
+			MaxQuerySize:   65536,
 		},
 		metrics: metrics,
 		log:     log.New("ngalert.state.historian", "backend", "loki"),
@@ -810,6 +813,10 @@ func (c *FakeLokiClient) RangeQuery(ctx context.Context, query string, from, to,
 	// reset expected streams on read
 	c.rangeQueryRes = []historian.Stream{}
 	return res, nil
+}
+
+func (c *FakeLokiClient) MaxQuerySize() int {
+	return c.cfg.MaxQuerySize
 }
 
 func TestUseStore(t *testing.T) {

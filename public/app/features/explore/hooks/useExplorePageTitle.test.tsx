@@ -1,5 +1,4 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 

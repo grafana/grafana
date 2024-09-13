@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 
 import { createDataFrame, createTheme } from '@grafana/data';
 
@@ -10,7 +10,7 @@ import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
 jest.mock('react-use', () => ({
   useMeasure: () => {
-    const ref = React.useRef();
+    const ref = useRef();
     return [ref, { width: 1600 }];
   },
 }));

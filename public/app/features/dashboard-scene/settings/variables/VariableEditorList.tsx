@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
-import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { ReactElement } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable, SceneVariableState } from '@grafana/scenes';
 import { useStyles2, Stack, Button, EmptyState, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+
+import { VariablesDependenciesButton } from '../../variables/VariablesDependenciesButton';
 
 import { VariableEditorListRow } from './VariableEditorListRow';
 
@@ -81,6 +83,7 @@ export function VariableEditorList({
               </table>
             </div>
             <Stack>
+              <VariablesDependenciesButton variables={variables} />
               <Button
                 data-testid={selectors.pages.Dashboard.Settings.Variables.List.newButton}
                 onClick={onAdd}

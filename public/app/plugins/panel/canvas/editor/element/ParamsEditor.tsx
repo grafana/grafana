@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import * as React from 'react';
 
-import { HorizontalGroup, IconButton, Input, VerticalGroup } from '@grafana/ui';
+import { IconButton, Input, Stack } from '@grafana/ui';
 
 interface Props {
   onChange: (v: Array<[string, string]>) => void;
@@ -44,20 +45,20 @@ export const ParamsEditor = ({ value, onChange }: Props) => {
 
   return (
     <div>
-      <HorizontalGroup>
+      <Stack direction="row">
         <Input placeholder="Key" value={paramName} onChange={changeParamName} />
         <Input placeholder="Value" value={paramValue} onChange={changeParamValue} />
         <IconButton aria-label="add" name="plus-circle" onClick={addParam} disabled={isAddParamsDisabled} />
-      </HorizontalGroup>
-      <VerticalGroup>
+      </Stack>
+      <Stack direction="column">
         {Array.from(value || []).map((entry) => (
-          <HorizontalGroup key={entry[0]}>
+          <Stack key={entry[0]} direction="row">
             <Input disabled value={entry[0]} />
             <Input disabled value={entry[1]} />
             <IconButton aria-label="delete" onClick={removeParam(entry[0])} name="trash-alt" />
-          </HorizontalGroup>
+          </Stack>
         ))}
-      </VerticalGroup>
+      </Stack>
     </div>
   );
 };

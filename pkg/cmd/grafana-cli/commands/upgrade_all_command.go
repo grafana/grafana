@@ -63,7 +63,7 @@ func upgradeAllCommand(c utils.CommandLine) error {
 			return err
 		}
 
-		err = installPlugin(ctx, p.JSONData.ID, "", c)
+		err = installPlugin(ctx, p.JSONData.ID, "", newInstallPluginOpts(c))
 		if err != nil {
 			return err
 		}

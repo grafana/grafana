@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -270,9 +271,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	if proxy.features.IsEnabled(req.Context(), featuremgmt.FlagIdForwarding) {
-		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
-	}
+	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
@@ -304,8 +303,14 @@ func (proxy *DataSourceProxy) validateRequest() error {
 			continue
 		}
 
-		if route.ReqRole.IsValid() {
-			if !proxy.ctx.HasUserRole(route.ReqRole) {
+		if proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagDatasourceProxyDisableRBAC) {
+			// TODO(aarongodin): following logic can be removed with FlagDatasourceProxyDisableRBAC as it is covered by
+			// proxy.hasAccessToRoute(..)
+			if route.ReqRole.IsValid() && !proxy.ctx.HasUserRole(route.ReqRole) {
+				return errors.New("plugin proxy route access denied")
+			}
+		} else {
+			if !proxy.hasAccessToRoute(route) {
 				return errors.New("plugin proxy route access denied")
 			}
 		}
@@ -330,6 +335,26 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	return nil
 }
 
+func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
+	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
+	if useRBAC {
+		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.UID, route.ReqAction)
+		hasAccess := routeEval.Evaluate(proxy.ctx.GetPermissions())
+		if !hasAccess {
+			ctxLogger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "path", route.Path, "method", route.Method)
+		}
+		return hasAccess
+	}
+	if route.ReqRole.IsValid() {
+		if hasUserRole := proxy.ctx.HasUserRole(route.ReqRole); !hasUserRole {
+			ctxLogger.Debug("plugin route is covered by org role, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "role", route.ReqRole, "path", route.Path, "method", route.Method)
+			return false
+		}
+	}
+	return true
+}
+
 func (proxy *DataSourceProxy) logRequest() {
 	if !proxy.cfg.DataProxyLogging {
 		return
@@ -346,13 +371,18 @@ func (proxy *DataSourceProxy) logRequest() {
 
 	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
 
+	uri, err := util.SanitizeURI(proxy.ctx.Req.RequestURI)
+	if err == nil {
+		proxy.ctx.Logger.Error("Could not sanitize RequestURI", "error", err)
+	}
+
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	ctxLogger.Info("Proxying incoming request",
 		"userid", proxy.ctx.UserID,
 		"orgid", proxy.ctx.OrgID,
 		"username", proxy.ctx.Login,
 		"datasource", proxy.ds.Type,
-		"uri", proxy.ctx.Req.RequestURI,
+		"uri", uri,
 		"method", proxy.ctx.Req.Method,
 		"panelPluginId", panelPluginId,
 		"body", body)

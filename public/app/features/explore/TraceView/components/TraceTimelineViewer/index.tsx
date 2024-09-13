@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { RefObject } from 'react';
+import { PureComponent, RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TraceKeyValuePair, TraceLog } from '@grafana/data';
 import { SpanBarOptions, TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -25,7 +25,7 @@ import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
+import { TraceSpan, Trace, TraceLink, TraceSpanReference } from '../types/trace';
 
 import { TraceFlameGraphs } from './SpanDetail';
 import TimelineHeaderRow from './TimelineHeaderRow';
@@ -127,7 +127,7 @@ const NUM_TICKS = 5;
  * re-render the ListView every time the cursor is moved on the trace minimap
  * or `TimelineHeaderRow`.
  */
-export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, State> {
+export class UnthemedTraceTimelineViewer extends PureComponent<TProps, State> {
   constructor(props: TProps) {
     super(props);
     this.state = { height: 0 };

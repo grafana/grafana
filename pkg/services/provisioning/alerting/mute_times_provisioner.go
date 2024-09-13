@@ -63,7 +63,7 @@ func (c *defaultMuteTimesProvisioner) Unprovision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, deleteMuteTime := range file.DeleteMuteTimes {
-			err := c.muteTimingService.DeleteMuteTiming(ctx, deleteMuteTime.Name, deleteMuteTime.OrgID)
+			err := c.muteTimingService.DeleteMuteTiming(ctx, deleteMuteTime.Name, deleteMuteTime.OrgID, definitions.Provenance(models.ProvenanceFile), "")
 			if err != nil {
 				return err
 			}

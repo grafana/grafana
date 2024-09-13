@@ -1,6 +1,6 @@
 import Editor, { loader as monacoEditorLoader, Monaco } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { useTheme2 } from '../../themes';
 

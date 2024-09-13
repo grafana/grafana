@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestServer_getSearchRequest(t *testing.T) {
@@ -53,8 +52,9 @@ func TestServer_getSearchRequest(t *testing.T) {
 
 func TestSerializeUsers(t *testing.T) {
 	t.Run("simple case", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg := &Config{
+			Enabled: true,
+		}
 
 		server := &Server{
 			cfg: cfg,
@@ -92,8 +92,9 @@ func TestSerializeUsers(t *testing.T) {
 	})
 
 	t.Run("without lastname", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg := &Config{
+			Enabled: true,
+		}
 
 		server := &Server{
 			cfg: cfg,
@@ -129,8 +130,9 @@ func TestSerializeUsers(t *testing.T) {
 	})
 
 	t.Run("mark user without matching group as disabled", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg := &Config{
+			Enabled: true,
+		}
 
 		server := &Server{
 			cfg: cfg,
@@ -163,8 +165,9 @@ func TestSerializeUsers(t *testing.T) {
 
 func TestServer_validateGrafanaUser(t *testing.T) {
 	t.Run("no group config", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg := &Config{
+			Enabled: true,
+		}
 
 		server := &Server{
 			cfg: cfg,
@@ -183,8 +186,9 @@ func TestServer_validateGrafanaUser(t *testing.T) {
 	})
 
 	t.Run("user in group", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg := &Config{
+			Enabled: true,
+		}
 
 		server := &Server{
 			cfg: cfg,
@@ -210,8 +214,9 @@ func TestServer_validateGrafanaUser(t *testing.T) {
 	})
 
 	t.Run("user not in group", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.LDAPAuthEnabled = true
+		cfg := &Config{
+			Enabled: true,
+		}
 
 		server := &Server{
 			cfg: cfg,

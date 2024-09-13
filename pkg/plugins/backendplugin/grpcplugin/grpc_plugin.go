@@ -19,6 +19,8 @@ type pluginClient interface {
 	backend.CheckHealthHandler
 	backend.QueryDataHandler
 	backend.CallResourceHandler
+	backend.AdmissionHandler
+	backend.ConversionHandler
 	backend.StreamHandler
 }
 
@@ -198,4 +200,28 @@ func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamReques
 		return plugins.ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
+}
+
+func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, plugins.ErrPluginUnavailable
+	}
+	return pluginClient.ValidateAdmission(ctx, request)
+}
+
+func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, plugins.ErrPluginUnavailable
+	}
+	return pluginClient.MutateAdmission(ctx, request)
+}
+
+func (p *grpcPlugin) ConvertObjects(ctx context.Context, request *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, plugins.ErrPluginUnavailable
+	}
+	return pluginClient.ConvertObjects(ctx, request)
 }

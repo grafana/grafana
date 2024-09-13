@@ -10,6 +10,7 @@ import {
   AnnotationEvent,
   AnnotationQueryRequest,
   CoreApp,
+  CustomVariableModel,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -23,6 +24,7 @@ import {
   LegacyMetricFindQueryOptions,
   MetricFindValue,
   QueryFixAction,
+  QueryVariableModel,
   rangeUtil,
   renderLegendFormat,
   ScopedVars,
@@ -66,6 +68,8 @@ import {
   PromOptions,
   PromQuery,
   PromQueryRequest,
+  RawRecordingRules,
+  RuleQueryMapping,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
 
@@ -79,20 +83,20 @@ export class PrometheusDatasource
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
 {
   type: string;
-  ruleMappings: { [index: string]: string };
+  ruleMappings: RuleQueryMapping;
   hasIncrementalQuery: boolean;
   url: string;
   id: number;
   access: 'direct' | 'proxy';
   basicAuth: any;
-  withCredentials: any;
+  withCredentials: boolean;
   interval: string;
   queryTimeout: string | undefined;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
-  customQueryParameters: any;
+  customQueryParameters: URLSearchParams;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
   disableRecordingRules: boolean;
@@ -114,7 +118,7 @@ export class PrometheusDatasource
     this.url = instanceSettings.url!;
     this.access = instanceSettings.access;
     this.basicAuth = instanceSettings.basicAuth;
-    this.withCredentials = instanceSettings.withCredentials;
+    this.withCredentials = Boolean(instanceSettings.withCredentials);
     this.interval = instanceSettings.jsonData.timeInterval || '15s';
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
@@ -137,7 +141,6 @@ export class PrometheusDatasource
     this.cache = new QueryCache({
       getTargetSignature: this.getPrometheusTargetSignature.bind(this),
       overlapString: instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow,
-      profileFunction: this.getPrometheusProfileData.bind(this),
     });
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
@@ -158,14 +161,6 @@ export class PrometheusDatasource
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
-  }
-
-  getPrometheusProfileData(request: DataQueryRequest<PromQuery>, targ: PromQuery) {
-    return {
-      interval: targ.interval ?? request.interval,
-      expr: this.interpolateString(targ.expr),
-      datasource: 'Prometheus',
-    };
   }
 
   /**
@@ -322,7 +317,7 @@ export class PrometheusDatasource
     ); // toPromise until we change getTagValues, getLabelNames to Observable
   }
 
-  interpolateQueryExpr(value: string | string[] = [], variable: any) {
+  interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel | CustomVariableModel) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return prometheusRegularEscape(value);
@@ -372,7 +367,14 @@ export class PrometheusDatasource
     };
 
     if (config.featureToggles.promQLScope) {
-      processedTarget.scope = request.scope?.spec;
+      processedTarget.scopes = (request.scopes ?? []).map((scope) => ({
+        name: scope.metadata.name,
+        ...scope.spec,
+      }));
+    }
+
+    if (config.featureToggles.groupByVariable) {
+      processedTarget.groupByKeys = request.groupByKeys;
     }
 
     if (target.instant && target.range) {
@@ -650,14 +652,19 @@ export class PrometheusDatasource
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const replacedInterpolatedQuery = config.featureToggles.promQLScope
+          ? interpolatedQuery
+          : this.templateSrv.replace(
+              this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
+              scopedVars,
+              this.interpolateQueryExpr
+            );
 
         const expandedQuery = {
           ...query,
           ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
           datasource: this.getRef(),
-          expr: config.featureToggles.promQLScope
-            ? interpolatedQuery
-            : this.enhanceExprWithAdHocFilters(filters, interpolatedQuery),
+          expr: replacedInterpolatedQuery,
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
 
@@ -734,6 +741,30 @@ export class PrometheusDatasource
         expression = `histogram_quantile(0.95, sum(rate(${expression}[$__rate_interval])) by (le))`;
         break;
       }
+      case 'ADD_HISTOGRAM_AVG': {
+        expression = `histogram_avg(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_FRACTION': {
+        expression = `histogram_fraction(0,0.2,rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_COUNT': {
+        expression = `histogram_count(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_SUM': {
+        expression = `histogram_sum(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_STDDEV': {
+        expression = `histogram_stddev(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
+      case 'ADD_HISTOGRAM_STDVAR': {
+        expression = `histogram_stdvar(rate(${expression}[$__rate_interval]))`;
+        break;
+      }
       case 'ADD_RATE': {
         expression = `rate(${expression}[$__rate_interval])`;
         break;
@@ -744,7 +775,7 @@ export class PrometheusDatasource
       }
       case 'EXPAND_RULES': {
         if (action.options) {
-          expression = expandRecordingRules(expression, action.options);
+          expression = expandRecordingRules(expression, action.options as any);
         }
         break;
       }
@@ -791,7 +822,12 @@ export class PrometheusDatasource
       return [];
     }
 
-    return filters.map((f) => ({ ...f, operator: scopeFilterOperatorMap[f.operator] }));
+    return filters.map((f) => ({
+      key: f.key,
+      operator: scopeFilterOperatorMap[f.operator],
+      value: this.templateSrv.replace(f.value, {}, this.interpolateQueryExpr),
+      values: f.values?.map((v) => this.templateSrv.replace(v, {}, this.interpolateQueryExpr)),
+    }));
   }
 
   enhanceExprWithAdHocFilters(filters: AdHocVariableFilter[] | undefined, expr: string) {
@@ -832,12 +868,21 @@ export class PrometheusDatasource
     };
 
     // interpolate expression
+
+    // We need a first replace to evaluate variables before applying adhoc filters
+    // This is required for an expression like `metric > $VAR` where $VAR is a float to which we must not add adhoc filters
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
+
+    // Apply ad-hoc filters
+    // When ad-hoc filters are applied, we replace again the variables in case the ad-hoc filters also reference a variable
+    const exprWithAdhoc = config.featureToggles.promQLScope
+      ? expr
+      : this.templateSrv.replace(this.enhanceExprWithAdHocFilters(filters, expr), variables, this.interpolateQueryExpr);
 
     return {
       ...target,
       ...(config.featureToggles.promQLScope ? { adhocFilters: this.generateScopeFilters(filters) } : {}),
-      expr: config.featureToggles.promQLScope ? expr : this.enhanceExprWithAdHocFilters(filters, expr),
+      expr: exprWithAdhoc,
       interval: this.templateSrv.replace(target.interval, variables),
       legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };
@@ -927,18 +972,22 @@ export function alignRange(
   };
 }
 
-export function extractRuleMappingFromGroups(groups: any[]) {
-  return groups.reduce(
+export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {
+  return groups.reduce<RuleQueryMapping>(
     (mapping, group) =>
       group.rules
-        .filter((rule: any) => rule.type === 'recording')
-        .reduce(
-          (acc: { [key: string]: string }, rule: any) => ({
-            ...acc,
-            [rule.name]: rule.query,
-          }),
-          mapping
-        ),
+        .filter((rule) => rule.type === 'recording')
+        .reduce((acc, rule) => {
+          // retrieve existing record
+          const existingRule = acc[rule.name] ?? [];
+          // push a new query with labels
+          existingRule.push({
+            query: rule.query,
+            labels: rule.labels,
+          });
+          acc[rule.name] = existingRule;
+          return acc;
+        }, mapping),
     {}
   );
 }

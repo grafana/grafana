@@ -15,6 +15,7 @@ import (
 func ProvideTestEnv(
 	server *Server,
 	db db.DB,
+	repldb db.ReplDB,
 	cfg *setting.Cfg,
 	ns *notifications.NotificationServiceMock,
 	grpcServer grpcserver.Provider,
@@ -26,6 +27,7 @@ func ProvideTestEnv(
 	return &TestEnv{
 		Server:              server,
 		SQLStore:            db,
+		ReadReplStore:       repldb,
 		Cfg:                 cfg,
 		NotificationService: ns,
 		GRPCServer:          grpcServer,
@@ -39,6 +41,7 @@ func ProvideTestEnv(
 type TestEnv struct {
 	Server              *Server
 	SQLStore            db.DB
+	ReadReplStore       db.ReplDB
 	Cfg                 *setting.Cfg
 	NotificationService *notifications.NotificationServiceMock
 	GRPCServer          grpcserver.Provider

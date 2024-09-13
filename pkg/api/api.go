@@ -46,7 +46,10 @@ import (
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api")
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
@@ -108,6 +111,10 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
 	}
 
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagOnPremToCloudMigrations) {
+		r.Get("/admin/migrate-to-cloud", reqOrgAdmin, hs.Index)
+	}
+
 	// feature toggle admin page
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagFeatureToggleAdminPage) {
 		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
@@ -165,6 +172,10 @@ func (hs *HTTPServer) registerRoutes() {
 		)
 	}
 
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		r.Get("/dashboard/recently-deleted", reqOrgAdmin, hs.Index)
+	}
+
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
 	r.Get("/playlists/", reqSignedIn, hs.Index)
@@ -212,7 +223,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
 	// add swagger support
-	registerSwaggerUI(r)
+	hs.registerSwaggerUI(r)
 
 	r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
 	r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
@@ -432,35 +443,60 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Any("/datasources/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealthWithUID))
 
 		// Folders
+		// #TODO kubernetes folders: move this to its own function, add back auth part, add other routes
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
-			idScope := dashboards.ScopeFoldersProvider.GetResourceScope(ac.Parameter(":id"))
-			uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":uid"))
-			folderRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
-			folderRoute.Get("/id/:id", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
-			folderRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
-
-			folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
-				folderUidRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
-				folderUidRoute.Put("/", authorize(ac.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
-				folderUidRoute.Post("/move", authorize(ac.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
-				folderUidRoute.Delete("/", authorize(ac.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
-				folderUidRoute.Get("/counts", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
-
-				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-					folderPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
-					folderPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
+			if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesFolders) {
+				// Use k8s client to implement legacy API
+				handler := newFolderK8sHandler(hs)
+				folderRoute.Get("/", handler.searchFolders)
+				folderRoute.Post("/", handler.createFolder)
+				folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+					folderUidRoute.Get("/", handler.getFolder)
+					folderUidRoute.Delete("/", handler.deleteFolder)
+					folderUidRoute.Put("/:uid", handler.updateFolder)
 				})
-			})
+			} else {
+				idScope := dashboards.ScopeFoldersProvider.GetResourceScope(ac.Parameter(":id"))
+				uidScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.Parameter(":uid"))
+				folderRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersRead)), routing.Wrap(hs.GetFolders))
+				folderRoute.Get("/id/:id", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, idScope)), routing.Wrap(hs.GetFolderByID))
+				folderRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionFoldersCreate)), routing.Wrap(hs.CreateFolder))
+
+				folderRoute.Group("/:uid", func(folderUidRoute routing.RouteRegister) {
+					folderUidRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderByUID))
+					folderUidRoute.Put("/", authorize(ac.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.UpdateFolder))
+					folderUidRoute.Post("/move", authorize(ac.EvalPermission(dashboards.ActionFoldersWrite, uidScope)), routing.Wrap(hs.MoveFolder))
+					folderUidRoute.Delete("/", authorize(ac.EvalPermission(dashboards.ActionFoldersDelete, uidScope)), routing.Wrap(hs.DeleteFolder))
+					folderUidRoute.Get("/counts", authorize(ac.EvalPermission(dashboards.ActionFoldersRead, uidScope)), routing.Wrap(hs.GetFolderDescendantCounts))
+
+					folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
+						folderPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionFoldersPermissionsRead, uidScope)), routing.Wrap(hs.GetFolderPermissionList))
+						folderPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionFoldersPermissionsWrite, uidScope)), routing.Wrap(hs.UpdateFolderPermissions))
+					})
+				})
+			}
 		})
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute routing.RouteRegister) {
 			dashboardRoute.Get("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead)), routing.Wrap(hs.GetDashboard))
-			dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
+
+			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.SoftDeleteDashboard))
+			} else {
+				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete)), routing.Wrap(hs.DeleteDashboardByUID))
+			}
+
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
 				dashUidRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersions))
 				dashUidRoute.Post("/restore", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.RestoreDashboardVersion))
 				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite)), routing.Wrap(hs.GetDashboardVersion))
+
+				if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+					dashUidRoute.Patch("/trash", reqOrgAdmin, routing.Wrap(hs.RestoreDeletedDashboard))
+					dashUidRoute.Delete("/trash", reqOrgAdmin, routing.Wrap(hs.HardDeleteDashboardByUID))
+				}
+
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))
 					dashboardPermissionRoute.Post("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsWrite)), routing.Wrap(hs.UpdateDashboardPermissions))
@@ -583,7 +619,7 @@ func (hs *HTTPServer) registerRoutes() {
 	}, reqSignedIn)
 
 	// rendering
-	r.Get("/render/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.RenderToPng)
+	r.Get("/render/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.RenderHandler)
 
 	// grafana.net proxy
 	r.Any("/api/gnet/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqSignedIn, hs.ProxyGnetRequest)

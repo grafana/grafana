@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent } from 'react';
+import { MouseEvent } from 'react';
 
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';

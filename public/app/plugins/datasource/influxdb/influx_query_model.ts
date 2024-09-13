@@ -2,6 +2,7 @@ import { filter, find, indexOf, map } from 'lodash';
 
 import { AdHocVariableFilter, escapeRegex, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
+import { QueryPart } from 'app/features/alerting/state/query_part';
 
 import { removeRegexWrapper } from './queryUtils';
 import queryPart from './query_part';
@@ -9,11 +10,11 @@ import { DEFAULT_POLICY, InfluxQuery, InfluxQueryTag } from './types';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;
-  selectModels: any[] = [];
+  selectModels: QueryPart[][] = [];
   queryBuilder: any;
-  groupByParts: any;
+  groupByParts: QueryPart[] = [];
   templateSrv: any;
-  scopedVars: any;
+  scopedVars: ScopedVars | undefined;
   refId?: string;
 
   constructor(target: InfluxQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
@@ -121,7 +122,7 @@ export default class InfluxQueryModel {
     this.updateProjection();
   }
 
-  removeSelectPart(selectParts: any[], part: any) {
+  removeSelectPart(selectParts: QueryPart[], part: QueryPart) {
     // if we remove the field remove the whole statement
     if (part.def.type === 'field') {
       if (this.selectModels.length > 1) {
@@ -136,7 +137,7 @@ export default class InfluxQueryModel {
     this.updatePersistedParts();
   }
 
-  addSelectPart(selectParts: any[], type: string) {
+  addSelectPart(selectParts: QueryPart[], type: string) {
     const partModel = queryPart.create({ type: type });
     partModel.def.addStrategy(selectParts, partModel, this);
     this.updatePersistedParts();
@@ -244,7 +245,7 @@ export default class InfluxQueryModel {
     return policy + measurement;
   }
 
-  interpolateQueryStr(value: any[], variable: { multi: any; includeAll: any }, defaultFormatFn: any) {
+  interpolateQueryStr(value: string | string[], variable: { multi: boolean; includeAll: boolean }) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return value;

@@ -360,7 +360,10 @@
       "build": {},
       "screenshots": null,
       "updated": "",
-      "keywords": null
+      "keywords": [
+        "aws",
+        "amazon"
+      ]
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -1081,7 +1084,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.4.0",
       "grafanaVersion": "*",
       "plugins": []
     },

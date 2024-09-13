@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -27,7 +27,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
     (): AlertGroupAlertsTableColumnProps[] => [
       {
         id: 'state',
-        label: 'State',
+        label: 'Notification state',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: alert }) => (
           <>
@@ -45,7 +45,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
       },
       {
         id: 'labels',
-        label: 'Labels',
+        label: 'Instance labels',
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: { labels } }) => <AlertLabels labels={labels} size="sm" />,
         size: 1,

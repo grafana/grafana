@@ -1,26 +1,26 @@
 import { Action, KBarProvider } from 'kbar';
-import React, { ComponentType } from 'react';
+import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
-import { Router, Redirect, Switch, RouteComponentProps } from 'react-router-dom';
-import { CompatRouter, CompatRoute } from 'react-router-dom-v5-compat';
+import { Redirect, Switch, RouteComponentProps } from 'react-router-dom';
+import { CompatRoute } from 'react-router-dom-v5-compat';
 
-import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
-import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, PortalContainer } from '@grafana/ui';
+import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
+import { ErrorBoundaryAlert, GlobalStyles, PortalContainer } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
-import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
-import { AppChrome } from './core/components/AppChrome/AppChrome';
-import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { GrafanaContext } from './core/context/GrafanaContext';
-import { ModalsContextProvider } from './core/context/ModalsContextProvider';
+import { SidecarContext } from './core/context/SidecarContext';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
+import { sidecarService } from './core/services/SidecarService';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
+import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
+import { ExperimentalSplitPaneRouterWrapper, RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -42,7 +42,7 @@ export function addPageBanner(fn: ComponentType) {
   pageBanners.push(fn);
 }
 
-export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState> {
+export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   constructor(props: AppWrapperProps) {
     super(props);
     this.state = {};
@@ -94,6 +94,12 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
       });
     };
 
+    const routerWrapperProps = {
+      routes: ready && this.renderRoutes(),
+      pageBanners,
+      bodyRenderHooks,
+    };
+
     return (
       <Provider store={store}>
         <ErrorBoundaryAlert style="page">
@@ -103,29 +109,20 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 actions={[]}
                 options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
               >
-                <Router history={locationService.getHistory()}>
-                  <CompatRouter>
-                    <ModalsContextProvider>
-                      <GlobalStyles />
-                      <div className="grafana-app">
-                        <AppChrome>
-                          {pageBanners.map((Banner, index) => (
-                            <Banner key={index.toString()} />
-                          ))}
-                          <AngularRoot />
-                          <AppNotificationList />
-                          {ready && this.renderRoutes()}
-                          {bodyRenderHooks.map((Hook, index) => (
-                            <Hook key={index.toString()} />
-                          ))}
-                        </AppChrome>
-                      </div>
+                <GlobalStyles />
+                <SidecarContext.Provider value={sidecarService}>
+                  <ExtensionRegistriesProvider registries={app.pluginExtensionsRegistries}>
+                    <div className="grafana-app">
+                      {config.featureToggles.appSidecar ? (
+                        <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
+                      ) : (
+                        <RouterWrapper {...routerWrapperProps} />
+                      )}
                       <LiveConnectionWarning />
-                      <ModalRoot />
                       <PortalContainer />
-                    </ModalsContextProvider>
-                  </CompatRouter>
-                </Router>
+                    </div>
+                  </ExtensionRegistriesProvider>
+                </SidecarContext.Provider>
               </KBarProvider>
             </ThemeProvider>
           </GrafanaContext.Provider>

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import * as React from 'react';
 
 import { useStyles2 } from '../../themes';
 import { Field, FieldProps } from '../Forms/Field';

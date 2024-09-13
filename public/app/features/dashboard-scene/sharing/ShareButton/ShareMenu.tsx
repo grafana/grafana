@@ -1,28 +1,101 @@
-import React from 'react';
-import { useAsyncFn } from 'react-use';
+import { useCallback } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Menu } from '@grafana/ui';
+import { config, locationService } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
+import { IconName, Menu } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 
-import { createAndCopyDashboardShortLink } from '../../../../core/utils/shortLinks';
+import { isPublicDashboardsEnabled } from '../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { getTrackingSource, shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
+import { DashboardInteractions } from '../../utils/interactions';
 
 const newShareButtonSelector = e2eSelectors.pages.Dashboard.DashNav.newShareButton.menu;
 
-export default function ShareMenu({ dashboard }: { dashboard: DashboardScene }) {
-  const [_, buildUrl] = useAsyncFn(async () => {
-    return await createAndCopyDashboardShortLink(dashboard, { useAbsoluteTimeRange: true, theme: 'current' });
-  }, [dashboard]);
+export interface ShareDrawerMenuItem {
+  shareId: string;
+  testId: string;
+  label: string;
+  description?: string;
+  icon: IconName;
+  renderCondition: boolean;
+  onClick: (d: DashboardScene) => void;
+}
+
+const customShareDrawerItem: ShareDrawerMenuItem[] = [];
+
+export function addDashboardShareDrawerItem(item: ShareDrawerMenuItem) {
+  customShareDrawerItem.push(item);
+}
+
+export default function ShareMenu({ dashboard, panel }: { dashboard: DashboardScene; panel?: VizPanel }) {
+  const onMenuItemClick = (shareView: string) => {
+    locationService.partial({ shareView });
+  };
+
+  const buildMenuItems = useCallback(() => {
+    const menuItems: ShareDrawerMenuItem[] = [];
+
+    menuItems.push({
+      shareId: shareDashboardType.link,
+      testId: newShareButtonSelector.shareInternally,
+      icon: 'building',
+      label: t('share-dashboard.menu.share-internally-title', 'Share internally'),
+      description: t('share-dashboard.menu.share-internally-description', 'Link settings'),
+      renderCondition: true,
+      onClick: () => onMenuItemClick(shareDashboardType.link),
+    });
+
+    menuItems.push({
+      shareId: shareDashboardType.publicDashboard,
+      testId: newShareButtonSelector.shareExternally,
+      icon: 'share-alt',
+      label: t('share-dashboard.menu.share-externally-title', 'Share externally'),
+      renderCondition: !panel && isPublicDashboardsEnabled(),
+      onClick: () => {
+        onMenuItemClick(shareDashboardType.publicDashboard);
+      },
+    });
+
+    customShareDrawerItem.forEach((d) => menuItems.push(d));
+
+    menuItems.push({
+      shareId: shareDashboardType.snapshot,
+      testId: newShareButtonSelector.shareSnapshot,
+      icon: 'camera',
+      label: t('share-dashboard.menu.share-snapshot-title', 'Share snapshot'),
+      renderCondition: contextSrv.isSignedIn && config.snapshotEnabled && dashboard.canEditDashboard(),
+      onClick: () => {
+        onMenuItemClick(shareDashboardType.snapshot);
+      },
+    });
+
+    return menuItems.filter((item) => item.renderCondition);
+  }, [panel, dashboard]);
+
+  const onClick = (item: ShareDrawerMenuItem) => {
+    DashboardInteractions.sharingCategoryClicked({
+      item: item.shareId,
+      shareResource: getTrackingSource(panel?.getRef()),
+    });
+
+    item.onClick(dashboard);
+  };
 
   return (
     <Menu data-testid={newShareButtonSelector.container}>
-      <Menu.Item
-        testId={newShareButtonSelector.shareInternally}
-        label="Share internally"
-        description="Copy link"
-        icon="building"
-        onClick={buildUrl}
-      />
+      {buildMenuItems().map((item) => (
+        <Menu.Item
+          key={item.label}
+          testId={item.testId}
+          label={item.label}
+          icon={item.icon}
+          description={item.description}
+          onClick={() => onClick(item)}
+        />
+      ))}
     </Menu>
   );
 }

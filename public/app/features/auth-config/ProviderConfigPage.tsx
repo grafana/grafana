@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
@@ -6,6 +6,7 @@ import { Badge, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
+import { PageNotFound } from '../../core/components/PageNotFound/PageNotFound';
 import { StoreState } from '../../types';
 
 import { ProviderConfigForm } from './ProviderConfigForm';
@@ -57,15 +58,16 @@ export type Props = ConnectedProps<typeof connector>;
  * Separate the Page logic from the Content logic for easier testing.
  */
 export const ProviderConfigPage = ({ config, loadProviders, isLoading, provider }: Props) => {
-  const pageNav = getPageNav(config);
-
   useEffect(() => {
     loadProviders(provider);
   }, [loadProviders, provider]);
 
-  if (!config) {
-    return null;
+  if (!config || !config.provider || !UIMap[config.provider]) {
+    return <PageNotFound />;
   }
+
+  const pageNav = getPageNav(config);
+
   return (
     <Page
       navId="authentication"

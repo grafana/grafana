@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import pluralize from 'pluralize';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -68,8 +68,7 @@ function NotificationRouteHeader({
         <Spacer />
         <Stack gap={2} direction="row" alignItems="center">
           <MetaText icon="layers-alt" data-testid="matching-instances">
-            {instancesCount ?? '-'}
-            <span>{pluralize('instance', instancesCount)}</span>
+            {instancesCount ?? '-'} {pluralize('instance', instancesCount)}
           </MetaText>
           <Stack gap={1} direction="row" alignItems="center">
             <div>
@@ -134,7 +133,7 @@ export function NotificationRoute({
           <div className={styles.routeInstances} data-testid="route-matching-instance">
             {instanceMatches.map((instanceMatch) => {
               const matchArray = Array.from(instanceMatch.labelsMatch);
-              let matchResult = matchArray.map(([label, matchResult]) => ({
+              const matchResult = matchArray.map(([label, matchResult]) => ({
                 label: `${label[0]}=${label[1]}`,
                 match: matchResult.match,
                 colorIndex: matchResult.match ? getTagColorIndexFromName(label[0]) : GREY_COLOR_INDEX,

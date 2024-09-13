@@ -5,7 +5,9 @@ import (
 	"os"
 	"strings"
 
+	alertingMqtt "github.com/grafana/alerting/receivers/mqtt"
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
+	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
 	alertingTemplates "github.com/grafana/alerting/templates"
 )
 
@@ -363,6 +365,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					PropertyName: "details",
 				},
+				{ //New in 11.1
+					Label:        "URL",
+					Description:  "The URL to send API requests to",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  alertingPagerduty.DefaultURL,
+					PropertyName: "url",
+				},
 			},
 		},
 		{
@@ -548,7 +558,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Expire (Only used for Emergency Priority)",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "maximum 86400 seconds",
+					Placeholder:  "maximum 10800 seconds",
 					PropertyName: "expire",
 				},
 				{
@@ -1237,6 +1247,93 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 		{
+			Type:        "mqtt",
+			Name:        "MQTT",
+			Description: "Sends notifications to an MQTT broker",
+			Heading:     "MQTT settings",
+			Info:        "The MQTT notifier sends messages to an MQTT broker. The message is sent to the topic specified in the configuration. ",
+			Options: []NotifierOption{
+				{
+					Label:        "Broker URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "tcp://localhost:1883",
+					Description:  "The URL of the MQTT broker.",
+					PropertyName: "brokerUrl",
+					Required:     true,
+				},
+				{
+					Label:        "Topic",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "grafana/alerts",
+					Description:  "The topic to which the message will be sent.",
+					PropertyName: "topic",
+					Required:     true,
+				},
+				{
+					Label:   "Message format",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: alertingMqtt.MessageFormatJSON,
+							Label: "json",
+						},
+						{
+							Value: alertingMqtt.MessageFormatText,
+							Label: "text",
+						},
+					},
+					InputType:    InputTypeText,
+					Placeholder:  "json",
+					Description:  "The format of the message to be sent. If set to 'json', the message will be sent as a JSON object. If set to 'text', the message will be sent as a plain text string. By default json is used.",
+					PropertyName: "messageFormat",
+					Required:     false,
+				},
+				{
+					Label:        "Client ID",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					Description:  "The client ID to use when connecting to the MQTT broker. If blank, a random client ID is used.",
+					PropertyName: "clientId",
+					Required:     false,
+				},
+				{
+					Label:        "Message",
+					Element:      ElementTypeTextArea,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
+					PropertyName: "message",
+				},
+				{
+					Label:        "Username",
+					Description:  "The username to use when connecting to the MQTT broker.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "username",
+					Required:     false,
+				},
+				{
+					Label:        "Password",
+					Description:  "The password to use when connecting to the MQTT broker.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "password",
+					Required:     false,
+					Secure:       true,
+				},
+				{
+					Label:        "Disable certificate verification",
+					Element:      ElementTypeCheckbox,
+					Description:  "Do not verify the broker's certificate chain and host name.",
+					PropertyName: "insecureSkipVerify",
+					Required:     false,
+				},
+			},
+		},
+		{
 			Type:        "opsgenie",
 			Name:        "OpsGenie",
 			Description: "Sends notifications to OpsGenie",
@@ -1384,6 +1481,118 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 			},
 		},
+		{ // Since Grafana 11.1
+			Type:        "sns",
+			Name:        "AWS SNS",
+			Description: "Sends notifications to AWS Simple Notification Service",
+			Heading:     "Webex settings",
+			Options: []NotifierOption{
+				{
+					Label:        "The Amazon SNS API URL",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "api_url",
+				},
+				{
+					Label:        "SigV4 Authentication",
+					Description:  "Configures AWS's Signature Verification 4 signing process to sign requests",
+					Element:      ElementTypeSubform,
+					PropertyName: "sigv4",
+					SubformOptions: []NotifierOption{
+						{
+							Label:        "Region",
+							Description:  "The AWS region. If blank, the region from the default credentials chain is used.",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "region",
+						},
+						{
+							Label:        "Access Key",
+							Description:  "The AWS API access key.",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "access_key",
+							Secure:       true,
+						},
+						{
+							Label:        "Secret Key",
+							Description:  "The AWS API secret key.",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "secret_key",
+							Secure:       true,
+						},
+						{
+							Label:        "Profile",
+							Description:  "Named AWS profile used to authenticate",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "profile",
+						},
+						{
+							Label:        "Role ARN",
+							Description:  "AWS Role ARN, an alternative to using AWS API keys",
+							Element:      ElementTypeInput,
+							InputType:    InputTypeText,
+							Placeholder:  "",
+							PropertyName: "role_arn",
+						},
+					},
+				},
+				{
+					Label:        "SNS topic ARN",
+					Description:  "If you don't specify this value, you must specify a value for the phone_number or target_arn. If you are using a FIFO SNS topic you should set a message group interval longer than 5 minutes to prevent messages with the same group key being deduplicated by the SNS default deduplication window.",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "",
+					PropertyName: "topic_arn",
+				},
+				{
+					Label:        "Phone number",
+					Description:  "Phone number if message is delivered via SMS in E.164 format. If you don't specify this value, you must specify a value for the topic_arn or target_arn",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  ``,
+					PropertyName: "phone_number",
+					Secure:       false,
+				},
+				{
+					Label:        "Target ARN",
+					Description:  "The mobile platform endpoint ARN if message is delivered via mobile notifications. If you don't specify this value, you must specify a value for the topic_arn or phone_number",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  ``,
+					PropertyName: "target_arn",
+				},
+				{
+					Label:        "Subject",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "Optional subject. You can use templates to customize this field",
+					PropertyName: "subject",
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
+				},
+				{
+					Label:        "Message",
+					Description:  "Optional message. You can use templates to customize this field. Using a custom message will replace the default message",
+					Element:      ElementTypeTextArea,
+					PropertyName: "message",
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
+				},
+				{
+					Label:        "Attributes",
+					Description:  "SNS message attributes",
+					Element:      ElementTypeKeyValueMap,
+					InputType:    InputTypeText,
+					PropertyName: "attributes",
+				},
+			},
+		},
 	}
 }
 
@@ -1391,15 +1600,38 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
-		if n.Type == contactPointType {
-			var secureFields []string
-			for _, field := range n.Options {
-				if field.Secure {
-					secureFields = append(secureFields, field.PropertyName)
-				}
-			}
-			return secureFields, nil
+		if strings.EqualFold(n.Type, contactPointType) {
+			return getSecretFields("", n.Options), nil
 		}
 	}
 	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+}
+
+func getSecretFields(parentPath string, options []NotifierOption) []string {
+	var secureFields []string
+	for _, field := range options {
+		name := field.PropertyName
+		if parentPath != "" {
+			name = parentPath + "." + name
+		}
+		if field.Secure {
+			secureFields = append(secureFields, name)
+			continue
+		}
+		if len(field.SubformOptions) > 0 {
+			secureFields = append(secureFields, getSecretFields(name, field.SubformOptions)...)
+		}
+	}
+	return secureFields
+}
+
+// ConfigForIntegrationType returns the config for the given integration type. Returns error is integration type is not known.
+func ConfigForIntegrationType(contactPointType string) (*NotifierPlugin, error) {
+	notifiers := GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if strings.EqualFold(n.Type, contactPointType) {
+			return n, nil
+		}
+	}
+	return nil, fmt.Errorf("unknown integration type '%s'", contactPointType)
 }

@@ -17,12 +17,14 @@ type storage struct {
 }
 
 func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, legacy *legacyStorage) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme)
+	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
 
 	resource := playlist.PlaylistResourceInfo
 	store := &genericregistry.Store{
 		NewFunc:                   resource.NewFunc,
 		NewListFunc:               resource.NewListFunc,
+		KeyRootFunc:               grafanaregistry.KeyRootFunc(resourceInfo.GroupResource()),
+		KeyFunc:                   grafanaregistry.NamespaceKeyFunc(resourceInfo.GroupResource()),
 		PredicateFunc:             grafanaregistry.Matcher,
 		DefaultQualifiedResource:  resource.GroupResource(),
 		SingularQualifiedResource: resourceInfo.SingularGroupResource(),

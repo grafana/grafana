@@ -18,13 +18,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/testutil"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -40,15 +43,16 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sql := db.InitTestDB(t)
+	sql := db.InitTestReplDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
 
 	features := featuremgmt.WithFeatures()
 	tagService := tagimpl.ProvideService(sql)
+	ruleStore := alertingStore.SetupStoreForTesting(t, sql)
 
-	repo := ProvideService(sql, cfg, features, tagService)
+	repo := ProvideService(sql, cfg, features, tagService, tracing.InitializeTracerForTest(), ruleStore)
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
 		UserID:   1,
@@ -187,15 +191,13 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	permissions := []accesscontrol.Permission{
 		{
 			Action: dashboards.ActionFoldersCreate,
-		}, {
-			Action: dashboards.ActionFoldersWrite,
 			Scope:  dashboards.ScopeFoldersAll,
 		},
 	}
 	usr := &user.SignedInUser{
 		UserID:      1,
 		OrgID:       orgID,
-		Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)},
+		Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), permissions)},
 	}
 
 	var role *accesscontrol.Role
@@ -208,8 +210,8 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	allDashboards := make([]dashInfo, 0, folder.MaxNestedFolderDepth+1)
 	annotationsTexts := make([]string, 0, folder.MaxNestedFolderDepth+1)
 
-	setupFolderStructure := func() db.DB {
-		sql, cfg := db.InitTestDBWithCfg(t)
+	setupFolderStructure := func() *sqlstore.ReplStore {
+		sql, cfg := db.InitTestReplDBWithCfg(t)
 
 		// enable nested folders so that the folder table is populated for all the tests
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
@@ -225,8 +227,8 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		ac := acimpl.ProvideAccessControl(features)
-		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil)
+		ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
+		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		cfg.AnnotationMaximumTagsLength = 60
 
@@ -316,8 +318,8 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationMaximumTagsLength = 60
-
-			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql))
+			ruleStore := alertingStore.SetupStoreForTesting(t, sql)
+			repo := ProvideService(sql, cfg, tc.features, tagimpl.ProvideService(sql), tracing.InitializeTracerForTest(), ruleStore)
 
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
 			testutil.SetupRBACPermission(t, sql, role, usr)

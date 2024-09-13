@@ -401,15 +401,15 @@ type pluginsSettingsServiceMock struct {
 func (s *pluginsSettingsServiceMock) GetPluginSettings(_ context.Context, args *pluginsettings.GetArgs) ([]*pluginsettings.InfoDTO, error) {
 	s.getPluginSettingsArgs = append(s.getPluginSettingsArgs, args.OrgID)
 
-	var res []*pluginsettings.InfoDTO
-	for _, ps := range s.storedPluginSettings {
-		res = append(res, &pluginsettings.InfoDTO{
+	res := make([]*pluginsettings.InfoDTO, len(s.storedPluginSettings))
+	for i, ps := range s.storedPluginSettings {
+		res[i] = &pluginsettings.InfoDTO{
 			PluginID:      ps.PluginID,
 			OrgID:         ps.OrgID,
 			Enabled:       ps.Enabled,
 			Pinned:        ps.Pinned,
 			PluginVersion: ps.PluginVersion,
-		})
+		}
 	}
 
 	return res, s.err

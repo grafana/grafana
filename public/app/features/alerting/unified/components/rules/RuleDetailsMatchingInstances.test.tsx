@@ -1,11 +1,10 @@
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { times } from 'lodash';
-import React from 'react';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
-import { usePluginLinkExtensions } from '@grafana/runtime';
+import { usePluginLinks } from '@grafana/runtime';
 
 import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from '../../../../../types/unified-alerting-dto';
@@ -17,11 +16,11 @@ import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn(),
-  usePluginLinkExtensions: jest.fn(),
+  usePluginLinks: jest.fn(),
 }));
 
 const mocks = {
-  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
+  usePluginLinksMock: jest.mocked(usePluginLinks),
 };
 
 const ui = {
@@ -44,8 +43,8 @@ const ui = {
 
 describe('RuleDetailsMatchingInstances', () => {
   beforeEach(() => {
-    mocks.usePluginLinkExtensionsMock.mockReturnValue({
-      extensions: [
+    mocks.usePluginLinksMock.mockReturnValue({
+      links: [
         {
           pluginId: 'grafana-ml-app',
           id: '1',

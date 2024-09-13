@@ -69,6 +69,16 @@ type Plugin struct {
 	mu sync.Mutex
 }
 
+var (
+	_ = backend.CollectMetricsHandler(&Plugin{})
+	_ = backend.CheckHealthHandler(&Plugin{})
+	_ = backend.QueryDataHandler(&Plugin{})
+	_ = backend.CallResourceHandler(&Plugin{})
+	_ = backend.StreamHandler(&Plugin{})
+	_ = backend.AdmissionHandler(&Plugin{})
+	_ = backend.ConversionHandler(&Plugin{})
+)
+
 type AngularMeta struct {
 	Detected        bool `json:"detected"`
 	HideDeprecation bool `json:"hideDeprecation"`
@@ -92,7 +102,8 @@ type JSONData struct {
 	Routes       []*Route     `json:"routes"`
 
 	// AccessControl settings
-	Roles []RoleRegistration `json:"roles,omitempty"`
+	Roles      []RoleRegistration `json:"roles,omitempty"`
+	ActionSets []ActionSet        `json:"actionSets,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
@@ -101,18 +112,19 @@ type JSONData struct {
 	AutoEnabled bool `json:"autoEnabled"`
 
 	// Datasource settings
-	Annotations  bool            `json:"annotations"`
-	Metrics      bool            `json:"metrics"`
-	Alerting     bool            `json:"alerting"`
-	Explore      bool            `json:"explore"`
-	Table        bool            `json:"tables"`
-	Logs         bool            `json:"logs"`
-	Tracing      bool            `json:"tracing"`
-	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
-	BuiltIn      bool            `json:"builtIn,omitempty"`
-	Mixed        bool            `json:"mixed,omitempty"`
-	Streaming    bool            `json:"streaming"`
-	SDK          bool            `json:"sdk,omitempty"`
+	Annotations               bool            `json:"annotations"`
+	Metrics                   bool            `json:"metrics"`
+	Alerting                  bool            `json:"alerting"`
+	Explore                   bool            `json:"explore"`
+	Table                     bool            `json:"tables"`
+	Logs                      bool            `json:"logs"`
+	Tracing                   bool            `json:"tracing"`
+	QueryOptions              map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn                   bool            `json:"builtIn,omitempty"`
+	Mixed                     bool            `json:"mixed,omitempty"`
+	Streaming                 bool            `json:"streaming"`
+	SDK                       bool            `json:"sdk,omitempty"`
+	MultiValueFilterOperators bool            `json:"multiValueFilterOperators,omitempty"`
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
@@ -165,6 +177,11 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		if include.Role == "" {
 			include.Role = org.RoleViewer
 		}
+
+		// Default to app access for app plugins
+		if plugin.Type == TypeApp && include.Role == org.RoleViewer && include.Action == "" {
+			include.Action = ActionAppAccess
+		}
 	}
 
 	return plugin, nil
@@ -202,10 +219,6 @@ type Route struct {
 	TokenAuth    *JWTTokenAuth   `json:"tokenAuth"`
 	JwtTokenAuth *JWTTokenAuth   `json:"jwtTokenAuth"`
 	Body         json.RawMessage `json:"body"`
-}
-
-func (r *Route) RequiresRBACAction() bool {
-	return r.ReqAction != ""
 }
 
 // Header describes an HTTP header that is forwarded with
@@ -361,6 +374,33 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
+// ValidateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ValidateAdmission(ctx, req)
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.MutateAdmission(ctx, req)
+}
+
+// ConvertObject implements backend.AdmissionHandler.
+func (p *Plugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ConvertObjects(ctx, req)
+}
+
 func (p *Plugin) File(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
@@ -419,6 +459,8 @@ type PluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.AdmissionHandler
+	backend.ConversionHandler
 	backend.StreamHandler
 }
 
@@ -464,6 +506,7 @@ const (
 	ClassCore     Class = "core"
 	ClassBundled  Class = "bundled"
 	ClassExternal Class = "external"
+	ClassCDN      Class = "cdn"
 )
 
 func (c Class) String() string {

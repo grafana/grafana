@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -18,20 +19,17 @@ import (
 func NewOAuthTokenMiddleware(oAuthTokenService oauthtoken.OAuthTokenService) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &OAuthTokenMiddleware{
-			next:              next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 			oAuthTokenService: oAuthTokenService,
 		}
 	})
 }
 
-const (
-	tokenHeaderName   = "Authorization"
-	idTokenHeaderName = "X-ID-Token"
-)
-
 type OAuthTokenMiddleware struct {
+	baseMiddleware
 	oAuthTokenService oauthtoken.OAuthTokenService
-	next              plugins.Client
 }
 
 func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req interface{}) error {
@@ -66,19 +64,19 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 
 			switch t := req.(type) {
 			case *backend.QueryDataRequest:
-				t.Headers[tokenHeaderName] = authorizationHeader
+				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
-					t.Headers[idTokenHeaderName] = idTokenHeader
+					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
 				}
 			case *backend.CheckHealthRequest:
-				t.Headers[tokenHeaderName] = authorizationHeader
+				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
-					t.Headers[idTokenHeaderName] = idTokenHeader
+					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
 				}
 			case *backend.CallResourceRequest:
-				t.Headers[tokenHeaderName] = []string{authorizationHeader}
+				t.Headers[backend.OAuthIdentityTokenHeaderName] = []string{authorizationHeader}
 				if idTokenHeader != "" {
-					t.Headers[idTokenHeaderName] = []string{idTokenHeader}
+					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = []string{idTokenHeader}
 				}
 			}
 		}
@@ -124,20 +122,4 @@ func (m *OAuthTokenMiddleware) CheckHealth(ctx context.Context, req *backend.Che
 	}
 
 	return m.next.CheckHealth(ctx, req)
-}
-
-func (m *OAuthTokenMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	return m.next.CollectMetrics(ctx, req)
-}
-
-func (m *OAuthTokenMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	return m.next.SubscribeStream(ctx, req)
-}
-
-func (m *OAuthTokenMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	return m.next.PublishStream(ctx, req)
-}
-
-func (m *OAuthTokenMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	return m.next.RunStream(ctx, req, sender)
 }

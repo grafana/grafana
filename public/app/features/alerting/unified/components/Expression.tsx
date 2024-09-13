@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { languages as prismLanguages } from 'prismjs';
-import React, { FC, useMemo } from 'react';
+import { FC, useMemo } from 'react';
 import { Editor } from 'slate-react';
 
 import { GrafanaTheme2 } from '@grafana/data';

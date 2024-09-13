@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 
 import { DataFrame, getFieldDisplayName, getFieldSeriesColor } from '@grafana/data';
 import { VizLegendOptions, AxisPlacement } from '@grafana/schema';
@@ -39,7 +39,7 @@ export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFra
   });
 }
 
-export const PlotLegend = React.memo(
+export const PlotLegend = memo(
   ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
     const legendItems = config
@@ -71,6 +71,7 @@ export const PlotLegend = React.memo(
           yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
           getDisplayValues: () => getDisplayValuesForCalcs(calcs, field, theme),
           getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
+          lineStyle: seriesConfig.lineStyle,
         };
       })
       .filter((i): i is VizLegendItem => i !== undefined);

@@ -1,12 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2, VariableHide, urlUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { AdHocVariableFilter, GrafanaTheme2, urlUtil, VariableHide } from '@grafana/data';
+import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   DataSourceVariable,
-  getUrlSyncManager,
   SceneComponentProps,
   SceneControlsSpacer,
   sceneGraph,
@@ -21,6 +19,7 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableSet,
+  UrlSyncManager,
   VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
@@ -29,7 +28,7 @@ import { useStyles2 } from '@grafana/ui';
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
-import { MetricSelectScene } from './MetricSelectScene';
+import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
@@ -50,10 +49,11 @@ export interface DataTrailState extends SceneObjectState {
 
   // Synced with url
   metric?: string;
+  metricSearch?: string;
 }
 
 export class DataTrail extends SceneObjectBase<DataTrailState> {
-  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric'] });
+  protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['metric', 'metricSearch'] });
 
   public constructor(state: Partial<DataTrailState>) {
     super({
@@ -93,21 +93,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       );
     }
 
-    // Disconnects the current step history state from the current state, to prevent changes affecting history state
-    const currentState = this.state.history.state.steps[this.state.history.state.currentStep]?.trailState;
-    if (currentState) {
-      this.restoreFromHistoryStep(currentState);
-    }
-
-    this.enableUrlSync();
-
     // Save the current trail as a recent if the browser closes or reloads
     const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
     window.addEventListener('unload', saveRecentTrail);
 
     return () => {
-      this.disableUrlSync();
-
       if (!this.state.embedded) {
         saveRecentTrail();
       }
@@ -115,21 +105,9 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     };
   }
 
-  private enableUrlSync() {
-    if (!this.state.embedded) {
-      getUrlSyncManager().initSync(this);
-    }
-  }
-
-  private disableUrlSync() {
-    if (!this.state.embedded) {
-      getUrlSyncManager().cleanUp(this);
-    }
-  }
-
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_DATASOURCE],
-    onReferencedVariableValueChanged: (variable: SceneVariable) => {
+    onReferencedVariableValueChanged: async (variable: SceneVariable) => {
       const { name } = variable.state;
       if (name === VAR_DATASOURCE) {
         this.datasourceHelper.reset();
@@ -167,8 +145,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   public restoreFromHistoryStep(state: DataTrailState) {
-    this.disableUrlSync();
-
     if (!state.topScene && !state.metric) {
       // If the top scene for an  is missing, correct it.
       state.topScene = new MetricSelectScene({});
@@ -178,14 +154,13 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       sceneUtils.cloneSceneObjectState(state, {
         history: this.state.history,
         metric: !state.metric ? undefined : state.metric,
+        metricSearch: !state.metricSearch ? undefined : state.metricSearch,
       })
     );
 
-    const urlState = getUrlSyncManager().getUrlState(this);
+    const urlState = new UrlSyncManager().getUrlState(this);
     const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
     locationService.replace(fullUrl);
-
-    this.enableUrlSync();
   }
 
   private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
@@ -208,7 +183,8 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   getUrlState() {
-    return { metric: this.state.metric };
+    const { metric, metricSearch } = this.state;
+    return { metric, metricSearch };
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
@@ -223,12 +199,19 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       stateUpdate.topScene = new MetricSelectScene({});
     }
 
+    if (typeof values.metricSearch === 'string') {
+      stateUpdate.metricSearch = values.metricSearch;
+    } else if (values.metric == null) {
+      stateUpdate.metricSearch = undefined;
+    }
+
     this.setState(stateUpdate);
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     const { controls, topScene, history, settings } = model.useState();
-    const styles = useStyles2(getStyles);
+    const chromeHeaderHeight = useChromeHeaderHeight();
+    const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
@@ -272,22 +255,25 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         addFilterButtonText: 'Add label',
         datasource: trailDS,
         hide: VariableHide.hideLabel,
-        layout: 'vertical',
+        layout: config.featureToggles.newFiltersUI ? 'combobox' : 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
+        // since we only support prometheus datasources, this is always true
+        supportsMultiValueOperators: true,
       }),
     ],
   });
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, chromeHeaderHeight: number) {
   return {
     container: css({
       flexGrow: 1,
       display: 'flex',
       gap: theme.spacing(1),
-      minHeight: '100%',
       flexDirection: 'column',
+      background: theme.isLight ? theme.colors.background.primary : theme.colors.background.canvas,
+      padding: theme.spacing(2, 3, 2, 3),
     }),
     body: css({
       flexGrow: 1,
@@ -303,7 +289,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
       zIndex: theme.zIndex.navbarFixed,
-      top: 0,
+      top: chromeHeaderHeight,
     }),
   };
 }

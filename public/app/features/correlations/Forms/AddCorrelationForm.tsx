@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { PanelContainer, useStyles2 } from '@grafana/ui';
@@ -44,7 +44,7 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
     }
   }, [error, loading, value, onCreated]);
 
-  const defaultValues: Partial<FormDTO> = { config: { type: 'query', target: {}, field: '' } };
+  const defaultValues: Partial<FormDTO> = { type: 'query', config: { target: {}, field: '' } };
 
   return (
     <PanelContainer className={styles.panelContainer}>

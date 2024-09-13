@@ -14,10 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
@@ -202,6 +203,7 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 				&setting.Cfg{
 					AutoAssignOrgRole: "",
 				},
+				nil,
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
@@ -222,6 +224,21 @@ type roundTripperFunc struct {
 func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f.fn(req)
 }
+
+const googleGroupsJSON = `
+{
+	"memberships": [
+		{
+			"group": "test-group",
+			"groupKey": {
+				"id": "test-group@google.com"
+			},
+			"displayName": "Test Group"
+		}
+	],
+	"nextPageToken": ""
+}
+`
 
 func TestSocialGoogle_UserInfo(t *testing.T) {
 	cl := jwt.Claims{
@@ -249,6 +266,16 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 
 	tokenWithoutID := &oauth2.Token{}
 
+	groupClient := &http.Client{
+		Transport: &roundTripperFunc{
+			fn: func(req *http.Request) (*http.Response, error) {
+				resp := httptest.NewRecorder()
+				_, _ = resp.WriteString(googleGroupsJSON)
+				return resp.Result(), nil
+			},
+		},
+	}
+
 	type fields struct {
 		Scopes                  []string
 		apiURL                  string
@@ -256,6 +283,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 		roleAttributePath       string
 		roleAttributeStrict     bool
 		allowAssignGrafanaAdmin bool
+		orgMapping              []string
 		skipOrgRoleSync         bool
 	}
 	type args struct {
@@ -294,27 +322,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				skipOrgRoleSync: true,
 			},
 			args: args{
-				token: tokenWithID,
-				client: &http.Client{
-					Transport: &roundTripperFunc{
-						fn: func(req *http.Request) (*http.Response, error) {
-							resp := httptest.NewRecorder()
-							_, _ = resp.WriteString(`{
-                                "memberships": [
-                                    {
-                                        "group": "test-group",
-                                        "groupKey": {
-                                            "id": "test-group@google.com"
-                                        },
-                                        "displayName": "Test Group"
-                                    }
-                                ],
-                                "nextPageToken": ""
-                            }`)
-							return resp.Result(), nil
-						},
-					},
-				},
+				token:  tokenWithID,
+				client: groupClient,
 			},
 			wantData: &social.BasicUserInfo{
 				Id:     "88888888888888",
@@ -506,27 +515,8 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				allowedGroups: []string{"not-that-one"},
 			},
 			args: args{
-				token: tokenWithID,
-				client: &http.Client{
-					Transport: &roundTripperFunc{
-						fn: func(req *http.Request) (*http.Response, error) {
-							resp := httptest.NewRecorder()
-							_, _ = resp.WriteString(`{
-                                "memberships": [
-                                    {
-                                        "group": "test-group",
-                                        "groupKey": {
-                                            "id": "test-group@google.com"
-                                        },
-                                        "displayName": "Test Group"
-                                    }
-                                ],
-                                "nextPageToken": ""
-                            }`)
-							return resp.Result(), nil
-						},
-					},
-				},
+				token:  tokenWithID,
+				client: groupClient,
 			},
 			wantData: &social.BasicUserInfo{
 				Id:     "88888888888888",
@@ -557,7 +547,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				Groups: []string{"test-group@google.com"},
 			},
 			wantErr:    true,
-			wantErrMsg: "idP did not return a role attribute, but role_attribute_strict is set",
+			wantErrMsg: "[oauth.role_attribute_strict_violation] could not evaluate any valid roles using IdP provided data",
 		},
 		{
 			name: "role mapping from id_token - no allowed assign Grafana Admin",
@@ -574,7 +564,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				Login:          "test@example.com",
 				Email:          "test@example.com",
 				Name:           "Test User",
-				Role:           roletype.RoleAdmin,
+				OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 				IsGrafanaAdmin: nil,
 			},
 			wantErr: false,
@@ -594,7 +584,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				Login:          "test@example.com",
 				Email:          "test@example.com",
 				Name:           "Test User",
-				Role:           roletype.RoleAdmin,
+				OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 				IsGrafanaAdmin: trueBoolPtr(),
 			},
 			wantErr: false,
@@ -606,54 +596,103 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 				roleAttributePath: "contains(groups[*], 'test-group@google.com') && 'Editor'",
 			},
 			args: args{
-				token: tokenWithID,
-				client: &http.Client{
-					Transport: &roundTripperFunc{
-						fn: func(req *http.Request) (*http.Response, error) {
-							resp := httptest.NewRecorder()
-							_, _ = resp.WriteString(`{
-                                "memberships": [
-                                    {
-                                        "group": "test-group",
-                                        "groupKey": {
-                                            "id": "test-group@google.com"
-                                        },
-                                        "displayName": "Test Group"
-                                    }
-                                ],
-                                "nextPageToken": ""
-                            }`)
-							return resp.Result(), nil
-						},
-					},
-				},
+				token:  tokenWithID,
+				client: groupClient,
 			},
 			wantData: &social.BasicUserInfo{
-				Id:     "88888888888888",
-				Login:  "test@example.com",
-				Email:  "test@example.com",
-				Name:   "Test User",
-				Role:   "Editor",
-				Groups: []string{"test-group@google.com"},
+				Id:       "88888888888888",
+				Login:    "test@example.com",
+				Email:    "test@example.com",
+				Name:     "Test User",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+				Groups:   []string{"test-group@google.com"},
 			},
 			wantErr: false,
+		},
+		{
+			name: "mapping from groups",
+			fields: fields{
+				Scopes:            []string{"https://www.googleapis.com/auth/cloud-identity.groups.readonly"},
+				roleAttributePath: "contains(groups[*], 'test-group@google.com') && 'Editor'",
+			},
+			args: args{
+				token:  tokenWithID,
+				client: groupClient,
+			},
+			wantData: &social.BasicUserInfo{
+				Id:       "88888888888888",
+				Login:    "test@example.com",
+				Email:    "test@example.com",
+				Name:     "Test User",
+				OrgRoles: map[int64]org.RoleType{1: org.RoleEditor},
+				Groups:   []string{"test-group@google.com"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Should map role when only org mapping is set",
+			fields: fields{
+				Scopes:     []string{"https://www.googleapis.com/auth/cloud-identity.groups.readonly"},
+				orgMapping: []string{"test-group@google.com:Org4:Editor", "*:Org5:Viewer"},
+			},
+			args: args{
+				token:  tokenWithID,
+				client: groupClient,
+			},
+			wantData: &social.BasicUserInfo{
+				Id:       "88888888888888",
+				Login:    "test@example.com",
+				Email:    "test@example.com",
+				Name:     "Test User",
+				OrgRoles: map[int64]org.RoleType{4: org.RoleEditor, 5: org.RoleViewer},
+				Groups:   []string{"test-group@google.com"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Should return error when neither role attribute path nor org mapping evaluates to a role and role attribute strict is enabled",
+			fields: fields{
+				Scopes:              []string{"https://www.googleapis.com/auth/cloud-identity.groups.readonly"},
+				orgMapping:          []string{"other@google.com:Org4:Editor"},
+				roleAttributeStrict: true,
+			},
+			args: args{
+				token:  tokenWithID,
+				client: groupClient,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Should return error when neither role attribute path nor org mapping is set and role attribute strict is enabled",
+			fields: fields{
+				Scopes:              []string{"https://www.googleapis.com/auth/cloud-identity.groups.readonly"},
+				roleAttributeStrict: true,
+			},
+			args: args{
+				token:  tokenWithID,
+				client: groupClient,
+			},
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+
 			s := NewGoogleProvider(
 				&social.OAuthInfo{
 					ApiUrl:                  tt.fields.apiURL,
 					Scopes:                  tt.fields.Scopes,
 					AllowedGroups:           tt.fields.allowedGroups,
-					AllowSignup:             false,
 					RoleAttributePath:       tt.fields.roleAttributePath,
 					RoleAttributeStrict:     tt.fields.roleAttributeStrict,
 					AllowAssignGrafanaAdmin: tt.fields.allowAssignGrafanaAdmin,
 					SkipOrgRoleSync:         tt.fields.skipOrgRoleSync,
+					OrgMapping:              tt.fields.orgMapping,
 				},
-				&setting.Cfg{},
+				cfg,
+				ProvideOrgRoleMapper(cfg, &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 4, Name: "Org4"}, {ID: 5, Name: "Org5"}}}),
 				&ssosettingstests.MockService{},
 				featuremgmt.WithFeatures())
 
@@ -795,13 +834,13 @@ func TestSocialGoogle_Validate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGoogleProvider(&social.OAuthInfo{}, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			if tc.requester == nil {
 				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
 
-			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			err := s.Validate(context.Background(), tc.settings, ssoModels.SSOSettings{}, tc.requester)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				return
@@ -876,7 +915,7 @@ func TestSocialGoogle_Reload(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := NewGoogleProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGoogleProvider(tc.info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
@@ -929,7 +968,7 @@ func TestIsHDAllowed(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			info := &social.OAuthInfo{}
 			info.AllowedDomains = tc.allowedDomains
-			s := NewGoogleProvider(info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+			s := NewGoogleProvider(info, &setting.Cfg{}, nil, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 			s.validateHD = tc.validateHD
 			err := s.isHDAllowed(tc.email)
 

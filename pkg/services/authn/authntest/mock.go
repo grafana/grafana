@@ -3,8 +3,9 @@ package authntest
 import (
 	"context"
 
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
@@ -46,11 +47,15 @@ func (m *MockService) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority
 	panic("unimplemented")
 }
 
+func (m *MockService) RegisterPreLogoutHook(hook authn.PreLogoutHookFn, priority uint) {
+	panic("unimplemented")
+}
+
 func (*MockService) Logout(_ context.Context, _ identity.Requester, _ *usertoken.UserToken) (*authn.Redirect, error) {
 	panic("unimplemented")
 }
 
-func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+func (m *MockService) ResolveIdentity(ctx context.Context, orgID int64, typedID string) (*authn.Identity, error) {
 	panic("unimplemented")
 }
 
@@ -73,8 +78,8 @@ type MockClient struct {
 	PriorityFunc        func() uint
 	HookFunc            func(ctx context.Context, identity *authn.Identity, r *authn.Request) error
 	LogoutFunc          func(ctx context.Context, user identity.Requester) (*authn.Redirect, bool)
-	NamespaceFunc       func() string
-	ResolveIdentityFunc func(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error)
+	IdentityTypeFunc    func() claims.IdentityType
+	ResolveIdentityFunc func(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error)
 }
 
 func (m MockClient) Name() string {
@@ -123,17 +128,17 @@ func (m *MockClient) Logout(ctx context.Context, user identity.Requester) (*auth
 	return nil, false
 }
 
-func (m *MockClient) Namespace() string {
-	if m.NamespaceFunc != nil {
-		return m.NamespaceFunc()
+func (m *MockClient) IdentityType() claims.IdentityType {
+	if m.IdentityTypeFunc != nil {
+		return m.IdentityTypeFunc()
 	}
-	return ""
+	return claims.TypeEmpty
 }
 
 // ResolveIdentity implements authn.IdentityResolverClient.
-func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, namespaceID authn.NamespaceID) (*authn.Identity, error) {
+func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, typ claims.IdentityType, id string) (*authn.Identity, error) {
 	if m.ResolveIdentityFunc != nil {
-		return m.ResolveIdentityFunc(ctx, orgID, namespaceID)
+		return m.ResolveIdentityFunc(ctx, orgID, typ, id)
 	}
 	return nil, nil
 }

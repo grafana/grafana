@@ -1,6 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_provider.test.ts
 import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 
+import { DEFAULT_SERIES_LIMIT } from './components/PrometheusMetricsBrowser';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
@@ -301,6 +302,48 @@ describe('Language completion provider', () => {
           end: toPrometheusTimeString,
           'match[]': 'interpolated-metric',
           start: fromPrometheusTimeString,
+          limit: DEFAULT_SERIES_LIMIT,
+        },
+        undefined
+      );
+    });
+
+    it("should not use default limit parameter when 'none' is passed to fetchSeriesLabels", () => {
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+      } as PrometheusDatasource);
+      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeriesLabels('metric-with-limit', undefined, 'none');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/series',
+        [],
+        {
+          end: toPrometheusTimeString,
+          'match[]': 'metric-with-limit',
+          start: fromPrometheusTimeString,
+        },
+        undefined
+      );
+    });
+
+    it("should not have a limit paranter if 'none' is passed to function", () => {
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        // interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as PrometheusDatasource);
+      const fetchSeriesLabels = languageProvider.fetchSeriesLabels;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      fetchSeriesLabels('metric-without-limit', false, 'none');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/series',
+        [],
+        {
+          end: toPrometheusTimeString,
+          'match[]': 'metric-without-limit',
+          start: fromPrometheusTimeString,
         },
         undefined
       );
@@ -504,6 +547,20 @@ describe('Language completion provider', () => {
             'match[]=process_max_fds&match[]=go_gc_heap_frees_by_size_bytes_bucket&match[]=process_cpu_seconds_total&match[]=go_gc_pauses_seconds_bucket'
           )
         );
+      });
+
+      it('should dont send match[] parameter if there is no metric', async () => {
+        const mockQueries: PromQuery[] = [
+          {
+            refId: 'A',
+            expr: '',
+          },
+        ];
+        const fetchLabel = languageProvider.fetchLabels;
+        const requestSpy = jest.spyOn(languageProvider, 'request');
+        await fetchLabel(tr, mockQueries);
+        expect(requestSpy).toHaveBeenCalled();
+        expect(requestSpy.mock.calls[0][0].indexOf('match[]')).toEqual(-1);
       });
     });
   });

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import * as H from 'history';
-import React, { useContext, useEffect, useMemo } from 'react';
+import { memo, useContext, useEffect, useMemo } from 'react';
 import { Prompt } from 'react-router';
 
 import { locationService } from '@grafana/runtime';
@@ -8,13 +8,15 @@ import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { ModalsContext, Modal, Button, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { DashboardScene } from '../scene/DashboardScene';
+import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 interface DashboardPromptProps {
   dashboard: DashboardScene;
 }
 
-export const DashboardPrompt = React.memo(({ dashboard }: DashboardPromptProps) => {
+export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const originalPath = useMemo(() => locationService.getLocation().pathname, [dashboard]);
   const { showModal, hideModal } = useContext(ModalsContext);
@@ -38,29 +40,39 @@ export const DashboardPrompt = React.memo(({ dashboard }: DashboardPromptProps) 
   }, [dashboard]);
 
   const onHistoryBlock = (location: H.Location) => {
-    // const panelInEdit = dashboard.state.editPanel;
-    // const search = new URLSearchParams(location.search);
+    const panelInEdit = dashboard.state.editPanel;
+    const vizPanelManager = panelInEdit?.state.vizManager;
+    const vizPanel = vizPanelManager?.state.panel;
+    const search = new URLSearchParams(location.search);
 
-    // TODO: Are we leaving panel edit & library panel?
+    // Are we leaving panel edit & library panel?
+    if (
+      panelInEdit &&
+      vizPanel &&
+      isLibraryPanel(vizPanel) &&
+      vizPanelManager.state.isDirty &&
+      !search.has('editPanel')
+    ) {
+      const libPanelBehavior = getLibraryPanelBehavior(vizPanel);
 
-    // if (panelInEdit && panelInEdit.libraryPanel && panelInEdit.hasChanged && !search.has('editPanel')) {
-    //   showModal(SaveLibraryPanelModal, {
-    //     isUnsavedPrompt: true,
-    //     panel: dashboard.panelInEdit as PanelModelWithLibraryPanel,
-    //     folderUid: dashboard.meta.folderUid ?? '',
-    //     onConfirm: () => {
-    //       hideModal();
-    //       moveToBlockedLocationAfterReactStateUpdate(location);
-    //     },
-    //     onDiscard: () => {
-    //       dispatch(discardPanelChanges());
-    //       moveToBlockedLocationAfterReactStateUpdate(location);
-    //       hideModal();
-    //     },
-    //     onDismiss: hideModal,
-    //   });
-    //   return false;
-    // }
+      showModal(SaveLibraryVizPanelModal, {
+        dashboard,
+        isUnsavedPrompt: true,
+        libraryPanel: libPanelBehavior!,
+        onConfirm: () => {
+          panelInEdit.onConfirmSaveLibraryPanel();
+          hideModal();
+          moveToBlockedLocationAfterReactStateUpdate(location);
+        },
+        onDiscard: () => {
+          panelInEdit.onDiscard();
+          hideModal();
+          moveToBlockedLocationAfterReactStateUpdate(location);
+        },
+        onDismiss: hideModal,
+      });
+      return false;
+    }
 
     // Are we still on the same dashboard?
     if (originalPath === location.pathname) {

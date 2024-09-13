@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { Input, Field, Button, FieldSet, Stack } from '@grafana/ui';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
-import { updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction, Role, Team } from 'app/types';
+import { AccessControlAction, Team } from 'app/types';
 
 import { updateTeam } from './state/actions';
 
@@ -28,7 +26,6 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
   const currentOrgId = contextSrv.user.orgId;
 
   const [{ roleOptions }] = useRoleOptions(currentOrgId);
-  const [pendingRoles, setPendingRoles] = useState<Role[]>([]);
   const {
     handleSubmit,
     register,
@@ -44,9 +41,6 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
     contextSrv.hasPermission(AccessControlAction.ActionRolesList);
 
   const onSubmit = async (formTeam: Team) => {
-    if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles) {
-      await updateTeamRoles(pendingRoles, team.id);
-    }
     updateTeam(formTeam.name, formTeam.email || '');
   };
 
@@ -66,15 +60,7 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
 
           {contextSrv.licensedAccessControlEnabled() && canListRoles && (
             <Field label="Role">
-              <TeamRolePicker
-                teamId={team.id}
-                roleOptions={roleOptions}
-                disabled={!canUpdateRoles}
-                apply={true}
-                onApplyRoles={setPendingRoles}
-                pendingRoles={pendingRoles}
-                maxWidth="100%"
-              />
+              <TeamRolePicker teamId={team.id} roleOptions={roleOptions} disabled={!canUpdateRoles} maxWidth="100%" />
             </Field>
           )}
 

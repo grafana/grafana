@@ -1,6 +1,6 @@
-import React, { useId } from 'react';
+import { useId } from 'react';
 
-import { HorizontalGroup, InlineFormLabel, Input, Select, TextArea } from '@grafana/ui';
+import { Stack, InlineField, Input, Select, TextArea } from '@grafana/ui';
 
 import { InfluxQuery } from '../../../../../types';
 import { DEFAULT_RESULT_FORMAT, RESULT_FORMATS } from '../../../constants';
@@ -34,7 +34,7 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
   };
 
   return (
-    <div>
+    <Stack direction={'column'}>
       <TextArea
         aria-label="query"
         rows={3}
@@ -46,30 +46,32 @@ export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.E
         }}
         value={currentQuery ?? ''}
       />
-      <HorizontalGroup>
-        <InlineFormLabel htmlFor={selectElementId}>Format as</InlineFormLabel>
-        <Select
-          inputId={selectElementId}
-          onChange={(v) => {
-            onChange({ ...query, resultFormat: v.value });
-            onRunQuery();
-          }}
-          value={resultFormat}
-          options={RESULT_FORMATS}
-        />
-        <InlineFormLabel htmlFor={aliasElementId}>Alias by</InlineFormLabel>
-        <Input
-          id={aliasElementId}
-          type="text"
-          spellCheck={false}
-          placeholder="Naming pattern"
-          onBlur={applyDelayedChangesAndRunQuery}
-          onChange={(e) => {
-            setCurrentAlias(e.currentTarget.value);
-          }}
-          value={currentAlias ?? ''}
-        />
-      </HorizontalGroup>
-    </div>
+      <Stack>
+        <InlineField htmlFor={selectElementId} label="Format as">
+          <Select
+            inputId={selectElementId}
+            onChange={(v) => {
+              onChange({ ...query, resultFormat: v.value });
+              onRunQuery();
+            }}
+            value={resultFormat}
+            options={RESULT_FORMATS}
+          />
+        </InlineField>
+        <InlineField htmlFor={aliasElementId} label="Alias by">
+          <Input
+            id={aliasElementId}
+            type="text"
+            spellCheck={false}
+            placeholder="Naming pattern"
+            onBlur={applyDelayedChangesAndRunQuery}
+            onChange={(e) => {
+              setCurrentAlias(e.currentTarget.value);
+            }}
+            value={currentAlias ?? ''}
+          />
+        </InlineField>
+      </Stack>
+    </Stack>
   );
 };

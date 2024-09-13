@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
+	"github.com/grafana/grafana-aws-sdk/pkg/cloudWatchConsts"
 )
 
 func parseDimensionFilter(dimensionFilter string) ([]*Dimension, error) {
@@ -46,7 +46,7 @@ func parseDimensionFilter(dimensionFilter string) ([]*Dimension, error) {
 }
 
 func isCustomNamespace(namespace string) bool {
-	if _, ok := constants.NamespaceMetricsMap[namespace]; ok {
+	if _, ok := cloudWatchConsts.NamespaceMetricsMap[namespace]; ok {
 		return false
 	}
 	return true

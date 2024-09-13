@@ -46,7 +46,7 @@ exports[`VariableQueryEditor renders correctly 1`] = `
               Loading...
             </div>
             <div
-              className=" css-lq7btu-Input"
+              className=" css-1tkw9oc-Input"
               data-value=""
             >
               <input

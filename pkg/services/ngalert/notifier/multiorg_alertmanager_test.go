@@ -253,7 +253,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	require.Equal(t, defaultConfig, cfgs[3].AlertmanagerConfiguration)
 
 	// Now let's save a new config for org 2.
-	newConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+	newConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
 	am, err := mam.alertmanagerForOrg(2)
 	require.NoError(t, err)
 
@@ -399,7 +399,6 @@ var defaultConfig = `
 				"alertname"
 			]
 		},
-		"templates": null,
 		"receivers": [
 			{
 				"name": "grafana-default-email",
@@ -410,8 +409,8 @@ var defaultConfig = `
 						"type": "email",
 						"disableResolveMessage": false,
 						"settings": {
-							"addresses": "\u003cexample@email.com\u003e"},
-						"secureSettings": null
+							"addresses": "\u003cexample@email.com\u003e"
+						}
 					}
 				]
 			}

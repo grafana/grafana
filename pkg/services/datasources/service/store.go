@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -162,12 +161,6 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 			}
 
 			cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
-
-			// Remove associated AccessControl permissions
-			if _, errDeletingPerms := sess.Exec("DELETE FROM permission WHERE scope=?",
-				ac.Scope(datasources.ScopeProvider.GetResourceScope(ds.UID))); errDeletingPerms != nil {
-				return errDeletingPerms
-			}
 		}
 
 		if cmd.UpdateSecretFn != nil {
@@ -259,8 +252,8 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			cmd.UID = uid
 		} else if err := util.ValidateUID(cmd.UID); err != nil {
 			logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "create", err)
-			if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
-				return fmt.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
+			if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagFailWrongDSUID) {
+				return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 			}
 		}
 
@@ -284,6 +277,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			ReadOnly:        cmd.ReadOnly,
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
+			APIVersion:      cmd.APIVersion,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -335,8 +329,8 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		if cmd.UID != "" {
 			if err := util.ValidateUID(cmd.UID); err != nil {
 				logDeprecatedInvalidDsUid(ss.logger, cmd.UID, cmd.Name, "update", err)
-				if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagAutofixDSUID) {
-					cmd.UID = util.AutofixUID(cmd.UID)
+				if ss.features != nil && ss.features.IsEnabled(ctx, featuremgmt.FlagFailWrongDSUID) {
+					return datasources.ErrDataSourceUIDInvalid.Errorf("invalid UID for datasource %s: %w", cmd.Name, err)
 				}
 			}
 		}
@@ -361,6 +355,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			Version:         cmd.Version + 1,
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
+			APIVersion:      cmd.APIVersion,
 		}
 
 		sess.UseBool("is_default")
@@ -378,6 +373,7 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		// Make sure secure json data is zeroed out if empty. We do this as we want to migrate secrets from
 		// secure json data to the unified secrets table.
 		sess.MustCols("secure_json_data")
+		sess.MustCols("api_version")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

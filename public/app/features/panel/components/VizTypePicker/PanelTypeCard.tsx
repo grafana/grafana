@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { MouseEventHandler } from 'react';
+import { MouseEventHandler } from 'react';
+import * as React from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';

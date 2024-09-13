@@ -15,9 +15,17 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
-import React from 'react';
+import * as React from 'react';
 
-import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@grafana/data';
+import {
+  DataFrame,
+  dateTimeFormat,
+  GrafanaTheme2,
+  IconName,
+  LinkModel,
+  TraceKeyValuePair,
+  TraceLog,
+} from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -30,7 +38,7 @@ import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
-import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -113,6 +121,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     LinkIcon: css({
       fontSize: '1.5em',
+    }),
+    linkList: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: '10px',
     }),
   };
 };
@@ -303,6 +316,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   let logLinkButton: JSX.Element | null = null;
   let profileLinkButton: JSX.Element | null = null;
+  let sessionLinkButton: JSX.Element | null = null;
   if (createSpanLink) {
     const links = createSpanLink(span);
     const logsLink = links?.filter((link) => link.type === SpanLinkType.Logs);
@@ -315,6 +329,15 @@ export default function SpanDetail(props: SpanDetailProps) {
     if (links && profilesLink && profilesLink.length > 0) {
       profileLinkButton = createLinkButton(profilesLink[0], SpanLinkType.Profiles, 'Profiles for this span', 'link');
     }
+    const sessionLink = links?.filter((link) => link.type === SpanLinkType.Session);
+    if (links && sessionLink && sessionLink.length > 0) {
+      sessionLinkButton = createLinkButton(
+        sessionLink[0],
+        SpanLinkType.Session,
+        'Session for this span',
+        'frontend-observability'
+      );
+    }
   }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
@@ -326,8 +349,11 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>
       </div>
-      <span style={{ marginRight: '10px' }}>{logLinkButton}</span>
-      {profileLinkButton}
+      <div className={styles.linkList}>
+        {logLinkButton}
+        {profileLinkButton}
+        {sessionLinkButton}
+      </div>
       <Divider spacing={1} />
       <div>
         <div>

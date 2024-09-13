@@ -155,9 +155,9 @@ export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejec
   }
 );
 
-export const fetchDetails = createAsyncThunk<Update<CatalogPlugin>, string>(
+export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, string>(
   `${STATE_PREFIX}/fetchDetails`,
-  async (id: string, thunkApi) => {
+  async (id, thunkApi) => {
     try {
       const details = await getPluginDetails(id);
 
@@ -191,7 +191,7 @@ export const addLocalAndRemotePlugins = createAction<{ local: LocalPlugin[]; rem
 
 // We are also using the install API endpoint to update the plugin
 export const install = createAsyncThunk<
-  Update<CatalogPlugin>,
+  Update<CatalogPlugin, string>,
   {
     id: string;
     version?: string;
@@ -213,6 +213,8 @@ export const install = createAsyncThunk<
   } catch (e) {
     console.error(e);
     if (isFetchError(e)) {
+      // add id to identify errors in multiple requests
+      e.data.id = id;
       return thunkApi.rejectWithValue(e.data);
     }
 
@@ -222,7 +224,7 @@ export const install = createAsyncThunk<
 
 export const unsetInstall = createAsyncThunk(`${STATE_PREFIX}/install`, async () => ({}));
 
-export const uninstall = createAsyncThunk<Update<CatalogPlugin>, string>(
+export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>(
   `${STATE_PREFIX}/uninstall`,
   async (id, thunkApi) => {
     try {
@@ -233,7 +235,7 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin>, string>(
 
       return {
         id,
-        changes: { isInstalled: false, installedVersion: undefined },
+        changes: { isInstalled: false, installedVersion: undefined, isFullyInstalled: false },
       };
     } catch (e) {
       console.error(e);

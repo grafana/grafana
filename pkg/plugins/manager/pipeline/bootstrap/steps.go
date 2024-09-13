@@ -4,7 +4,6 @@ import (
 	"context"
 	"path"
 	"slices"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -48,34 +47,19 @@ func NewDefaultConstructor(signatureCalculator plugins.SignatureCalculator, asse
 
 // Construct will calculate the plugin's signature state and create the plugin using the pluginFactoryFunc.
 func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSource, bundle *plugins.FoundBundle) ([]*plugins.Plugin, error) {
-	res := []*plugins.Plugin{}
-
 	sig, err := c.signatureCalculator.Calculate(ctx, src, bundle.Primary)
 	if err != nil {
 		c.log.Warn("Could not calculate plugin signature state", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err
 	}
-	plugin, err := c.pluginFactoryFunc(bundle.Primary, src.PluginClass(ctx), sig)
+	plugin, err := c.pluginFactoryFunc(bundle, src.PluginClass(ctx), sig)
 	if err != nil {
 		c.log.Error("Could not create primary plugin base", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 		return nil, err
 	}
+	res := make([]*plugins.Plugin, 0, len(plugin.Children)+1)
 	res = append(res, plugin)
-
-	children := make([]*plugins.Plugin, 0, len(bundle.Children))
-	for _, child := range bundle.Children {
-		cp, err := c.pluginFactoryFunc(*child, plugin.Class, sig)
-		if err != nil {
-			c.log.Error("Could not create child plugin base", "pluginId", child.JSONData.ID, "error", err)
-			return nil, err
-		}
-		cp.Parent = plugin
-		plugin.Children = append(plugin.Children, cp)
-
-		children = append(children, cp)
-	}
-	res = append(res, children...)
-
+	res = append(res, plugin.Children...)
 	return res, nil
 }
 
@@ -144,14 +128,11 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 		return
 	}
 	child.IncludedInAppID = parent.ID
-	child.BaseURL = parent.BaseURL
 
-	// TODO move this logic within assetpath package
-	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
-	if parent.IsCorePlugin() {
-		child.Module = path.Join("core:plugin", parent.ID, appSubPath)
-	} else {
-		child.Module = path.Join("public/plugins", parent.ID, appSubPath, "module.js")
+	// If the child plugin does not have a version, it will inherit the version from the parent.
+	// This is to ensure that the frontend can appropriately cache the plugin assets.
+	if child.Info.Version == "" {
+		child.Info.Version = parent.Info.Version
 	}
 }
 

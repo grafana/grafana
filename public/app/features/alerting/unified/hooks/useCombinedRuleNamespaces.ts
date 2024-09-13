@@ -22,6 +22,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
+import { GRAFANA_RULER_CONFIG } from '../api/featureDiscoveryApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import {
   getAllRulesSources,
@@ -30,6 +31,7 @@ import {
   isCloudRulesSource,
   isGrafanaRulesSource,
 } from '../utils/datasource';
+import { hashQuery } from '../utils/rule-id';
 import {
   isAlertingRule,
   isAlertingRulerRule,
@@ -38,7 +40,6 @@ import {
   isRecordingRulerRule,
 } from '../utils/rules';
 
-import { grafanaRulerConfig } from './useCombinedRule';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export interface CacheValue {
@@ -288,11 +289,11 @@ export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'
   }
 
   return {
-    alerting: result[AlertInstanceTotalState.Alerting] || result['firing'],
+    alerting: result[AlertInstanceTotalState.Alerting] || result.firing,
     pending: result[AlertInstanceTotalState.Pending],
     inactive: result[AlertInstanceTotalState.Normal],
     nodata: result[AlertInstanceTotalState.NoData],
-    error: result[AlertInstanceTotalState.Error] || result['err'] || undefined, // Prometheus uses "err" instead of "error"
+    error: result[AlertInstanceTotalState.Error] || result.err || undefined, // Prometheus uses "err" instead of "error"
   };
 }
 
@@ -452,23 +453,11 @@ function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, c
   return false;
 }
 
-// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
-function hashQuery(query: string) {
-  // one of them might be wrapped in parens
-  if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
-    query = query.slice(1, -1);
-  }
-  // whitespace could be added or removed
-  query = query.replace(/\s|\n/g, '');
-  // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
-  return query.split('').sort().join('');
-}
-
 /*
   This hook returns combined Grafana rules. Optionally, it can filter rules by dashboard UID and panel ID.
 */
 export function useCombinedRules(
-  dashboardUID?: string,
+  dashboardUID?: string | null,
   panelId?: number,
   poll?: boolean
 ): {
@@ -483,10 +472,12 @@ export function useCombinedRules(
   } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
     {
       ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-      dashboardUid: dashboardUID,
+      dashboardUid: dashboardUID ?? undefined,
       panelId,
     },
     {
+      // "null" means the dashboard isn't saved yet, as opposed to "undefined" which means we don't want to filter by dashboard UID
+      skip: dashboardUID === null,
       pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
     }
   );
@@ -497,11 +488,12 @@ export function useCombinedRules(
     error: rulerRulesError,
   } = alertRuleApi.endpoints.rulerRules.useQuery(
     {
-      rulerConfig: grafanaRulerConfig,
-      filter: { dashboardUID, panelId },
+      rulerConfig: GRAFANA_RULER_CONFIG,
+      filter: { dashboardUID: dashboardUID ?? undefined, panelId },
     },
     {
       pollingInterval: poll ? RULE_LIST_POLL_INTERVAL_MS : undefined,
+      skip: dashboardUID === null,
     }
   );
 

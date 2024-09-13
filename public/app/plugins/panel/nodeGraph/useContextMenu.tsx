@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent, useCallback, useState } from 'react';
+import { MouseEvent, useCallback, useState } from 'react';
+import * as React from 'react';
 
 import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
 
 import { Config } from './layout';
-import { EdgeDatum, NodeDatum } from './types';
+import { EdgeDatumLayout, NodeDatum } from './types';
 import { getEdgeFields, getNodeFields, statToString } from './utils';
 
 /**
@@ -22,7 +23,7 @@ export function useContextMenu(
   setConfig: (config: Config) => void,
   setFocusedNodeId: (id: string) => void
 ): {
-  onEdgeOpen: (event: MouseEvent<SVGElement>, edge: EdgeDatum) => void;
+  onEdgeOpen: (event: MouseEvent<SVGElement>, edge: EdgeDatumLayout) => void;
   onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
   MenuComponent: React.ReactNode;
 } {
@@ -53,7 +54,7 @@ export function useContextMenu(
   );
 
   const onEdgeOpen = useCallback(
-    (event: MouseEvent<SVGElement>, edge: EdgeDatum) => {
+    (event: MouseEvent<SVGElement>, edge: EdgeDatumLayout) => {
       if (!edges) {
         // This could happen if we have only one node and no edges, in which case this is not needed as there is no edge
         // to click on.
@@ -86,7 +87,7 @@ function makeContextMenu(
   );
 }
 
-function getItemsRenderer<T extends NodeDatum | EdgeDatum>(
+function getItemsRenderer<T extends NodeDatum | EdgeDatumLayout>(
   links: LinkModel[],
   item: T,
   extraItems?: Array<LinkData<T>> | undefined
@@ -109,7 +110,7 @@ function getItemsRenderer<T extends NodeDatum | EdgeDatum>(
   };
 }
 
-function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
+function mapMenuItem<T extends NodeDatum | EdgeDatumLayout>(item: T) {
   return function NodeGraphMenuItem(link: LinkData<T>) {
     return (
       <MenuItem
@@ -134,7 +135,7 @@ function mapMenuItem<T extends NodeDatum | EdgeDatum>(item: T) {
   };
 }
 
-type LinkData<T extends NodeDatum | EdgeDatum> = {
+type LinkData<T extends NodeDatum | EdgeDatumLayout> = {
   label: string;
   ariaLabel?: string;
   url?: string;
@@ -224,7 +225,7 @@ function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
 /**
  * Shows some of the field values in a table on top of the context menu.
  */
-function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
+function EdgeHeader(props: { edge: EdgeDatumLayout; edges: DataFrame }) {
   const index = props.edge.dataFrameRowIndex;
   const fields = getEdgeFields(props.edges);
   const valueSource = fields.source?.values[index] || '';

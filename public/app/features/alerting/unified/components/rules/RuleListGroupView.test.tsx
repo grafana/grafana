@@ -1,12 +1,9 @@
-import { render, waitFor } from '@testing-library/react';
-import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { waitFor } from '@testing-library/react';
+import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
-import { locationService, setPluginExtensionsHook } from '@grafana/runtime';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -19,12 +16,12 @@ import { RuleListGroupView } from './RuleListGroupView';
 jest.spyOn(analytics, 'logInfo');
 
 const ui = {
-  grafanaRulesHeading: byRole('heading', { name: 'Grafana' }),
-  cloudRulesHeading: byRole('heading', { name: 'Mimir / Cortex / Loki' }),
+  grafanaRulesHeading: byRole('heading', { name: 'Grafana-managed' }),
+  cloudRulesHeading: byRole('heading', { name: 'Data source-managed' }),
 };
 
-setPluginExtensionsHook(() => ({
-  extensions: [],
+setPluginLinksHook(() => ({
+  links: [],
   isLoading: false,
 }));
 
@@ -102,15 +99,7 @@ describe('RuleListGroupView', () => {
 });
 
 function renderRuleList(namespaces: CombinedRuleNamespace[]) {
-  const store = configureStore();
-
-  render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <RuleListGroupView namespaces={namespaces} expandAll />
-      </Router>
-    </Provider>
-  );
+  render(<RuleListGroupView namespaces={namespaces} expandAll />);
 }
 
 function getGrafanaNamespace(): CombinedRuleNamespace {

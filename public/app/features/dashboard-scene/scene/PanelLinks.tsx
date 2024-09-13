@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { DataLink, LinkModel } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';

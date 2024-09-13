@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { ElementType, forwardRef, PropsWithChildren } from 'react';
+import { ElementType, forwardRef, PropsWithChildren } from 'react';
+import * as React from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 

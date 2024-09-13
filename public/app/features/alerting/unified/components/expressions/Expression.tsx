@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
@@ -20,7 +20,7 @@ import {
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
-import { HoverCard } from '../HoverCard';
+import { PopupCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
@@ -138,7 +138,6 @@ export const Expression: FC<ExpressionProps> = ({
           queryType={queryType}
           onRemoveExpression={() => onRemoveExpression(query.refId)}
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
-          onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
           onSetCondition={onSetCondition}
           query={query}
           alertCondition={alertCondition}
@@ -286,7 +285,6 @@ interface HeaderProps {
   queryType: ExpressionQueryType;
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
-  onUpdateExpressionType: (type: ExpressionQueryType) => void;
   onSetCondition: (refId: string) => void;
   query: ExpressionQuery;
   alertCondition: boolean;
@@ -426,7 +424,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
           {name}
         </span>
         <div className={styles.expression.resultValue}>
-          <HoverCard
+          <PopupCard
             placement="right"
             wrapperClassName={styles.timeseriesTableWrapper}
             content={
@@ -449,7 +447,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
             }
           >
             <span>Time series data</span>
-          </HoverCard>
+          </PopupCard>
         </div>
       </Stack>
     </div>

@@ -1,11 +1,9 @@
 package user
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
@@ -100,6 +98,12 @@ type UpdateUserLastSeenAtCommand struct {
 	OrgID  int64
 }
 
+type ListUserResult struct {
+	Users      []*User
+	ContinueID int64
+	RV         int64
+}
+
 type SearchUsersQuery struct {
 	SignedInUser identity.Requester
 	OrgID        int64 `xorm:"org_id"`
@@ -122,7 +126,7 @@ type SearchUserQueryResult struct {
 
 type UserSearchHitDTO struct {
 	ID            int64                `json:"id" xorm:"id"`
-	UID           string               `json:"uid" xorm:"id"`
+	UID           string               `json:"uid" xorm:"uid"`
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
@@ -208,6 +212,11 @@ type GetUserByIDQuery struct {
 	ID int64
 }
 
+type GetUserByUIDQuery struct {
+	OrgID int64
+	UID   string
+}
+
 type StartVerifyEmailCommand struct {
 	User   User
 	Email  string
@@ -217,27 +226,6 @@ type StartVerifyEmailCommand struct {
 type CompleteEmailVerifyCommand struct {
 	User identity.Requester
 	Code string
-}
-
-type ErrCaseInsensitiveLoginConflict struct {
-	Users []User
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {
-	return ErrCaseInsensitive
-}
-
-func (e *ErrCaseInsensitiveLoginConflict) Error() string {
-	n := len(e.Users)
-
-	userStrings := make([]string, 0, n)
-	for _, v := range e.Users {
-		userStrings = append(userStrings, fmt.Sprintf("%s (email:%s, id:%d)", v.Login, v.Email, v.ID))
-	}
-
-	return fmt.Sprintf(
-		"Found a conflict in user login information. %d users already exist with either the same login or email: [%s].",
-		n, strings.Join(userStrings, ", "))
 }
 
 type Filter interface {

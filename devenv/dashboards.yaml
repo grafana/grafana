@@ -6,6 +6,6 @@ providers:
    folderUid: ''
    type: file
    allowUiUpdates: false
-   updateIntervalSeconds: 60
+   updateIntervalSeconds: 3600
    options:
      path: devenv/dev-dashboards

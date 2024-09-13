@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
-import { match } from 'react-router-dom';
+import { Component } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { Dashboard } from '@grafana/schema';
@@ -17,7 +16,7 @@ import { Props, SoloPanelPage } from './SoloPanelPage';
 
 jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => ({}));
 jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
-  class DashboardPanel extends React.Component<DashboardPanelProps> {
+  class DashboardPanel extends Component<DashboardPanelProps> {
     render() {
       // In this test we only check whether a new panel has arrived in the props
       return <>{this.props.panel?.title}</>;
@@ -75,7 +74,10 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           ...getRouteComponentProps({
             match: {
               params: { slug: 'my-dash', uid: '11' },
-            } as unknown as match,
+              isExact: false,
+              path: '',
+              url: '',
+            },
             queryParams: {
               panelId: '1',
             },

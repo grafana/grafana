@@ -42,7 +42,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("testdata.datasource.grafana.app")
-		// fmt.Printf("%s", string(disco))
+		// fmt.Printf("%s", disco)
 
 		require.JSONEq(t, `[
 			{

@@ -33,6 +33,8 @@ var pluginSet = map[int]goplugin.PluginSet{
 		"resource":       &grpcplugin.ResourceGRPCPlugin{},
 		"data":           &grpcplugin.DataGRPCPlugin{},
 		"stream":         &grpcplugin.StreamGRPCPlugin{},
+		"admission":      &grpcplugin.AdmissionGRPCPlugin{},
+		"conversion":     &grpcplugin.ConversionGRPCPlugin{},
 		"renderer":       &pluginextensionv2.RendererGRPCPlugin{},
 		"secretsmanager": &secretsmanagerplugin.SecretsManagerGRPCPlugin{},
 	},

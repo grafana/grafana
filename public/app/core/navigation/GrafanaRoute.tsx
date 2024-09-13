@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useLayoutEffect } from 'react';
+import { Suspense, useEffect, useLayoutEffect } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 

@@ -3,12 +3,11 @@ package serviceaccounts
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -51,10 +50,6 @@ type MigrationResult struct {
 	Failed          int      `json:"failed"`
 	FailedApikeyIDs []int64  `json:"failedApikeyIDs"`
 	FailedDetails   []string `json:"failedDetails"`
-}
-
-type ServiceAccount struct {
-	Id int64
 }
 
 // swagger:model
@@ -190,7 +185,7 @@ type ExtSvcAccount struct {
 	Name       string
 	OrgID      int64
 	IsDisabled bool
-	Role       roletype.RoleType
+	Role       identity.RoleType
 }
 
 type ManageExtSvcAccountCmd struct {

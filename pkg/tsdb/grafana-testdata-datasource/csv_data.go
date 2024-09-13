@@ -28,7 +28,7 @@ func (s *Service) handleCsvContentScenario(ctx context.Context, req *backend.Que
 
 		csvContent := model.CsvContent
 		if len(csvContent) == 0 {
-			return backend.NewQueryDataResponse(), nil
+			continue
 		}
 
 		alias := model.Alias

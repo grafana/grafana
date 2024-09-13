@@ -1,19 +1,18 @@
 # Styling Grafana
 
-[Emotion](https://emotion.sh/docs/introduction) is our default-to-be approach to styling React components. It provides a way for styles to be a consequence of properties and state of a component.
+[Emotion](https://emotion.sh/docs/introduction) is Grafana's default-to-be approach to styling React components. It provides a way for styles to be a consequence of properties and state of a component.
 
 ## Usage
 
-For styling components, use [Emotion's `css` function](https://emotion.sh/docs/emotion#css).
+For styling components, use [Emotion's `css` function](https://emotion.sh/docs/@emotion/css#css).
 
 ### Basic styling
 
-To access the theme in your styles, use the `useStyles` hook. It provides basic memoization and access to the theme object.
+To access the Emotion theme in your styles, use the `useStyles` hook. This hook provides basic memoization and access to the theme object.
 
-> Please remember to put `getStyles` function at the end of the file!
+> **Note:** Please remember to put `getStyles` function at the end of the file!
 
 ```tsx
-import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
@@ -31,16 +30,20 @@ const getStyles = (theme: GrafanaTheme2) =>
   });
 ```
 
-### Styling complex components
+### Style complex components
 
-In more complex cases, especially when you need to style multiple DOM elements in one component, or when using styles that depend on properties and/or state you
-can have your getStyles function return an object with many class names and use [Emotion's `cx` function](https://emotion.sh/docs/@emotion/css#cx) to compose them.
+In more complex cases, you can have the `getStyles` function return an object with many class names and use [Emotion's `cx` function](https://emotion.sh/docs/@emotion/css#cx) to compose them.
 
-Let's say you need to style a component that has a different background depending on the `isActive` property :
+This feature can be especially useful in certain use cases:
+
+- when you need to style multiple DOM elements in one component
+- when using styles that depend on properties
+- when using styles that depend on state
+
+Let's say you need to style a component that has a different background depending on the `isActive` property. For example:
 
 ```tsx
 import { css, cx } from '@emotion/css';
-import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -77,4 +80,4 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 ```
 
-For more information about themes at Grafana please see the [themes guide](./themes.md).
+For more information about themes at Grafana, refer to the [themes guide](./themes.md).

@@ -1,8 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { match, Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -244,6 +243,16 @@ describe('PublicDashboardPage', () => {
       setup(undefined, newState);
       await waitFor(() => {
         expect(screen.queryByTestId(selectors.Panels.Panel.HoverWidget.container)).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('When public dashboard changes', () => {
+    it('Should init again', async () => {
+      const { rerender } = setup();
+      rerender({ match: { params: { accessToken: 'another-new-access-token' } } as unknown as match });
+      await waitFor(() => {
+        expect(initDashboard).toHaveBeenCalledTimes(2);
       });
     });
   });

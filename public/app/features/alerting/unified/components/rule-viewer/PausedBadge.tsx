@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Icon, Stack, Text } from '@grafana/ui';
 
 export default function PausedBadge() {

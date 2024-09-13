@@ -26,7 +26,7 @@ const comments = `
 // Run "yarn generate" to update.
 `;
 const imports = `
-import React, { memo } from 'react';
+import { memo } from 'react';
 
 import { IconBase, IconProps } from '../IconBase';
 `;

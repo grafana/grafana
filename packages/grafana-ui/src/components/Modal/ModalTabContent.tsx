@@ -1,5 +1,9 @@
-import React from 'react';
+import { css } from '@emotion/css';
+import * as React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
 
 interface Props {
@@ -11,11 +15,23 @@ interface Props {
 
 /** @internal */
 export const ModalTabContent = ({ children }: React.PropsWithChildren<Props>) => {
+  const styles = useStyles2(getStyles);
+
   return (
-    <div className="share-modal-body">
-      <div className="share-modal-header">
-        <div className="share-modal-content">{children}</div>
+    <div>
+      <div className={styles.header}>
+        <div className={styles.content}>{children}</div>
       </div>
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  header: css({
+    display: 'flex',
+    margin: theme.spacing(0, 0, 3, 0),
+  }),
+  content: css({
+    flexGrow: 1,
+  }),
+});

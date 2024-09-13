@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -33,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -56,7 +57,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -105,9 +105,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	// things. For example Node allows to publish messages to channels from server
 	// side with its Publish method.
 	node, err := centrifuge.New(centrifuge.Config{
-		LogHandler:       handleLog,
-		LogLevel:         centrifuge.LogLevelError,
-		MetricsNamespace: "grafana_live",
+		LogHandler:         handleLog,
+		LogLevel:           centrifuge.LogLevelError,
+		MetricsNamespace:   "grafana_live",
+		ClientQueueMaxSize: 4194304, // 4MB
 		// Use reasonably large expiration interval for stream meta key,
 		// much bigger than maximum HistoryLifetime value in Node config.
 		// This way stream meta data will expire, in some cases you may want
@@ -284,11 +285,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.websocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
-		_, identifier := user.GetNamespacedID()
-
+		id, _ := user.GetInternalID()
 		// Centrifuge expects Credentials in context with a current user ID.
 		cred := &centrifuge.Credentials{
-			UserID: identifier,
+			UserID: strconv.FormatInt(id, 10),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)
@@ -332,12 +332,14 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	redisShardConfigs := []centrifuge.RedisShardConfig{
 		{Address: redisAddress, Password: redisPassword},
 	}
-	var redisShards []*centrifuge.RedisShard
+
+	redisShards := make([]*centrifuge.RedisShard, 0, len(redisShardConfigs))
 	for _, redisConf := range redisShardConfigs {
 		redisShard, err := centrifuge.NewRedisShard(node, redisConf)
 		if err != nil {
 			return fmt.Errorf("error connecting to Live Redis: %v", err)
 		}
+
 		redisShards = append(redisShards, redisShard)
 	}
 
@@ -348,6 +350,7 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	if err != nil {
 		return fmt.Errorf("error creating Live Redis broker: %v", err)
 	}
+
 	node.SetBroker(broker)
 
 	presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
@@ -357,7 +360,9 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	if err != nil {
 		return fmt.Errorf("error creating Live Redis presence manager: %v", err)
 	}
+
 	node.SetPresenceManager(presenceManager)
+
 	return nil
 }
 
@@ -950,8 +955,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "invalid channel ID", nil)
 	}
 
-	namespaceID, userID := ctx.SignedInUser.GetNamespacedID()
-	logger.Debug("Publish API cmd", "namespaceID", namespaceID, "userID", userID, "channel", cmd.Channel)
+	logger.Debug("Publish API cmd", "identity", ctx.SignedInUser.GetID(), "channel", cmd.Channel)
 	user := ctx.SignedInUser
 	channel := cmd.Channel
 
@@ -1008,7 +1012,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.R
 			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 		}
 	}
-	logger.Debug("Publication successful", "namespaceID", namespaceID, "userID", userID, "channel", cmd.Channel)
+	logger.Debug("Publication successful", "identity", ctx.SignedInUser.GetID(), "channel", cmd.Channel)
 	return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
 }
 

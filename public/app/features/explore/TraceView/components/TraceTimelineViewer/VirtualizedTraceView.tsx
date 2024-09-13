@@ -18,7 +18,7 @@ import memoizeOne from 'memoize-one';
 import * as React from 'react';
 import { RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TraceKeyValuePair, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -27,7 +27,7 @@ import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 import { PEER_SERVICE } from '../constants/tag-keys';
 import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { TraceLog, TraceSpan, Trace, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
+import { TraceSpan, Trace, TraceLink, TraceSpanReference } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 
 import ListView from './ListView';

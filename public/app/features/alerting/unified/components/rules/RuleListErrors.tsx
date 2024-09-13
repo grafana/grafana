@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { SerializedError } from '@reduxjs/toolkit';
 import pluralize from 'pluralize';
-import React, { useMemo, ReactElement, useState, FC } from 'react';
+import { useMemo, ReactElement, useState, FC } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';

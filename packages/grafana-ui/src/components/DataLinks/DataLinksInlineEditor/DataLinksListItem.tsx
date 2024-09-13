@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import { Draggable } from '@hello-pangea/dnd';
 
 import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { isCompactUrl } from '../../../utils/dataLinks';
+import { isCompactUrl } from '../../../utils';
 import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
+import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
 
 export interface DataLinksListItemProps {
@@ -16,9 +17,10 @@ export interface DataLinksListItemProps {
   onEdit: () => void;
   onRemove: () => void;
   isEditing?: boolean;
+  itemKey: string;
 }
 
-export const DataLinksListItem = ({ link, onEdit, onRemove }: DataLinksListItemProps) => {
+export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: DataLinksListItemProps) => {
   const styles = useStyles2(getDataLinkListItemStyles);
   const { title = '', url = '' } = link;
 
@@ -28,50 +30,63 @@ export const DataLinksListItem = ({ link, onEdit, onRemove }: DataLinksListItemP
   const isCompactExploreUrl = isCompactUrl(url);
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.titleWrapper}>
-        <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
-          {hasTitle ? title : 'Data link title not provided'}
-        </div>
-        <div className={styles.actionButtons}>
-          <IconButton name="pen" onClick={onEdit} tooltip="Edit data link title" />
-          <IconButton name="times" onClick={onRemove} tooltip="Remove data link title" />
-        </div>
-      </div>
-      <div
-        className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
-        title={url}
-      >
-        {hasUrl ? url : 'Data link url not provided'}
-      </div>
-      {isCompactExploreUrl && (
-        <FieldValidationMessage>Explore data link may not work in the future. Please edit.</FieldValidationMessage>
+    <Draggable key={itemKey} draggableId={itemKey} index={index}>
+      {(provided) => (
+        <>
+          <div
+            className={cx(styles.wrapper, styles.dragRow)}
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            key={index}
+          >
+            <div className={styles.linkDetails}>
+              <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
+                {hasTitle ? title : 'Data link title not provided'}
+              </div>
+              <div
+                className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
+                title={url}
+              >
+                {hasUrl ? url : 'Data link url not provided'}
+              </div>
+              {isCompactExploreUrl && (
+                <FieldValidationMessage>
+                  Explore data link may not work in the future. Please edit.
+                </FieldValidationMessage>
+              )}
+            </div>
+            <div className={styles.icons}>
+              <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit data link" />
+              <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove data link" />
+              <div className={styles.dragIcon} {...provided.dragHandleProps}>
+                <Icon name="draggabledots" size="lg" />
+              </div>
+            </div>
+          </div>
+        </>
       )}
-    </div>
+    </Draggable>
   );
 };
 
 const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
-      marginBottom: theme.spacing(2),
+      display: 'flex',
+      flexGrow: 1,
+      alignItems: 'center',
+      justifyContent: 'space-between',
       width: '100%',
-      '&:last-child': {
-        marginBottom: 0,
-      },
+      padding: '5px 0 5px 10px',
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.secondary,
+      gap: 8,
+    }),
+    linkDetails: css({
       display: 'flex',
       flexDirection: 'column',
-    }),
-    titleWrapper: css({
-      label: 'data-links-list-item-title',
-      justifyContent: 'space-between',
-      display: 'flex',
-      width: '100%',
-      alignItems: 'center',
-    }),
-    actionButtons: css({
-      marginLeft: theme.spacing(1),
-      display: 'flex',
+      flexGrow: 1,
+      maxWidth: `calc(100% - 100px)`,
     }),
     errored: css({
       color: theme.colors.error.text,
@@ -91,7 +106,23 @@ const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
-      maxWidth: '90%',
+    }),
+    dragRow: css({
+      position: 'relative',
+    }),
+    icons: css({
+      display: 'flex',
+      padding: 6,
+      alignItems: 'center',
+      gap: 8,
+    }),
+    dragIcon: css({
+      cursor: 'grab',
+      color: theme.colors.text.secondary,
+      margin: theme.spacing(0, 0.5),
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
     }),
   };
 };

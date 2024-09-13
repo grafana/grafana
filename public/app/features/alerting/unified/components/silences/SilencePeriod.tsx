@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import React from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
 import { dateTime } from '@grafana/data';

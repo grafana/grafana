@@ -9,9 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -101,7 +101,7 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 		return nil, err
 	}
 
-	var authorizedProviders []*models.SSOSettings
+	authorizedProviders := make([]*models.SSOSettings, 0, len(allProviders))
 	for _, provider := range allProviders {
 		ev := ac.EvalPermission(ac.ActionSettingsRead, ac.Scope("settings", "auth."+provider.Provider, "*"))
 		hasAccess, err := api.AccessControl.Evaluate(ctx, identity, ev)

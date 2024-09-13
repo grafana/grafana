@@ -38,31 +38,31 @@
       "method": "GET",
       "path": "/rules",
       "reqRole": "Viewer",
-      "reqAction": "datasources:query"
+      "reqAction": "alert.rules.external:read"
     },
     {
       "method": "POST",
       "path": "/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:write"
+      "reqAction": "alert.rules.external:write"
     },
     {
       "method": "DELETE",
       "path": "/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:write"
+      "reqAction": "alert.rules.external:write"
     },
     {
       "method": "DELETE",
       "path": "/config/v1/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:write"
+      "reqAction": "alert.rules.external:write"
     },
     {
       "method": "POST",
       "path": "/config/v1/rules",
       "reqRole": "Editor",
-      "reqAction": "datasources:write"
+      "reqAction": "alert.rules.external:write"
     }
   ],
   "includes": [
@@ -89,6 +89,7 @@
   "queryOptions": {
     "minInterval": true
   },
+  "multiValueFilterOperators": true,
   "info": {
     "description": "Open source time series database & alerting",
     "author": {

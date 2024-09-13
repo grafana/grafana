@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { Button, LinkButton, Menu, Tooltip } from '@grafana/ui';
 
 import { usePluginBridge } from '../../hooks/usePluginBridge';

@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
+import * as React from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
@@ -7,6 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes';
+import { RangeSelection1D, RangeSelection2D, OnSelectRangeCallback } from '../../PanelChrome';
 import { getPortalContainer } from '../../Portal/Portal';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -36,6 +38,8 @@ interface TooltipPlugin2Props {
   queryZoom?: (range: { from: number; to: number }) => void;
   // y-only, via shiftKey
   clientZoom?: boolean;
+
+  onSelectRange?: OnSelectRangeCallback;
 
   render: (
     u: uPlot,
@@ -107,6 +111,7 @@ export const TooltipPlugin2 = ({
   render,
   clientZoom = false,
   queryZoom,
+  onSelectRange,
   maxWidth,
   syncMode = DashboardCursorSync.Off,
   syncScope = 'global', // eventsScope
@@ -121,8 +126,6 @@ export const TooltipPlugin2 = ({
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
 
   const sizeRef = useRef<TooltipContainerSize>();
-
-  maxWidth = isPinned ? DEFAULT_TOOLTIP_WIDTH : maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
   const styles = useStyles2(getStyles, maxWidth);
 
   const renderRef = useRef(render);
@@ -310,8 +313,10 @@ export const TooltipPlugin2 = ({
           }
           // only pinnable tooltip is visible *and* is within proximity to series/point
           else if (_isHovering && closestSeriesIdx != null && !_isPinned) {
-            _isPinned = true;
-            scheduleRender(true);
+            setTimeout(() => {
+              _isPinned = true;
+              scheduleRender(true);
+            }, 0);
           }
         }
       });
@@ -319,9 +324,65 @@ export const TooltipPlugin2 = ({
 
     config.addHook('setSelect', (u) => {
       const isXAxisHorizontal = u.scales.x.ori === 0;
+
       if (!viaSync && (clientZoom || queryZoom != null)) {
         if (maybeZoomAction(u.cursor!.event)) {
-          if (clientZoom && yDrag) {
+          if (onSelectRange != null) {
+            let selections: RangeSelection2D[] = [];
+
+            const yDrag = Boolean(u.cursor!.drag!.y);
+            const xDrag = Boolean(u.cursor!.drag!.x);
+
+            let xSel = null;
+            let ySels: RangeSelection1D[] = [];
+
+            // get x selection
+            if (xDrag) {
+              xSel = {
+                from: isXAxisHorizontal
+                  ? u.posToVal(u.select.left!, 'x')
+                  : u.posToVal(u.select.top + u.select.height, 'x'),
+                to: isXAxisHorizontal
+                  ? u.posToVal(u.select.left! + u.select.width, 'x')
+                  : u.posToVal(u.select.top, 'x'),
+              };
+            }
+
+            // get y selections
+            if (yDrag) {
+              config.scales.forEach((scale) => {
+                const key = scale.props.scaleKey;
+
+                if (key !== 'x') {
+                  let ySel = {
+                    from: isXAxisHorizontal
+                      ? u.posToVal(u.select.top + u.select.height, key)
+                      : u.posToVal(u.select.left + u.select.width, key),
+                    to: isXAxisHorizontal ? u.posToVal(u.select.top, key) : u.posToVal(u.select.left, key),
+                  };
+
+                  ySels.push(ySel);
+                }
+              });
+            }
+
+            if (xDrag) {
+              if (yDrag) {
+                // x + y
+                selections = ySels.map((ySel) => ({ x: xSel!, y: ySel }));
+              } else {
+                // x only
+                selections = [{ x: xSel! }];
+              }
+            } else {
+              if (yDrag) {
+                // y only
+                selections = ySels.map((ySel) => ({ y: ySel }));
+              }
+            }
+
+            onSelectRange(selections);
+          } else if (clientZoom && yDrag) {
             if (u.select.height >= MIN_ZOOM_DIST) {
               for (let key in u.scales!) {
                 if (key !== 'x') {
@@ -404,6 +465,10 @@ export const TooltipPlugin2 = ({
     config.addHook('setData', (u) => {
       yZoomed = false;
       yDrag = false;
+
+      if (_isPinned) {
+        dismiss();
+      }
     });
 
     // fires on series focus/proximity changes
@@ -517,7 +582,7 @@ export const TooltipPlugin2 = ({
 
     const onscroll = (e: Event) => {
       updatePlotVisible();
-      _isHovering && !_isPinned && e.target instanceof HTMLElement && e.target.contains(_plot!.root) && dismiss();
+      _isHovering && e.target instanceof Node && e.target.contains(_plot!.root) && dismiss();
     };
 
     window.addEventListener('resize', updateWinSize);
@@ -526,6 +591,10 @@ export const TooltipPlugin2 = ({
     return () => {
       window.removeEventListener('resize', updateWinSize);
       window.removeEventListener('scroll', onscroll, true);
+
+      // in case this component unmounts while anchored (due to data auto-refresh + re-config)
+      document.removeEventListener('mousedown', downEventOutside, true);
+      document.removeEventListener('keydown', downEventOutside, true);
     };
   }, [config]);
 
@@ -541,11 +610,31 @@ export const TooltipPlugin2 = ({
       size.width = width;
       size.height = height;
 
-      const event = plot!.cursor.event;
+      let event = plot!.cursor.event;
 
       // if not viaSync, re-dispatch real event
       if (event != null) {
-        plot!.over.dispatchEvent(event);
+        // we expect to re-dispatch mousemove, but on mobile we'll get mouseup or click
+        const isMobile = event.type !== 'mousemove';
+
+        if (isMobile) {
+          event = new MouseEvent('mousemove', {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            screenX: event.screenX,
+            screenY: event.screenY,
+          });
+        }
+
+        // this works around the fact that uPlot does not unset cursor.event (for perf reasons)
+        // so if the last real mouse event was mouseleave and you manually trigger u.setCursor()
+        // it would end up re-dispatching mouseleave
+        const isStaleEvent = isMobile ? false : performance.now() - event.timeStamp > 16;
+
+        !isStaleEvent && plot!.over.dispatchEvent(event);
       } else {
         plot!.setCursor(
           {

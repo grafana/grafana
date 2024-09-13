@@ -1,6 +1,8 @@
 # Database
 
-Grafana uses a database to persist settings between restarts. In fact, if you don't specify one, Grafana creates a [SQLite3](https://www.sqlite.org/) database file on your local disk. This guide explains how to store and retrieve data from the database.
+Grafana uses databases to persist settings between restarts. If you don't specify one, Grafana creates a [SQLite3](https://www.sqlite.org/) database file on your local disk. This guide explains how to store and retrieve data from the default or other databases.
+
+## Supported databases and services
 
 Grafana supports the [following databases](https://grafana.com/docs/installation/requirements/#database):
 
@@ -16,7 +18,7 @@ Grafana uses the [XORM](https://xorm.io) framework for persisting objects to the
 
 > **Deprecated:** We are deprecating `sqlstore` handlers in favor of using the `SQLStore` object directly in each service. Since most services still use the `sqlstore` handlers, we still want to explain how they work.
 
-The `sqlstore` package allows you to register [command handlers](communication.md#handle-commands) that either store, or retrieve objects from the database. `sqlstore` handlers are similar to services:
+The `sqlstore` package allows you to register [command handlers](communication.md#commands-and-queries) that either store or retrieve objects from the database. The `sqlstore` handlers are similar to services:
 
 - [Services](services.md) are command handlers that _contain business logic_.
 - `sqlstore` handlers are command handlers that _access the database_.
@@ -27,8 +29,8 @@ The `sqlstore` package allows you to register [command handlers](communication.m
 
 To register a handler:
 
-- Create a new file `myrepo.go` in the `sqlstore` package.
-- Create a [command handler](communication.md#handle-commands).
+- Create a new file, `myrepo.go`, in the `sqlstore` package.
+- Create a [command handler](communication.md#commands-and-queries).
 - Register the handler in the `init` function:
 
 ```go
@@ -48,7 +50,7 @@ Here, `inTransactionCtx` is a helper function in the `sqlstore` package that pro
 
 ## `SQLStore`
 
-As opposed to a `sqlstore` handler, the `SQLStore` is a service itself. The `SQLStore` has the same responsibility however: to store and retrieve objects, to and from the database.
+As opposed to a `sqlstore` handler, the `SQLStore` is a service itself. Like the handler, the `SQLStore` is responsible for storing and retrieving objects, to and from the database.
 
 To use the `SQLStore`, inject it in your service struct:
 
@@ -58,7 +60,7 @@ type MyService struct {
 }
 ```
 
-You can now make SQL queries in any of your [command handlers](communication.md#handle-commands) or [event listeners](communication.md#subscribe-to-an-event):
+You can now make SQL queries in any of your [command handlers](communication.md#commands-and-queries) or [event listeners](communication.md#subscribe-to-an-event):
 
 ```go
 func (s *MyService) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
@@ -73,13 +75,13 @@ For transactions, use the `WithTransactionalDbSession` method instead.
 
 ## Migrations
 
-As Grafana evolves, it becomes necessary to create _schema migrations_ for one or more database tables.
+As your use of Grafana evolves, you may need to create _schema migrations_ for one or more database tables.
 
 To see all the types of migrations you can add, refer to [migrations.go](/pkg/services/sqlstore/migrator/migrations.go).
 
 Before you add a migration, make sure that you:
 
-- Never change a migration that has been committed and pushed to main.
+- Never change a migration that has been committed and pushed to `main`.
 - Always add new migrations, to change or undo previous migrations.
 
 Add a migration using one of the following methods:
@@ -87,7 +89,7 @@ Add a migration using one of the following methods:
 - Add migrations in the `migrations` package.
 - Implement the `DatabaseMigrator` for the service.
 
-**Important:** If there are previous migrations for a service, use that method. By adding migrations using both methods, you risk running migrations in the wrong order.
+> **Important:** If there are previous migrations for a service, use that method. Don't add migrations using both methods or you risk running migrations in the wrong order.
 
 ### Add migrations in `migrations` package
 
@@ -97,15 +99,15 @@ To add a migration:
 
 - Open the [migrations.go](/pkg/services/sqlstore/migrations/migrations.go) file.
 - In the `AddMigrations` function, find the `addXxxMigration` function for the service you want to create a migration for.
-- At the end of the `addXxxMigration` function, register your migration:
+- At the end of the `addXxxMigration` function, register your migration (refer to the following example).
 
-> **NOTE:** Putting migrations behind feature flags is no longer recommended as it may cause the migration skip integration testing.
+- [Example](https://github.com/grafana/grafana/blob/00d0640b6e778ddaca021670fe851fe00982acf2/pkg/services/sqlstore/migrations/migrations.go#L55-L70)
 
-[Example](https://github.com/grafana/grafana/blob/00d0640b6e778ddaca021670fe851fe00982acf2/pkg/services/sqlstore/migrations/migrations.go#L55-L70)
+> **Note:** We no longer recommend putting migrations behind feature flags because this could cause the migration to skip integration testing.
 
 ### Implement `DatabaseMigrator`
 
-During initialization, SQL store queries the service registry, and runs migrations for every service that implements the [DatabaseMigrator](https://github.com/grafana/grafana/blob/44c2007498c76c2dbb48e8366b4af410f1ee1b98/pkg/registry/registry.go#L101-L106) interface.
+During initialization, SQL store queries the service registry, and runs migrations for every service that implements the [DatabaseMigrator](https://github.com/grafana/grafana/blob/d27c3822f28e5f26199b4817892d6d24a7a26567/pkg/registry/registry.go#L46-L50) interface.
 
 To add a migration:
 

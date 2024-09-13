@@ -1,4 +1,4 @@
-import React, { PureComponent, ReactNode } from 'react';
+import { Fragment, PureComponent, ReactNode } from 'react';
 
 import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
@@ -88,7 +88,7 @@ export class AdHocFilter extends PureComponent<Props> {
 
   renderFilterSegments(filter: AdHocVariableFilter, index: number, disabled?: boolean) {
     return (
-      <React.Fragment key={`filter-${index}`}>
+      <Fragment key={`filter-${index}`}>
         <AdHocFilterRenderer
           disabled={disabled}
           datasource={this.props.datasource!}
@@ -98,7 +98,7 @@ export class AdHocFilter extends PureComponent<Props> {
           onValueChange={this.onChange(index, 'value')}
           allFilters={this.getAllFilters()}
         />
-      </React.Fragment>
+      </Fragment>
     );
   }
 }
