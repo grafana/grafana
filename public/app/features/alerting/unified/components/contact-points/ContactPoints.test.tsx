@@ -1,6 +1,6 @@
 import { MemoryHistoryBuildOptions } from 'history';
 import { ComponentProps, ReactNode } from 'react';
-import { render, screen, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import {
@@ -24,6 +24,16 @@ import setupVanillaAlertmanagerFlavoredServer, {
 } from './__mocks__/vanillaAlertmanagerServer';
 import { RECEIVER_META_KEY } from './constants';
 import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
+
+/**
+ * Flushes out microtasks so we don't get warnings from @floating-ui/react
+ * as per https://floating-ui.com/docs/react#testing
+ */
+const flushMicrotasks = async () => {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+};
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
@@ -65,6 +75,7 @@ const clickMoreActionsButton = async (name: string) => {
   const user = userEvent.setup();
   const moreActions = await screen.findByRole('button', { name: `More actions for contact point "${name}"` });
   await user.click(moreActions);
+  await flushMicrotasks();
 };
 
 const attemptDeleteContactPoint = async (name: string) => {
@@ -442,7 +453,7 @@ describe('contact points', () => {
     it('does not show manage permissions', async () => {
       renderGrafanaContactPoints();
 
-      clickMoreActionsButton('lotsa-emails');
+      await clickMoreActionsButton('lotsa-emails');
 
       expect(screen.queryByRole('menuitem', { name: /manage permissions/i })).not.toBeInTheDocument();
     });
@@ -451,23 +462,10 @@ describe('contact points', () => {
       testWithLicenseFeatures(['accesscontrol']);
 
       it('shows manage permissions', async () => {
-        // Stub out console.error due to act warnings that I can't get to the bottom of right now
-        // When rendering the ManagePermissions logic in a button that isn't in a dropdown,
-        // it will render without any console errors, but showing inside a dropdown causes act warnings
-        // for some reason
-        // TODO: Work out why, and remove the console.error logic here
-        const originalConsoleError = console.error;
-        jest.spyOn(console, 'error').mockImplementation((msg) => {
-          if (/Warning: An update to (.*) inside a test was not wrapped in act/.test(msg)) {
-            return;
-          }
-          originalConsoleError(msg);
-          return;
-        });
-
         const { user } = renderGrafanaContactPoints();
 
-        clickMoreActionsButton('lotsa-emails');
+        await clickMoreActionsButton('lotsa-emails');
+
         await user.click(await screen.findByRole('menuitem', { name: /manage permissions/i }));
 
         expect(await screen.findByRole('dialog', { name: /drawer title manage permissions/i })).toBeInTheDocument();
