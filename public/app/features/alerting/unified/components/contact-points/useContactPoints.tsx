@@ -340,10 +340,31 @@ export function useDeleteContactPoint({ alertmanager }: BaseAlertmanagerArgs) {
   };
 }
 
-const mapIntegrationSettings = (integration: GrafanaManagedReceiverConfig): GrafanaManagedReceiverConfig => {
+/**
+ * Turns a Grafana Managed receiver config into a format that can be sent to the k8s API
+ *
+ * When updating secure settings, we need to send a value of `true` for any secure setting that we want to keep the same.
+ *
+ * Any other setting that has a value in `secureSettings` will correspond to a new value for that setting -
+ * so we should not tell the API that we want to preserve it. Those values will instead be sent within `settings`
+ */
+const mapIntegrationSettingsForK8s = (integration: GrafanaManagedReceiverConfig): GrafanaManagedReceiverConfig => {
+  const { secureSettings, ...restOfIntegration } = integration;
+
+  const secureFields = Object.entries(secureSettings || {}).reduce((acc, [key, value]) => {
+    if (value === undefined) {
+      return {
+        ...acc,
+        [key]: true,
+      };
+    }
+    return acc;
+  }, {});
+
   return {
-    ...integration,
-    settings: { ...integration.settings, ...integration.secureSettings },
+    ...restOfIntegration,
+    secureFields,
+    settings: { ...restOfIntegration.settings, ...secureSettings },
   };
 };
 const grafanaContactPointToK8sReceiver = (
@@ -358,7 +379,7 @@ const grafanaContactPointToK8sReceiver = (
     },
     spec: {
       title: contactPoint.name,
-      integrations: (contactPoint.grafana_managed_receiver_configs || []).map(mapIntegrationSettings),
+      integrations: (contactPoint.grafana_managed_receiver_configs || []).map(mapIntegrationSettingsForK8s),
     },
   };
 };
