@@ -34,9 +34,9 @@ refs:
 {{< admonition type="note" >}}
 In Grafana Cloud, you can only create data source-managed recording rules.
 
-In Grafana OSS, you can create both Grafana-managed and data source-managed recording rules if you enable the `grafanaManagedRecordingRules` feature flag.
+In Grafana OSS and Enterprise, you can create both Grafana-managed and data source-managed recording rules if you enable the `grafanaManagedRecordingRules` feature flag.
 
-For more information on enabling feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/latest/setup-grafana//<GRAFANA_VERSION>/configure-grafana/feature-toggles/)
+For more information on enabling feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles).
 {{< /admonition >}}
 
 Recording rules calculate frequently needed expressions or computationally expensive expressions in advance and save the result as a new set of time series. Querying this new time series is faster, especially for dashboards since they query the same expression every time the dashboards refresh.
@@ -51,7 +51,7 @@ This setting has precedence over each individual rule frequency. If a rule frequ
 
 ## Configure data source-managed recording rules
 
-To configure data-source managed recording rules, complete the following steps.
+Configure data source-managed recording rules.
 
 ### Before you begin
 
@@ -63,12 +63,11 @@ To configure data-source managed recording rules, complete the following steps.
 
   - **Grafana Mimir** - use the `/prometheus` prefix. The Prometheus data source supports both Grafana Mimir and Prometheus, and Grafana expects that both the [Query API](/docs/mimir/latest/operators-guide/reference-http-api/#querier--query-frontend) and [Ruler API](/docs/mimir/latest/operators-guide/reference-http-api/#ruler) are under the same URL. You cannot provide a separate URL for the Ruler API.
 
-### Steps
+To configure data-source managed recording rules, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Select **Rule type** -> **Recording**.
-1. Scroll to the **Data-source managed section** and click **+New recording rule**.
+1. Scroll to the **Data source-managed section** and click **+New recording rule**.
 
 #### Enter recording rule name
 
@@ -96,17 +95,20 @@ Select your data source and enter a query.
 
 ## Configure Grafana-managed recording rules
 
-To configure Grafana-managed recording rules, complete the following steps.
+Configure Grafana-managed recording rules.
+
+{{< admonition type="note" >}}
+This feature is only available for Grafana OSS and Enterprise users. It is not available in Grafana Cloud.
+{{< /admonition >}}
 
 ### Before you begin
 
-If you are using Grafana OSS, enable the `grafanaManagedRecordingRules` feature flag.
+- Enable the `grafanaManagedRecordingRules` [feature flag](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
-### Steps
+To configure Grafana-managed recording rules, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Select **Rule type** -> **Recording**.
 1. Scroll to the **Grafana-managed section** and click **+New recording rule**.
 
 #### Enter a recording rule and metric name
