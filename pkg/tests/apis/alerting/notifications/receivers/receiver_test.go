@@ -24,6 +24,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	notificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -426,6 +427,10 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
+
 	// Prepare environment and create notification policy and rule that use receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
@@ -440,8 +445,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	parentRoute.Routes = []*definitions.Route{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	persistInitialConfig(t, amConfig, adminClient, legacyCli)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -470,10 +474,6 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	legacyCli.CreateFolder(t, folderUID, "TEST")
 	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
-
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
 
 	requestReceivers := func(t *testing.T, title string) (v0alpha1.Receiver, v0alpha1.Receiver) {
 		t.Helper()
@@ -508,7 +508,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Removing the new extra route should leave only 1.
 	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
-	success, err = legacyCli.PostConfiguration(t, amConfig)
+	success, err := legacyCli.PostConfiguration(t, amConfig)
 	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
@@ -832,29 +832,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	// First we create the receiver with the new API as the legacy API does not support receiver modification anymore.
-	idx := slices.IndexFunc(amConfig.AlertmanagerConfig.Receivers, func(rcv *definitions.PostableApiReceiver) bool {
-		return rcv.Name == "user-defined"
-	})
-	receiverToCreate := amConfig.AlertmanagerConfig.Receivers[idx]
-	created, err := adminClient.Create(ctx, &v0alpha1.Receiver{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
-		Spec: v0alpha1.ReceiverSpec{
-			Title: receiverToCreate.Name,
-			Integrations: []v0alpha1.Integration{
-				createIntegrationWithSettings(t, receiverToCreate.GrafanaManagedReceivers[0].Type, string(receiverToCreate.GrafanaManagedReceivers[0].Settings)),
-			},
-		},
-	}, v1.CreateOptions{})
-	require.NoError(t, err)
-
-	receiverToCreate.GrafanaManagedReceivers[0].UID = *created.Spec.Integrations[0].Uid
-	receiverToCreate.GrafanaManagedReceivers[0].Name = created.Spec.Title
-
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	persistInitialConfig(t, amConfig, adminClient, legacyCli)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -869,7 +847,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	receivers, err := adminClient.List(ctx, v1.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, receivers.Items, 2)
-	idx = slices.IndexFunc(receivers.Items, func(interval v0alpha1.Receiver) bool {
+	idx := slices.IndexFunc(receivers.Items, func(interval v0alpha1.Receiver) bool {
 		return interval.Spec.Title == "user-defined"
 	})
 	receiver := receivers.Items[idx]
@@ -1210,6 +1188,61 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
 	})
+}
+
+// persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
+// modifications, so we need to use k8s API to create new receivers before posting the config.
+func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, adminClient notificationsv0alpha1.ReceiverInterface, legacyCli alerting.LegacyApiClient) {
+	ctx := context.Background()
+
+	var defaultReceiver *definitions.PostableApiReceiver
+	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
+		if receiver.Name == "grafana-default-email" {
+			defaultReceiver = receiver
+			continue
+		}
+
+		toCreate := v0alpha1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ReceiverSpec{
+				Title:        receiver.Name,
+				Integrations: []v0alpha1.Integration{},
+			},
+		}
+
+		for _, integration := range receiver.GrafanaManagedReceivers {
+			settings := common.Unstructured{}
+			require.NoError(t, settings.UnmarshalJSON(integration.Settings))
+			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.Integration{
+				Settings:              settings,
+				Type:                  integration.Type,
+				DisableResolveMessage: util.Pointer(false),
+			})
+		}
+
+		created, err := adminClient.Create(ctx, &toCreate, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		for i, integration := range created.Spec.Integrations {
+			receiver.GrafanaManagedReceivers[i].UID = *integration.Uid
+		}
+	}
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+
+	gettable, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
+	require.Equalf(t, http.StatusOK, status, body)
+
+	idx := slices.IndexFunc(gettable.AlertmanagerConfig.Receivers, func(recv *definitions.GettableApiReceiver) bool {
+		return recv.Name == "grafana-default-email"
+	})
+	gettableDefault := gettable.AlertmanagerConfig.Receivers[idx]
+
+	// Assign uid of default receiver as well.
+	defaultReceiver.GrafanaManagedReceivers[0].UID = gettableDefault.GrafanaManagedReceivers[0].UID
 }
 
 func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
