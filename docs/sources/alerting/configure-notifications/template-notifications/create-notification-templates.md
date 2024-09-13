@@ -171,10 +171,12 @@ Follow these steps to create a custom notification template that consolidates al
 1. First, you need to modify the alert rule to include an annotation that will later be referenced in the notification template.
 1. Enter a name for the **custom annotation**: In this example, we'll use _ServerInfo_.
 1. Enter the following code as the value for the annotation. It retrieves the server's instance name and a corresponding metric value, formatted as a table row:
+
    ```
    {{ index $labels "instance" }}{{- "\t" -}}{{ index $values "A"}}{{- "\n" -}}
    ```
-   This line of code returns the labels and their values in the form of a table.  Assuming $labels has `{"instance": "node1"}` and $values has `{"A": "123"}`, the output would be:
+
+   This line of code returns the labels and their values in the form of a table. Assuming $labels has `{"instance": "node1"}` and $values has `{"A": "123"}`, the output would be:
 
    ```
    node1    123
@@ -182,7 +184,7 @@ Follow these steps to create a custom notification template that consolidates al
 
 1. Create a notification template that references the _ServerInfo_ annotation.
 
-   ``` go
+   ```go
    {{ define "Table" }}
    {{- "\nHost\t\tValue\n" -}}
    {{ range .Alerts -}}
@@ -194,9 +196,10 @@ Follow these steps to create a custom notification template that consolidates al
    {{- end }}
    {{ end }}
    ```
+
    The notification template outputs a list of server information from the "ServerInfo" annotation for each alert.
 
-1. Apply the template you your contact point. 
+1. Apply the template you your contact point.
 1. Navigate to your contact point in Grafana
 1. In the **Message** reference the template by name (see **Optional Email settings** section):
 
