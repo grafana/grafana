@@ -1,4 +1,4 @@
-import { config, usePluginLinks } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { updateScopes } from './utils/actions';
 import { expectDashboardReload, expectNotDashboardReload } from './utils/assertions';
