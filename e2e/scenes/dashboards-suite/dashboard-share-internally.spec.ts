@@ -50,9 +50,9 @@ describe('Share internally', () => {
       .its('response')
       .then((rs) => {
         expect(rs.statusCode).eq(200);
-        const body: { url: string } = rs.body;
+        const body: { url: string; uid: string } = rs.body;
         expect(body.url).contain('goto');
-        cy.visit(fromBaseUrl(body.url));
+        cy.visit(fromBaseUrl(getShortLinkUrl(body.uid)));
 
         cy.url().should('not.include', 'from=now-6h&to=now');
       });
@@ -84,10 +84,10 @@ describe('Share internally', () => {
       .its('response')
       .then((rs) => {
         expect(rs.statusCode).eq(200);
-        const body: { url: string } = rs.body;
+        const body: { url: string; uid: string } = rs.body;
         expect(body.url).contain('goto');
 
-        cy.visit(fromBaseUrl(body.url));
+        cy.visit(fromBaseUrl(getShortLinkUrl(body.uid)));
         cy.url().should('include', 'from=now-6h&to=now');
       });
 
@@ -140,10 +140,10 @@ describe('Share internally', () => {
       .its('response')
       .then((rs) => {
         expect(rs.statusCode).eq(200);
-        const body: { url: string } = rs.body;
+        const body: { url: string; uid: string } = rs.body;
         expect(body.url).contain('goto');
 
-        cy.visit(fromBaseUrl(body.url));
+        cy.visit(fromBaseUrl(getShortLinkUrl(body.uid)));
         cy.url().should('include', 'from=now-6h&to=now');
       });
   });
@@ -228,4 +228,8 @@ const openDashboard = () => {
     queryParams: { '__feature.scenes': true, '__feature.newDashboardSharingComponent': true },
     timeRange: { from: 'now-6h', to: 'now' },
   });
+};
+
+const getShortLinkUrl = (uid: string): string => {
+  return `/goto/${uid}`;
 };

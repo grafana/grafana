@@ -50,7 +50,7 @@ describe('Snapshots', () => {
       .then((rs) => {
         expect(rs.statusCode).eq(200);
         const body: SnapshotCreateResponse = rs.body;
-        cy.visit(fromBaseUrl(body.url));
+        cy.visit(fromBaseUrl(getSnapsotUrl(body.key)));
 
         // Validate the dashboard controls are rendered
         e2e.pages.Dashboard.Controls().should('exist');
@@ -88,6 +88,10 @@ describe('Snapshots', () => {
     //   });
   });
 });
+
+const getSnapsotUrl = (uid: string): string => {
+  return `/dashboard/snapshot/${uid}`;
+};
 
 // const getSnapshotKey = (url: string): string => {
 //   return url.split('/').pop();
