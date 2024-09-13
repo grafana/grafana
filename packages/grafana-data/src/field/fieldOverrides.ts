@@ -13,7 +13,7 @@ import { ReducerID, reduceField } from '../transformations/fieldReducer';
 import { fieldMatchers } from '../transformations/matchers';
 import { ScopedVars, DataContextScopedVar } from '../types/ScopedVars';
 import { DataFrame, NumericRange, FieldType, Field, ValueLinkConfig, FieldConfig } from '../types/dataFrame';
-import { LinkModel, DataLink, VariableInterpolation } from '../types/dataLink';
+import { LinkModel, DataLink } from '../types/dataLink';
 import { DisplayProcessor, DisplayValue, DecimalCount } from '../types/displayValue';
 import { FieldColorModeId } from '../types/fieldColor';
 import {
@@ -24,7 +24,7 @@ import {
   DataLinkPostProcessor,
   FieldConfigSource,
 } from '../types/fieldOverrides';
-import { InterpolateFunction, PanelData } from '../types/panel';
+import { EnhancedInterpolateFunction, InterpolateFunction, PanelData } from '../types/panel';
 import { TimeZone } from '../types/time';
 import { FieldMatcher } from '../types/transformations';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
@@ -153,6 +153,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
         fieldConfigRegistry: fieldConfigRegistry,
+        enhancedReplaceVariables: options.enhancedReplaceVariables,
       };
 
       // Anything in the field config that's not set by the datasource
@@ -211,7 +212,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         field.state!.scopedVars,
         context.replaceVariables,
         options.timeZone,
-        options.dataLinkPostProcessor
+        options.dataLinkPostProcessor,
+        options.enhancedReplaceVariables
       );
 
       if (field.type === FieldType.nestedFrames) {
@@ -454,7 +456,8 @@ export const getLinksSupplier =
     fieldScopedVars: ScopedVars,
     replaceVariables: InterpolateFunction,
     timeZone?: TimeZone,
-    dataLinkPostProcessor?: DataLinkPostProcessor
+    dataLinkPostProcessor?: DataLinkPostProcessor,
+    enhancedReplaceVariables?: EnhancedInterpolateFunction
   ) =>
   (config: ValueLinkConfig): Array<LinkModel<Field>> => {
     if (!field.config.links || field.config.links.length === 0) {
@@ -496,11 +499,20 @@ export const getLinksSupplier =
         __dataContext: dataContext,
       };
 
-      const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) => {
-        let variables: VariableInterpolation[] = [];
-        const replaceStr = replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format, variables);
-        console.log('replace array', variables);
-        return replaceStr;
+      const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) =>
+        replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
+
+      const enhancedBoundReplacedVariables = (value: string, scopedVars: ScopedVars, format: string | Function) => {
+        if (enhancedReplaceVariables) {
+          const replaceInfo = enhancedReplaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
+          if (replaceInfo.allFound) {
+            return replaceInfo.replaceStr;
+          } else {
+            return undefined;
+          }
+        } else {
+          return replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
+        }
       };
 
       // We are not displaying reduction result
@@ -510,9 +522,9 @@ export const getLinksSupplier =
         dataContext.value.calculatedValue = config.calculatedValue;
       }
 
-      let linkModel: LinkModel<Field>;
+      let linkModel: LinkModel<Field> | undefined;
 
-      let href =
+      let href: string | undefined =
         link.onClick || !link.onBuildUrl
           ? link.url
           : link.onBuildUrl({
@@ -522,31 +534,39 @@ export const getLinksSupplier =
 
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
-        href = boundReplaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
-        href = locationUtil.processUrl(href);
+        const replacedStr = enhancedBoundReplacedVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
+        if (replacedStr === undefined) {
+          href = undefined;
+        } else {
+          href = locationUtil.processUrl(replacedStr);
+        }
       }
 
-      if (link.onClick) {
-        linkModel = {
-          href,
-          title: boundReplaceVariables(link.title || '', dataLinkScopedVars),
-          target: link.targetBlank ? '_blank' : undefined,
-          onClick: (evt: MouseEvent, origin: Field) => {
-            link.onClick!({
-              origin: origin ?? field,
-              e: evt,
-              replaceVariables: boundReplaceVariables,
-            });
-          },
-          origin: field,
-        };
+      if (href !== undefined) {
+        if (link.onClick) {
+          linkModel = {
+            href,
+            title: boundReplaceVariables(link.title || '', dataLinkScopedVars),
+            target: link.targetBlank ? '_blank' : undefined,
+            onClick: (evt: MouseEvent, origin: Field) => {
+              link.onClick!({
+                origin: origin ?? field,
+                e: evt,
+                replaceVariables: boundReplaceVariables,
+              });
+            },
+            origin: field,
+          };
+        } else {
+          linkModel = {
+            href,
+            title: boundReplaceVariables(link.title || '', dataLinkScopedVars),
+            target: link.targetBlank ? '_blank' : undefined,
+            origin: field,
+          };
+        }
       } else {
-        linkModel = {
-          href,
-          title: boundReplaceVariables(link.title || '', dataLinkScopedVars),
-          target: link.targetBlank ? '_blank' : undefined,
-          origin: field,
-        };
+        linkModel = undefined;
       }
 
       return (dataLinkPostProcessor || defaultInternalLinkPostProcessor)({
@@ -604,7 +624,8 @@ export function useFieldOverrides(
   timeZone: string,
   theme: GrafanaTheme2,
   replace: InterpolateFunction,
-  dataLinkPostProcessor?: DataLinkPostProcessor
+  dataLinkPostProcessor?: DataLinkPostProcessor,
+  enhancedReplace?: EnhancedInterpolateFunction
 ): PanelData | undefined {
   const fieldConfigRegistry = plugin?.fieldConfigRegistry;
   const structureRev = useRef(0);
@@ -637,6 +658,7 @@ export function useFieldOverrides(
         theme,
         timeZone,
         dataLinkPostProcessor,
+        enhancedReplaceVariables: enhancedReplace,
       }),
     };
     if (data.annotations && data.annotations.length > 0) {
@@ -653,7 +675,17 @@ export function useFieldOverrides(
       });
     }
     return panelData;
-  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace, dataLinkPostProcessor]);
+  }, [
+    fieldConfigRegistry,
+    fieldConfig,
+    data,
+    prevSeries,
+    replace,
+    theme,
+    timeZone,
+    dataLinkPostProcessor,
+    enhancedReplace,
+  ]);
 }
 
 /**

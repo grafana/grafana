@@ -26,6 +26,13 @@ export type InterpolateFunction = (
   interpolations?: VariableInterpolation[]
 ) => string;
 
+export type EnhancedInterpolateFunction = (
+  value: string,
+  scopedVars?: ScopedVars,
+  format?: string | Function,
+  interpolations?: VariableInterpolation[]
+) => { replaceStr: string; variables: VariableInterpolation[]; allFound: boolean };
+
 export interface PanelPluginMeta extends PluginMeta {
   /** Indicates that panel does not issue queries */
   skipDataQuery?: boolean;

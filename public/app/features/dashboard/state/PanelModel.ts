@@ -20,6 +20,7 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
   getNextRefId,
+  VariableInterpolation,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
@@ -71,6 +72,23 @@ const notPersistedProperties: { [str: string]: boolean } = {
   isNew: true,
   refreshWhenInView: true,
 };
+
+// See https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+const builtInVariables = [
+  '__from',
+  '__to',
+  '__interval',
+  '__interval_ms',
+  '__org',
+  '__user',
+  '__range',
+  '__rate_interval',
+  '__timeFilter',
+  'timeFilter',
+  // These are only applicable in dashboards so should not affect this for Explore
+  // '__dashboard',
+  //'__name',
+];
 
 // For angular panels we need to clean up properties when changing type
 // To make sure the change happens without strange bugs happening when panels use same
@@ -229,6 +247,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
+    this.enhancedReplaceVariables = this.enhancedReplaceVariables.bind(this);
     this.key = uuidv4();
   }
 
@@ -609,6 +628,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       replaceVariables: this.replaceVariables,
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme2,
+      enhancedReplaceVariables: this.enhancedReplaceVariables,
     };
   }
 
@@ -668,6 +688,19 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const lastRequest = this.getQueryRunner().getLastRequest();
     const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
     return getTemplateSrv().replace(value, vars, format);
+  }
+
+  enhancedReplaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
+    let variables: VariableInterpolation[] = [];
+    const lastRequest = this.getQueryRunner().getLastRequest();
+    const vars: ScopedVars = Object.assign({}, this.scopedVars, lastRequest?.scopedVars, extraVars);
+    const replaceStr = getTemplateSrv().replace(value, vars, format, variables);
+    const allFound = variables
+      // We filter out builtin variables as they should be always defined but sometimes only later, like
+      // __range_interval which is defined in prometheus at query time.
+      .filter((v) => !builtInVariables.includes(v.variableName))
+      .every((variable) => variable.found);
+    return { replaceStr, variables, allFound };
   }
 
   resendLastResult() {
