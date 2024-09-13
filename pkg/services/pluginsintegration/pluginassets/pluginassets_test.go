@@ -369,38 +369,36 @@ func TestService_ModuleHash(t *testing.T) {
 }
 
 func TestService_ModuleHash_Cache(t *testing.T) {
-	t.Run("returned values cache", func(t *testing.T) {
-		pCfg := &config.PluginManagementCfg{
-			PluginSettings: setting.PluginSettings{},
-			Features:       config.Features{FilesystemSriChecksEnabled: true},
-		}
-		svc := ProvideService(
-			pCfg,
-			pluginscdn.ProvideService(pCfg),
-			signature.ProvideService(pCfg, statickey.New()),
-			pluginstore.NewFakePluginStore(),
-		)
-		p := newPlugin(
-			"grafana-test-datasource",
-			withSignatureStatus(plugins.SignatureStatusValid),
-			withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
-		)
+	pCfg := &config.PluginManagementCfg{
+		PluginSettings: setting.PluginSettings{},
+		Features:       config.Features{FilesystemSriChecksEnabled: true},
+	}
+	svc := ProvideService(
+		pCfg,
+		pluginscdn.ProvideService(pCfg),
+		signature.ProvideService(pCfg, statickey.New()),
+		pluginstore.NewFakePluginStore(),
+	)
+	p := newPlugin(
+		"grafana-test-datasource",
+		withSignatureStatus(plugins.SignatureStatusValid),
+		withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+	)
 
-		_, ok := svc.moduleHashCache.Load(p.ID)
-		require.False(t, ok, "cache should initially be empty")
+	_, ok := svc.moduleHashCache.Load(p.ID)
+	require.False(t, ok, "cache should initially be empty")
 
-		mh := svc.ModuleHash(context.Background(), p)
-		exp := newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
-		require.Equal(t, exp, mh, "returned value should be correct")
+	mh := svc.ModuleHash(context.Background(), p)
+	exp := newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
+	require.Equal(t, exp, mh, "returned value should be correct")
 
-		cachedMh, ok := svc.moduleHashCache.Load(p.ID)
-		require.True(t, ok)
-		require.Equal(t, exp, cachedMh, "cache should contain the returned value")
+	cachedMh, ok := svc.moduleHashCache.Load(p.ID)
+	require.True(t, ok)
+	require.Equal(t, exp, cachedMh, "cache should contain the returned value")
 
-		svc.moduleHashCache.Store(p.ID, "hax")
-		mh = svc.ModuleHash(context.Background(), p)
-		require.Equal(t, "hax", mh, "cache should be used")
-	})
+	svc.moduleHashCache.Store(p.ID, "hax")
+	mh = svc.ModuleHash(context.Background(), p)
+	require.Equal(t, "hax", mh, "cache should be used")
 }
 
 func TestConvertHashFromSRI(t *testing.T) {
