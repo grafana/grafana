@@ -52,7 +52,11 @@ describe('Share internally', () => {
         expect(rs.statusCode).eq(200);
         const body: { url: string; uid: string } = rs.body;
         expect(body.url).contain('goto');
-        cy.visit(fromBaseUrl(getShortLinkUrl(body.uid)));
+
+        const url = fromBaseUrl(getShortLinkUrl(body.uid));
+        cy.intercept('GET', url).as('get');
+        cy.visit(url, { retryOnNetworkFailure: true });
+        cy.wait('@get');
 
         cy.url().should('not.include', 'from=now-6h&to=now');
       });
@@ -87,7 +91,11 @@ describe('Share internally', () => {
         const body: { url: string; uid: string } = rs.body;
         expect(body.url).contain('goto');
 
-        cy.visit(fromBaseUrl(getShortLinkUrl(body.uid)));
+        const url = fromBaseUrl(getShortLinkUrl(body.uid));
+        cy.intercept('GET', url).as('get');
+        cy.visit(url, { retryOnNetworkFailure: true });
+        cy.wait('@get');
+
         cy.url().should('include', 'from=now-6h&to=now');
       });
 
@@ -143,7 +151,11 @@ describe('Share internally', () => {
         const body: { url: string; uid: string } = rs.body;
         expect(body.url).contain('goto');
 
-        cy.visit(fromBaseUrl(getShortLinkUrl(body.uid)));
+        const url = fromBaseUrl(getShortLinkUrl(body.uid));
+        cy.intercept('GET', url).as('get');
+        cy.visit(url, { retryOnNetworkFailure: true });
+        cy.wait('@get');
+
         cy.url().should('include', 'from=now-6h&to=now');
       });
   });
