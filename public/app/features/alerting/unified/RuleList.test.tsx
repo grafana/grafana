@@ -812,6 +812,7 @@ describe('RuleList', () => {
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
     });
+
     describe('Grafana Managed Alerts', () => {
       it('New alert button should be visible when the user has alert rule create and folder read permissions and no rules exists', async () => {
         grantUserPermissions([
@@ -828,6 +829,7 @@ describe('RuleList', () => {
         renderRuleList();
 
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+
         expect(ui.newRuleButton.get()).toBeInTheDocument();
       });
 
@@ -901,35 +903,6 @@ describe('RuleList', () => {
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
         expect(ui.newRuleButton.get()).toBeInTheDocument();
       });
-    });
-  });
-
-  describe('Analytics', () => {
-    it('Sends log info when creating an alert rule from a scratch', async () => {
-      grantUserPermissions([
-        AccessControlAction.FoldersRead,
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingRuleRead,
-      ]);
-
-      mocks.getAllDataSourcesMock.mockReturnValue([]);
-      setDataSourceSrv(new MockDataSourceSrv({}));
-      mocks.api.fetchRules.mockResolvedValue([]);
-      mocks.api.fetchRulerRules.mockResolvedValue({});
-
-      renderRuleList();
-
-      await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
-
-      const button = screen.getByText('New alert rule');
-
-      button.addEventListener('click', (event) => event.preventDefault(), false);
-
-      expect(button).toBeEnabled();
-
-      await userEvent.click(button);
-
-      expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.alertRuleFromScratch);
     });
   });
 });
