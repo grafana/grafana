@@ -17,12 +17,12 @@ export const NoRulesSplash = () => {
             <Stack direction="row" alignItems="center" justifyContent="center">
               {canCreateAnything && (
                 <LinkButton variant="primary" icon="plus" size="lg" href="alerting/new/alerting">
-                  <Trans i18nKey='alerting.list-view".empty.new-alert-rule'>New alert rule</Trans>
+                  <Trans i18nKey='alerting.list-view.empty.new-alert-rule'>New alert rule</Trans>
                 </LinkButton>
               )}
               {canCreateCloudRules && (
                 <LinkButton variant="primary" icon="plus" size="lg" href="alerting/new/recording">
-                  <Trans i18nKey='alerting.list-view".empty.new-recording-rule'>New recording rule</Trans>
+                  <Trans i18nKey='alerting.list-view.empty.new-recording-rule'>New recording rule</Trans>
                 </LinkButton>
               )}
             </Stack>
@@ -30,7 +30,7 @@ export const NoRulesSplash = () => {
         }
       >
         <>
-          <Trans i18nKey='alerting.list-view".empty.provisioning'>
+          <Trans i18nKey='alerting.list-view.empty.provisioning'>
             You can also define rules through file provisioning or Terraform.{' '}
             <TextLink
               href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/"

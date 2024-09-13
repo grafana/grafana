@@ -124,6 +124,11 @@
       "label": "Cőŉŧäčŧ pőįŉŧ"
     },
     "list-view": {
+      "empty": {
+        "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
+        "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
+        "provisioning": "Ÿőū čäŉ äľşő đęƒįŉę řūľęş ŧĥřőūģĥ ƒįľę přővįşįőŉįŉģ őř Ŧęřřäƒőřm. <2>Ŀęäřŉ mőřę</2>"
+      },
       "section": {
         "dataSourceManaged": {
           "title": "Đäŧä şőūřčę-mäŉäģęđ"
@@ -134,13 +139,6 @@
           "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
           "title": "Ğřäƒäŉä-mäŉäģęđ"
         }
-      }
-    },
-    "list-view\"": {
-      "empty": {
-        "new-alert-rule": "Ńęŵ äľęřŧ řūľę",
-        "new-recording-rule": "Ńęŵ řęčőřđįŉģ řūľę",
-        "provisioning": "Ÿőū čäŉ äľşő đęƒįŉę řūľęş ŧĥřőūģĥ ƒįľę přővįşįőŉįŉģ őř Ŧęřřäƒőřm. <2>Ŀęäřŉ mőřę</2>"
       }
     },
     "mute_timings": {
