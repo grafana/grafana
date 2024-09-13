@@ -73,6 +73,7 @@
 /hack/ @grafana/grafana-app-platform-squad
 
 /apps/alerting/ @grafana/alerting-backend
+/apps/playlist/ @grafana/grafana-app-platform-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/alerting_notifications @grafana/grafana-app-platform-squad @grafana/alerting-backend @grafana/alerting-frontend

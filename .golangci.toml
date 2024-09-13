@@ -153,6 +153,17 @@ files = [
   "./pkg/storage/unified/apistore/**/*"
 ]
 
+[linters-settings.depguard.rules.apps-playlist]
+list-mode = "lax"
+allow = []
+deny = [
+  { pkg = "github.com/grafana/grafana/pkg", desc = "apps/playlist is not allowed to import grafana core" }
+]
+files = [
+  "./apps/playlist/*",
+  "./apps/playlist/**/*"
+]
+
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
 [linters-settings.gocritic.settings.ruleguard]
