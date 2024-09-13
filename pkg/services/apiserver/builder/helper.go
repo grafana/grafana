@@ -27,6 +27,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/auth"
 )
 
 type BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler
@@ -53,7 +54,7 @@ var PathRewriters = []filters.PathRewriter{
 	},
 }
 
-func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
+func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, idService auth.IDService) BuildHandlerChainFunc {
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		requestHandler, err := GetCustomRoutesHandler(
 			delegateHandler,
@@ -67,7 +68,7 @@ func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerCha
 		handler := filters.WithTracingHTTPLoggingAttributes(requestHandler)
 
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
-		handler = filters.WithRequester(handler)
+		handler = filters.WithRequester(handler, idService)
 
 		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
 		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
@@ -93,6 +94,7 @@ func SetupConfig(
 	buildCommit string,
 	buildBranch string,
 	buildHandlerChainFunc func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler,
+	idService auth.IDService,
 ) error {
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
@@ -122,7 +124,7 @@ func SetupConfig(
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
 	serverConfig.SkipOpenAPIInstallation = false
-	serverConfig.BuildHandlerChainFunc = getDefaultBuildHandlerChainFunc(builders)
+	serverConfig.BuildHandlerChainFunc = getDefaultBuildHandlerChainFunc(builders, idService)
 
 	if buildHandlerChainFunc != nil {
 		serverConfig.BuildHandlerChainFunc = buildHandlerChainFunc

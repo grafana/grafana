@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -121,6 +122,7 @@ type service struct {
 	metrics prometheus.Registerer
 
 	authorizer        *authorizer.GrafanaAuthorizer
+	idService         auth.IDService
 	serverLockService builder.ServerLockService
 	kvStore           kvstore.KVStore
 
@@ -143,6 +145,7 @@ func ProvideService(
 	datasources datasource.ScopedPluginDatasourceProvider,
 	contextProvider datasource.PluginContextWrapper,
 	pluginStore pluginstore.Store,
+	idService auth.IDService,
 ) (*service, error) {
 	s := &service{
 		cfg:               cfg,
@@ -152,6 +155,7 @@ func ProvideService(
 		stopCh:            make(chan struct{}),
 		builders:          []builder.APIGroupBuilder{},
 		authorizer:        authorizer.NewGrafanaAuthorizer(cfg, orgService),
+		idService:         idService,
 		tracing:           tracing,
 		db:                db, // For Unified storage
 		metrics:           metrics.ProvideRegisterer(),
@@ -337,6 +341,7 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildCommit,
 		s.cfg.BuildBranch,
 		nil,
+		s.idService,
 	)
 	if err != nil {
 		return err

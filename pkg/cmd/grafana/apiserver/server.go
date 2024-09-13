@@ -123,6 +123,7 @@ func (o *APIServerOptions) Config(tracer tracing.Tracer) (*genericapiserver.Reco
 		setting.BuildCommit,
 		setting.BuildBranch,
 		o.factory.GetBuildHandlerChainFunc(tracer, o.builders),
+		nil,
 	)
 	return serverConfig, err
 }

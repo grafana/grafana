@@ -1,19 +1,23 @@
 package filters
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"reflect"
 	"slices"
 
+	"github.com/grafana/authlib/claims"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/auth"
 )
 
 // WithRequester makes sure there is an identity.Requester in context
-func WithRequester(handler http.Handler) http.Handler {
+func WithRequester(handler http.Handler, idService auth.IDService) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		ctx := req.Context()
 		requester, err := identity.GetRequester(ctx)
@@ -64,6 +68,11 @@ func WithRequester(handler http.Handler) http.Handler {
 				}
 			}
 
+			requester, err = signStaticRequester(ctx, idService, requester.(*identity.StaticRequester))
+			if err != nil {
+				klog.Error("failed to sign identity", "error", err)
+			}
+
 			if requester != nil {
 				req = req.WithContext(identity.WithRequester(ctx, requester))
 			} else {
@@ -72,4 +81,19 @@ func WithRequester(handler http.Handler) http.Handler {
 		}
 		handler.ServeHTTP(w, req)
 	})
+}
+
+func signStaticRequester(ctx context.Context, idService auth.IDService, requester *identity.StaticRequester) (*identity.StaticRequester, error) {
+	if idService == nil || reflect.ValueOf(idService).IsNil() {
+		return nil, fmt.Errorf("IDService is nil")
+	}
+
+	token, claims, err := idService.SignIdentity(ctx, requester)
+	if err != nil {
+		return nil, err
+	}
+
+	requester.IDToken = token
+	requester.IDTokenClaims = claims
+	return requester, nil
 }
