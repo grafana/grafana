@@ -11,7 +11,6 @@ import {
   SceneObjectStateChangedEvent,
   sceneUtils,
   VizPanel,
-  VizPanelState,
 } from '@grafana/scenes';
 import { Panel } from '@grafana/schema/dist/esm/index.gen';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
