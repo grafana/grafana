@@ -488,9 +488,6 @@ export const getLinksSupplier =
     if (!field.config.links || field.config.links.length === 0) {
       return [];
     }
-
-    //console.log('getLinksSupplier', field);
-
     const linkModels = field.config.links.map((link: DataLink) => {
       const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
 
@@ -499,7 +496,6 @@ export const getLinksSupplier =
       if (link.meta?.transformations) {
         link.meta?.transformations.forEach((transformation) => {
           let fieldValue;
-          //const rowValue = config.valueRowIndex !== undefined ? field.values[config.valueRowIndex] : config.calculatedValue !== undefined ? config.calculatedValue : undefined;
           if (config.valueRowIndex !== undefined) {
             if (transformation.field) {
               const transformField = frame?.fields.find((field) => field.name === transformation.field);

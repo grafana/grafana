@@ -62,6 +62,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
               datasourceUid: correlation.target.uid,
               datasourceName: correlation.target.name,
             },
+            targetBlank: true,
             url: '',
             title: correlation.label || correlation.target.name,
             origin: DataLinkConfigOrigin.Correlations,
@@ -76,6 +77,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             title: correlation.label || 'External URL',
             origin: DataLinkConfigOrigin.Correlations,
             meta: { transformations: correlation.config?.transformations },
+            targetBlank: true,
           });
         }
       }
