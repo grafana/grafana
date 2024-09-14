@@ -431,19 +431,44 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 }
 
+// Recursively get all strings from an object into a simple list with space as separator.
+function getStringsFromObject(obj: Object): string {
+  let acc = '';
+  let k: keyof typeof obj;
+
+  for (k in obj) {
+    if (typeof obj[k] === 'string') {
+      acc += ' ' + obj[k];
+    } else if (typeof obj[k] === 'object') {
+      acc += ' ' + getStringsFromObject(obj[k]);
+    }
+  }
+  return acc;
+}
+
 const defaultInternalLinkPostProcessor: DataLinkPostProcessor = (options) => {
   // For internal links at the moment only destination is Explore.
-  const { link, linkModel, dataLinkScopedVars, field, replaceVariables } = options;
+  const { link, linkModel, dataLinkScopedVars, field, replaceVariables, enhancedReplaceVariables } = options;
 
   if (link.internal) {
-    return mapInternalLinkToExplore({
-      link,
-      internalLink: link.internal,
-      scopedVars: dataLinkScopedVars,
-      field,
-      range: link.internal.range,
-      replaceVariables,
-    });
+    let showInternalLink = false;
+    if (enhancedReplaceVariables === undefined) {
+      showInternalLink = true;
+    } else {
+      const variableInfo = enhancedReplaceVariables(getStringsFromObject(link), dataLinkScopedVars);
+      showInternalLink = variableInfo.allFound;
+    }
+
+    return showInternalLink
+      ? mapInternalLinkToExplore({
+          link,
+          internalLink: link.internal,
+          scopedVars: dataLinkScopedVars,
+          field,
+          range: link.internal.range,
+          replaceVariables,
+        })
+      : undefined;
   } else {
     return linkModel;
   }
@@ -577,6 +602,7 @@ export const getLinksSupplier =
         config,
         link,
         linkModel,
+        enhancedReplaceVariables,
       });
     });
 

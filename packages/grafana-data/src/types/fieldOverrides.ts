@@ -119,6 +119,7 @@ export type DataLinkPostProcessorOptions = {
   config: ValueLinkConfig;
   link: DataLink;
   linkModel?: LinkModel;
+  enhancedReplaceVariables?: EnhancedInterpolateFunction;
 };
 
 export type DataLinkPostProcessor = (options: DataLinkPostProcessorOptions) => LinkModel<Field> | undefined;

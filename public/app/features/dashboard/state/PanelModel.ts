@@ -247,7 +247,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
-    this.enhancedReplaceVariables = this.enhancedReplaceVariables.bind(this);
+    if (typeof this.enhancedReplaceVariables === 'function') {
+      this.enhancedReplaceVariables = this.enhancedReplaceVariables.bind(this);
+    }
     this.key = uuidv4();
   }
 
