@@ -73,7 +73,7 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
   const animationDuration = 150;
   const animationStyles = useStyles2(getStyles, animationDuration);
 
-  const onOverlayClicked = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const onOverlayClicked = () => {
     handleOpenChange(false);
   };
 
