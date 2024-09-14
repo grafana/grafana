@@ -512,11 +512,7 @@ describe('DataTrail', () => {
       locationService.push(preTrailUrl);
       activateFullSceneTree(trail);
       getOtelResourcesVar(trail).setState({ filters: [{ key: 'service_name', operator: '=', value: 'adservice' }] });
-      getOtelDepEnvVar(trail).setState({
-        text: 'production',
-        value: 'production',
-        options: [{ value: 'production', label: 'production' }],
-      });
+      getOtelDepEnvVar(trail).changeValueTo('production');
     });
 
     it('should start with hidden dep env variable', () => {
@@ -547,8 +543,7 @@ describe('DataTrail', () => {
       expect(getOtelDepEnvVar(trail).getValue()).toBe('production');
     });
 
-    // BUG: custom variable does not update variable dependency with setState
-    xit('should add history step for when updating the dep env variable', () => {
+    it('should add history step for when updating the dep env variable', () => {
       expect(trail.state.history.state.steps[3].type).toBe('dep_env');
     });
   });
