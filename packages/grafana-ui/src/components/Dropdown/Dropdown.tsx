@@ -74,13 +74,6 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
   const animationStyles = useStyles2(getStyles, animationDuration);
 
   const onOverlayClicked = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    if (event.target instanceof HTMLDivElement || event.target instanceof HTMLSpanElement) {
-      const innerText = event.target.innerText
-      if (innerText.includes("More...")) {
-        return
-      }
-    }
-
     handleOpenChange(false);
   };
 

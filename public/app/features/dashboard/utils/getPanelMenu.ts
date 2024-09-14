@@ -75,6 +75,8 @@ export function getPanelMenu(
 
   const onMore = (event: React.MouseEvent) => {
     event.preventDefault();
+    console.log("click")
+    event.stopPropagation();
   };
 
   const onDuplicatePanel = (event: React.MouseEvent) => {
