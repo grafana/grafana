@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG GF_VERSION=11.0.0
+ARG GF_VERSION=11.2.0
 ARG BASE_IMAGE=alpine:3.19.1
 ARG JS_IMAGE=node:20-alpine
 ARG JS_PLATFORM=linux/amd64
