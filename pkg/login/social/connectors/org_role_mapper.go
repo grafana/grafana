@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -50,6 +51,7 @@ func ProvideOrgRoleMapper(cfg *setting.Cfg, orgService org.Service) *OrgRoleMapp
 //
 // directlyMappedRole: role that is directly mapped to the user (ex: through `role_attribute_path`)
 func (m *OrgRoleMapper) MapOrgRoles(
+	ctx context.Context,
 	mappingCfg *MappingConfiguration,
 	externalOrgs []string,
 	directlyMappedRole org.RoleType,
@@ -59,7 +61,7 @@ func (m *OrgRoleMapper) MapOrgRoles(
 		return m.getDefaultOrgMapping(mappingCfg.strictRoleMapping, directlyMappedRole)
 	}
 
-	userOrgRoles := getMappedOrgRoles(externalOrgs, mappingCfg.orgMapping)
+	userOrgRoles := m.getMappedOrgRoles(ctx, externalOrgs, mappingCfg.orgMapping)
 
 	if err := m.handleGlobalOrgMapping(userOrgRoles); err != nil {
 		// Cannot map global org roles, return nil (prevent resetting asignments)
@@ -139,6 +141,7 @@ func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []
 
 	for _, v := range mappings {
 		kv := splitOrgMapping(v)
+
 		if !isValidOrgMappingFormat(kv) {
 			m.logger.Error("Skipping org mapping due to invalid format.", "mapping", fmt.Sprintf("%v", v))
 			if roleStrict {
@@ -244,7 +247,7 @@ func isValidOrgMappingFormat(kv []string) bool {
 	return len(kv) > 1 && len(kv) < 4
 }
 
-func getMappedOrgRoles(externalOrgs []string, orgMapping map[string]map[int64]org.RoleType) map[int64]org.RoleType {
+func (m *OrgRoleMapper) getMappedOrgRoles(ctx context.Context, externalOrgs []string, orgMapping map[string]map[int64]org.RoleType) map[int64]org.RoleType {
 	userOrgRoles := map[int64]org.RoleType{}
 
 	if len(orgMapping) == 0 {
@@ -257,14 +260,41 @@ func getMappedOrgRoles(externalOrgs []string, orgMapping map[string]map[int64]or
 		}
 	}
 
-	for _, org := range externalOrgs {
-		orgRoles, ok := orgMapping[org]
-		if !ok {
+	for key := range orgMapping {
+		if key == "*" {
 			continue
 		}
+		// Regex pattern to capture parts of the externalOrg string
+		// Example: Capture org name and other dynamic parts
+		regexPattern := key
+		regex := regexp.MustCompile(regexPattern)
+		for _, externalOrg := range externalOrgs {
+			// Match the externalOrg string against the regex pattern
+			matches := regex.FindStringSubmatch(externalOrg)
+			if len(matches) < 3 {
+				// If no match is found, skip this externalOrg
+				continue
+			}
 
-		for orgID, role := range orgRoles {
-			userOrgRoles[orgID] = getTopRole(userOrgRoles[orgID], role)
+			// Use the captured group (e.g., organization name) to index into orgMapping
+			// Example: `matches[1]` could be the organization name or ID depending on your use case
+			extractedOrgName := strings.ToLower(matches[1]) // Capture group 1 (org name), adjust as needed
+
+			extractedRole := strings.ToLower(matches[2])
+			firstRune := unicode.ToUpper(rune(extractedRole[0]))
+			extractedRole = string(firstRune) + extractedRole[1:]
+
+			res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: extractedOrgName})
+			if getErr != nil {
+				// skip in case of error
+				m.logger.Warn("Could not fetch organization. Skipping.", "err", getErr, "org", extractedOrgName)
+				continue
+			}
+			fetchedOrgID := int64(res.ID)
+			if org.RoleType(extractedRole).IsValid() {
+				role := org.RoleType(extractedRole)
+				userOrgRoles[fetchedOrgID] = getTopRole(userOrgRoles[fetchedOrgID], role)
+			}
 		}
 	}
 

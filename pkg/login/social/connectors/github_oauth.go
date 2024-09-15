@@ -337,7 +337,7 @@ func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token 
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
-		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
+		userInfo.OrgRoles = s.orgRoleMapper.MapOrgRoles(ctx, s.orgMappingCfg, userInfo.Groups, directlyMappedRole)
 		if s.info.RoleAttributeStrict && len(userInfo.OrgRoles) == 0 {
 			return nil, errRoleAttributeStrictViolation.Errorf("could not evaluate any valid roles using IdP provided data")
 		}

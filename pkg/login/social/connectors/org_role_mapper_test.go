@@ -210,7 +210,7 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 				}
 			}
 			mappingCfg := mapper.ParseOrgMappingSettings(context.Background(), tc.orgMappingSettings, tc.strictRoleMapping)
-			actual := mapper.MapOrgRoles(mappingCfg, tc.externalOrgs, tc.directlyMappedRole)
+			actual := mapper.MapOrgRoles(context.TODO(), mappingCfg, tc.externalOrgs, tc.directlyMappedRole)
 
 			assert.EqualValues(t, tc.expected, actual)
 		})
