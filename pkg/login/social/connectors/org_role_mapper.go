@@ -304,8 +304,8 @@ func (m *OrgRoleMapper) getMappedOrgRolesDynamic(ctx context.Context, externalOr
 		extractedOrgName = string(firstRune) + extractedOrgName[1:]
 
 		extractedRole := strings.ToLower(matches[2])
-		firstRunes := unicode.ToUpper(rune(extractedRole[0]))
-		extractedRole = string(firstRunes) + extractedRole[1:]
+		firstRune = unicode.ToUpper(rune(extractedRole[0]))
+		extractedRole = string(firstRune) + extractedRole[1:]
 
 		res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: extractedOrgName})
 		if getErr != nil {
