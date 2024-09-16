@@ -9,10 +9,6 @@ module.exports = {
     app: './public/app/index.ts',
     swagger: './public/swagger/index.tsx',
   },
-  experiments: {
-    // Required to load WASM modules.
-    asyncWebAssembly: true,
-  },
   output: {
     clean: true,
     path: path.resolve(__dirname, '../../public/build'),

@@ -1760,13 +1760,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bsull/augurs@npm:0.3.1":
-  version: 0.3.1
-  resolution: "@bsull/augurs@npm:0.3.1"
-  checksum: 10/cab3a0b5ce12f470c738ed13f4831d4fc5dff77c11941945131582e6ec6c891d11372bb211ca16d64ee98518f87b3ff17671b537465020bcdcf0bbe2facf4d2c
-  languageName: node
-  linkType: hard
-
 "@bundled-es-modules/cookie@npm:^2.0.0":
   version: 2.0.0
   resolution: "@bundled-es-modules/cookie@npm:2.0.0"
@@ -18506,7 +18499,6 @@ __metadata:
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
     "@betterer/eslint": "npm:5.4.0"
-    "@bsull/augurs": "npm:0.3.1"
     "@cypress/webpack-preprocessor": "npm:6.0.2"
     "@emotion/css": "npm:11.11.2"
     "@emotion/eslint-plugin": "npm:11.11.0"
