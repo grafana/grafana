@@ -32,6 +32,7 @@ type OrgRoleMapper struct {
 // strictRoleMapping: if true, the mapper ensures that the evaluated role from orgMapping or the directlyMappedRole is a valid role, otherwise it will return nil.
 type MappingConfiguration struct {
 	orgMapping        map[string]map[int64]org.RoleType
+	orgMappingRegex   string
 	strictRoleMapping bool
 }
 
@@ -56,12 +57,16 @@ func (m *OrgRoleMapper) MapOrgRoles(
 	externalOrgs []string,
 	directlyMappedRole org.RoleType,
 ) map[int64]org.RoleType {
+	if len(mappingCfg.orgMappingRegex) > 0 {
+		// Regex Org Mapping configured
+		return m.getMappedOrgRolesDynamic(ctx, externalOrgs, mappingCfg.orgMappingRegex)
+	}
 	if len(mappingCfg.orgMapping) == 0 {
 		// Org mapping is not configured
 		return m.getDefaultOrgMapping(mappingCfg.strictRoleMapping, directlyMappedRole)
 	}
 
-	userOrgRoles := m.getMappedOrgRoles(ctx, externalOrgs, mappingCfg.orgMapping)
+	userOrgRoles := getMappedOrgRolesStatic(externalOrgs, mappingCfg.orgMapping)
 
 	if err := m.handleGlobalOrgMapping(userOrgRoles); err != nil {
 		// Cannot map global org roles, return nil (prevent resetting asignments)
@@ -136,8 +141,21 @@ func (m *OrgRoleMapper) handleGlobalOrgMapping(orgRoles map[int64]org.RoleType) 
 // ParseOrgMappingSettings parses the `org_mapping` setting and returns an internal representation of the mapping.
 // If the roleStrict is enabled, the mapping should contain a valid role for each org.
 // FIXME: Consider introducing a struct to represent the org mapping settings
-func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string, roleStrict bool) *MappingConfiguration {
+func (m *OrgRoleMapper) ParseOrgMappingSettings(ctx context.Context, mappings []string, roleStrict bool, orgMappingRegex string) *MappingConfiguration {
 	res := map[string]map[int64]org.RoleType{}
+
+	if len(orgMappingRegex) > 0 {
+		re, err := regexp.Compile(orgMappingRegex)
+		if err != nil {
+			m.logger.Warn("Organization regex mapping pattern is not valid regex syntax.")
+		}
+		numCaptureGroups := len(re.SubexpNames()) - 1
+		if numCaptureGroups == 2 {
+			return &MappingConfiguration{orgMapping: map[string]map[int64]org.RoleType{}, strictRoleMapping: roleStrict, orgMappingRegex: orgMappingRegex}
+		} else {
+			m.logger.Warn("Organization regex mapping pattern needs exactly two capture groups, one for the organization and one for the role.")
+		}
+	}
 
 	for _, v := range mappings {
 		kv := splitOrgMapping(v)
@@ -247,7 +265,7 @@ func isValidOrgMappingFormat(kv []string) bool {
 	return len(kv) > 1 && len(kv) < 4
 }
 
-func (m *OrgRoleMapper) getMappedOrgRoles(ctx context.Context, externalOrgs []string, orgMapping map[string]map[int64]org.RoleType) map[int64]org.RoleType {
+func getMappedOrgRolesStatic(externalOrgs []string, orgMapping map[string]map[int64]org.RoleType) map[int64]org.RoleType {
 	userOrgRoles := map[int64]org.RoleType{}
 
 	if len(orgMapping) == 0 {
@@ -260,44 +278,47 @@ func (m *OrgRoleMapper) getMappedOrgRoles(ctx context.Context, externalOrgs []st
 		}
 	}
 
-	for key := range orgMapping {
-		if key == "*" {
+	for _, org := range externalOrgs {
+		orgRoles, ok := orgMapping[org]
+		if !ok {
 			continue
 		}
-		// Regex pattern to capture parts of the externalOrg string
-		// Example: Capture org name and other dynamic parts
-		regexPattern := key
-		regex := regexp.MustCompile(regexPattern)
-		for _, externalOrg := range externalOrgs {
-			// Match the externalOrg string against the regex pattern
-			matches := regex.FindStringSubmatch(externalOrg)
-			if len(matches) < 3 {
-				// If no match is found, skip this externalOrg
-				continue
-			}
 
-			// Use the captured group (e.g., organization name) to index into orgMapping
-			// Example: `matches[1]` could be the organization name or ID depending on your use case
-			extractedOrgName := strings.ToLower(matches[1]) // Capture group 1 (org name), adjust as needed
-
-			extractedRole := strings.ToLower(matches[2])
-			firstRune := unicode.ToUpper(rune(extractedRole[0]))
-			extractedRole = string(firstRune) + extractedRole[1:]
-
-			res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: extractedOrgName})
-			if getErr != nil {
-				// skip in case of error
-				m.logger.Warn("Could not fetch organization. Skipping.", "err", getErr, "org", extractedOrgName)
-				continue
-			}
-			fetchedOrgID := int64(res.ID)
-			if org.RoleType(extractedRole).IsValid() {
-				role := org.RoleType(extractedRole)
-				userOrgRoles[fetchedOrgID] = getTopRole(userOrgRoles[fetchedOrgID], role)
-			}
+		for orgID, role := range orgRoles {
+			userOrgRoles[orgID] = getTopRole(userOrgRoles[orgID], role)
 		}
 	}
 
+	return userOrgRoles
+}
+
+func (m *OrgRoleMapper) getMappedOrgRolesDynamic(ctx context.Context, externalOrgs []string, orgMappingRegex string) map[int64]org.RoleType {
+	userOrgRoles := map[int64]org.RoleType{}
+
+	compiledRegex := regexp.MustCompile(orgMappingRegex)
+	for _, externalOrg := range externalOrgs {
+		matches := compiledRegex.FindStringSubmatch(externalOrg)
+
+		extractedOrgName := strings.ToLower(matches[1]) // this makes the org name lower case, does that even matter for the orgService.GetByName call? if yes this is a caveat and needs fixing
+		firstRune := unicode.ToUpper(rune(extractedOrgName[0]))
+		extractedOrgName = string(firstRune) + extractedOrgName[1:]
+
+		extractedRole := strings.ToLower(matches[2])
+		firstRunes := unicode.ToUpper(rune(extractedRole[0]))
+		extractedRole = string(firstRunes) + extractedRole[1:]
+
+		res, getErr := m.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: extractedOrgName})
+		if getErr != nil {
+			// skip in case of error
+			m.logger.Warn("Could not fetch organization. Skipping.", "err", getErr, "org", extractedOrgName)
+			continue
+		}
+		fetchedOrgID := int64(res.ID)
+		if org.RoleType(extractedRole).IsValid() {
+			role := org.RoleType(extractedRole)
+			userOrgRoles[fetchedOrgID] = getTopRole(userOrgRoles[fetchedOrgID], role)
+		}
+	}
 	return userOrgRoles
 }
 

@@ -77,6 +77,7 @@ type OAuthInfo struct {
 	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict"`
 	OrgAttributePath        string            `mapstructure:"org_attribute_path"`
 	OrgMapping              []string          `mapstructure:"org_mapping"`
+	OrgRegexMapping         string            `mapstructure:"org_regex_mapping"`
 	Scopes                  []string          `mapstructure:"scopes" toml:"scopes"`
 	SignoutRedirectUrl      string            `mapstructure:"signout_redirect_url" toml:"signout_redirect_url"`
 	SkipOrgRoleSync         bool              `mapstructure:"skip_org_role_sync" toml:"skip_org_role_sync"`

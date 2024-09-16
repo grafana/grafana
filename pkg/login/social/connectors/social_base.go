@@ -54,14 +54,14 @@ func newSocialBase(name string,
 		features:      features,
 		cfg:           cfg,
 		orgRoleMapper: orgRoleMapper,
-		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict),
+		orgMappingCfg: orgRoleMapper.ParseOrgMappingSettings(context.Background(), info.OrgMapping, info.RoleAttributeStrict, info.OrgRegexMapping),
 	}
 }
 
 func (s *SocialBase) updateInfo(ctx context.Context, name string, info *social.OAuthInfo) {
 	s.Config = createOAuthConfig(info, s.cfg, name)
 	s.info = info
-	s.orgMappingCfg = s.orgRoleMapper.ParseOrgMappingSettings(ctx, info.OrgMapping, info.RoleAttributeStrict)
+	s.orgMappingCfg = s.orgRoleMapper.ParseOrgMappingSettings(ctx, info.OrgMapping, info.RoleAttributeStrict, info.OrgRegexMapping)
 }
 
 type groupStruct struct {
