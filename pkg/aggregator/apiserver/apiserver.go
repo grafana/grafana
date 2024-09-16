@@ -152,7 +152,7 @@ func (s *GrafanaAggregator) AddDataPlaneService(dataplaneService *v0alpha1.DataP
 		return nil
 	}
 
-	proxyPath := "/apis/dataplane/" + dataplaneService.Spec.Group + "/" + dataplaneService.Spec.Version
+	proxyPath := "/apis/" + dataplaneService.Spec.Group + "/" + dataplaneService.Spec.Version
 	proxyHandler := &dataPlaneServiceHandler{
 		localDelegate:         s.delegateHandler,
 		client:                s.PluginClient,
@@ -176,7 +176,7 @@ func (s *GrafanaAggregator) AddDataPlaneService(dataplaneService *v0alpha1.DataP
 func (s *GrafanaAggregator) RemoveDataPlaneService(dataplaneServiceName string) {
 	version := v0alpha1helper.DataPlaneServiceNameToGroupVersion(dataplaneServiceName)
 
-	proxyPath := "/apis/dataplane/" + version.Group + "/" + version.Version
+	proxyPath := "/apis/" + version.Group + "/" + version.Version
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(proxyPath + "/")
 	delete(s.proxyHandlers, dataplaneServiceName)
@@ -190,7 +190,7 @@ func (s *GrafanaAggregator) RemoveDataPlaneService(dataplaneServiceName string) 
 		return
 	}
 	delete(s.handledGroupVersions, version.Group)
-	groupPath := "/apis/dataplane/" + version.Group
+	groupPath := "/apis/" + version.Group
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(groupPath)
 	s.GenericAPIServer.Handler.NonGoRestfulMux.Unregister(groupPath + "/")
 }
