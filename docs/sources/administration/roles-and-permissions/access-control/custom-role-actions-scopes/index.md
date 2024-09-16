@@ -181,38 +181,6 @@ The following list contains role-based access control actions.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-### Grafana OnCall action definitions (beta)
-
-The following list contains role-based access control actions used by Grafana OnCall application plugin.
-
-| Action                                           | Applicable scopes | Description                                       |
-| ------------------------------------------------ | ----------------- | ------------------------------------------------- |
-| `grafana-oncall-app.alert-groups:read`           | None              | Read OnCall alert groups.                         |
-| `grafana-oncall-app.alert-groups:write`          | None              | Create, edit and delete OnCall alert groups.      |
-| `grafana-oncall-app.integrations:read`           | None              | Read OnCall integrations.                         |
-| `grafana-oncall-app.integrations:write`          | None              | Create, edit and delete OnCall integrations.      |
-| `grafana-oncall-app.integrations:test`           | None              | Test OnCall integrations.                         |
-| `grafana-oncall-app.escalation-chains:read`      | None              | Read OnCall escalation chains.                    |
-| `grafana-oncall-app.escalation-chains:write`     | None              | Create, edit and delete OnCall escalation chains. |
-| `grafana-oncall-app.schedules:read`              | None              | Read OnCall schedules.                            |
-| `grafana-oncall-app.schedules:write`             | None              | Create, edit and delete OnCall schedules.         |
-| `grafana-oncall-app.schedules:export`            | None              | Export OnCall schedules.                          |
-| `grafana-oncall-app.chatops:read`                | None              | Read OnCall ChatOps.                              |
-| `grafana-oncall-app.chatops:write`               | None              | Edit OnCall ChatOps.                              |
-| `grafana-oncall-app.chatops:update-settings`     | None              | Edit OnCall ChatOps settings.                     |
-| `grafana-oncall-app.maintenance:read`            | None              | Read OnCall maintenance.                          |
-| `grafana-oncall-app.maintenance:write`           | None              | Edit OnCall maintenance.                          |
-| `grafana-oncall-app.api-keys:read`               | None              | Read OnCall API keys.                             |
-| `grafana-oncall-app.api-keys:write`              | None              | Create, edit and delete OnCall API keys.          |
-| `grafana-oncall-app.notifications:read`          | None              | Receive OnCall notifications.                     |
-| `grafana-oncall-app.notification-settings:read`  | None              | Read OnCall notification settings.                |
-| `grafana-oncall-app.notification-settings:write` | None              | Edit OnCall notification settings.                |
-| `grafana-oncall-app.user-settings:read`          | None              | Read user's own OnCall user settings.             |
-| `grafana-oncall-app.user-settings:write`         | None              | Edit user's own OnCall user settings.             |
-| `grafana-oncall-app.user-settings:admin`         | None              | Read and edit all users' OnCall user settings.    |
-| `grafana-oncall-app.other-settings:read`         | None              | Read OnCall settings.                             |
-| `grafana-oncall-app.other-settings:write`        | None              | Edit OnCall settings.                             |
-
 ### Grafana Adaptive Metrics action definitions
 
 The following list contains role-based access control actions used by Grafana Adaptive Metrics.

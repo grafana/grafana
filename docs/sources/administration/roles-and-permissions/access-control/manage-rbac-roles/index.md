@@ -74,8 +74,6 @@ refs:
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
-{{< table-of-contents >}}
-
 This section includes instructions for how to view permissions associated with roles, create custom roles, and update and delete roles.
 
 The following example includes the base64 username:password Basic Authorization. You cannot use authorization tokens in the request.
