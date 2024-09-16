@@ -197,6 +197,19 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 			orgMappingRegex: ".*_(.*)_.*_(.*)",
 			expected:        map[int64]org.RoleType{1: org.RoleEditor, 2: org.RoleAdmin},
 		},
+		{
+			name:               "should map dynamically and disregard orgMappingSettings",
+			externalOrgs:       []string{"PREFIX_First_SUFFIX_EDITOR", "PREFIX_Second_SUFFIX_ADMIN"},
+			orgMappingSettings: []string{"First:*:Admin"},
+			orgMappingRegex:    ".*_(.*)_.*_(.*)",
+			expected:           map[int64]org.RoleType{1: org.RoleEditor, 2: org.RoleAdmin},
+		},
+		{
+			name:            "should return the default mapping in case the mapping regex is valid but no matching org is found",
+			externalOrgs:    []string{"PREFIX_NotExistingOrg_SUFFIX_EDITOR"},
+			orgMappingRegex: ".*_(.*)_.*_(.*)",
+			expected:        map[int64]org.RoleType{2: org.RoleViewer},
+		},
 	}
 	orgService := orgtest.NewOrgServiceFake()
 	cfg := setting.NewCfg()

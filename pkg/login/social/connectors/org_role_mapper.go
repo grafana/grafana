@@ -59,7 +59,11 @@ func (m *OrgRoleMapper) MapOrgRoles(
 ) map[int64]org.RoleType {
 	if len(mappingCfg.orgMappingRegex) > 0 {
 		// Regex Org Mapping configured
-		return m.getMappedOrgRolesDynamic(ctx, externalOrgs, mappingCfg.orgMappingRegex)
+		userOrgRoles := m.getMappedOrgRolesDynamic(ctx, externalOrgs, mappingCfg.orgMappingRegex)
+		if len(userOrgRoles) == 0 {
+			return m.getDefaultOrgMapping(mappingCfg.strictRoleMapping, directlyMappedRole)
+		}
+		return userOrgRoles
 	}
 	if len(mappingCfg.orgMapping) == 0 {
 		// Org mapping is not configured
