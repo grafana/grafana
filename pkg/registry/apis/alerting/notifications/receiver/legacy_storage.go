@@ -34,7 +34,8 @@ type ReceiverService interface {
 }
 
 type MetadataService interface {
-	Access(ctx context.Context, user identity.Requester, receivers ...*ngmodels.Receiver) (map[string]ngmodels.ReceiverPermissionSet, error)
+	AccessControlMetadata(ctx context.Context, user identity.Requester, receivers ...*ngmodels.Receiver) (map[string]ngmodels.ReceiverPermissionSet, error)
+	InUseMetadata(ctx context.Context, orgID int64, receivers ...*ngmodels.Receiver) (map[string]ngmodels.ReceiverMetadata, error)
 }
 
 type legacyStorage struct {
@@ -90,12 +91,17 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	accesses, err := s.metadata.Access(ctx, user, res...)
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, res...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
 	}
 
-	return convertToK8sResources(orgId, res, accesses, s.namespacer, opts.FieldSelector)
+	inUses, err := s.metadata.InUseMetadata(ctx, orgId, res...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get in-use metadata: %w", err)
+	}
+
+	return convertToK8sResources(orgId, res, accesses, inUses, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -125,7 +131,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	}
 
 	var access *ngmodels.ReceiverPermissionSet
-	accesses, err := s.metadata.Access(ctx, user, r)
+	accesses, err := s.metadata.AccessControlMetadata(ctx, user, r)
 	if err == nil {
 		if a, ok := accesses[r.GetUID()]; ok {
 			access = &a
@@ -134,7 +140,17 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
 	}
 
-	return convertToK8sResource(info.OrgID, r, access, s.namespacer)
+	var inUse *ngmodels.ReceiverMetadata
+	inUses, err := s.metadata.InUseMetadata(ctx, info.OrgID, r)
+	if err == nil {
+		if a, ok := inUses[r.GetUID()]; ok {
+			inUse = &a
+		}
+	} else {
+		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+	}
+
+	return convertToK8sResource(info.OrgID, r, access, inUse, s.namespacer)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -172,7 +188,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, nil, s.namespacer)
+	return convertToK8sResource(info.OrgID, out, nil, nil, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -224,7 +240,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	r, err := convertToK8sResource(info.OrgID, updated, nil, s.namespacer)
+	r, err := convertToK8sResource(info.OrgID, updated, nil, nil, s.namespacer)
 	return r, false, err
 }
 
