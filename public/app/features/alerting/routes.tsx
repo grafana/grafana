@@ -1,9 +1,9 @@
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
-import { PERMISSIONS_CONTACT_POINTS } from 'app/features/alerting/unified/components/contact-points/utils';
 import { AccessControlAction } from 'app/types';
 
+import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/constants';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
@@ -87,7 +87,6 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications',
-      // TODO: add proper access control here
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,

@@ -12,7 +12,7 @@ import {
   Receiver,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction, NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types';
+import { NotifierDTO, NotifierStatus, ReceiversStateDTO } from 'app/types';
 
 import { OnCallIntegrationDTO } from '../../api/onCallApi';
 import { computeInheritedTree } from '../../utils/notification-policies';
@@ -211,9 +211,3 @@ function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedR
 
 export const showManageContactPointPermissions = (alertmanager: string, contactPoint: GrafanaManagedContactPoint) =>
   shouldUseK8sApi(alertmanager) && contextSrv.licensedAccessControlEnabled() && canAdminEntity(contactPoint);
-
-export const PERMISSIONS_CONTACT_POINTS = [
-  AccessControlAction.AlertingReceiversCreate,
-  AccessControlAction.AlertingReceiversRead,
-  AccessControlAction.AlertingReceiversWrite,
-];
