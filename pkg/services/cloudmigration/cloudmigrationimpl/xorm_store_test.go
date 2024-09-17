@@ -325,6 +325,53 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 }
 
+func TestDecryptToken(t *testing.T) {
+	t.Parallel()
+
+	_, s := setUpTest(t)
+	ctx := context.Background()
+
+	t.Run("with an nil session, it returns a `migration not found` error", func(t *testing.T) {
+		t.Parallel()
+
+		var cm *cloudmigration.CloudMigrationSession
+
+		require.ErrorIs(t, s.decryptToken(ctx, cm), cloudmigration.ErrMigrationNotFound)
+	})
+
+	t.Run("with an empty auth token, it returns a `token not found` error", func(t *testing.T) {
+		t.Parallel()
+
+		var cm cloudmigration.CloudMigrationSession
+
+		require.ErrorIs(t, s.decryptToken(ctx, &cm), cloudmigration.ErrTokenNotFound)
+	})
+
+	t.Run("with an invalid base64 auth token, it returns an error", func(t *testing.T) {
+		t.Parallel()
+
+		cm := cloudmigration.CloudMigrationSession{
+			AuthToken: "invalid-base64-",
+		}
+
+		require.Error(t, s.decryptToken(ctx, &cm))
+	})
+
+	t.Run("with a valid base64 auth token, it decrypts it and overrides the auth token field", func(t *testing.T) {
+		t.Parallel()
+
+		rawAuthToken := "raw-and-fake"
+		encodedAuthToken := base64.StdEncoding.EncodeToString([]byte(rawAuthToken))
+
+		cm := cloudmigration.CloudMigrationSession{
+			AuthToken: encodedAuthToken,
+		}
+
+		require.NoError(t, s.decryptToken(ctx, &cm))
+		require.Equal(t, rawAuthToken, cm.AuthToken)
+	})
+}
+
 func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 	testDB := db.InitTestDB(t)
 	s := &sqlStore{
