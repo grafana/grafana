@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -153,7 +152,7 @@ type ServiceAccountPermissionsService interface {
 type ReceiverPermissionsService interface {
 	PermissionsService
 	// SetDefaultPermissions
-	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, receiver models.Receiver)
+	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
 }
 
 type PermissionsService interface {

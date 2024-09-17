@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -116,15 +115,15 @@ type ReceiverPermissionsService struct {
 	log log.Logger
 }
 
-func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, receiver models.Receiver) {
+func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string) {
 	// TODO: Do we need support for cfg.RBAC.PermissionsOnCreation?
 
 	var permissions []accesscontrol.SetResourcePermissionCommand
 	clearCache := false
-	if receiver.Provenance == models.ProvenanceNone && user.IsIdentityType(claims.TypeUser) {
+	if user.IsIdentityType(claims.TypeUser) {
 		userID, err := user.GetInternalID()
 		if err != nil {
-			r.log.Error("Could not make user admin", "receiver", receiver.Name, "id", user.GetID(), "error", err)
+			r.log.Error("Could not make user admin", "receiver_uid", uid, "id", user.GetID(), "error", err)
 		} else {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: string(alertingac.ReceiverPermissionAdmin),
@@ -138,8 +137,8 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 		{BuiltinRole: string(org.RoleViewer), Permission: string(alertingac.ReceiverPermissionView)},
 	}...)
 
-	if _, err := r.SetPermissions(ctx, orgID, receiver.UID, permissions...); err != nil {
-		r.log.Error("Could not set default permissions", "receiver", receiver.Name, "error", err)
+	if _, err := r.SetPermissions(ctx, orgID, uid, permissions...); err != nil {
+		r.log.Error("Could not set default permissions", "receiver_uid", uid, "error", err)
 	}
 
 	if clearCache {

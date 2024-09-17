@@ -360,7 +360,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 			return err
 		}
 		if rs.resourcePermissions != nil {
-			rs.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, createdReceiver)
+			rs.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, createdReceiver.GetUID())
 		}
 		return rs.setReceiverProvenance(ctx, orgID, &createdReceiver)
 	})
