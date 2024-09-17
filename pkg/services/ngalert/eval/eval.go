@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var logger = log.New("ngalert.eval")
@@ -789,17 +790,20 @@ func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
 }
 
 func scalarInstantVector(f *data.Frame) (*float64, bool) {
-	defaultReturnValue := 0.0
 	if len(f.Fields) != 2 {
-		return &defaultReturnValue, false
+		return nil, false
 	}
 	if f.Fields[0].Len() > 1 || (f.Fields[0].Type() != data.FieldTypeNullableTime && f.Fields[0].Type() != data.FieldTypeTime) {
-		return &defaultReturnValue, false
+		return nil, false
 	}
-	if f.Fields[1].Len() > 1 || f.Fields[1].Type() != data.FieldTypeNullableFloat64 {
-		return &defaultReturnValue, false
+	switch f.Fields[1].Type() {
+	case data.FieldTypeFloat64:
+		return util.Pointer(f.Fields[1].At(0).(float64)), true
+	case data.FieldTypeNullableFloat64:
+		return f.Fields[1].At(0).(*float64), true
+	default:
+		return nil, true
 	}
-	return f.Fields[1].At(0).(*float64), true
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
