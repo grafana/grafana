@@ -96,10 +96,11 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
 		&AlertmanagerSrv{
-			crypto: api.MultiOrgAlertmanager.Crypto,
-			log:    logger,
-			ac:     api.AccessControl,
-			mam:    api.MultiOrgAlertmanager,
+			crypto:         api.MultiOrgAlertmanager.Crypto,
+			log:            logger,
+			ac:             api.AccessControl,
+			mam:            api.MultiOrgAlertmanager,
+			featureManager: api.FeatureManager,
 			silenceSvc: notifier.NewSilenceService(
 				accesscontrol.NewSilenceService(api.AccessControl, api.RuleStore),
 				api.TransactionManager,

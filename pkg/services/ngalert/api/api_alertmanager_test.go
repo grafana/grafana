@@ -569,11 +569,12 @@ func createSut(t *testing.T) AlertmanagerSrv {
 	ruleStore := ngfakes.NewRuleStore(t)
 	ruleAuthzService := accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()))
 	return AlertmanagerSrv{
-		mam:        mam,
-		crypto:     mam.Crypto,
-		ac:         ac,
-		log:        log,
-		silenceSvc: notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService),
+		mam:            mam,
+		crypto:         mam.Crypto,
+		ac:             ac,
+		log:            log,
+		featureManager: featuremgmt.WithFeatures(),
+		silenceSvc:     notifier.NewSilenceService(accesscontrol.NewSilenceService(ac, ruleStore), ruleStore, log, mam, ruleStore, ruleAuthzService),
 	}
 }
 
