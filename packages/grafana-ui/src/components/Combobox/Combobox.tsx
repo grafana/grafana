@@ -340,5 +340,5 @@ const useComboboxFloat = (
     minWidth: inputRef.current?.offsetWidth,
   };
 
-  return { inputRef, floatingRef, popoverWidth, popoverMaxWidth, popoverStyles };
+  return { inputRef, floatingRef, popoverStyles };
 };
