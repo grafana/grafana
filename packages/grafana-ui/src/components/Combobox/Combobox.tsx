@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { SetStateAction, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -97,15 +97,10 @@ export const Combobox = <T extends string | number>({
     return null;
   }, [selectedItemIndex, options, value]);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const floatingRef = useRef<HTMLDivElement>(null);
-
   const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
   const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
 
   const styles = useStyles2(getComboboxStyles);
-  const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
-  const [popoverWidth, setPopoverWidth] = useState<number | undefined>(undefined);
 
   const virtualizerOptions = {
     count: items.length,
@@ -167,37 +162,13 @@ export const Combobox = <T extends string | number>({
       }
     },
   });
+  const { inputRef, floatingRef, popoverStyles } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
 
-  // the order of middleware is important!
-  const middleware = [
-    flip({
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: true,
-      boundary: document.body,
-    }),
-    size({
-      apply({ availableWidth }) {
-        setPopoverMaxWidth(availableWidth);
-      },
-    }),
-  ];
-  const elements = { reference: inputRef.current, floating: floatingRef.current };
-  const { floatingStyles } = useFloating({
-    strategy: 'fixed',
-    open: isOpen,
-    placement: 'bottom-start',
-    middleware,
-    elements,
-    whileElementsMounted: autoUpdate,
-  });
-
   const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_HEIGHT;
-
-  useDynamicWidth(items, rowVirtualizer.range, setPopoverWidth);
 
   return (
     <div>
@@ -248,10 +219,7 @@ export const Combobox = <T extends string | number>({
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight, !isOpen && styles.menuClosed)}
         style={{
-          ...floatingStyles,
-          maxWidth: popoverMaxWidth,
-          minWidth: inputRef.current?.offsetWidth,
-          width: popoverWidth,
+          ...popoverStyles,
         }}
         {...getMenuProps({
           ref: floatingRef,
@@ -295,11 +263,39 @@ export const Combobox = <T extends string | number>({
   );
 };
 
-const useDynamicWidth = (
+const useComboboxFloat = (
   items: Array<ComboboxOption<string | number>>,
   range: { startIndex: number; endIndex: number } | null,
-  setPopoverWidth: { (value: SetStateAction<number | undefined>): void }
+  isOpen: boolean
 ) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const floatingRef = useRef<HTMLDivElement>(null);
+  const [popoverWidth, setPopoverWidth] = useState<number | undefined>(undefined);
+  const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
+
+  // the order of middleware is important!
+  const middleware = [
+    flip({
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: true,
+      boundary: document.body,
+    }),
+    size({
+      apply({ availableWidth }) {
+        setPopoverMaxWidth(availableWidth);
+      },
+    }),
+  ];
+  const elements = { reference: inputRef.current, floating: floatingRef.current };
+  const { floatingStyles } = useFloating({
+    strategy: 'fixed',
+    open: isOpen,
+    placement: 'bottom-start',
+    middleware,
+    elements,
+    whileElementsMounted: autoUpdate,
+  });
+
   useEffect(() => {
     if (range === null) {
       return;
@@ -336,4 +332,13 @@ const useDynamicWidth = (
       setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
     }
   }, [items, range, setPopoverWidth]);
+
+  const popoverStyles = {
+    ...floatingStyles,
+    width: popoverWidth,
+    maxWidth: popoverMaxWidth,
+    minWidth: inputRef.current?.offsetWidth,
+  };
+
+  return { inputRef, floatingRef, popoverWidth, popoverMaxWidth, popoverStyles };
 };
