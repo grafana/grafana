@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import {
   Alert,
   Button,
+  EmptyState,
   LinkButton,
   LoadingPlaceholder,
   Pagination,
@@ -13,8 +14,9 @@ import {
   Text,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
-import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
+import { makeAMLink, stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { AccessControlAction } from 'app/types';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
@@ -47,14 +49,15 @@ const ContactPointsTab = () => {
   // If we're using the K8S API, then we don't need to fetch the policies info within the hook,
   // as we get metadata about this from the API
   const fetchPolicies = !shouldUseK8sApi(selectedAlertmanager!);
+  // User may have access to list contact points, but not permission to fetch the status endpoint
   const fetchStatuses = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
 
   const { isLoading, error, contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
     fetchPolicies,
-    fetchStatuses: fetchStatuses,
+    fetchStatuses,
   });
-  const canCreateContactPoint = contextSrv.hasPermission(AccessControlAction.AlertingReceiversCreate);
+
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
   );
@@ -66,16 +69,32 @@ const ContactPointsTab = () => {
 
   const search = queryParams.get('search');
 
-  if (error) {
-    // TODO fix this type casting, when error comes from "getContactPointsStatus" it probably won't be a SerializedError
-    return <Alert title="Failed to fetch contact points">{stringifyErrorLike(error)}</Alert>;
-  }
-
   if (isLoading) {
     return <LoadingPlaceholder text="Loading..." />;
   }
 
   const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+
+  if (contactPoints.length === 0) {
+    return (
+      <EmptyState
+        variant={addContactPointAllowed ? 'call-to-action' : 'not-found'}
+        button={
+          addContactPointAllowed && (
+            <LinkButton
+              href={makeAMLink('/alerting/notifications/receivers/new', selectedAlertmanager)}
+              icon="plus"
+              size="lg"
+            >
+              <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
+            </LinkButton>
+          )
+        }
+        message={t('alerting.contact-points.empty-state.title', "You don't have any contact points yet")}
+      />
+    );
+  }
+
   return (
     <>
       {/* TODO we can add some additional info here with a ToggleTip */}
@@ -83,15 +102,15 @@ const ContactPointsTab = () => {
         <ContactPointsFilter />
 
         <Stack direction="row" gap={1}>
-          {(canCreateContactPoint || addContactPointSupported) && (
+          {addContactPointSupported && (
             <LinkButton
               icon="plus"
               aria-label="add contact point"
               variant="primary"
               href="/alerting/notifications/receivers/new"
-              disabled={!(canCreateContactPoint || addContactPointAllowed)}
+              disabled={!addContactPointAllowed}
             >
-              Add contact point
+              <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
             </LinkButton>
           )}
           {exportContactPointsSupported && (
@@ -107,7 +126,8 @@ const ContactPointsTab = () => {
           )}
         </Stack>
       </Stack>
-      <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
+      {error && <Alert title="Failed to fetch contact points">{stringifyErrorLike(error)}</Alert>}
+      {!error && <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />}
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
       {ExportDrawer}
@@ -167,6 +187,8 @@ const ContactPointsPageContents = () => {
     alertmanager: selectedAlertmanager!,
   });
 
+  const showTemplatesTab = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
+
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;
 
@@ -181,11 +203,13 @@ const ContactPointsPageContents = () => {
             counter={contactPoints.length}
             onChangeTab={() => setActiveTab(ActiveTab.ContactPoints)}
           />
-          <Tab
-            label="Notification Templates"
-            active={showNotificationTemplates}
-            onChangeTab={() => setActiveTab(ActiveTab.NotificationTemplates)}
-          />
+          {showTemplatesTab && (
+            <Tab
+              label="Notification Templates"
+              active={showNotificationTemplates}
+              onChangeTab={() => setActiveTab(ActiveTab.NotificationTemplates)}
+            />
+          )}
         </TabsBar>
         <TabContent>
           <Stack direction="column">
