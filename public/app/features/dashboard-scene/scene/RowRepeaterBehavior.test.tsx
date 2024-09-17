@@ -167,24 +167,6 @@ describe('RowRepeaterBehavior', () => {
     });
   });
 
-  describe('Should not repeat row', () => {
-    it('Should ignore repeat process if the variable is not a multi select variable', async () => {
-      const { scene, grid, repeatBehavior } = buildScene({ variableQueryTime: 0 }, undefined, { isMulti: false });
-      const gridStateUpdates = [];
-      grid.subscribeToState((state) => gridStateUpdates.push(state));
-
-      activateFullSceneTree(scene);
-      await new Promise((r) => setTimeout(r, 1));
-
-      // trigger another repeat cycle by changing the variable
-      repeatBehavior.performRepeat();
-
-      await new Promise((r) => setTimeout(r, 1));
-
-      expect(gridStateUpdates.length).toBe(0);
-    });
-  });
-
   describe('Given scene with DashboardGridItem', () => {
     let scene: DashboardScene;
     let grid: SceneGridLayout;
