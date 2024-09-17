@@ -103,6 +103,35 @@ func getURL(item *unstructured.Unstructured) string {
 	return dashboards.GetFolderURL(uid, slug)
 }
 
+func getCreated(item *unstructured.Unstructured) *time.Time {
+	meta, err := utils.MetaAccessor(item)
+	if err != nil {
+		return nil
+	}
+	created, err := meta.GetOriginTimestamp()
+	if err != nil {
+		return nil
+	}
+	return created
+}
+
+// // #TODO figure out whether we want to set this
+// // currently the updated timestamp is getting overwritten in prepareObjectForStorage()
+// // same thing for the "updated by" field
+// // we could possibly simply return the created fields instead
+// func getUpdated(item *unstructured.Unstructured) *time.Time {
+// 	meta, err := utils.MetaAccessor(item)
+// 	if err != nil {
+// 		return nil
+// 	}
+// 	updated, err := meta.GetUpdatedTimestamp()
+
+// 	if err != nil {
+// 		return nil
+// 	}
+// 	return updated
+// }
+
 func UnstructuredToLegacyFolder(item unstructured.Unstructured) *folder.Folder {
 	spec := item.Object["spec"].(map[string]any)
 	return &folder.Folder{
@@ -124,8 +153,11 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) *dtos.Folder 
 		ID:        getLegacyID(&item),
 		ParentUID: getParentUID(&item),
 		CreatedBy: getCreatedBy(&item),
-		UpdatedBy: getUpdatedBy(&item),
+		UpdatedBy: getCreatedBy(&item),
 		URL:       getURL(&item),
+		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
+		Created: *getCreated(&item),
+		Updated: *getCreated(&item),
 		// #TODO figure out how to set these properly
 		CanSave:   true,
 		CanEdit:   true,
