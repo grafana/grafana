@@ -4996,15 +4996,15 @@ __metadata:
   linkType: hard
 
 "@mapbox/mapbox-gl-style-spec@npm:^13.23.1":
-  version: 13.25.0
-  resolution: "@mapbox/mapbox-gl-style-spec@npm:13.25.0"
+  version: 13.28.0
+  resolution: "@mapbox/mapbox-gl-style-spec@npm:13.28.0"
   dependencies:
     "@mapbox/jsonlint-lines-primitives": "npm:~2.0.2"
     "@mapbox/point-geometry": "npm:^0.1.0"
     "@mapbox/unitbezier": "npm:^0.0.0"
     csscolorparser: "npm:~1.0.2"
     json-stringify-pretty-compact: "npm:^2.0.0"
-    minimist: "npm:^1.2.5"
+    minimist: "npm:^1.2.6"
     rw: "npm:^1.3.3"
     sort-object: "npm:^0.3.2"
   bin:
@@ -5012,7 +5012,7 @@ __metadata:
     gl-style-format: bin/gl-style-format.js
     gl-style-migrate: bin/gl-style-migrate.js
     gl-style-validate: bin/gl-style-validate.js
-  checksum: 10/cabd9629bde72fe961f9a9d957534f75eb74bddb10068bf7b43fa73868eeb857a31196a12dc2a4532ab732bc7d38392e9bd4582fa9021ef9a5c3465e964201d2
+  checksum: 10/d65f95fde4e58de62085a796f41a7ac16513f866adaac18baf19ee4ee00d4b6e16d515bb0dd5848e094fc32316d2a56f45a0013ef304c29d5b15c089ed25fb24
   languageName: node
   linkType: hard
 
@@ -22726,9 +22726,9 @@ __metadata:
   linkType: hard
 
 "mapbox-to-css-font@npm:^2.4.1":
-  version: 2.4.1
-  resolution: "mapbox-to-css-font@npm:2.4.1"
-  checksum: 10/224fc0f39a2f546bbe5b69a67a4e8c54928606cac44490650ee711723747edb393b4936c0005bcc72cb12f70b31fab50078a65e3e27e0f3e7d65f1ab8a3a253b
+  version: 2.4.5
+  resolution: "mapbox-to-css-font@npm:2.4.5"
+  checksum: 10/62179d67e5532e5522ce15f0dce94936ceb29c1872684850eaa2195d103cefb9e0a3f7ce16a855ed5caf4ed6d0f0baccd3f34c41e480b7ffdf0ed1824c0c1f40
   languageName: node
   linkType: hard
 
@@ -24784,13 +24784,13 @@ __metadata:
   linkType: hard
 
 "ol-mapbox-style@npm:^10.1.0":
-  version: 10.6.0
-  resolution: "ol-mapbox-style@npm:10.6.0"
+  version: 10.7.0
+  resolution: "ol-mapbox-style@npm:10.7.0"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": "npm:^13.23.1"
     mapbox-to-css-font: "npm:^2.4.1"
     ol: "npm:^7.3.0"
-  checksum: 10/069421f5260b6d7b02e6f753eef5e9e10d3a86df8fe425aab1317b5e3d75684709b4b506e4c47e9840abeb503066c64a73dd29ec4a1cf65a8cbc484e91c70bfb
+  checksum: 10/a8ddbde5fad8fa0a677ec7789c0a2cf4aaa30231d0d6c52246336a9bad195df7f57f3048adddb6e601094e3d4ac346e27d4f7d5aded11d561a6fb9ca3b294789
   languageName: node
   linkType: hard
 
@@ -24809,7 +24809,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol@npm:7.4.0, ol@npm:^7.3.0":
+"ol@npm:7.4.0":
   version: 7.4.0
   resolution: "ol@npm:7.4.0"
   dependencies:
@@ -24819,6 +24819,19 @@ __metadata:
     pbf: "npm:3.2.1"
     rbush: "npm:^3.0.1"
   checksum: 10/c83698fddd02fdd497e92bffee7ca7d4059f64d28a0be7a7781981f129b6636cacbee894aed331a572f066fe1e56a4cf22861c51e1efddb7fbb58c4bf5606ece
+  languageName: node
+  linkType: hard
+
+"ol@npm:^7.3.0":
+  version: 7.5.2
+  resolution: "ol@npm:7.5.2"
+  dependencies:
+    earcut: "npm:^2.2.3"
+    geotiff: "npm:^2.0.7"
+    ol-mapbox-style: "npm:^10.1.0"
+    pbf: "npm:3.2.1"
+    rbush: "npm:^3.0.1"
+  checksum: 10/0763a3972f7a6ae47c7c4a70b787a856f420a79a6dddd5bbbe738ac023bfbecf8ed157faf4e49dcd3052c366a13d0a920cdf3179bd54215f8c67d5cc991e14b1
   languageName: node
   linkType: hard
 
