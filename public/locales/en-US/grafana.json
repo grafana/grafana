@@ -112,6 +112,7 @@
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
       "no-delivery-attempts": "No delivery attempts",
+      "no-integrations": "No integrations configured",
       "only-firing": "Delivering <1>only firing</1> notifications",
       "telegram": {
         "parse-mode-warning-body": "If you use a <1>parse_mode</1> option other than <3>None</3>, truncation may result in an invalid message, causing the notification to fail. For longer messages, we recommend using an alternative contact method.",
@@ -124,6 +125,11 @@
       "label": "Contact point"
     },
     "list-view": {
+      "empty": {
+        "new-alert-rule": "New alert rule",
+        "new-recording-rule": "New recording rule",
+        "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
+      },
       "section": {
         "dataSourceManaged": {
           "title": "Data source-managed"
@@ -1172,9 +1178,8 @@
       "placeholder": "example: cn=%s"
     },
     "search-base-dns": {
-      "description": "An array of base dns to search through; separate by commas or spaces.",
-      "label": "Search base DNS *",
-      "placeholder": "example: \"dc=grafana.dc=org\""
+      "description": "An array of base dns to search through.",
+      "label": "Search base DNS *"
     },
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><0>documentation</0></2>.",
     "title": "Basic Settings"
