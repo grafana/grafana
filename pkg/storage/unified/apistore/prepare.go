@@ -3,6 +3,7 @@ package apistore
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/storage"
 )
@@ -115,7 +117,13 @@ func (s *Storage) updateSecureFields(obj utils.GrafanaMetaAccessor) (map[string]
 
 	fields := make(map[string]*resource.SecureValue, len(secure))
 	for k, v := range secure {
+		// Create a new GUID if we are writing an explicit value
+		if v.GUID != "" && (v.Value != "" || v.Ref != "") {
+			v.GUID = ""
+		}
+
 		if !v.IsValidForWrite() {
+			// fmt.Printf("updateSecureFields error: %s=%+v\n", k, v)
 			return nil, fmt.Errorf("unable to write secure value: %s", k)
 		}
 
@@ -138,6 +146,44 @@ func (s *Storage) updateSecureFields(obj utils.GrafanaMetaAccessor) (map[string]
 			}
 		}
 		fields[k] = sv
+	}
+
+	// Make sure the kubectl last applied does not include secret values
+	if len(fields) > 0 {
+		// Check if the managed fields includes `f:secure`
+		for _, v := range obj.GetManagedFields() {
+			if v.FieldsV1 == nil {
+				continue
+			}
+			if bytes.Contains(v.FieldsV1.Raw, []byte(`"f:secure":`)) {
+				raw := map[string]any{}
+				err := json.Unmarshal(v.FieldsV1.Raw, &raw)
+				if err != nil {
+					return nil, err
+				}
+				// Or replace the value/ref with GUID???
+				delete(raw, "f:secure")
+				v.FieldsV1.Raw, err = json.Marshal(raw)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		lastapplied := obj.GetAnnotations()["kubectl.kubernetes.io/last-applied-configuration"]
+		if lastapplied != "" {
+			cfg := unstructured.Unstructured{}
+			err := cfg.UnmarshalJSON([]byte(lastapplied))
+			if err != nil {
+				return nil, err
+			}
+			delete(cfg.Object, "secure")
+			lastappliedbytes, err := cfg.MarshalJSON()
+			if err != nil {
+				return nil, err
+			}
+			obj.SetAnnotation("kubectl.kubernetes.io/last-applied-configuration", string(lastappliedbytes))
+		}
 	}
 
 	return fields, nil
