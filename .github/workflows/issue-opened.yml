@@ -15,23 +15,9 @@ permissions:
   id-token: write
 
 jobs:
-  config:
-    runs-on: "ubuntu-latest"
-    outputs:
-      has-secrets: ${{ steps.check.outputs.has-secrets }}
-    steps:
-      - name: "Check for secrets"
-        id: check
-        shell: bash
-        run: |
-          if [ "${{ github.repository }}" == "grafana/grafana" ]; then
-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
-          fi
-
   main:
     runs-on: ubuntu-latest
-    needs: config
-    if: needs.config.outputs.has-secrets
+    if: github.repository == 'grafana/grafana'
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
@@ -73,8 +59,8 @@ jobs:
           configPath: "issue-opened"
 
   auto-triage:
-    needs: [main, config]
-    if: needs.config.outputs.has-secrets && (github.event.issue.author_association == 'NONE' || github.event.issue.author_association == 'FIRST_TIMER' || github.event.issue.author_association == 'FIRST_TIME_CONTRIBUTOR')
+    needs: [main]
+    if: github.repository == 'grafana/grafana' && (github.event.issue.author_association == 'NONE' || github.event.issue.author_association == 'FIRST_TIMER' || github.event.issue.author_association == 'FIRST_TIME_CONTRIBUTOR')
     runs-on: ubuntu-latest
     steps:
 
