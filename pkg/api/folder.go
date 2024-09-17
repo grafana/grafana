@@ -718,12 +718,12 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 	if !ok {
 		return // error is already sent
 	}
-	cmd := folder.UpdateFolderCommand{}
+	cmd := folder.CreateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	obj := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
+	obj := internalfolders.LegacyCreateCommandToUnstructured(cmd)
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)

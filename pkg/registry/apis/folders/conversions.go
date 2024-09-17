@@ -14,6 +14,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
+func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) unstructured.Unstructured {
+	obj := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":       cmd.Title,
+				"description": cmd.Description,
+			},
+		},
+	}
+	// #TODO: let's see if we need to set the json field to "-"
+	obj.SetName(cmd.UID)
+	setParentUID(&obj, cmd.ParentUID)
+	return obj
+}
+
 func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructured.Unstructured {
 	// #TODO add other fields
 	obj := unstructured.Unstructured{
