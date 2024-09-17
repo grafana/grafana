@@ -24,6 +24,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	notificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -133,11 +134,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 	org1 := helper.Org1
 
 	type testCase struct {
-		user      apis.User
-		canRead   bool
-		canUpdate bool
-		canCreate bool
-		canDelete bool
+		user           apis.User
+		canRead        bool
+		canUpdate      bool
+		canCreate      bool
+		canDelete      bool
+		canReadSecrets bool
 	}
 	// region users
 	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
@@ -215,8 +217,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canRead: true,
 		},
 		{
-			user:    secretsReader,
-			canRead: true,
+			user:           secretsReader,
+			canRead:        true,
+			canReadSecrets: true,
 		},
 		{
 			user:      creator,
@@ -298,6 +301,18 @@ func TestIntegrationAccessControl(t *testing.T) {
 			}
 
 			if tc.canRead {
+				// Set expected metadata.
+				expectedWithMetadata := expected.DeepCopy()
+				expectedWithMetadata.SetInUse(0, nil)
+				if tc.canUpdate {
+					expectedWithMetadata.SetAccessControl("canWrite")
+				}
+				if tc.canDelete {
+					expectedWithMetadata.SetAccessControl("canDelete")
+				}
+				if tc.canReadSecrets {
+					expectedWithMetadata.SetAccessControl("canReadSecrets")
+				}
 				t.Run("should be able to list receivers", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
 					require.NoError(t, err)
@@ -307,7 +322,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				t.Run("should be able to read receiver by resource identifier", func(t *testing.T) {
 					got, err := client.Get(ctx, expected.Name, v1.GetOptions{})
 					require.NoError(t, err)
-					require.Equal(t, expected, got)
+					require.Equal(t, expectedWithMetadata, got)
 
 					t.Run("should get NotFound if resource does not exist", func(t *testing.T) {
 						_, err := client.Get(ctx, "Notfound", v1.GetOptions{})
@@ -399,6 +414,131 @@ func TestIntegrationAccessControl(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIntegrationInUseMetadata(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
+
+	// Prepare environment and create notification policy and rule that use receiver
+	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
+	require.NoError(t, err)
+	var amConfig definitions.PostableUserConfig
+	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	// Add more references to the receiver in other routes.
+	route1 := *amConfig.AlertmanagerConfig.Route.Routes[0]
+	route1.Routes = nil
+	route2 := route1
+	parentRoute := *amConfig.AlertmanagerConfig.Route.Routes[0]
+	parentRoute.Routes = []*definitions.Route{&route1, &route2}
+	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
+
+	persistInitialConfig(t, amConfig, adminClient, legacyCli)
+
+	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
+	require.NoError(t, err)
+	var ruleGroup definitions.PostableRuleGroupConfig
+	require.NoError(t, json.Unmarshal(postGroupRaw, &ruleGroup))
+
+	// Add more references to the receiver by creating adding same rule with a different title.
+	ruleGen := func() definitions.PostableGrafanaRule { return *ruleGroup.Rules[0].GrafanaManagedAlert }
+	rule2 := ruleGen()
+	rule2.Title = "Rule2"
+	rule2.NotificationSettings = &definitions.AlertRuleNotificationSettings{Receiver: "grafana-default-email"}
+	rule3 := ruleGen()
+	rule3.Title = "Rule3"
+	ruleGroup.Rules = append(ruleGroup.Rules,
+		definitions.PostableExtendedRuleNode{
+			ApiRuleNode:         ruleGroup.Rules[0].ApiRuleNode,
+			GrafanaManagedAlert: &rule2,
+		},
+		definitions.PostableExtendedRuleNode{
+			ApiRuleNode:         ruleGroup.Rules[0].ApiRuleNode,
+			GrafanaManagedAlert: &rule3,
+		},
+	)
+
+	folderUID := "test-folder"
+	legacyCli.CreateFolder(t, folderUID, "TEST")
+	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
+
+	requestReceivers := func(t *testing.T, title string) (v0alpha1.Receiver, v0alpha1.Receiver) {
+		t.Helper()
+		receivers, err := adminClient.List(ctx, v1.ListOptions{})
+		require.NoError(t, err)
+		require.Len(t, receivers.Items, 2)
+		idx := slices.IndexFunc(receivers.Items, func(interval v0alpha1.Receiver) bool {
+			return interval.Spec.Title == title
+		})
+		receiverListed := receivers.Items[idx]
+
+		receiverGet, err := adminClient.Get(ctx, receiverListed.Name, v1.GetOptions{})
+		require.NoError(t, err)
+
+		return receiverListed, *receiverGet
+	}
+
+	checkInUse := func(t *testing.T, receiverList, receiverGet v0alpha1.Receiver, routes, rules int) {
+		t.Helper()
+		assert.Equalf(t, fmt.Sprintf("%d", routes), receiverList.Annotations[v0alpha1.InUseAnnotation("routes")], "LIST: Expected %s used by %d routes", receiverList.Spec.Title, routes)
+		assert.Equalf(t, fmt.Sprintf("%d", rules), receiverList.Annotations[v0alpha1.InUseAnnotation("rules")], "LIST: Expected %s used by %d rules", receiverList.Spec.Title, rules)
+		assert.Equalf(t, fmt.Sprintf("%d", routes), receiverGet.Annotations[v0alpha1.InUseAnnotation("routes")], "GET: Expected %s used by %d routes", receiverGet.Spec.Title, routes)
+		assert.Equalf(t, fmt.Sprintf("%d", rules), receiverGet.Annotations[v0alpha1.InUseAnnotation("rules")], "GET: Expected %s used by %d rules", receiverGet.Spec.Title, rules)
+	}
+
+	receiverListed, receiverGet := requestReceivers(t, "user-defined")
+	checkInUse(t, receiverListed, receiverGet, 4, 2)
+
+	// Verify the default.
+	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
+	checkInUse(t, receiverListed, receiverGet, 1, 1)
+
+	// Removing the new extra route should leave only 1.
+	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+
+	receiverListed, receiverGet = requestReceivers(t, "user-defined")
+	checkInUse(t, receiverListed, receiverGet, 1, 2)
+
+	// Remove the extra rules.
+	ruleGroup.Rules = ruleGroup.Rules[:1]
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
+
+	receiverListed, receiverGet = requestReceivers(t, "user-defined")
+	checkInUse(t, receiverListed, receiverGet, 1, 1)
+
+	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
+	checkInUse(t, receiverListed, receiverGet, 1, 0)
+
+	// Remove the rest.
+	amConfig.AlertmanagerConfig.Route.Routes = nil
+	success, err = legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+
+	ruleGroup.Rules = nil
+	_, status, data = legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
+	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
+
+	receiverListed, receiverGet = requestReceivers(t, "user-defined")
+	checkInUse(t, receiverListed, receiverGet, 0, 0)
+
+	receiverListed, receiverGet = requestReceivers(t, "grafana-default-email")
+	checkInUse(t, receiverListed, receiverGet, 1, 0)
 }
 
 func TestIntegrationProvisioning(t *testing.T) {
@@ -646,6 +786,26 @@ func TestIntegrationPatch(t *testing.T) {
 	})
 }
 
+func TestIntegrationRejectConfigApiReceiverModification(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := getTestHelper(t)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	// This config has new and modified receivers.
+	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
+	require.NoError(t, err)
+	var amConfig definitions.PostableUserConfig
+	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Falsef(t, success, "Expected receiver modification to be rejected, but got %s", err)
+}
+
 func TestIntegrationReferentialIntegrity(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -662,14 +822,17 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
+
 	// Prepare environment and create notification policy and rule that use time receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	persistInitialConfig(t, amConfig, adminClient, legacyCli)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -680,10 +843,6 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	legacyCli.CreateFolder(t, folderUID, "TEST")
 	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
-
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
 
 	receivers, err := adminClient.List(ctx, v1.ListOptions{})
 	require.NoError(t, err)
@@ -871,6 +1030,11 @@ func TestIntegrationCRUD(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, receiver.Spec.Integrations, len(integrations))
 
+		// Set expected metadata
+		receiver.SetAccessControl("canWrite")
+		receiver.SetAccessControl("canDelete")
+		receiver.SetInUse(0, nil)
+
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
 		cliCfg := helper.Org1.Admin.NewRestConfig()
 		legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
@@ -1026,14 +1190,72 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	})
 }
 
+// persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
+// modifications, so we need to use k8s API to create new receivers before posting the config.
+func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, adminClient notificationsv0alpha1.ReceiverInterface, legacyCli alerting.LegacyApiClient) {
+	ctx := context.Background()
+
+	var defaultReceiver *definitions.PostableApiReceiver
+	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
+		if receiver.Name == "grafana-default-email" {
+			defaultReceiver = receiver
+			continue
+		}
+
+		toCreate := v0alpha1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ReceiverSpec{
+				Title:        receiver.Name,
+				Integrations: []v0alpha1.Integration{},
+			},
+		}
+
+		for _, integration := range receiver.GrafanaManagedReceivers {
+			settings := common.Unstructured{}
+			require.NoError(t, settings.UnmarshalJSON(integration.Settings))
+			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.Integration{
+				Settings:              settings,
+				Type:                  integration.Type,
+				DisableResolveMessage: util.Pointer(false),
+			})
+		}
+
+		created, err := adminClient.Create(ctx, &toCreate, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		for i, integration := range created.Spec.Integrations {
+			receiver.GrafanaManagedReceivers[i].UID = *integration.Uid
+		}
+	}
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+
+	gettable, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
+	require.Equalf(t, http.StatusOK, status, body)
+
+	idx := slices.IndexFunc(gettable.AlertmanagerConfig.Receivers, func(recv *definitions.GettableApiReceiver) bool {
+		return recv.Name == "grafana-default-email"
+	})
+	gettableDefault := gettable.AlertmanagerConfig.Receivers[idx]
+
+	// Assign uid of default receiver as well.
+	defaultReceiver.GrafanaManagedReceivers[0].UID = gettableDefault.GrafanaManagedReceivers[0].UID
+}
+
 func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
+	return createIntegrationWithSettings(t, integrationType, cfg.Config)
+}
+func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.Integration {
 	settings := common.Unstructured{}
-	require.NoError(t, settings.UnmarshalJSON([]byte(cfg.Config)))
+	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
 	return v0alpha1.Integration{
 		Settings:              settings,
-		Type:                  cfg.NotifierType,
+		Type:                  integrationType,
 		DisableResolveMessage: util.Pointer(false),
 	}
 }
