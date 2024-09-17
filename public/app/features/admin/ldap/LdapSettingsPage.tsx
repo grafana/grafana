@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -107,7 +107,7 @@ export const LdapSettingsPage = () => {
   });
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
-  const { getValues, handleSubmit, register, reset, setValue, watch } = methods;
+  const { control, getValues, handleSubmit, register, reset, watch } = methods;
 
   const styles = useStyles2(getStyles);
 
@@ -321,20 +321,19 @@ export const LdapSettingsPage = () => {
                     'An array of base dns to search through.'
                   )}
                 >
-                  <MultiSelect
-                    id="search-base-dns"
-                    allowCustomValue
-                    onChange={(v) => {
-                      setValue(
-                        `${serverConfig}.search_base_dns`,
-                        v.filter((v) => typeof v.value === 'string').map(({ value }) => String(value))
-                      );
-                    }}
-                    value={watch(`${serverConfig}.search_base_dns`, []).map((v) => ({
-                      label: v,
-                      value: v,
-                    }))}
-                  />
+                  <Controller
+                    name={`${serverConfig}.search_base_dns`}
+                    control={control}
+                    render={({ field: { onChange, ...field } }) => (
+                      <MultiSelect
+                        {...field}
+                        allowCustomValue
+                        onChange={(v) => {
+                          onChange(v.filter((v) => typeof v.value === 'string').map(({ value }) => String(value)));
+                        }}
+                      />
+                    )}
+                  ></Controller>
                 </Field>
                 <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
                   <Stack alignItems={'center'} direction={'row'} gap={2} justifyContent={'space-between'}>
