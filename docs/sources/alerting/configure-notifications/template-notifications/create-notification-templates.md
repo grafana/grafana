@@ -53,7 +53,7 @@ To create a notification template that contains more than one template:
 
 ## Preview notification templates
 
-Preview how your notification templates will look before using them in your contact points, helping you understand the result of the template you are creating as well as enabling you to fix any errors before saving it.
+Preview how your notification templates should look before using them in your contact points, helping you understand the result of the template you are creating as well as enabling you to fix any errors before saving it.
 
 **Note:** This feature is only for Grafana Alertmanager.
 
@@ -81,7 +81,7 @@ To preview your notification templates:
 
    c. Click **Add alert data**.
 
-   d. Click **Refresh preview** to see what your template content will look like and the corresponding payload data.
+   d. Click **Refresh preview** to see what your template content should look like and the corresponding payload data.
 
    If there are any errors in your template, they are displayed in the Preview and you can correct them before saving.
 
@@ -161,6 +161,54 @@ Resolved alerts:
    ```
    {{ template "email.message" . }}
    ```
+
+## Group multiple alert instances into one email notification
+
+To make alerts more concise, you can group multiple instances of a firing alert into a single email notification in a table format. This way, you avoid long, repetitive emails and make alerts easier to digest.
+
+Follow these steps to create a custom notification template that consolidates alert instances into a table.
+
+1.Modify the alert rule to include an annotation that is referenced in the notification template later on.
+
+1. Enter a name for the **custom annotation**: In this example, _ServerInfo_.
+1. Enter the following code as the value for the annotation. It retrieves the server's instance name and a corresponding metric value, formatted as a table row:
+
+   ```
+   {{ index $labels "instance" }}{{- "\t" -}}{{ index $values "A"}}{{- "\n" -}}
+   ```
+
+   This line of code returns the labels and their values in the form of a table. Assuming $labels has `{"instance": "node1"}` and $values has `{"A": "123"}`, the output would be:
+
+   ```
+   node1    123
+   ```
+
+1. Create a notification template that references the _ServerInfo_ annotation.
+
+   ```go
+   {{ define "Table" }}
+   {{- "\nHost\t\tValue\n" -}}
+   {{ range .Alerts -}}
+   {{ range .Annotations.SortedPairs -}}
+   {{ if (eq .Name  "ServerInfo") -}}
+   {{ .Value -}}
+   {{- end }}
+   {{- end }}
+   {{- end }}
+   {{ end }}
+   ```
+
+   The notification template outputs a list of server information from the "ServerInfo" annotation for each alert.
+
+1. Apply the template you your contact point.
+1. Navigate to your contact point in Grafana
+1. In the **Message** reference the template by name (see **Optional Email settings** section):
+
+   ```
+   {{ template "Table" . }}
+   ```
+
+   This generates a neatly formatted table in the email, grouping information for all affected servers into a single notification.
 
 ## Template the title of a Slack message
 
