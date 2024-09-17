@@ -110,7 +110,8 @@ const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof us
 
       return {
         ...result,
-        data,
+        // K8S API will return 403 error for no-permissions case, so its cleaner to fallback to empty array
+        data: result.error ? [] : data,
         currentData: data,
       };
     },
@@ -132,7 +133,6 @@ const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
         ...item,
         provisioned: item.grafana_managed_receiver_configs?.some((item) => item.provenance),
       }));
-
       return {
         ...result,
         data,
@@ -140,10 +140,7 @@ const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
       };
     },
   });
-  const k8sResponse = useK8sContactPoints(
-    { namespace, labelSelector: 'grafana.com/accessControl,grafana.com/inUse' },
-    { skip: skip || !useK8sApi }
-  );
+  const k8sResponse = useK8sContactPoints({ namespace }, { skip: skip || !useK8sApi });
 
   return useK8sApi ? k8sResponse : grafanaResponse;
 };
@@ -173,6 +170,7 @@ export const useGrafanaContactPoints = ({
   const onCallResponse = useOnCallIntegrations(potentiallySkip);
   const alertNotifiers = useGrafanaNotifiersQuery(undefined, potentiallySkip);
   const contactPointsListResponse = useFetchGrafanaContactPoints(potentiallySkip);
+
   const contactPointsStatusResponse = useGetContactPointsStatusQuery(undefined, {
     ...defaultOptions,
     pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
