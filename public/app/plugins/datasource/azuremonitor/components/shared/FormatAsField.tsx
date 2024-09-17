@@ -38,6 +38,9 @@ const FormatAsField = ({
     if (!query.azureLogAnalytics && !query.azureMonitor && !query.azureTraces && !query.azureResourceGraph) {
       handleChange({ value: defaultValue });
     }
+    else if (!query.azureLogAnalytics?.resultFormat) {
+      handleChange({value: ResultFormat.TimeSeries})
+    }
   });
 
   return (

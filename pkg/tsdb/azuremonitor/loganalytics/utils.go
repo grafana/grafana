@@ -67,17 +67,15 @@ func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled
 func ParseResultFormat(queryResultFormat *dataquery.ResultFormat, queryType dataquery.AzureQueryType) dataquery.ResultFormat {
 	var resultFormat dataquery.ResultFormat
 	if queryResultFormat != nil {
-		resultFormat = *queryResultFormat
+		return *queryResultFormat
 	}
-	if resultFormat == "" {
-		if queryType == dataquery.AzureQueryTypeAzureLogAnalytics {
-			// Default to logs format for logs queries
-			resultFormat = dataquery.ResultFormatLogs
-		}
-		if queryType == dataquery.AzureQueryTypeAzureTraces {
-			// Default to table format for traces queries as many traces may be returned
-			resultFormat = dataquery.ResultFormatTable
-		}
+	if queryType == dataquery.AzureQueryTypeAzureLogAnalytics {
+		// Default to time series format for logs queries. It was time series before this change
+		resultFormat = dataquery.ResultFormatTimeSeries
+	}
+	if queryType == dataquery.AzureQueryTypeAzureTraces {
+		// Default to table format for traces queries as many traces may be returned
+		resultFormat = dataquery.ResultFormatTable
 	}
 	return resultFormat
 }
