@@ -116,7 +116,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
-	middlewareScenario(t, "middleware should pass cache-control on resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "middleware should pass cache-control on datasource resources with private cache control", func(t *testing.T, sc *scenarioContext) {
 		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
 		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
 		sc.resp.Header().Add("X-Grafana-Cache", "true")
@@ -124,8 +124,24 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
 	})
 
-	middlewareScenario(t, "middleware should not pass cache-control on resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "middleware should not pass cache-control on datasource resources with public cache control", func(t *testing.T, sc *scenarioContext) {
 		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "public, max-age=86400, private")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should pass cache-control on plugins resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/plugins/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should not pass cache-control on plugins resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/plugins/1/resources/foo")
 		sc.resp.Header().Add("Cache-Control", "public, max-age=86400, private")
 		sc.resp.Header().Add("X-Grafana-Cache", "true")
 		sc.exec()
