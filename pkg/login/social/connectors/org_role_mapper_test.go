@@ -239,11 +239,12 @@ func TestOrgRoleMapper_MapOrgRoles(t *testing.T) {
 
 func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 	testCases := []struct {
-		name       string
-		rawMapping []string
-		roleStrict bool
-		setupMock  func(*orgtest.MockService)
-		expected   *MappingConfiguration
+		name            string
+		rawMapping      []string
+		orgMappingRegex string
+		roleStrict      bool
+		setupMock       func(*orgtest.MockService)
+		expected        *MappingConfiguration
 	}{
 		{
 			name:       "should return empty mapping when no org mapping settings are provided",
@@ -365,6 +366,44 @@ func TestOrgRoleMapper_ParseOrgMappingSettings(t *testing.T) {
 			expected: &MappingConfiguration{
 				orgMapping:        map[string]map[int64]org.RoleType{"ExternalOrg1": {1: org.RoleEditor}},
 				strictRoleMapping: false,
+			},
+		},
+		{
+			name:            "should return empty mapping regex when no org mapping regex is provided",
+			orgMappingRegex: "",
+			expected: &MappingConfiguration{
+				orgMappingRegex:   "",
+				strictRoleMapping: false,
+				orgMapping:        map[string]map[int64]org.RoleType{},
+			},
+		},
+		{
+			name:            "should return org mapping as org mapping regex is not supplied",
+			orgMappingRegex: "",
+			rawMapping:      []string{"ExternalOrg1:1:Editor", "ExternalOrg2:2:Viewer"},
+			expected: &MappingConfiguration{
+				orgMappingRegex:   "",
+				strictRoleMapping: false,
+				orgMapping:        map[string]map[int64]org.RoleType{"ExternalOrg1": {1: "Editor"}, "ExternalOrg2": {2: "Viewer"}},
+			},
+		},
+		{
+			name:            "should return org mapping regex as is and no org mapping",
+			orgMappingRegex: ".*()()",
+			rawMapping:      []string{"ExternalOrg1:First:Editor", "ExternalOrg1:Second:Viewer"},
+			expected: &MappingConfiguration{
+				orgMappingRegex:   ".*()()",
+				strictRoleMapping: false,
+				orgMapping:        map[string]map[int64]org.RoleType{},
+			},
+		},
+		{
+			name:            "should return no org mapping regex when regex does not have 2 capture groups and also no org mapping since org mapping is empty",
+			orgMappingRegex: ".*",
+			expected: &MappingConfiguration{
+				orgMappingRegex:   "",
+				strictRoleMapping: false,
+				orgMapping:        map[string]map[int64]org.RoleType{},
 			},
 		},
 	}
