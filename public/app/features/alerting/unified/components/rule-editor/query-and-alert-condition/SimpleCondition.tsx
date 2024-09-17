@@ -15,7 +15,7 @@ import { ExpressionResult } from '../../expressions/Expression';
 import { updateExpression } from './reducer';
 
 export const SIMPLE_CONDITION_QUERY_ID = 'A';
-export const SIMPLE_CONFITION_REDUCER_ID = 'B';
+export const SIMPLE_CONDITION_REDUCER_ID = 'B';
 export const SIMPLE_CONDITION_THRESHOLD_ID = 'C';
 
 export interface SimpleCondition {
@@ -155,7 +155,7 @@ function updateReduceExpression(
   dispatch: Dispatch<UnknownAction>
 ) {
   const reduceExpression = expressionQueriesList.find(
-    (model) => model.type === ExpressionQueryType.reduce && model.refId === SIMPLE_CONFITION_REDUCER_ID
+    (model) => model.type === ExpressionQueryType.reduce && model.refId === SIMPLE_CONDITION_REDUCER_ID
   );
 
   const newReduceExpression = produce(reduceExpression, (draft) => {
@@ -204,7 +204,7 @@ function updateThresholdValue(
 
 export function getSimpleConditionFromExpressions(expressions: ExpressionQuery[]): SimpleCondition {
   const reduceExpression = expressions.find(
-    (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONFITION_REDUCER_ID
+    (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
   );
   const thresholdExpression = expressions.find(
     (query) => query.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID

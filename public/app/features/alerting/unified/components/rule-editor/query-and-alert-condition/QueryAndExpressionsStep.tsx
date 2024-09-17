@@ -56,8 +56,8 @@ import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import {
   getSimpleConditionFromExpressions,
   SIMPLE_CONDITION_QUERY_ID,
+  SIMPLE_CONDITION_REDUCER_ID,
   SIMPLE_CONDITION_THRESHOLD_ID,
-  SIMPLE_CONFITION_REDUCER_ID,
   SimpleCondition,
   SimpleConditionEditor,
 } from './SimpleCondition';
@@ -101,7 +101,7 @@ export function areQueriesTransformableToSimpleCondition(
   }
 
   const reduceExpression = expressionQueries.find(
-    (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONFITION_REDUCER_ID
+    (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
   );
   const reduceOk =
     reduceExpression &&
@@ -196,7 +196,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         // Grafana Managed rules and recording rules do
         return;
       }
-      // we need to be sure the condition is set once we swhitch to simple mode
+      // we need to be sure the condition is set once we switch to simple mode
       if (!isAdvancedMode) {
         setValue('condition', SIMPLE_CONDITION_THRESHOLD_ID);
         runQueries(getValues('queries'), SIMPLE_CONDITION_THRESHOLD_ID);
@@ -315,15 +315,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 
   const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
-
-  // for simple condition mode, when switching to simple mode we need to update the reducer
-  // useEffect(() => {
-  //   if (!isAdvancedMode) {
-  //     if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)) {
-  //       dispatch(resetToSimpleCondition());
-  //     }
-  //   }
-  // }, [isAdvancedMode, dispatch]);
 
   useEffect(() => {
     clearPreviewData();
@@ -473,9 +464,27 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   ]);
 
   const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
+
   if (!type) {
     return null;
   }
+
+  const switchMode =
+    isGrafanaManagedRuleByType(type) && isSwitchModeEnabled
+      ? {
+          isModeAdvanced: isAdvancedMode,
+          setAdvancedMode: (isAdvanced: boolean) => {
+            if (!isAdvanced) {
+              if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)) {
+                setShowResetModal(true);
+                return;
+              }
+            }
+            setIsAdvancedMode(isAdvanced);
+          },
+        }
+      : undefined;
+
   return (
     <>
       <RuleEditorSection
@@ -495,22 +504,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             />
           </Stack>
         }
-        switchMode={
-          isGrafanaManagedRuleByType(type) && isSwitchModeEnabled
-            ? {
-                isModeAdvanced: isAdvancedMode,
-                setAdvancedMode: (isAdvanced) => {
-                  if (!isAdvanced) {
-                    if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)) {
-                      setShowResetModal(true);
-                      return;
-                    }
-                  }
-                  setIsAdvancedMode(isAdvanced);
-                },
-              }
-            : undefined
-        }
+        switchMode={switchMode}
       >
         {/* This is the cloud data source selector */}
         {isDataSourceManagedRuleByType(type) && (

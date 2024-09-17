@@ -35,16 +35,17 @@ export const RuleEditorSection = ({
               {stepNo}. {title}
             </Text>
             {switchMode && (
-              <InlineSwitch
-                value={switchMode.isModeAdvanced}
-                onChange={(event) => {
-                  switchMode.setAdvancedMode(event.currentTarget.checked);
-                }}
-                label="Advanced options"
-                showLabel
-                transparent
-                className={styles.switch}
-              />
+              <Text variant="bodySmall">
+                <InlineSwitch
+                  value={switchMode.isModeAdvanced}
+                  onChange={(event) => {
+                    switchMode.setAdvancedMode(event.currentTarget.checked);
+                  }}
+                  label="Advanced options"
+                  showLabel
+                  transparent
+                />
+              </Text>
             )}
           </Stack>
         }
@@ -71,8 +72,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   fullWidth: css({
     width: '100%',
-  }),
-  switch: css({
-    fontSize: theme.typography.bodySmall.fontSize,
   }),
 });

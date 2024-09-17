@@ -7,8 +7,8 @@ import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 import { areQueriesTransformableToSimpleCondition } from '../QueryAndExpressionsStep';
 import {
   SIMPLE_CONDITION_QUERY_ID,
+  SIMPLE_CONDITION_REDUCER_ID,
   SIMPLE_CONDITION_THRESHOLD_ID,
-  SIMPLE_CONFITION_REDUCER_ID,
 } from '../SimpleCondition';
 
 const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
@@ -20,7 +20,7 @@ const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
 
 const reduceExpression: ExpressionQuery = {
   type: ExpressionQueryType.reduce,
-  refId: SIMPLE_CONFITION_REDUCER_ID,
+  refId: SIMPLE_CONDITION_REDUCER_ID,
   settings: { mode: ReducerMode.Strict },
 };
 const thresholdExpression: ExpressionQuery = {
