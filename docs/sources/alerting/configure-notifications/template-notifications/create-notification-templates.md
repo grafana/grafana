@@ -166,7 +166,7 @@ Resolved alerts:
 
 To make alerts more concise, you can group multiple instances of a firing alert into a single email notification in a table format. This way, you avoid long, repetitive emails and make alerts easier to digest.
 
-Follow these steps to create a custom notification template that consolidates alert instances into a table:
+Follow these steps to create a custom notification template that consolidates alert instances into a table.
 
 1. First, you need to modify the alert rule to include an annotation that will later be referenced in the notification template.
 1. Enter a name for the **custom annotation**: In this example, we'll use _ServerInfo_.
