@@ -12,13 +12,13 @@ import {
 } from '@grafana/data';
 import { RuntimeDataSource } from '@grafana/scenes';
 
-import { ExtensionsLog, LogItem } from '../plugins/extensions/log';
+import { ExtensionsLog, LogItem } from './log';
 
-export class MyCustomDS extends RuntimeDataSource {
+export class ExtensionsLogDataSource extends RuntimeDataSource {
   extensionsLog: ExtensionsLog;
   constructor(
-    public readonly uid: string,
-    public readonly pluginId: string
+    public readonly pluginId: string,
+    public readonly uid: string
   ) {
     super(pluginId, uid);
     this.extensionsLog = new ExtensionsLog();

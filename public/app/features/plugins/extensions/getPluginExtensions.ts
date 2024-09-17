@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { GetPluginExtensions } from '@grafana/runtime';
 
-import { log } from './log';
+import { log } from './logs/log';
 import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { RegistryType } from './registry/Registry';

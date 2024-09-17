@@ -103,6 +103,15 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	//TODO: only add this if in development mode
+	pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
+		Text:     "Extensions",
+		Icon:     "plug",
+		SubTitle: "Extend the UI of plugins and Grafana",
+		Id:       "extensions",
+		Url:      s.cfg.AppSubURL + "/admin/extensions",
+	})
+
 	pluginsNode := &navtree.NavLink{
 		Text:     "Plugins and data",
 		SubTitle: "Install plugins and define the relationships between data",

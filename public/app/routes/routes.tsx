@@ -204,6 +204,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: () => <NavLandingPage navId="cfg/plugins" />,
     },
     {
+      path: '/admin/extensions',
+      navId: 'extensions',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PluginExtensionsLog" */ 'app/features/plugins/extensions/logs/LogViewer')
+      ),
+    },
+    {
       path: '/admin/access',
       component: () => <NavLandingPage navId="cfg/access" />,
     },
