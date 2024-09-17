@@ -1,36 +1,35 @@
 ---
-description: Learn how to create Team LBAC rules for the Loki data source.
+description: Learn how to create LBAC for datasources rules for the Loki data source.
 keywords:
   - loki
   - lbac
   - team
 labels:
   products:
-    - enterprise
     - cloud
-title: Create Team LBAC rules for the Loki data source
+title: Create LBAC for datasources rules for the Loki data source
 weight: 250
 ---
 
-# Create Team LBAC rules for the Loki data source
+# Create LBAC for datasources rules for the Loki data source
 
-Team LBAC is available on Cloud for data sources created with basic authentication. Any managed Loki data source can **NOT** be configured with Team LBAC rules.
+LBAC for datasources is available on Cloud for loki data sources created with basic authentication. Managed/Provisioned Loki data source can **NOT** be configured with LBAC for datasources, as of now.
 
 ## Before you begin
 
-To be able to use Team LBAC rules, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
+To be able to use LBAC for datasources rules, you need to enable the feature toggle `teamHttpHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
 
-- Be sure that you are running Grafana Enterprise.
+- Be sure that you have the permission setup to create a loki tenant in Grafana Cloud
 - Be sure that you have admin data source permissions for Grafana.
 - Be sure that you have a team setup in Grafana.
 
-### Create a Team LBAC Rule for a team
+### Create a LBAC for datasources Rule for a team
 
 1. Navigate to your Loki datasource
 1. Navigate to the permissions tab
-   - Here, you'll find the Team LBAC rules section.
-1. Add a Team LBAC Rule
-   - Add a new rule for the team in the Team LBAC rules section.
+   - Here, you'll find the LBAC for datasources rules section.
+1. Add a LBAC for datasources Rule
+   - Add a new rule for the team in the LBAC for datasources rules section.
 1. Define Label Selector for the Rule
    - Add a label selector to the rule. Refer to Loki query documentation for guidance on the types of log selections you can specify.
 
