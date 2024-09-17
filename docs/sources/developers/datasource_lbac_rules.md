@@ -54,7 +54,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 `PUT /api/datasources/:uid/lbac/teams`
 
 Updates LBAC rules for teams associated with the data source with the given `uid`. Here you submit a list of teams and the rules for each team.
-Deleting a team from the list will remove the team's LBAC rules. You have to submit all teams and their rules to be persistant, to remove a team's rules, you have to submit the current listof rules without the team.
+Deleting a team from the list will remove the team's LBAC rules. You have to submit all teams and their rules to be updated, to remove a team's rules, you have to submit the current list of rules without the team.
 
 **Required permissions**
 
