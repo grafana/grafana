@@ -86,7 +86,7 @@ jobs:
 
       - name: "Send Slack notification"
         if: ${{ (env.CHANNEL != 'null') && ((env.USER_FOUND == 'false') || (env.TEAM != 'null')) }}
-        uses: slackapi/slack-github-action@v1.26.0
+        uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: >
             {
