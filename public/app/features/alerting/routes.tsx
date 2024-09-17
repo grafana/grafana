@@ -1,15 +1,10 @@
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
+import { PERMISSIONS_CONTACT_POINTS } from 'app/features/alerting/unified/components/contact-points/utils';
 import { AccessControlAction } from 'app/types';
 
 import { evaluateAccess } from './unified/utils/access-control';
-
-const PERMISSIONS_RECEIVERS = [
-  AccessControlAction.AlertingReceiversCreate,
-  AccessControlAction.AlertingReceiversRead,
-  AccessControlAction.AlertingReceiversWrite,
-];
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   const routes = [
@@ -96,7 +91,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...PERMISSIONS_RECEIVERS,
+        ...PERMISSIONS_CONTACT_POINTS,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
@@ -117,7 +112,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalWrite,
-        ...PERMISSIONS_RECEIVERS,
+        ...PERMISSIONS_CONTACT_POINTS,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
@@ -130,7 +125,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingNotificationsExternalWrite,
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...PERMISSIONS_RECEIVERS,
+        ...PERMISSIONS_CONTACT_POINTS,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
