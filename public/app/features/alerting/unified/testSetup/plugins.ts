@@ -1,5 +1,5 @@
 import { PluginMeta, PluginType } from '@grafana/data';
-import { setPluginExtensionsHook } from '@grafana/runtime';
+import { setPluginComponentsHook, setPluginExtensionsHook } from '@grafana/runtime';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { mockPluginLinkExtension } from '../mocks';
@@ -13,6 +13,10 @@ export function setupPluginsExtensionsHook() {
         path: `/a/${plugin.id}`,
       })
     ),
+    isLoading: false,
+  }));
+  setPluginComponentsHook(() => ({
+    components: [],
     isLoading: false,
   }));
 }

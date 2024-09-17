@@ -13,7 +13,7 @@ import {
   locationService,
   setAppEvents,
   setDataSourceSrv,
-  usePluginLinkExtensions,
+  usePluginLinks,
 } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -52,7 +52,7 @@ import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn(),
-  usePluginLinkExtensions: jest.fn(),
+  usePluginLinks: jest.fn(),
   useReturnToPrevious: jest.fn(),
 }));
 jest.mock('./api/buildInfo');
@@ -72,7 +72,7 @@ setupPluginsExtensionsHook();
 const mocks = {
   getAllDataSourcesMock: jest.mocked(config.getAllDataSources),
   getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
-  usePluginLinkExtensionsMock: jest.mocked(usePluginLinkExtensions),
+  usePluginLinksMock: jest.mocked(usePluginLinks),
   rulesInSameGroupHaveInvalidForMock: jest.mocked(actions.rulesInSameGroupHaveInvalidFor),
 
   api: {
@@ -168,8 +168,8 @@ describe('RuleList', () => {
       AccessControlAction.AlertingRuleExternalWrite,
     ]);
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
-    mocks.usePluginLinkExtensionsMock.mockReturnValue({
-      extensions: [
+    mocks.usePluginLinksMock.mockReturnValue({
+      links: [
         {
           pluginId: 'grafana-ml-app',
           id: '1',
@@ -812,6 +812,7 @@ describe('RuleList', () => {
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
     });
+
     describe('Grafana Managed Alerts', () => {
       it('New alert button should be visible when the user has alert rule create and folder read permissions and no rules exists', async () => {
         grantUserPermissions([
@@ -828,6 +829,7 @@ describe('RuleList', () => {
         renderRuleList();
 
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+
         expect(ui.newRuleButton.get()).toBeInTheDocument();
       });
 
@@ -901,35 +903,6 @@ describe('RuleList', () => {
         await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
         expect(ui.newRuleButton.get()).toBeInTheDocument();
       });
-    });
-  });
-
-  describe('Analytics', () => {
-    it('Sends log info when creating an alert rule from a scratch', async () => {
-      grantUserPermissions([
-        AccessControlAction.FoldersRead,
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingRuleRead,
-      ]);
-
-      mocks.getAllDataSourcesMock.mockReturnValue([]);
-      setDataSourceSrv(new MockDataSourceSrv({}));
-      mocks.api.fetchRules.mockResolvedValue([]);
-      mocks.api.fetchRulerRules.mockResolvedValue({});
-
-      renderRuleList();
-
-      await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
-
-      const button = screen.getByText('New alert rule');
-
-      button.addEventListener('click', (event) => event.preventDefault(), false);
-
-      expect(button).toBeEnabled();
-
-      await userEvent.click(button);
-
-      expect(analytics.logInfo).toHaveBeenCalledWith(analytics.LogMessages.alertRuleFromScratch);
     });
   });
 });

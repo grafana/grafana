@@ -351,10 +351,10 @@ func (s *Service) GetSession(ctx context.Context, uid string) (*cloudmigration.C
 func (s *Service) GetSessionList(ctx context.Context) (*cloudmigration.CloudMigrationSessionListResponse, error) {
 	values, err := s.store.GetCloudMigrationSessionList(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retrieving session list from store: %w", err)
 	}
 
-	migrations := make([]cloudmigration.CloudMigrationSessionResponse, 0)
+	migrations := make([]cloudmigration.CloudMigrationSessionResponse, 0, len(values))
 	for _, v := range values {
 		migrations = append(migrations, cloudmigration.CloudMigrationSessionResponse{
 			UID:     v.UID,
@@ -473,7 +473,7 @@ func (s *Service) DeleteSession(ctx context.Context, sessionUID string) (*cloudm
 	session, snapshots, err := s.store.DeleteMigrationSessionByUID(ctx, sessionUID)
 	if err != nil {
 		s.report(ctx, session, gmsclient.EventDisconnect, 0, err)
-		return nil, fmt.Errorf("deleting migration from db: %w", err)
+		return nil, fmt.Errorf("deleting migration from db for session %v: %w", sessionUID, err)
 	}
 
 	err = s.deleteLocalFiles(snapshots)
@@ -752,6 +752,17 @@ func (s *Service) report(
 	id, err := s.getLocalEventId(ctx)
 	if err != nil {
 		s.log.Error("failed to report event", "type", t, "error", err.Error())
+		return
+	}
+
+	if sess == nil {
+		errMessage := "session not found"
+		if evtErr != nil {
+			errMessage = evtErr.Error()
+		}
+
+		s.log.Error("failed to report event", "type", t, "error", errMessage)
+
 		return
 	}
 
