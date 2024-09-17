@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/models" // LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
 	"io"
 	"net/http"
 	"net/url"
@@ -225,6 +226,13 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 	logger.Debug("Sending request to Elasticsearch", "resourcePath", req.Path)
 	start := time.Now()
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-43889 - Add headers for logzio datasources support
+	logzIoHeaders := &models.LogzIoHeaders{RequestHeaders: req.Headers}
+	request.Header = logzIoHeaders.GetDatasourceQueryHeaders(request.Header)
+	request.Header.Set("Content-Type", "application/json")
+	logger.Debug("request details", "headers", request.Header, "url", request.URL.String())
+	// LOGZ.IO GRAFANA CHANGE :: End
 	response, err := ds.HTTPClient.Do(request)
 	if err != nil {
 		status := "error"
