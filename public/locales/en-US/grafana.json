@@ -108,6 +108,7 @@
     },
     "contact-point": "Contact Point",
     "contact-points": {
+      "create": "Create contact point",
       "delete-reasons": {
         "heading": "Contact point cannot be deleted for the following reasons:",
         "no-permissions": "You do not have the required permission to delete this contact point",
@@ -116,6 +117,9 @@
         "rules": "Contact point is referenced by one or more alert rules"
       },
       "delivery-duration": "Last delivery took <1></1>",
+      "empty-state": {
+        "title": "You don't have any contact points yet"
+      },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
       "no-delivery-attempts": "No delivery attempts",
