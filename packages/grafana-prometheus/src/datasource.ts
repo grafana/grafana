@@ -390,6 +390,7 @@ export class PrometheusDatasource
           ...processedTarget,
           refId: processedTarget.refId + InstantQueryRefIdIndex,
           range: false,
+          exemplar: false,
         }
       );
     } else {
