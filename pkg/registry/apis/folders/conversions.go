@@ -46,93 +46,6 @@ func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructu
 	return obj
 }
 
-func setParentUID(u *unstructured.Unstructured, parentUid string) {
-	meta, err := utils.MetaAccessor(u)
-	if err != nil {
-		return
-	}
-	meta.SetFolder(parentUid)
-}
-
-func getParentUID(item *unstructured.Unstructured) string {
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return ""
-	}
-	return meta.GetFolder()
-}
-
-func getLegacyID(item *unstructured.Unstructured) int64 {
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return 0
-	}
-	info, _ := meta.GetOriginInfo()
-	if info != nil && info.Name == "SQL" {
-		i, err := strconv.ParseInt(info.Path, 10, 64)
-		if err == nil {
-			return i
-		}
-	}
-	return 0
-}
-
-// // #TODO convert GetCreatedBy() return value to a struct--id and name
-// func getCreatedBy(item *unstructured.Unstructured) string {
-// 	meta, err := utils.MetaAccessor(item)
-// 	if err != nil {
-// 		return ""
-// 	}
-// 	return meta.GetCreatedBy()
-// }
-
-// func getUpdatedBy(item *unstructured.Unstructured) string {
-// 	meta, err := utils.MetaAccessor(item)
-// 	if err != nil {
-// 		return ""
-// 	}
-// 	return meta.GetUpdatedBy()
-// }
-
-func getURL(item *unstructured.Unstructured) string {
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return ""
-	}
-	slug := meta.GetSlug()
-	uid := meta.GetName()
-	return dashboards.GetFolderURL(uid, slug)
-}
-
-func getCreated(item *unstructured.Unstructured) *time.Time {
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return nil
-	}
-	created, err := meta.GetOriginTimestamp()
-	if err != nil {
-		return nil
-	}
-	return created
-}
-
-// // #TODO figure out whether we want to set this
-// // currently the updated timestamp is getting overwritten in prepareObjectForStorage()
-// // same thing for the "updated by" field
-// // we could possibly simply return the created fields instead
-// func getUpdated(item *unstructured.Unstructured) *time.Time {
-// 	meta, err := utils.MetaAccessor(item)
-// 	if err != nil {
-// 		return nil
-// 	}
-// 	updated, err := meta.GetUpdatedTimestamp()
-
-// 	if err != nil {
-// 		return nil
-// 	}
-// 	return updated
-// }
-
 func UnstructuredToLegacyFolder(item unstructured.Unstructured) *folder.Folder {
 	spec := item.Object["spec"].(map[string]any)
 	return &folder.Folder{
@@ -147,20 +60,27 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) *dtos.Folder 
 	uid := item.GetName()
 	title := spec["title"].(string)
 
+	meta, err := utils.MetaAccessor(&item)
+	if err != nil {
+		return nil
+	}
+
 	dto := &dtos.Folder{
-		UID:   uid,
-		Title: title,
-		// #TODO reduce repetition with metaaccessor creation
-		ID:        getLegacyID(&item),
-		ParentUID: getParentUID(&item),
+		UID:       uid,
+		Title:     title,
+		ID:        getLegacyID(meta),
+		ParentUID: meta.GetFolder(),
 		// #TODO add back CreatedBy, UpdatedBy once we figure out how to access userService
-		// to translate user ID into user login
-		// CreatedBy: getCreatedBy(&item),
-		// UpdatedBy: getCreatedBy(&item),
-		URL: getURL(&item),
+		// to translate user ID into user login. meta.GetCreatedBy() only stores user ID
+		// Could convert meta.GetCreatedBy() return value to a struct--id and name
+		// CreatedBy: meta.GetCreatedBy(),
+		// UpdatedBy: meta.GetCreatedBy(),
+		URL: getURL(meta),
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
-		Created: *getCreated(&item),
-		Updated: *getCreated(&item),
+		Created: *getCreated(meta),
+		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
+		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
+		Updated: *getCreated(meta),
 		// #TODO figure out how to set these properly
 		CanSave:   true,
 		CanEdit:   true,
@@ -193,9 +113,8 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		meta.SetUpdatedTimestamp(&v.Updated)
 		if v.ID > 0 { // nolint:staticcheck
 			meta.SetOriginInfo(&utils.ResourceOriginInfo{
-				Name: "SQL",
-				Path: fmt.Sprintf("%d", v.ID), // nolint:staticcheck
-				// #TODO check if timestamp is correct
+				Name:      "SQL",
+				Path:      fmt.Sprintf("%d", v.ID), // nolint:staticcheck
 				Timestamp: &v.Created,
 			})
 		}
@@ -218,4 +137,37 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f
+}
+
+func setParentUID(u *unstructured.Unstructured, parentUid string) {
+	meta, err := utils.MetaAccessor(u)
+	if err != nil {
+		return
+	}
+	meta.SetFolder(parentUid)
+}
+
+func getLegacyID(meta utils.GrafanaMetaAccessor) int64 {
+	info, _ := meta.GetOriginInfo()
+	if info != nil && info.Name == "SQL" {
+		i, err := strconv.ParseInt(info.Path, 10, 64)
+		if err == nil {
+			return i
+		}
+	}
+	return 0
+}
+
+func getURL(meta utils.GrafanaMetaAccessor) string {
+	slug := meta.GetSlug()
+	uid := meta.GetName()
+	return dashboards.GetFolderURL(uid, slug)
+}
+
+func getCreated(meta utils.GrafanaMetaAccessor) *time.Time {
+	created, err := meta.GetOriginTimestamp()
+	if err != nil {
+		return nil
+	}
+	return created
 }
