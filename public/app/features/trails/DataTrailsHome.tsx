@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
-import { Redirect } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
@@ -9,9 +8,10 @@ import { Box, Button, Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 
 import { DataTrail } from './DataTrail';
-import { DataTrailCard } from './DataTrailCard';
+// import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
-import { getBookmarkKey, getTrailStore } from './TrailStore/TrailStore';
+// import { DataTrailsBookmarks } from './DataTrailsBookmarks';
+import { getTrailStore } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
 import { getDatasourceForNewTrail, getUrlForTrail, newMetricsTrail } from './utils';
 
@@ -69,7 +69,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     return (
       <div className={styles.container}>
         <div className={styles.homepageBox}>
-          <Stack direction="column" alignItems="center" gap={2}>
+          <Stack direction="column" alignItems="center">
             <div className={styles.rocket}>
               <Icon name="rocket" style={{ width: '100%', height: 'auto' }} size="xxxl" />
             </div>
@@ -78,7 +78,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               <Trans>Start your metrics exploration!</Trans>
             </Text>
             {/* <Box marginBottom={1} paddingX={4} > */}
-            <Box paddingX={4} gap={3}>
+            <Box>
               <Text element="p" textAlignment="center" color="secondary">
                 {/* have to add i18nKey */}
                 <Trans>Explore your Prometheus-compatible metrics without writing a query.</Trans>
@@ -91,17 +91,19 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
                 </TextLink>
               </Text>
             </Box>
-            <Button size="lg" variant="primary" onClick={model.onNewMetricsTrail}>
-              <div className={styles.startButton}>
-                <Trans>Let's start!</Trans>
-              </div>
-              <Icon name="arrow-right" size="lg" style={{ marginLeft: '8px' }} />
-            </Button>
+            <div className={styles.gap24}>
+              <Button size="lg" variant="primary" onClick={model.onNewMetricsTrail}>
+                <div className={styles.startButton}>
+                  <Trans>Let's start!</Trans>
+                </div>
+                <Icon name="arrow-right" size="lg" style={{ marginLeft: '8px' }} />
+              </Button>
+            </div>
           </Stack>
         </div>
         {/* separate recent metircs + bookmarks code into separate components, then can conditionally render based on if there's a length */}
         <Stack gap={5}>
-          <div className={styles.column}>
+          {/* <div className={styles.column}>
             <Text variant="h4">Recent metrics explorations</Text>
             <div className={styles.trailList}>
               {getTrailStore().recent.map((trail, index) => {
@@ -116,8 +118,9 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               })}
             </div>
           </div>
-          <div className={styles.verticalLine} />
-          <div className={styles.column}>
+          <div className={styles.verticalLine} /> */}
+          {/* <DataTrailsBookmarks /> */}
+          {/* <div className={styles.column}>
             <Text variant="h4">Bookmarks</Text>
             <div className={styles.trailList}>
               {getTrailStore().bookmarks.map((bookmark, index) => {
@@ -131,7 +134,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
                 );
               })}
             </div>
-          </div>
+          </div> */}
         </Stack>
       </div>
     );
@@ -146,7 +149,7 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     homepageBox: css({
       backgroundColor: theme.colors.background.secondary,
-      display: 'flex',
+      // display: 'flex', // do i need to display: flex on children?
       width: '725px',
       height: '294px',
       padding: '40px 32px',
@@ -168,12 +171,13 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(3),
+      justifyContent: 'center',
+      minHeight: '100vh',
     }),
     column: css({
       display: 'flex',
       flexGrow: 1,
       flexDirection: 'column',
-      gap: theme.spacing(2),
     }),
     newTrail: css({
       height: 'auto',
@@ -188,6 +192,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     verticalLine: css({
       borderLeft: `1px solid ${theme.colors.border.weak}`,
+    }),
+    gap24: css({
+      marginTop: theme.spacing(2), // Add a 24px gap, there is already a 8px gap from the button
     }),
   };
 }
