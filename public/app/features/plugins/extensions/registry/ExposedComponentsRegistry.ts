@@ -73,7 +73,7 @@ export class ExposedComponentsRegistry extends Registry<
         continue;
       }
 
-      pointIdLog.debug('Successfully exposed component');
+      pointIdLog.debug(`Exposed component from '${pluginId}' to '${id}'`);
       registry[id] = { ...config, pluginId };
     }
 

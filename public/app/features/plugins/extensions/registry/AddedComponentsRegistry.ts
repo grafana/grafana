@@ -86,7 +86,7 @@ export class AddedComponentsRegistry extends Registry<
           title: config.title,
         };
 
-        pointIdLog.debug('Successfully added component');
+        pointIdLog.debug(`Added component from '${pluginId}' to '${extensionPointId}'`);
 
         if (!(extensionPointId in registry)) {
           registry[extensionPointId] = [result];
