@@ -32,9 +32,9 @@ Gets all existing LBAC rules for the data source with the given `uid`.
 
 **Required permissions**
 
-| Action                | Scope                                                                                      |
-| --------------------- | ------------------------------------------------------------------------------------------ |
-| datasources:read      | datasources:*<br>datasources:uid:*<br>datasources:uid:my_datasource (single data source) |
+| Action           | Scope                                                                                    |
+| ---------------- | ---------------------------------------------------------------------------------------- |
+| datasources:read | datasources:_<br>datasources:uid:_<br>datasources:uid:my_datasource (single data source) |
 
 ### Examples
 
@@ -47,8 +47,6 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-
-
 ## Update LBAC rules for a data source
 
 `PUT /api/datasources/:uid/lbac/teams`
@@ -58,10 +56,10 @@ Deleting a team from the list will remove the team's LBAC rules. You have to sub
 
 **Required permissions**
 
-| Action                        | Scope                                                                                      |
-| ----------------------------- | ------------------------------------------------------------------------------------------ |
-| datasources:write             | datasources:*<br>datasources:uid:*<br>datasources:uid:my_datasource (single data source)   |
-| datasources.permissions:write | datasources:*<br>datasources:uid:*<br>datasources:uid:my_datasource (single data source)   |
+| Action                        | Scope                                                                                    |
+| ----------------------------- | ---------------------------------------------------------------------------------------- |
+| datasources:write             | datasources:_<br>datasources:uid:_<br>datasources:uid:my_datasource (single data source) |
+| datasources.permissions:write | datasources:_<br>datasources:uid:_<br>datasources:uid:my_datasource (single data source) |
 
 ### Examples
 
@@ -101,7 +99,7 @@ Content-Length: 35
       "teamId": 1,
       "rules": [
         {
-          "header": "X-Prom-Label-Policy", 
+          "header": "X-Prom-Label-Policy",
           "value": "18042:{ foo=\"bar\" }"
         }
       ]
@@ -109,5 +107,3 @@ Content-Length: 35
   ]
 }
 ```
-
-
