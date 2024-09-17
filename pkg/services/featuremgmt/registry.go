@@ -1468,6 +1468,14 @@ var (
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
 		},
+		{
+			Name:              "improvedExternalSessionHandling",
+			Description:       "Enable improved support for external sessions in Grafana",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 
