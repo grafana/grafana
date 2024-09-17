@@ -77,22 +77,22 @@ func getLegacyID(item *unstructured.Unstructured) int64 {
 	return 0
 }
 
-// #TODO convert GetCreatedBy() return value to a struct--id and name
-func getCreatedBy(item *unstructured.Unstructured) string {
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return ""
-	}
-	return meta.GetCreatedBy()
-}
+// // #TODO convert GetCreatedBy() return value to a struct--id and name
+// func getCreatedBy(item *unstructured.Unstructured) string {
+// 	meta, err := utils.MetaAccessor(item)
+// 	if err != nil {
+// 		return ""
+// 	}
+// 	return meta.GetCreatedBy()
+// }
 
-func getUpdatedBy(item *unstructured.Unstructured) string {
-	meta, err := utils.MetaAccessor(item)
-	if err != nil {
-		return ""
-	}
-	return meta.GetUpdatedBy()
-}
+// func getUpdatedBy(item *unstructured.Unstructured) string {
+// 	meta, err := utils.MetaAccessor(item)
+// 	if err != nil {
+// 		return ""
+// 	}
+// 	return meta.GetUpdatedBy()
+// }
 
 func getURL(item *unstructured.Unstructured) string {
 	meta, err := utils.MetaAccessor(item)
