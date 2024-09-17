@@ -186,8 +186,7 @@ const ContactPointsPageContents = () => {
   const { contactPoints } = useContactPointsWithStatus({
     alertmanager: selectedAlertmanager!,
   });
-
-  const showTemplatesTab = contextSrv.hasPermission(AccessControlAction.AlertingNotificationsRead);
+  const [_, showTemplatesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationTemplate);
 
   const showingContactPoints = activeTab === ActiveTab.ContactPoints;
   const showNotificationTemplates = activeTab === ActiveTab.NotificationTemplates;

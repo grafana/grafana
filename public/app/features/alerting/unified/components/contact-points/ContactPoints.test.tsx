@@ -103,7 +103,7 @@ describe('contact points', () => {
       test('loads contact points tab', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=contact_points'] });
 
-        expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
       });
 
       test('loads templates tab', async () => {
@@ -115,13 +115,13 @@ describe('contact points', () => {
       test('defaults to contact points tab with invalid query param', async () => {
         renderWithProvider(<ContactPointsPageContents />, { initialEntries: ['/?tab=foo_bar'] });
 
-        expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
       });
 
       test('defaults to contact points tab with no query param', async () => {
         renderWithProvider(<ContactPointsPageContents />);
 
-        expect(await screen.findByText(/add contact point/i)).toBeInTheDocument();
+        expect(await screen.findByText(/create contact point/i)).toBeInTheDocument();
       });
     });
 
