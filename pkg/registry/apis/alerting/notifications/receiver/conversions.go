@@ -15,7 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
-func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, accesses map[string]ngmodels.ReceiverPermissionSet, namespacer request.NamespaceMapper, selector fields.Selector) (*model.ReceiverList, error) {
+func convertToK8sResources(
+	orgID int64,
+	receivers []*ngmodels.Receiver,
+	accesses map[string]ngmodels.ReceiverPermissionSet,
+	metadatas map[string]ngmodels.ReceiverMetadata,
+	namespacer request.NamespaceMapper,
+	selector fields.Selector,
+) (*model.ReceiverList, error) {
 	result := &model.ReceiverList{
 		Items: make([]model.Receiver, 0, len(receivers)),
 	}
@@ -26,7 +33,13 @@ func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, accesses
 				access = &a
 			}
 		}
-		k8sResource, err := convertToK8sResource(orgID, receiver, access, namespacer)
+		var metadata *ngmodels.ReceiverMetadata
+		if metadatas != nil {
+			if m, ok := metadatas[receiver.GetUID()]; ok {
+				metadata = &m
+			}
+		}
+		k8sResource, err := convertToK8sResource(orgID, receiver, access, metadata, namespacer)
 		if err != nil {
 			return nil, err
 		}
@@ -38,7 +51,13 @@ func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, accesses
 	return result, nil
 }
 
-func convertToK8sResource(orgID int64, receiver *ngmodels.Receiver, access *ngmodels.ReceiverPermissionSet, namespacer request.NamespaceMapper) (*model.Receiver, error) {
+func convertToK8sResource(
+	orgID int64,
+	receiver *ngmodels.Receiver,
+	access *ngmodels.ReceiverPermissionSet,
+	metadata *ngmodels.ReceiverMetadata,
+	namespacer request.NamespaceMapper,
+) (*model.Receiver, error) {
 	spec := model.ReceiverSpec{
 		Title: receiver.Name,
 	}
@@ -74,6 +93,14 @@ func convertToK8sResource(orgID int64, receiver *ngmodels.Receiver, access *ngmo
 				r.SetAccessControl(mappedAction)
 			}
 		}
+	}
+
+	if metadata != nil {
+		rules := make([]string, 0, len(metadata.InUseByRules))
+		for _, rule := range metadata.InUseByRules {
+			rules = append(rules, rule.UID)
+		}
+		r.SetInUse(metadata.InUseByRoutes, rules)
 	}
 
 	return r, nil
