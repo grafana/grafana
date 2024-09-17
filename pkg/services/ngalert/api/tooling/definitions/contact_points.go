@@ -96,6 +96,7 @@ type MqttIntegration struct {
 	Username           *string `json:"username,omitempty" yaml:"username,omitempty" hcl:"username"`
 	Password           *Secret `json:"password,omitempty" yaml:"password,omitempty" hcl:"password"`
 	InsecureSkipVerify *bool   `json:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" hcl:"insecure_skip_verify"`
+	AddGroupKeyToTopic *bool   `json:"addGroupKeyToTopic,omitempty" yaml:"addGroupKeyToTopic,omitempty" hcl:"add_group_key_to_topic"`
 }
 
 type OnCallIntegration struct {

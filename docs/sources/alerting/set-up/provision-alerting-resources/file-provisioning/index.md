@@ -364,6 +364,8 @@ settings:
   password: password1
   # <bool>
   insecureSkipVerify: false
+  # <bool>
+  addGroupKeyToTopic: false
 ```
 
 {{< /collapse >}}

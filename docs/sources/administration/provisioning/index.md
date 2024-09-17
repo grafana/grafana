@@ -514,6 +514,7 @@ The following sections detail the supported settings and secure settings for eac
 | messageFormat      |
 | username           |                |
 | password           | yes            |
+| addGroupKeyToTopic |                |
 | insecureSkipVerify |                |
 
 #### Alert notification `pagerduty`
