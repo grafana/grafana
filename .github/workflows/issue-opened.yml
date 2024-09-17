@@ -19,15 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
     steps:
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
-          repo_secrets: |
-            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
-            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
-
 
       - name: Checkout Actions
         uses: actions/checkout@v4
@@ -43,6 +34,15 @@ jobs:
       - name: Sleep for 2 minutes
         run: sleep 2m
         shell: bash
+
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
+          repo_secrets: |
+            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
+            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
 
       - name: "Generate token"
         id: generate_token
