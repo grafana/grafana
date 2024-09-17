@@ -58,7 +58,8 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 	createdCopy := created.DeepCopyObject()
 
 	go func(createdCopy runtime.Object) {
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage create timeout"))
+		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage create timeout"))
 		defer cancel()
 
 		if err := enrichLegacyObject(original, createdCopy); err != nil {
@@ -96,7 +97,8 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 
 	go func(res runtime.Object) {
 		startStorage := time.Now()
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage get timeout"))
+		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage get timeout"))
 		defer cancel()
 		storageObj, err := d.Storage.Get(ctx, name, options)
 		d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
@@ -130,7 +132,8 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 
 	go func(res runtime.Object) {
 		startStorage := time.Now()
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage list timeout"))
+		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage list timeout"))
 		defer cancel()
 		storageObj, err := d.Storage.List(ctx, options)
 		d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
@@ -163,7 +166,8 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 
 	go func(res runtime.Object) {
 		startStorage := time.Now()
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage delete timeout"))
+		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage delete timeout"))
 		defer cancel()
 		storageObj, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
 		d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
@@ -197,7 +201,8 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 
 	go func(res runtime.Object) {
 		startStorage := time.Now()
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage deletecollection timeout"))
+		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage deletecollection timeout"))
 		defer cancel()
 		storageObj, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 		d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
@@ -229,7 +234,8 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	d.recordLegacyDuration(false, mode1Str, d.resource, method, startLegacy)
 
 	go func(res runtime.Object) {
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
+		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage update timeout"))
 
 		resCopy := res.DeepCopyObject()
 		// get the object to be updated
