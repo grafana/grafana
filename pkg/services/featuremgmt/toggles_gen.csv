@@ -194,3 +194,4 @@ exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false
 appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,false
 appSidecar,experimental,@grafana/explore-squad,false,false,false
 groupAttributeSync,experimental,@grafana/identity-access-team,false,false,false
+improvedExternalSessionHandling,experimental,@grafana/identity-access-team,false,false,false
