@@ -108,15 +108,17 @@ func TestIntegrationProvisioning(t *testing.T) {
 			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor GET should 403", func(t *testing.T) {
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46158 - Allow editors to manage alerting provisioning
+		t.Run("editor GET should succeed", func(t *testing.T) {
 			req := createTestRequest("GET", url, "editor", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 403, resp.StatusCode)
+			require.Equal(t, 200, resp.StatusCode)
 		})
+		// LOGZ.IO GRAFANA CHANGE :: End
 
 		t.Run("admin GET should succeed", func(t *testing.T) {
 			req := createTestRequest("GET", url, "admin", "")
@@ -148,15 +150,17 @@ func TestIntegrationProvisioning(t *testing.T) {
 			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor PUT should 403", func(t *testing.T) {
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46158 - Allow editors to manage alerting provisioning
+		t.Run("editor PUT should succeed", func(t *testing.T) {
 			req := createTestRequest("PUT", url, "editor", body)
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 403, resp.StatusCode)
+			require.Equal(t, 202, resp.StatusCode)
 		})
+		// LOGZ.IO GRAFANA CHANGE :: End
 
 		t.Run("admin PUT should succeed", func(t *testing.T) {
 			req := createTestRequest("PUT", url, "admin", body)
@@ -200,15 +204,17 @@ func TestIntegrationProvisioning(t *testing.T) {
 			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor GET should 403", func(t *testing.T) {
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46158 - Allow editors to manage alerting provisioning
+		t.Run("editor GET should succeed", func(t *testing.T) {
 			req := createTestRequest("GET", url, "editor", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 403, resp.StatusCode)
+			require.Equal(t, 200, resp.StatusCode)
 		})
+		// LOGZ.IO GRAFANA CHANGE :: End
 
 		t.Run("admin GET should succeed", func(t *testing.T) {
 			req := createTestRequest("GET", url, "admin", "")
@@ -240,15 +246,17 @@ func TestIntegrationProvisioning(t *testing.T) {
 			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor POST should 403", func(t *testing.T) {
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46158 - Allow editors to manage alerting provisioning
+		t.Run("editor POST should succeed", func(t *testing.T) {
 			req := createTestRequest("POST", url, "editor", body)
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 403, resp.StatusCode)
+			require.Equal(t, 202, resp.StatusCode)
 		})
+		// LOGZ.IO GRAFANA CHANGE :: End
 
 		t.Run("admin POST should succeed", func(t *testing.T) {
 			req := createTestRequest("POST", url, "admin", body)
@@ -284,15 +292,17 @@ func TestIntegrationProvisioning(t *testing.T) {
 			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor GET should 403", func(t *testing.T) {
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46158 - Allow editors to manage alerting provisioning
+		t.Run("editor GET should succeed", func(t *testing.T) {
 			req := createTestRequest("GET", url, "editor", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 403, resp.StatusCode)
+			require.Equal(t, 200, resp.StatusCode)
 		})
+		// LOGZ.IO GRAFANA CHANGE :: End
 
 		t.Run("admin GET should succeed", func(t *testing.T) {
 			req := createTestRequest("GET", url, "admin", "")
@@ -328,15 +338,17 @@ func TestIntegrationProvisioning(t *testing.T) {
 			require.Equal(t, 403, resp.StatusCode)
 		})
 
-		t.Run("editor GET should 403", func(t *testing.T) {
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46158 - Allow editors to manage alerting provisioning
+		t.Run("editor GET should succeed", func(t *testing.T) {
 			req := createTestRequest("GET", url, "editor", "")
 
 			resp, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			require.NoError(t, resp.Body.Close())
 
-			require.Equal(t, 403, resp.StatusCode)
+			require.Equal(t, 200, resp.StatusCode)
 		})
+		// LOGZ.IO GRAFANA CHANGE :: End
 
 		t.Run("admin GET should succeed", func(t *testing.T) {
 			req := createTestRequest("GET", url, "admin", "")

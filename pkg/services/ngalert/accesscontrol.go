@@ -181,7 +181,7 @@ var (
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin)},
+		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)}, // LOGZ.IO GRAFANA CHANGE :: DEV-46158 - Allow editors to manage alerting provisioning
 	}
 
 	alertingProvisioningReaderWithSecretsRole = accesscontrol.RoleRegistration{
