@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -152,9 +153,11 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) *dtos.Folder 
 		// #TODO reduce repetition with metaaccessor creation
 		ID:        getLegacyID(&item),
 		ParentUID: getParentUID(&item),
-		CreatedBy: getCreatedBy(&item),
-		UpdatedBy: getCreatedBy(&item),
-		URL:       getURL(&item),
+		// #TODO add back CreatedBy, UpdatedBy once we figure out how to access userService
+		// to translate user ID into user login
+		// CreatedBy: getCreatedBy(&item),
+		// UpdatedBy: getCreatedBy(&item),
+		URL: getURL(&item),
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
 		Created: *getCreated(&item),
 		Updated: *getCreated(&item),
@@ -165,7 +168,7 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) *dtos.Folder 
 		CanDelete: true,
 		HasACL:    false,
 
-		// #TODO figure out about adding version and parents fields
+		// #TODO figure out about adding version, parents, orgID fields
 	}
 	return dto
 }
