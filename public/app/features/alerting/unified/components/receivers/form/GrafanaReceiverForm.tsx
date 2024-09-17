@@ -8,7 +8,7 @@ import {
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { canEditEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
+import { canEditEntity } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
@@ -142,8 +142,6 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
     return { dto: n };
   });
-  const disableEditTitle = editMode && shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
-
   return (
     <>
       {hasOnCallError && (
@@ -157,7 +155,6 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
       <ReceiverForm<GrafanaChannelValues>
         contactPointId={contactPoint?.id}
-        disableEditTitle={disableEditTitle}
         isEditable={isEditable}
         isTestable={isTestable}
         onSubmit={onSubmit}
