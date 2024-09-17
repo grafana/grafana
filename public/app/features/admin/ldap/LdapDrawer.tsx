@@ -338,11 +338,11 @@ export const LdapDrawerComponent = ({
                   <Controller
                     name={`${serverConfig}.root_ca_cert_value`}
                     control={control}
-                    render={({field : {onChange, value, ...field}}) => (
+                    render={({ field: { onChange, value, ...field } }) => (
                       <MultiSelect
                         {...field}
                         allowCustomValue
-                        onChange={(v)=> onChange(v.map(({ value }) => String(value)))}
+                        onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                         value={value?.map((v) => ({ label: renderMultiSelectLabel(v), value: v }))}
                       />
                     )}
