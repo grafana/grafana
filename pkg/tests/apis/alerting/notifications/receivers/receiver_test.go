@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -103,24 +104,25 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.Equal(t, newResource.Spec, actual.Spec)
 	})
 
-	// TODO uncomment when renaming is supported
-	// t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
-	// 	existing, err := client.Get(ctx, resourceID, v1.GetOptions{})
-	// 	require.NoError(t, err)
-	//
-	// 	updated := existing.DeepCopy()
-	// 	updated.Spec.Title = "another-newReceiver"
-	//
-	// 	actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
-	// 	require.NoError(t, err)
-	// 	require.Equal(t, updated.Spec, actual.Spec)
-	// 	require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
-	// 	require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
-	//
-	// 	resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
-	// 	require.NoError(t, err)
-	// 	require.Equal(t, actual, resource)
-	// })
+	t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
+		existing, err := client.Get(ctx, resourceID, v1.GetOptions{})
+		require.NoError(t, err)
+
+		updated := existing.DeepCopy()
+		updated.Spec.Title = "another-newReceiver"
+
+		actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, updated.Spec, actual.Spec)
+		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
+
+		resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, actual.Spec, resource.Spec)
+		require.Equal(t, actual.Name, resource.Name)
+		require.Equal(t, actual.ResourceVersion, resource.ResourceVersion)
+	})
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
@@ -813,11 +815,11 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	// env := helper.GetEnv()
-	// ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
-	// db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
-	// require.NoError(t, err)
-	// orgID := helper.Org1.Admin.Identity.GetOrgID()
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	require.NoError(t, err)
+	orgID := helper.Org1.Admin.Identity.GetOrgID()
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
@@ -852,71 +854,63 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	})
 	receiver := receivers.Items[idx]
 
-	// TODO uncomment when renaming is enabled
-	// currentRoute := legacyCli.GetRoute(t)
-	// currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
-	// replace := func(input []string, oldName, newName string) []string {
-	// 	result := make([]string, 0, len(input))
-	// 	for _, s := range input {
-	// 		if s == oldName {
-	// 			result = append(result, newName)
-	// 			continue
-	// 		}
-	// 		result = append(result, s)
-	// 	}
-	// 	return result
-	// }
-	//
-	// t.Run("Update", func(t *testing.T) {
-	// 	t.Run("should rename all references if name changes", func(t *testing.T) {
-	// 		renamed := receiver.DeepCopy()
-	// 		expectedTitle := renamed.Spec.Title + "-new"
-	// 		renamed.Spec.Title += expectedTitle
-	//
-	// 		actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
-	// 		require.NoError(t, err)
-	//
-	// 		updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
-	// 		for idx, rule := range updatedRuleGroup.Rules {
-	// 			assert.Equalf(t, expectedTitle, rule.GrafanaManagedAlert.NotificationSettings.Receiver, "receiver in rule %d should have been renamed but it did not", idx)
-	// 		}
-	//
-	// 		updatedRoute := legacyCli.GetRoute(t)
-	// 		for _, route := range updatedRoute.Routes {
-	// 			assert.Equalf(t, expectedTitle, route.Receiver, "time receiver in routes should have been renamed but it did not")
-	// 		}
-	// 		receiver = *actual
-	// 	})
-	//
-	// 	t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
-	// 		require.NoError(t, err)
-	// 		renamed := receiver.DeepCopy()
-	// 		renamed.Spec.Title += util.GenerateShortUID()
-	//
-	// 		t.Run("provisioned route", func(t *testing.T) {
-	// 			require.NoError(t, db.SetProvenance(ctx, &currentRoute, orgID, "API"))
-	// 			t.Cleanup(func() {
-	// 				require.NoError(t, db.DeleteProvenance(ctx, &currentRoute, orgID))
-	// 			})
-	// 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
-	// 			require.Errorf(t, err, "Expected error but got successful result: %v", actual)
-	// 			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
-	// 		})
-	//
-	// 		t.Run("provisioned rules", func(t *testing.T) {
-	// 			ruleUid := currentRuleGroup.Rules[0].GrafanaManagedAlert.UID
-	// 			resource := &ngmodels.AlertRule{UID: ruleUid}
-	// 			require.NoError(t, db.SetProvenance(ctx, resource, orgID, "API"))
-	// 			t.Cleanup(func() {
-	// 				require.NoError(t, db.DeleteProvenance(ctx, resource, orgID))
-	// 			})
-	//
-	// 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
-	// 			require.Errorf(t, err, "Expected error but got successful result: %v", actual)
-	// 			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
-	// 		})
-	// 	})
-	// })
+	currentRoute := legacyCli.GetRoute(t)
+	currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+
+	t.Run("Update", func(t *testing.T) {
+		t.Run("should rename all references if name changes", func(t *testing.T) {
+			renamed := receiver.DeepCopy()
+			expectedTitle := renamed.Spec.Title + "-new"
+			renamed.Spec.Title = expectedTitle
+
+			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+			require.NoError(t, err)
+
+			updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			for idx, rule := range updatedRuleGroup.Rules {
+				assert.Equalf(t, expectedTitle, rule.GrafanaManagedAlert.NotificationSettings.Receiver, "receiver in rule %d should have been renamed but it did not", idx)
+			}
+
+			updatedRoute := legacyCli.GetRoute(t)
+			for _, route := range updatedRoute.Routes {
+				assert.Equalf(t, expectedTitle, route.Receiver, "time receiver in routes should have been renamed but it did not")
+			}
+
+			actual, err = adminClient.Get(ctx, actual.Name, v1.GetOptions{})
+			require.NoError(t, err)
+
+			receiver = *actual
+		})
+
+		t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
+			require.NoError(t, err)
+			renamed := receiver.DeepCopy()
+			renamed.Spec.Title += util.GenerateShortUID()
+
+			t.Run("provisioned route", func(t *testing.T) {
+				require.NoError(t, db.SetProvenance(ctx, &currentRoute, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, &currentRoute, orgID))
+				})
+				actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+
+			t.Run("provisioned rules", func(t *testing.T) {
+				ruleUid := currentRuleGroup.Rules[0].GrafanaManagedAlert.UID
+				resource := &ngmodels.AlertRule{UID: ruleUid}
+				require.NoError(t, db.SetProvenance(ctx, resource, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, resource, orgID))
+				})
+
+				actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+		})
+	})
 
 	t.Run("Delete", func(t *testing.T) {
 		t.Run("should fail to delete if receiver is used in rule and routes", func(t *testing.T) {

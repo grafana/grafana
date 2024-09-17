@@ -231,10 +231,6 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, false, err
 	}
 
-	if p.ObjectMeta.Name != model.GetUID() {
-		return nil, false, errors.NewBadRequest("title cannot be changed. Consider creating a new resource.")
-	}
-
 	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID, user)
 	if err != nil {
 		return nil, false, err

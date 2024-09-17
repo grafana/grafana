@@ -28,6 +28,11 @@ var (
 		"Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'",
 		errutil.WithPublic("Provided version '{{ .Public.Version }}' of receiver '{{ .Public.Name }}' does not match current version '{{ .Public.CurrentVersion }}'"),
 	)
+
+	ErrReceiverDependentResourcesProvenance = errutil.Conflict("alerting.notifications.receivers.usedProvisioned").MustTemplate(
+		"Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}",
+		errutil.WithPublic(`Receiver cannot be renamed because it is used by provisioned {{ if .Public.UsedByRules }}alert rules{{ end }}{{ if .Public.UsedByRoutes }}{{ if .Public.UsedByRules }} and {{ end }}notification policies{{ end }}. You must update those resources first using the original provision method.`),
+	)
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -43,7 +48,7 @@ type ReceiverService struct {
 }
 
 type alertRuleNotificationSettingsStore interface {
-	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
@@ -73,6 +78,7 @@ type alertmanagerConfigStore interface {
 }
 
 type provisoningStore interface {
+	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
@@ -330,11 +336,10 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
-	err = revision.CreateReceiver(&createdReceiver)
+	created, err := revision.CreateReceiver(&createdReceiver)
 	if err != nil {
 		return nil, err
 	}
-	createdReceiver.Version = createdReceiver.Fingerprint()
 
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		err = rs.cfgStore.Save(ctx, revision, orgID)
@@ -346,7 +351,12 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	return &createdReceiver, nil
+
+	result, err := PostableApiReceiverToReceiver(created, createdReceiver.Provenance)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receiver, storedSecureFields map[string][]string, orgID int64, user identity.Requester) (*models.Receiver, error) {
@@ -400,26 +410,19 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
-	err = revision.UpdateReceiver(&updatedReceiver)
+	updated, err := revision.UpdateReceiver(&updatedReceiver)
 	if err != nil {
 		return nil, err
 	}
-	updatedReceiver.Version = updatedReceiver.Fingerprint()
 
 	err = rs.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// If the name of the receiver changed, we must update references to it in both routes and notification settings.
-		// TODO: Needs to check provenance status compatibility: For example, if we rename a receiver via UI but rules are provisioned, this call should be rejected.
 		if existing.Name != r.Name {
-			affected, err := rs.ruleNotificationsStore.RenameReceiverInNotificationSettings(ctx, orgID, existing.Name, r.Name)
+			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, existing.Name, r.Name, r.Provenance)
 			if err != nil {
 				return err
 			}
-			if affected > 0 {
-				rs.log.Info("Renamed receiver in notification settings", "oldName", existing.Name, "newName", r.Name, "affectedSettings", affected)
-			}
-			revision.RenameReceiverInRoutes(existing.Name, r.Name)
 		}
-
 		err = rs.cfgStore.Save(ctx, revision, orgID)
 		if err != nil {
 			return err
@@ -434,7 +437,12 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if err != nil {
 		return nil, err
 	}
-	return &updatedReceiver, nil
+
+	result, err := PostableApiReceiverToReceiver(updated, updatedReceiver.Provenance)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (rs *ReceiverService) UsedByRules(ctx context.Context, orgID int64, name string) ([]models.AlertRuleKey, error) {
@@ -610,4 +618,48 @@ func makeErrReceiverVersionConflict(current *models.Receiver, desiredVersion str
 		},
 	}
 	return ErrReceiverVersionConflict.Build(data)
+}
+
+func makeErrReceiverDependentResourcesProvenance(usedByRoutes bool, rules []models.AlertRuleKey) error {
+	uids := make([]string, 0, len(rules))
+	for _, key := range rules {
+		uids = append(uids, key.UID)
+	}
+	data := make(map[string]any, 2)
+	if len(uids) > 0 {
+		data["UsedByRules"] = uids
+	}
+	if usedByRoutes {
+		data["UsedByRoutes"] = true
+	}
+
+	return ErrReceiverDependentResourcesProvenance.Build(errutil.TemplateData{
+		Public: data,
+	})
+}
+
+func (rs *ReceiverService) RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *definitions.Route, oldName, newName string, receiverProvenance models.Provenance) error {
+	validate := validation.ValidateProvenanceOfDependentResources(receiverProvenance)
+	// if there are no references to the old time interval, exit
+	updatedRoutes := legacy_storage.RenameReceiverInRoute(oldName, newName, route)
+	canUpdate := true
+	if updatedRoutes > 0 {
+		routeProvenance, err := rs.provisioningStore.GetProvenance(ctx, route, orgID)
+		if err != nil {
+			return err
+		}
+		canUpdate = validate(routeProvenance)
+	}
+	dryRun := !canUpdate
+	affected, invalidProvenance, err := rs.ruleNotificationsStore.RenameReceiverInNotificationSettings(ctx, orgID, oldName, newName, validate, dryRun)
+	if err != nil {
+		return err
+	}
+	if !canUpdate || len(invalidProvenance) > 0 {
+		return makeErrReceiverDependentResourcesProvenance(updatedRoutes > 0, invalidProvenance)
+	}
+	if len(affected) > 0 || updatedRoutes > 0 {
+		rs.log.FromContext(ctx).Info("Updated rules and routes that use renamed receiver", "oldName", oldName, "newName", newName, "rules", len(affected), "routes", updatedRoutes)
+	}
+	return nil
 }

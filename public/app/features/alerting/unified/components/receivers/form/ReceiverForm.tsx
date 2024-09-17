@@ -38,11 +38,6 @@ interface Props<R extends ChannelValues> {
    * and that contact point being created will be set as the default?
    */
   showDefaultRouteWarning?: boolean;
-  /**
-   * Should we disable the title editing? Required when we're using the API server,
-   * as at the time of writing this is not possible
-   */
-  disableEditTitle?: boolean;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -57,7 +52,6 @@ export function ReceiverForm<R extends ChannelValues>({
   isTestable,
   customValidators,
   showDefaultRouteWarning,
-  disableEditTitle,
 }: Props<R>) {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -138,7 +132,6 @@ export function ReceiverForm<R extends ChannelValues>({
         </h4>
         <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message} required>
           <Input
-            disabled={disableEditTitle}
             readOnly={!isEditable}
             id="name"
             {...register('name', {
