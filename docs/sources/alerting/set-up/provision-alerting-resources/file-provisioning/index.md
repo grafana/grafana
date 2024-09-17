@@ -362,8 +362,20 @@ settings:
   username: grafana
   # <string>
   password: password1
+  # <string>
+  qos: 0
   # <bool>
-  insecureSkipVerify: false
+  retain: false
+  # <map>
+  tlsConfig:
+    # <bool>
+    insecureSkipVerify: false
+    # <string>
+    clientCertificate: certificate in PEM format
+    # <string>
+    clientKey: key in PEM format
+    # <string>
+    caCertificate: CA certificate in PEM format
 ```
 
 {{< /collapse >}}
