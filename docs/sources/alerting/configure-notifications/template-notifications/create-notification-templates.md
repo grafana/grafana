@@ -169,7 +169,7 @@ To make alerts more concise, you can group multiple instances of a firing alert 
 Follow these steps to create a custom notification template that consolidates alert instances into a table.
 
 1.Modify the alert rule to include an annotation that is referenced in the notification template later on.
-1. Enter a name for the **custom annotation**: In this example, we'll use _ServerInfo_.
+1. Enter a name for the **custom annotation**: In this example, _ServerInfo_.
 1. Enter the following code as the value for the annotation. It retrieves the server's instance name and a corresponding metric value, formatted as a table row:
 
    ```
