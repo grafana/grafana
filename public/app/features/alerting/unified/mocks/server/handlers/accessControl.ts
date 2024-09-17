@@ -5,15 +5,6 @@ import { AccessControlAction } from 'app/types';
 
 // TODO: Expand this out to more realistic use cases as we work on RBAC for contact points
 const resourceDescriptionsMap: Record<string, Description> = {
-  dashboards: {
-    assignments: {
-      users: true,
-      serviceAccounts: true,
-      teams: true,
-      builtInRoles: true,
-    },
-    permissions: ['View', 'Edit', 'Admin'],
-  },
   receivers: {
     assignments: {
       users: true,
