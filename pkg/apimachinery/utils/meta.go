@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -100,6 +101,14 @@ type GrafanaMetaAccessor interface {
 	// Used by the generic strategy to keep the status value unchanged on an update
 	// NOTE the type must match the existing value, or an error will be thrown
 	SetStatus(any) error
+
+	// Get generic secure values or empty
+	// the ok parameter indicates that the resource can hold secure values
+	GetSecureValues() (map[string]common.SecureValue, bool)
+
+	// Set (or update) a secure value on this resource
+	// Will throw an error if the backing resource is unable to support secure values
+	SetSecureValue(field string, value common.SecureValue) error
 
 	// Find a title in the object
 	// This will reflect the object and try to get:
@@ -596,6 +605,204 @@ func (m *grafanaMetaAccessor) SetStatus(s any) (err error) {
 		err = fmt.Errorf("unable to read status")
 	}
 	return
+}
+
+func asSecureValue(in reflect.Value) (v common.SecureValue, ok bool) {
+	if !in.IsValid() {
+		return
+	}
+
+	if in.Kind() == reflect.Map {
+		for _, k := range in.MapKeys() {
+			key := k.Convert(in.Type().Key())
+			if key.CanInterface() {
+				str, found := key.Interface().(string)
+				if found {
+					val := in.MapIndex(key)
+					if val.CanInterface() {
+						vstr, found := val.Interface().(string)
+						if found {
+							switch str {
+							case "guid":
+								v.GUID = vstr
+							case "value":
+								v.Value = vstr
+							case "ref":
+								v.Ref = vstr
+							}
+						}
+						ok = true
+					}
+				}
+			}
+		}
+		return
+	}
+
+	if in.CanInterface() {
+		if in.Kind() == reflect.Pointer {
+			val, found := in.Interface().(*common.SecureValue)
+			if val != nil && found {
+				return *val, true
+			}
+		} else {
+			val, found := in.Interface().(common.SecureValue)
+			return val, found
+		}
+	}
+	return
+}
+
+func asSecureValues(in reflect.Value) map[string]common.SecureValue {
+	// First check if it is a simple map
+	if in.CanInterface() {
+		iv := in.Interface()
+		m, ok := iv.(map[string]common.SecureValue)
+		if ok {
+			return m
+		}
+		m2, ok := iv.(map[string]any)
+		if ok {
+			m := make(map[string]common.SecureValue)
+			for k, v := range m2 {
+				sv, ok := asSecureValue(reflect.ValueOf(v))
+				if ok {
+					m[k] = sv
+				}
+			}
+			if len(m) > 0 {
+				return m
+			}
+			return nil
+		}
+	}
+
+	if in.Kind() == reflect.Struct {
+		m := make(map[string]common.SecureValue)
+		for i := 0; i < in.NumField(); i++ {
+			v := in.Field(i)
+			sv, ok := asSecureValue(v)
+			if ok && (sv.GUID != "" || sv.Ref != "" || sv.Value != "") {
+				m[jsonName(in.Type().Field(i))] = sv
+			}
+		}
+		if len(m) > 0 {
+			return m
+		}
+		return nil
+	}
+
+	// fmt.Printf("Unsupported: %v\n", in)
+	return nil
+}
+
+func jsonName(f reflect.StructField) string {
+	tag := f.Tag.Get("json")
+	if tag == "" {
+		return f.Name
+	}
+	idx := strings.Index(tag, ",")
+	if idx > 0 {
+		return tag[:idx]
+	}
+	return tag
+}
+
+func (m *grafanaMetaAccessor) GetSecureValues() (values map[string]common.SecureValue, ok bool) {
+	ok = false
+	defer func() {
+		if r := recover(); r != nil {
+			ok = false
+		}
+	}()
+
+	f := m.r.FieldByName("Secure")
+	if f.IsValid() {
+		values = asSecureValues(f)
+		ok = true
+		return
+	}
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		v, found := u.Object["secure"]
+		if found {
+			values = asSecureValues(reflect.ValueOf(v))
+		}
+		ok = true
+	}
+	return
+}
+
+func (m *grafanaMetaAccessor) SetSecureValue(field string, value common.SecureValue) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("error setting status")
+		}
+	}()
+
+	// Unstructured
+	u, ok := m.raw.(*unstructured.Unstructured)
+	if ok {
+		v := map[string]any{}
+		if value.GUID != "" {
+			v["guid"] = value.GUID
+		}
+		if value.Value != "" {
+			v["value"] = value.Value
+		}
+		if value.Ref != "" {
+			v["ref"] = value.Ref
+		}
+
+		s, found, err := unstructured.NestedMap(u.Object, "secure")
+		if err != nil {
+			return err
+		}
+		if !found {
+			s = map[string]any{}
+		}
+		s[field] = v
+		u.Object["secure"] = s
+		return nil
+	}
+
+	s := m.r.FieldByName("Secure")
+	if s.IsValid() && s.CanInterface() {
+		anyv := s.Interface()
+		if s.Kind() == reflect.Map {
+			var vals map[string]common.SecureValue
+			if anyv == nil {
+				vals = make(map[string]common.SecureValue)
+			} else {
+				vals, ok = anyv.(map[string]common.SecureValue)
+				if !ok {
+					return fmt.Errorf("expecting secure value map.  found %t", anyv)
+				}
+			}
+			vals[field] = value
+			s.Set(reflect.ValueOf(vals))
+			return err
+		}
+		if s.Kind() == reflect.Struct {
+			typ := s.Type()
+			for i := 0; i < s.NumField(); i++ {
+				ftype := typ.Field(i)
+				if strings.HasPrefix(ftype.Tag.Get("json"), field) {
+					if ftype.Type.Kind() == reflect.Pointer {
+						s.Field(i).Set(reflect.ValueOf(&value))
+					} else {
+						s.Field(i).Set(reflect.ValueOf(value))
+					}
+					return err // nil
+				}
+			}
+			return fmt.Errorf("field not found in struct")
+		}
+	}
+
+	return fmt.Errorf("unable to set secure value")
 }
 
 func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {

@@ -39,3 +39,29 @@ var GenericConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		},
 	},
 )
+
+var GenericSettingsResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"settings", "settings", "DataSourceSettings",
+	func() runtime.Object { return &GenericDataSourceSettings{} },
+	func() runtime.Object { return &GenericDataSourceSettingsList{} },
+	utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{
+			{Name: "Name", Type: "string", Format: "name"},
+			{Name: "Title", Type: "string", Format: "string", Description: "The datasource title"},
+			{Name: "APIVersion", Type: "string", Format: "string", Description: "API Version"},
+			{Name: "Created At", Type: "date"},
+		},
+		Reader: func(obj any) ([]interface{}, error) {
+			m, ok := obj.(*GenericDataSourceSettings)
+			if !ok {
+				return nil, fmt.Errorf("expected connection")
+			}
+			return []interface{}{
+				m.Name,
+				m.Spec.Title,
+				m.APIVersion,
+				m.CreationTimestamp.UTC().Format(time.RFC3339),
+			}, nil
+		},
+	},
+)

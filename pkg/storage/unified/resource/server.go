@@ -75,12 +75,24 @@ type StorageBackend interface {
 	WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error)
 }
 
+type SecureBackend interface {
+	// Write secure values
+	UpdateSecureFields(ctx context.Context, key *ResourceKey, fields map[string]*SecureValue) *ErrorResult
+
+	// Read the secure values -- the access claims in context will be checked if for permissions
+	// when decrypt value is true, the raw value is returned, otherwise the GUID
+	ReadSecureFields(ctx context.Context, key *ResourceKey, decrypt bool) (map[string]*SecureValue, *ErrorResult)
+}
+
 type ResourceServerOptions struct {
 	// OTel tracer
 	Tracer trace.Tracer
 
 	// Real storage backend
 	Backend StorageBackend
+
+	// Read storage for secure values
+	Secure SecureBackend
 
 	// Requests based on a search index
 	Index ResourceIndexServer
@@ -131,6 +143,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		tracer:      opts.Tracer,
 		log:         slog.Default().With("logger", "resource-server"),
 		backend:     opts.Backend,
+		secure:      opts.Secure,
 		index:       opts.Index,
 		diagnostics: opts.Diagnostics,
 		access:      opts.WriteAccess,
@@ -147,6 +160,7 @@ type server struct {
 	tracer      trace.Tracer
 	log         *slog.Logger
 	backend     StorageBackend
+	secure      SecureBackend
 	index       ResourceIndexServer
 	diagnostics DiagnosticsServer
 	access      WriteAccessHooks
@@ -291,6 +305,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 			return nil, AsErrorResult(err)
 		}
 	}
+
 	return event, nil
 }
 
@@ -324,6 +339,11 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
 	if e != nil {
 		rsp.Error = e
+		return rsp, nil
+	}
+
+	rsp.Error = s.updateSecureValues(ctx, event, req.Secure)
+	if rsp.Error != nil {
 		return rsp, nil
 	}
 
@@ -375,6 +395,11 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, latest.Value)
 	if e != nil {
 		rsp.Error = e
+		return rsp, nil
+	}
+
+	rsp.Error = s.updateSecureValues(ctx, event, req.Secure)
+	if rsp.Error != nil {
 		return rsp, nil
 	}
 
@@ -457,6 +482,58 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	return rsp, nil
 }
 
+func (s *server) updateSecureValues(ctx context.Context, evt *WriteEvent, values map[string]*SecureValue) *ErrorResult {
+	secure, _ := evt.Object.GetSecureValues()
+	if len(secure) != len(values) {
+		return NewBadRequestError("expecting secure values count to match", "secure")
+	}
+
+	// Validate that the request values match
+	for k, v := range values {
+		body, ok := secure[k]
+		if !ok {
+			return NewBadRequestError("secure field request must also be in the body", "secure", k)
+		}
+		if v.Guid != body.GUID || body.GUID == "" {
+			return NewBadRequestError("secure field request must have matching GUIDs in the body", "secure", k)
+		}
+
+		if v.Refid != "" {
+			return NewBadRequestError("secure reference not yet supported", "secure", k)
+		}
+	}
+
+	// If there were no updates (in the resource), no need to write any values
+	if evt.ObjectOld != nil {
+		oldValues, _ := evt.ObjectOld.GetSecureValues()
+		if len(oldValues) == len(values) {
+			hasChanges := false
+			for k, v := range values {
+				old, ok := oldValues[k]
+				if ok && old.GUID == v.Guid {
+					continue
+				}
+				hasChanges = true
+				break
+			}
+			if !hasChanges {
+				return nil
+			}
+		}
+	}
+
+	if len(values) < 1 {
+		return nil // nothing to write
+	}
+	if s.secure == nil {
+		return &ErrorResult{
+			Message: "no secure storage is registered",
+			Code:    http.StatusNotImplemented,
+		}
+	}
+	return s.secure.UpdateSecureFields(ctx, evt.Key, values)
+}
+
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
 	if err := s.Init(ctx); err != nil {
 		return nil, err
@@ -472,6 +549,28 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 
 	rsp := s.backend.ReadResource(ctx, req)
 	// TODO, check folder permissions etc
+
+	if req.DecryptSecureValues {
+		if req.ResourceVersion > 0 {
+			rsp.Error = &ErrorResult{
+				Message: "Decrypting values is only supported when fetching the latest resource version",
+				Code:    http.StatusBadRequest,
+			}
+			return rsp, nil
+		}
+
+		if s.secure == nil {
+			rsp.Error = &ErrorResult{
+				Message: "no secure backend is configured",
+				Code:    http.StatusNotImplemented,
+			}
+		} else {
+			// TODO -- check permissions to decrypt!
+			// then we don't have to do it in the secure service????
+			rsp.SecureValues, rsp.Error = s.secure.ReadSecureFields(ctx, req.Key, true)
+		}
+	}
+
 	return rsp, nil
 }
 

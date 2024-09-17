@@ -140,6 +140,10 @@ message CreateRequest {
   
   // The resource JSON.  
   bytes value = 2;
+
+  // Create secure values
+  // NOTE the resource JSON must also include secure values with matching GUIDs
+  map<string,SecureValue> secure = 3;
 }
 
 message CreateResponse {
@@ -159,6 +163,10 @@ message UpdateRequest {
 
   // The resource JSON.  
   bytes value = 3;
+
+  // Update secure values
+  // NOTE the resource JSON must also include secure values with matching GUIDs
+  map<string,SecureValue> secure = 4;
 }
 
 message UpdateResponse {
@@ -192,7 +200,11 @@ message ReadRequest {
   ResourceKey key = 1;
 
   // Optionally pick an explicit resource version
-  int64 resource_version = 3;
+  int64 resource_version = 2;
+
+  // Read and decrypt the secure values
+  // ???? maybe this should be an enum so we can verify but not decrypt also?
+  bool decrypt_secure_values = 3;
 }
 
 message ReadResponse {
@@ -204,6 +216,9 @@ message ReadResponse {
 
   // The properties
   bytes value = 3;
+
+  // When decrypt_secure_values is true, the raw values w
+  map<string,SecureValue> secure_values = 4;
 }
 
 // ----------------------------------
@@ -324,6 +339,22 @@ message WatchEvent {
   Resource previous = 4;
 }
 
+message SecureValue {
+  // A unique identifier for the saved value.  
+  // With this value and an access token allowed to view raw tokens in the group
+  // we can return decrypted values
+  string guid = 1;
+
+  // The decrypted raw value
+  // Used when writing value
+  string value = 2;
+
+  // When accessing shared values, this requests the shared value by name 
+  // This is only valid on write
+  // ???? Likely enterprise only
+  string refid = 3;
+}
+
 message HistoryRequest {
   // Starting from the requested page (other query parameters must match!)
   string next_page_token = 1;
@@ -414,7 +445,6 @@ message HealthCheckResponse {
   }
   ServingStatus status = 1;
 }
-
 
 // This provides the CRUD+List+Watch support needed for a k8s apiserver
 // The semantics and behaviors of this service are constrained by kubernetes

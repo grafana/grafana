@@ -16,6 +16,7 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.ObjectReference": schema_apimachinery_apis_common_v0alpha1_ObjectReference(ref),
+		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.SecureValue":     SecureValue{}.OpenAPIDefinition(),
 		"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1.Unstructured":    Unstructured{}.OpenAPIDefinition(),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroup":                                    schema_pkg_apis_meta_v1_APIGroup(ref),
 		"k8s.io/apimachinery/pkg/apis/meta/v1.APIGroupList":                                schema_pkg_apis_meta_v1_APIGroupList(ref),

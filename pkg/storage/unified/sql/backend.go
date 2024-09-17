@@ -27,6 +27,7 @@ type Backend interface {
 	resource.StorageBackend
 	resource.DiagnosticsServer
 	resource.LifecycleHooks
+	resource.SecureBackend // The default SQL based secure storage
 }
 
 type BackendOptions struct {

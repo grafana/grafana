@@ -59,7 +59,7 @@ func (r *historyREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *historyREST) Connect(ctx context.Context, uid string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	info, err := NamespaceInfoFrom(ctx, true)
+	info, err := namespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (r *historyREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 }
 
 // TODO: This is a temporary copy of the function from pkg/services/apiserver/endpoints/request/namespace.go
-func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (claims.NamespaceInfo, error) {
+func namespaceInfoFrom(ctx context.Context, requireOrgID bool) (claims.NamespaceInfo, error) {
 	info, err := claims.ParseNamespace(request.NamespaceValue(ctx))
 	if err == nil && requireOrgID && info.OrgID < 1 {
 		return info, fmt.Errorf("expected valid orgId in namespace")

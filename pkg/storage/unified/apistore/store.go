@@ -48,7 +48,7 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store  resource.ResourceStoreClient
+	store  resource.ResourceClient
 	getKey func(string) (*resource.ResourceKey, error)
 
 	watchSet  *WatchSet
@@ -64,7 +64,7 @@ var ErrNamespaceNotExists = errors.New("namespace does not exist")
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
-	store resource.ResourceStoreClient,
+	store resource.ResourceClient,
 	keyFunc func(obj runtime.Object) (string, error),
 	keyParser func(key string) (*resource.ResourceKey, error),
 	newFunc func() runtime.Object,
@@ -127,7 +127,7 @@ func (s *Storage) Versioner() storage.Versioner {
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	var err error
 	req := &resource.CreateRequest{}
-	req.Value, err = s.prepareObjectForStorage(ctx, obj)
+	req.Value, req.Secure, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
 		return err
 	}
@@ -630,13 +630,14 @@ func (s *Storage) GuaranteedUpdate(
 
 	rv := int64(0)
 	if created {
-		value, err := s.prepareObjectForStorage(ctx, updatedObj)
+		value, secure, err := s.prepareObjectForStorage(ctx, updatedObj)
 		if err != nil {
 			return err
 		}
 		rsp2, err := s.store.Create(ctx, &resource.CreateRequest{
-			Key:   req.Key,
-			Value: value,
+			Key:    req.Key,
+			Value:  value,
+			Secure: secure,
 		})
 		if err != nil {
 			return err
@@ -646,7 +647,7 @@ func (s *Storage) GuaranteedUpdate(
 		}
 		rv = rsp2.ResourceVersion
 	} else {
-		req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
+		req.Value, req.Secure, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 		if err != nil {
 			return err
 		}

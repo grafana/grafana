@@ -43,71 +43,106 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.GetGroupVersionInfoJSON("testdata.datasource.grafana.app")
 		// fmt.Printf("%s", disco)
-
 		require.JSONEq(t, `[
 			{
-			  "freshness": "Current",
-			  "resources": [
-				{
-				  "resource": "connections",
-				  "responseKind": {
-					"group": "",
-					"kind": "DataSourceConnection",
-					"version": ""
-				  },
-				  "scope": "Namespaced",
-				  "shortNames": [
-					"grafana-testdata-datasource-connection"
-				  ],
-				  "singularResource": "connection",
-				  "subresources": [
+				"freshness": "Current",
+				"resources": [
 					{
-					  "responseKind": {
-						"group": "",
-						"kind": "HealthCheckResult",
-						"version": ""
-					  },
-					  "subresource": "health",
-					  "verbs": [
-						"get"
-					  ]
+						"resource": "connections",
+						"responseKind": {
+							"group": "",
+							"kind": "DataSourceConnection",
+							"version": ""
+						},
+						"scope": "Namespaced",
+						"shortNames": [
+							"grafana-testdata-datasource-connection"
+						],
+						"singularResource": "connection",
+						"subresources": [
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "HealthCheckResult",
+									"version": ""
+								},
+								"subresource": "health",
+								"verbs": [
+									"get"
+								]
+							},
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "QueryDataResponse",
+									"version": ""
+								},
+								"subresource": "query",
+								"verbs": [
+									"create"
+								]
+							},
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "Status",
+									"version": ""
+								},
+								"subresource": "resource",
+								"verbs": [
+									"create",
+									"delete",
+									"get",
+									"patch",
+									"update"
+								]
+							}
+						],
+						"verbs": [
+							"get",
+							"list"
+						]
 					},
 					{
-					  "responseKind": {
-						"group": "",
-						"kind": "QueryDataResponse",
-						"version": ""
-					  },
-					  "subresource": "query",
-					  "verbs": [
-						"create"
-					  ]
-					},
-					{
-					  "responseKind": {
-						"group": "",
-						"kind": "Status",
-						"version": ""
-					  },
-					  "subresource": "resource",
-					  "verbs": [
-						"create",
-						"delete",
-						"get",
-						"patch",
-						"update"
-					  ]
+						"resource": "settings",
+						"responseKind": {
+							"group": "",
+							"kind": "GenericDataSourceSettings",
+							"version": ""
+						},
+						"scope": "Namespaced",
+						"shortNames": [
+							"grafana-testdata-datasource-settings"
+						],
+						"singularResource": "settings",
+						"subresources": [
+							{
+								"responseKind": {
+									"group": "",
+									"kind": "GenericDataSourceSettings",
+									"version": ""
+								},
+								"subresource": "secure",
+								"verbs": [
+									"get"
+								]
+							}
+						],
+						"verbs": [
+							"create",
+							"delete",
+							"deletecollection",
+							"get",
+							"list",
+							"patch",
+							"update",
+							"watch"
+						]
 					}
-				  ],
-				  "verbs": [
-					"get",
-					"list"
-				  ]
-				}
-			  ],
-			  "version": "v0alpha1"
+				],
+				"version": "v0alpha1"
 			}
-		  ]`, disco)
+		]`, disco)
 	})
 
 	t.Run("Call subresources", func(t *testing.T) {

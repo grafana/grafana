@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
@@ -18,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,12 +41,14 @@ var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo utils.ResourceInfo
+	settingsResourceInfo   *utils.ResourceInfo
 
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same pluginid!
 	datasources     PluginDatasourceProvider
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
+	unified         resource.ResourceClient
 	queryTypes      *query.QueryTypeDefinitionList
 	log             log.Logger
 }
@@ -57,6 +62,7 @@ func RegisterAPIService(
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 	reg prometheus.Registerer,
+	unified resource.ResourceClient,
 ) (*DataSourceAPIBuilder, error) {
 	// This requires devmode!
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -66,8 +72,6 @@ func RegisterAPIService(
 	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
-	// ATTENTION: Adding a datasource here requires the plugin to implement
-	// an AdmissionHandler to validate the datasource settings.
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
@@ -89,6 +93,17 @@ func RegisterAPIService(
 		if err != nil {
 			return nil, err
 		}
+
+		// Add the client
+		builder.unified = unified
+
+		// testdata when running local dev will add a settings object
+		if ds.ID == "grafana-testdata-datasource" && features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+			group := builder.connectionResourceInfo.GroupResource().Group
+			info := datasource.GenericSettingsResourceInfo.WithGroupAndShortName(group, ds.ID+"-settings")
+			builder.settingsResourceInfo = &info
+		}
+
 		apiRegistrar.RegisterAPI(builder)
 	}
 	return builder, nil // only used for wire
@@ -162,6 +177,9 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&datasource.DataSourceConnectionList{},
 		&datasource.HealthCheckResult{},
 		&unstructured.Unstructured{},
+		// Currently only for testdata
+		&datasource.GenericDataSourceSettings{},
+		&datasource.GenericDataSourceSettingsList{},
 		// Query handler
 		&query.QueryDataRequest{},
 		&query.QueryDataResponse{},
@@ -202,7 +220,7 @@ func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
 func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-	_ generic.RESTOptionsGetter,
+	optsGetter generic.RESTOptionsGetter,
 	_ grafanarest.DualWriteBuilder,
 ) (*genericapiserver.APIGroupInfo, error) {
 	storage := map[string]rest.Storage{}
@@ -226,6 +244,20 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	// Register hardcoded query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
+
+	// If the settings has a known type register it
+	// Currently only for testdata when in dev mode
+	if b.settingsResourceInfo != nil {
+		storage[b.settingsResourceInfo.StoragePath()], err = newSettingsStorage(scheme, *b.settingsResourceInfo, optsGetter)
+		if err != nil {
+			return nil, err
+		}
+		// Expose the secure client
+		storage[b.settingsResourceInfo.StoragePath("secure")] = apistore.NewSecureConnector(
+			b.unified,
+			*b.settingsResourceInfo,
+		)
+	}
 
 	// Create the group info
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
@@ -280,6 +312,30 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	if sub != nil && sub.Get != nil {
 		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
 	}
+
+	// Replace the "*/*" with a JSON flavor
+	sub = oas.Paths.Paths[root+"namespaces/{namespace}/settings"]
+	if sub != nil && sub.Post != nil && sub.Post.RequestBody != nil {
+		v, ok := sub.Post.RequestBody.Content["*/*"]
+		if ok {
+			v.Example = datasource.GenericDataSourceSettings{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "ex",
+				},
+				Spec: datasource.GenericDataSourceSpec{
+					Title: "sample",
+				},
+				Secure: map[string]common.SecureValue{
+					"aaa": {Value: "so so secure!!!"},
+				},
+			}
+			sub.Post.RequestBody.Content["application/json"] = v
+
+			// Keep JSON first while we test
+			delete(sub.Post.RequestBody.Content, "*/*")
+		}
+	}
+
 	return oas, err
 }
 

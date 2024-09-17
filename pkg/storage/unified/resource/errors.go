@@ -3,6 +3,7 @@ package resource
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,12 +16,20 @@ var (
 	ErrNotImplementedYet       = errors.New("not implemented yet")
 )
 
-func NewBadRequestError(msg string) *ErrorResult {
-	return &ErrorResult{
+func NewBadRequestError(msg string, field ...string) *ErrorResult {
+	err := &ErrorResult{
 		Message: msg,
 		Code:    http.StatusBadRequest,
 		Reason:  string(metav1.StatusReasonBadRequest),
 	}
+	if field != nil {
+		err.Details = &ErrorDetails{
+			Causes: []*ErrorCause{
+				{Field: strings.Join(field, ".")},
+			},
+		}
+	}
+	return err
 }
 
 func NewNotFoundError(key *ResourceKey) *ErrorResult {

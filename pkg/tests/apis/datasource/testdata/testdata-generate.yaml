@@ -1,0 +1,12 @@
+apiVersion: testdata.datasource.grafana.app/v0alpha1
+kind: GenericDataSourceSettings
+metadata:
+  generateName: tt # this becomes a prefix for the name 
+spec:
+  title: A random datasource
+  description: A description from here
+secure:
+  fieldA:
+    value: super secure
+  fieldB:
+    value: also secure
