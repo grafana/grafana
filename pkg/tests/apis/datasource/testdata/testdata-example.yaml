@@ -1,0 +1,11 @@
+apiVersion: testdata.datasource.grafana.app/v0alpha1
+kind: GenericDataSourceSettings
+metadata:
+  name: example
+spec:
+  title: Example with fixed name
+secure:
+  fieldA:
+    value: super secure
+  fieldB:
+    value: also secure
