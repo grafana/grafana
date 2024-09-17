@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/promlib
 
-go 1.22.4
+go 1.22.7
 
 require (
 	github.com/grafana/grafana-plugin-sdk-go v0.241.0
