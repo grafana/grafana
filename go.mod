@@ -73,7 +73,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.13.0 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20240911162301-b5db19e7f66b // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20240912123344-682967089420 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20240827201526-24af227df935 // @grafana/identity-access-team
 	github.com/grafana/authlib/claims v0.0.0-20240827210201-19d5347dd8dd // @grafana/identity-access-team
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
@@ -259,7 +259,7 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
