@@ -158,13 +158,13 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   };
 }
 
-interface RuleLocation {
+export interface RuleLocation {
   namespace: string;
   group: string;
   ruleName: string;
 }
 
-function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
+export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<RuleLocation> {
   const { isLoading, currentData, error, isUninitialized } = alertRuleApi.endpoints.getAlertRule.useQuery(
     { uid: isGrafanaRuleIdentifier(ruleIdentifier) ? ruleIdentifier.uid : '' },
     { skip: !isGrafanaRuleIdentifier(ruleIdentifier), refetchOnMountOrArgChange: true }

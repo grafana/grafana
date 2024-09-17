@@ -8,7 +8,14 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { alertInstanceKey, isGrafanaRulerRule } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
+import {
+  Alert,
+  CombinedRule,
+  FilterState,
+  RuleIdentifier,
+  RulesSource,
+  SilenceFilterState,
+} from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
@@ -26,6 +33,13 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
   const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
   const paramSource = encodeURIComponent(sourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+}
+
+export function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
+  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(identifier.ruleSourceName);
 
   return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }

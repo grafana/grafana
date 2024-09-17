@@ -14,14 +14,13 @@ import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedR
 import {
   getRuleGroupLocationFromFormValues,
   getRuleGroupLocationFromRuleWithLocation,
-  isCloudRuleIdentifier,
   isCloudRulerRule,
   isGrafanaManagedRuleByType,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
   isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
-import { CloudRuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
+import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import {
   LogMessages,
@@ -30,10 +29,10 @@ import {
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
-import { alertRuleApi } from '../../../api/alertRuleApi';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { createViewLinkFromIdentifier } from '../../../utils/misc';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
   MANUAL_ROUTING_KEY,
@@ -46,7 +45,6 @@ import {
   formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
-import * as ruleId from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -78,8 +76,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
-
-  const { waitForPrometheusConsistency } = useWaitForPrometheusConsistency();
 
   const uidFromParams = routeParams.id;
 
@@ -173,21 +169,24 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       );
     }
 
-    // TODO Need to figure out how to handle GMA
-    if (isCloudRulerRule(ruleDefinition) && prometheusRulesPrimary) {
-      const { dataSourceName, namespaceName, groupName } = getRuleGroupLocationFromFormValues(values);
-      const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
-      if (isCloudRuleIdentifier(updatedRuleIdentifier)) {
-        await waitForPrometheusConsistency(updatedRuleIdentifier);
+    if (exitOnSave) {
+      if (returnTo) {
+        locationService.push(returnTo);
       }
-    }
-
-    if (exitOnSave && returnTo) {
-      locationService.push(returnTo);
-    } else if (isCloudRulerRule(ruleDefinition)) {
-      const { dataSourceName, namespaceName, groupName } = getRuleGroupLocationFromFormValues(values);
-      const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
-      locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+      if (isCloudRulerRule(ruleDefinition) && prometheusRulesPrimary) {
+        const { dataSourceName, namespaceName, groupName } = getRuleGroupLocationFromFormValues(values);
+        const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
+        locationService.replace(createViewLinkFromIdentifier(updatedRuleIdentifier));
+      }
+      // TODO Handle GMA rules
+    } else {
+      // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
+      // After successful update we need to update the URL to avoid displaying 404 errors
+      if (isCloudRulerRule(ruleDefinition)) {
+        const { dataSourceName, namespaceName, groupName } = getRuleGroupLocationFromFormValues(values);
+        const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
+        locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+      }
     }
   };
 
@@ -367,40 +366,6 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
     ...getDefaultFormValues(),
     ...rule,
   });
-}
-
-const { useLazyPrometheusRuleNamespacesQuery } = alertRuleApi;
-
-function useWaitForPrometheusConsistency() {
-  const [fetchPrometheusNamespaces] = useLazyPrometheusRuleNamespacesQuery();
-
-  function waitForPrometheusConsistency(ruleIdentifier: CloudRuleIdentifier): Promise<void> {
-    const { ruleSourceName, namespace, groupName, ruleName } = ruleIdentifier;
-
-    async function isPrometheusConsistent() {
-      const namespaces = await fetchPrometheusNamespaces({ ruleSourceName, namespace, groupName, ruleName }).unwrap();
-      const matchingGroup = namespaces.find((ns) => ns.name === namespace)?.groups.find((g) => g.name === groupName);
-
-      const hasMatchingRule = matchingGroup?.rules.some((r) => {
-        const currentRuleIdentifier = ruleId.fromRule(ruleSourceName, namespace, groupName, r);
-        return r.name === ruleName && ruleId.equal(currentRuleIdentifier, ruleIdentifier);
-      });
-
-      return hasMatchingRule;
-    }
-
-    return new Promise((resolve) => {
-      const interval = setInterval(async () => {
-        const isConsistent = await isPrometheusConsistent();
-        if (isConsistent) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 3000);
-    });
-  }
-
-  return { waitForPrometheusConsistency };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
