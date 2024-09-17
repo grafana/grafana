@@ -10,7 +10,7 @@ import { getDataSourceByName } from '../utils/datasource';
 import * as ruleId from '../utils/rule-id';
 import { isCloudRuleIdentifier, isGrafanaRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
-import { attachRulerRulesToCombinedRules } from './useCombinedRuleNamespaces';
+import { attachRulerRulesToCombinedRules, combineRulesNamespaces } from './useCombinedRuleNamespaces';
 
 export function useCloudCombinedRulesMatching(
   ruleName: string,
@@ -100,7 +100,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   } = useRuleLocation(ruleIdentifier);
 
   const {
-    currentData: promRuleNs,
+    currentData: promRuleNs = [],
     isLoading: isLoadingPromRules,
     error: promRuleNsError,
   } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
@@ -135,30 +135,21 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
   }, [dsFeatures, fetchRulerRuleGroup, ruleLocation]);
 
   const rule = useMemo(() => {
-    if (!promRuleNs || !ruleSource) {
+    if (!ruleSource || !ruleLocation) {
       return;
     }
 
-    if (promRuleNs.length > 0) {
-      const namespaces = promRuleNs.map((ns) =>
-        attachRulerRulesToCombinedRules(ruleSource, ns, rulerRuleGroup ? [rulerRuleGroup] : [])
-      );
+    const rulerConfig = rulerRuleGroup ? { [ruleLocation.namespace]: [rulerRuleGroup] } : {};
 
-      for (const namespace of namespaces) {
-        for (const group of namespace.groups) {
-          for (const rule of group.rules) {
-            const id = ruleId.fromCombinedRule(ruleSourceName, rule);
+    const combinedNamespaces = combineRulesNamespaces(ruleSource, promRuleNs, rulerConfig);
+    const combinedRules = combinedNamespaces.flatMap((ns) => ns.groups).flatMap((group) => group.rules);
 
-            if (ruleId.equal(id, ruleIdentifier)) {
-              return rule;
-            }
-          }
-        }
-      }
-    }
+    const matchingRule = combinedRules.find((rule) =>
+      ruleId.equal(ruleId.fromCombinedRule(ruleSourceName, rule), ruleIdentifier)
+    );
 
-    return;
-  }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource]);
+    return matchingRule;
+  }, [ruleIdentifier, ruleSourceName, promRuleNs, rulerRuleGroup, ruleSource, ruleLocation]);
 
   return {
     loading: isLoadingDsFeatures || isLoadingPromRules || isLoadingRulerGroup,
