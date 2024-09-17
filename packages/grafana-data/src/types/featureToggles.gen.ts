@@ -213,4 +213,5 @@ export interface FeatureToggles {
   appPlatformAccessTokens?: boolean;
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
+  improvedExternalSessionHandling?: boolean;
 }
