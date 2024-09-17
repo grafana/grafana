@@ -1,11 +1,12 @@
 // Based on work https://github.com/mohsen1/json-formatter-js
 // License MIT, Copyright (c) 2015 Mohsen Azimi
 
+import { isNumber } from 'lodash';
+
 import { isObject, getObjectName, getType, getValuePreview, cssClass, createElement } from './helpers';
 
-import _ from 'lodash';
-
-const DATE_STRING_REGEX = /(^\d{1,4}[\.|\\/|-]\d{1,2}[\.|\\/|-]\d{1,4})(\s*(?:0?[1-9]:[0-5]|1(?=[012])\d:[0-5])\d\s*[ap]m)?$/;
+const DATE_STRING_REGEX =
+  /(^\d{1,4}[\.|\\/|-]\d{1,2}[\.|\\/|-]\d{1,4})(\s*(?:0?[1-9]:[0-5]|1(?=[012])\d:[0-5])\d\s*[ap]m)?$/;
 const PARTIAL_DATE_REGEX = /\d{2}:\d{2}:\d{2} GMT-\d{4}/;
 const JSON_DATE_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 
@@ -13,7 +14,7 @@ const JSON_DATE_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 const MAX_ANIMATED_TOGGLE_ITEMS = 10;
 
 const requestAnimationFrame =
-  window.requestAnimationFrame ||
+  (typeof window !== 'undefined' && window.requestAnimationFrame) ||
   ((cb: () => void) => {
     cb();
     return 0;
@@ -41,7 +42,7 @@ export class JsonExplorer {
   private _isOpen: boolean | null = null;
 
   // A reference to the element that we render to
-  private element: Element | null = null;
+  private element: HTMLDivElement | null = null;
 
   private skipChildren = false;
 
@@ -70,7 +71,7 @@ export class JsonExplorer {
    *   preview. Any object with more properties that thin number will be
    *   truncated.
    *
-   * @param {string} [key=undefined] The key that this object in it's parent
+   * @param {string} [key=undefined] The key that this object in its parent
    * context
    */
   constructor(
@@ -173,7 +174,7 @@ export class JsonExplorer {
    */
   private get keys(): string[] {
     if (this.isObject) {
-      return Object.keys(this.json).map(key => (key ? key : '""'));
+      return Object.keys(this.json).map((key) => (key ? key : '""'));
     } else {
       return [];
     }
@@ -222,7 +223,7 @@ export class JsonExplorer {
   }
 
   isNumberArray() {
-    return this.json.length > 0 && this.json.length < 4 && (_.isNumber(this.json[0]) || _.isNumber(this.json[1]));
+    return this.json.length > 0 && this.json.length < 4 && (isNumber(this.json[0]) || isNumber(this.json[1]));
   }
 
   renderArray() {
@@ -357,7 +358,7 @@ export class JsonExplorer {
       togglerLink.addEventListener('click', this.toggleOpen.bind(this));
     }
 
-    return this.element as HTMLDivElement;
+    return this.element;
   }
 
   /**
@@ -391,7 +392,7 @@ export class JsonExplorer {
 
       requestAnimationFrame(addAChild);
     } else {
-      this.keys.forEach(key => {
+      this.keys.forEach((key) => {
         const formatter = new JsonExplorer(this.json[key], this.open - 1, this.config, key);
         children.appendChild(formatter.render());
       });
@@ -403,8 +404,7 @@ export class JsonExplorer {
    * Animated option is used when user triggers this via a click
    */
   removeChildren(animated = false) {
-    const childrenElement =
-      this.element && (this.element.querySelector(`div.${cssClass('children')}`) as HTMLDivElement);
+    const childrenElement = this.element && this.element.querySelector<HTMLDivElement>(`div.${cssClass('children')}`);
 
     if (animated) {
       let childrenRemoved = 0;

@@ -1,26 +1,40 @@
-import React, { useState, useCallback } from 'react';
-import { Icon, renderOrCallToRender, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
+import { Draggable } from '@hello-pangea/dnd';
+import { useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 import { useUpdateEffect } from 'react-use';
-import { Draggable } from 'react-beautiful-dnd';
 
-interface QueryOperationRowProps {
+import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import { ReactUtils, useStyles2 } from '@grafana/ui';
+
+import { QueryOperationRowHeader, ExpanderMessages } from './QueryOperationRowHeader';
+
+export interface QueryOperationRowProps {
   index: number;
   id: string;
-  title?: ((props: { isOpen: boolean }) => React.ReactNode) | React.ReactNode;
-  headerElement?: React.ReactNode;
-  actions?:
-    | ((props: { isOpen: boolean; openRow: () => void; closeRow: () => void }) => React.ReactNode)
-    | React.ReactNode;
+  title?: string;
+  headerElement?: QueryOperationRowRenderProp;
+  actions?: QueryOperationRowRenderProp;
   onOpen?: () => void;
   onClose?: () => void;
   children: React.ReactNode;
   isOpen?: boolean;
   draggable?: boolean;
+  collapsable?: boolean;
+  disabled?: boolean;
+  expanderMessages?: ExpanderMessages;
 }
 
-export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
+export type QueryOperationRowRenderProp = ((props: QueryOperationRowRenderProps) => React.ReactNode) | React.ReactNode;
+
+export interface QueryOperationRowRenderProps {
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+}
+
+export function QueryOperationRow({
   children,
   actions,
   title,
@@ -28,16 +42,44 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   onClose,
   onOpen,
   isOpen,
+  disabled,
   draggable,
+  collapsable,
   index,
   id,
-}: QueryOperationRowProps) => {
+  expanderMessages,
+}: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
-  const theme = useTheme();
-  const styles = getQueryOperationRowStyles(theme);
+  const styles = useStyles2(getQueryOperationRowStyles);
   const onRowToggle = useCallback(() => {
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
+
+  // Force QueryOperationRow expansion when `isOpen` prop updates in parent component.
+  // `undefined` can be deliberately passed value here, but we only want booleans to trigger the effect.
+  useEffect(() => {
+    if (typeof isOpen === 'boolean') {
+      setIsContentVisible(isOpen);
+    }
+  }, [isOpen]);
+
+  const reportDragMousePosition = useCallback((e: React.MouseEvent) => {
+    // When drag detected react-beautiful-dnd will preventDefault the event
+    // Ref: https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md#a-mouse-drag-has-started-and-the-user-is-now-dragging
+    if (e.defaultPrevented) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // report relative mouse position within the header element
+      reportInteraction('query_row_reorder_drag_position', {
+        x: x / rect.width,
+        y: y / rect.height,
+        width: rect.width,
+        height: rect.height,
+      });
+    }
+  }, []);
 
   useUpdateEffect(() => {
     if (isContentVisible) {
@@ -51,41 +93,42 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     }
   }, [isContentVisible]);
 
-  const titleElement = title && renderOrCallToRender(title, { isOpen: isContentVisible });
-  const actionsElement =
-    actions &&
-    renderOrCallToRender(actions, {
-      isOpen: isContentVisible,
-      openRow: () => {
-        setIsContentVisible(true);
-      },
-      closeRow: () => {
-        setIsContentVisible(false);
-      },
-    });
+  const renderPropArgs: QueryOperationRowRenderProps = {
+    isOpen: isContentVisible,
+    onOpen: () => {
+      setIsContentVisible(true);
+    },
+    onClose: () => {
+      setIsContentVisible(false);
+    },
+  };
 
-  const rowHeader = (
-    <div className={styles.header}>
-      <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
-        <Icon name={isContentVisible ? 'angle-down' : 'angle-right'} className={styles.collapseIcon} />
-        {title && <div className={styles.title}>{titleElement}</div>}
-        {headerElement}
-      </div>
-      {actions && <div>{actionsElement}</div>}
-      {draggable && (
-        <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
-      )}
-    </div>
-  );
+  const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
+  const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
 
   if (draggable) {
     return (
       <Draggable draggableId={id} index={index}>
-        {provided => {
+        {(provided) => {
           return (
             <>
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
-                <div {...provided.dragHandleProps}>{rowHeader}</div>
+                <div>
+                  <QueryOperationRowHeader
+                    id={id}
+                    actionsElement={actionsElement}
+                    disabled={disabled}
+                    draggable
+                    collapsable={collapsable}
+                    dragHandleProps={provided.dragHandleProps}
+                    headerElement={headerElementRendered}
+                    isContentVisible={isContentVisible}
+                    onRowToggle={onRowToggle}
+                    reportDragMousePosition={reportDragMousePosition}
+                    title={title}
+                    expanderMessages={expanderMessages}
+                  />
+                </div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
               </div>
             </>
@@ -97,58 +140,34 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
 
   return (
     <div className={styles.wrapper}>
-      {rowHeader}
+      <QueryOperationRowHeader
+        id={id}
+        actionsElement={actionsElement}
+        disabled={disabled}
+        draggable={false}
+        collapsable={collapsable}
+        headerElement={headerElementRendered}
+        isContentVisible={isContentVisible}
+        onRowToggle={onRowToggle}
+        reportDragMousePosition={reportDragMousePosition}
+        title={title}
+        expanderMessages={expanderMessages}
+      />
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>
   );
-};
+}
 
-const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
+const getQueryOperationRowStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.md};
-    `,
-    header: css`
-      padding: ${theme.spacing.xs} ${theme.spacing.sm};
-      border-radius: ${theme.border.radius.sm};
-      background: ${theme.colors.bg2};
-      min-height: ${theme.spacing.formInputHeight}px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    `,
-    dragIcon: css`
-      cursor: drag;
-      color: ${theme.colors.textWeak};
-      &:hover {
-        color: ${theme.colors.text};
-      }
-    `,
-    collapseIcon: css`
-      color: ${theme.colors.textWeak};
-      &:hover {
-        color: ${theme.colors.text};
-      }
-    `,
-    titleWrapper: css`
-      display: flex;
-      align-items: center;
-      flex-grow: 1;
-      cursor: pointer;
-      overflow: hidden;
-      margin-right: ${theme.spacing.sm};
-    `,
-    title: css`
-      font-weight: ${theme.typography.weight.semibold};
-      color: ${theme.colors.textBlue};
-      margin-left: ${theme.spacing.sm};
-      overflow: hidden;
+      margin-bottom: ${theme.spacing(2)};
     `,
     content: css`
-      margin-top: ${theme.spacing.inlineFormMargin};
-      margin-left: ${theme.spacing.lg};
+      margin-top: ${theme.spacing(0.5)};
+      margin-left: ${theme.spacing(3)};
     `,
   };
-});
+};
 
 QueryOperationRow.displayName = 'QueryOperationRow';

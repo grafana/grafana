@@ -1,0 +1,63 @@
+[[- define "__default_message" -]]
+You have [[ len .Alerts.Firing ]] firing alert(s), and [[ len .Alerts.Resolved ]] resolved alert(s) for [[ .GroupLabels ]]
+
+[[ if .Alerts.Firing -]]
+([[ len .Alerts.Firing ]]) FIRING
+-----------
+[[ template "__default_alerts_summarize" .Alerts.Firing ]]
+[[- end ]]
+
+[[- if .Alerts.Resolved ]]
+([[ len .Alerts.Resolved ]]) RESOLVED
+-------------
+[[ template "__default_alerts_summarize" .Alerts.Resolved ]]
+[[- end ]]
+Go to the Alerts page: [[ .AlertPageUrl ]]
+[[- end -]]
+
+[[- define "__default_alerts_summarize" -]]
+[[- range . ]]
+[[- template "__default_alert_labels" . ]]
+[[- template "__default_alert_annotations" . ]]
+[[ end ]]
+[[- end -]]
+
+[[- define "__default_alert_labels" -]]
+[[- $labels := .Labels -]]
+[[- if index $labels "alertname" ]]
+Alertname: [[ index .Labels "alertname" -]]
+[[ $labels = $labels.Remove (toStrings (list "alertname")) ]]
+[[- end ]]
+Labels: [[ template "__default_sorted_pairs" $labels ]]
+[[- end -]]
+
+[[- define "__default_alert_annotations" -]]
+[[- $annotations := .Annotations -]]
+[[- if index $annotations "summary" ]]
+Summary: [[ index .Annotations "summary" -]]
+[[- $annotations = $annotations.Remove (toStrings (list "summary")) ]]
+[[- end -]]
+[[- if index $annotations "description" ]]
+Description: [[ index $annotations "description" -]]
+[[- $annotations = $annotations.Remove (toStrings (list "description")) ]]
+[[- end -]]
+[[- if index $annotations "runbook_url" ]]
+Runbook: [[ index $annotations "runbook_url" -]]
+[[- $annotations = $annotations.Remove (toStrings (list "runbook_url")) ]]
+[[- end -]]
+[[- if $annotations ]]
+Annotations: [[ template "__default_sorted_pairs" $annotations ]]
+[[- end -]]
+[[- end -]]
+
+[[- define "__default_sorted_pairs" -]]
+[[ range .SortedPairs ]]
+ - [[ .Name ]] = [[ .Value ]]
+[[- end ]]
+[[- end -]]
+
+[[- if .Message -]]
+    [[ .Message ]]
+[[- else -]]
+    [[ template "__default_message" . ]]
+[[- end ]]

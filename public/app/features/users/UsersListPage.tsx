@@ -1,129 +1,130 @@
-import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
-import { NavModel, renderMarkdown } from '@grafana/data';
+import { useEffect, useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import Page from 'app/core/components/Page/Page';
-import UsersActionBar from './UsersActionBar';
-import UsersTable from './UsersTable';
-import InviteesTable from './InviteesTable';
-import { Invitee, OrgUser, OrgRole } from 'app/types';
-import { loadInvitees, loadUsers, removeUser, updateUser } from './state/actions';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { getInvitees, getUsers, getUsersSearchQuery } from './state/selectors';
-import { setUsersSearchQuery } from './state/reducers';
+import { renderMarkdown } from '@grafana/data';
+import { Alert } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/core';
+import { OrgUser, OrgRole, StoreState } from 'app/types';
 
-export interface Props {
-  navModel: NavModel;
-  invitees: Invitee[];
-  users: OrgUser[];
-  searchQuery: string;
-  externalUserMngInfo: string;
-  hasFetched: boolean;
-  loadUsers: typeof loadUsers;
-  loadInvitees: typeof loadInvitees;
-  setUsersSearchQuery: typeof setUsersSearchQuery;
-  updateUser: typeof updateUser;
-  removeUser: typeof removeUser;
-}
+import { OrgUsersTable } from '../admin/Users/OrgUsersTable';
+import InviteesTable from '../invites/InviteesTable';
+import { fetchInvitees } from '../invites/state/actions';
+import { selectInvitesMatchingQuery } from '../invites/state/selectors';
 
-export interface State {
-  showInvites: boolean;
-}
+import { UsersActionBar } from './UsersActionBar';
+import { loadUsers, removeUser, updateUser, changePage, changeSort } from './state/actions';
+import { getUsers, getUsersSearchQuery } from './state/selectors';
 
-export class UsersListPage extends PureComponent<Props, State> {
-  externalUserMngInfoHtml: string;
-
-  constructor(props: Props) {
-    super(props);
-
-    if (this.props.externalUserMngInfo) {
-      this.externalUserMngInfoHtml = renderMarkdown(this.props.externalUserMngInfo);
-    }
-
-    this.state = {
-      showInvites: false,
-    };
-  }
-
-  componentDidMount() {
-    this.fetchUsers();
-    this.fetchInvitees();
-  }
-
-  async fetchUsers() {
-    return await this.props.loadUsers();
-  }
-
-  async fetchInvitees() {
-    return await this.props.loadInvitees();
-  }
-
-  onRoleChange = (role: OrgRole, user: OrgUser) => {
-    const updatedUser = { ...user, role: role };
-
-    this.props.updateUser(updatedUser);
-  };
-
-  onShowInvites = () => {
-    this.setState(prevState => ({
-      showInvites: !prevState.showInvites,
-    }));
-  };
-
-  renderTable() {
-    const { invitees, users } = this.props;
-
-    if (this.state.showInvites) {
-      return <InviteesTable invitees={invitees} />;
-    } else {
-      return (
-        <UsersTable
-          users={users}
-          onRoleChange={(role, user) => this.onRoleChange(role, user)}
-          onRemoveUser={user => this.props.removeUser(user.userId)}
-        />
-      );
-    }
-  }
-
-  render() {
-    const { navModel, hasFetched } = this.props;
-    const externalUserMngInfoHtml = this.externalUserMngInfoHtml;
-
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched}>
-          <>
-            <UsersActionBar onShowInvites={this.onShowInvites} showInvites={this.state.showInvites} />
-            {externalUserMngInfoHtml && (
-              <div className="grafana-info-box" dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
-            )}
-            {hasFetched && this.renderTable()}
-          </>
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
-
-function mapStateToProps(state: any) {
+function mapStateToProps(state: StoreState) {
+  const searchQuery = getUsersSearchQuery(state.users);
   return {
-    navModel: getNavModel(state.navIndex, 'users'),
     users: getUsers(state.users),
     searchQuery: getUsersSearchQuery(state.users),
-    invitees: getInvitees(state.users),
+    page: state.users.page,
+    totalPages: state.users.totalPages,
+    perPage: state.users.perPage,
+    invitees: selectInvitesMatchingQuery(state.invites, searchQuery),
     externalUserMngInfo: state.users.externalUserMngInfo,
-    hasFetched: state.users.hasFetched,
+    isLoading: state.users.isLoading,
+    rolesLoading: state.users.rolesLoading,
   };
 }
 
 const mapDispatchToProps = {
   loadUsers,
-  loadInvitees,
-  setUsersSearchQuery,
+  fetchInvitees,
+  changePage,
+  changeSort,
   updateUser,
   removeUser,
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UsersListPage));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = ConnectedProps<typeof connector>;
+
+export interface State {
+  showInvites: boolean;
+}
+
+export const UsersListPageUnconnected = ({
+  users,
+  page,
+  totalPages,
+  invitees,
+  externalUserMngInfo,
+  isLoading,
+  rolesLoading,
+  loadUsers,
+  fetchInvitees,
+  changePage,
+  updateUser,
+  removeUser,
+  changeSort,
+}: Props) => {
+  const [showInvites, setShowInvites] = useState(false);
+  const externalUserMngInfoHtml = externalUserMngInfo ? renderMarkdown(externalUserMngInfo) : '';
+
+  useEffect(() => {
+    loadUsers();
+    fetchInvitees();
+  }, [fetchInvitees, loadUsers]);
+
+  const onRoleChange = (role: OrgRole, user: OrgUser) => {
+    updateUser({ ...user, role: role });
+  };
+
+  const onRemoveUser = (user: OrgUser) => removeUser(user.userId);
+
+  const onShowInvites = () => {
+    setShowInvites(!showInvites);
+  };
+
+  const onUserRolesChange = () => {
+    loadUsers();
+  };
+
+  const renderTable = () => {
+    if (showInvites) {
+      return <InviteesTable invitees={invitees} />;
+    } else {
+      return (
+        <OrgUsersTable
+          users={users}
+          orgId={contextSrv.user.orgId}
+          rolesLoading={rolesLoading}
+          onRoleChange={onRoleChange}
+          onRemoveUser={onRemoveUser}
+          onUserRolesChange={onUserRolesChange}
+          fetchData={changeSort}
+          changePage={changePage}
+          page={page}
+          totalPages={totalPages}
+        />
+      );
+    }
+  };
+
+  return (
+    <Page.Contents isLoading={!isLoading}>
+      <UsersActionBar onShowInvites={onShowInvites} showInvites={showInvites} />
+      {externalUserMngInfoHtml && (
+        <Alert severity="info" title="">
+          <div dangerouslySetInnerHTML={{ __html: externalUserMngInfoHtml }} />
+        </Alert>
+      )}
+      {isLoading && renderTable()}
+    </Page.Contents>
+  );
+};
+
+export const UsersListPageContent = connector(UsersListPageUnconnected);
+
+export default function UsersListPage() {
+  return (
+    <Page navId="users">
+      <UsersListPageContent />
+    </Page>
+  );
+}

@@ -1,43 +1,76 @@
-import React from 'react';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Layout } from './Layout';
+import { StoryFn, Meta } from '@storybook/react';
+
 import { Button, VerticalGroup, HorizontalGroup } from '@grafana/ui';
+
 import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
-import { select } from '@storybook/addon-knobs';
+
+import { Layout, LayoutProps } from './Layout';
 import mdx from './Layout.mdx';
 
-export default {
+const meta: Meta = {
   title: 'Layout/Groups',
   component: Layout,
-  decorators: [withStoryContainer, withCenteredStory, withHorizontallyCenteredStory],
+  decorators: [withStoryContainer],
+  // SB7 has broken subcomponent types due to dropping support for the feature
+  // https://github.com/storybookjs/storybook/issues/20782
+  // @ts-ignore
   subcomponents: { HorizontalGroup, VerticalGroup },
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['orientation'],
+    },
+  },
+  args: {
+    justify: 'flex-start',
+    spacing: 'sm',
+    align: 'center',
+    wrap: false,
+    width: '100%',
+    containerWidth: 300,
+    containerHeight: 0,
+    showBoundaries: false,
+  },
+  argTypes: {
+    containerWidth: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+    containerHeight: { control: { type: 'range', min: 100, max: 500, step: 10 } },
+    justify: {
+      control: {
+        type: 'select',
+        options: ['flex-start', 'flex-end', 'space-between', 'center'],
+      },
+    },
+    align: {
+      control: {
+        type: 'select',
+        options: ['flex-start', 'flex-end', 'center', 'normal'],
+      },
+    },
+    spacing: {
+      control: {
+        type: 'select',
+        options: ['xs', 'sm', 'md', 'lg'],
+      },
+    },
   },
 };
 
-const justifyVariants = ['flex-start', 'flex-end', 'space-between'];
+export default meta;
 
-const spacingVariants = ['xs', 'sm', 'md', 'lg'];
-
-export const horizontal = () => {
-  const justify = select('Justify elements', justifyVariants, 'flex-start');
-  const spacing = select('Elements spacing', spacingVariants, 'sm');
+export const Horizontal: StoryFn<LayoutProps> = (args) => {
   return (
-    <HorizontalGroup justify={justify as any} spacing={spacing as any}>
+    <HorizontalGroup {...args}>
       <Button>Save</Button>
       <Button>Cancel</Button>
     </HorizontalGroup>
   );
 };
 
-export const vertical = () => {
-  const justify = select('Justify elements', justifyVariants, 'flex-start');
-  const spacing = select('Elements spacing', spacingVariants, 'sm');
+export const Vertical: StoryFn<LayoutProps> = (args) => {
   return (
-    <VerticalGroup justify={justify as any} spacing={spacing as any}>
+    <VerticalGroup {...args}>
       <Button>Save</Button>
       <Button>Cancel</Button>
     </VerticalGroup>

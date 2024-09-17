@@ -1,49 +1,173 @@
 package api
 
 import (
-	"regexp"
-	"strings"
+	"context"
+	"net/http"
+	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func AdminGetSettings(c *models.ReqContext) Response {
-	settings := make(map[string]interface{})
+// swagger:route GET /admin/settings admin adminGetSettings
+//
+// Fetch settings.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `settings:read` and scopes: `settings:*`, `settings:auth.saml:` and `settings:auth.saml:enabled` (property level).
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: adminGetSettingsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+func (hs *HTTPServer) AdminGetSettings(c *contextmodel.ReqContext) response.Response {
+	settings, err := hs.getAuthorizedSettings(c.Req.Context(), c.SignedInUser, hs.SettingsProvider.Current())
+	if err != nil {
+		return response.Error(http.StatusForbidden, "Failed to authorize settings", err)
+	}
+	return response.JSON(http.StatusOK, settings)
+}
 
-	for _, section := range setting.Raw.Sections() {
-		jsonSec := make(map[string]interface{})
-		settings[section.Name()] = jsonSec
+func (hs *HTTPServer) AdminGetVerboseSettings(c *contextmodel.ReqContext) response.Response {
+	bag := hs.SettingsProvider.CurrentVerbose()
+	if bag == nil {
+		return response.JSON(http.StatusNotImplemented, make(map[string]string))
+	}
 
-		for _, key := range section.Keys() {
-			keyName := key.Name()
-			value := key.Value()
-			if strings.Contains(keyName, "secret") || strings.Contains(keyName, "password") || (strings.Contains(keyName, "provider_config")) {
-				value = "************"
+	verboseSettings, err := hs.getAuthorizedVerboseSettings(c.Req.Context(), c.SignedInUser, bag)
+	if err != nil {
+		return response.Error(http.StatusForbidden, "Failed to authorize settings", err)
+	}
+	return response.JSON(http.StatusOK, verboseSettings)
+}
+
+// swagger:route GET /admin/stats admin adminGetStats
+//
+// Fetch Grafana Stats.
+//
+// Only works with Basic Authentication (username and password). See introduction for an explanation.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `server:stats:read`.
+//
+// Responses:
+// 200: adminGetStatsResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) AdminGetStats(c *contextmodel.ReqContext) response.Response {
+	adminStats, err := hs.statsService.GetAdminStats(c.Req.Context(), &stats.GetAdminStatsQuery{})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get admin stats from database", err)
+	}
+	anonymousDeviceExpiration := 30 * 24 * time.Hour
+	devicesCount, err := hs.anonService.CountDevices(c.Req.Context(), time.Now().Add(-anonymousDeviceExpiration), time.Now().Add(time.Minute))
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get anon stats from database", err)
+	}
+	adminStats.AnonymousStats.ActiveDevices = devicesCount
+
+	return response.JSON(http.StatusOK, adminStats)
+}
+
+func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user identity.Requester, bag setting.SettingsBag) (setting.SettingsBag, error) {
+	eval := func(scope string) (bool, error) {
+		return hs.AccessControl.Evaluate(ctx, user, ac.EvalPermission(ac.ActionSettingsRead, scope))
+	}
+
+	ok, err := eval(ac.ScopeSettingsAll)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return bag, nil
+	}
+
+	authorizedBag := make(setting.SettingsBag)
+
+	for section, keys := range bag {
+		ok, err := eval(ac.Scope("settings", section, "*"))
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			authorizedBag[section] = keys
+			continue
+		}
+
+		for key := range keys {
+			ok, err := eval(ac.Scope("settings", section, key))
+			if err != nil {
+				return nil, err
 			}
-			if strings.Contains(keyName, "url") {
-				var rgx = regexp.MustCompile(`.*:\/\/([^:]*):([^@]*)@.*?$`)
-				var subs = rgx.FindAllSubmatch([]byte(value), -1)
-				if subs != nil && len(subs[0]) == 3 {
-					value = strings.Replace(value, string(subs[0][1]), "******", 1)
-					value = strings.Replace(value, string(subs[0][2]), "******", 1)
+			if ok {
+				if _, exists := authorizedBag[section]; !exists {
+					authorizedBag[section] = make(map[string]string)
 				}
+				authorizedBag[section][key] = bag[section][key]
+			}
+		}
+	}
+	return authorizedBag, nil
+}
+
+func (hs *HTTPServer) getAuthorizedVerboseSettings(ctx context.Context, user identity.Requester, bag setting.VerboseSettingsBag) (setting.VerboseSettingsBag, error) {
+	eval := func(scope string) (bool, error) {
+		return hs.AccessControl.Evaluate(ctx, user, ac.EvalPermission(ac.ActionSettingsRead, scope))
+	}
+
+	ok, err := eval(ac.ScopeSettingsAll)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		return bag, nil
+	}
+
+	authorizedBag := make(setting.VerboseSettingsBag)
+
+	for section, keys := range bag {
+		ok, err := eval(ac.Scope("settings", section, "*"))
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			authorizedBag[section] = keys
+			continue
+		}
+
+		for key := range keys {
+			ok, err := eval(ac.Scope("settings", section, key))
+			if err != nil {
+				return nil, err
 			}
 
-			jsonSec[keyName] = value
+			if !ok {
+				continue
+			}
+
+			if _, exists := authorizedBag[section]; !exists {
+				authorizedBag[section] = make(map[string]map[setting.VerboseSourceType]string)
+			}
+			authorizedBag[section][key] = bag[section][key]
 		}
 	}
 
-	return JSON(200, settings)
+	return authorizedBag, nil
 }
 
-func AdminGetStats(c *models.ReqContext) Response {
-	statsQuery := models.GetAdminStatsQuery{}
+// swagger:response adminGetSettingsResponse
+type GetSettingsResponse struct {
+	// in:body
+	Body setting.SettingsBag `json:"body"`
+}
 
-	if err := bus.Dispatch(&statsQuery); err != nil {
-		return Error(500, "Failed to get admin stats from database", err)
-	}
-
-	return JSON(200, statsQuery.Result)
+// swagger:response adminGetStatsResponse
+type GetStatsResponse struct {
+	// in:body
+	Body stats.AdminStats `json:"body"`
 }

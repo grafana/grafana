@@ -1,0 +1,14 @@
+{
+  "type": "datasource",
+  "name": "Test",
+  "id": "test-datasource",
+  "backend": true,
+  "info": {
+    "description": "Test",
+    "version": "1.0.0",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

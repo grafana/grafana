@@ -1,41 +1,75 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"regexp"
 	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/prometheus/prometheus/promql/parser"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/datasource"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var datasourcesLogger = log.New("datasources")
+var secretsPluginError datasources.ErrDatasourceSecretsPluginUserFriendly
 
-func GetDataSources(c *models.ReqContext) Response {
-	query := models.GetDataSourcesQuery{OrgId: c.OrgId}
+// swagger:route GET /datasources datasources getDataSources
+//
+// Get all data sources.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:read` and scope: `datasources:*`.
+//
+// Responses:
+// 200: getDataSourcesResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Response {
+	query := datasources.GetDataSourcesQuery{OrgID: c.SignedInUser.GetOrgID(), DataSourceLimit: hs.Cfg.DataSourceLimit}
 
-	if err := bus.Dispatch(&query); err != nil {
-		return Error(500, "Failed to query datasources", err)
+	dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
+	}
+
+	filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByReadPermissions(dataSources)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
 
 	result := make(dtos.DataSourceList, 0)
-	for _, ds := range query.Result {
+	for _, ds := range filtered {
 		dsItem := dtos.DataSourceListItemDTO{
-			OrgId:     ds.OrgId,
-			Id:        ds.Id,
+			OrgId:     ds.OrgID,
+			Id:        ds.ID,
+			UID:       ds.UID,
 			Name:      ds.Name,
-			Url:       ds.Url,
+			Url:       ds.URL,
 			Type:      ds.Type,
+			TypeName:  ds.Type,
 			Access:    ds.Access,
-			Password:  ds.Password,
 			Database:  ds.Database,
 			User:      ds.User,
 			BasicAuth: ds.BasicAuth,
@@ -44,8 +78,10 @@ func GetDataSources(c *models.ReqContext) Response {
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		if plugin, exists := plugins.DataSources[ds.Type]; exists {
+		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
+			dsItem.TypeName = plugin.Name
+			dsItem.Type = plugin.ID // may be from an alias
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
 		}
@@ -55,241 +91,679 @@ func GetDataSources(c *models.ReqContext) Response {
 
 	sort.Sort(result)
 
-	return JSON(200, &result)
+	return response.JSON(http.StatusOK, &result)
 }
 
-func GetDataSourceById(c *models.ReqContext) Response {
-	query := models.GetDataSourceByIdQuery{
-		Id:    c.ParamsInt64(":id"),
-		OrgId: c.OrgId,
+// swagger:route GET /datasources/{id} datasources getDataSourceByID
+//
+// Get a single data source by Id.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+//
+// Please refer to [updated API](#/datasources/getDataSourceByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: getDataSourceResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetDataSourceById(c *contextmodel.ReqContext) response.Response {
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", nil)
+	}
+	query := datasources.GetDataSourceQuery{
+		ID:    id,
+		OrgID: c.SignedInUser.GetOrgID(),
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
-		if errors.Is(err, models.ErrDataSourceNotFound) {
-			return Error(404, "Data source not found", nil)
+	dataSource, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return Error(500, "Failed to query datasources", err)
+		if errors.Is(err, datasources.ErrDataSourceIdentifierNotSet) {
+			return response.Error(http.StatusBadRequest, "Datasource id is missing", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
 	}
 
-	ds := query.Result
-	dtos := convertModelToDtos(ds)
+	dto := hs.convertModelToDtos(c.Req.Context(), dataSource)
 
-	return JSON(200, &dtos)
+	// Add accesscontrol metadata
+	dto.AccessControl = hs.getAccessControlMetadata(c, datasources.ScopePrefix, dto.UID)
+
+	return response.JSON(http.StatusOK, &dto)
 }
 
-func DeleteDataSourceById(c *models.ReqContext) Response {
-	id := c.ParamsInt64(":id")
+// swagger:route DELETE /datasources/{id} datasources deleteDataSourceByID
+//
+// Delete an existing data source by id.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+//
+// Please refer to [updated API](#/datasources/deleteDataSourceByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 404: notFoundError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.Response {
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	if id <= 0 {
-		return Error(400, "Missing valid datasource id", nil)
+		return response.Error(http.StatusBadRequest, "Missing valid datasource id", nil)
 	}
 
-	ds, err := getRawDataSourceById(id, c.OrgId)
+	ds, err := hs.getRawDataSourceById(c.Req.Context(), id, c.SignedInUser.GetOrgID())
 	if err != nil {
-		return Error(400, "Failed to delete datasource", nil)
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusBadRequest, "Failed to delete datasource", nil)
 	}
 
 	if ds.ReadOnly {
-		return Error(403, "Cannot delete read-only data source", nil)
+		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
+	cmd := &datasources.DeleteDataSourceCommand{ID: id, OrgID: c.SignedInUser.GetOrgID(), Name: ds.Name}
 
-	err = bus.Dispatch(cmd)
+	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
 	if err != nil {
-		return Error(500, "Failed to delete datasource", err)
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(http.StatusInternalServerError, "Failed to delete datasource: "+err.Error(), err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
 	}
 
-	return Success("Data source deleted")
+	hs.Live.HandleDatasourceDelete(c.SignedInUser.GetOrgID(), ds.UID)
+
+	return response.Success("Data source deleted")
 }
 
-func DeleteDataSourceByName(c *models.ReqContext) Response {
-	name := c.Params(":name")
+// swagger:route GET /datasources/uid/{uid} datasources getDataSourceByUID
+//
+// Get a single data source by UID.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).
+//
+// Responses:
+// 200: getDataSourceResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetDataSourceByUID(c *contextmodel.ReqContext) response.Response {
+	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.SignedInUser.GetOrgID())
 
-	if name == "" {
-		return Error(400, "Missing valid datasource name", nil)
-	}
-
-	getCmd := &models.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
-	if err := bus.Dispatch(getCmd); err != nil {
-		if errors.Is(err, models.ErrDataSourceNotFound) {
-			return Error(404, "Data source not found", nil)
-		}
-		return Error(500, "Failed to delete datasource", err)
-	}
-
-	if getCmd.Result.ReadOnly {
-		return Error(403, "Cannot delete read-only data source", nil)
-	}
-
-	cmd := &models.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
-	err := bus.Dispatch(cmd)
 	if err != nil {
-		return Error(500, "Failed to delete datasource", err)
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
 	}
 
-	return JSON(200, util.DynMap{
+	dto := hs.convertModelToDtos(c.Req.Context(), ds)
+
+	// Add accesscontrol metadata
+	dto.AccessControl = hs.getAccessControlMetadata(c, datasources.ScopePrefix, dto.UID)
+
+	return response.JSON(http.StatusOK, &dto)
+}
+
+// swagger:route DELETE /datasources/uid/{uid} datasources deleteDataSourceByUID
+//
+// Delete an existing data source by UID.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:kLtEtcRGk` (single data source).
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+
+	if uid == "" {
+		return response.Error(http.StatusBadRequest, "Missing datasource uid", nil)
+	}
+
+	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), uid, c.SignedInUser.GetOrgID())
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusBadRequest, "Failed to delete datasource", nil)
+	}
+
+	if ds.ReadOnly {
+		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
+	}
+
+	cmd := &datasources.DeleteDataSourceCommand{UID: uid, OrgID: c.SignedInUser.GetOrgID(), Name: ds.Name}
+
+	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
+	if err != nil {
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(http.StatusInternalServerError, "Failed to delete datasource: "+err.Error(), err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
+	}
+
+	hs.Live.HandleDatasourceDelete(c.SignedInUser.GetOrgID(), ds.UID)
+
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
-		"id":      getCmd.Result.Id,
+		"id":      ds.ID,
 	})
 }
 
-func validateURL(tp string, u string) Response {
-	if u != "" {
-		if _, err := datasource.ValidateURL(tp, u); err != nil {
-			datasourcesLogger.Error("Received invalid data source URL as part of data source command",
-				"url", u)
-			return Error(400, fmt.Sprintf("Validation error, invalid URL: %q", u), err)
+// swagger:route DELETE /datasources/name/{name} datasources deleteDataSourceByName
+//
+// Delete an existing data source by name.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:delete` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Responses:
+// 200: deleteDataSourceByNameResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) DeleteDataSourceByName(c *contextmodel.ReqContext) response.Response {
+	name := web.Params(c.Req)[":name"]
+
+	if name == "" {
+		return response.Error(http.StatusBadRequest, "Missing valid datasource name", nil)
+	}
+
+	getCmd := &datasources.GetDataSourceQuery{Name: name, OrgID: c.SignedInUser.GetOrgID()}
+	dataSource, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), getCmd)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
+	}
+
+	if dataSource.ReadOnly {
+		return response.Error(http.StatusForbidden, "Cannot delete read-only data source", nil)
+	}
+
+	cmd := &datasources.DeleteDataSourceCommand{Name: name, OrgID: c.SignedInUser.GetOrgID()}
+	err = hs.DataSourcesService.DeleteDataSource(c.Req.Context(), cmd)
+	if err != nil {
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(http.StatusInternalServerError, "Failed to delete datasource: "+err.Error(), err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to delete datasource", err)
+	}
+
+	hs.Live.HandleDatasourceDelete(c.SignedInUser.GetOrgID(), dataSource.UID)
+
+	return response.JSON(http.StatusOK, util.DynMap{
+		"message": "Data source deleted",
+		"id":      dataSource.ID,
+	})
+}
+
+func validateURL(cmdType string, url string) response.Response {
+	if _, err := datasource.ValidateURL(cmdType, url); err != nil {
+		datasourcesLogger.Error("Failed to validate URL", "url", url)
+		return response.Error(http.StatusBadRequest, "Validation error, invalid URL", err)
+	}
+
+	return nil
+}
+
+// validateJSONData prevents the user from adding a custom header with name that matches the auth proxy header name.
+// This is done to prevent data source proxy from being used to circumvent auth proxy.
+// For more context take a look at CVE-2022-35957
+func validateJSONData(ctx context.Context, jsonData *simplejson.Json, cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
+	if jsonData == nil {
+		return nil
+	}
+
+	if cfg.AuthProxy.Enabled {
+		for key, value := range jsonData.MustMap() {
+			if strings.HasPrefix(key, datasources.CustomHeaderName) {
+				header := fmt.Sprint(value)
+				if http.CanonicalHeaderKey(header) == http.CanonicalHeaderKey(cfg.AuthProxy.HeaderName) {
+					datasourcesLogger.Error("Forbidden to add a data source header with a name equal to auth proxy header name", "headerName", key)
+					return errors.New("validation error, invalid header name specified")
+				}
+			}
+		}
+	}
+
+	// Prevent adding a data source team header with a name that matches the auth proxy header name
+	if features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) {
+		err := validateTeamHTTPHeaderJSON(jsonData)
+		if err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Response {
-	datasourcesLogger.Debug("Received command to add data source", "url", cmd.Url)
-	cmd.OrgId = c.OrgId
-	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
-		return resp
+// we only allow for now the following headers to be added to a data source team header
+var validHeaders = []string{"X-Prom-Label-Policy"}
+
+func validateTeamHTTPHeaderJSON(jsonData *simplejson.Json) error {
+	teamHTTPHeadersJSON, err := datasources.GetTeamHTTPHeaders(jsonData)
+	if err != nil {
+		datasourcesLogger.Error("Unable to marshal TeamHTTPHeaders")
+		return errors.New("validation error, invalid format of TeamHTTPHeaders")
+	}
+	if teamHTTPHeadersJSON == nil {
+		return nil
+	}
+	// whitelisting ValidHeaders
+	// each teams headers
+	for _, teamheaders := range teamHTTPHeadersJSON.Headers {
+		for _, header := range teamheaders {
+			if !slices.ContainsFunc(validHeaders, func(v string) bool {
+				return http.CanonicalHeaderKey(v) == http.CanonicalHeaderKey(header.Header)
+			}) {
+				datasourcesLogger.Error("Cannot add a data source team header that is different than", "headerName", header.Header)
+				return errors.New("validation error, invalid header name specified")
+			}
+			if !validateLBACHeader(header.Value) {
+				datasourcesLogger.Error("Cannot add a data source team header value with invalid value", "headerValue", header.Value)
+				return errors.New("validation error, invalid header value syntax")
+			}
+		}
+	}
+	return nil
+}
+
+// validateLBACHeader returns true if the header value matches the syntax
+// 1234:{ name!="value",foo!~"bar" }
+func validateLBACHeader(headervalue string) bool {
+	exp := `^\d+:(.+)`
+	pattern, err := regexp.Compile(exp)
+	if err != nil {
+		return false
+	}
+	match := pattern.FindSubmatch([]byte(strings.TrimSpace(headervalue)))
+	if match == nil || len(match) < 2 {
+		return false
+	}
+	_, err = parser.ParseMetricSelector(string(match[1]))
+	return err == nil
+}
+
+func evaluateTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, scope string) (bool, error) {
+	ev := ac.EvalPermission(datasources.ActionPermissionsWrite, ac.Scope(scope))
+	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ev)
+}
+
+// swagger:route POST /datasources datasources addDataSource
+//
+// Create a data source.
+//
+// By defining `password` and `basicAuthPassword` under secureJsonData property
+// Grafana encrypts them securely as an encrypted blob in the database.
+// The response then lists the encrypted fields under secureJsonFields.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:create`
+//
+// Responses:
+// 200: createOrUpdateDatasourceResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 409: conflictError
+// 500: internalServerError
+func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Response {
+	cmd := datasources.AddDataSourceCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
-		if errors.Is(err, models.ErrDataSourceNameExists) || errors.Is(err, models.ErrDataSourceUidExists) {
-			return Error(409, err.Error(), err)
+	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
+
+	datasourcesLogger.Debug("Received command to add data source", "url", cmd.URL)
+	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.UserID = userID
+	if cmd.URL != "" {
+		if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
+			return resp
+		}
+	}
+
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
+	}
+
+	dataSource, err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNameExists) || errors.Is(err, datasources.ErrDataSourceUidExists) {
+			return response.Error(http.StatusConflict, err.Error(), err)
 		}
 
-		return Error(500, "Failed to add datasource", err)
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(http.StatusInternalServerError, "Failed to add datasource: "+err.Error(), err)
+		}
+
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to add datasource", err)
 	}
 
-	ds := convertModelToDtos(cmd.Result)
-	return JSON(200, util.DynMap{
+	// Clear permission cache for the user who's created the data source, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
+
+	ds := hs.convertModelToDtos(c.Req.Context(), dataSource)
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message":    "Datasource added",
-		"id":         cmd.Result.Id,
-		"name":       cmd.Result.Name,
+		"id":         dataSource.ID,
+		"name":       dataSource.Name,
 		"datasource": ds,
 	})
 }
 
-func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) Response {
-	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
-	cmd.OrgId = c.OrgId
-	cmd.Id = c.ParamsInt64(":id")
-	if resp := validateURL(cmd.Type, cmd.Url); resp != nil {
+// swagger:route PUT /datasources/{id} datasources updateDataSourceByID
+//
+// Update an existing data source by its sequential ID.
+//
+// Similar to creating a data source, `password` and `basicAuthPassword` should be defined under
+// secureJsonData in order to be stored securely as an encrypted blob in the database. Then, the
+// encrypted fields are listed under secureJsonFields section in the response.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:id:*` and `datasources:id:1` (single data source).
+//
+// Please refer to [updated API](#/datasources/updateDataSourceByUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: createOrUpdateDatasourceResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+
+func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.Response {
+	cmd := datasources.UpdateDataSourceCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	datasourcesLogger.Debug("Received command to update data source", "url", cmd.URL)
+	cmd.OrgID = c.SignedInUser.GetOrgID()
+	var err error
+	if cmd.ID, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64); err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
+	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
 		return resp
 	}
-
-	err := fillWithSecureJSONData(&cmd)
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
+	}
+	ds, err := hs.getRawDataSourceById(c.Req.Context(), cmd.ID, cmd.OrgID)
 	if err != nil {
-		return Error(500, "Failed to update datasource", err)
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
 
-	err = bus.Dispatch(&cmd)
+	// check if LBAC rules have been modified
+	hasAccess, errAccess := checkTeamHTTPHeaderPermissions(hs, c, ds, cmd)
+	if !hasAccess {
+		return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), errAccess)
+	}
+
+	return hs.updateDataSourceByID(c, ds, cmd)
+}
+
+// swagger:route PUT /datasources/uid/{uid} datasources updateDataSourceByUID
+//
+// Update an existing data source.
+//
+// Similar to creating a data source, `password` and `basicAuthPassword` should be defined under
+// secureJsonData in order to be stored securely as an encrypted blob in the database. Then, the
+// encrypted fields are listed under secureJsonFields section in the response.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:write` and scopes: `datasources:*`, `datasources:uid:*` and `datasources:uid:1` (single data source).
+//
+// Responses:
+// 200: createOrUpdateDatasourceResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response.Response {
+	cmd := datasources.UpdateDataSourceCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	datasourcesLogger.Debug("Received command to update data source", "url", cmd.URL)
+	cmd.OrgID = c.SignedInUser.GetOrgID()
+	if resp := validateURL(cmd.Type, cmd.URL); resp != nil {
+		return resp
+	}
+	if err := validateJSONData(c.Req.Context(), cmd.JsonData, hs.Cfg, hs.Features); err != nil {
+		return response.Error(http.StatusBadRequest, "Failed to update datasource", err)
+	}
+
+	ds, err := hs.getRawDataSourceByUID(c.Req.Context(), web.Params(c.Req)[":uid"], c.SignedInUser.GetOrgID())
 	if err != nil {
-		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
-			return Error(500, "Failed to update datasource. Reload new version and try again", err)
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
 		}
-		return Error(500, "Failed to update datasource", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
+	}
+	cmd.ID = ds.ID
+
+	// check if LBAC rules have been modified
+	hasAccess, errAccess := checkTeamHTTPHeaderPermissions(hs, c, ds, cmd)
+	if !hasAccess {
+		return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), errAccess)
 	}
 
-	query := models.GetDataSourceByIdQuery{
-		Id:    cmd.Id,
-		OrgId: c.OrgId,
+	return hs.updateDataSourceByID(c, ds, cmd)
+}
+
+func getEncodedString(jsonData *simplejson.Json, key string) string {
+	if jsonData == nil {
+		return ""
+	}
+	jsonValues, exists := jsonData.CheckGet(key)
+	if !exists {
+		return ""
+	}
+	val, _ := jsonValues.Encode()
+	return string(val)
+}
+
+func checkTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) (bool, error) {
+	currentTeamHTTPHeaders := getEncodedString(ds.JsonData, "teamHttpHeaders")
+	newTeamHTTPHeaders := getEncodedString(cmd.JsonData, "teamHttpHeaders")
+	if (currentTeamHTTPHeaders != "" || newTeamHTTPHeaders != "") && currentTeamHTTPHeaders != newTeamHTTPHeaders {
+		return evaluateTeamHTTPHeaderPermissions(hs, c, datasources.ScopePrefix+ds.UID)
+	}
+	return true, nil
+}
+
+func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) response.Response {
+	if ds.ReadOnly {
+		return response.Error(http.StatusForbidden, "Cannot update read-only data source", nil)
 	}
 
-	if err := bus.Dispatch(&query); err != nil {
-		if errors.Is(err, models.ErrDataSourceNotFound) {
-			return Error(404, "Data source not found", nil)
+	_, err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNameExists) {
+			return response.Error(http.StatusConflict, "Failed to update datasource: "+err.Error(), err)
 		}
-		return Error(500, "Failed to query datasources", err)
+
+		if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
+			return response.Error(http.StatusConflict, "Datasource has already been updated by someone else. Please reload and try again", err)
+		}
+
+		if errors.As(err, &secretsPluginError) {
+			return response.Error(http.StatusInternalServerError, "Failed to update datasource: "+err.Error(), err)
+		}
+
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
 
-	dtos := convertModelToDtos(query.Result)
+	query := datasources.GetDataSourceQuery{
+		ID:    cmd.ID,
+		OrgID: c.SignedInUser.GetOrgID(),
+	}
 
-	return JSON(200, util.DynMap{
+	dataSource, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
+	}
+
+	datasourceDTO := hs.convertModelToDtos(c.Req.Context(), dataSource)
+
+	hs.Live.HandleDatasourceUpdate(c.SignedInUser.GetOrgID(), datasourceDTO.UID)
+
+	return response.JSON(http.StatusOK, util.DynMap{
 		"message":    "Datasource updated",
-		"id":         cmd.Id,
+		"id":         cmd.ID,
 		"name":       cmd.Name,
-		"datasource": dtos,
+		"datasource": datasourceDTO,
 	})
 }
 
-func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
-	if len(cmd.SecureJsonData) == 0 {
-		return nil
+func (hs *HTTPServer) getRawDataSourceById(ctx context.Context, id int64, orgID int64) (*datasources.DataSource, error) {
+	query := datasources.GetDataSourceQuery{
+		ID:    id,
+		OrgID: orgID,
 	}
 
-	ds, err := getRawDataSourceById(cmd.Id, cmd.OrgId)
+	dataSource, err := hs.DataSourcesService.GetDataSource(ctx, &query)
 	if err != nil {
-		return err
-	}
-
-	if ds.ReadOnly {
-		return models.ErrDatasourceIsReadOnly
-	}
-
-	secureJSONData := ds.SecureJsonData.Decrypt()
-	for k, v := range secureJSONData {
-		if _, ok := cmd.SecureJsonData[k]; !ok {
-			cmd.SecureJsonData[k] = v
-		}
-	}
-
-	return nil
-}
-
-func getRawDataSourceById(id int64, orgID int64) (*models.DataSource, error) {
-	query := models.GetDataSourceByIdQuery{
-		Id:    id,
-		OrgId: orgID,
-	}
-
-	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return dataSource, nil
 }
 
-// Get /api/datasources/name/:name
-func GetDataSourceByName(c *models.ReqContext) Response {
-	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
-
-	if err := bus.Dispatch(&query); err != nil {
-		if errors.Is(err, models.ErrDataSourceNotFound) {
-			return Error(404, "Data source not found", nil)
-		}
-		return Error(500, "Failed to query datasources", err)
+func (hs *HTTPServer) getRawDataSourceByUID(ctx context.Context, uid string, orgID int64) (*datasources.DataSource, error) {
+	query := datasources.GetDataSourceQuery{
+		UID:   uid,
+		OrgID: orgID,
 	}
 
-	dtos := convertModelToDtos(query.Result)
-	return JSON(200, &dtos)
-}
-
-// Get /api/datasources/id/:name
-func GetDataSourceIdByName(c *models.ReqContext) Response {
-	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
-
-	if err := bus.Dispatch(&query); err != nil {
-		if errors.Is(err, models.ErrDataSourceNotFound) {
-			return Error(404, "Data source not found", nil)
-		}
-		return Error(500, "Failed to query datasources", err)
-	}
-
-	ds := query.Result
-	dtos := dtos.AnyId{
-		Id: ds.Id,
-	}
-
-	return JSON(200, &dtos)
-}
-
-// /api/datasources/:id/resources/*
-func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
-	datasourceID := c.ParamsInt64(":id")
-	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+	dataSource, err := hs.DataSourcesService.GetDataSource(ctx, &query)
 	if err != nil {
-		if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		return nil, err
+	}
+
+	return dataSource, nil
+}
+
+// swagger:route GET /datasources/name/{name} datasources getDataSourceByName
+//
+// Get a single data source by Name.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Responses:
+// 200: getDataSourceResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) GetDataSourceByName(c *contextmodel.ReqContext) response.Response {
+	query := datasources.GetDataSourceQuery{Name: web.Params(c.Req)[":name"], OrgID: c.SignedInUser.GetOrgID()}
+
+	dataSource, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
+	}
+
+	dto := hs.convertModelToDtos(c.Req.Context(), dataSource)
+	return response.JSON(http.StatusOK, &dto)
+}
+
+// swagger:route GET /datasources/id/{name} datasources getDataSourceIdByName
+//
+// Get data source Id by Name.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled
+// you need to have a permission with action: `datasources:read` and scopes: `datasources:*`, `datasources:name:*` and `datasources:name:test_datasource` (single data source).
+//
+// Responses:
+// 200: getDataSourceIDResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetDataSourceIdByName(c *contextmodel.ReqContext) response.Response {
+	query := datasources.GetDataSourceQuery{Name: web.Params(c.Req)[":name"], OrgID: c.SignedInUser.GetOrgID()}
+
+	ds, err := hs.DataSourcesService.GetDataSource(c.Req.Context(), &query)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return response.Error(http.StatusNotFound, "Data source not found", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
+	}
+
+	dtos := dtos.AnyId{
+		Id: ds.ID,
+	}
+
+	return response.JSON(http.StatusOK, &dtos)
+}
+
+// swagger:route GET /datasources/{id}/resources/{datasource_proxy_route} datasources callDatasourceResourceByID
+//
+// Fetch data source resources by Id.
+//
+// Please refer to [updated API](#/datasources/callDatasourceResourceWithUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) CallDatasourceResource(c *contextmodel.ReqContext) {
+	datasourceID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "id is invalid", nil)
+		return
+	}
+	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipDSCache)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(403, "Access denied to datasource", err)
 			return
 		}
@@ -297,111 +771,370 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 		return
 	}
 
-	// find plugin
-	plugin, ok := plugins.DataSources[ds.Type]
-	if !ok {
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	if !exists {
 		c.JsonApiErr(500, "Unable to find datasource plugin", err)
 		return
 	}
 
-	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to process datasource instance model", err)
-	}
-
-	pCtx := backend.PluginContext{
-		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
-		OrgID:                      c.OrgId,
-		PluginID:                   plugin.Id,
-		DataSourceInstanceSettings: dsInstanceSettings,
-	}
-	hs.BackendPluginManager.CallResource(pCtx, c, c.Params("*"))
+	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
 }
 
-func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
-	dto := dtos.DataSource{
-		Id:                ds.Id,
-		OrgId:             ds.OrgId,
-		Name:              ds.Name,
-		Url:               ds.Url,
-		Type:              ds.Type,
-		Access:            ds.Access,
-		Password:          ds.Password,
-		Database:          ds.Database,
-		User:              ds.User,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          ds.JsonData,
-		SecureJsonFields:  map[string]bool{},
-		Version:           ds.Version,
-		ReadOnly:          ds.ReadOnly,
+// swagger:route GET /datasources/uid/{uid}/resources/{datasource_proxy_route} datasources callDatasourceResourceWithUID
+//
+// Fetch data source resources.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) CallDatasourceResourceWithUID(c *contextmodel.ReqContext) {
+	dsUID := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(dsUID) {
+		c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
+		return
 	}
 
-	for k, v := range ds.SecureJsonData {
-		if len(v) > 0 {
-			dto.SecureJsonFields[k] = true
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipDSCache)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
+			c.JsonApiErr(http.StatusForbidden, "Access denied to datasource", err)
+			return
 		}
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
+		return
+	}
+
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
+	if !exists {
+		c.JsonApiErr(http.StatusInternalServerError, "Unable to find datasource plugin", err)
+		return
+	}
+
+	hs.callPluginResourceWithDataSource(c, plugin.ID, ds)
+}
+
+func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.DataSource) dtos.DataSource {
+	dto := dtos.DataSource{
+		Id:               ds.ID,
+		UID:              ds.UID,
+		OrgId:            ds.OrgID,
+		Name:             ds.Name,
+		Url:              ds.URL,
+		Type:             ds.Type,
+		Access:           ds.Access,
+		Database:         ds.Database,
+		User:             ds.User,
+		BasicAuth:        ds.BasicAuth,
+		BasicAuthUser:    ds.BasicAuthUser,
+		WithCredentials:  ds.WithCredentials,
+		IsDefault:        ds.IsDefault,
+		JsonData:         ds.JsonData,
+		SecureJsonFields: map[string]bool{},
+		Version:          ds.Version,
+		ReadOnly:         ds.ReadOnly,
+		APIVersion:       ds.APIVersion,
+	}
+
+	if hs.pluginStore != nil {
+		if plugin, exists := hs.pluginStore.Plugin(ctx, ds.Type); exists {
+			dto.TypeLogoUrl = plugin.Info.Logos.Small
+			dto.Type = plugin.ID // may be from an alias
+		} else {
+			dto.TypeLogoUrl = "public/img/icn-datasource.svg"
+		}
+	}
+
+	secrets, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
+	if err == nil {
+		for k, v := range secrets {
+			if len(v) > 0 {
+				dto.SecureJsonFields[k] = true
+			}
+		}
+	} else {
+		datasourcesLogger.Debug("Failed to retrieve datasource secrets to parse secure json fields", "error", err)
 	}
 
 	return dto
 }
 
-// CheckDatasourceHealth sends a health check request to the plugin datasource
-// /api/datasource/:id/health
-func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) Response {
-	datasourceID := c.ParamsInt64("id")
+// swagger:route GET /datasources/uid/{uid}/health datasources checkDatasourceHealthWithUID
+//
+// Sends a health check request to the plugin datasource identified by the UID.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) CheckDatasourceHealthWithUID(c *contextmodel.ReqContext) response.Response {
+	dsUID := web.Params(c.Req)[":uid"]
+	if !util.IsValidShortUID(dsUID) {
+		return response.Error(http.StatusBadRequest, "UID is invalid", nil)
+	}
 
-	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
+	ds, err := hs.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
-		if errors.Is(err, models.ErrDataSourceAccessDenied) {
-			return Error(403, "Access denied to datasource", err)
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
+			return response.Error(http.StatusForbidden, "Access denied to datasource", err)
 		}
-		return Error(500, "Unable to load datasource metadata", err)
+		return response.Error(http.StatusInternalServerError, "Unable to load datasource metadata", err)
 	}
+	return hs.checkDatasourceHealth(c, ds)
+}
 
-	plugin, ok := hs.PluginManager.GetDatasource(ds.Type)
-	if !ok {
-		return Error(500, "Unable to find datasource plugin", err)
-	}
-
-	dsInstanceSettings, err := wrapper.ModelToInstanceSettings(ds)
+// swagger:route GET /datasources/{id}/health datasources checkDatasourceHealthByID
+//
+// Sends a health check request to the plugin datasource identified by the ID.
+//
+// Please refer to [updated API](#/datasources/checkDatasourceHealthWithUID) instead
+//
+// Deprecated: true
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) CheckDatasourceHealth(c *contextmodel.ReqContext) response.Response {
+	datasourceID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return Error(500, "Unable to get datasource model", err)
-	}
-	pCtx := backend.PluginContext{
-		User:                       wrapper.BackendUserFromSignedInUser(c.SignedInUser),
-		OrgID:                      c.OrgId,
-		PluginID:                   plugin.Id,
-		DataSourceInstanceSettings: dsInstanceSettings,
+		return response.Error(http.StatusBadRequest, "id is invalid", nil)
 	}
 
-	resp, err := hs.BackendPluginManager.CheckHealth(c.Req.Context(), pCtx)
+	ds, err := hs.DataSourceCache.GetDatasource(c.Req.Context(), datasourceID, c.SignedInUser, c.SkipDSCache)
+	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceAccessDenied) {
+			return response.Error(http.StatusForbidden, "Access denied to datasource", err)
+		}
+		return response.Error(http.StatusInternalServerError, "Unable to load datasource metadata", err)
+	}
+	return hs.checkDatasourceHealth(c, ds)
+}
+
+func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *datasources.DataSource) response.Response {
+	pCtx, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), ds.Type, c.SignedInUser, ds)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Unable to get plugin context", err)
+	}
+	req := &backend.CheckHealthRequest{
+		PluginContext: pCtx,
+		Headers:       map[string]string{},
+	}
+
+	var dsURL string
+	if req.PluginContext.DataSourceInstanceSettings != nil {
+		dsURL = req.PluginContext.DataSourceInstanceSettings.URL
+	}
+
+	err = hs.PluginRequestValidator.Validate(dsURL, c.Req)
+	if err != nil {
+		return response.Error(http.StatusForbidden, "Access denied", err)
+	}
+
+	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"status":  resp.Status.String(),
 		"message": resp.Message,
 	}
 
 	// Unmarshal JSONDetails if it's not empty.
 	if len(resp.JSONDetails) > 0 {
-		var jsonDetails map[string]interface{}
+		var jsonDetails map[string]any
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			return Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return response.Error(http.StatusInternalServerError, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backend.HealthStatusOk {
-		return JSON(503, payload)
+		return response.JSON(http.StatusBadRequest, payload)
 	}
 
-	return JSON(200, payload)
+	return response.JSON(http.StatusOK, payload)
+}
+
+// swagger:parameters checkDatasourceHealthByID
+type CheckDatasourceHealthByIDParams struct {
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
+}
+
+// swagger:parameters callDatasourceResourceByID
+type CallDatasourceResourceByIDParams struct {
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
+}
+
+// swagger:parameters deleteDataSourceByID
+type DeleteDataSourceByIDParams struct {
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
+}
+
+// swagger:parameters getDataSourceByID
+type GetDataSourceByIDParams struct {
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
+}
+
+// swagger:parameters checkDatasourceHealthWithUID
+type CheckDatasourceHealthWithUIDParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+}
+
+// swagger:parameters callDatasourceResourceWithUID
+type CallDatasourceResourceWithUIDParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+}
+
+// swagger:parameters deleteDataSourceByUID
+type DeleteDataSourceByUIDParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+}
+
+// swagger:parameters getDataSourceByUID
+type GetDataSourceByUIDParams struct {
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+}
+
+// swagger:parameters getDataSourceByName
+type GetDataSourceByNameParams struct {
+	// in:path
+	// required:true
+	DatasourceName string `json:"name"`
+}
+
+// swagger:parameters deleteDataSourceByName
+type DeleteDataSourceByNameParams struct {
+	// in:path
+	// required:true
+	DatasourceName string `json:"name"`
+}
+
+// swagger:parameters getDataSourceIdByName
+type GetDataSourceIdByNameParams struct {
+	// in:path
+	// required:true
+	DatasourceName string `json:"name"`
+}
+
+// swagger:parameters addDataSource
+type AddDataSourceParams struct {
+	// in:body
+	// required:true
+	Body datasources.AddDataSourceCommand
+}
+
+// swagger:parameters updateDataSourceByID
+type UpdateDataSourceByIDParams struct {
+	// in:body
+	// required:true
+	Body datasources.UpdateDataSourceCommand
+	// in:path
+	// required:true
+	DatasourceID string `json:"id"`
+}
+
+// swagger:parameters updateDataSourceByUID
+type UpdateDataSourceByUIDParams struct {
+	// in:body
+	// required:true
+	Body datasources.UpdateDataSourceCommand
+	// in:path
+	// required:true
+	DatasourceUID string `json:"uid"`
+}
+
+// swagger:response getDataSourcesResponse
+type GetDataSourcesResponse struct {
+	// The response message
+	// in: body
+	Body dtos.DataSourceList `json:"body"`
+}
+
+// swagger:response getDataSourceResponse
+type GetDataSourceResponse struct {
+	// The response message
+	// in: body
+	Body dtos.DataSource `json:"body"`
+}
+
+// swagger:response createOrUpdateDatasourceResponse
+type CreateOrUpdateDatasourceResponse struct {
+	// The response message
+	// in: body
+	Body struct {
+		// ID Identifier of the new data source.
+		// required: true
+		// example: 65
+		ID int64 `json:"id"`
+
+		// Name of the new data source.
+		// required: true
+		// example: My Data source
+		Name string `json:"name"`
+
+		// Message Message of the deleted dashboard.
+		// required: true
+		// example: Data source added
+		Message string `json:"message"`
+
+		// Datasource properties
+		// required: true
+		Datasource dtos.DataSource `json:"datasource"`
+	} `json:"body"`
+}
+
+// swagger:response getDataSourceIDResponse
+type GetDataSourceIDresponse struct {
+	// The response message
+	// in: body
+	Body struct {
+		// ID Identifier of the data source.
+		// required: true
+		// example: 65
+		ID int64 `json:"id"`
+	} `json:"body"`
+}
+
+// swagger:response deleteDataSourceByNameResponse
+type DeleteDataSourceByNameResponse struct {
+	// The response message
+	// in: body
+	Body struct {
+		// ID Identifier of the deleted data source.
+		// required: true
+		// example: 65
+		ID int64 `json:"id"`
+
+		// Message Message of the deleted dashboard.
+		// required: true
+		// example: Dashboard My Dashboard deleted
+		Message string `json:"message"`
+	} `json:"body"`
 }

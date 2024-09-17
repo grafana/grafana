@@ -1,53 +1,77 @@
+import { isEqual } from 'lodash';
+
 import { DataFrame } from '../types/dataFrame';
 
 /**
- * Returns true if both frames have the same list of fields and configs.
- * Field may have diferent names, labels and values but share the same structure
+ * Returns true if both frames have the same name, fields, labels and configs.
  *
+ * @example
  * To compare multiple frames use:
  * ```
- * areArraysEqual(a, b, framesHaveSameStructure);
+ * compareArrayValues(a, b, framesHaveSameStructure);
  * ```
- * NOTE: this does a shallow check on the FieldConfig properties, when using the query
- * editor, this should be sufficient, however if applicaitons are mutating properties
- * deep in the FieldConfig this will not recognize a change
- *
  * @beta
  */
-export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean {
+export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfig?: boolean): boolean {
   if (a === b) {
     return true;
   }
+
   if (a?.fields?.length !== b?.fields?.length) {
     return false;
   }
+
+  if (a.name !== b.name) {
+    return false;
+  }
+
   for (let i = 0; i < a.fields.length; i++) {
     const fA = a.fields[i];
     const fB = b.fields[i];
-    if (fA.type !== fB.type) {
-      return false;
-    }
-    const cfgA = fA.config as any;
-    const cfgB = fB.config as any;
 
-    const keys = Object.keys(cfgA);
-    if (keys.length !== Object.keys(cfgB).length) {
+    if (fA.type !== fB.type || fA.name !== fB.name) {
       return false;
     }
-    for (const key of keys) {
-      if (!cfgB.hasOwnProperty(key)) {
+
+    // Do not check the config fields
+    if (skipConfig) {
+      continue;
+    }
+
+    // Check if labels are different
+    if (fA.labels && fB.labels && !shallowCompare(fA.labels, fB.labels)) {
+      return false;
+    }
+
+    const cfgA = fA.config;
+    const cfgB = fB.config;
+
+    if (Object.keys(cfgA).length !== Object.keys(cfgB).length) {
+      return false;
+    }
+
+    let key: keyof typeof cfgA;
+    for (key in cfgA) {
+      if (!(key in cfgB)) {
         return false;
       }
-      if (cfgA[key] !== cfgB[key]) {
+
+      if (key === 'interval') {
+        continue;
+      }
+
+      // Deep comparison on all object properties
+      if (!isEqual(cfgA[key], cfgB[key])) {
         return false;
       }
     }
   }
+
   return true;
 }
 
 /**
- * Check if all values in two arrays match the compare funciton
+ * Check if all values in two arrays match the compare function
  *
  * @beta
  */
@@ -63,5 +87,33 @@ export function compareArrayValues<T>(a: T[], b: T[], cmp: (a: T, b: T) => boole
       return false;
     }
   }
+  return true;
+}
+
+type Cmp = (valA: unknown, valB: unknown) => boolean;
+
+const defaultCmp: Cmp = (a, b) => a === b;
+
+/**
+ * Checks if two objects are equal shallowly
+ *
+ * @beta
+ */
+export function shallowCompare<T extends {}>(a: T, b: T, cmp: Cmp = defaultCmp) {
+  if (a === b) {
+    return true;
+  }
+
+  if (Object.keys(a).length !== Object.keys(b).length) {
+    return false;
+  }
+
+  let key: keyof typeof a;
+  for (key in a) {
+    if (!cmp(a[key], b[key])) {
+      return false;
+    }
+  }
+
   return true;
 }

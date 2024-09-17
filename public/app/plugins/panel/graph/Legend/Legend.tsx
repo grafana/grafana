@@ -1,10 +1,12 @@
-import _ from 'lodash';
-import React, { PureComponent } from 'react';
-import { TimeSeries } from 'app/core/core';
-import { CustomScrollbar, Icon } from '@grafana/ui';
-import { LegendItem, LEGEND_STATS } from './LegendSeriesItem';
+import { sortBy as _sortBy } from 'lodash';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
-type Sort = 'min' | 'max' | 'avg' | 'current' | 'total';
+import { CustomScrollbar, Icon } from '@grafana/ui';
+import { TimeSeries } from 'app/core/core';
+
+import { LegendStat, LegendItem, LEGEND_STATS } from './LegendSeriesItem';
+
 interface LegendProps {
   seriesList: TimeSeries[];
   optionalClass?: string;
@@ -19,7 +21,7 @@ interface LegendEventHandlers {
 
 interface LegendComponentEventHandlers {
   onToggleSeries?: (series: TimeSeries, event: any) => void;
-  onToggleSort?: (sortBy: Sort | undefined, sortDesc: any) => void;
+  onToggleSort?: (sortBy: LegendStat | undefined, sortDesc: any) => void;
   onToggleAxis?: (series: TimeSeries) => void;
   onColorChange?: (series: TimeSeries, color: string) => void;
 }
@@ -31,6 +33,7 @@ interface LegendDisplayProps {
   alignAsTable?: boolean;
   rightSide?: boolean;
   sideWidth?: number;
+  renderCallback?: () => void;
 }
 
 interface LegendValuesProps {
@@ -43,7 +46,7 @@ interface LegendValuesProps {
 }
 
 interface LegendSortProps {
-  sort?: Sort;
+  sort?: LegendStat;
   sortDesc?: boolean;
 }
 
@@ -92,7 +95,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     let seriesList: TimeSeries[] = [...this.props.seriesList] || [];
     const sortBy = this.props.sort;
     if (sortBy && this.props[sortBy] && this.props.alignAsTable) {
-      seriesList = _.sortBy(seriesList, series => {
+      seriesList = _sortBy(seriesList, (series) => {
         let sort = series.stats[sortBy];
         if (sort === null) {
           sort = -Infinity;
@@ -133,7 +136,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     }
 
     // check if every other series is hidden
-    const alreadyExclusive = this.props.seriesList.every(value => {
+    const alreadyExclusive = this.props.seriesList.every((value) => {
       if (value.alias === series.alias) {
         return true;
       }
@@ -143,12 +146,12 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
 
     if (alreadyExclusive) {
       // remove all hidden series
-      this.props.seriesList.forEach(value => {
+      this.props.seriesList.forEach((value) => {
         delete hiddenSeries[value.alias];
       });
     } else {
       // hide all but this serie
-      this.props.seriesList.forEach(value => {
+      this.props.seriesList.forEach((value) => {
         if (value.alias === series.alias) {
           return;
         }
@@ -175,12 +178,13 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
       avg,
       current,
       total,
+      renderCallback,
     } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     const hiddenSeries = this.state.hiddenSeries;
     const seriesHideProps = { hideEmpty, hideZero };
     const sortProps = { sort, sortDesc };
-    const seriesList = this.sortLegend().filter(series => !series.hideFromLegend(seriesHideProps));
+    const seriesList = this.sortLegend().filter((series) => !series.hideFromLegend(seriesHideProps));
     const legendClass = `${this.props.alignAsTable ? 'graph-legend-table' : ''} ${optionalClass}`;
 
     // Set min-width if side style and there is a value, otherwise remove the CSS property
@@ -204,7 +208,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     };
 
     return (
-      <div className={`graph-legend-content ${legendClass}`} style={legendStyle}>
+      <div className={`graph-legend-content ${legendClass}`} ref={renderCallback} style={legendStyle}>
         {this.props.alignAsTable ? <LegendTable {...legendProps} /> : <LegendSeriesList {...legendProps} />}
       </div>
     );
@@ -232,7 +236,7 @@ class LegendSeriesList extends PureComponent<LegendComponentProps> {
 }
 
 class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
-  onToggleSort = (stat: Sort) => {
+  onToggleSort = (stat: LegendStat) => {
     if (!this.props.onToggleSort) {
       return;
     }
@@ -264,7 +268,7 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
     }
 
     return (
-      <table>
+      <table role="grid">
         <colgroup>
           <col style={{ width: '100%' }} />
         </colgroup>
@@ -272,7 +276,7 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
           <tr>
             <th style={{ textAlign: 'left' }} />
             {LEGEND_STATS.map(
-              statName =>
+              (statName) =>
                 seriesValuesProps[statName] && (
                   <LegendTableHeaderItem
                     key={statName}
@@ -306,8 +310,8 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
 }
 
 interface LegendTableHeaderProps {
-  statName: string;
-  onClick?: (statName: string) => void;
+  statName: LegendStat;
+  onClick?: (statName: LegendStat) => void;
 }
 
 class LegendTableHeaderItem extends PureComponent<LegendTableHeaderProps & LegendSortProps> {

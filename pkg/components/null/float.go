@@ -63,14 +63,14 @@ func FloatFromString(f string, nullString string) (Float, error) {
 // It also supports unmarshaling a sql.NullFloat64.
 func (f *Float) UnmarshalJSON(data []byte) error {
 	var err error
-	var v interface{}
+	var v any
 	if err = json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 	switch x := v.(type) {
 	case float64:
 		f.Float64 = x
-	case map[string]interface{}:
+	case map[string]any:
 		err = json.Unmarshal(data, &f.NullFloat64)
 	case nil:
 		f.Valid = false
@@ -98,9 +98,9 @@ func (f *Float) UnmarshalText(text []byte) error {
 }
 
 // MarshalJSON implements json.Marshaler.
-// It will encode null if this Float is null.
+// It will encode null if this Float is null, NaN, of Inf.
 func (f Float) MarshalJSON() ([]byte, error) {
-	if !f.Valid || math.IsNaN(f.Float64) {
+	if !f.Valid || math.IsNaN(f.Float64) || math.IsInf(f.Float64, 0) {
 		return []byte(nullString), nil
 	}
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil

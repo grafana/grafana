@@ -1,0 +1,95 @@
+version: "2.1"
+
+services:
+  db:
+    image: mysql:8.0.32
+    platform: linux/x86_64
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: grafana
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all, --max-connections=1001]
+    ports:
+      - 3306
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+  mysqld-exporter:
+    image: prom/mysqld-exporter
+    environment:
+      - DATA_SOURCE_NAME=root:rootpass@(db:3306)/
+    ports:
+      - 9104
+    depends_on:
+      db:
+        condition: service_healthy
+  prometheus:
+    image: prom/prometheus:v2.4.2
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+    environment:
+      - VIRTUAL_HOST=prometheus.loc
+    ports:
+      - 9090
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    depends_on:
+      db:
+        condition: service_healthy
+  grafana1:
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
+    ports:
+      - 3010:3000
+    depends_on:
+      db:
+        condition: service_healthy
+  grafana2:
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
+    ports:
+      - 3020:3000
+    depends_on:
+      db:
+        condition: service_healthy
+      grafana1:
+        condition: service_healthy
+  grafana3:
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
+    ports:
+      - 3030:3000
+    depends_on:
+      db:
+        condition: service_healthy
+      grafana2:
+        condition: service_healthy
+  grafana4:
+    extends:
+      file: ./grafana-service.yml
+      service: grafana
+    ports:
+      - 3040:3000
+    depends_on:
+      db:
+        condition: service_healthy
+      grafana3:
+        condition: service_healthy
+  webhook:
+    image: webhook-receiver
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "18081:8080"
+    volumes:
+      - "./logs/webhook:/tmp/logs:rw"

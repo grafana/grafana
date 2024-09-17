@@ -1,7 +1,7 @@
 package services
 
 import (
-	"io/ioutil"
+	"io/fs"
 	"os"
 )
 
@@ -16,10 +16,14 @@ func (i IoUtilImp) RemoveAll(path string) error {
 	return os.RemoveAll(path)
 }
 
-func (i IoUtilImp) ReadDir(path string) ([]os.FileInfo, error) {
-	return ioutil.ReadDir(path)
+func (i IoUtilImp) ReadDir(path string) ([]fs.DirEntry, error) {
+	return os.ReadDir(path)
 }
 
 func (i IoUtilImp) ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadFile(filename)
+	// We can ignore the gosec G304 warning on this one, since the variable part of the file path stems
+	// from command line flag "pluginsDir". If the user shouldn't be reading from this directory, they shouldn't have
+	// the permission in the file system.
+	// nolint:gosec
+	return os.ReadFile(filename)
 }

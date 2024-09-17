@@ -1,263 +1,159 @@
 package api
 
 import (
-	"fmt"
+	"encoding/json"
+	"net/http"
+	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func TestDashboardPermissionAPIEndpoint(t *testing.T) {
-	t.Run("Dashboard permissions test", func(t *testing.T) {
-		t.Run("Given dashboard not exists", func(t *testing.T) {
-			setUp := func() {
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
-					return models.ErrDashboardNotFound
-				})
-			}
+func TestHTTPServer_GetDashboardPermissionList(t *testing.T) {
+	t.Run("should not be able to list acl when user does not have permission to do so", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {})
 
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					setUp()
-					callGetDashboardPermissions(sc)
-					assert.Equal(t, 404, sc.resp.Code)
-				})
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/uid/1/permissions"), userWithPermissions(1, nil)))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-				},
-			}
-
-			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-					setUp()
-					callUpdateDashboardPermissions(sc)
-					assert.Equal(t, 404, sc.resp.Code)
-				})
-		})
-
-		t.Run("Given user has no admin permissions", func(t *testing.T) {
-			origNewGuardian := guardian.New
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
-
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
-
-			getDashboardQueryResult := models.NewDashboard("Dash")
-
-			setUp := func() {
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					setUp()
-					callGetDashboardPermissions(sc)
-					assert.Equal(t, 403, sc.resp.Code)
-				})
-
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-				},
-			}
-
-			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-					setUp()
-					callUpdateDashboardPermissions(sc)
-					assert.Equal(t, 403, sc.resp.Code)
-				})
-		})
-
-		t.Run("Given user has admin permissions and permissions to update", func(t *testing.T) {
-			origNewGuardian := guardian.New
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
-
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-				CanAdminValue:                    true,
-				CheckPermissionBeforeUpdateValue: true,
-				GetAclValue: []*models.DashboardAclInfoDTO{
-					{OrgId: 1, DashboardId: 1, UserId: 2, Permission: models.PERMISSION_VIEW},
-					{OrgId: 1, DashboardId: 1, UserId: 3, Permission: models.PERMISSION_EDIT},
-					{OrgId: 1, DashboardId: 1, UserId: 4, Permission: models.PERMISSION_ADMIN},
-					{OrgId: 1, DashboardId: 1, TeamId: 1, Permission: models.PERMISSION_VIEW},
-					{OrgId: 1, DashboardId: 1, TeamId: 2, Permission: models.PERMISSION_ADMIN},
-				},
-			})
-
-			setUp := func() {
-				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-
-			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
-					setUp()
-					callGetDashboardPermissions(sc)
-					assert.Equal(t, 200, sc.resp.Code)
-					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-					require.NoError(t, err)
-					assert.Equal(t, 5, len(respJSON.MustArray()))
-					assert.Equal(t, 2, respJSON.GetIndex(0).Get("userId").MustInt())
-					assert.Equal(t, int(models.PERMISSION_VIEW), respJSON.GetIndex(0).Get("permission").MustInt())
-				})
-
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-				},
-			}
-
-			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-					setUp()
-					callUpdateDashboardPermissions(sc)
-					assert.Equal(t, 200, sc.resp.Code)
-				})
-		})
-
-		t.Run("When trying to update permissions with duplicate permissions", func(t *testing.T) {
-			origNewGuardian := guardian.New
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-				CanAdminValue:                    true,
-				CheckPermissionBeforeUpdateValue: false,
-				CheckPermissionBeforeUpdateError: guardian.ErrGuardianPermissionExists,
-			})
-
-			setUp := func() {
-				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
-
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-				},
-			}
-
-			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-					setUp()
-					callUpdateDashboardPermissions(sc)
-					assert.Equal(t, 400, sc.resp.Code)
-				})
-		})
-
-		t.Run("When trying to update team or user permissions with a role", func(t *testing.T) {
-			role := models.ROLE_EDITOR
-			cmds := []dtos.UpdateDashboardAclCommand{
-				{
-					Items: []dtos.DashboardAclUpdateItem{
-						{UserID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
-					},
-				},
-				{
-					Items: []dtos.DashboardAclUpdateItem{
-						{TeamID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
-					},
-				},
-			}
-
-			for _, cmd := range cmds {
-				updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
-					"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-						callUpdateDashboardPermissions(sc)
-						assert.Equal(t, 400, sc.resp.Code)
-						respJSON, err := jsonMap(sc.resp.Body.Bytes())
-						require.NoError(t, err)
-						assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON["error"])
-					})
+	t.Run("should be able to list acl with correct permission", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			svc := dashboards.NewFakeDashboardService(t)
+			svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1, UID: "1"}, nil)
+			hs.DashboardService = svc
+			hs.dashboardPermissionsService = &actest.FakePermissionsService{
+				ExpectedPermissions: []accesscontrol.ResourcePermission{},
 			}
 		})
 
-		t.Run("When trying to override inherited permissions with lower precedence", func(t *testing.T) {
-			origNewGuardian := guardian.New
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/uid/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsPermissionsRead, Scope: "dashboards:uid:1"},
+		})))
 
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-				CanAdminValue:                    true,
-				CheckPermissionBeforeUpdateValue: false,
-				CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverride},
-			)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
 
-			setUp := func() {
-				getDashboardQueryResult := models.NewDashboard("Dash")
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
-					query.Result = getDashboardQueryResult
-					return nil
-				})
-			}
+	t.Run("should filter out hidden users from acl", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			cfg := setting.NewCfg()
+			cfg.HiddenUsers = map[string]struct{}{"hidden": {}}
+			hs.Cfg = cfg
 
-			cmd := dtos.UpdateDashboardAclCommand{
-				Items: []dtos.DashboardAclUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
+			svc := dashboards.NewFakeDashboardService(t)
+			svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1, UID: "1"}, nil)
+
+			hs.DashboardService = svc
+			hs.dashboardPermissionsService = &actest.FakePermissionsService{
+				ExpectedPermissions: []accesscontrol.ResourcePermission{
+					{UserId: 1, UserLogin: "regular", IsManaged: true},
+					{UserId: 2, UserLogin: "hidden", IsManaged: true},
 				},
 			}
-
-			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
-				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-					setUp()
-					callUpdateDashboardPermissions(sc)
-					assert.Equal(t, 400, sc.resp.Code)
-				})
 		})
+
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/uid/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsPermissionsRead, Scope: "dashboards:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+
+		var result []dashboards.DashboardACLInfoDTO
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+
+		assert.Len(t, result, 1)
+		assert.Equal(t, result[0].UserLogin, "regular")
+		require.NoError(t, res.Body.Close())
 	})
 }
 
-func callGetDashboardPermissions(sc *scenarioContext) {
-	sc.handlerFunc = GetDashboardPermissionList
-	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-}
+func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
+	t.Run("should not be able to update acl when user does not have permission to do so", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {})
 
-func callUpdateDashboardPermissions(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *models.UpdateDashboardAclCommand) error {
-		return nil
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/dashboards/uid/1/permissions", nil), userWithPermissions(1, nil)))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
-	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-}
+	t.Run("should be able to update acl with correct permissions", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			svc := dashboards.NewFakeDashboardService(t)
+			svc.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1, UID: "1"}, nil)
 
-func updateDashboardPermissionScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.UpdateDashboardAclCommand, fn scenarioFunc) {
-	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
-
-		sc := setupScenarioContext(t, url)
-
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
-			sc.context = c
-			sc.context.OrgId = testOrgID
-			sc.context.UserId = testUserID
-
-			return UpdateDashboardPermissions(c, cmd)
+			hs.DashboardService = svc
+			hs.dashboardPermissionsService = &actest.FakePermissionsService{}
 		})
 
-		sc.m.Post(routePattern, sc.defaultHandler)
+		body := `{"items": []}`
+		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/dashboards/uid/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: "dashboards:uid:1"},
+		})))
 
-		fn(sc)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should not be able to specify team and user in same acl", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.DashboardService = dashboards.NewFakeDashboardService(t)
+			hs.dashboardPermissionsService = &actest.FakePermissionsService{}
+		})
+
+		body := `{"items": [{ userId:1, teamId: 2 }]}`
+		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/dashboards/uid/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: "dashboards:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should not be able to specify team and role in same acl", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.DashboardService = dashboards.NewFakeDashboardService(t)
+			hs.dashboardPermissionsService = &actest.FakePermissionsService{}
+		})
+
+		body := `{"items": [{ teamId:1, role: "Admin" }]}`
+		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/dashboards/uid/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: "dashboards:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should not be able to specify user and role in same acl", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.DashboardService = dashboards.NewFakeDashboardService(t)
+			hs.dashboardPermissionsService = &actest.FakePermissionsService{}
+		})
+
+		body := `{"items": [{ userId:1, role: "Admin" }]}`
+		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/dashboards/uid/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsPermissionsWrite, Scope: "dashboards:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }

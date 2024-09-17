@@ -1,0 +1,390 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 16 Fields by 5 Rows
+//  +--------------------------+----------------------+-----------------+--------------------------+-----------------+------------------+--------------------+--------------------------+---------------+-----------------+-----------------+---------------------------+-----------------------------------------+------------------------------------+---------------------------------------------------------------------------------+--------------------------+
+//  | Name: @timestamp         | Name: _id            | Name: _index    | Name: _type              | Name: abc       | Name: counter    | Name: float        | Name: highlight          | Name: is_true | Name: label     | Name: level     | Name: line                | Name: location                          | Name: nested_field.internal.nested | Name: shapes                                                                    | Name: sort               |
+//  | Labels:                  | Labels:              | Labels:         | Labels:                  | Labels:         | Labels:          | Labels:            | Labels:                  | Labels:       | Labels:         | Labels:         | Labels:                   | Labels:                                 | Labels:                            | Labels:                                                                         | Labels:                  |
+//  | Type: []*string          | Type: []*string      | Type: []*string | Type: []*json.RawMessage | Type: []*string | Type: []*float64 | Type: []*float64   | Type: []*json.RawMessage | Type: []*bool | Type: []*string | Type: []*string | Type: []*string           | Type: []*string                         | Type: []*string                    | Type: []*json.RawMessage                                                        | Type: []*json.RawMessage |
+//  +--------------------------+----------------------+-----------------+--------------------------+-----------------+------------------+--------------------+--------------------------+---------------+-----------------+-----------------+---------------------------+-----------------------------------------+------------------------------------+---------------------------------------------------------------------------------+--------------------------+
+//  | 2023-02-09T14:40:01.475Z | g2aeNoYB7vaC3bq-ezfK | logs-2023.02.09 | null                     | null            | 81               | 10.911972180833306 | null                     | true          | val3            | info            | log text  [106619125]     | -42.73465234425797, -14.097854057104112 | value1                             | [{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}] | [1675953601475,4]        |
+//  | 2023-02-09T14:40:00.513Z | gmaeNoYB7vaC3bq-eDcN | logs-2023.02.09 | null                     | null            | 80               | 62.94120607636795  | null                     | false         | val3            | error           | log text with [781660944] | 42.07571917624318, 15.95725088484611    | value2                             | [{"type":"triangle"},{"type":"square"}]                                         | [1675953600513,7]        |
+//  | 2023-02-09T14:39:59.556Z | gWaeNoYB7vaC3bq-dDdL | logs-2023.02.09 | null                     | def             | 79               | 53.323706427230455 | null                     | true          | val1            | info            | log text  [894867430]     | -38.27341566189766, -23.66739642570781  | value3                             | [{"type":"triangle"},{"type":"square"}]                                         | [1675953599556,10]       |
+//  | 2023-02-09T14:39:58.608Z | gGaeNoYB7vaC3bq-cDeY | logs-2023.02.09 | null                     | def             | 78               | 82.72012623471589  | null                     | false         | val1            | info            | log text  [478598889]     | 12.373240290451287, 43.265493464362024  | value4                             | [{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}] | [1675953598608,15]       |
+//  | 2023-02-09T14:39:57.665Z | f2aeNoYB7vaC3bq-bDf7 | logs-2023.02.09 | null                     | def             | 77               | 35.05784443331803  | null                     | false         | val3            | info            | log text  [526995818]     | -31.524344042228194, -32.11254790120572 | value5                             | [{"type":"triangle"},{"type":"triangle"},{"type":"triangle"},{"type":"square"}] | [1675953597665,20]       |
+//  +--------------------------+----------------------+-----------------+--------------------------+-----------------+------------------+--------------------+--------------------------+---------------+-----------------+-----------------+---------------------------+-----------------------------------------+------------------------------------+---------------------------------------------------------------------------------+--------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "@timestamp",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "_id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "_index",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "_type",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "abc",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "counter",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "float",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "highlight",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "is_true",
+            "type": "boolean",
+            "typeInfo": {
+              "frame": "bool",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "label",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "level",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "line",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "location",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "nested_field.internal.nested",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "shapes",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          },
+          {
+            "name": "sort",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "2023-02-09T14:40:01.475Z",
+            "2023-02-09T14:40:00.513Z",
+            "2023-02-09T14:39:59.556Z",
+            "2023-02-09T14:39:58.608Z",
+            "2023-02-09T14:39:57.665Z"
+          ],
+          [
+            "g2aeNoYB7vaC3bq-ezfK",
+            "gmaeNoYB7vaC3bq-eDcN",
+            "gWaeNoYB7vaC3bq-dDdL",
+            "gGaeNoYB7vaC3bq-cDeY",
+            "f2aeNoYB7vaC3bq-bDf7"
+          ],
+          [
+            "logs-2023.02.09",
+            "logs-2023.02.09",
+            "logs-2023.02.09",
+            "logs-2023.02.09",
+            "logs-2023.02.09"
+          ],
+          [
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            null,
+            null,
+            "def",
+            "def",
+            "def"
+          ],
+          [
+            81,
+            80,
+            79,
+            78,
+            77
+          ],
+          [
+            10.911972180833306,
+            62.94120607636795,
+            53.323706427230455,
+            82.72012623471589,
+            35.05784443331803
+          ],
+          [
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          [
+            true,
+            false,
+            true,
+            false,
+            false
+          ],
+          [
+            "val3",
+            "val3",
+            "val1",
+            "val1",
+            "val3"
+          ],
+          [
+            "info",
+            "error",
+            "info",
+            "info",
+            "info"
+          ],
+          [
+            "log text  [106619125]",
+            "log text with [781660944]",
+            "log text  [894867430]",
+            "log text  [478598889]",
+            "log text  [526995818]"
+          ],
+          [
+            "-42.73465234425797, -14.097854057104112",
+            "42.07571917624318, 15.95725088484611",
+            "-38.27341566189766, -23.66739642570781",
+            "12.373240290451287, 43.265493464362024",
+            "-31.524344042228194, -32.11254790120572"
+          ],
+          [
+            "value1",
+            "value2",
+            "value3",
+            "value4",
+            "value5"
+          ],
+          [
+            [
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "square"
+              }
+            ],
+            [
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "square"
+              }
+            ],
+            [
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "square"
+              }
+            ],
+            [
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "square"
+              }
+            ],
+            [
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "triangle"
+              },
+              {
+                "type": "square"
+              }
+            ]
+          ],
+          [
+            [
+              1675953601475,
+              4
+            ],
+            [
+              1675953600513,
+              7
+            ],
+            [
+              1675953599556,
+              10
+            ],
+            [
+              1675953598608,
+              15
+            ],
+            [
+              1675953597665,
+              20
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

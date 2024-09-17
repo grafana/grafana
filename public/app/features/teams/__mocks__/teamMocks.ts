@@ -3,47 +3,24 @@ import { Team, TeamGroup, TeamMember, TeamPermissionLevel } from 'app/types';
 export const getMultipleMockTeams = (numberOfTeams: number): Team[] => {
   const teams: Team[] = [];
   for (let i = 1; i <= numberOfTeams; i++) {
-    teams.push({
-      id: i,
-      name: `test-${i}`,
-      avatarUrl: 'some/url/',
-      email: `test-${i}@test.com`,
-      memberCount: i,
-      permission: TeamPermissionLevel.Member,
-    });
+    teams.push(getMockTeam(i));
   }
 
   return teams;
 };
 
-export const getMockTeam = (): Team => {
+export const getMockTeam = (i = 1, overrides = {}): Team => {
   return {
-    id: 1,
-    name: 'test',
+    id: i,
+    name: `test-${i}`,
     avatarUrl: 'some/url/',
-    email: 'test@test.com',
-    memberCount: 1,
+    email: `test-${i}@test.com`,
+    memberCount: i,
     permission: TeamPermissionLevel.Member,
+    accessControl: { isEditor: false },
+    orgId: 0,
+    ...overrides,
   };
-};
-
-export const getMockTeamMembers = (amount: number, teamAdminId: number): TeamMember[] => {
-  const teamMembers: TeamMember[] = [];
-
-  for (let i = 1; i <= amount; i++) {
-    teamMembers.push({
-      userId: i,
-      teamId: 1,
-      avatarUrl: 'some/url/',
-      email: 'test@test.com',
-      name: 'testName',
-      login: `testUser-${i}`,
-      labels: ['label 1', 'label 2'],
-      permission: i === teamAdminId ? TeamPermissionLevel.Admin : TeamPermissionLevel.Member,
-    });
-  }
-
-  return teamMembers;
 };
 
 export const getMockTeamMember = (): TeamMember => {

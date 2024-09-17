@@ -1,11 +1,11 @@
-import React from 'react';
-import { useTheme } from '../../themes/ThemeContext';
-import { sharedInputStyle } from '../Forms/commonStyles';
+import { css, cx } from '@emotion/css';
+import { forwardRef } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { inputPadding } from '../Forms/commonStyles';
 import { getInputStyles } from '../Input/Input';
-import { css, cx } from 'emotion';
-import { stylesFactory } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
-import { focusCss } from '../../themes/mixins';
 
 interface InputControlProps {
   /** Show an icon as a prefix in the input */
@@ -13,60 +13,50 @@ interface InputControlProps {
   focused: boolean;
   invalid: boolean;
   disabled: boolean;
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
 }
 
-const getInputControlStyles = stylesFactory(
-  (theme: GrafanaTheme, invalid: boolean, focused: boolean, disabled: boolean, withPrefix: boolean) => {
-    const styles = getInputStyles({ theme, invalid });
-
-    return {
-      wrapper: cx(
-        styles.wrapper,
-        sharedInputStyle(theme, invalid),
-        focused &&
-          css`
-            ${focusCss(theme)}
-          `,
-        disabled && styles.inputDisabled,
-        css`
-          min-height: 32px;
-          height: auto;
-          flex-direction: row;
-          padding-right: 0;
-          max-width: 100%;
-          align-items: center;
-          cursor: default;
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: space-between;
-          position: relative;
-          box-sizing: border-box;
-        `,
-        withPrefix &&
-          css`
-            padding-left: 0;
-          `
-      ),
-      prefix: cx(
-        styles.prefix,
-        css`
-          position: relative;
-        `
-      ),
-    };
-  }
-);
-
-export const InputControl = React.forwardRef<HTMLDivElement, React.PropsWithChildren<InputControlProps>>(
+export const InputControl = forwardRef<HTMLDivElement, React.PropsWithChildren<InputControlProps>>(
   function InputControl({ focused, invalid, disabled, children, innerProps, prefix, ...otherProps }, ref) {
-    const theme = useTheme();
-    const styles = getInputControlStyles(theme, invalid, focused, disabled, !!prefix);
+    const styles = useStyles2(getInputControlStyles, invalid, !!prefix);
+
     return (
-      <div className={styles.wrapper} {...innerProps} ref={ref}>
+      <div className={styles.input} {...innerProps} ref={ref}>
         {prefix && <div className={cx(styles.prefix)}>{prefix}</div>}
         {children}
       </div>
     );
   }
 );
+
+const getInputControlStyles = (theme: GrafanaTheme2, invalid: boolean, withPrefix: boolean) => {
+  const styles = getInputStyles({ theme, invalid });
+
+  return {
+    input: cx(
+      inputPadding(theme),
+      css({
+        width: '100%',
+        maxWidth: '100%',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        paddingRight: 0,
+        position: 'relative',
+        boxSizing: 'border-box',
+      }),
+      withPrefix &&
+        css({
+          paddingLeft: 0,
+        })
+    ),
+    prefix: cx(
+      styles.prefix,
+      css({
+        position: 'relative',
+      })
+    ),
+  };
+};

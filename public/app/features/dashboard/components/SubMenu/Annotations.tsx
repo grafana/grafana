@@ -1,16 +1,20 @@
-import React, { FunctionComponent, useEffect, useState } from 'react';
-import { LegacyForms } from '@grafana/ui';
-const { Switch } = LegacyForms;
+import { useEffect, useState } from 'react';
+
+import { AnnotationQuery, DataQuery, EventBus } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { AnnotationPicker } from './AnnotationPicker';
 
 interface Props {
-  annotations: any[];
-  onAnnotationChanged: (annotation: any) => void;
+  events: EventBus;
+  annotations: AnnotationQuery[];
+  onAnnotationChanged: (annotation: AnnotationQuery<DataQuery>) => void;
 }
 
-export const Annotations: FunctionComponent<Props> = ({ annotations, onAnnotationChanged }) => {
-  const [visibleAnnotations, setVisibleAnnotations] = useState<any>([]);
+export const Annotations = ({ annotations, onAnnotationChanged, events }: Props) => {
+  const [visibleAnnotations, setVisibleAnnotations] = useState<AnnotationQuery[]>([]);
   useEffect(() => {
-    setVisibleAnnotations(annotations.filter(annotation => annotation.hide !== true));
+    setVisibleAnnotations(annotations.filter((annotation) => annotation.hide !== true));
   }, [annotations]);
 
   if (visibleAnnotations.length === 0) {
@@ -18,22 +22,15 @@ export const Annotations: FunctionComponent<Props> = ({ annotations, onAnnotatio
   }
 
   return (
-    <>
-      {visibleAnnotations.map((annotation: any) => {
-        return (
-          <div
-            key={annotation.name}
-            className={annotation.enable ? 'submenu-item' : 'submenu-item annotation-disabled'}
-          >
-            <Switch
-              label={annotation.name}
-              className="gf-form"
-              checked={annotation.enable}
-              onChange={() => onAnnotationChanged(annotation)}
-            />
-          </div>
-        );
-      })}
-    </>
+    <div data-testid={selectors.pages.Dashboard.SubMenu.Annotations.annotationsWrapper}>
+      {visibleAnnotations.map((annotation) => (
+        <AnnotationPicker
+          events={events}
+          annotation={annotation}
+          onEnabledChanged={onAnnotationChanged}
+          key={annotation.name}
+        />
+      ))}
+    </div>
   );
 };

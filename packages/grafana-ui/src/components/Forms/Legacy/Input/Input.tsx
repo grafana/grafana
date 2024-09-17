@@ -1,14 +1,17 @@
-import React, { PureComponent, ChangeEvent } from 'react';
 import classNames from 'classnames';
-import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
-import { ValidationEvents, ValidationRule } from '../../../../types';
+import { PureComponent, ChangeEvent } from 'react';
+import * as React from 'react';
 
+import { ValidationEvents, ValidationRule } from '../../../../types';
+import { validate, EventsWithValidation, hasValidationEvent } from '../../../../utils';
+
+/** @deprecated Please use the `Input` component, which does not require this enum. */
 export enum LegacyInputStatus {
   Invalid = 'invalid',
   Valid = 'valid',
 }
 
-interface Props extends React.HTMLProps<HTMLInputElement> {
+export interface Props extends React.HTMLProps<HTMLInputElement> {
   validationEvents?: ValidationEvents;
   hideErrorMessage?: boolean;
   inputRef?: React.LegacyRef<HTMLInputElement>;
@@ -23,6 +26,7 @@ interface State {
   error: string | null;
 }
 
+/** @deprecated Please use the `Input` component. {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-input--simple See Storybook for example.} */
 export class Input extends PureComponent<Props, State> {
   static defaultProps = {
     className: '',
@@ -43,7 +47,7 @@ export class Input extends PureComponent<Props, State> {
   validatorAsync = (validationRules: ValidationRule[]) => {
     return (evt: ChangeEvent<HTMLInputElement>) => {
       const errors = validate(evt.target.value, validationRules);
-      this.setState(prevState => {
+      this.setState((prevState) => {
         return { ...prevState, error: errors ? errors[0] : null };
       });
     };
@@ -54,7 +58,7 @@ export class Input extends PureComponent<Props, State> {
     if (!validationEvents) {
       return inputElementProps;
     }
-    Object.keys(EventsWithValidation).forEach(eventName => {
+    Object.keys(EventsWithValidation).forEach((eventName) => {
       if (hasValidationEvent(eventName as EventsWithValidation, validationEvents) || restProps[eventName]) {
         inputElementProps[eventName] = async (evt: ChangeEvent<HTMLInputElement>) => {
           evt.persist(); // Needed for async. https://reactjs.org/docs/events.html#event-pooling

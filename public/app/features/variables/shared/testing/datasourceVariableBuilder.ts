@@ -1,13 +1,16 @@
-import { MultiVariableBuilder } from './multiVariableBuilder';
-import { DataSourceVariableModel, VariableRefresh } from 'app/features/variables/types';
+import { DataSourceVariableModel, QueryVariableModel, VariableRefresh } from '@grafana/data';
 
-export class DatasourceVariableBuilder<T extends DataSourceVariableModel> extends MultiVariableBuilder<T> {
+import { MultiVariableBuilder } from './multiVariableBuilder';
+
+export class DatasourceVariableBuilder<
+  T extends DataSourceVariableModel | QueryVariableModel,
+> extends MultiVariableBuilder<T> {
   withRefresh(refresh: VariableRefresh) {
     this.variable.refresh = refresh;
     return this;
   }
 
-  withRegEx(regex: any) {
+  withRegEx(regex: string) {
     this.variable.regex = regex;
     return this;
   }

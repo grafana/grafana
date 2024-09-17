@@ -1,129 +1,96 @@
 'use strict';
 
-const merge = require('webpack-merge');
-const TerserPlugin = require('terser-webpack-plugin');
-const common = require('./webpack.common.js');
-const path = require('path');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const browserslist = require('browserslist');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const { EsbuildPlugin } = require('esbuild-loader');
+const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const path = require('path');
+const { EnvironmentPlugin } = require('webpack');
+const WebpackAssetsManifest = require('webpack-assets-manifest');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
+const { merge } = require('webpack-merge');
 
-module.exports = merge(common, {
-  mode: 'production',
-  devtool: 'source-map',
+const getEnvConfig = require('./env-util.js');
+const common = require('./webpack.common.js');
+const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 
-  entry: {
-    dark: './public/sass/grafana.dark.scss',
-    light: './public/sass/grafana.light.scss',
-  },
+// esbuild-loader 3.0.0+ requires format to be set to prevent it
+// from defaulting to 'iife' which breaks monaco/loader once minified.
+const esbuildOptions = {
+  target: esbuildTargets,
+  format: undefined,
+  jsx: 'automatic',
+};
 
-  module: {
-    // Note: order is bottom-to-top and/or right-to-left
-    rules: [
-      {
-        test: /\.tsx?$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              cacheDirectory: true,
-              babelrc: false,
-              // Note: order is top-to-bottom and/or left-to-right
-              plugins: [
-                [
-                  require('@rtsao/plugin-proposal-class-properties'),
-                  {
-                    loose: true,
-                  },
-                ],
-                '@babel/plugin-proposal-nullish-coalescing-operator',
-                '@babel/plugin-proposal-optional-chaining',
-                '@babel/plugin-syntax-dynamic-import', // needed for `() => import()` in routes.ts
-                'angularjs-annotate',
-              ],
-              // Note: order is bottom-to-top and/or right-to-left
-              presets: [
-                [
-                  '@babel/preset-env',
-                  {
-                    targets: {
-                      browsers: 'last 3 versions',
-                    },
-                    useBuiltIns: 'entry',
-                    corejs: 3,
-                    modules: false,
-                  },
-                ],
-                [
-                  '@babel/preset-typescript',
-                  {
-                    allowNamespaces: true,
-                  },
-                ],
-                '@babel/preset-react',
-              ],
-            },
-          },
-        ],
-      },
-      require('./sass.rule.js')({
-        sourceMap: false,
-        preserveUrl: false,
-      }),
-    ],
-  },
-  optimization: {
-    nodeEnv: 'production',
-    minimizer: [
-      new TerserPlugin({
-        cache: false,
-        parallel: false,
-        sourceMap: true,
-      }),
-      new OptimizeCSSAssetsPlugin({}),
-    ],
-  },
-  plugins: [
-    new ForkTsCheckerWebpackPlugin({
-      eslint: {
-        enabled: true,
-        files: ['public/app/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
-      },
-      typescript: {
-        mode: 'write-references',
-        memoryLimit: 4096,
-        diagnosticOptions: {
-          semantic: true,
-          syntactic: true,
-        },
-      },
-    }),
-    new MiniCssExtractPlugin({
-      filename: 'grafana.[name].[hash].css',
-    }),
-    new HtmlWebpackPlugin({
-      filename: path.resolve(__dirname, '../../public/views/error.html'),
-      template: path.resolve(__dirname, '../../public/views/error-template.html'),
-      inject: false,
-      excludeChunks: ['dark', 'light'],
-      chunksSortMode: 'none',
-    }),
-    new HtmlWebpackPlugin({
-      filename: path.resolve(__dirname, '../../public/views/index.html'),
-      template: path.resolve(__dirname, '../../public/views/index-template.html'),
-      inject: false,
-      excludeChunks: ['manifest', 'dark', 'light'],
-      chunksSortMode: 'none',
-    }),
-    function() {
-      this.hooks.done.tap('Done', function(stats) {
-        if (stats.compilation.errors && stats.compilation.errors.length) {
-          console.log(stats.compilation.errors);
-          process.exit(1);
-        }
-      });
+const envConfig = getEnvConfig();
+
+module.exports = (env = {}) =>
+  merge(common, {
+    mode: 'production',
+    devtool: 'source-map',
+
+    entry: {
+      dark: './public/sass/grafana.dark.scss',
+      light: './public/sass/grafana.light.scss',
     },
-  ],
-});
+
+    module: {
+      // Note: order is bottom-to-top and/or right-to-left
+      rules: [
+        {
+          test: /\.tsx?$/,
+          use: {
+            loader: 'esbuild-loader',
+            options: esbuildOptions,
+          },
+        },
+        require('./sass.rule.js')({
+          sourceMap: false,
+          preserveUrl: false,
+        }),
+      ],
+    },
+    optimization: {
+      nodeEnv: 'production',
+      minimize: parseInt(env.noMinify, 10) !== 1,
+      minimizer: [new EsbuildPlugin(esbuildOptions), new CssMinimizerPlugin()],
+    },
+
+    // enable persistent cache for faster builds
+    cache: {
+      type: 'filesystem',
+      name: 'grafana-default-production',
+      buildDependencies: {
+        config: [__filename],
+      },
+    },
+
+    plugins: [
+      new MiniCssExtractPlugin({
+        filename: 'grafana.[name].[contenthash].css',
+      }),
+      /**
+       * I know we have two manifest plugins here.
+       * WebpackManifestPlugin was only used in prod before and does not support integrity hashes
+       */
+      new WebpackAssetsManifest({
+        entrypoints: true,
+        integrity: true,
+        publicPath: true,
+      }),
+      new WebpackManifestPlugin({
+        fileName: path.join(process.cwd(), 'manifest.json'),
+        filter: (file) => !file.name.endsWith('.map'),
+      }),
+      function () {
+        this.hooks.done.tap('Done', function (stats) {
+          if (stats.compilation.errors && stats.compilation.errors.length) {
+            console.log(stats.compilation.errors);
+            process.exit(1);
+          }
+        });
+      },
+      new EnvironmentPlugin(envConfig),
+    ],
+  });

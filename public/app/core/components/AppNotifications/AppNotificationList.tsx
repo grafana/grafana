@@ -1,62 +1,65 @@
-import React, { PureComponent } from 'react';
+import { css } from '@emotion/css';
+import { useEffect } from 'react';
+
+import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, Stack } from '@grafana/ui';
+import { notifyApp, hideAppNotification } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
-import AppNotificationItem from './AppNotificationItem';
-import { notifyApp, clearAppNotification } from 'app/core/actions';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
-import { AppNotification, StoreState } from 'app/types';
+import { selectVisible } from 'app/core/reducers/appNotification';
+import { useSelector, useDispatch } from 'app/types';
 
 import {
   createErrorNotification,
+  createInfoNotification,
   createSuccessNotification,
   createWarningNotification,
 } from '../../copy/appNotification';
-import { AppEvents } from '@grafana/data';
 
-export interface Props {
-  appNotifications: AppNotification[];
-  notifyApp: typeof notifyApp;
-  clearAppNotification: typeof clearAppNotification;
-}
+import AppNotificationItem from './AppNotificationItem';
 
-export class AppNotificationList extends PureComponent<Props> {
-  componentDidMount() {
-    const { notifyApp } = this.props;
+export function AppNotificationList() {
+  const appNotifications = useSelector((state) => selectVisible(state.appNotifications));
+  const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
 
-    appEvents.on(AppEvents.alertWarning, payload => notifyApp(createWarningNotification(...payload)));
-    appEvents.on(AppEvents.alertSuccess, payload => notifyApp(createSuccessNotification(...payload)));
-    appEvents.on(AppEvents.alertError, payload => notifyApp(createErrorNotification(...payload)));
-  }
+  useEffect(() => {
+    appEvents.on(AppEvents.alertWarning, (payload) => dispatch(notifyApp(createWarningNotification(...payload))));
+    appEvents.on(AppEvents.alertSuccess, (payload) => dispatch(notifyApp(createSuccessNotification(...payload))));
+    appEvents.on(AppEvents.alertError, (payload) => dispatch(notifyApp(createErrorNotification(...payload))));
+    appEvents.on(AppEvents.alertInfo, (payload) => dispatch(notifyApp(createInfoNotification(...payload))));
+  }, [dispatch]);
 
-  onClearAppNotification = (id: string) => {
-    this.props.clearAppNotification(id);
+  const onClearAppNotification = (id: string) => {
+    dispatch(hideAppNotification(id));
   };
 
-  render() {
-    const { appNotifications } = this.props;
-
-    return (
-      <div>
+  return (
+    <div className={styles.wrapper}>
+      <Stack direction="column">
         {appNotifications.map((appNotification, index) => {
           return (
             <AppNotificationItem
               key={`${appNotification.id}-${index}`}
               appNotification={appNotification}
-              onClearNotification={id => this.onClearAppNotification(id)}
+              onClearNotification={onClearAppNotification}
             />
           );
         })}
-      </div>
-    );
-  }
+      </Stack>
+    </div>
+  );
 }
 
-const mapStateToProps = (state: StoreState) => ({
-  appNotifications: state.appNotifications.appNotifications,
-});
-
-const mapDispatchToProps = {
-  notifyApp,
-  clearAppNotification,
-};
-
-export default connectWithStore(AppNotificationList, mapStateToProps, mapDispatchToProps);
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css({
+      label: 'app-notifications-list',
+      zIndex: theme.zIndex.portal,
+      minWidth: 400,
+      maxWidth: 600,
+      position: 'fixed',
+      right: 6,
+      top: 88,
+    }),
+  };
+}

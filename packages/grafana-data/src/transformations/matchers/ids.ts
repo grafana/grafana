@@ -13,14 +13,19 @@ export enum MatcherID {
 export enum FieldMatcherID {
   // Specific Types
   numeric = 'numeric',
-  time = 'time',
+  time = 'time', // Can be multiple times
+  first = 'first',
+  firstTimeField = 'firstTimeField', // Only the first time field
 
   // With arguments
   byType = 'byType',
+  byTypes = 'byTypes',
   byName = 'byName',
   byNames = 'byNames',
   byRegexp = 'byRegexp',
   byRegexpOrNames = 'byRegexpOrNames',
+  byFrameRefID = 'byFrameRefID',
+  byValue = 'byValue',
   // byIndex = 'byIndex',
   // byLabel = 'byLabel',
 }
@@ -32,5 +37,22 @@ export enum FrameMatcherID {
   byName = 'byName',
   byRefId = 'byRefId',
   byIndex = 'byIndex',
-  byLabel = 'byLabel',
+}
+
+/**
+ * @public
+ */
+export enum ValueMatcherID {
+  regex = 'regex',
+  isNull = 'isNull',
+  isNotNull = 'isNotNull',
+  greater = 'greater',
+  greaterOrEqual = 'greaterOrEqual',
+  lower = 'lower',
+  lowerOrEqual = 'lowerOrEqual',
+  equal = 'equal',
+  notEqual = 'notEqual',
+  substring = 'substring',
+  notSubstring = 'notSubstring',
+  between = 'between',
 }

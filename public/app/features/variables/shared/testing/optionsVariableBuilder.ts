@@ -1,21 +1,28 @@
-import { VariableOption, VariableWithOptions } from 'app/features/variables/types';
+import { VariableOption, VariableWithOptions } from '@grafana/data';
+
 import { VariableBuilder } from './variableBuilder';
 
 export class OptionsVariableBuilder<T extends VariableWithOptions> extends VariableBuilder<T> {
-  withOptions(...texts: string[]) {
+  withOptions(...options: Array<string | { text: string; value: string }>) {
     this.variable.options = [];
-    for (let index = 0; index < texts.length; index++) {
-      this.variable.options.push({
-        text: texts[index],
-        value: texts[index],
-        selected: false,
-      });
+    for (let index = 0; index < options.length; index++) {
+      const option = options[index];
+
+      if (typeof option === 'string') {
+        this.variable.options.push({
+          text: option,
+          value: option,
+          selected: false,
+        });
+      } else {
+        this.variable.options.push({ ...option, selected: false });
+      }
     }
     return this;
   }
 
   withoutOptions() {
-    this.variable.options = (undefined as unknown) as VariableOption[];
+    this.variable.options = undefined as unknown as VariableOption[];
     return this;
   }
 

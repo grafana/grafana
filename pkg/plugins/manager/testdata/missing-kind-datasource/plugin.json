@@ -1,0 +1,14 @@
+{
+  "type": "datasource",
+  "name": "Missing kind impl",
+  "id": "missing-kind-datasource",
+  "backend": true,
+  "state": "alpha",
+  "info": {
+    "description": "Test",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    }
+  }
+}

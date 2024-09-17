@@ -1,38 +1,35 @@
+import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { getQueryKeys } from 'app/core/utils/explore';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
-import { queryReducer } from './query';
-import { datasourceReducer } from './datasource';
-import { timeReducer } from './time';
-import { historyReducer } from './history';
-import { makeExplorePaneState, makeInitialUpdateState, loadAndInitDatasource, createEmptyQueryResponse } from './utils';
-import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import {
-  EventBusExtended,
-  DataQuery,
-  ExploreUrlState,
-  LogLevel,
-  LogsDedupStrategy,
   TimeRange,
   HistoryItem,
   DataSourceApi,
+  ExplorePanelsState,
+  PreferredVisualisationType,
+  RawTimeRange,
+  ExploreCorrelationHelperData,
+  EventBusExtended,
 } from '@grafana/data';
-import {
-  clearQueryKeys,
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getTimeRangeFromUrl,
-} from 'app/core/utils/explore';
-// Types
-import { ThunkResult } from 'app/types';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { getQueryKeys } from 'app/core/utils/explore';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
+import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { updateLocation } from '../../../core/actions';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { runQueries, setQueriesAction } from './query';
-import { updateTime } from './time';
-import { toRawTimeRange } from '../utils/time';
-import { getExploreDatasources } from './selectors';
+import { createAsyncThunk, ThunkResult } from 'app/types';
+import { ExploreItemState } from 'app/types/explore';
+
+import { datasourceReducer } from './datasource';
+import { queryReducer, runQueries } from './query';
+import { timeReducer, updateTime } from './time';
+import {
+  makeExplorePaneState,
+  loadAndInitDatasource,
+  createEmptyQueryResponse,
+  getRange,
+  getDatasourceUIDs,
+} from './utils';
+// Types
 
 //
 // Actions and Payloads
@@ -43,101 +40,124 @@ import { getExploreDatasources } from './selectors';
  * The width will be used to calculate graph intervals (number of datapoints).
  */
 export interface ChangeSizePayload {
-  exploreId: ExploreId;
+  exploreId: string;
   width: number;
-  height: number;
 }
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
 /**
- * Change deduplication strategy for logs.
+ * Tracks the state of explore panels that gets synced with the url.
  */
-export interface ChangeDedupStrategyPayload {
-  exploreId: ExploreId;
-  dedupStrategy: LogsDedupStrategy;
+interface ChangePanelsState {
+  exploreId: string;
+  panelsState: ExplorePanelsState;
 }
-export const changeDedupStrategyAction = createAction<ChangeDedupStrategyPayload>('explore/changeDedupStrategyAction');
+export const changePanelsStateAction = createAction<ChangePanelsState>('explore/changePanels');
+export function changePanelState(
+  exploreId: string,
+  panel: PreferredVisualisationType,
+  panelState: ExplorePanelsState[PreferredVisualisationType]
+): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const exploreItem = getState().explore.panes[exploreId];
+    if (exploreItem === undefined) {
+      return;
+    }
+    const { panelsState } = exploreItem;
+    dispatch(
+      changePanelsStateAction({
+        exploreId,
+        panelsState: {
+          ...panelsState,
+          [panel]: panelState,
+        },
+      })
+    );
+  };
+}
 
 /**
- * Highlight expressions in the log results
+ * Tracks the state of correlation helper data in the panel
  */
-export interface HighlightLogsExpressionPayload {
-  exploreId: ExploreId;
-  expressions: string[];
+interface ChangeCorrelationHelperData {
+  exploreId: string;
+  correlationEditorHelperData?: ExploreCorrelationHelperData;
 }
-export const highlightLogsExpressionAction = createAction<HighlightLogsExpressionPayload>(
-  'explore/highlightLogsExpression'
+export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperData>(
+  'explore/changeCorrelationHelperData'
 );
 
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
-export interface InitializeExplorePayload {
-  exploreId: ExploreId;
-  containerWidth: number;
-  eventBridge: EventBusExtended;
+interface InitializeExplorePayload {
+  exploreId: string;
   queries: DataQuery[];
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
-  originPanelId?: number | null;
+  eventBridge: EventBusExtended;
 }
-export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
-
-export interface ToggleLogLevelPayload {
-  exploreId: ExploreId;
-  hiddenLogLevels: LogLevel[];
-}
-export const toggleLogLevelAction = createAction<ToggleLogLevelPayload>('explore/toggleLogLevel');
+const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
 export interface SetUrlReplacedPayload {
-  exploreId: ExploreId;
+  exploreId: string;
 }
 export const setUrlReplacedAction = createAction<SetUrlReplacedPayload>('explore/setUrlReplaced');
+
+export interface SaveCorrelationsPayload {
+  exploreId: string;
+  correlations: CorrelationData[];
+}
+export const saveCorrelationsAction = createAction<SaveCorrelationsPayload>('explore/saveCorrelationsAction');
 
 /**
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
  */
-export function changeSize(
-  exploreId: ExploreId,
-  { height, width }: { height: number; width: number }
-): PayloadAction<ChangeSizePayload> {
-  return changeSizeAction({ exploreId, height, width });
+export function changeSize(exploreId: string, { width }: { width: number }): PayloadAction<ChangeSizePayload> {
+  return changeSizeAction({ exploreId, width });
 }
 
-/**
- * Change logs deduplication strategy.
- */
-export const changeDedupStrategy = (
-  exploreId: ExploreId,
-  dedupStrategy: LogsDedupStrategy
-): PayloadAction<ChangeDedupStrategyPayload> => {
-  return changeDedupStrategyAction({ exploreId, dedupStrategy });
-};
-
+export interface InitializeExploreOptions {
+  exploreId: string;
+  datasource: DataSourceRef | string | undefined;
+  queries: DataQuery[];
+  range: RawTimeRange;
+  panelsState?: ExplorePanelsState;
+  correlationHelperData?: ExploreCorrelationHelperData;
+  position?: number;
+  eventBridge: EventBusExtended;
+}
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
+ *
+ * The `datasource` param will be passed to the datasource service `get` function
+ * and can be either a string that is the name or uid, or a datasourceRef
+ * This is to maximize compatability with how datasources are accessed from the URL param.
  */
-export function initializeExplore(
-  exploreId: ExploreId,
-  datasourceName: string,
-  queries: DataQuery[],
-  range: TimeRange,
-  containerWidth: number,
-  eventBridge: EventBusExtended,
-  originPanelId?: number | null
-): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    const exploreDatasources = getExploreDatasources();
+export const initializeExplore = createAsyncThunk(
+  'explore/initializeExplore',
+  async (
+    {
+      exploreId,
+      datasource,
+      queries,
+      range,
+      panelsState,
+      correlationHelperData,
+      eventBridge,
+    }: InitializeExploreOptions,
+    { dispatch, getState, fulfillWithValue }
+  ) => {
     let instance = undefined;
     let history: HistoryItem[] = [];
 
-    if (exploreDatasources.length >= 1) {
+    if (datasource) {
       const orgId = getState().user.orgId;
-      const loadResult = await loadAndInitDatasource(orgId, datasourceName);
+      const loadResult = await loadAndInitDatasource(orgId, datasource);
       instance = loadResult.instance;
       history = loadResult.history;
     }
@@ -145,98 +165,40 @@ export function initializeExplore(
     dispatch(
       initializeExploreAction({
         exploreId,
-        containerWidth,
-        eventBridge,
         queries,
-        range,
-        originPanelId,
+        range: getRange(range, getTimeZone(getState().user)),
         datasourceInstance: instance,
         history,
+        eventBridge,
       })
     );
+    if (panelsState !== undefined) {
+      dispatch(changePanelsStateAction({ exploreId, panelsState }));
+    }
+
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
+      const datasourceUIDs = getDatasourceUIDs(instance.uid, queries);
+      const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+      dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
 
-/**
- * Save local redux state back to the URL. Should be called when there is some change that should affect the URL.
- * Not all of the redux state is reflected in URL though.
- */
-export const stateSave = (): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const { left, right, split } = getState().explore;
-    const orgId = getState().user.orgId.toString();
-    const replace = left && left.urlReplaced === false;
-    const urlStates: { [index: string]: string } = { orgId };
-    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left), true);
-    if (split) {
-      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right), true);
+      dispatch(runQueries({ exploreId }));
     }
 
-    dispatch(updateLocation({ query: urlStates, replace }));
-    if (replace) {
-      dispatch(setUrlReplacedAction({ exploreId: ExploreId.left }));
-    }
-  };
-};
-
-/**
- * Reacts to changes in URL state that we need to sync back to our redux state. Checks the internal update variable
- * to see which parts change and need to be synced.
- * @param exploreId
- */
-export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
-  return (dispatch, getState) => {
-    const itemState = getState().explore[exploreId];
-    if (!itemState.initialized) {
-      return;
-    }
-
-    const { urlState, update, containerWidth, eventBridge } = itemState;
-
-    if (!urlState) {
-      return;
-    }
-
-    const { datasource, queries, range: urlRange, originPanelId } = urlState;
-    const refreshQueries: DataQuery[] = [];
-
-    for (let index = 0; index < queries.length; index++) {
-      const query = queries[index];
-      refreshQueries.push(generateNewKeyAndAddRefIdIfMissing(query, refreshQueries, index));
-    }
-
-    const timeZone = getTimeZone(getState().user);
-    const range = getTimeRangeFromUrl(urlRange, timeZone);
-
-    // need to refresh datasource
-    if (update.datasource) {
-      const initialQueries = ensureQueries(queries);
+    // initialize new pane with helper data
+    if (correlationHelperData !== undefined && getState().explore.correlationEditorDetails?.editorMode) {
       dispatch(
-        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, originPanelId)
+        changeCorrelationHelperData({
+          exploreId,
+          correlationEditorHelperData: correlationHelperData,
+        })
       );
-      return;
     }
 
-    if (update.range) {
-      dispatch(updateTime({ exploreId, rawRange: range.raw }));
-    }
-
-    // need to refresh queries
-    if (update.queries) {
-      dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
-    }
-
-    // always run queries when refresh is needed
-    if (update.queries || update.range) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
+    return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });
+  }
+);
 
 /**
  * Reducer for an Explore area, to be used by the global Explore reducer.
@@ -250,70 +212,46 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   state = queryReducer(state, action);
   state = datasourceReducer(state, action);
   state = timeReducer(state, action);
-  state = historyReducer(state, action);
 
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
     return { ...state, containerWidth };
   }
 
-  if (highlightLogsExpressionAction.match(action)) {
-    const { expressions } = action.payload;
-    return { ...state, logsHighlighterExpressions: expressions };
+  if (changePanelsStateAction.match(action)) {
+    const { panelsState } = action.payload;
+    return { ...state, panelsState };
   }
 
-  if (changeDedupStrategyAction.match(action)) {
-    const { dedupStrategy } = action.payload;
+  if (changeCorrelationHelperData.match(action)) {
+    const { correlationEditorHelperData } = action.payload;
+    return { ...state, correlationEditorHelperData };
+  }
+
+  if (saveCorrelationsAction.match(action)) {
     return {
       ...state,
-      dedupStrategy,
+      correlations: action.payload.correlations,
     };
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, originPanelId, datasourceInstance, history } = action.payload;
+    const { queries, range, datasourceInstance, history, eventBridge } = action.payload;
+
     return {
       ...state,
-      containerWidth,
-      eventBridge,
       range,
       queries,
       initialized: true,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
-      originPanelId,
-      update: makeInitialUpdateState(),
+      eventBridge,
+      queryKeys: getQueryKeys(queries),
       datasourceInstance,
       history,
-      datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
-      logsHighlighterExpressions: undefined,
-    };
-  }
-
-  if (toggleLogLevelAction.match(action)) {
-    const { hiddenLogLevels } = action.payload;
-    return {
-      ...state,
-      hiddenLogLevels: Array.from(hiddenLogLevels),
-    };
-  }
-
-  if (setUrlReplacedAction.match(action)) {
-    return {
-      ...state,
-      urlReplaced: true,
+      cache: [],
+      correlations: [],
     };
   }
 
   return state;
 };
-
-function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
-  return {
-    // It can happen that if we are in a split and initial load also runs queries we can be here before the second pane
-    // is initialized so datasourceInstance will be still undefined.
-    datasource: pane.datasourceInstance?.name || pane.urlState!.datasource,
-    queries: pane.queries.map(clearQueryKeys),
-    range: toRawTimeRange(pane.range),
-  };
-}

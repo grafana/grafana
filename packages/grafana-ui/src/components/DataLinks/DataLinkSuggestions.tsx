@@ -1,126 +1,63 @@
-import { selectThemeVariant, ThemeContext } from '../../index';
-import { GrafanaTheme, VariableSuggestion } from '@grafana/data';
-import { css, cx } from 'emotion';
-import _ from 'lodash';
-import React, { useRef, useContext, useMemo } from 'react';
+import { css, cx } from '@emotion/css';
+import { groupBy, capitalize } from 'lodash';
+import { useRef, useMemo } from 'react';
+import * as React from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
-import { List } from '../index';
-import tinycolor from 'tinycolor2';
-import { stylesFactory } from '../../themes';
+
+import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+import { List } from '../List/List';
 
 interface DataLinkSuggestionsProps {
+  activeRef?: React.RefObject<HTMLDivElement>;
   suggestions: VariableSuggestion[];
   activeIndex: number;
   onSuggestionSelect: (suggestion: VariableSuggestion) => void;
   onClose?: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const wrapperBg = selectThemeVariant(
-    {
-      light: theme.palette.white,
-      dark: theme.palette.dark2,
-    },
-    theme.type
-  );
-
-  const wrapperShadow = selectThemeVariant(
-    {
-      light: theme.palette.gray5,
-      dark: theme.palette.black,
-    },
-    theme.type
-  );
-
-  const itemColor = selectThemeVariant(
-    {
-      light: theme.palette.black,
-      dark: theme.palette.white,
-    },
-    theme.type
-  );
-
-  const itemDocsColor = selectThemeVariant(
-    {
-      light: theme.palette.dark3,
-      dark: theme.palette.gray2,
-    },
-    theme.type
-  );
-
-  const itemBgHover = selectThemeVariant(
-    {
-      light: theme.palette.gray5,
-      dark: theme.palette.dark7,
-    },
-    theme.type
-  );
-
-  const itemBgActive = selectThemeVariant(
-    {
-      light: theme.palette.gray6,
-      dark: theme.palette.dark9,
-    },
-    theme.type
-  );
-
-  const separatorColor = selectThemeVariant(
-    {
-      light: tinycolor(wrapperBg.toString())
-        .darken(10)
-        .toString(),
-      dark: tinycolor(wrapperBg.toString())
-        .lighten(10)
-        .toString(),
-    },
-    theme.type
-  );
-
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    list: css`
-      border-bottom: 1px solid ${separatorColor};
-      &:last-child {
-        border: none;
-      }
-    `,
-    wrapper: css`
-      background: ${wrapperBg};
-      z-index: 1;
-      width: 250px;
-      box-shadow: 0 5px 10px 0 ${wrapperShadow};
-    `,
-    item: css`
-      background: none;
-      padding: 2px 8px;
-      color: ${itemColor};
-      cursor: pointer;
-      &:hover {
-        background: ${itemBgHover};
-      }
-    `,
-    label: css`
-      color: ${theme.colors.textWeak};
-    `,
-    activeItem: css`
-      background: ${itemBgActive};
-      &:hover {
-        background: ${itemBgActive};
-      }
-    `,
-    itemValue: css`
-      font-family: ${theme.typography.fontFamily.monospace};
-      font-size: ${theme.typography.size.sm};
-    `,
-    itemDocs: css`
-      margin-top: ${theme.spacing.xs};
-      color: ${itemDocsColor};
-    `,
+    list: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      '&:last-child': {
+        border: 'none',
+      },
+    }),
+    wrapper: css({
+      background: theme.colors.background.primary,
+      width: '250px',
+    }),
+    item: css({
+      background: 'none',
+      padding: '2px 8px',
+      userSelect: 'none',
+      color: theme.colors.text.primary,
+      cursor: 'pointer',
+      '&:hover': {
+        background: theme.colors.action.hover,
+      },
+    }),
+    label: css({
+      color: theme.colors.text.secondary,
+    }),
+    activeItem: css({
+      background: theme.colors.background.secondary,
+      '&:hover': {
+        background: theme.colors.background.secondary,
+      },
+    }),
+    itemValue: css({
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.size.sm,
+    }),
   };
-});
+};
 
-export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ suggestions, ...otherProps }) => {
+export const DataLinkSuggestions = ({ suggestions, ...otherProps }: DataLinkSuggestionsProps) => {
   const ref = useRef(null);
-  const theme = useContext(ThemeContext);
+
   useClickAway(ref, () => {
     if (otherProps.onClose) {
       otherProps.onClose();
@@ -128,12 +65,13 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   });
 
   const groupedSuggestions = useMemo(() => {
-    return _.groupBy(suggestions, s => s.origin);
+    return groupBy(suggestions, (s) => s.origin);
   }, [suggestions]);
 
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
+
   return (
-    <div ref={ref} className={styles.wrapper}>
+    <div role="menu" ref={ref} className={styles.wrapper}>
       {Object.keys(groupedSuggestions).map((key, i) => {
         const indexOffset =
           i === 0
@@ -149,7 +87,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
           <DataLinkSuggestionsList
             {...otherProps}
             suggestions={groupedSuggestions[key]}
-            label={`${_.capitalize(key)}`}
+            label={`${capitalize(key)}`}
             activeIndex={otherProps.activeIndex}
             activeIndexOffset={indexOffset}
             key={key}
@@ -165,12 +103,20 @@ DataLinkSuggestions.displayName = 'DataLinkSuggestions';
 interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   label: string;
   activeIndexOffset: number;
+  activeRef?: React.RefObject<HTMLDivElement>;
 }
 
-const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
-  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions }) => {
-    const theme = useContext(ThemeContext);
-    const styles = getStyles(theme);
+const DataLinkSuggestionsList = React.memo(
+  ({
+    activeIndex,
+    activeIndexOffset,
+    label,
+    onClose,
+    onSuggestionSelect,
+    suggestions,
+    activeRef: selectedRef,
+  }: DataLinkSuggestionsListProps) => {
+    const styles = useStyles2(getStyles);
 
     return (
       <>
@@ -178,9 +124,15 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
           className={styles.list}
           items={suggestions}
           renderItem={(item, index) => {
+            const isActive = index + activeIndexOffset === activeIndex;
             return (
+              // key events are handled by DataLinkInput
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
               <div
-                className={cx(styles.item, index + activeIndexOffset === activeIndex && styles.activeItem)}
+                role="menuitem"
+                tabIndex={0}
+                className={cx(styles.item, isActive && styles.activeItem)}
+                ref={isActive ? selectedRef : undefined}
                 onClick={() => {
                   onSuggestionSelect(item);
                 }}

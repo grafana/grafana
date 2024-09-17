@@ -2,7 +2,6 @@ package setting
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"sort"
@@ -45,6 +44,11 @@ func AddExpander(name string, priority int64, e Expander) {
 
 var regex = regexp.MustCompile(`\$(|__\w+){([^}]+)}`)
 
+// Slightly hacky function to avoid code duplication. If this is eventually called in multiple places, consider refactoring or potentially adding more general helper functions to this package
+func GetExpanderRegex() *regexp.Regexp {
+	return regex
+}
+
 func expandConfig(file *ini.File) error {
 	sort.Slice(expanders, func(i, j int) bool {
 		return expanders[i].priority < expanders[j].priority
@@ -53,7 +57,7 @@ func expandConfig(file *ini.File) error {
 	for _, expander := range expanders {
 		err := expander.expander.SetupExpander(file)
 		if err != nil {
-			return fmt.Errorf("got error during initilazation of expander '%s': %w", expander.name, err)
+			return fmt.Errorf("got error during initialization of expander '%s': %w", expander.name, err)
 		}
 
 		for _, section := range file.Sections() {
@@ -138,7 +142,9 @@ func (e fileExpander) Expand(s string) (string, error) {
 		return "", err
 	}
 
-	f, err := ioutil.ReadFile(s)
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `s` comes from configuration section keys
+	f, err := os.ReadFile(s)
 	if err != nil {
 		return "", err
 	}

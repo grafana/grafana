@@ -1,13 +1,29 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
+
+import { TemplateSrv } from '../../../features/templating/template_srv';
+
+import { GraphiteDatasource } from './datasource';
+
+export enum GraphiteQueryType {
+  Default = 'Default',
+  Value = 'Value',
+  MetricName = 'Metric Name',
+}
 
 export interface GraphiteQuery extends DataQuery {
+  queryType?: string;
+  textEditor?: boolean;
   target?: string;
+  targetFull?: string;
+  tags?: string[];
+  fromAnnotations?: boolean;
 }
 
 export interface GraphiteOptions extends DataSourceJsonData {
   graphiteVersion: string;
   graphiteType: GraphiteType;
   rollupIndicatorEnabled?: boolean;
+  importConfiguration: GraphiteQueryImportConfiguration;
 }
 
 export enum GraphiteType {
@@ -34,4 +50,55 @@ export interface MetricTankSeriesMeta {
 export interface MetricTankMeta {
   request: MetricTankRequestMeta;
   info: MetricTankSeriesMeta[];
+}
+
+export interface GraphiteParserError {
+  message: string;
+  pos: number;
+}
+
+export type GraphiteQueryImportConfiguration = {
+  loki: GraphiteToLokiQueryImportConfiguration;
+};
+
+export type GraphiteToLokiQueryImportConfiguration = {
+  mappings: GraphiteLokiMapping[];
+};
+
+export type GraphiteLokiMapping = {
+  matchers: GraphiteMetricLokiMatcher[];
+};
+
+export type GraphiteMetricLokiMatcher = {
+  value: string;
+  labelName?: string;
+};
+
+export type GraphiteSegment = {
+  value: string;
+  type?: 'tag' | 'metric' | 'series-ref' | 'template';
+  expandable?: boolean;
+  fake?: boolean;
+};
+
+export type GraphiteTagOperator = '=' | '!=' | '=~' | '!=~';
+
+export type GraphiteTag = {
+  key: string;
+  operator: GraphiteTagOperator;
+  value: string;
+};
+
+export type GraphiteQueryEditorDependencies = {
+  target: any;
+  datasource: GraphiteDatasource;
+  range?: TimeRange;
+  templateSrv: TemplateSrv;
+  queries: DataQuery[];
+  // schedule onChange/onRunQuery after the reducer actions finishes
+  refresh: () => void;
+};
+
+export interface GraphiteQueryRequest extends DataQueryRequest {
+  format: string;
 }

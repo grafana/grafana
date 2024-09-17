@@ -3,15 +3,15 @@ package datamigrations
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -27,14 +27,14 @@ var (
 
 // EncryptDatasourcePasswords migrates unencrypted secrets on datasources
 // to the secureJson Column.
-func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore *sqlstore.SQLStore) error {
-	return sqlStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		passwordsUpdated, err := migrateColumn(session, "password")
+func EncryptDatasourcePasswords(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
+	return sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
+		passwordsUpdated, err := migrateColumn(cfg, session, "password")
 		if err != nil {
 			return err
 		}
 
-		basicAuthUpdated, err := migrateColumn(session, "basic_auth_password")
+		basicAuthUpdated, err := migrateColumn(cfg, session, "basic_auth_password")
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func EncryptDatasourcePasswords(c utils.CommandLine, sqlStore *sqlstore.SQLStore
 	})
 }
 
-func migrateColumn(session *sqlstore.DBSession, column string) (int, error) {
+func migrateColumn(cfg *setting.Cfg, session *db.Session, column string) (int, error) {
 	var rows []map[string][]byte
 
 	session.Cols("id", column, "secure_json_data")
@@ -71,28 +71,31 @@ func migrateColumn(session *sqlstore.DBSession, column string) (int, error) {
 	err := session.Find(&rows)
 
 	if err != nil {
-		return 0, errutil.Wrapf(err, "failed to select column: %s", column)
+		return 0, fmt.Errorf("failed to select column: %s: %w", column, err)
 	}
 
-	rowsUpdated, err := updateRows(session, rows, column)
-	return rowsUpdated, errutil.Wrapf(err, "failed to update column: %s", column)
+	rowsUpdated, err := updateRows(cfg, session, rows, column)
+	if err != nil {
+		return rowsUpdated, fmt.Errorf("failed to update column: %s: %w", column, err)
+	}
+	return rowsUpdated, err
 }
 
-func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordFieldName string) (int, error) {
+func updateRows(cfg *setting.Cfg, session *db.Session, rows []map[string][]byte, passwordFieldName string) (int, error) {
 	var rowsUpdated int
 
 	for _, row := range rows {
-		newSecureJSONData, err := getUpdatedSecureJSONData(row, passwordFieldName)
+		newSecureJSONData, err := getUpdatedSecureJSONData(cfg.SecretKey, row, passwordFieldName)
 		if err != nil {
 			return 0, err
 		}
 
 		data, err := json.Marshal(newSecureJSONData)
 		if err != nil {
-			return 0, errutil.Wrap("marshaling newSecureJsonData failed", err)
+			return 0, fmt.Errorf("%v: %w", "marshaling newSecureJsonData failed", err)
 		}
 
-		newRow := map[string]interface{}{"secure_json_data": data, passwordFieldName: ""}
+		newRow := map[string]any{"secure_json_data": data, passwordFieldName: ""}
 		session.Table("data_source")
 		session.Where("id = ?", string(row["id"]))
 		// Setting both columns while having value only for secure_json_data should clear the [passwordFieldName] column
@@ -108,20 +111,20 @@ func updateRows(session *sqlstore.DBSession, rows []map[string][]byte, passwordF
 	return rowsUpdated, nil
 }
 
-func getUpdatedSecureJSONData(row map[string][]byte, passwordFieldName string) (map[string]interface{}, error) {
-	encryptedPassword, err := util.Encrypt(row[passwordFieldName], setting.SecretKey)
+func getUpdatedSecureJSONData(secretKey string, row map[string][]byte, passwordFieldName string) (map[string]any, error) {
+	encryptedPassword, err := util.Encrypt(row[passwordFieldName], secretKey)
 	if err != nil {
 		return nil, err
 	}
 
-	var secureJSONData map[string]interface{}
+	var secureJSONData map[string]any
 
 	if len(row["secure_json_data"]) > 0 {
 		if err := json.Unmarshal(row["secure_json_data"], &secureJSONData); err != nil {
 			return nil, err
 		}
 	} else {
-		secureJSONData = map[string]interface{}{}
+		secureJSONData = map[string]any{}
 	}
 
 	jsonFieldName := util.ToCamelCase(passwordFieldName)

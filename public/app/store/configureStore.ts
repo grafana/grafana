@@ -1,11 +1,19 @@
-import { configureStore as reduxConfigureStore, getDefaultMiddleware } from '@reduxjs/toolkit';
-import { createLogger } from 'redux-logger';
-import { ThunkMiddleware } from 'redux-thunk';
-import { setStore } from './store';
+import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { Middleware } from 'redux';
+
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
+import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
+import { userPreferencesAPI } from 'app/features/preferences/api';
 import { StoreState } from 'app/types/store';
-import { toggleLogActionsMiddleware } from 'app/core/middlewares/application';
-import { addReducer, createRootReducer } from '../core/reducers/root';
+
 import { buildInitialState } from '../core/reducers/navModel';
+import { addReducer, createRootReducer } from '../core/reducers/root';
+import { alertingApi } from '../features/alerting/unified/api/alertingApi';
+import { queryLibraryApi } from '../features/query-library/api/factory';
+
+import { setStore } from './store';
 
 export function addRootReducer(reducers: any) {
   // this is ok now because we add reducers before configureStore is called
@@ -14,68 +22,40 @@ export function addRootReducer(reducers: any) {
   addReducer(reducers);
 }
 
-export function configureStore() {
-  const logger = createLogger({
-    predicate: getState => {
-      return getState().application.logActions;
-    },
-  });
+const listenerMiddleware = createListenerMiddleware();
+const extraMiddleware: Middleware[] = [];
 
-  const middleware = process.env.NODE_ENV !== 'production' ? [toggleLogActionsMiddleware, logger] : [];
+export function addExtraMiddleware(middleware: Middleware) {
+  extraMiddleware.push(middleware);
+}
 
-  const reduxDefaultMiddleware = getDefaultMiddleware<StoreState>({
-    thunk: true,
-    serializableCheck: false,
-    immutableCheck: false,
-  } as any);
-
-  const store = reduxConfigureStore<StoreState>({
+export function configureStore(initialState?: Partial<StoreState>) {
+  const store = reduxConfigureStore({
     reducer: createRootReducer(),
-    middleware: [...reduxDefaultMiddleware, ...middleware] as [ThunkMiddleware<StoreState>],
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
+        listenerMiddleware.middleware,
+        alertingApi.middleware,
+        publicDashboardApi.middleware,
+        browseDashboardsAPI.middleware,
+        cloudMigrationAPI.middleware,
+        queryLibraryApi.middleware,
+        userPreferencesAPI.middleware,
+        ...extraMiddleware
+      ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
       navIndex: buildInitialState(),
+      ...initialState,
     },
   });
+
+  // this enables "refetchOnFocus" and "refetchOnReconnect" for RTK Query
+  setupListeners(store.dispatch);
 
   setStore(store);
   return store;
 }
 
-/* 
-function getActionsToIgnoreSerializableCheckOn() {
-  return [
-    'dashboard/setPanelAngularComponent',
-    'dashboard/panelModelAndPluginReady',
-    'dashboard/dashboardInitCompleted',
-    'plugins/panelPluginLoaded',
-    'explore/initializeExplore',
-    'explore/changeRange',
-    'explore/updateDatasourceInstance',
-    'explore/queryStoreSubscription',
-    'explore/queryStreamUpdated',
-  ];
-}
-
-function getPathsToIgnoreMutationAndSerializableCheckOn() {
-  return [    
-    'plugins.panels',
-    'dashboard.panels',
-    'dashboard.getModel',
-    'payload.plugin',
-    'panelEditorNew.getPanel',
-    'panelEditorNew.getSourcePanel',
-    'panelEditorNew.getData',
-    'explore.left.queryResponse',
-    'explore.right.queryResponse',
-    'explore.left.datasourceInstance',
-    'explore.right.datasourceInstance',
-    'explore.left.range',
-    'explore.left.eventBridge',
-    'explore.right.eventBridge',
-    'explore.right.range',
-    'explore.left.querySubscription',
-    'explore.right.querySubscription',    
-  ];
-}
-*/
+export type RootState = ReturnType<ReturnType<typeof configureStore>['getState']>;
+export type AppDispatch = ReturnType<typeof configureStore>['dispatch'];

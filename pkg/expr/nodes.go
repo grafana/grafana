@@ -3,55 +3,72 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/expr/mathexp"
-
+	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
+
+	"github.com/grafana/grafana/pkg/expr/classic"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-// baseNode includes commmon properties used across DPNodes.
+// label that is used when all mathexp.Series have 0 labels to make them identifiable by labels. The value of this label is extracted from value field names
+const nameLabelName = "__name__"
+
+var (
+	logger = log.New("expr")
+)
+
+// baseNode includes common properties used across DPNodes.
 type baseNode struct {
 	id    int64
 	refID string
 }
 
 type rawNode struct {
-	RefID     string `json:"refId"`
-	Query     map[string]interface{}
-	QueryType string
-	TimeRange backend.TimeRange
+	RefID      string `json:"refId"`
+	Query      map[string]any
+	QueryRaw   []byte
+	QueryType  string
+	TimeRange  TimeRange
+	DataSource *datasources.DataSource
+	// We use this index as the id of the node graph so the order can remain during a the stable sort of the dependency graph execution order.
+	// Some data sources, such as cloud watch, have order dependencies between queries.
+	idx int64
 }
 
-func (rn *rawNode) GetDatasourceName() (string, error) {
-	rawDs, ok := rn.Query["datasource"]
+func getExpressionCommandTypeString(rawQuery map[string]any) (string, error) {
+	rawType, ok := rawQuery["type"]
 	if !ok {
-		return "", fmt.Errorf("no datasource in query for refId %v", rn.RefID)
-	}
-	dsName, ok := rawDs.(string)
-	if !ok {
-		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
-	}
-	return dsName, nil
-}
-
-func (rn *rawNode) GetCommandType() (c CommandType, err error) {
-	rawType, ok := rn.Query["type"]
-	if !ok {
-		return c, fmt.Errorf("no expression command type in query for refId %v", rn.RefID)
+		return "", errors.New("no expression command type in query")
 	}
 	typeString, ok := rawType.(string)
 	if !ok {
-		return c, fmt.Errorf("expected expression command type to be a string, got type %T", rawType)
+		return "", fmt.Errorf("expected expression command type to be a string, got type %T", rawType)
+	}
+	return typeString, nil
+}
+
+func GetExpressionCommandType(rawQuery map[string]any) (c CommandType, err error) {
+	typeString, err := getExpressionCommandTypeString(rawQuery)
+	if err != nil {
+		return c, err
 	}
 	return ParseCommandType(typeString)
 }
 
 // String returns a string representation of the node. In particular for
-// %v formating in error messages.
+// %v formatting in error messages.
 func (b *baseNode) String() string {
 	return b.refID
 }
@@ -78,24 +95,54 @@ func (gn *CMDNode) NodeType() NodeType {
 	return TypeCMDNode
 }
 
+func (gn *CMDNode) NeedsVars() []string {
+	return gn.Command.NeedsVars()
+}
+
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
-	return gn.Command.Execute(ctx, vars)
+func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error) {
+	return gn.Command.Execute(ctx, now, vars, s.tracer)
 }
 
-func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
-	commandType, err := rn.GetCommandType()
+func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, error) {
+	commandType, err := GetExpressionCommandType(rn.Query)
 	if err != nil {
-		return nil, fmt.Errorf("invalid expression command type in '%v'", rn.RefID)
+		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
 	}
 
 	node := &CMDNode{
 		baseNode: baseNode{
-			id:    dp.NewNode().ID(),
+			id:    rn.idx,
 			refID: rn.RefID,
 		},
+		CMDType: commandType,
+	}
+
+	if toggles.IsEnabledGlobally(featuremgmt.FlagExpressionParser) {
+		rn.QueryType, err = getExpressionCommandTypeString(rn.Query)
+		if err != nil {
+			return nil, err // should not happen because the command was parsed first thing
+		}
+
+		// NOTE: this structure of this is weird now, because it is targeting a structure
+		// where this is actually run in the root loop, however we want to verify the individual
+		// node parsing before changing the full tree parser
+		reader := NewExpressionQueryReader(toggles)
+		iter, err := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
+		if err != nil {
+			return nil, err
+		}
+		q, err := reader.ReadQuery(data.NewDataQuery(map[string]any{
+			"refId": rn.RefID,
+			"type":  rn.QueryType,
+		}), iter)
+		if err != nil {
+			return nil, err
+		}
+		node.Command = q.Command
+		return node, err
 	}
 
 	switch commandType {
@@ -105,11 +152,17 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:
 		node.Command, err = UnmarshalResampleCommand(rn)
+	case TypeClassicConditions:
+		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
+	case TypeThreshold:
+		node.Command, err = UnmarshalThresholdCommand(rn, toggles)
+	case TypeSQL:
+		node.Command, err = UnmarshalSQLCommand(rn)
 	default:
-		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
+		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse expression '%v': %w", rn.RefID, err)
 	}
 
 	return node, nil
@@ -123,13 +176,22 @@ const (
 // DSNode is a DPNode that holds a datasource request.
 type DSNode struct {
 	baseNode
-	query        json.RawMessage
-	datasourceID int64
-	orgID        int64
-	queryType    string
-	timeRange    backend.TimeRange
-	intervalMS   int64
-	maxDP        int64
+	query      json.RawMessage
+	datasource *datasources.DataSource
+
+	orgID      int64
+	queryType  string
+	timeRange  TimeRange
+	intervalMS int64
+	maxDP      int64
+	request    Request
+}
+
+func (dn *DSNode) String() string {
+	if dn.datasource == nil {
+		return "unknown"
+	}
+	return dn.datasource.Type
 }
 
 // NodeType returns the data pipeline node type.
@@ -137,7 +199,15 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
+// NodeType returns the data pipeline node type.
+func (dn *DSNode) NeedsVars() []string {
+	return []string{}
+}
+
+func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
+	if rn.TimeRange == nil {
+		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
+	}
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -145,38 +215,21 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
 
 	dsNode := &DSNode{
 		baseNode: baseNode{
-			id:    dp.NewNode().ID(),
+			id:    rn.idx,
 			refID: rn.RefID,
 		},
+		orgID:      req.OrgId,
 		query:      json.RawMessage(encodedQuery),
 		queryType:  rn.QueryType,
 		intervalMS: defaultIntervalMS,
 		maxDP:      defaultMaxDP,
 		timeRange:  rn.TimeRange,
+		request:    *req,
+		datasource: rn.DataSource,
 	}
-
-	rawDsID, ok := rn.Query["datasourceId"]
-	if !ok {
-		return nil, fmt.Errorf("no datasourceId in expression data source request for refId %v", rn.RefID)
-	}
-	floatDsID, ok := rawDsID.(float64)
-	if !ok {
-		return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
-	}
-	dsNode.datasourceID = int64(floatDsID)
-
-	rawOrgID, ok := rn.Query["orgId"]
-	if !ok {
-		return nil, fmt.Errorf("no orgId in expression data source request command for refId %v", rn.RefID)
-	}
-	floatOrgID, ok := rawOrgID.(float64)
-	if !ok {
-		return nil, fmt.Errorf("expected orgId to be a float64, got type %T for refId %v", rawOrgID, rn.RefID)
-	}
-	dsNode.orgID = int64(floatOrgID)
 
 	var floatIntervalMS float64
-	if rawIntervalMS := rn.Query["intervalMs"]; ok {
+	if rawIntervalMS, ok := rn.Query["intervalMs"]; ok {
 		if floatIntervalMS, ok = rawIntervalMS.(float64); !ok {
 			return nil, fmt.Errorf("expected intervalMs to be an float64, got type %T for refId %v", rawIntervalMS, rn.RefID)
 		}
@@ -184,7 +237,7 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
 	}
 
 	var floatMaxDP float64
-	if rawMaxDP := rn.Query["maxDataPoints"]; ok {
+	if rawMaxDP, ok := rn.Query["maxDataPoints"]; ok {
 		if floatMaxDP, ok = rawMaxDP.(float64); !ok {
 			return nil, fmt.Errorf("expected maxDataPoints to be an float64, got type %T for refId %v", rawMaxDP, rn.RefID)
 		}
@@ -194,165 +247,163 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
 	return dsNode, nil
 }
 
+// executeDSNodesGrouped groups datasource node queries by the datasource instance, and then sends them
+// in a single request with one or more queries to the datasource.
+func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service, nodes []*DSNode) {
+	type dsKey struct {
+		uid   string // in theory I think this all I need for the key, but rather be safe
+		id    int64
+		orgID int64
+	}
+	byDS := make(map[dsKey][]*DSNode)
+	for _, node := range nodes {
+		k := dsKey{id: node.datasource.ID, uid: node.datasource.UID, orgID: node.orgID}
+		byDS[k] = append(byDS[k], node)
+	}
+
+	for _, nodeGroup := range byDS {
+		func() {
+			ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
+			defer span.End()
+			firstNode := nodeGroup[0]
+			pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource)
+			if err != nil {
+				for _, dn := range nodeGroup {
+					vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
+				}
+				return
+			}
+
+			logger := logger.FromContext(ctx).New("datasourceType", firstNode.datasource.Type,
+				"queryRefId", firstNode.refID,
+				"datasourceUid", firstNode.datasource.UID,
+				"datasourceVersion", firstNode.datasource.Version,
+			)
+
+			span.SetAttributes(
+				attribute.String("datasource.type", firstNode.datasource.Type),
+				attribute.String("datasource.uid", firstNode.datasource.UID),
+			)
+
+			req := &backend.QueryDataRequest{
+				PluginContext: pCtx,
+				Headers:       firstNode.request.Headers,
+			}
+
+			for _, dn := range nodeGroup {
+				req.Queries = append(req.Queries, backend.DataQuery{
+					RefID:         dn.refID,
+					MaxDataPoints: dn.maxDP,
+					Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+					JSON:          dn.query,
+					TimeRange:     dn.timeRange.AbsoluteTime(now),
+					QueryType:     dn.queryType,
+				})
+			}
+
+			instrument := func(e error, rt string) {
+				respStatus := "success"
+				responseType := rt
+				if e != nil {
+					responseType = "error"
+					respStatus = "failure"
+					span.SetStatus(codes.Error, "failed to query data source")
+					span.RecordError(e)
+				}
+				logger.Debug("Data source queried", "responseType", responseType)
+				useDataplane := strings.HasPrefix(responseType, "dataplane-")
+				s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
+			}
+
+			resp, err := s.dataService.QueryData(ctx, req)
+			if err != nil {
+				for _, dn := range nodeGroup {
+					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(firstNode.refID, firstNode.datasource.UID, err)}
+				}
+				instrument(err, "")
+				return
+			}
+
+			for _, dn := range nodeGroup {
+				dataFrames, err := getResponseFrame(logger, resp, dn.refID)
+				if err != nil {
+					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(dn.refID, dn.datasource.UID, err)}
+					instrument(err, "")
+					return
+				}
+
+				var result mathexp.Results
+				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames, s.allowLongFrames)
+				if err != nil {
+					result.Error = makeConversionError(dn.RefID(), err)
+				}
+				instrument(err, responseType)
+				vars[dn.refID] = result
+			}
+		}()
+	}
+}
+
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
-	pc := backend.PluginContext{
-		OrgID: dn.orgID,
-		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-			ID: dn.datasourceID,
-		},
-	}
+func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (r mathexp.Results, e error) {
+	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type, "queryRefId", dn.refID, "datasourceUid", dn.datasource.UID, "datasourceVersion", dn.datasource.Version)
+	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
+	defer span.End()
 
-	q := []backend.DataQuery{
-		{
-			RefID:         dn.refID,
-			MaxDataPoints: dn.maxDP,
-			Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
-			JSON:          dn.query,
-			TimeRange:     dn.timeRange,
-			QueryType:     dn.queryType,
-		},
-	}
-
-	resp, err := QueryData(ctx, &backend.QueryDataRequest{
-		PluginContext: pc,
-		Queries:       q,
-	})
-
+	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
 	if err != nil {
 		return mathexp.Results{}, err
 	}
+	span.SetAttributes(
+		attribute.String("datasource.type", dn.datasource.Type),
+		attribute.String("datasource.uid", dn.datasource.UID),
+	)
 
-	vals := make([]mathexp.Value, 0)
-	for refID, qr := range resp.Responses {
-		if len(qr.Frames) == 1 {
-			frame := qr.Frames[0]
-			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
-				backend.Logger.Debug("expression datasource query (numberSet)", "query", refID)
-				numberSet, err := extractNumberSet(frame)
-				if err != nil {
-					return mathexp.Results{}, err
-				}
-				for _, n := range numberSet {
-					vals = append(vals, n)
-				}
-
-				return mathexp.Results{
-					Values: vals,
-				}, nil
-			}
-		}
-
-		for _, frame := range qr.Frames {
-			backend.Logger.Debug("expression datasource query (seriesSet)", "query", refID)
-			series, err := WideToMany(frame)
-			if err != nil {
-				return mathexp.Results{}, err
-			}
-			for _, s := range series {
-				vals = append(vals, s)
-			}
-		}
-	}
-	return mathexp.Results{
-		Values: vals,
-	}, nil
-}
-
-func isNumberTable(frame *data.Frame) bool {
-	if frame == nil || frame.Fields == nil {
-		return false
-	}
-	numericCount := 0
-	stringCount := 0
-	otherCount := 0
-	for _, field := range frame.Fields {
-		fType := field.Type()
-		switch {
-		case fType.Numeric():
-			numericCount++
-		case fType == data.FieldTypeString || fType == data.FieldTypeNullableString:
-			stringCount++
-		default:
-			otherCount++
-		}
-	}
-	return numericCount == 1 && otherCount == 0
-}
-
-func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
-	numericField := 0
-	stringFieldIdxs := []int{}
-	stringFieldNames := []string{}
-	for i, field := range frame.Fields {
-		fType := field.Type()
-		switch {
-		case fType.Numeric():
-			numericField = i
-		case fType == data.FieldTypeString || fType == data.FieldTypeNullableString:
-			stringFieldIdxs = append(stringFieldIdxs, i)
-			stringFieldNames = append(stringFieldNames, field.Name)
-		}
-	}
-	numbers := make([]mathexp.Number, frame.Rows())
-
-	for rowIdx := 0; rowIdx < frame.Rows(); rowIdx++ {
-		val, _ := frame.FloatAt(numericField, rowIdx)
-		var labels data.Labels
-		for i := 0; i < len(stringFieldIdxs); i++ {
-			if i == 0 {
-				labels = make(data.Labels)
-			}
-			key := stringFieldNames[i] // TODO check for duplicate string column names
-			val, _ := frame.ConcreteAt(stringFieldIdxs[i], rowIdx)
-			labels[key] = val.(string) // TODO check assertion / return error
-		}
-
-		n := mathexp.NewNumber("", labels)
-		n.SetValue(&val)
-		numbers[rowIdx] = n
-	}
-	return numbers, nil
-}
-
-// WideToMany converts a data package wide type Frame to one or multiple Series. A series
-// is created for each value type column of wide frame.
-//
-// This might not be a good idea long term, but works now as an adapter/shim.
-func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
-	tsSchema := frame.TimeSeriesSchema()
-	if tsSchema.Type != data.TimeSeriesTypeWide {
-		return nil, fmt.Errorf("input data must be a wide series but got type %s (input refid)", tsSchema.Type)
+	req := &backend.QueryDataRequest{
+		PluginContext: pCtx,
+		Queries: []backend.DataQuery{
+			{
+				RefID:         dn.refID,
+				MaxDataPoints: dn.maxDP,
+				Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+				JSON:          dn.query,
+				TimeRange:     dn.timeRange.AbsoluteTime(now),
+				QueryType:     dn.queryType,
+			},
+		},
+		Headers: dn.request.Headers,
 	}
 
-	if len(tsSchema.ValueIndices) == 1 {
-		s, err := mathexp.SeriesFromFrame(frame)
-		if err != nil {
-			return nil, err
+	responseType := "unknown"
+	respStatus := "success"
+	defer func() {
+		if e != nil {
+			responseType = "error"
+			respStatus = "failure"
+			span.SetStatus(codes.Error, "failed to query data source")
+			span.RecordError(e)
 		}
-		return []mathexp.Series{s}, nil
+		logger.Debug("Data source queried", "responseType", responseType)
+		useDataplane := strings.HasPrefix(responseType, "dataplane-")
+		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
+	}()
+
+	resp, err := s.dataService.QueryData(ctx, req)
+	if err != nil {
+		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
 
-	series := []mathexp.Series{}
-	for _, valIdx := range tsSchema.ValueIndices {
-		l := frame.Rows()
-		f := data.NewFrameOfFieldTypes(frame.Name, l, frame.Fields[tsSchema.TimeIndex].Type(), frame.Fields[valIdx].Type())
-		f.Fields[0].Name = frame.Fields[tsSchema.TimeIndex].Name
-		f.Fields[1].Name = frame.Fields[valIdx].Name
-		if frame.Fields[valIdx].Labels != nil {
-			f.Fields[1].Labels = frame.Fields[valIdx].Labels.Copy()
-		}
-		for i := 0; i < l; i++ {
-			f.SetRow(i, frame.Fields[tsSchema.TimeIndex].CopyAt(i), frame.Fields[valIdx].CopyAt(i))
-		}
-		s, err := mathexp.SeriesFromFrame(f)
-		if err != nil {
-			return nil, err
-		}
-		series = append(series, s)
+	dataFrames, err := getResponseFrame(logger, resp, dn.refID)
+	if err != nil {
+		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
 	}
 
-	return series, nil
+	var result mathexp.Results
+	responseType, result, err = s.converter.Convert(ctx, dn.datasource.Type, dataFrames, s.allowLongFrames)
+	if err != nil {
+		err = makeConversionError(dn.refID, err)
+	}
+	return result, err
 }

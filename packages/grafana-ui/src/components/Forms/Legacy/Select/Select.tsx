@@ -1,38 +1,31 @@
 // Libraries
 import classNames from 'classnames';
-import React, { PureComponent } from 'react';
-
-// Ignoring because I couldn't get @types/react-select work with Torkel's fork
-// @ts-ignore
-import { default as ReactSelect } from '@torkelo/react-select';
-// @ts-ignore
-import Creatable from '@torkelo/react-select/creatable';
-// @ts-ignore
-import { CreatableProps } from 'react-select';
-// @ts-ignore
-import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
-// @ts-ignore
-import { components } from '@torkelo/react-select';
+import { PureComponent } from 'react';
+import * as React from 'react';
+import { default as ReactSelect, components, MenuListProps } from 'react-select';
+import { default as ReactAsyncSelect } from 'react-select/async';
+import Creatable from 'react-select/creatable';
 
 // Components
-import { SelectOption } from './SelectOption';
-import { SelectOptionGroup } from '../../../Select/SelectOptionGroup';
+import { SelectableValue, ThemeContext } from '@grafana/data';
+
+import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
 import { SingleValue } from '../../../Select/SingleValue';
+import resetSelectStyles from '../../../Select/resetSelectStyles';
 import { SelectCommonProps, SelectAsyncProps } from '../../../Select/types';
+import { Tooltip, PopoverContent } from '../../../Tooltip';
+
 import IndicatorsContainer from './IndicatorsContainer';
 import NoOptionsMessage from './NoOptionsMessage';
-import resetSelectStyles from '../../../Select/resetSelectStyles';
-import { CustomScrollbar } from '../../../CustomScrollbar/CustomScrollbar';
-import { PopoverContent } from '../../../Tooltip/Tooltip';
-import { Tooltip } from '../../../Tooltip/Tooltip';
-import { SelectableValue } from '@grafana/data';
+import { SelectOption } from './SelectOption';
+import { SelectOptionGroup } from './SelectOptionGroup';
 
 /**
  * Changes in new selects:
  * - noOptionsMessage & loadingMessage is of string type
  * - isDisabled is renamed to disabled
  */
-type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value'>;
+type LegacyCommonProps<T> = Omit<SelectCommonProps<T>, 'noOptionsMessage' | 'disabled' | 'value' | 'loadingMessage'>;
 
 interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 'loadingMessage'> {
   loadingMessage?: () => string;
@@ -42,14 +35,14 @@ interface AsyncProps<T> extends LegacyCommonProps<T>, Omit<SelectAsyncProps<T>, 
   value?: SelectableValue<T>;
 }
 
-interface LegacySelectProps<T> extends LegacyCommonProps<T> {
+export interface LegacySelectProps<T> extends LegacyCommonProps<T> {
   tooltipContent?: PopoverContent;
   noOptionsMessage?: () => string;
   isDisabled?: boolean;
   value?: SelectableValue<T>;
 }
 
-export const MenuList = (props: any) => {
+export const MenuList = (props: MenuListProps) => {
   return (
     <components.MenuList {...props}>
       <CustomScrollbar autoHide={false} autoHeightMax="inherit">
@@ -58,8 +51,13 @@ export const MenuList = (props: any) => {
     </components.MenuList>
   );
 };
+
+/** @deprecated Please use the `Select` component, as seen {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-select--basic in Storybook}. */
 export class Select<T> extends PureComponent<LegacySelectProps<T>> {
-  static defaultProps: Partial<LegacySelectProps<any>> = {
+  declare context: React.ContextType<typeof ThemeContext>;
+  static contextType = ThemeContext;
+
+  static defaultProps: Partial<LegacySelectProps<unknown>> = {
     className: '',
     isDisabled: false,
     isSearchable: true,
@@ -111,6 +109,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
       onOpenMenu,
       allowCustomValue,
       formatCreateLabel,
+      'aria-label': ariaLabel,
     } = this.props;
 
     let widthClass = '';
@@ -118,7 +117,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
       widthClass = 'width-' + width;
     }
 
-    let SelectComponent: ReactSelect | Creatable = ReactSelect;
+    let SelectComponent = ReactSelect;
     const creatableOptions: any = {};
 
     if (allowCustomValue) {
@@ -146,7 +145,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onChange={onChange}
               options={options}
               placeholder={placeholder || 'Choose'}
-              styles={resetSelectStyles()}
+              styles={resetSelectStyles(this.context)}
               isDisabled={isDisabled}
               isLoading={isLoading}
               isClearable={isClearable}
@@ -161,6 +160,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onMenuOpen={onOpenMenuInternal}
               onMenuClose={onCloseMenuInternal}
               tabSelectsValue={tabSelectsValue}
+              aria-label={ariaLabel}
               {...creatableOptions}
             />
           );
@@ -170,8 +170,11 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
   }
 }
 
+/** @deprecated Please use the `Select` component with async functionality, as seen {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-select--basic-select-async in Storybook}. */
 export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
-  static defaultProps: Partial<AsyncProps<any>> = {
+  static contextType = ThemeContext;
+
+  static defaultProps: Partial<AsyncProps<unknown>> = {
     className: '',
     components: {},
     loadingMessage: () => 'Loading...',
@@ -238,7 +241,9 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               }}
               defaultValue={defaultValue}
               value={value}
+              //@ts-expect-error
               getOptionLabel={getOptionLabel}
+              //@ts-expect-error
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
               onChange={onChange}
@@ -246,8 +251,9 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               isLoading={isLoading}
               defaultOptions={defaultOptions}
               placeholder={placeholder || 'Choose'}
-              styles={resetSelectStyles()}
-              loadingMessage={() => loadingMessage}
+              //@ts-expect-error
+              styles={resetSelectStyles(this.context)}
+              loadingMessage={loadingMessage}
               noOptionsMessage={noOptionsMessage}
               isDisabled={isDisabled}
               isSearchable={isSearchable}

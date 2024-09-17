@@ -1,11 +1,12 @@
-import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
-import { CustomVariableModel, VariableWithMultiSupport } from '../types';
-import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { FormEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { Field, TextArea } from '@grafana/ui';
+
+import { CustomVariableModel, VariableWithMultiSupport } from '@grafana/data';
+import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { CustomVariableForm } from 'app/features/dashboard-scene/settings/variables/components/CustomVariableForm';
 import { StoreState } from 'app/types';
+
+import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { changeVariableMultiValue } from '../state/actions';
 
 interface OwnProps extends VariableEditorProps<CustomVariableModel> {}
@@ -19,52 +20,36 @@ interface DispatchProps {
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class CustomVariableEditorUnconnected extends PureComponent<Props> {
-  onChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    this.props.onPropChange({
-      propName: 'query',
-      propValue: event.target.value,
-    });
-  };
-
   onSelectionOptionsChange = async ({ propName, propValue }: OnPropChangeArguments<VariableWithMultiSupport>) => {
     this.props.onPropChange({ propName, propValue, updateOptions: true });
   };
 
-  onBlur = (event: FocusEvent<HTMLTextAreaElement>) => {
+  onQueryChange = (event: FormEvent<HTMLTextAreaElement>) => {
     this.props.onPropChange({
       propName: 'query',
-      propValue: event.target.value,
+      propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
 
   render() {
     return (
-      <>
-        <div className="gf-form-group">
-          <h5 className="section-heading">Custom Options</h5>
-          <div className="gf-form">
-            <Field label="Values separated by comma">
-              <TextArea
-                className="gf-form-input"
-                value={this.props.variable.query}
-                onChange={this.onChange}
-                onBlur={this.onBlur}
-                rows={5}
-                cols={81}
-                placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
-                required
-                aria-label="Variable editor Form Custom Query field"
-              />
-            </Field>
-          </div>
-        </div>
-        <SelectionOptionsEditor
-          variable={this.props.variable}
-          onPropChange={this.onSelectionOptionsChange}
-          onMultiChanged={this.props.changeVariableMultiValue}
-        />
-      </>
+      <CustomVariableForm
+        query={this.props.variable.query}
+        multi={this.props.variable.multi}
+        allValue={this.props.variable.allValue}
+        includeAll={this.props.variable.includeAll}
+        onQueryChange={this.onQueryChange}
+        onMultiChange={(event) =>
+          this.onSelectionOptionsChange({ propName: 'multi', propValue: event.currentTarget.checked })
+        }
+        onIncludeAllChange={(event) =>
+          this.onSelectionOptionsChange({ propName: 'includeAll', propValue: event.currentTarget.checked })
+        }
+        onAllValueChange={(event) =>
+          this.onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
+        }
+      />
     );
   }
 }

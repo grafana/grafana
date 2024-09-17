@@ -1,0 +1,16 @@
+{
+  "type": "panel",
+  "name": "Traces",
+  "id": "traces",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/traces-panel.svg",
+      "large": "img/traces-panel.svg"
+    }
+  }
+}

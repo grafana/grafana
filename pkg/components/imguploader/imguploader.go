@@ -16,6 +16,7 @@ const (
 	defaultGCSSignedURLExpiration = 7 * 24 * time.Hour // 7 days
 )
 
+//go:generate mockgen -destination=mock.go -package=imguploader github.com/grafana/grafana/pkg/components/imguploader ImageUploader
 type ImageUploader interface {
 	Upload(ctx context.Context, path string) (string, error)
 }
@@ -31,10 +32,10 @@ var (
 	logger = log.New("imguploader")
 )
 
-func NewImageUploader() (ImageUploader, error) {
-	switch setting.ImageUploadProvider {
+func NewImageUploader(cfg *setting.Cfg) (ImageUploader, error) {
+	switch cfg.ImageUploadProvider {
 	case "s3":
-		s3sec, err := setting.Raw.GetSection("external_image_storage.s3")
+		s3sec, err := cfg.Raw.GetSection("external_image_storage.s3")
 		if err != nil {
 			return nil, err
 		}
@@ -63,7 +64,7 @@ func NewImageUploader() (ImageUploader, error) {
 
 		return NewS3Uploader(endpoint, region, bucket, path, "public-read", accessKey, secretKey, pathStyleAccess), nil
 	case "webdav":
-		webdavSec, err := setting.Raw.GetSection("external_image_storage.webdav")
+		webdavSec, err := cfg.Raw.GetSection("external_image_storage.webdav")
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +80,7 @@ func NewImageUploader() (ImageUploader, error) {
 
 		return NewWebdavImageUploader(url, username, password, public_url)
 	case "gcs":
-		gcssec, err := setting.Raw.GetSection("external_image_storage.gcs")
+		gcssec, err := cfg.Raw.GetSection("external_image_storage.gcs")
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +102,7 @@ func NewImageUploader() (ImageUploader, error) {
 
 		return gcs.NewUploader(keyFile, bucketName, path, enableSignedURLs, suExp)
 	case "azure_blob":
-		azureBlobSec, err := setting.Raw.GetSection("external_image_storage.azure_blob")
+		azureBlobSec, err := cfg.Raw.GetSection("external_image_storage.azure_blob")
 		if err != nil {
 			return nil, err
 		}
@@ -109,14 +110,16 @@ func NewImageUploader() (ImageUploader, error) {
 		account_name := azureBlobSec.Key("account_name").MustString("")
 		account_key := azureBlobSec.Key("account_key").MustString("")
 		container_name := azureBlobSec.Key("container_name").MustString("")
+		sas_token_expiration_days := azureBlobSec.Key("sas_token_expiration_days").MustInt(-1)
 
-		return NewAzureBlobUploader(account_name, account_key, container_name), nil
+		return NewAzureBlobUploader(account_name, account_key, container_name, sas_token_expiration_days), nil
+
 	case "local":
 		return NewLocalImageUploader()
 	}
 
-	if setting.ImageUploadProvider != "" {
-		logger.Error("The external image storage configuration is invalid", "unsupported provider", setting.ImageUploadProvider)
+	if cfg.ImageUploadProvider != "" {
+		logger.Error("The external image storage configuration is invalid", "unsupported provider", cfg.ImageUploadProvider)
 	}
 
 	return NopImageUploader{}, nil

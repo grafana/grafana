@@ -5,167 +5,245 @@ import (
 	"sort"
 	"time"
 
+	"github.com/grafana/dataplane/sdata/timeseries"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
-// Series has time.Time and ...? *float64 fields.
+// seriesTypeTimeIdx is the data frame field index for the Series type's Time column.
+const seriesTypeTimeIdx = 0
+
+// seriesTypeValIdx is the data frame field index for the Series type's Value column.
+const seriesTypeValIdx = 1
+
+// Series has a time.Time and a *float64 fields.
 type Series struct {
-	Frame          *data.Frame
-	TimeIsNullable bool
-	TimeIdx        int
-	ValueIsNullabe bool
-	ValueIdx       int
-	// TODO:
-	// - Multiple Value Fields
-	// - Value can be different number types
+	Frame *data.Frame
 }
 
 // SeriesFromFrame validates that the dataframe can be considered a Series type
-// and populate meta information on Series about the frame.
+// and mutates the frame to be in the format that additional SSE operations expect.
 func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 	if len(frame.Fields) != 2 {
 		return s, fmt.Errorf("frame must have exactly two fields to be a series, has %v", len(frame.Fields))
 	}
 
-	foundTime := false
-	foundValue := false
+	valueIdx := -1
+	timeIdx := -1
+
+	timeNullable := false
+	valueNullable := false
+
+FIELDS:
 	for i, field := range frame.Fields {
 		switch field.Type() {
 		case data.FieldTypeTime:
-			s.TimeIdx = i
-			foundTime = true
+			timeIdx = i
 		case data.FieldTypeNullableTime:
-			s.TimeIsNullable = true
-			foundTime = true
-			s.TimeIdx = i
+			timeNullable = true
+			timeIdx = i
 		case data.FieldTypeFloat64:
-			foundValue = true
-			s.ValueIdx = i
+			valueIdx = i
 		case data.FieldTypeNullableFloat64:
-			s.ValueIsNullabe = true
-			foundValue = true
-			s.ValueIdx = i
+			valueNullable = true
+			valueIdx = i
+		default:
+			// Handle default case
+			// try to convert to *float64
+			var convertedField *data.Field
+			for j := 0; j < field.Len(); j++ {
+				ff, err := field.NullableFloatAt(j)
+				if err != nil {
+					break
+				}
+				if convertedField == nil { // initialise field
+					convertedField = data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, field.Len())
+					convertedField.Name = field.Name
+					convertedField.Labels = field.Labels
+				}
+				convertedField.Set(j, ff)
+			}
+			if convertedField != nil {
+				frame.Fields[i] = convertedField
+				valueNullable = true
+				valueIdx = i
+			}
+			if valueIdx != -1 && timeIdx != -1 {
+				break FIELDS
+			}
 		}
 	}
-	if !foundTime {
+
+	if timeIdx == -1 {
 		return s, fmt.Errorf("no time column found in frame %v", frame.Name)
 	}
-	if !foundValue {
+	if valueIdx == -1 {
 		return s, fmt.Errorf("no float64 value column found in frame %v", frame.Name)
 	}
+
+	if timeNullable { // make time not nullable if it is in the input
+		timeSlice := make([]time.Time, 0, frame.Fields[timeIdx].Len())
+		for rowIdx := 0; rowIdx < frame.Fields[timeIdx].Len(); rowIdx++ {
+			val, ok := frame.At(timeIdx, rowIdx).(*time.Time)
+			if !ok {
+				return s, fmt.Errorf("unexpected time type, expected *time.Time but got %T", val)
+			}
+			if val == nil {
+				return s, fmt.Errorf("time series with null time stamps are not supported")
+			}
+			timeSlice = append(timeSlice, *val)
+		}
+		nF := data.NewField(frame.Fields[timeIdx].Name, nil, timeSlice) // (labels are not used on time field)
+		nF.Config = frame.Fields[timeIdx].Config
+		frame.Fields[timeIdx] = nF
+	}
+
+	if !valueNullable { // make value nullable if it is not in the input
+		floatSlice := make([]*float64, 0, frame.Fields[valueIdx].Len())
+		for rowIdx := 0; rowIdx < frame.Fields[valueIdx].Len(); rowIdx++ {
+			val, ok := frame.At(valueIdx, rowIdx).(float64)
+			if !ok {
+				return s, fmt.Errorf("unexpected time type, expected float64 but got %T", val)
+			}
+			floatSlice = append(floatSlice, &val)
+		}
+		nF := data.NewField(frame.Fields[valueIdx].Name, frame.Fields[valueIdx].Labels, floatSlice)
+		nF.Config = frame.Fields[valueIdx].Config
+		frame.Fields[valueIdx] = nF
+	}
+
+	fields := make([]*data.Field, 2)
+	fields[seriesTypeTimeIdx] = frame.Fields[timeIdx]
+	fields[seriesTypeValIdx] = frame.Fields[valueIdx]
+
+	frame.Fields = fields
 	s.Frame = frame
+
+	// We use the frame name as series name if the frame name is set
+	if s.Frame.Name != "" {
+		s.Frame.Fields[seriesTypeValIdx].Name = s.Frame.Name
+	}
+
 	return s, nil
 }
 
 // NewSeries returns a dataframe of type Series.
-func NewSeries(name string, labels data.Labels, timeIdx int, nullableTime bool, valueIdx int, nullableValue bool, size int) Series {
+func NewSeries(refID string, labels data.Labels, size int) Series {
 	fields := make([]*data.Field, 2)
-
-	if nullableValue {
-		fields[valueIdx] = data.NewField(name, labels, make([]*float64, size))
-	} else {
-		fields[valueIdx] = data.NewField(name, labels, make([]float64, size))
-	}
-
-	if nullableTime {
-		fields[timeIdx] = data.NewField("Time", nil, make([]*time.Time, size))
-	} else {
-		fields[timeIdx] = data.NewField("Time", nil, make([]time.Time, size))
+	fields[seriesTypeTimeIdx] = data.NewField("Time", nil, make([]time.Time, size))
+	fields[seriesTypeValIdx] = data.NewField(refID, labels, make([]*float64, size))
+	frame := data.NewFrame("", fields...)
+	frame.RefID = refID
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
 	}
 
 	return Series{
-		Frame:          data.NewFrame("", fields...),
-		TimeIsNullable: nullableTime,
-		TimeIdx:        timeIdx,
-		ValueIsNullabe: nullableValue,
-		ValueIdx:       valueIdx,
+		Frame: frame,
 	}
+}
+
+// NewSeries returns a dataframe of type Series.
+func NewSeriesFromRef(refID string, s timeseries.MetricRef) (Series, error) {
+	frame := data.NewFrame("")
+	frame.RefID = refID
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	}
+
+	valField := s.ValueField
+	if valField.Type() != data.FieldTypeNullableFloat64 {
+		convertedField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, valField.Len())
+		convertedField.Name = valField.Name
+		convertedField.Labels = valField.Labels
+		convertedField.Config = valField.Config
+		for j := 0; j < valField.Len(); j++ {
+			ff, err := valField.NullableFloatAt(j)
+			if err != nil {
+				break
+			}
+
+			convertedField.Set(j, ff)
+		}
+		valField = convertedField
+	}
+	frame.Fields = []*data.Field{s.TimeField, valField}
+
+	return Series{
+		Frame: frame, // No Data Frame
+	}, nil
 }
 
 // Type returns the Value type and allows it to fulfill the Value interface.
 func (s Series) Type() parse.ReturnType { return parse.TypeSeriesSet }
 
 // Value returns the actual value allows it to fulfill the Value interface.
-func (s Series) Value() interface{} { return &s }
+func (s Series) Value() any { return &s }
 
-func (s Series) GetLabels() data.Labels { return s.Frame.Fields[s.ValueIdx].Labels }
+func (s Series) GetLabels() data.Labels { return s.Frame.Fields[seriesTypeValIdx].Labels }
 
-func (s Series) SetLabels(ls data.Labels) { s.Frame.Fields[s.ValueIdx].Labels = ls }
+func (s Series) SetLabels(ls data.Labels) { s.Frame.Fields[seriesTypeValIdx].Labels = ls }
 
-func (s Series) GetName() string { return s.Frame.Name }
+func (s Series) GetName() string { return s.Frame.Fields[seriesTypeValIdx].Name }
+
+func (s Series) GetMeta() any {
+	return s.Frame.Meta.Custom
+}
+
+func (s Series) SetMeta(v any) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Custom = v
+}
+
+func (s Series) AddNotice(notice data.Notice) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, notice)
+}
 
 // AsDataFrame returns the underlying *data.Frame.
 func (s Series) AsDataFrame() *data.Frame { return s.Frame }
 
 // GetPoint returns the time and value at the specified index.
-func (s Series) GetPoint(pointIdx int) (*time.Time, *float64) {
+func (s Series) GetPoint(pointIdx int) (time.Time, *float64) {
 	return s.GetTime(pointIdx), s.GetValue(pointIdx)
 }
 
 // SetPoint sets the time and value on the corresponding vectors at the specified index.
-func (s Series) SetPoint(pointIdx int, t *time.Time, f *float64) (err error) {
-	if s.TimeIsNullable {
-		s.Frame.Fields[s.TimeIdx].Set(pointIdx, t)
-	} else {
-		if t == nil {
-			return fmt.Errorf("can not set null time value on non-nullable time field for series name %v", s.Frame.Name)
-		}
-		s.Frame.Fields[s.TimeIdx].Set(pointIdx, *t)
-	}
-	if s.ValueIsNullabe {
-		s.Frame.Fields[s.ValueIdx].Set(pointIdx, f)
-	} else {
-		if f == nil {
-			return fmt.Errorf("can not set null float value on non-nullable float field for series name %v", s.Frame.Name)
-		}
-		s.Frame.Fields[s.ValueIdx].Set(pointIdx, *f)
-	}
-	return
+func (s Series) SetPoint(pointIdx int, t time.Time, f *float64) {
+	s.Frame.Fields[seriesTypeTimeIdx].Set(pointIdx, t)
+	s.Frame.Fields[seriesTypeValIdx].Set(pointIdx, f)
 }
 
 // AppendPoint appends a point (time/value).
-func (s Series) AppendPoint(pointIdx int, t *time.Time, f *float64) (err error) {
-	if s.TimeIsNullable {
-		s.Frame.Fields[s.TimeIdx].Append(t)
-	} else {
-		if t == nil {
-			return fmt.Errorf("can not append null time value on non-nullable time field for series name %v", s.Frame.Name)
-		}
-		s.Frame.Fields[s.TimeIdx].Append(*t)
-	}
-	if s.ValueIsNullabe {
-		s.Frame.Fields[s.ValueIdx].Append(f)
-	} else {
-		if f == nil {
-			return fmt.Errorf("can not append null float value on non-nullable float field for series name %v", s.Frame.Name)
-		}
-		s.Frame.Fields[s.ValueIdx].Append(*f)
-	}
-	return
+func (s Series) AppendPoint(t time.Time, f *float64) {
+	s.Frame.Fields[seriesTypeTimeIdx].Append(t)
+	s.Frame.Fields[seriesTypeValIdx].Append(f)
 }
 
 // Len returns the length of the series.
 func (s Series) Len() int {
-	return s.Frame.Fields[0].Len()
+	return s.Frame.Fields[seriesTypeTimeIdx].Len()
 }
 
 // GetTime returns the time at the specified index.
-func (s Series) GetTime(pointIdx int) *time.Time {
-	if s.TimeIsNullable {
-		return s.Frame.Fields[s.TimeIdx].At(pointIdx).(*time.Time)
-	}
-	t := s.Frame.Fields[s.TimeIdx].At(pointIdx).(time.Time)
-	return &t
+func (s Series) GetTime(pointIdx int) time.Time {
+	return s.Frame.Fields[seriesTypeTimeIdx].At(pointIdx).(time.Time)
 }
 
 // GetValue returns the float value at the specified index.
 func (s Series) GetValue(pointIdx int) *float64 {
-	if s.ValueIsNullabe {
-		return s.Frame.Fields[s.ValueIdx].At(pointIdx).(*float64)
-	}
-	f := s.Frame.Fields[s.ValueIdx].At(pointIdx).(float64)
-	return &f
+	return s.Frame.Fields[seriesTypeValIdx].At(pointIdx).(*float64)
 }
 
 // SortByTime sorts the series by the time from oldest to newest.
@@ -188,12 +266,12 @@ func (ss SortSeriesByTime) Len() int { return Series(ss).Len() }
 func (ss SortSeriesByTime) Swap(i, j int) {
 	iTimeVal, iFVal := Series(ss).GetPoint(i)
 	jTimeVal, jFVal := Series(ss).GetPoint(j)
-	_ = Series(ss).SetPoint(j, iTimeVal, iFVal)
-	_ = Series(ss).SetPoint(i, jTimeVal, jFVal)
+	Series(ss).SetPoint(j, iTimeVal, iFVal)
+	Series(ss).SetPoint(i, jTimeVal, jFVal)
 }
 
 func (ss SortSeriesByTime) Less(i, j int) bool {
 	iTimeVal := Series(ss).GetTime(i)
 	jTimeVal := Series(ss).GetTime(j)
-	return iTimeVal.Before(*jTimeVal)
+	return iTimeVal.Before(jTimeVal)
 }

@@ -1,11 +1,14 @@
+import { cloneDeep } from 'lodash';
+
+import { TextBoxVariableModel } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import cloneDeep from 'lodash/cloneDeep';
 import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload } from '../state/types';
-import { createTextBoxOptions, textBoxVariableReducer } from './reducer';
-import { VariablesState } from '../state/variablesReducer';
-import { TextBoxVariableModel } from '../types';
+import { VariablesState } from '../state/types';
+import { toVariablePayload } from '../utils';
+
 import { createTextBoxVariableAdapter } from './adapter';
+import { createTextBoxOptions, textBoxVariableReducer } from './reducer';
 
 describe('textBoxVariableReducer', () => {
   const adapter = createTextBoxVariableAdapter();

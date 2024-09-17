@@ -1,120 +1,69 @@
-import React, { FunctionComponent } from 'react';
-import { Themeable } from '../../types';
-import { ColorDefinition } from '@grafana/data';
-import { Color } from 'csstype';
-import upperFirst from 'lodash/upperFirst';
-import find from 'lodash/find';
-import { selectThemeVariant } from '../../themes/selectThemeVariant';
+import { css } from '@emotion/css';
+import { Property } from 'csstype';
+import { upperFirst } from 'lodash';
 
-type ColorChangeHandler = (color: ColorDefinition) => void;
+import { GrafanaTheme2, ThemeVizHue } from '@grafana/data';
 
-export enum ColorSwatchVariant {
-  Small = 'small',
-  Large = 'large',
-}
+import { useStyles2 } from '../../themes/ThemeContext';
+import { reverseMap } from '../../utils/reverseMap';
 
-interface ColorSwatchProps extends Themeable, React.DOMAttributes<HTMLDivElement> {
-  color: string;
-  label?: string;
-  variant?: ColorSwatchVariant;
-  isSelected?: boolean;
-}
+import { ColorSwatch, ColorSwatchVariant } from './ColorSwatch';
 
-export const ColorSwatch: FunctionComponent<ColorSwatchProps> = ({
-  color,
-  label,
-  variant = ColorSwatchVariant.Small,
-  isSelected,
-  theme,
-  ...otherProps
-}) => {
-  const isSmall = variant === ColorSwatchVariant.Small;
-  const swatchSize = isSmall ? '16px' : '32px';
-
-  const selectedSwatchBorder = selectThemeVariant(
-    {
-      light: theme.palette.white,
-      dark: theme.palette.black,
-    },
-    theme.type
-  );
-
-  const swatchStyles = {
-    width: swatchSize,
-    height: swatchSize,
-    borderRadius: '50%',
-    background: `${color}`,
-    marginRight: isSmall ? '0px' : '8px',
-    boxShadow: isSelected ? `inset 0 0 0 2px ${color}, inset 0 0 0 4px ${selectedSwatchBorder}` : 'none',
-  };
-
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        cursor: 'pointer',
-      }}
-      {...otherProps}
-    >
-      <div style={swatchStyles} />
-      {variant === ColorSwatchVariant.Large && <span>{label}</span>}
-    </div>
-  );
-};
-
-interface NamedColorsGroupProps extends Themeable {
-  colors: ColorDefinition[];
-  selectedColor?: Color;
-  onColorSelect: ColorChangeHandler;
+interface NamedColorsGroupProps {
+  hue: ThemeVizHue;
+  selectedColor?: Property.Color;
+  onColorSelect: (colorName: string) => void;
   key?: string;
 }
 
-const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
-  colors,
-  selectedColor,
-  onColorSelect,
-  theme,
-  ...otherProps
-}) => {
-  const primaryColor = find(colors, color => !!color.isPrimary);
+const NamedColorsGroup = ({ hue, selectedColor, onColorSelect, ...otherProps }: NamedColorsGroupProps) => {
+  const label = upperFirst(hue.name);
+  const styles = useStyles2(getStyles);
 
   return (
-    <div {...otherProps} style={{ display: 'flex', flexDirection: 'column' }}>
-      {primaryColor && (
-        <ColorSwatch
-          key={primaryColor.name}
-          isSelected={primaryColor.name === selectedColor}
-          variant={ColorSwatchVariant.Large}
-          color={primaryColor.variants[theme.type]}
-          label={upperFirst(primaryColor.hue)}
-          onClick={() => onColorSelect(primaryColor)}
-          theme={theme}
-        />
-      )}
-      <div
-        style={{
-          display: 'flex',
-          marginTop: '8px',
-        }}
-      >
-        {colors.map(
-          color =>
-            !color.isPrimary && (
-              <div key={color.name} style={{ marginRight: '4px' }}>
-                <ColorSwatch
-                  key={color.name}
-                  isSelected={color.name === selectedColor}
-                  color={color.variants[theme.type]}
-                  onClick={() => onColorSelect(color)}
-                  theme={theme}
-                />
-              </div>
-            )
-        )}
+    <div className={styles.colorRow}>
+      <div className={styles.colorLabel}>{label}</div>
+      <div {...otherProps} className={styles.swatchRow}>
+        {reverseMap(hue.shades, (shade) => (
+          <ColorSwatch
+            key={shade.name}
+            aria-label={shade.name}
+            variant={shade.primary ? ColorSwatchVariant.Large : ColorSwatchVariant.Small}
+            isSelected={shade.name === selectedColor}
+            color={shade.color}
+            onClick={() => onColorSelect(shade.name)}
+          />
+        ))}
       </div>
     </div>
   );
 };
 
 export default NamedColorsGroup;
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    colorRow: css({
+      display: 'grid',
+      gridTemplateColumns: '25% 1fr',
+      gridColumnGap: theme.spacing(2),
+      padding: theme.spacing(0.5, 0),
+
+      '&:hover': {
+        background: theme.colors.background.secondary,
+      },
+    }),
+    colorLabel: css({
+      paddingLeft: theme.spacing(2),
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    swatchRow: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      flexDirection: 'row',
+    }),
+  };
+};

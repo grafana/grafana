@@ -1,10 +1,13 @@
-import { CSVHeaderStyle, readCSV, toCSV } from './csv';
-import { getDataFrameRow, toDataFrameDTO } from '../dataframe/processDataFrame';
-
 // Test with local CSV files
 import fs from 'fs';
-import { MutableDataFrame } from '../dataframe';
-import { getDisplayProcessor } from '../field';
+
+import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { getDataFrameRow, toDataFrameDTO } from '../dataframe/processDataFrame';
+import { getDisplayProcessor } from '../field/displayProcessor';
+import { createTheme } from '../themes/createTheme';
+import { FieldType } from '../types/dataFrame';
+
+import { CSVHeaderStyle, readCSV, toCSV } from './csv';
 
 describe('read csv', () => {
   it('should get X and y', () => {
@@ -86,7 +89,7 @@ describe('write csv', () => {
     const fields = f[0].fields;
     expect(fields.length).toBe(3);
     expect(getDataFrameRow(f[0], 0)).toEqual(firstRow);
-    expect(fields.map(f => f.name).join(',')).toEqual('a,b,c'); // the names
+    expect(fields.map((f) => f.name).join(',')).toEqual('a,b,c'); // the names
   });
 
   it('should add Excel header given config', () => {
@@ -100,11 +103,9 @@ describe('write csv', () => {
     const csv = toCSV([dataFrame], { useExcelHeader: true });
     expect(csv).toMatchInlineSnapshot(`
       "sep=,
-      \\"Time\\",\\"Value\\"
+      "Time","Value"
       1598784913123,1234
-      1598784914123,5678
-
-      "
+      1598784914123,5678"
     `);
   });
 });
@@ -128,10 +129,8 @@ describe('DataFrame to CSV', () => {
 
     const csv = toCSV([dataFrame]);
     expect(csv).toMatchInlineSnapshot(`
-      "\\"Time\\",\\"{label1=\\"\\"value1\\"\\", label2=\\"\\"value1\\"\\"}\\"
-      1589455688623,1234
-
-      "
+      ""Time","{label1=""value1"", label2=""value1""}"
+      1589455688623,1234"
     `);
   });
 
@@ -149,14 +148,35 @@ describe('DataFrame to CSV', () => {
       ],
     });
 
-    dataFrame.fields[1].display = getDisplayProcessor({ field: dataFrame.fields[1], timeZone: 'utc' });
+    dataFrame.fields[1].display = getDisplayProcessor({
+      field: dataFrame.fields[1],
+      timeZone: 'utc',
+      theme: createTheme(),
+    });
 
     const csv = toCSV([dataFrame]);
     expect(csv).toMatchInlineSnapshot(`
-      "\\"Time\\",\\"Value\\"
-      1589455688623,2020-05-14 11:28:08
+      ""Time","Value"
+      1589455688623,2020-05-14 11:28:08"
+    `);
+  });
 
-      "
+  it('should handle field type frame', () => {
+    const dataFrame = new MutableDataFrame({
+      fields: [
+        { name: 'Time', values: [1589455688623] },
+        {
+          name: 'Value',
+          type: FieldType.frame,
+          values: [{ value: '1234' }],
+        },
+      ],
+    });
+
+    const csv = toCSV([dataFrame]);
+    expect(csv).toMatchInlineSnapshot(`
+      ""Time","Value"
+      1589455688623,1234"
     `);
   });
 });

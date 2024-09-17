@@ -1,6 +1,8 @@
-import moment from 'moment-timezone';
 import { memoize } from 'lodash';
-import { TimeZone } from '../types';
+import moment from 'moment-timezone';
+
+import { TimeZone } from '../types/time';
+
 import { getTimeZone } from './common';
 
 export enum InternalTimeZones {
@@ -18,6 +20,10 @@ export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
     default:
       return timeZone;
   }
+};
+
+export const getZone = (timeZone: string) => {
+  return moment.tz.zone(timeZone);
 };
 
 export interface TimeZoneCountry {
@@ -48,11 +54,13 @@ export const getTimeZoneInfo = (zone: string, timestamp: number): TimeZoneInfo |
   return mapToInfo(zone, timestamp);
 };
 
-export const getTimeZones = memoize((includeInternal = false): TimeZone[] => {
+export const getTimeZones = memoize((includeInternal: boolean | InternalTimeZones[] = false): TimeZone[] => {
   const initial: TimeZone[] = [];
 
-  if (includeInternal) {
-    initial.push.apply(initial, [InternalTimeZones.default, InternalTimeZones.localBrowserTime, InternalTimeZones.utc]);
+  if (includeInternal === true) {
+    initial.push(InternalTimeZones.default, InternalTimeZones.localBrowserTime, InternalTimeZones.utc);
+  } else if (includeInternal) {
+    initial.push(...includeInternal);
   }
 
   return moment.tz.names().reduce((zones: TimeZone[], zone: string) => {
@@ -67,32 +75,34 @@ export const getTimeZones = memoize((includeInternal = false): TimeZone[] => {
   }, initial);
 });
 
-export const getTimeZoneGroups = memoize((includeInternal = false): GroupedTimeZones[] => {
-  const timeZones = getTimeZones(includeInternal);
+export const getTimeZoneGroups = memoize(
+  (includeInternal: boolean | InternalTimeZones[] = false): GroupedTimeZones[] => {
+    const timeZones = getTimeZones(includeInternal);
 
-  const groups = timeZones.reduce((groups: Record<string, TimeZone[]>, zone: TimeZone) => {
-    const delimiter = zone.indexOf('/');
+    const groups = timeZones.reduce((groups: Record<string, TimeZone[]>, zone: TimeZone) => {
+      const delimiter = zone.indexOf('/');
 
-    if (delimiter === -1) {
-      const group = '';
+      if (delimiter === -1) {
+        const group = '';
+        groups[group] = groups[group] ?? [];
+        groups[group].push(zone);
+
+        return groups;
+      }
+
+      const group = zone.slice(0, delimiter);
       groups[group] = groups[group] ?? [];
       groups[group].push(zone);
 
       return groups;
-    }
+    }, {});
 
-    const group = zone.substr(0, delimiter);
-    groups[group] = groups[group] ?? [];
-    groups[group].push(zone);
-
-    return groups;
-  }, {});
-
-  return Object.keys(groups).map(name => ({
-    name,
-    zones: groups[name],
-  }));
-});
+    return Object.keys(groups).map((name) => ({
+      name,
+      zones: groups[name],
+    }));
+  }
+);
 
 const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined => {
   switch (zone) {
@@ -110,14 +120,14 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
     case InternalTimeZones.default: {
       const tz = getTimeZone();
       const isInternal = tz === 'browser' || tz === 'utc';
-      const info = (isInternal ? mapInternal(tz, timestamp) : mapToInfo(tz, timestamp)) ?? {};
+      const info = isInternal ? mapInternal(tz, timestamp) : mapToInfo(tz, timestamp);
 
       return {
         countries: countriesByTimeZone[tz] ?? [],
         abbreviation: '',
         offsetInMins: 0,
         ...info,
-        ianaName: (info as TimeZoneInfo).ianaName,
+        ianaName: info?.ianaName ?? '',
         name: 'Default',
         zone,
       };
@@ -125,7 +135,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
 
     case InternalTimeZones.localBrowserTime: {
       const tz = moment.tz.guess(true);
-      const info = mapToInfo(tz, timestamp) ?? {};
+      const info = mapToInfo(tz, timestamp);
 
       return {
         countries: countriesByTimeZone[tz] ?? [],
@@ -133,7 +143,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
         offsetInMins: new Date().getTimezoneOffset(),
         ...info,
         name: 'Browser Time',
-        ianaName: (info as TimeZoneInfo).ianaName,
+        ianaName: info?.ianaName ?? '',
         zone,
       };
     }
@@ -335,7 +345,7 @@ const countryByCode: Record<string, string> = {
   OM: 'Oman',
   PK: 'Pakistan',
   PW: 'Palau',
-  PS: 'Palestinian Territory (Occupied)',
+  PS: 'Palestine, State of',
   PA: 'Panama',
   PG: 'Papua New Guinea',
   PY: 'Paraguay',

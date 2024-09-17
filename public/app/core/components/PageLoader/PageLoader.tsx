@@ -1,16 +1,15 @@
-import React, { FC } from 'react';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { Box, LoadingPlaceholder } from '@grafana/ui';
 
 interface Props {
   pageName?: string;
 }
 
-const PageLoader: FC<Props> = ({ pageName = '' }) => {
+const PageLoader = ({ pageName = '' }: Props) => {
   const loadingText = `Loading ${pageName}...`;
   return (
-    <div className="page-loader-wrapper">
+    <Box display="flex" alignItems="center" direction="column" justifyContent="center" paddingTop={10}>
       <LoadingPlaceholder text={loadingText} />
-    </div>
+    </Box>
   );
 };
 

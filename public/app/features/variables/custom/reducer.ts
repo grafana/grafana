@@ -1,8 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { CustomVariableModel, initialVariableModelState, VariableOption } from '../types';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, getInstanceState, VariablePayload } from '../state/types';
-import { initialVariablesState, VariablesState } from '../state/variablesReducer';
+import { CustomVariableModel, VariableOption } from '@grafana/data';
+
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../constants';
+import { getInstanceState } from '../state/selectors';
+import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
+import { initialVariableModelState } from '../types';
 
 export const initialCustomVariableModelState: CustomVariableModel = {
   ...initialVariableModelState,
@@ -19,12 +22,16 @@ export const customVariableSlice = createSlice({
   name: 'templating/custom',
   initialState: initialVariablesState,
   reducers: {
-    createCustomOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.id);
-      const { includeAll, query } = instanceState;
+    createCustomOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload<string>>) => {
+      const instanceState = getInstanceState(state, action.payload.id);
+      if (instanceState.type !== 'custom') {
+        return;
+      }
 
-      const match = query.match(/(?:\\,|[^,])+/g) ?? [];
-      const options = match.map(text => {
+      const { includeAll } = instanceState;
+      const queryInterpolated = action.payload.data;
+      const match = queryInterpolated.match(/(?:\\,|[^,])+/g) ?? [];
+      const options = match.map((text) => {
         text = text.replace(/\\,/g, ',');
         const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];
         if (textMatch.length === 3) {

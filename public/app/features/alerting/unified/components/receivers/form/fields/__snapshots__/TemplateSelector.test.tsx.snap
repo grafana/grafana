@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getTemplateOptions function should return the last template when there are duplicates 1`] = `
+[
+  {
+    "label": "template1",
+    "value": {
+      "content": "{{ define "template1" }}{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s) this is the last one{{ end }}",
+      "name": "template1",
+    },
+  },
+  {
+    "label": "email.subject",
+    "value": {
+      "content": "{{ define "email.subject" }}{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s){{ end }}",
+      "name": "email.subject",
+    },
+  },
+  {
+    "label": "template_with_minus",
+    "value": {
+      "content": "{{ define "template_with_minus" -}}{{ .Annotations.summary }}{{- end }}",
+      "name": "template_with_minus",
+    },
+  },
+  {
+    "label": "nested",
+    "value": {
+      "content": "{{ define "nested" }}
+      Main Template Content
+      {{ template "sub1" }}
+      {{ template "sub2" }}
+      {{ end }}
+{{ define "sub1" }}
+      Sub Template 1 Content
+      {{ end }}
+{{ define "sub2" }}
+      Sub Template 2 Content
+      {{ end }}",
+      "name": "nested",
+    },
+  },
+  {
+    "label": "default.title",
+    "value": {
+      "content": "{{ define "default.title" }}{{ template "__subject" . }}{{ end }}",
+      "name": "default.title",
+    },
+  },
+  {
+    "label": "default.message",
+    "value": {
+      "content": "{{ define "default.message" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
+{{ template "__text_alert_list" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
+
+{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
+{{ template "__text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}",
+      "name": "default.message",
+    },
+  },
+  {
+    "label": "teams.default.message",
+    "value": {
+      "content": "{{ define "teams.default.message" }}{{ if gt (len .Alerts.Firing) 0 }}**Firing**
+{{ template "__teams_text_alert_list" .Alerts.Firing }}{{ if gt (len .Alerts.Resolved) 0 }}
+
+{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}**Resolved**
+{{ template "__teams_text_alert_list" .Alerts.Resolved }}{{ end }}{{ end }}",
+      "name": "teams.default.message",
+    },
+  },
+]
+`;

@@ -1,10 +1,12 @@
-import React, { HTMLProps, ReactNode } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
+import { forwardRef, HTMLProps, ReactNode } from 'react';
+import useMeasure from 'react-use/lib/useMeasure';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
-import { stylesFactory, useTheme } from '../../themes';
 import { Spinner } from '../Spinner/Spinner';
-import { useClientRect } from '../../utils/useClientRect';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'size'> {
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
@@ -24,210 +26,26 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
 }
 
 interface StyleDeps {
-  theme: GrafanaTheme;
-  invalid: boolean;
+  theme: GrafanaTheme2;
+  invalid?: boolean;
   width?: number;
 }
 
-export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
-  const { palette, colors } = theme;
-  const borderRadius = theme.border.radius.sm;
-  const height = theme.spacing.formInputHeight;
-
-  const prefixSuffixStaticWidth = '28px';
-  const prefixSuffix = css`
-    position: absolute;
-    top: 0;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-grow: 0;
-    flex-shrink: 0;
-    font-size: ${theme.typography.size.md};
-    height: 100%;
-    /* Min width specified for prefix/suffix classes used outside React component*/
-    min-width: ${prefixSuffixStaticWidth};
-    color: ${theme.colors.textWeak};
-  `;
-
-  return {
-    // Wraps inputWrapper and addons
-    wrapper: cx(
-      css`
-        label: input-wrapper;
-        display: flex;
-        width: ${width ? `${8 * width}px` : '100%'};
-        height: ${height}px;
-        border-radius: ${borderRadius};
-        &:hover {
-          > .prefix,
-          .suffix,
-          .input {
-            border-color: ${invalid ? palette.redBase : colors.formInputBorder};
-          }
-
-          // only show number buttons on hover
-          input[type='number'] {
-            -moz-appearance: number-input;
-            -webkit-appearance: number-input;
-            appearance: textfield;
-          }
-
-          input[type='number']::-webkit-inner-spin-button,
-          input[type='number']::-webkit-outer-spin-button {
-            -webkit-appearance: inner-spin-button !important;
-            opacity: 1;
-          }
-        }
-      `
-    ),
-    // Wraps input and prefix/suffix
-    inputWrapper: css`
-      label: input-inputWrapper;
-      position: relative;
-      flex-grow: 1;
-      /* we want input to be above addons, especially for focused state */
-      z-index: 1;
-
-      /* when input rendered with addon before only*/
-      &:not(:first-child):last-child {
-        > input {
-          border-left: none;
-          border-top-left-radius: 0;
-          border-bottom-left-radius: 0;
-        }
-      }
-
-      /* when input rendered with addon after only*/
-      &:first-child:not(:last-child) {
-        > input {
-          border-right: none;
-          border-top-right-radius: 0;
-          border-bottom-right-radius: 0;
-        }
-      }
-
-      /* when rendered with addon before and after */
-      &:not(:first-child):not(:last-child) {
-        > input {
-          border-right: none;
-          border-top-right-radius: 0;
-          border-bottom-right-radius: 0;
-          border-top-left-radius: 0;
-          border-bottom-left-radius: 0;
-        }
-      }
-
-      input {
-        /* paddings specified for classes used outside React component */
-        &:not(:first-child) {
-          padding-left: ${prefixSuffixStaticWidth};
-        }
-        &:not(:last-child) {
-          padding-right: ${prefixSuffixStaticWidth};
-        }
-        &[readonly] {
-          cursor: default;
-        }
-      }
-    `,
-
-    input: cx(
-      getFocusStyle(theme),
-      sharedInputStyle(theme, invalid),
-      css`
-        label: input-input;
-        position: relative;
-        z-index: 0;
-        flex-grow: 1;
-        border-radius: ${borderRadius};
-        height: 100%;
-        width: 100%;
-      `
-    ),
-    inputDisabled: css`
-      background-color: ${colors.formInputBgDisabled};
-      color: ${colors.formInputDisabledText};
-    `,
-    addon: css`
-      label: input-addon;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-grow: 0;
-      flex-shrink: 0;
-      position: relative;
-
-      &:first-child {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-        > :last-child {
-          border-top-right-radius: 0;
-          border-bottom-right-radius: 0;
-        }
-      }
-
-      &:last-child {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        > :first-child {
-          border-top-left-radius: 0;
-          border-bottom-left-radius: 0;
-        }
-      }
-      > *:focus {
-        /* we want anything that has focus and is an addon to be above input */
-        z-index: 2;
-      }
-    `,
-    prefix: cx(
-      prefixSuffix,
-      css`
-        label: input-prefix;
-        padding-left: ${theme.spacing.sm};
-        padding-right: ${theme.spacing.xs};
-        border-right: none;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-      `
-    ),
-    suffix: cx(
-      prefixSuffix,
-      css`
-        label: input-suffix;
-        padding-right: ${theme.spacing.sm};
-        padding-left: ${theme.spacing.xs};
-        margin-bottom: -2px;
-        border-left: none;
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        right: 0;
-      `
-    ),
-    loadingIndicator: css`
-      & + * {
-        margin-left: ${theme.spacing.xs};
-      }
-    `,
-  };
-});
-
-export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
    * Thanks to that prefix/suffix do not overflow the input element itself.
    */
-  const [prefixRect, prefixRef] = useClientRect<HTMLDivElement>();
-  const [suffixRect, suffixRef] = useClientRect<HTMLDivElement>();
+  const [prefixRef, prefixRect] = useMeasure<HTMLDivElement>();
+  const [suffixRef, suffixRect] = useMeasure<HTMLDivElement>();
 
-  const theme = useTheme();
+  const theme = useTheme2();
   const styles = getInputStyles({ theme, invalid: !!invalid, width });
 
   return (
-    <div className={cx(styles.wrapper, className)}>
+    <div className={cx(styles.wrapper, className)} data-testid={'input-wrapper'}>
       {!!addonBefore && <div className={styles.addon}>{addonBefore}</div>}
 
       <div className={styles.inputWrapper}>
@@ -242,8 +60,8 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
           className={styles.input}
           {...restProps}
           style={{
-            paddingLeft: prefixRect ? prefixRect.width : undefined,
-            paddingRight: suffixRect ? suffixRect.width : undefined,
+            paddingLeft: prefix ? prefixRect.width + 12 : undefined,
+            paddingRight: suffix || loading ? suffixRect.width + 12 : undefined,
           }}
         />
 
@@ -261,3 +79,185 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
 });
 
 Input.displayName = 'Input';
+
+export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
+  const prefixSuffixStaticWidth = '28px';
+  const prefixSuffix = css({
+    position: 'absolute',
+    top: 0,
+    zIndex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 0,
+    flexShrink: 0,
+    fontSize: theme.typography.size.md,
+    height: '100%',
+    /* Min width specified for prefix/suffix classes used outside React component*/
+    minWidth: prefixSuffixStaticWidth,
+    color: theme.colors.text.secondary,
+  });
+
+  return {
+    // Wraps inputWrapper and addons
+    wrapper: cx(
+      css({
+        label: 'input-wrapper',
+        display: 'flex',
+        width: width ? theme.spacing(width) : '100%',
+        height: theme.spacing(theme.components.height.md),
+        borderRadius: theme.shape.radius.default,
+        '&:hover': {
+          '> .prefix, .suffix, .input': {
+            borderColor: invalid ? theme.colors.error.border : theme.colors.primary.border,
+          },
+
+          // only show number buttons on hover
+          "input[type='number']": {
+            appearance: 'textfield',
+          },
+
+          "input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button": {
+            // Need type assertion here due to the use of !important
+            // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            WebkitAppearance: 'inner-spin-button !important' as 'inner-spin-button',
+            opacity: 1,
+          },
+        },
+      })
+    ),
+    // Wraps input and prefix/suffix
+    inputWrapper: css({
+      label: 'input-inputWrapper',
+      position: 'relative',
+      flexGrow: 1,
+      /* we want input to be above addons, especially for focused state */
+      zIndex: 1,
+
+      /* when input rendered with addon before only*/
+      '&:not(:first-child):last-child': {
+        '> input': {
+          borderLeft: 'none',
+          borderTopLeftRadius: 0,
+          borderBottomLeftRadius: 0,
+        },
+      },
+
+      /* when input rendered with addon after only*/
+      '&:first-child:not(:last-child)': {
+        '> input': {
+          borderRight: 'none',
+          borderTopRightRadius: 0,
+          borderBottomRightRadius: 0,
+        },
+      },
+
+      /* when rendered with addon before and after */
+      '&:not(:first-child):not(:last-child)': {
+        '> input': {
+          borderRight: 'none',
+          borderTopRightRadius: 0,
+          borderBottomRightRadius: 0,
+          borderTopLeftRadius: 0,
+          borderBottomLeftRadius: 0,
+        },
+      },
+
+      input: {
+        /* paddings specified for classes used outside React component */
+        '&:not(:first-child)': {
+          paddingLeft: prefixSuffixStaticWidth,
+        },
+        '&:not(:last-child)': {
+          paddingRight: prefixSuffixStaticWidth,
+        },
+        '&[readonly]': {
+          cursor: 'default',
+        },
+      },
+    }),
+
+    input: cx(
+      getFocusStyle(theme),
+      sharedInputStyle(theme, invalid),
+      css({
+        label: 'input-input',
+        position: 'relative',
+        zIndex: 0,
+        flexGrow: 1,
+        borderRadius: theme.shape.radius.default,
+        height: '100%',
+        width: '100%',
+      })
+    ),
+    inputDisabled: css({
+      backgroundColor: theme.colors.action.disabledBackground,
+      color: theme.colors.action.disabledText,
+      border: `1px solid ${theme.colors.action.disabledBackground}`,
+      '&:focus': {
+        boxShadow: 'none',
+      },
+    }),
+    addon: css({
+      label: 'input-addon',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexGrow: 0,
+      flexShrink: 0,
+      position: 'relative',
+
+      '&:first-child': {
+        borderTopRightRadius: 0,
+        borderBottomRightRadius: 0,
+        '> :last-child': {
+          borderTopRightRadius: 0,
+          borderBottomRightRadius: 0,
+        },
+      },
+
+      '&:last-child': {
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0,
+        '> :first-child': {
+          borderTopLeftRadius: 0,
+          borderBottomLeftRadius: 0,
+        },
+      },
+      '> *:focus': {
+        /* we want anything that has focus and is an addon to be above input */
+        zIndex: 2,
+      },
+    }),
+    prefix: cx(
+      prefixSuffix,
+      css({
+        label: 'input-prefix',
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(0.5),
+        borderRight: 'none',
+        borderTopRightRadius: 0,
+        borderBottomRightRadius: 0,
+      })
+    ),
+    suffix: cx(
+      prefixSuffix,
+      css({
+        label: 'input-suffix',
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+        marginBottom: '-2px',
+        borderLeft: 'none',
+        borderTopLeftRadius: 0,
+        borderBottomLeftRadius: 0,
+        right: 0,
+      })
+    ),
+    loadingIndicator: css({
+      '& + *': {
+        marginLeft: theme.spacing(0.5),
+      },
+    }),
+  };
+});

@@ -1,21 +1,27 @@
-import React from 'react';
-import debounce from 'lodash/debounce';
-import sortBy from 'lodash/sortBy';
+import { debounce, sortBy } from 'lodash';
+import { Editor, Plugin as SlatePlugin } from 'slate-react';
 
-import { Editor as CoreEditor } from 'slate';
-import { Plugin as SlatePlugin } from '@grafana/slate-react';
+import { BootData } from '@grafana/data';
+
+import { Typeahead } from '../components/Typeahead/Typeahead';
+import { CompletionItem, SuggestionsState, TypeaheadInput, TypeaheadOutput } from '../types';
+import { makeFragment, SearchFunctionType } from '../utils';
+import { SearchFunctionMap } from '../utils/searchFunctions';
 
 import TOKEN_MARK from './slate-prism/TOKEN_MARK';
-import { Typeahead } from '../components/Typeahead/Typeahead';
-import { CompletionItem, TypeaheadOutput, TypeaheadInput, SuggestionsState } from '../types/completion';
-import { makeFragment } from '../utils/slate';
 
 export const TYPEAHEAD_DEBOUNCE = 250;
 
+declare global {
+  interface Window {
+    grafanaBootData?: BootData;
+  }
+}
+
 // Commands added to the editor by this plugin.
 interface SuggestionsPluginCommands {
-  selectSuggestion: (suggestion: CompletionItem) => CoreEditor;
-  applyTypeahead: (suggestion: CompletionItem) => CoreEditor;
+  selectSuggestion: (suggestion: CompletionItem) => Editor;
+  applyTypeahead: (suggestion: CompletionItem) => Editor;
 }
 
 export function SuggestionsPlugin({
@@ -64,16 +70,15 @@ export function SuggestionsPlugin({
       return next();
     },
 
-    onKeyDown: (event: Event, editor, next) => {
-      const keyEvent = event as KeyboardEvent;
+    onKeyDown: (event, editor, next) => {
       const currentSuggestions = state.groupedItems;
 
       const hasSuggestions = currentSuggestions.length;
 
-      switch (keyEvent.key) {
+      switch (event.key) {
         case 'Escape': {
           if (hasSuggestions) {
-            keyEvent.preventDefault();
+            event.preventDefault();
 
             state = {
               ...state,
@@ -90,16 +95,16 @@ export function SuggestionsPlugin({
         case 'ArrowDown':
         case 'ArrowUp':
           if (hasSuggestions) {
-            keyEvent.preventDefault();
-            typeaheadRef.moveMenuIndex(keyEvent.key === 'ArrowDown' ? 1 : -1);
+            event.preventDefault();
+            typeaheadRef.moveMenuIndex(event.key === 'ArrowDown' ? 1 : -1);
             return;
           }
 
           break;
 
         case 'Enter': {
-          if (!(keyEvent.shiftKey || keyEvent.ctrlKey) && hasSuggestions) {
-            keyEvent.preventDefault();
+          if (!(event.shiftKey || event.ctrlKey) && hasSuggestions) {
+            event.preventDefault();
             return typeaheadRef.insertSuggestion();
           }
 
@@ -108,7 +113,7 @@ export function SuggestionsPlugin({
 
         case 'Tab': {
           if (hasSuggestions) {
-            keyEvent.preventDefault();
+            event.preventDefault();
             return typeaheadRef.insertSuggestion();
           }
 
@@ -117,7 +122,7 @@ export function SuggestionsPlugin({
 
         default: {
           // Don't react on meta keys
-          if (keyEvent.key.length === 1) {
+          if (event.key.length === 1) {
             handleTypeaheadDebounced(editor, setState, onTypeahead, cleanText);
           }
           break;
@@ -128,7 +133,7 @@ export function SuggestionsPlugin({
     },
 
     commands: {
-      selectSuggestion: (editor: CoreEditor, suggestion: CompletionItem): CoreEditor => {
+      selectSuggestion: (editor, suggestion: CompletionItem): Editor => {
         const suggestions = state.groupedItems;
         if (!suggestions || !suggestions.length) {
           return editor;
@@ -140,11 +145,13 @@ export function SuggestionsPlugin({
         return ed;
       },
 
-      applyTypeahead: (editor: CoreEditor, suggestion: CompletionItem): CoreEditor => {
+      applyTypeahead: (editor, suggestion: CompletionItem) => {
         let suggestionText = suggestion.insertText || suggestion.label;
 
         const preserveSuffix = suggestion.kind === 'function';
         const move = suggestion.move || 0;
+        const moveForward = move > 0 ? move : 0;
+        const moveBackward = move < 0 ? -move : 0;
 
         const { typeaheadPrefix, typeaheadText, typeaheadContext } = state;
 
@@ -157,22 +164,20 @@ export function SuggestionsPlugin({
           });
         }
 
-        // Remove the current, incomplete text and replace it with the selected suggestion
-        const backward = suggestion.deleteBackwards || typeaheadPrefix.length;
-        const text = cleanText ? cleanText(typeaheadText) : typeaheadText;
-        const suffixLength = text.length - typeaheadPrefix.length;
-        const offset = typeaheadText.indexOf(typeaheadPrefix);
-        const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
-        const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
+        const { forward, backward } = getNumCharsToDelete(
+          suggestionText,
+          typeaheadPrefix,
+          typeaheadText,
+          preserveSuffix,
+          suggestion.deleteBackwards,
+          cleanText
+        );
 
         // If new-lines, apply suggestion as block
         if (suggestionText.match(/\n/)) {
           const fragment = makeFragment(suggestionText);
-          return editor
-            .deleteBackward(backward)
-            .deleteForward(forward)
-            .insertFragment(fragment)
-            .focus();
+          editor.deleteBackward(backward).deleteForward(forward).insertFragment(fragment).focus();
+          return editor;
         }
 
         state = {
@@ -180,16 +185,20 @@ export function SuggestionsPlugin({
           groupedItems: [],
         };
 
-        return editor
+        editor
+          .snapshotSelection()
           .deleteBackward(backward)
           .deleteForward(forward)
           .insertText(suggestionText)
-          .moveForward(move)
+          .moveForward(moveForward)
+          .moveBackward(moveBackward)
           .focus();
+
+        return editor;
       },
     },
 
-    renderEditor: (props, editor, next) => {
+    renderEditor(props, editor, next) {
       if (editor.value.selection.isExpanded) {
         return next();
       }
@@ -205,7 +214,7 @@ export function SuggestionsPlugin({
             prefix={state.typeaheadPrefix}
             isOpen={!!state.groupedItems.length}
             groupedItems={state.groupedItems}
-            onSelectSuggestion={(editor as CoreEditor & SuggestionsPluginCommands).selectSuggestion}
+            onSelectSuggestion={(editor as Editor & SuggestionsPluginCommands).selectSuggestion}
           />
         </>
       );
@@ -214,7 +223,7 @@ export function SuggestionsPlugin({
 }
 
 const handleTypeahead = async (
-  editor: CoreEditor,
+  editor: Editor,
   onStateChange: (state: Partial<SuggestionsState>) => void,
   onTypeahead?: (typeahead: TypeaheadInput) => Promise<TypeaheadOutput>,
   cleanText?: (text: string) => string
@@ -234,7 +243,7 @@ const handleTypeahead = async (
   const filteredDecorations = decorations
     ? decorations
         .filter(
-          decoration =>
+          (decoration) =>
             decoration!.start.offset <= selectionStartOffset &&
             decoration!.end.offset > selectionStartOffset &&
             decoration!.type === TOKEN_MARK
@@ -247,7 +256,7 @@ const handleTypeahead = async (
     decorations &&
     decorations
       .filter(
-        decoration =>
+        (decoration) =>
           decoration!.end.offset <= selectionStartOffset &&
           decoration!.type === TOKEN_MARK &&
           decoration!.data.get('className').includes('label-key')
@@ -257,10 +266,10 @@ const handleTypeahead = async (
   const labelKey = labelKeyDec && value.focusText.text.slice(labelKeyDec.start.offset, labelKeyDec.end.offset);
 
   const wrapperClasses = filteredDecorations
-    .map(decoration => decoration.data.get('className'))
+    .map((decoration) => decoration.data.get('className'))
     .join(' ')
     .split(' ')
-    .filter(className => className.length);
+    .filter((className) => className.length);
 
   let text = value.focusText.text;
   let prefix = text.slice(0, selection.focus.offset);
@@ -289,34 +298,42 @@ const handleTypeahead = async (
   });
 
   const filteredSuggestions = suggestions
-    .map(group => {
+    .map((group) => {
       if (!group.items) {
         return group;
       }
-
+      // Falling back to deprecated prefixMatch to support backwards compatibility with plugins using this property
+      const searchFunctionType =
+        group.searchFunctionType || (group.prefixMatch ? SearchFunctionType.Prefix : SearchFunctionType.Word);
+      const searchFunction = SearchFunctionMap[searchFunctionType];
       let newGroup = { ...group };
       if (prefix) {
         // Filter groups based on prefix
         if (!group.skipFilter) {
-          newGroup.items = newGroup.items.filter(c => (c.filterText || c.label).length >= prefix.length);
-          if (group.prefixMatch) {
-            newGroup.items = newGroup.items.filter(c => (c.filterText || c.label).startsWith(prefix));
-          } else {
-            newGroup.items = newGroup.items.filter(c => (c.filterText || c.label).includes(prefix));
-          }
+          newGroup.items = newGroup.items.filter((c) => (c.filterText || c.label).length >= prefix.length);
+          newGroup.items = searchFunction(newGroup.items, prefix);
         }
 
         // Filter out the already typed value (prefix) unless it inserts custom text not matching the prefix
-        newGroup.items = newGroup.items.filter(c => !(c.insertText === prefix || (c.filterText ?? c.label) === prefix));
+        newGroup.items = newGroup.items.filter(
+          (c) => !(c.insertText === prefix || (c.filterText ?? c.label) === prefix)
+        );
       }
 
       if (!group.skipSort) {
-        newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => item.sortText || item.label);
+        newGroup.items = sortBy(newGroup.items, (item: CompletionItem) => {
+          if (item.sortText === undefined) {
+            return item.sortValue !== undefined ? item.sortValue : item.label;
+          } else {
+            // Falling back to deprecated sortText to support backwards compatibility with plugins using this property
+            return item.sortText || item.label;
+          }
+        });
       }
 
       return newGroup;
     })
-    .filter(gr => gr.items && gr.items.length); // Filter out empty groups
+    .filter((gr) => gr.items && gr.items.length); // Filter out empty groups
 
   onStateChange({
     groupedItems: filteredSuggestions,
@@ -328,3 +345,27 @@ const handleTypeahead = async (
   // Bogus edit to force re-render
   editor.blur().focus();
 };
+
+export function getNumCharsToDelete(
+  suggestionText: string,
+  typeaheadPrefix: string,
+  typeaheadText: string,
+  preserveSuffix: boolean,
+  deleteBackwards?: number,
+  cleanText?: (text: string) => string
+) {
+  // remove the current, incomplete text and replace it with the selected suggestion
+  const backward = deleteBackwards || typeaheadPrefix.length;
+  const text = cleanText ? cleanText(typeaheadText) : typeaheadText;
+  const offset = typeaheadText.indexOf(typeaheadPrefix);
+
+  const suffixLength =
+    offset > -1 ? text.length - offset - typeaheadPrefix.length : text.length - typeaheadPrefix.length;
+  const midWord = Boolean((typeaheadPrefix && suffixLength > 0) || suggestionText === typeaheadText);
+  const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
+
+  return {
+    forward,
+    backward,
+  };
+}

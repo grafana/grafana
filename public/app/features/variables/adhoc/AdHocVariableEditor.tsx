@@ -1,86 +1,69 @@
-import React, { PureComponent } from 'react';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { PureComponent } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { AdHocVariableModel } from '../types';
-import { VariableEditorProps } from '../editor/types';
-import { VariableEditorState } from '../editor/reducer';
-import { AdHocVariableEditorState } from './reducer';
-import { changeVariableDatasource, initAdHocVariableEditor } from './actions';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { AdHocVariableModel, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { AdHocVariableForm } from 'app/features/dashboard-scene/settings/variables/components/AdHocVariableForm';
 import { StoreState } from 'app/types';
+
+import { initialVariableEditorState } from '../editor/reducer';
+import { getAdhocVariableEditorState } from '../editor/selectors';
+import { VariableEditorProps } from '../editor/types';
+import { getVariablesState } from '../state/selectors';
+import { toKeyedVariableIdentifier } from '../utils';
+
+import { changeVariableDatasource } from './actions';
+
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const { rootStateKey } = ownProps.variable;
+
+  if (!rootStateKey) {
+    console.error('AdHocVariableEditor: variable has no rootStateKey');
+    return {
+      extended: getAdhocVariableEditorState(initialVariableEditorState),
+    };
+  }
+
+  const { editor } = getVariablesState(rootStateKey, state);
+
+  return {
+    extended: getAdhocVariableEditorState(editor),
+  };
+};
+
+const mapDispatchToProps = {
+  changeVariableDatasource,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export interface OwnProps extends VariableEditorProps<AdHocVariableModel> {}
 
-interface ConnectedProps {
-  editor: VariableEditorState<AdHocVariableEditorState>;
-}
-
-interface DispatchProps {
-  initAdHocVariableEditor: typeof initAdHocVariableEditor;
-  changeVariableDatasource: typeof changeVariableDatasource;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
   componentDidMount() {
-    this.props.initAdHocVariableEditor();
+    const { rootStateKey } = this.props.variable;
+    if (!rootStateKey) {
+      console.error('AdHocVariableEditor: variable has no rootStateKey');
+      return;
+    }
   }
 
-  onDatasourceChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    this.props.changeVariableDatasource(event.target.value);
+  onDatasourceChanged = (ds: DataSourceInstanceSettings) => {
+    this.props.changeVariableDatasource(toKeyedVariableIdentifier(this.props.variable), getDataSourceRef(ds));
   };
 
   render() {
-    const { variable, editor } = this.props;
-    const dataSources = editor.extended?.dataSources ?? [];
-    const infoText = editor.extended?.infoText ?? null;
+    const { variable, extended } = this.props;
 
     return (
-      <>
-        <div className="gf-form-group">
-          <h5 className="section-heading">Options</h5>
-          <div className="gf-form max-width-21">
-            <span className="gf-form-label width-8">Data source</span>
-            <div className="gf-form-select-wrapper max-width-14">
-              <select
-                className="gf-form-input"
-                required
-                onChange={this.onDatasourceChanged}
-                value={variable.datasource ?? ''}
-                aria-label="Variable editor Form AdHoc DataSource select"
-              >
-                {dataSources.map(ds => (
-                  <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.text}>
-                    {ds.text}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {infoText && (
-          <div className="alert alert-info gf-form-group" aria-label="Variable editor Form Alert">
-            {infoText}
-          </div>
-        )}
-      </>
+      <AdHocVariableForm
+        datasource={variable.datasource ?? undefined}
+        onDataSourceChange={this.onDatasourceChanged}
+        infoText={extended?.infoText}
+      />
     );
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
-  editor: state.templating.editor as VariableEditorState<AdHocVariableEditorState>,
-});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  initAdHocVariableEditor,
-  changeVariableDatasource,
-};
-
-export const AdHocVariableEditor = connectWithStore(
-  AdHocVariableEditorUnConnected,
-  mapStateToProps,
-  mapDispatchToProps
-);
+export const AdHocVariableEditor = connector(AdHocVariableEditorUnConnected);

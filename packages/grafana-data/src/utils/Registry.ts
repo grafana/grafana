@@ -1,3 +1,4 @@
+import { PluginState } from '../types/plugin';
 import { SelectableValue } from '../types/select';
 
 export interface RegistryItem {
@@ -11,6 +12,11 @@ export interface RegistryItem {
    *  like: 'all' and 'any' matchers;
    */
   excludeFromPicker?: boolean;
+
+  /**
+   * Optional feature state
+   */
+  state?: PluginState;
 }
 
 export interface RegistryItemWithOptions<TOptions = any> extends RegistryItem {
@@ -35,7 +41,9 @@ export class Registry<T extends RegistryItem> {
   private byId = new Map<string, T>();
   private initialized = false;
 
-  constructor(private init?: () => T[]) {}
+  constructor(private init?: () => T[]) {
+    this.init = init;
+  }
 
   setInit = (init: () => T[]) => {
     if (this.initialized) {
@@ -69,7 +77,7 @@ export class Registry<T extends RegistryItem> {
   get(id: string): T {
     const v = this.getIfExists(id);
     if (!v) {
-      throw new Error('Undefined: ' + id);
+      throw new Error(`"${id}" not found in: ${this.list().map((v) => v.id)}`);
     }
     return v;
   }
@@ -79,10 +87,10 @@ export class Registry<T extends RegistryItem> {
       this.initialize();
     }
 
-    const select = {
+    const select: RegistrySelectInfo = {
       options: [],
       current: [],
-    } as RegistrySelectInfo;
+    };
 
     const currentOptions: Record<string, SelectableValue<string>> = {};
     if (current) {
@@ -105,6 +113,10 @@ export class Registry<T extends RegistryItem> {
         description: ext.description,
       };
 
+      if (ext.state === PluginState.alpha) {
+        option.label += ' (alpha)';
+      }
+
       select.options.push(option);
       if (currentOptions[ext.id]) {
         currentOptions[ext.id] = option;
@@ -122,7 +134,7 @@ export class Registry<T extends RegistryItem> {
   /**
    * Return a list of values by ID, or all values if not specified
    */
-  list(ids?: any[]): T[] {
+  list(ids?: string[]): T[] {
     if (!this.initialized) {
       this.initialize();
     }

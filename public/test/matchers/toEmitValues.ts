@@ -1,9 +1,10 @@
-import { Observable, Subscription } from 'rxjs';
 import { matcherHint, printExpected, printReceived } from 'jest-matcher-utils';
-import { expectObservable, forceObservableCompletion } from './utils';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash';
+import { Observable, Subscription } from 'rxjs';
 
-function passMessage(received: any[], expected: any[]) {
+import { expectObservable, forceObservableCompletion } from './utils';
+
+function passMessage(received: unknown[], expected: unknown[]) {
   return `${matcherHint('.not.toEmitValues')}
 
   Expected observable to emit values:
@@ -13,7 +14,7 @@ function passMessage(received: any[], expected: any[]) {
     `;
 }
 
-function failMessage(received: any[], expected: any[]) {
+function failMessage(received: unknown[], expected: unknown[]) {
   return `${matcherHint('.toEmitValues')}
 
   Expected observable to emit values:
@@ -23,7 +24,7 @@ function failMessage(received: any[], expected: any[]) {
     `;
 }
 
-function tryExpectations(received: any[], expected: any[]): jest.CustomMatcherResult {
+function tryExpectations(received: unknown[], expected: unknown[]): jest.CustomMatcherResult {
   try {
     if (received.length !== expected.length) {
       return {
@@ -49,29 +50,30 @@ function tryExpectations(received: any[], expected: any[]): jest.CustomMatcherRe
       message: () => passMessage(received, expected),
     };
   } catch (err) {
+    const message = err instanceof Error ? err.message : 'An unknown error occurred';
     return {
       pass: false,
-      message: () => err,
+      message: () => message,
     };
   }
 }
 
-export function toEmitValues(received: Observable<any>, expected: any[]): Promise<jest.CustomMatcherResult> {
+export function toEmitValues(received: Observable<unknown>, expected: unknown[]): Promise<jest.CustomMatcherResult> {
   const failsChecks = expectObservable(received);
   if (failsChecks) {
     return Promise.resolve(failsChecks);
   }
 
-  return new Promise(resolve => {
-    const receivedValues: any[] = [];
+  return new Promise((resolve) => {
+    const receivedValues: unknown[] = [];
     const subscription = new Subscription();
 
     subscription.add(
       received.subscribe({
-        next: value => {
+        next: (value) => {
           receivedValues.push(value);
         },
-        error: err => {
+        error: (err) => {
           receivedValues.push(err);
           subscription.unsubscribe();
           resolve(tryExpectations(receivedValues, expected));

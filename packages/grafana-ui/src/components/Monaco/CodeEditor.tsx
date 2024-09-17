@@ -1,34 +1,73 @@
-import React from 'react';
-import { withTheme } from '../../themes';
-import { Themeable } from '../../types';
-import { CodeEditorProps } from './types';
+import { css } from '@emotion/css';
+import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
+import { PureComponent } from 'react';
+
+import { GrafanaTheme2, monacoLanguageRegistry } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types';
+
+import { ReactMonacoEditorLazy } from './ReactMonacoEditorLazy';
 import { registerSuggestions } from './suggestions';
-import ReactMonaco from 'react-monaco-editor';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import { CodeEditorProps, Monaco, MonacoEditor as MonacoEditorType, MonacoOptions } from './types';
 
-type Props = CodeEditorProps & Themeable;
+type Props = CodeEditorProps & Themeable2;
 
-class UnthemedCodeEditor extends React.PureComponent<Props> {
-  completionCancel?: monaco.IDisposable;
+class UnthemedCodeEditor extends PureComponent<Props> {
+  completionCancel?: monacoType.IDisposable;
+  monaco?: Monaco;
+  modelId?: string;
+
+  constructor(props: Props) {
+    super(props);
+  }
 
   componentWillUnmount() {
     if (this.completionCancel) {
       this.completionCancel.dispose();
     }
+
+    this.props.onEditorWillUnmount?.();
   }
 
   componentDidUpdate(oldProps: Props) {
     const { getSuggestions, language } = this.props;
-    if (getSuggestions) {
-      // Language changed
-      if (language !== oldProps.language) {
-        if (this.completionCancel) {
-          this.completionCancel.dispose();
-        }
-        this.completionCancel = registerSuggestions(language, getSuggestions);
+
+    const newLanguage = oldProps.language !== language;
+    const newGetSuggestions = oldProps.getSuggestions !== getSuggestions;
+
+    if (newGetSuggestions || newLanguage) {
+      if (this.completionCancel) {
+        this.completionCancel.dispose();
+      }
+
+      if (!this.monaco) {
+        console.warn('Monaco instance not loaded yet');
+        return;
+      }
+
+      if (getSuggestions && this.modelId) {
+        this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions, this.modelId);
       }
     }
+
+    if (newLanguage) {
+      this.loadCustomLanguage();
+    }
   }
+
+  loadCustomLanguage = () => {
+    const { language } = this.props;
+
+    const customLanguage = monacoLanguageRegistry.getIfExists(language);
+
+    if (customLanguage) {
+      return customLanguage.init();
+    }
+
+    return Promise.resolve();
+  };
 
   // This is replaced with a real function when the actual editor mounts
   getEditorValue = () => '';
@@ -40,70 +79,130 @@ class UnthemedCodeEditor extends React.PureComponent<Props> {
     }
   };
 
-  editorWillMount = (m: typeof monaco) => {
-    const { language, getSuggestions } = this.props;
-    if (getSuggestions) {
-      this.completionCancel = registerSuggestions(language, getSuggestions);
+  onFocus = () => {
+    const { onFocus } = this.props;
+    if (onFocus) {
+      onFocus(this.getEditorValue());
     }
   };
 
-  editorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
-    const { onSave, onEditorDidMount } = this.props;
+  onSave = () => {
+    const { onSave } = this.props;
+    if (onSave) {
+      onSave(this.getEditorValue());
+    }
+  };
 
+  handleBeforeMount = (monaco: Monaco) => {
+    this.monaco = monaco;
+
+    const { onBeforeEditorMount } = this.props;
+
+    onBeforeEditorMount?.(monaco);
+  };
+
+  handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
+    const { getSuggestions, language, onChange, onEditorDidMount } = this.props;
+
+    this.modelId = editor.getModel()?.id;
     this.getEditorValue = () => editor.getValue();
 
-    if (onSave) {
-      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, () => {
-        onSave(this.getEditorValue());
-      });
+    if (getSuggestions && this.modelId) {
+      this.completionCancel = registerSuggestions(monaco, language, getSuggestions, this.modelId);
+    }
+
+    // Save when pressing Ctrl+S or Cmd+S
+    editor.onKeyDown((e: monacoType.IKeyboardEvent) => {
+      if (e.keyCode === monaco.KeyCode.KeyS && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        this.onSave();
+      }
+    });
+
+    if (onChange) {
+      editor.getModel()?.onDidChangeContent(() => onChange(editor.getValue()));
     }
 
     if (onEditorDidMount) {
-      onEditorDidMount(editor);
+      onEditorDidMount(editor, monaco);
     }
   };
 
   render() {
-    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly } = this.props;
+    const { theme, language, width, height, showMiniMap, showLineNumbers, readOnly, wordWrap, monacoOptions } =
+      this.props;
+    const { alwaysConsumeMouseWheel, ...restMonacoOptions } = monacoOptions ?? {};
+
     const value = this.props.value ?? '';
     const longText = value.length > 100;
 
-    const options: monaco.editor.IEditorConstructionOptions = {
-      wordWrap: 'off',
-      codeLens: false, // not included in the bundle
+    const containerStyles = this.props.containerStyles ?? getStyles(theme).container;
+
+    const options: MonacoOptions = {
+      wordWrap: wordWrap ? 'on' : 'off',
+      tabSize: 2,
+      codeLens: false,
+      contextmenu: false,
       minimap: {
         enabled: longText && showMiniMap,
         renderCharacters: false,
       },
+
       readOnly,
       lineNumbersMinChars: 4,
-      lineDecorationsWidth: 0,
+      lineDecorationsWidth: 1 * theme.spacing.gridSize,
       overviewRulerBorder: false,
       automaticLayout: true,
+      padding: {
+        top: 0.5 * theme.spacing.gridSize,
+        bottom: 0.5 * theme.spacing.gridSize,
+      },
+      fixedOverflowWidgets: true, // Ensures suggestions menu is drawn on top
+
+      scrollbar: {
+        alwaysConsumeMouseWheel: alwaysConsumeMouseWheel ?? false,
+      },
     };
+
     if (!showLineNumbers) {
       options.glyphMargin = false;
       options.folding = false;
       options.lineNumbers = 'off';
-      options.lineDecorationsWidth = 5; // left margin when not showing line numbers
       options.lineNumbersMinChars = 0;
     }
 
     return (
-      <div onBlur={this.onBlur}>
-        <ReactMonaco
+      <div
+        className={containerStyles}
+        onFocus={this.onFocus}
+        onBlur={this.onBlur}
+        data-testid={selectors.components.CodeEditor.container}
+      >
+        <ReactMonacoEditorLazy
           width={width}
           height={height}
           language={language}
-          theme={theme.isDark ? 'vs-dark' : 'vs-light'}
           value={value}
-          options={options}
-          editorWillMount={this.editorWillMount}
-          editorDidMount={this.editorDidMount}
+          options={{
+            ...options,
+            ...(restMonacoOptions ?? {}),
+          }}
+          beforeMount={this.handleBeforeMount}
+          onMount={this.handleOnMount}
+          keepCurrentModel={true}
         />
       </div>
     );
   }
 }
 
-export default withTheme(UnthemedCodeEditor);
+export const CodeEditor = withTheme2(UnthemedCodeEditor);
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    container: css({
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.components.input.borderColor}`,
+    }),
+  };
+};

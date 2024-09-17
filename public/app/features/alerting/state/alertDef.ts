@@ -1,5 +1,7 @@
-import _ from 'lodash';
-import { QueryPartDef, QueryPart } from 'app/core/components/query_part/query_part';
+import { isArray, reduce } from 'lodash';
+
+import { IconName } from '@grafana/ui';
+import { QueryPartDef, QueryPart } from 'app/features/alerting/state/query_part';
 
 const alertQueryDef = new QueryPartDef({
   type: 'query',
@@ -8,7 +10,7 @@ const alertQueryDef = new QueryPartDef({
     {
       name: 'from',
       type: 'string',
-      options: ['10s', '1m', '5m', '10m', '15m', '1h', '24h', '48h'],
+      options: ['10s', '1m', '5m', '10m', '15m', '1h', '2h', '6h', '12h', '24h', '48h'],
     },
     { name: 'to', type: 'string', options: ['now', 'now-1m', 'now-5m', 'now-10m', 'now-1h'] },
   ],
@@ -19,23 +21,34 @@ const conditionTypes = [{ text: 'Query', value: 'query' }];
 
 const alertStateSortScore = {
   alerting: 1,
+  firing: 1,
   no_data: 2,
   pending: 3,
   ok: 4,
   paused: 5,
+  inactive: 5,
 };
 
+export enum EvalFunction {
+  'IsAbove' = 'gt',
+  'IsBelow' = 'lt',
+  'IsOutsideRange' = 'outside_range',
+  'IsWithinRange' = 'within_range',
+  'HasNoValue' = 'no_value',
+}
+
 const evalFunctions = [
-  { text: 'IS ABOVE', value: 'gt' },
-  { text: 'IS BELOW', value: 'lt' },
-  { text: 'IS OUTSIDE RANGE', value: 'outside_range' },
-  { text: 'IS WITHIN RANGE', value: 'within_range' },
-  { text: 'HAS NO VALUE', value: 'no_value' },
+  { value: EvalFunction.IsAbove, text: 'IS ABOVE' },
+  { value: EvalFunction.IsBelow, text: 'IS BELOW' },
+  { value: EvalFunction.IsOutsideRange, text: 'IS OUTSIDE RANGE' },
+  { value: EvalFunction.IsWithinRange, text: 'IS WITHIN RANGE' },
+  { value: EvalFunction.HasNoValue, text: 'HAS NO VALUE' },
 ];
 
 const evalOperators = [
   { text: 'OR', value: 'or' },
   { text: 'AND', value: 'and' },
+  { text: 'LOGIC OR', value: 'logic-or' },
 ];
 
 const reducerTypes = [
@@ -51,7 +64,7 @@ const reducerTypes = [
   { text: 'percent_diff()', value: 'percent_diff' },
   { text: 'percent_diff_abs()', value: 'percent_diff_abs' },
   { text: 'count_non_null()', value: 'count_non_null' },
-];
+] as const;
 
 const noDataModes = [
   { text: 'Alerting', value: 'alerting' },
@@ -70,8 +83,23 @@ function createReducerPart(model: any) {
   return new QueryPart(model, def);
 }
 
-function getStateDisplayModel(state: string) {
-  switch (state) {
+// state can also contain a "Reason", ie. "Alerting (NoData)" which indicates that the actual state is "Alerting" but
+// the reason it is set to "Alerting" is "NoData"; a lack of data points to evaluate.
+function normalizeAlertState(state: string) {
+  return state.toLowerCase().replace(/_/g, '').split(' ')[0];
+}
+
+interface AlertStateDisplayModel {
+  text: string;
+  iconClass: IconName;
+  stateClass: string;
+}
+
+function getStateDisplayModel(state: string): AlertStateDisplayModel {
+  const normalizedState = normalizeAlertState(state);
+
+  switch (normalizedState) {
+    case 'normal':
     case 'ok': {
       return {
         text: 'OK',
@@ -86,7 +114,7 @@ function getStateDisplayModel(state: string) {
         stateClass: 'alert-state-critical',
       };
     }
-    case 'no_data': {
+    case 'nodata': {
       return {
         text: 'NO DATA',
         iconClass: 'question-circle',
@@ -103,24 +131,48 @@ function getStateDisplayModel(state: string) {
     case 'pending': {
       return {
         text: 'PENDING',
-        iconClass: 'exclamation-triangle',
+        iconClass: 'hourglass',
         stateClass: 'alert-state-warning',
       };
     }
-    case 'unknown': {
+
+    case 'firing': {
+      return {
+        text: 'FIRING',
+        iconClass: 'fire',
+        stateClass: '',
+      };
+    }
+
+    case 'inactive': {
+      return {
+        text: 'INACTIVE',
+        iconClass: 'check',
+        stateClass: '',
+      };
+    }
+
+    case 'error': {
+      return {
+        text: 'ERROR',
+        iconClass: 'heart-break',
+        stateClass: 'alert-state-critical',
+      };
+    }
+
+    case 'unknown':
+    default: {
       return {
         text: 'UNKNOWN',
         iconClass: 'question-circle',
-        stateClass: 'alert-state-paused',
+        stateClass: '.alert-state-paused',
       };
     }
   }
-
-  throw { message: 'Unknown alert state' };
 }
 
 function joinEvalMatches(matches: any, separator: string) {
-  return _.reduce(
+  return reduce(
     matches,
     (res, ev) => {
       if (ev.metric !== undefined && ev.value !== undefined) {
@@ -143,14 +195,33 @@ function getAlertAnnotationInfo(ah: any) {
   // old way stored evalMatches in data property directly,
   // new way stores it in evalMatches property on new data object
 
-  if (_.isArray(ah.data)) {
+  if (isArray(ah.data)) {
     return joinEvalMatches(ah.data, ', ');
-  } else if (_.isArray(ah.data.evalMatches)) {
+  } else if (isArray(ah.data.evalMatches)) {
     return joinEvalMatches(ah.data.evalMatches, ', ');
   }
 
   if (ah.data.error) {
     return 'Error: ' + ah.data.error;
+  }
+
+  return '';
+}
+
+// Copy of getAlertAnnotationInfo, used in annotation tooltip
+function getAlertAnnotationText(annotationData: any) {
+  // backward compatibility, can be removed in grafana 5.x
+  // old way stored evalMatches in data property directly,
+  // new way stores it in evalMatches property on new data object
+
+  if (isArray(annotationData)) {
+    return joinEvalMatches(annotationData, ', ');
+  } else if (isArray(annotationData.evalMatches)) {
+    return joinEvalMatches(annotationData.evalMatches, ', ');
+  }
+
+  if (annotationData.error) {
+    return 'Error: ' + annotationData.error;
   }
 
   return '';
@@ -167,5 +238,6 @@ export default {
   reducerTypes: reducerTypes,
   createReducerPart: createReducerPart,
   getAlertAnnotationInfo: getAlertAnnotationInfo,
+  getAlertAnnotationText: getAlertAnnotationText,
   alertStateSortScore: alertStateSortScore,
 };

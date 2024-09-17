@@ -1,4 +1,20 @@
+import { isEmpty } from 'lodash';
+
 import { TimeZone, DefaultTimeZone } from '../types/time';
+
+/**
+ * Used for helper functions handling time zones.
+ *
+ * @public
+ */
+export interface TimeZoneOptions {
+  /**
+   * Specify this if you want to override the timeZone used when parsing or formatting
+   * a date and time value. If no timeZone is set, the default timeZone for the current
+   * user is used.
+   */
+  timeZone?: TimeZone;
+}
 
 /**
  * The type describing date and time options. Used for all the helper functions
@@ -6,14 +22,7 @@ import { TimeZone, DefaultTimeZone } from '../types/time';
  *
  * @public
  */
-export interface DateTimeOptions {
-  /**
-   * Specify this if you want to override the timeZone used when parsing or formatting
-   * a date and time value. If no timeZone is set, the default timeZone for the current
-   * user is used.
-   */
-  timeZone?: TimeZone;
-
+export interface DateTimeOptions extends TimeZoneOptions {
   /**
    * Specify a {@link https://momentjs.com/docs/#/displaying/format | momentjs} format to
    * use a custom formatting pattern or parsing pattern. If no format is set,
@@ -43,11 +52,15 @@ export const setTimeZoneResolver = (resolver: TimeZoneResolver) => {
 };
 
 /**
- * Used within this package to get timeZone from an options value. If timezone
- * is not set in the options, then a default timeZone is be resolved instead.
+ * Used to get the current selected time zone. If a valid time zone is passed in the
+ * options it will be returned. If no valid time zone is passed either the time zone
+ * configured for the user account will be returned or the default for Grafana.
  *
- * @internal
+ * @public
  */
-export const getTimeZone = <T extends DateTimeOptions>(options?: T): TimeZone => {
-  return options?.timeZone ?? defaultTimeZoneResolver() ?? DefaultTimeZone;
+export const getTimeZone = <T extends TimeZoneOptions>(options?: T): TimeZone => {
+  if (options?.timeZone && !isEmpty(options.timeZone)) {
+    return options.timeZone;
+  }
+  return defaultTimeZoneResolver() ?? DefaultTimeZone;
 };

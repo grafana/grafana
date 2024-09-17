@@ -1,88 +1,88 @@
-import { PanelModel } from './PanelModel';
-import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
+import { ComponentClass } from 'react';
+
 import {
   FieldConfigProperty,
-  identityOverrideProcessor,
+  PanelData,
   PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
-  PanelData,
-  DataSourceInstanceSettings,
-  FieldColorModeId,
-  FieldColorConfigSettings,
+  dateTime,
+  TimeRange,
+  PanelMigrationHandler,
+  PanelTypeChangedHandler,
 } from '@grafana/data';
-import { ComponentClass } from 'react';
-import { PanelQueryRunner } from './PanelQueryRunner';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { mockStandardFieldConfigOptions } from '@grafana/data/test/helpers/fieldConfig';
+import { setTemplateSrv } from '@grafana/runtime';
+import { queryBuilder } from 'app/features/variables/shared/testing/builders';
 
-class TablePanelCtrl {}
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { TemplateSrv } from '../../templating/template_srv';
+import { variableAdapters } from '../../variables/adapters';
+import { createQueryVariableAdapter } from '../../variables/query/adapter';
+import { TimeOverrideResult } from '../utils/panel';
 
-export const mockStandardProperties = () => {
-  const unit = {
-    id: 'unit',
-    path: 'unit',
-    name: 'Unit',
-    description: 'Value units',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
+import { PanelModel } from './PanelModel';
 
-  const decimals = {
-    id: 'decimals',
-    path: 'decimals',
-    name: 'Decimals',
-    description: 'Number of decimal to be shown for a value',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
+standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
+standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
 
-  const boolean = {
-    id: 'boolean',
-    path: 'boolean',
-    name: 'Boolean',
-    description: '',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
+const getVariables = () => variablesMock;
+const getVariableWithName = (name: string) => variablesMock.filter((v) => v.name === name)[0];
+const getFilteredVariables = jest.fn();
 
-  const fieldColor = {
-    id: 'color',
-    path: 'color',
-    name: 'color',
-    description: '',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
+setTemplateSrv(
+  new TemplateSrv({
+    getVariables,
+    getVariableWithName,
+    getFilteredVariables,
+  })
+);
 
-  return [unit, decimals, boolean, fieldColor];
-};
-
-standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
-standardEditorsRegistry.setInit(() => mockStandardProperties());
+variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
     let model: any;
-    let modelJson: any;
+    let modelJson: Record<string, unknown>;
     let persistedOptionsMock;
 
-    beforeEach(() => {
+    const tablePlugin = getPanelPlugin(
+      {
+        id: 'table',
+      },
+      null as unknown as ComponentClass<PanelProps>, // react
+      {} // angular
+    );
+
+    tablePlugin.setPanelOptions((builder) => {
+      builder.addBooleanSwitch({
+        name: 'Show thresholds',
+        path: 'showThresholds',
+        defaultValue: true,
+        description: '',
+      });
+    });
+
+    tablePlugin.useFieldConfig({
+      standardOptions: {
+        [FieldConfigProperty.Unit]: {
+          defaultValue: 'flop',
+        },
+        [FieldConfigProperty.Decimals]: {
+          defaultValue: 2,
+        },
+      },
+      useCustomConfig: (builder) => {
+        builder.addBooleanSwitch({
+          name: 'CustomProp',
+          path: 'customProp',
+          defaultValue: false,
+        });
+      },
+    });
+
+    beforeEach(async () => {
       persistedOptionsMock = {
         fieldOptions: {
           thresholds: [
@@ -143,35 +143,44 @@ describe('PanelModel', () => {
       };
 
       model = new PanelModel(modelJson);
+      await model.pluginLoaded(tablePlugin);
+    });
 
-      const panelPlugin = getPanelPlugin(
-        {
-          id: 'table',
-        },
-        (null as unknown) as ComponentClass<PanelProps>, // react
-        TablePanelCtrl // angular
-      );
+    describe('migrations', () => {
+      let initialMigrator: PanelMigrationHandler<(typeof model)['options']> | undefined = undefined;
 
-      panelPlugin.setPanelOptions(builder => {
-        builder.addBooleanSwitch({
-          name: 'Show thresholds',
-          path: 'showThresholds',
-          defaultValue: true,
-          description: '',
-        });
+      beforeEach(() => {
+        initialMigrator = tablePlugin.onPanelMigration;
+      });
+      afterEach(() => {
+        tablePlugin.onPanelMigration = initialMigrator;
       });
 
-      panelPlugin.useFieldConfig({
-        standardOptions: {
-          [FieldConfigProperty.Unit]: {
-            defaultValue: 'flop',
-          },
-          [FieldConfigProperty.Decimals]: {
-            defaultValue: 2,
-          },
-        },
+      it('should run sync migrations', async () => {
+        model.options.valueToMigrate = 'old-legacy';
+
+        tablePlugin.onPanelMigration = (p) => ({ ...p.options, valueToMigrate: 'new-version' });
+
+        tablePlugin.onPanelMigration = (p) => {
+          p.options.valueToMigrate = 'new-version';
+          return p.options;
+        };
+
+        await model.pluginLoaded(tablePlugin);
+        expect(model.options).toMatchObject({ valueToMigrate: 'new-version' });
       });
-      model.pluginLoaded(panelPlugin);
+
+      it('should run async migrations', async () => {
+        model.options.valueToMigrate = 'old-legacy';
+
+        tablePlugin.onPanelMigration = async (p) =>
+          new Promise((resolve) => {
+            setTimeout(() => resolve({ ...p.options, valueToMigrate: 'new-version' }), 10);
+          });
+
+        await model.pluginLoaded(tablePlugin);
+        expect(model.options).toMatchObject({ valueToMigrate: 'new-version' });
+      });
     });
 
     it('should apply defaults', () => {
@@ -192,11 +201,6 @@ describe('PanelModel', () => {
     });
 
     it('should apply field config defaults', () => {
-      setDataSourceSrv({
-        getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
-          return undefined;
-        },
-      } as any);
       // default unit is overriden by model
       expect(model.getFieldOverrideOptions().fieldConfig.defaults.unit).toBe('mpg');
       // default decimals are aplied
@@ -225,14 +229,30 @@ describe('PanelModel', () => {
       expect(saveModel.gridPos).toBe(undefined);
     });
 
-    it('getSaveModel should not remove datasource default', () => {
-      const saveModel = model.getSaveModel();
-      expect(saveModel.datasource).toBe(null);
-    });
-
     it('getSaveModel should remove nonPersistedProperties', () => {
       const saveModel = model.getSaveModel();
       expect(saveModel.events).toBe(undefined);
+    });
+
+    it('getSaveModel should clean libraryPanels from a collapsed row', () => {
+      const newmodelJson = {
+        type: 'row',
+        panels: [
+          {
+            ...modelJson,
+            libraryPanel: {
+              uid: 'BVIBScisnl',
+              model: modelJson,
+              name: 'Library panel title',
+            },
+          },
+          modelJson,
+        ],
+      };
+      const newmodel = new PanelModel(newmodelJson);
+      const saveModel = newmodel.getSaveModel();
+      expect(saveModel.panels[0].tagrets).toBe(undefined);
+      expect(saveModel.panels[1].targets).toBeTruthy();
     });
 
     describe('variables interpolation', () => {
@@ -242,6 +262,7 @@ describe('PanelModel', () => {
           bbb: { value: 'BBB', text: 'upperB' },
         };
       });
+
       it('should interpolate variables', () => {
         const out = model.replaceVariables('hello $aaa');
         expect(out).toBe('hello AAA');
@@ -251,6 +272,18 @@ describe('PanelModel', () => {
         const extra = { aaa: { text: '???', value: 'XXX' } };
         const out = model.replaceVariables('hello $aaa and $bbb', extra);
         expect(out).toBe('hello XXX and BBB');
+      });
+
+      it('Can use request scoped vars', () => {
+        model.getQueryRunner().getLastRequest = () => {
+          return {
+            scopedVars: {
+              __interval: { text: '10m', value: '10m' },
+            },
+          };
+        };
+        const out = model.replaceVariables('hello $__interval');
+        expect(out).toBe('hello 10m');
       });
     });
 
@@ -266,9 +299,16 @@ describe('PanelModel', () => {
               },
             },
           },
+          useCustomConfig: (builder) => {
+            builder.addNumberInput({
+              path: 'customProp',
+              name: 'customProp',
+              defaultValue: 100,
+            });
+          },
         });
 
-        newPlugin.setPanelOptions(builder => {
+        newPlugin.setPanelOptions((builder) => {
           builder.addBooleanSwitch({
             name: 'Show thresholds labels',
             path: 'showThresholdLabels',
@@ -277,13 +317,27 @@ describe('PanelModel', () => {
           });
         });
 
-        model.editSourceId = 1001;
+        model.fieldConfig.defaults.decimals = 3;
+        model.fieldConfig.defaults.custom = {
+          customProp: true,
+        };
+        model.fieldConfig.overrides = [
+          {
+            matcher: { id: 'byName', options: 'D-series' },
+            properties: [
+              {
+                id: 'custom.customProp',
+                value: false,
+              },
+              {
+                id: 'decimals',
+                value: 0,
+              },
+            ],
+          },
+        ];
         model.changePlugin(newPlugin);
         model.alert = { id: 2 };
-      });
-
-      it('should keep editSourceId', () => {
-        expect(model.editSourceId).toBe(1001);
       });
 
       it('should keep maxDataPoints', () => {
@@ -292,6 +346,21 @@ describe('PanelModel', () => {
 
       it('should keep interval', () => {
         expect(model.interval).toBe('5m');
+      });
+
+      it('should preseve standard field config', () => {
+        expect(model.fieldConfig.defaults.decimals).toEqual(3);
+      });
+
+      it('should clear custom field config and apply new defaults', () => {
+        expect(model.fieldConfig.defaults.custom).toEqual({
+          customProp: 100,
+        });
+      });
+
+      it('should remove overrides with custom props', () => {
+        expect(model.fieldConfig.overrides.length).toEqual(1);
+        expect(model.fieldConfig.overrides[0].properties[0].id).toEqual('decimals');
       });
 
       it('should apply next panel option defaults', () => {
@@ -304,8 +373,13 @@ describe('PanelModel', () => {
       });
 
       it('should restore table properties when changing back', () => {
-        model.changePlugin(getPanelPlugin({ id: 'table' }));
+        model.changePlugin(tablePlugin);
         expect(model.showColumns).toBe(true);
+      });
+
+      it('should restore custom field config to what it was and preserve standard options', () => {
+        model.changePlugin(tablePlugin);
+        expect(model.fieldConfig.defaults.custom.customProp).toBe(true);
       });
 
       it('should remove alert rule when changing type that does not support it', () => {
@@ -314,71 +388,13 @@ describe('PanelModel', () => {
       });
     });
 
-    describe('when changing panel type to one that does not support by value color mode', () => {
-      beforeEach(() => {
-        model.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
-
-        const newPlugin = getPanelPlugin({ id: 'graph' });
-        newPlugin.useFieldConfig({
-          standardOptions: {
-            [FieldConfigProperty.Color]: {
-              settings: {
-                byValueSupport: false,
-              },
-            },
-          },
-        });
-
-        model.editSourceId = 1001;
-        model.changePlugin(newPlugin);
-        model.alert = { id: 2 };
-      });
-
-      it('should change color mode', () => {
-        expect(model.fieldConfig.defaults.color.mode).toBe(FieldColorModeId.PaletteClassic);
-      });
-    });
-
-    describe('when changing panel type from one not supporting by value color mode to one that supports it', () => {
-      const prepareModel = (colorOptions?: FieldColorConfigSettings) => {
-        const newModel = new PanelModel(modelJson);
-        newModel.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
-
-        const newPlugin = getPanelPlugin({ id: 'graph' });
-        newPlugin.useFieldConfig({
-          standardOptions: {
-            [FieldConfigProperty.Color]: {
-              settings: {
-                byValueSupport: true,
-                ...colorOptions,
-              },
-            },
-          },
-        });
-
-        newModel.editSourceId = 1001;
-        newModel.changePlugin(newPlugin);
-        newModel.alert = { id: 2 };
-        return newModel;
-      };
-
-      it('should keep supported mode', () => {
-        const testModel = prepareModel();
-
-        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.PaletteClassic);
-      });
-
-      it('should change to thresholds mode when it prefers to', () => {
-        const testModel = prepareModel({ preferThresholdsMode: true });
-        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
-      });
-    });
-
     describe('when changing to react panel from angular panel', () => {
-      let panelQueryRunner: any;
+      let panelQueryRunner: PanelQueryRunner;
 
       const onPanelTypeChanged = jest.fn();
-      const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(onPanelTypeChanged as any);
+      const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(
+        onPanelTypeChanged as PanelTypeChangedHandler
+      );
 
       beforeEach(() => {
         model.changePlugin(reactPlugin);
@@ -398,11 +414,51 @@ describe('PanelModel', () => {
       });
     });
 
+    describe('when autoMigrateFrom angular to react', () => {
+      const onPanelTypeChanged: PanelTypeChangedHandler = (panel, prevPluginId, prevOptions) => {
+        panel.fieldConfig = { defaults: { unit: 'bytes' }, overrides: [] };
+        return { name: prevOptions.angular.oldName };
+      };
+
+      const reactPlugin = getPanelPlugin({ id: 'timeseries' })
+        .setPanelChangeHandler(onPanelTypeChanged)
+        .useFieldConfig({
+          disableStandardOptions: [FieldConfigProperty.Thresholds],
+        })
+        .setPanelOptions((builder) => {
+          builder.addTextInput({
+            name: 'Name',
+            path: 'name',
+          });
+        });
+
+      beforeEach(() => {
+        model = new PanelModel({
+          autoMigrateFrom: 'graph',
+          oldName: 'old name',
+          type: 'timeseries',
+        });
+
+        model.pluginLoaded(reactPlugin);
+      });
+
+      it('should run panel changed handler and remove old model props', () => {
+        expect(model.options).toEqual({ name: 'old name' });
+        expect(model.fieldConfig).toEqual({ defaults: { unit: 'bytes' }, overrides: [] });
+        expect(model.autoMigrateFrom).toBe(undefined);
+        expect(model.oldName).toBe(undefined);
+        expect(model.plugin).toBe(reactPlugin);
+        expect(model.type).toBe('timeseries');
+      });
+    });
+
     describe('variables interpolation', () => {
-      let panelQueryRunner: any;
+      let panelQueryRunner: PanelQueryRunner;
 
       const onPanelTypeChanged = jest.fn();
-      const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(onPanelTypeChanged as any);
+      const reactPlugin = getPanelPlugin({ id: 'react' }).setPanelChangeHandler(
+        onPanelTypeChanged as PanelTypeChangedHandler
+      );
 
       beforeEach(() => {
         model.changePlugin(reactPlugin);
@@ -463,15 +519,89 @@ describe('PanelModel', () => {
       });
     });
 
+    describe('updateGridPos', () => {
+      it('Should not have changes if no change', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 1, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(false);
+      });
+
+      it('Should have changes if gridPos is different', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 });
+        expect(model.hasChanged).toBe(true);
+      });
+
+      it('Should not have changes if not manually updated', () => {
+        model.gridPos = { w: 1, h: 1, x: 1, y: 2 };
+        model.updateGridPos({ w: 10, h: 1, x: 1, y: 2 }, false);
+        expect(model.hasChanged).toBe(false);
+      });
+    });
+
     describe('destroy', () => {
       it('Should still preserve last query result', () => {
         model.getQueryRunner().useLastResultFrom({
-          getLastResult: () => ({} as PanelData),
+          getLastResult: () => ({}) as PanelData,
         } as PanelQueryRunner);
 
         model.destroy();
         expect(model.getQueryRunner().getLastResult()).toBeDefined();
       });
     });
+
+    describe('getDisplayTitle', () => {
+      it('when called then it should interpolate singe value variables in title', () => {
+        const model = new PanelModel({
+          title: 'Single value variable [[test3]] ${test3} ${test3:percentencode}',
+        });
+        const title = model.getDisplayTitle();
+
+        expect(title).toEqual('Single value variable Value 3 Value 3 Value%203');
+      });
+
+      it('when called then it should interpolate multi value variables in title', () => {
+        const model = new PanelModel({
+          title: 'Multi value variable [[test4]] ${test4} ${test4:percentencode}',
+        });
+        const title = model.getDisplayTitle();
+
+        expect(title).toEqual('Multi value variable A + B A + B %7BA%2CB%7D');
+      });
+    });
+
+    describe('runAllPanelQueries', () => {
+      it('when called then it should call all pending queries', () => {
+        model.getQueryRunner = jest.fn().mockReturnValue({
+          run: jest.fn(),
+        });
+        const dashboardId = 123;
+        const dashboardUID = 'ggHbN42mk';
+        const dashboardTimezone = 'browser';
+        const width = 860;
+        const timeData = {
+          timeInfo: '',
+          timeRange: {
+            from: dateTime([2019, 1, 11, 12, 0]),
+            to: dateTime([2019, 1, 11, 18, 0]),
+            raw: {
+              from: 'now-6h',
+              to: 'now',
+            },
+          } as TimeRange,
+        } as TimeOverrideResult;
+
+        model.runAllPanelQueries({ dashboardId, dashboardUID, dashboardTimezone, timeData, width });
+
+        expect(model.getQueryRunner).toBeCalled();
+      });
+    });
   });
 });
+
+const variablesMock = [
+  queryBuilder().withId('test1').withName('test1').withCurrent('val1').build(),
+  queryBuilder().withId('test2').withName('test2').withCurrent('val2').build(),
+  queryBuilder().withId('test3').withName('test3').withCurrent('Value 3').build(),
+  queryBuilder().withId('test4').withName('test4').withCurrent(['A', 'B']).build(),
+];

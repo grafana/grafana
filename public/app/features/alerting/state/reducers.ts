@@ -1,3 +1,6 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+import { dateTime } from '@grafana/data';
 import {
   AlertRule,
   AlertRuleDTO,
@@ -6,9 +9,10 @@ import {
   NotificationChannelState,
   NotifierDTO,
 } from 'app/types';
+
+import unifiedAlertingReducer from '../unified/state/reducers';
+
 import alertDef from './alertDef';
-import { dateTime } from '@grafana/data';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export const initialState: AlertRulesState = {
   items: [],
@@ -49,13 +53,13 @@ const alertRulesSlice = createSlice({
   name: 'alertRules',
   initialState,
   reducers: {
-    loadAlertRules: state => {
+    loadAlertRules: (state) => {
       return { ...state, isLoading: true };
     },
     loadedAlertRules: (state, action: PayloadAction<AlertRuleDTO[]>): AlertRulesState => {
       const alertRules: AlertRuleDTO[] = action.payload;
 
-      const alertRulesViewModel: AlertRule[] = alertRules.map(rule => {
+      const alertRulesViewModel: AlertRule[] = alertRules.map((rule) => {
         return convertToAlertRule(rule, rule.state);
       });
 
@@ -80,7 +84,7 @@ const notificationChannelSlice = createSlice({
     },
     notificationChannelLoaded: (state, action: PayloadAction<any>): NotificationChannelState => {
       const notificationChannel = action.payload;
-      const selectedType: NotifierDTO = state.notifiers.find(t => t.type === notificationChannel.type)!;
+      const selectedType: NotifierDTO = state.notifiers.find((t) => t.type === notificationChannel.type)!;
       const secureChannelOptions = selectedType.options.filter((o: NotificationChannelOption) => o.secure);
       /*
         If any secure field is in plain text we need to migrate it to use secure field instead.
@@ -110,11 +114,8 @@ const notificationChannelSlice = createSlice({
 
 export const { loadAlertRules, loadedAlertRules, setSearchQuery } = alertRulesSlice.actions;
 
-export const {
-  setNotificationChannels,
-  notificationChannelLoaded,
-  resetSecureField,
-} = notificationChannelSlice.actions;
+export const { setNotificationChannels, notificationChannelLoaded, resetSecureField } =
+  notificationChannelSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;
@@ -122,6 +123,7 @@ export const notificationChannelReducer = notificationChannelSlice.reducer;
 export default {
   alertRules: alertRulesReducer,
   notificationChannel: notificationChannelReducer,
+  unifiedAlerting: unifiedAlertingReducer,
 };
 
 function migrateSecureFields(
@@ -132,7 +134,7 @@ function migrateSecureFields(
   const cleanedSettings: { [key: string]: string } = {};
   const secureSettings: { [key: string]: string } = {};
 
-  secureChannelOptions.forEach(option => {
+  secureChannelOptions.forEach((option) => {
     secureSettings[option.propertyName] = notificationChannel.settings[option.propertyName];
     cleanedSettings[option.propertyName] = '';
   });

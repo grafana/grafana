@@ -3,189 +3,507 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
 
+	"golang.org/x/sync/errgroup"
+
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func AdminCreateUser(c *models.ReqContext, form dtos.AdminCreateUserForm) Response {
-	cmd := models.CreateUserCommand{
+// swagger:route POST /admin/users admin_users adminCreateUser
+//
+// Create new user.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:create`.
+// Note that OrgId is an optional parameter that can be used to assign a new user to a different organization when `auto_assign_org` is set to `true`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: adminCreateUserResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 412: preconditionFailedError
+// 500: internalServerError
+func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Response {
+	form := dtos.AdminCreateUserForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	cmd := user.CreateUserCommand{
 		Login:    form.Login,
 		Email:    form.Email,
 		Password: form.Password,
 		Name:     form.Name,
-		OrgId:    form.OrgId,
+		OrgID:    form.OrgId,
 	}
 
-	if len(cmd.Login) == 0 {
-		cmd.Login = cmd.Email
-		if len(cmd.Login) == 0 {
-			return Error(400, "Validation error, need specify either username or email", nil)
-		}
-	}
-
-	if len(cmd.Password) < 4 {
-		return Error(400, "Password is missing or too short", nil)
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
-			return Error(400, err.Error(), nil)
+	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
+	if err != nil {
+		if errors.Is(err, org.ErrOrgNotFound) {
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
 
-		if errors.Is(err, models.ErrUserAlreadyExists) {
-			return Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
+		if errors.Is(err, user.ErrUserAlreadyExists) {
+			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
-		return Error(500, "failed to create user", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create user", err)
 	}
 
 	metrics.MApiAdminUserCreate.Inc()
 
-	user := cmd.Result
-
-	result := models.UserIdDTO{
+	result := user.AdminCreateUserResponse{
 		Message: "User created",
-		Id:      user.Id,
+		ID:      usr.ID,
 	}
 
-	return JSON(200, result)
+	return response.JSON(http.StatusOK, result)
 }
 
-func AdminUpdateUserPassword(c *models.ReqContext, form dtos.AdminUpdateUserPasswordForm) Response {
-	userID := c.ParamsInt64(":id")
-
-	if len(form.Password) < 4 {
-		return Error(400, "New password too short", nil)
+// swagger:route PUT /admin/users/{user_id}/password admin_users adminUpdateUserPassword
+//
+// Set password for user.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.password:update` and scope `global.users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) response.Response {
+	if hs.Cfg.DisableLoginForm || hs.Cfg.DisableLogin {
+		return response.Error(http.StatusForbidden,
+			"Not allowed to reset password when login form is disabled", nil)
 	}
 
-	userQuery := models.GetUserByIdQuery{Id: userID}
-
-	if err := bus.Dispatch(&userQuery); err != nil {
-		return Error(500, "Could not read user from database", err)
+	form := dtos.AdminUpdateUserPasswordForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	passwordHashed, err := util.EncodePassword(form.Password, userQuery.Result.Salt)
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
-		return Error(500, "Could not encode password", err)
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	cmd := models.ChangeUserPasswordCommand{
-		UserId:      userID,
-		NewPassword: passwordHashed,
+	if response := hs.errOnExternalUser(c.Req.Context(), userID); response != nil {
+		return response
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to update user password", err)
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, Password: &form.Password}); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update user password", err)
 	}
 
-	return Success("User password updated")
+	usr, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: userID})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Could not read user from database", err)
+	}
+
+	if err := hs.loginAttemptService.Reset(c.Req.Context(),
+		usr.Login); err != nil {
+		c.Logger.Warn("could not reset login attempts", "err", err, "username", usr.Login)
+	}
+
+	if err := hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(),
+		userID); err != nil {
+		return response.Error(http.StatusExpectationFailed,
+			"User password updated but unable to revoke user sessions", err)
+	}
+
+	return response.Success("User password updated")
 }
 
-// PUT /api/admin/users/:id/permissions
-func AdminUpdateUserPermissions(c *models.ReqContext, form dtos.AdminUpdateUserPermissionsForm) Response {
-	userID := c.ParamsInt64(":id")
-
-	cmd := models.UpdateUserPermissionsCommand{
-		UserId:         userID,
-		IsGrafanaAdmin: form.IsGrafanaAdmin,
+// swagger:route PUT /admin/users/{user_id}/permissions admin_users adminUpdateUserPermissions
+//
+// Set permissions for user.
+//
+// Only works with Basic Authentication (username and password). See introduction for an explanation.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.permissions:update` and scope `global.users:*`.
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) response.Response {
+	form := dtos.AdminUpdateUserPermissionsForm{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
-		if errors.Is(err, models.ErrLastGrafanaAdmin) {
-			return Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil && authInfo != nil {
+		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
+		if login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule) {
+			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
+		}
+	}
+
+	err = hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{
+		UserID:         userID,
+		IsGrafanaAdmin: &form.IsGrafanaAdmin,
+	})
+	if err != nil {
+		if errors.Is(err, user.ErrLastGrafanaAdmin) {
+			return response.Error(http.StatusBadRequest, user.ErrLastGrafanaAdmin.Error(), nil)
 		}
 
-		return Error(500, "Failed to update user permissions", err)
+		return response.Error(http.StatusInternalServerError, "Failed to update user permissions", err)
 	}
 
-	return Success("User permissions updated")
+	return response.Success("User permissions updated")
 }
 
-func AdminDeleteUser(c *models.ReqContext) Response {
-	userID := c.ParamsInt64(":id")
+// swagger:route DELETE /admin/users/{user_id} admin_users adminDeleteUser
+//
+// Delete global User.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:delete` and scope `global.users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Response {
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
-	cmd := models.DeleteUserCommand{UserId: userID}
+	cmd := user.DeleteUserCommand{UserID: userID}
 
-	if err := bus.Dispatch(&cmd); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return Error(404, models.ErrUserNotFound.Error(), nil)
+	if err := hs.userService.Delete(c.Req.Context(), &cmd); err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return Error(500, "Failed to delete user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete user", err)
 	}
 
-	return Success("User deleted")
+	g, ctx := errgroup.WithContext(c.Req.Context())
+	g.Go(func() error {
+		if err := hs.starService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.orgService.DeleteUserFromAll(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.preferenceService.DeleteByUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.TeamService.RemoveUsersMemberships(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.authInfoService.DeleteUserAuthInfo(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.AuthTokenService.RevokeAllUserTokens(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.QuotaService.DeleteQuotaForUser(ctx, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
+		if err := hs.accesscontrolService.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete user", err)
+	}
+
+	return response.Success("User deleted")
 }
 
-// POST /api/admin/users/:id/disable
-func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
-	userID := c.ParamsInt64(":id")
+// swagger:route POST /admin/users/{user_id}/disable admin_users adminDisableUser
+//
+// Disable user.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:disable` and scope `global.users:1` (userIDScope).
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) AdminDisableUser(c *contextmodel.ReqContext) response.Response {
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	// External users shouldn't be disabled from API
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
-		return Error(500, "Could not disable external user", nil)
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
+	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
+		return response.Error(http.StatusInternalServerError, "Could not disable external user", nil)
 	}
 
-	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
-	if err := bus.Dispatch(&disableCmd); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return Error(404, models.ErrUserNotFound.Error(), nil)
+	isDisabled := true
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled}); err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return Error(500, "Failed to disable user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to disable user", err)
 	}
 
-	err := hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
+	err = hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
 	if err != nil {
-		return Error(500, "Failed to disable user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to disable user", err)
 	}
 
-	return Success("User disabled")
+	return response.Success("User disabled")
 }
 
-// POST /api/admin/users/:id/enable
-func AdminEnableUser(c *models.ReqContext) Response {
-	userID := c.ParamsInt64(":id")
+// swagger:route POST /admin/users/{user_id}/enable admin_users adminEnableUser
+//
+// Enable user.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users:enable` and scope `global.users:1` (userIDScope).
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Response {
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
 	// External users shouldn't be disabled from API
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
-		return Error(500, "Could not enable external user", nil)
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
+	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
+		return response.Error(http.StatusInternalServerError, "Could not enable external user", nil)
 	}
 
-	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
-	if err := bus.Dispatch(&disableCmd); err != nil {
-		if errors.Is(err, models.ErrUserNotFound) {
-			return Error(404, models.ErrUserNotFound.Error(), nil)
+	isDisabled := false
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, IsDisabled: &isDisabled}); err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return Error(500, "Failed to enable user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to enable user", err)
 	}
 
-	return Success("User enabled")
+	return response.Success("User enabled")
 }
 
-// POST /api/admin/users/:id/logout
-func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) Response {
-	userID := c.ParamsInt64(":id")
+// swagger:route POST /admin/users/{user_id}/logout admin_users adminLogoutUser
+//
+// Logout user revokes all auth tokens (devices) for the user. User of issued auth tokens (devices) will no longer be logged in and will be required to authenticate again upon next activity.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.logout` and scope `global.users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Response {
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 
-	if c.UserId == userID {
-		return Error(400, "You cannot logout yourself", nil)
+	if c.SignedInUser.GetID() == identity.NewTypedID(claims.TypeUser, userID) {
+		return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
 	}
 
 	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)
 }
 
-// GET /api/admin/users/:id/auth-tokens
-func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) Response {
-	userID := c.ParamsInt64(":id")
+// swagger:route GET /admin/users/{user_id}/auth-tokens admin_users adminGetUserAuthTokens
+//
+// Return a list of all auth tokens (devices) that the user currently have logged in from.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:list` and scope `global.users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: adminGetUserAuthTokensResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) AdminGetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	return hs.getUserAuthTokensInternal(c, userID)
 }
 
-// POST /api/admin/users/:id/revoke-auth-token
-func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) Response {
-	userID := c.ParamsInt64(":id")
+// swagger:route POST /admin/users/{user_id}/revoke-auth-token admin_users adminRevokeUserAuthToken
+//
+// Revoke auth token for user.
+//
+// Revokes the given auth token (device) for the user. User of issued auth token (device) will no longer be logged in and will be required to authenticate again upon next activity.
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.authtoken:update` and scope `global.users:*`.
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) AdminRevokeUserAuthToken(c *contextmodel.ReqContext) response.Response {
+	cmd := auth.RevokeAuthTokenCmd{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "id is invalid", err)
+	}
 	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
+}
+
+// swagger:parameters adminUpdateUserPassword
+type AdminUpdateUserPasswordParams struct {
+	// in:body
+	// required:true
+	Body dtos.AdminUpdateUserPasswordForm `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters adminDeleteUser
+type AdminDeleteUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters adminEnableUser
+type AdminEnableUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters adminDisableUser
+type AdminDisableUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters adminGetUserAuthTokens
+type AdminGetUserAuthTokensParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters adminLogoutUser
+type AdminLogoutUserParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters adminRevokeUserAuthToken
+type AdminRevokeUserAuthTokenParams struct {
+	// in:body
+	// required:true
+	Body auth.RevokeAuthTokenCmd `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters adminCreateUser
+type AdminCreateUserParams struct {
+	// in:body
+	// required:true
+	Body dtos.AdminCreateUserForm `json:"body"`
+}
+
+// swagger:parameters adminUpdateUserPermissions
+type AdminUpdateUserPermissionsParams struct {
+	// in:body
+	// required:true
+	Body dtos.AdminUpdateUserPermissionsForm `json:"body"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:response adminCreateUserResponse
+type AdminCreateUserResponseResponse struct {
+	// in:body
+	Body user.AdminCreateUserResponse `json:"body"`
+}
+
+// swagger:response adminGetUserAuthTokensResponse
+type AdminGetUserAuthTokensResponse struct {
+	// in:body
+	Body []*auth.UserToken `json:"body"`
 }

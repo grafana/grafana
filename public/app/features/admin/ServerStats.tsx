@@ -1,71 +1,158 @@
-import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
-import { StoreState } from 'app/types';
-import { getNavModel } from 'app/core/selectors/navModel';
+import { css } from '@emotion/css';
+import { useEffect, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { config, GrafanaBootConfig } from '@grafana/runtime';
+import { LinkButton, useStyles2 } from '@grafana/ui';
+import { AccessControlAction } from 'app/types';
+
+import { contextSrv } from '../../core/services/context_srv';
+
+import { ServerStatsCard } from './ServerStatsCard';
 import { getServerStats, ServerStat } from './state/apis';
-import Page from 'app/core/components/Page/Page';
-import { NavModel } from '@grafana/data';
 
-interface Props {
-  navModel: NavModel;
-  getServerStats: () => Promise<ServerStat[]>;
-}
+export const ServerStats = () => {
+  const [stats, setStats] = useState<ServerStat | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const styles = useStyles2(getStyles);
 
-interface State {
-  stats: ServerStat[];
-  isLoading: boolean;
-}
+  const hasAccessToDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesRead);
+  const hasAccessToAdminUsers = contextSrv.hasPermission(AccessControlAction.UsersRead);
 
-export class ServerStats extends PureComponent<Props, State> {
-  state: State = {
-    stats: [],
-    isLoading: true,
-  };
-
-  async componentDidMount() {
-    try {
-      const stats = await this.props.getServerStats();
-      this.setState({ stats, isLoading: false });
-    } catch (error) {
-      console.error(error);
+  useEffect(() => {
+    if (contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
+      getServerStats().then((stats) => {
+        setStats(stats);
+        setIsLoading(false);
+      });
     }
+  }, []);
+
+  if (!contextSrv.hasPermission(AccessControlAction.ActionServerStatsRead)) {
+    return null;
   }
 
-  render() {
-    const { navModel } = this.props;
-    const { stats, isLoading } = this.state;
-
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={isLoading}>
-          <table className="filter-table form-inline">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>{stats.map(StatItem)}</tbody>
-          </table>
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
-
-function StatItem(stat: ServerStat) {
   return (
-    <tr key={stat.name}>
-      <td>{stat.name}</td>
-      <td>{stat.value}</td>
-    </tr>
+    <>
+      <h2 className={styles.title}>Instance statistics</h2>
+      {!isLoading && !stats ? (
+        <p className={styles.notFound}>No stats found.</p>
+      ) : (
+        <div className={styles.row}>
+          <ServerStatsCard
+            isLoading={isLoading}
+            content={[
+              { name: 'Dashboards (starred)', value: `${stats?.dashboards} (${stats?.stars})` },
+              { name: 'Tags', value: stats?.tags },
+              { name: 'Playlists', value: stats?.playlists },
+              { name: 'Snapshots', value: stats?.snapshots },
+            ]}
+            footer={
+              <LinkButton href={'/dashboards'} variant={'secondary'}>
+                Manage dashboards
+              </LinkButton>
+            }
+          />
+
+          <div className={styles.doubleRow}>
+            <ServerStatsCard
+              isLoading={isLoading}
+              content={[{ name: 'Data sources', value: stats?.datasources }]}
+              footer={
+                hasAccessToDataSources && (
+                  <LinkButton href={'/datasources'} variant={'secondary'}>
+                    Manage data sources
+                  </LinkButton>
+                )
+              }
+            />
+            <ServerStatsCard
+              isLoading={isLoading}
+              content={[{ name: 'Alerts', value: stats?.alerts }]}
+              footer={
+                <LinkButton href={'/alerting/list'} variant={'secondary'}>
+                  Manage alerts
+                </LinkButton>
+              }
+            />
+          </div>
+          <ServerStatsCard
+            isLoading={isLoading}
+            content={[
+              { name: 'Organisations', value: stats?.orgs },
+              { name: 'Users total', value: stats?.users },
+              { name: 'Active sessions', value: stats?.activeSessions },
+              { name: 'Active users in last 30 days', value: stats?.activeUsers },
+              ...getAnonymousStatsContent(stats, config),
+            ]}
+            footer={
+              hasAccessToAdminUsers && (
+                <LinkButton href={'/admin/users'} variant={'secondary'}>
+                  Manage users
+                </LinkButton>
+              )
+            }
+          />
+        </div>
+      )}
+    </>
   );
-}
+};
 
-const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'server-stats'),
-  getServerStats: getServerStats,
-});
+const getAnonymousStatsContent = (stats: ServerStat | null, config: GrafanaBootConfig) => {
+  if (!config.anonymousEnabled || !stats?.activeDevices) {
+    return [];
+  }
+  if (!config.anonymousDeviceLimit) {
+    return [
+      {
+        name: 'Active anonymous devices',
+        value: `${stats.activeDevices}`,
+        tooltip: 'Detected devices that are not logged in, in last 30 days.',
+      },
+    ];
+  } else {
+    return [
+      {
+        name: 'Active anonymous devices',
+        value: `${stats.activeDevices} / ${config.anonymousDeviceLimit}`,
+        tooltip: 'Detected devices that are not logged in, in last 30 days.',
+        highlight: stats.activeDevices > config.anonymousDeviceLimit,
+      },
+    ];
+  }
+};
 
-export default hot(module)(connect(mapStateToProps)(ServerStats));
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    title: css({
+      marginBottom: theme.spacing(4),
+    }),
+    row: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      width: '100%',
+
+      '& > div:not(:last-of-type)': {
+        marginRight: theme.spacing(2),
+      },
+
+      '& > div': {
+        width: '33.3%',
+      },
+    }),
+    doubleRow: css({
+      display: 'flex',
+      flexDirection: 'column',
+
+      '& > div:first-of-type': {
+        marginBottom: theme.spacing(2),
+      },
+    }),
+    notFound: css({
+      fontSize: theme.typography.h6.fontSize,
+      textAlign: 'center',
+      height: '290px',
+    }),
+  };
+};

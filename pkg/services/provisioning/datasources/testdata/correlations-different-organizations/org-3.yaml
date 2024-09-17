@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+  - name: Foo
+    uid: foo
+    orgId: 3
+    type: graphite
+    correlations:
+      - targetUID: foo
+        label: self correlation
+        description: a description

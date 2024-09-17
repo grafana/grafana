@@ -1,11 +1,12 @@
 import { from, Observable } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
+
 import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 
-import CloudMonitoringDatasource from './datasource';
-import { CloudMonitoringVariableQuery } from './types';
 import CloudMonitoringMetricFindQuery from './CloudMonitoringMetricFindQuery';
 import { CloudMonitoringVariableQueryEditor } from './components/VariableQueryEditor';
+import CloudMonitoringDatasource from './datasource';
+import { CloudMonitoringVariableQuery } from './types/types';
 
 export class CloudMonitoringVariableSupport extends CustomVariableSupport<
   CloudMonitoringDatasource,
@@ -16,7 +17,6 @@ export class CloudMonitoringVariableSupport extends CustomVariableSupport<
   constructor(private readonly datasource: CloudMonitoringDatasource) {
     super();
     this.metricFindQuery = new CloudMonitoringMetricFindQuery(datasource);
-    this.query = this.query.bind(this);
   }
 
   editor = CloudMonitoringVariableQueryEditor;
@@ -25,7 +25,7 @@ export class CloudMonitoringVariableSupport extends CustomVariableSupport<
     const executeObservable = from(this.metricFindQuery.execute(request.targets[0]));
     return from(this.datasource.ensureGCEDefaultProject()).pipe(
       mergeMap(() => executeObservable),
-      map(data => ({ data }))
+      map((data) => ({ data }))
     );
   }
 }

@@ -1,28 +1,41 @@
-# End-to-End Tests for plugins
+# End-to-end tests for plugins
 
-Be sure that you've read the [generalized E2E document](e2e.md).
+When end-to-end testing Grafana plugins, a best practice is to use the [`@grafana/plugin-e2e`](https://www.npmjs.com/package/@grafana/plugin-e2e?activeTab=readme) testing tool. The `@grafana/plugin-e2e` tool extends [`@playwright/test`](https://playwright.dev/) capabilities with relevant fixtures, models, and expect matchers. Use it to enable comprehensive end-to-end testing of Grafana plugins across multiple versions of Grafana.
+
+> **Note:** To learn more, refer to our documentation on [plugin development](https://grafana.com/developers/plugin-tools/) and [end-to-end plugin testing](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/get-started).
+
+## Add end-to-end tests for a core plugin
+
+You can add Playwright end-to-end tests for plugins to the [`e2e/plugin-e2e`](https://github.com/grafana/grafana/tree/main/e2e/plugin-e2e) directory.
+
+1. Add a new directory that has the name as your plugin [`here`](https://github.com/grafana/grafana/tree/main/e2e/plugin-e2e). This is the directory where your plugin tests will be kept.
+
+1. Playwright uses [projects](https://playwright.dev/docs/test-projects) to logically group tests together. All tests in a project share the same configuration.
+   In the [Playwright config file](https://github.com/grafana/grafana/blob/main/playwright.config.ts), add a new project item. Make sure the `name` and the `testDir` subdirectory match the name of the directory that contains your plugin tests.
+   Add `'authenticate'` to the list of dependencies and specify `'playwright/.auth/admin.json'` as the storage state to ensure that all tests in your project will start already authenticated as an admin user. If you want to use a different role for and perhaps test RBAC for some of your tests, refer to our [documentation](https://grafana.com/developers/plugin-tools/e2e-test-a-plugin/use-authentication).
+
+   ```ts
+   {
+      name: 'mysql',
+      testDir: path.join(testDirRoot, '/mysql'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/admin.json',
+      },
+      dependencies: ['authenticate'],
+    },
+   ```
+
+1. Update the [CODEOWNERS](https://github.com/grafana/grafana/blob/main/.github/CODEOWNERS/#L315) file so that your team is owner of the tests in the directory you added in step 1.
 
 ## Commands
 
-- `yarn test:e2e` will run [Grafana's E2E utility](../../packages/grafana-e2e) against an already running Grafana server.
-- `yarn test:e2e:update` will run `test:e2e` but instead of asserting that screenshots match their expected fixtures, they'll be replaced with new ones.
+- `yarn e2e:playwright` runs all Playwright tests. Optionally, you can provide the `--project mysql` argument to run tests in a specific project.
 
-Your running Grafana instance can be targeted by setting the `CYPRESS_BASE_URL`, `CYPRESS_USERNAME` and `CYPRESS_PASSWORD` environment variableS:
+  The `yarn e2e:playwright` script assumes you have Grafana running on `localhost:3000`. You may change this with an environment variable:
 
-```shell
-CYPRESS_BASE_URL=https://localhost:3000 CYPRESS_USERNAME=admin CYPRESS_PASSWORD=admin yarn test:e2e
-```
+  `HOST=127.0.0.1 PORT=3001 yarn e2e:playwright`
 
-## Test suites
+  The `yarn e2e:playwright:server` starts a Grafana [development server](https://github.com/grafana/grafana/blob/main/scripts/grafana-server/start-server) on port 3001 and runs the Playwright tests.
 
-All tests are located at _\<repo-root>/cypress/integration_ by default.
-
-## Things to test
-
-- Add data source (if applicable)
-- Add panel
-- Edit panel
-- Annotations (if applicable)
-- Aliases (if applicable)
-- Template variables
-- "Explore" view
+- You can provision the development server with the [devenv](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#add-data-sources) dashboards, data sources, and apps.

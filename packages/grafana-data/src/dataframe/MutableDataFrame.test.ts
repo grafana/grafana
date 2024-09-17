@@ -1,4 +1,5 @@
 import { DataFrameDTO, FieldType } from '../types/dataFrame';
+
 import { MutableDataFrame } from './MutableDataFrame';
 
 describe('Reversing DataFrame', () => {
@@ -14,15 +15,15 @@ describe('Reversing DataFrame', () => {
 
       const helper = new MutableDataFrame(frame);
 
-      expect(helper.fields[0].values.toArray()).toEqual([100, 200, 300]);
-      expect(helper.fields[1].values.toArray()).toEqual(['a', 'b', 'c']);
-      expect(helper.fields[2].values.toArray()).toEqual([1, 2, 3]);
+      expect(helper.fields[0].values).toEqual([100, 200, 300]);
+      expect(helper.fields[1].values).toEqual(['a', 'b', 'c']);
+      expect(helper.fields[2].values).toEqual([1, 2, 3]);
 
       helper.reverse();
 
-      expect(helper.fields[0].values.toArray()).toEqual([300, 200, 100]);
-      expect(helper.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
-      expect(helper.fields[2].values.toArray()).toEqual([3, 2, 1]);
+      expect(helper.fields[0].values).toEqual([300, 200, 100]);
+      expect(helper.fields[1].values).toEqual(['c', 'b', 'a']);
+      expect(helper.fields[2].values).toEqual([3, 2, 1]);
     });
   });
 });
@@ -38,14 +39,14 @@ describe('Apending DataFrame', () => {
     };
 
     const frame = new MutableDataFrame(dto);
-    expect(frame.fields[0].values.toArray()).toEqual([100, null, null]);
+    expect(frame.fields[0].values).toEqual([100, undefined, undefined]);
 
     // Set a value on the second row
     frame.set(1, { time: 200, name: 'BB', value: 20 });
     expect(frame.toArray()).toEqual([
       { time: 100, name: 'a', value: 1 }, // 1
       { time: 200, name: 'BB', value: 20 }, // 2
-      { time: null, name: null, value: 3 }, // 3
+      { time: undefined, name: undefined, value: 3 }, // 3
     ]);
 
     // Add a time value that has an array type
@@ -53,13 +54,13 @@ describe('Apending DataFrame', () => {
     expect(frame.toArray()).toEqual([
       { time: 100, name: 'a', value: 1 }, // 1
       { time: 200, name: 'BB', value: 20 }, // 2
-      { time: null, name: null, value: 3 }, // 3
-      { time: 300, name: null, value: null }, // 5
+      { time: undefined, name: undefined, value: 3 }, // 3
+      { time: 300, name: undefined, value: undefined }, // 5
     ]);
 
     // Make sure length survives a spread operator
     const keys = Object.keys(frame);
-    const copy = { ...frame } as any;
+    const copy = { ...frame } as MutableDataFrame;
     expect(keys).toContain('length');
     expect(copy.length).toEqual(frame.length);
   });

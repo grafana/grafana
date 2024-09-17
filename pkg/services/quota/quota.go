@@ -1,108 +1,30 @@
 package quota
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/setting"
+	"context"
+
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
-func init() {
-	registry.RegisterService(&QuotaService{})
+type Service interface {
+	// GetQuotasByScope returns the quota for the specific scope (global, organization, user)
+	// If the scope is organization, the ID is expected to be the organisation ID.
+	// If the scope is user, the id is expected to be the user ID.
+	GetQuotasByScope(ctx context.Context, scope Scope, ID int64) ([]QuotaDTO, error)
+	// Update overrides the quota for a specific scope (global, organization, user).
+	// If the cmd.OrgID is set, then the organization quota are updated.
+	// If the cmd.UseID is set, then the user quota are updated.
+	Update(ctx context.Context, cmd *UpdateQuotaCmd) error
+	// QuotaReached is called by the quota middleware for applying quota enforcement to API handlers
+	QuotaReached(c *contextmodel.ReqContext, targetSrv TargetSrv) (bool, error)
+	// CheckQuotaReached checks if the quota limitations have been reached for a specific service
+	CheckQuotaReached(ctx context.Context, targetSrv TargetSrv, scopeParams *ScopeParameters) (bool, error)
+	// DeleteQuotaForUser deletes custom quota limitations for the user
+	DeleteQuotaForUser(ctx context.Context, userID int64) error
+	// DeleteByOrg(ctx context.Context, orgID int64) error
+
+	// RegisterQuotaReporter registers a service UsageReporterFunc, targets and their default limits
+	RegisterQuotaReporter(e *NewUsageReporter) error
 }
 
-type QuotaService struct {
-	AuthTokenService models.UserTokenService `inject:""`
-}
-
-func (qs *QuotaService) Init() error {
-	return nil
-}
-
-func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool, error) {
-	if !setting.Quota.Enabled {
-		return false, nil
-	}
-	// No request context means this is a background service, like LDAP Background Sync.
-	// TODO: we should replace the req context with a more limited interface or struct,
-	//       something that we could easily provide from background jobs.
-	if c == nil {
-		return false, nil
-	}
-	// get the list of scopes that this target is valid for. Org, User, Global
-	scopes, err := models.GetQuotaScopes(target)
-	if err != nil {
-		return false, err
-	}
-
-	for _, scope := range scopes {
-		c.Logger.Debug("Checking quota", "target", target, "scope", scope)
-
-		switch scope.Name {
-		case "global":
-			if scope.DefaultLimit < 0 {
-				continue
-			}
-			if scope.DefaultLimit == 0 {
-				return true, nil
-			}
-			if target == "session" {
-				usedSessions, err := qs.AuthTokenService.ActiveTokenCount(c.Req.Context())
-				if err != nil {
-					return false, err
-				}
-
-				if usedSessions > scope.DefaultLimit {
-					c.Logger.Debug("Sessions limit reached", "active", usedSessions, "limit", scope.DefaultLimit)
-					return true, nil
-				}
-				continue
-			}
-			query := models.GetGlobalQuotaByTargetQuery{Target: scope.Target}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
-			}
-			if query.Result.Used >= scope.DefaultLimit {
-				return true, nil
-			}
-		case "org":
-			if !c.IsSignedIn {
-				continue
-			}
-			query := models.GetOrgQuotaByTargetQuery{OrgId: c.OrgId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
-			}
-			if query.Result.Limit < 0 {
-				continue
-			}
-			if query.Result.Limit == 0 {
-				return true, nil
-			}
-
-			if query.Result.Used >= query.Result.Limit {
-				return true, nil
-			}
-		case "user":
-			if !c.IsSignedIn || c.UserId == 0 {
-				continue
-			}
-			query := models.GetUserQuotaByTargetQuery{UserId: c.UserId, Target: scope.Target, Default: scope.DefaultLimit}
-			if err := bus.Dispatch(&query); err != nil {
-				return true, err
-			}
-			if query.Result.Limit < 0 {
-				continue
-			}
-			if query.Result.Limit == 0 {
-				return true, nil
-			}
-
-			if query.Result.Used >= query.Result.Limit {
-				return true, nil
-			}
-		}
-	}
-
-	return false, nil
-}
+type UsageReporterFunc func(ctx context.Context, scopeParams *ScopeParameters) (*Map, error)

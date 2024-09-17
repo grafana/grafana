@@ -1,7 +1,9 @@
-import { GraphEdge, GraphNode } from './utils';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
+
 import { Modal } from '@grafana/ui';
+
 import { NetworkGraph, Props as NetWorkGraphProps } from './NetworkGraph';
+import { GraphEdge, GraphNode } from './utils';
 
 interface NetworkGraphModalApi {
   showModal: () => void;
@@ -32,7 +34,7 @@ export function NetworkGraphModal({ edges, nodes, show: propsShow, title, childr
         isOpen={show}
         title={title}
         icon="info-circle"
-        iconTooltip="The graph can be moved, zoomed in and zoomed out."
+        iconTooltip="The graph can be moved, zoomed in, and zoomed out."
         onClickBackdrop={onClose}
         onDismiss={onClose}
       >

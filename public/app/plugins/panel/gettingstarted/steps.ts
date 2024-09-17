@@ -1,19 +1,14 @@
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import store from 'app/core/store';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+
 import { SetupStep } from './types';
 
 const step1TutorialTitle = 'Grafana fundamentals';
 const step2TutorialTitle = 'Create users and teams';
 const keyPrefix = 'getting.started.';
-const step1Key = `${keyPrefix}${step1TutorialTitle
-  .replace(' ', '-')
-  .trim()
-  .toLowerCase()}`;
-const step2Key = `${keyPrefix}${step2TutorialTitle
-  .replace(' ', '-')
-  .trim()
-  .toLowerCase()}`;
+const step1Key = `${keyPrefix}${step1TutorialTitle.replace(' ', '-').trim().toLowerCase()}`;
+const step2Key = `${keyPrefix}${step2TutorialTitle.replace(' ', '-').trim().toLowerCase()}`;
 
 export const getSteps = (): SetupStep[] => [
   {
@@ -27,8 +22,7 @@ export const getSteps = (): SetupStep[] => [
         type: 'tutorial',
         heading: 'Data source and dashboards',
         title: step1TutorialTitle,
-        info:
-          'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
+        info: 'Set up and understand Grafana if you have no prior experience. This tutorial guides you through the entire process and covers the “Data source” and “Dashboards” steps to the right.',
         href: 'https://grafana.com/tutorials/grafana-fundamentals',
         icon: 'grafana',
         check: () => Promise.resolve(store.get(step1Key)),
@@ -43,11 +37,11 @@ export const getSteps = (): SetupStep[] => [
         learnHref: 'https://grafana.com/docs/grafana/latest/features/datasources/add-a-data-source',
         href: 'datasources/new',
         check: () => {
-          return new Promise(resolve => {
+          return new Promise((resolve) => {
             resolve(
               getDatasourceSrv()
                 .getMetricSources()
-                .filter(item => {
+                .filter((item) => {
                   return item.meta.builtIn !== true;
                 }).length > 0
             );

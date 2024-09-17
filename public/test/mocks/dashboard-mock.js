@@ -1,12 +1,11 @@
-define([], function() {
+define([], function () {
   'use strict';
 
   return {
-    create: function() {
+    create: function () {
       return {
         title: '',
         tags: [],
-        style: 'dark',
         timezone: 'browser',
         editable: true,
         failover: false,

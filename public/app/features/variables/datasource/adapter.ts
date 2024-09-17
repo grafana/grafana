@@ -1,23 +1,26 @@
-import cloneDeep from 'lodash/cloneDeep';
-import { DataSourceVariableModel } from '../types';
+import { cloneDeep } from 'lodash';
+
+import { DataSourceVariableModel } from '@grafana/data';
+
 import { dispatch } from '../../../store/store';
-import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { VariableAdapter } from '../adapters';
-import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
-import { OptionsPicker } from '../pickers';
-import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
+import { ALL_VARIABLE_TEXT } from '../constants';
+import { optionPickerFactory } from '../pickers';
+import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
+import { containsVariable, isAllVariable, toKeyedVariableIdentifier } from '../utils';
+
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
-import { containsVariable, isAllVariable } from '../utils';
+import { dataSourceVariableReducer, initialDataSourceVariableModelState } from './reducer';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
     id: 'datasource',
-    description: 'Enabled you to dynamically switch the datasource for multiple panels',
-    name: 'Datasource',
+    description: 'Enables you to dynamically switch the data source for multiple panels.',
+    name: 'Data source',
     initialState: initialDataSourceVariableModelState,
     reducer: dataSourceVariableReducer,
-    picker: OptionsPicker,
+    picker: optionPickerFactory<DataSourceVariableModel>(),
     editor: DataSourceVariableEditor,
     dependsOn: (variable, variableToTest) => {
       if (variable.regex) {
@@ -26,19 +29,19 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
       return false;
     },
     setValue: async (variable, option, emitChanges = false) => {
-      await dispatch(setOptionAsCurrent(toVariableIdentifier(variable), option, emitChanges));
+      await dispatch(setOptionAsCurrent(toKeyedVariableIdentifier(variable), option, emitChanges));
     },
     setValueFromUrl: async (variable, urlValue) => {
-      await dispatch(setOptionFromUrl(toVariableIdentifier(variable), urlValue));
+      await dispatch(setOptionFromUrl(toKeyedVariableIdentifier(variable), urlValue));
     },
-    updateOptions: async variable => {
-      await dispatch(updateDataSourceVariableOptions(toVariableIdentifier(variable)));
+    updateOptions: async (variable) => {
+      await dispatch(updateDataSourceVariableOptions(toKeyedVariableIdentifier(variable)));
     },
-    getSaveModel: variable => {
-      const { index, id, state, global, ...rest } = cloneDeep(variable);
+    getSaveModel: (variable) => {
+      const { index, id, state, global, rootStateKey, ...rest } = cloneDeep(variable);
       return { ...rest, options: [] };
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       if (isAllVariable(variable)) {
         return ALL_VARIABLE_TEXT;
       }

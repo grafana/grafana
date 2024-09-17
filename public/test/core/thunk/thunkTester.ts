@@ -1,7 +1,6 @@
-// @ts-ignore
-import configureMockStore from 'redux-mock-store';
-import thunk from 'redux-thunk';
 import { PayloadAction } from '@reduxjs/toolkit';
+import configureMockStore from 'redux-mock-store';
+import { thunk } from 'redux-thunk';
 
 const mockStore = configureMockStore([thunk]);
 
@@ -10,10 +9,10 @@ export interface ThunkGiven {
 }
 
 export interface ThunkWhen {
-  whenThunkIsDispatched: (...args: any) => Promise<Array<PayloadAction<any>>>;
+  whenThunkIsDispatched: (...args: unknown[]) => Promise<Array<PayloadAction<any>>>;
 }
 
-export const thunkTester = (initialState: any, debug?: boolean): ThunkGiven => {
+export const thunkTester = (initialState: unknown, debug?: boolean): ThunkGiven => {
   const store = mockStore(initialState);
   let thunkUnderTest: any = null;
   let dispatchedActions: Array<PayloadAction<any>> = [];
@@ -24,7 +23,7 @@ export const thunkTester = (initialState: any, debug?: boolean): ThunkGiven => {
     return instance;
   };
 
-  const whenThunkIsDispatched = async (...args: any): Promise<Array<PayloadAction<any>>> => {
+  const whenThunkIsDispatched = async (...args: unknown[]): Promise<Array<PayloadAction<any>>> => {
     await store.dispatch(thunkUnderTest(...args));
 
     dispatchedActions = store.getActions();

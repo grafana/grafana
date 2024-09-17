@@ -1,15 +1,13 @@
-import {
-  DataLink,
-  DataQuery,
-  DataSourceInstanceSettings,
-  Field,
-  InterpolateFunction,
-  LinkModel,
-  ScopedVars,
-  TimeRange,
-} from '../types';
+import { ScopedVars } from '../types/ScopedVars';
+import { Field } from '../types/dataFrame';
+import { DataLink, InternalDataLink, LinkModel } from '../types/dataLink';
+import { SplitOpen, ExplorePanelsState } from '../types/explore';
+import { InterpolateFunction } from '../types/panel';
+import { DataQuery } from '../types/query';
+import { TimeRange } from '../types/time';
+
 import { locationUtil } from './location';
-import { serializeStateToUrlParam } from './url';
+import { serializeStateToUrlParam, toURLRange } from './url';
 
 export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
@@ -27,47 +25,52 @@ export const DataLinkBuiltInVars = {
 };
 
 // We inject these because we cannot import them directly as they reside inside grafana main package.
-type Options = {
-  onClickFn?: (options: { datasourceUid: string; query: any; range?: TimeRange }) => void;
+export type LinkToExploreOptions = {
+  link: DataLink;
+  scopedVars: ScopedVars;
+  range?: TimeRange;
+  field: Field;
+  internalLink: InternalDataLink;
+  onClickFn?: SplitOpen;
   replaceVariables: InterpolateFunction;
-  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined;
 };
 
-export function mapInternalLinkToExplore(
-  link: DataLink,
-  scopedVars: ScopedVars,
-  range: TimeRange,
-  field: Field,
-  options: Options
-): LinkModel<Field> {
-  if (!link.internal) {
-    throw new Error('Trying to map external link as internal');
-  }
-  const { onClickFn, replaceVariables, getDataSourceSettingsByUid } = options;
+export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
+  const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
 
-  const interpolatedQuery = interpolateQuery(link, scopedVars, replaceVariables);
+  const interpolatedQuery = interpolateObject(link.internal?.query, scopedVars, replaceVariables);
+  const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
+  const interpolatedCorrelationData = interpolateObject(
+    link.internal?.meta?.correlationData,
+    scopedVars,
+    replaceVariables
+  );
+  const title = link.title ? link.title : internalLink.datasourceName;
+
   return {
-    title: link.title
-      ? replaceVariables(link.title || '', scopedVars)
-      : getDataSourceSettingsByUid(link.internal.datasourceUid)?.name || 'Unknown datasource',
-
+    title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
-    href: generateInternalHref(
-      getDataSourceSettingsByUid(link.internal.datasourceUid)?.name || 'unknown',
-      interpolatedQuery,
-      range
-    ),
+    href: generateInternalHref(internalLink.datasourceUid, interpolatedQuery, range, interpolatedPanelsState),
     onClick: onClickFn
-      ? () => {
-          onClickFn?.({
-            datasourceUid: link.internal!.datasourceUid,
-            query: interpolatedQuery,
+      ? (event) => {
+          // Explore data links can be displayed not only in DataLinkButton but it can be used by the consumer in
+          // other way, for example MenuItem. We want to provide the URL (for opening in the new tab as well as
+          // the onClick to open the split view).
+          if (event.preventDefault) {
+            event.preventDefault();
+          }
+
+          onClickFn({
+            datasourceUid: internalLink.datasourceUid,
+            queries: [interpolatedQuery],
+            panelsState: interpolatedPanelsState,
+            correlationHelperData: interpolatedCorrelationData,
             range,
           });
         }
       : undefined,
-    target: '_self',
+    target: link?.targetBlank ? '_blank' : '_self',
     origin: field,
   };
 }
@@ -75,40 +78,59 @@ export function mapInternalLinkToExplore(
 /**
  * Generates href for internal derived field link.
  */
-function generateInternalHref<T extends DataQuery = any>(datasourceName: string, query: T, range: TimeRange): string {
+function generateInternalHref<T extends DataQuery = any>(
+  datasourceUid: string,
+  query: T,
+  range?: TimeRange,
+  panelsState?: ExplorePanelsState
+): string {
   return locationUtil.assureBaseUrl(
-    `/explore?left=${serializeStateToUrlParam({
-      range: range.raw,
-      datasource: datasourceName,
-      queries: [query],
-    })}`
+    `/explore?left=${encodeURIComponent(
+      serializeStateToUrlParam({
+        // @deprecated mapInternalLinkToExplore required passing range. Some consumers to generate the URL
+        // with defaults pass range as `{} as any`. This is why we need to check for `range?.raw` not just
+        // `range ? ...` here. This behavior will be marked as deprecated in #72498
+        ...(range?.raw ? { range: toURLRange(range.raw) } : {}),
+        datasource: datasourceUid,
+        queries: [query],
+        panelsState: panelsState,
+      })
+    )}`
   );
 }
 
-function interpolateQuery<T extends DataQuery = any>(
-  link: DataLink,
+function interpolateObject<T>(
+  obj: T | undefined,
+  scopedVars: ScopedVars,
+  replaceVariables: InterpolateFunction
+): T | undefined {
+  if (!obj) {
+    return obj;
+  }
+  if (typeof obj === 'string') {
+    // @ts-ignore this is complaining we are returning string, but we are checking if obj is a string so should be fine.
+    return replaceVariables(obj, scopedVars);
+  }
+  const copy = JSON.parse(JSON.stringify(obj));
+  return interpolateObjectRecursive(copy, scopedVars, replaceVariables);
+}
+
+function interpolateObjectRecursive<T extends Object>(
+  obj: T,
   scopedVars: ScopedVars,
   replaceVariables: InterpolateFunction
 ): T {
-  let stringifiedQuery = '';
-  try {
-    stringifiedQuery = JSON.stringify(link.internal?.query || '');
-  } catch (err) {
-    // should not happen and not much to do about this, possibly something non stringifiable in the query
-    console.error(err);
+  for (const k of Object.keys(obj)) {
+    // Honestly not sure how to type this to make TS happy.
+    // @ts-ignore
+    if (typeof obj[k] === 'string') {
+      // @ts-ignore
+      obj[k] = replaceVariables(obj[k], scopedVars);
+      // @ts-ignore
+    } else if (typeof obj[k] === 'object' && obj[k] !== null) {
+      // @ts-ignore
+      obj[k] = interpolateObjectRecursive(obj[k], scopedVars, replaceVariables);
+    }
   }
-
-  // Replace any variables inside the query. This may not be the safest as it can also replace keys etc so may not
-  // actually work with every datasource query right now.
-  stringifiedQuery = replaceVariables(stringifiedQuery, scopedVars);
-
-  let replacedQuery = {} as T;
-  try {
-    replacedQuery = JSON.parse(stringifiedQuery);
-  } catch (err) {
-    // again should not happen and not much to do about this, probably some issue with how we replaced the variables.
-    console.error(stringifiedQuery, err);
-  }
-
-  return replacedQuery;
+  return obj;
 }

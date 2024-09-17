@@ -1,17 +1,10 @@
-import _ from 'lodash';
+import { find } from 'lodash';
+
+import { DataFrame, dateTime, Field, FieldType, getFieldDisplayName, getTimeField, TimeRange } from '@grafana/data';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
 import { colors } from '@grafana/ui';
-import {
-  TimeRange,
-  FieldType,
-  Field,
-  DataFrame,
-  getTimeField,
-  dateTime,
-  getFieldDisplayName,
-  getColorForTheme,
-} from '@grafana/data';
-import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
+import TimeSeries from 'app/core/time_series2';
 
 type Options = {
   dataList: DataFrame[];
@@ -30,12 +23,15 @@ export class DataProcessor {
     }
 
     for (let i = 0; i < dataList.length; i++) {
-      const series = dataList[i];
-      const { timeField } = getTimeField(series);
+      let series = dataList[i];
+      let { timeField } = getTimeField(series);
 
       if (!timeField) {
         continue;
       }
+
+      series = applyNullInsertThreshold({ frame: series, refFieldName: timeField.name });
+      timeField = getTimeField(series).timeField!; // use updated length
 
       for (let j = 0; j < series.fields.length; j++) {
         const field = series.fields[j];
@@ -47,7 +43,7 @@ export class DataProcessor {
         const datapoints = [];
 
         for (let r = 0; r < series.length; r++) {
-          datapoints.push([field.values.get(r), dateTime(timeField.values.get(r)).valueOf()]);
+          datapoints.push([field.values[r], dateTime(timeField.values[r]).valueOf()]);
         }
 
         list.push(this.toTimeSeries(field, name, i, j, datapoints, list.length, range));
@@ -84,7 +80,7 @@ export class DataProcessor {
     const series = new TimeSeries({
       datapoints: datapoints || [],
       alias: alias,
-      color: getColorForTheme(color, config.theme),
+      color: config.theme2.visualization.getColorByName(color),
       unit: field.config ? field.config.unit : undefined,
       dataFrameIndex,
       fieldIndex,
@@ -95,7 +91,11 @@ export class DataProcessor {
       const from = range.from;
 
       if (last - from.valueOf() < -10000) {
-        series.isOutsideRange = true;
+        // If the data is in reverse order
+        const first = datapoints[0][1];
+        if (first - from.valueOf() < -10000) {
+          series.isOutsideRange = true;
+        }
       }
     }
     return series;
@@ -143,7 +143,7 @@ export class DataProcessor {
         }
 
         const validOptions = this.getXAxisValueOptions({});
-        const found: any = _.find(validOptions, { value: this.panel.xaxis.values[0] });
+        const found: any = find(validOptions, { value: this.panel.xaxis.values[0] });
         if (!found) {
           this.panel.xaxis.values = ['total'];
         }

@@ -1,10 +1,12 @@
-import React from 'react';
-import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField } = LegacyForms;
-import { ElasticsearchOptions } from '../types';
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import * as React from 'react';
 
-const indexPatternTypes = [
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
+import { InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
+
+import { ElasticsearchOptions, Interval } from '../types';
+
+const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'No pattern', value: 'none' },
   { label: 'Hourly', value: 'Hourly', example: '[logstash-]YYYY.MM.DD.HH' },
   { label: 'Daily', value: 'Daily', example: '[logstash-]YYYY.MM.DD' },
@@ -13,212 +15,197 @@ const indexPatternTypes = [
   { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
 
-const esVersions = [
-  { label: '2.x', value: 2 },
-  { label: '5.x', value: 5 },
-  { label: '5.6+', value: 56 },
-  { label: '6.0+', value: 60 },
-  { label: '7.0+', value: 70 },
-];
-
 type Props = {
   value: DataSourceSettings<ElasticsearchOptions>;
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
-export const ElasticDetails = (props: Props) => {
-  const { value, onChange } = props;
-
+export const ElasticDetails = ({ value, onChange }: Props) => {
   return (
-    <>
-      <h3 className="page-heading">Elasticsearch details</h3>
+    <ConfigSubSection
+      title="Elasticsearch details"
+      description={
+        <ConfigDescriptionLink
+          description="Specific settings for the Elasticsearch data source."
+          suffix="elasticsearch/#index-settings"
+          feature="Elasticsearch details"
+        />
+      }
+    >
+      <InlineField
+        label="Index name"
+        htmlFor="es_config_indexName"
+        labelWidth={29}
+        tooltip="Name of your Elasticsearch index. You can use a time pattern, such as YYYY.MM.DD, or a wildcard for the index name."
+      >
+        <Input
+          id="es_config_indexName"
+          value={value.jsonData.index ?? (value.database || '')}
+          onChange={indexChangeHandler(value, onChange)}
+          width={24}
+          placeholder="es-index-name"
+          required
+        />
+      </InlineField>
 
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form max-width-25">
-            <FormField
-              labelWidth={10}
-              inputWidth={15}
-              label="Index name"
-              value={value.database || ''}
-              onChange={changeHandler('database', value, onChange)}
-              placeholder={'es-index-name'}
-              required
-            />
-          </div>
+      <InlineField
+        label="Pattern"
+        htmlFor="es_config_indexPattern"
+        labelWidth={29}
+        tooltip="If you're using a pattern for your index, select the type, or no pattern."
+      >
+        <Select
+          inputId="es_config_indexPattern"
+          value={indexPatternTypes.find(
+            (pattern) => pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
+          )}
+          options={indexPatternTypes}
+          onChange={intervalHandler(value, onChange)}
+          width={24}
+        />
+      </InlineField>
 
-          <div className="gf-form width-14">
-            <FormField
-              labelWidth={10}
-              label="Pattern"
-              inputEl={
-                <Select
-                  options={indexPatternTypes}
-                  onChange={intervalHandler(value, onChange)}
-                  value={indexPatternTypes.find(
-                    pattern =>
-                      pattern.value === (value.jsonData.interval === undefined ? 'none' : value.jsonData.interval)
-                  )}
-                />
-              }
-            />
-          </div>
-        </div>
+      <InlineField
+        label="Time field name"
+        htmlFor="es_config_timeField"
+        labelWidth={29}
+        tooltip="Name of your time field. Defaults to @timestamp."
+      >
+        <Input
+          id="es_config_timeField"
+          value={value.jsonData.timeField || ''}
+          onChange={jsonDataChangeHandler('timeField', value, onChange)}
+          width={24}
+          placeholder="@timestamp"
+          required
+        />
+      </InlineField>
 
-        <div className="gf-form max-width-25">
-          <FormField
-            labelWidth={10}
-            inputWidth={15}
-            label="Time field name"
-            value={value.jsonData.timeField || ''}
-            onChange={jsonDataChangeHandler('timeField', value, onChange)}
-            required
-          />
-        </div>
+      <InlineField
+        label="Max concurrent Shard Requests"
+        htmlFor="es_config_shardRequests"
+        labelWidth={29}
+        tooltip="Maximum number of concurrent shards a search request can hit per node. Defaults to 5."
+      >
+        <Input
+          id="es_config_shardRequests"
+          value={value.jsonData.maxConcurrentShardRequests || ''}
+          onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
+          width={24}
+        />
+      </InlineField>
 
-        <div className="gf-form">
-          <span className="gf-form-select-wrapper">
-            <FormField
-              labelWidth={10}
-              label="Version"
-              inputEl={
-                <Select
-                  options={esVersions}
-                  onChange={option => {
-                    const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
-                      value.jsonData.maxConcurrentShardRequests,
-                      option.value!
-                    );
-                    onChange({
-                      ...value,
-                      jsonData: {
-                        ...value.jsonData,
-                        esVersion: option.value!,
-                        maxConcurrentShardRequests,
-                      },
-                    });
-                  }}
-                  value={esVersions.find(version => version.value === value.jsonData.esVersion)}
-                />
-              }
-            />
-          </span>
-        </div>
-        {value.jsonData.esVersion >= 56 && (
-          <div className="gf-form max-width-30">
-            <FormField
-              aria-label={'Max concurrent Shard Requests input'}
-              labelWidth={15}
-              label="Max concurrent Shard Requests"
-              value={value.jsonData.maxConcurrentShardRequests || ''}
-              onChange={jsonDataChangeHandler('maxConcurrentShardRequests', value, onChange)}
-            />
-          </div>
-        )}
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <FormField
-              labelWidth={10}
-              label="Min time interval"
-              inputEl={
-                <Input
-                  className={'width-6'}
-                  value={value.jsonData.timeInterval || ''}
-                  onChange={jsonDataChangeHandler('timeInterval', value, onChange)}
-                  placeholder="10s"
-                  validationEvents={{
-                    [EventsWithValidation.onBlur]: [
-                      regexValidation(
-                        /^\d+(ms|[Mwdhmsy])$/,
-                        'Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s'
-                      ),
-                    ],
-                  }}
-                />
-              }
-              tooltip={
-                <>
-                  A lower limit for the auto group by time interval. Recommended to be set to write frequency, for
-                  example <code>1m</code> if your data is written every minute.
-                </>
-              }
-            />
-          </div>
-        </div>
-      </div>
-    </>
+      <InlineField
+        label="Min time interval"
+        htmlFor="es_config_minTimeInterval"
+        labelWidth={29}
+        tooltip={
+          <>
+            A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example{' '}
+            <code>1m</code> if your data is written every minute.
+          </>
+        }
+        error="Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s"
+        invalid={!!value.jsonData.timeInterval && !/^\d+(ms|[Mwdhmsy])$/.test(value.jsonData.timeInterval)}
+      >
+        <Input
+          id="es_config_minTimeInterval"
+          value={value.jsonData.timeInterval || ''}
+          onChange={jsonDataChangeHandler('timeInterval', value, onChange)}
+          width={24}
+          placeholder="10s"
+        />
+      </InlineField>
+      <InlineField
+        label="Include Frozen Indices"
+        htmlFor="es_config_frozenIndices"
+        labelWidth={29}
+        tooltip="Include frozen indices in searches."
+      >
+        <InlineSwitch
+          id="es_config_frozenIndices"
+          value={value.jsonData.includeFrozen ?? false}
+          onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
+        />
+      </InlineField>
+    </ConfigSubSection>
   );
 };
 
-const changeHandler = (
-  key: keyof DataSourceSettings<ElasticsearchOptions>,
-  value: Props['value'],
-  onChange: Props['onChange']
-) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
-  onChange({
-    ...value,
-    [key]: event.currentTarget.value,
-  });
-};
+const indexChangeHandler =
+  (value: Props['value'], onChange: Props['onChange']) =>
+  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+    onChange({
+      ...value,
+      database: '',
+      jsonData: {
+        ...value.jsonData,
+        index: event.currentTarget.value,
+      },
+    });
+  };
 
-const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) => (
-  event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: event.currentTarget.value,
-    },
-  });
-};
+// TODO: Use change handlers from @grafana/data
+const jsonDataChangeHandler =
+  (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.value,
+      },
+    });
+  };
 
-const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<string>) => {
-  const { database } = value;
-  // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
-  const newInterval = option.value === 'none' ? undefined : option.value;
+const jsonDataSwitchChangeHandler =
+  (key: keyof ElasticsearchOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: React.SyntheticEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.checked,
+      },
+    });
+  };
 
-  if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
-    let newDatabase = '';
+const intervalHandler =
+  (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<Interval | 'none'>) => {
+    // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
+    const newInterval = option.value === 'none' ? undefined : option.value;
 
-    if (newInterval !== undefined) {
-      const pattern = indexPatternTypes.find(pattern => pattern.value === newInterval);
+    const currentIndex = value.jsonData.index ?? value.database;
+    if (!currentIndex || currentIndex.length === 0 || currentIndex.startsWith('[logstash-]')) {
+      let newDatabase = '';
 
-      if (pattern) {
-        newDatabase = pattern.example ?? '';
+      if (newInterval !== undefined) {
+        const pattern = indexPatternTypes.find((pattern) => pattern.value === newInterval);
+
+        if (pattern) {
+          newDatabase = pattern.example ?? '';
+        }
       }
+
+      onChange({
+        ...value,
+        database: '',
+        jsonData: {
+          ...value.jsonData,
+          index: newDatabase,
+          interval: newInterval,
+        },
+      });
+    } else {
+      onChange({
+        ...value,
+        jsonData: {
+          ...value.jsonData,
+          interval: newInterval,
+        },
+      });
     }
+  };
 
-    onChange({
-      ...value,
-      database: newDatabase,
-      jsonData: {
-        ...value.jsonData,
-        interval: newInterval,
-      },
-    });
-  } else {
-    onChange({
-      ...value,
-      jsonData: {
-        ...value.jsonData,
-        interval: newInterval,
-      },
-    });
-  }
-};
-
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined, version: number): number {
-  if (maxConcurrentShardRequests === 5 && version < 70) {
-    return 256;
-  }
-
-  if (maxConcurrentShardRequests === 256 && version >= 70) {
-    return 5;
-  }
-
-  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests(version);
-}
-
-export function defaultMaxConcurrentShardRequests(version: number) {
-  return version >= 70 ? 5 : 256;
+export function defaultMaxConcurrentShardRequests() {
+  return 5;
 }

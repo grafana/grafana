@@ -1,12 +1,10 @@
-import each from 'lodash/each';
-import groupBy from 'lodash/groupBy';
-import has from 'lodash/has';
+import { each } from 'lodash';
 
-import { RawTimeRange, TimeRange, TimeZone, IntervalValues } from '../types/time';
+import { RawTimeRange, TimeRange, TimeZone, IntervalValues, RelativeTimeRange, TimeOption } from '../types/time';
 
 import * as dateMath from './datemath';
-import { isDateTime, DateTime } from './moment_wrapper';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
+import { isDateTime, DateTime, dateTime } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
@@ -19,94 +17,82 @@ const spans: { [key: string]: { display: string; section?: number } } = {
   y: { display: 'year' },
 };
 
-const rangeOptions = [
-  { from: 'now/d', to: 'now/d', display: 'Today', section: 2 },
-  { from: 'now/d', to: 'now', display: 'Today so far', section: 2 },
-  { from: 'now/w', to: 'now/w', display: 'This week', section: 2 },
-  { from: 'now/w', to: 'now', display: 'This week so far', section: 2 },
-  { from: 'now/M', to: 'now/M', display: 'This month', section: 2 },
-  { from: 'now/M', to: 'now', display: 'This month so far', section: 2 },
-  { from: 'now/y', to: 'now/y', display: 'This year', section: 2 },
-  { from: 'now/y', to: 'now', display: 'This year so far', section: 2 },
+const rangeOptions: TimeOption[] = [
+  { from: 'now/d', to: 'now/d', display: 'Today' },
+  { from: 'now/d', to: 'now', display: 'Today so far' },
+  { from: 'now/w', to: 'now/w', display: 'This week' },
+  { from: 'now/w', to: 'now', display: 'This week so far' },
+  { from: 'now/M', to: 'now/M', display: 'This month' },
+  { from: 'now/M', to: 'now', display: 'This month so far' },
+  { from: 'now/y', to: 'now/y', display: 'This year' },
+  { from: 'now/y', to: 'now', display: 'This year so far' },
 
-  { from: 'now-1d/d', to: 'now-1d/d', display: 'Yesterday', section: 1 },
+  { from: 'now-1d/d', to: 'now-1d/d', display: 'Yesterday' },
   {
     from: 'now-2d/d',
     to: 'now-2d/d',
     display: 'Day before yesterday',
-    section: 1,
   },
   {
     from: 'now-7d/d',
     to: 'now-7d/d',
     display: 'This day last week',
-    section: 1,
   },
-  { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week', section: 1 },
-  { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month', section: 1 },
-  { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year', section: 1 },
+  { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week' },
+  { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month' },
+  { from: 'now-1Q/fQ', to: 'now-1Q/fQ', display: 'Previous fiscal quarter' },
+  { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year' },
+  { from: 'now-1y/fy', to: 'now-1y/fy', display: 'Previous fiscal year' },
 
-  { from: 'now-5m', to: 'now', display: 'Last 5 minutes', section: 3 },
-  { from: 'now-15m', to: 'now', display: 'Last 15 minutes', section: 3 },
-  { from: 'now-30m', to: 'now', display: 'Last 30 minutes', section: 3 },
-  { from: 'now-1h', to: 'now', display: 'Last 1 hour', section: 3 },
-  { from: 'now-3h', to: 'now', display: 'Last 3 hours', section: 3 },
-  { from: 'now-6h', to: 'now', display: 'Last 6 hours', section: 3 },
-  { from: 'now-12h', to: 'now', display: 'Last 12 hours', section: 3 },
-  { from: 'now-24h', to: 'now', display: 'Last 24 hours', section: 3 },
-  { from: 'now-2d', to: 'now', display: 'Last 2 days', section: 0 },
-  { from: 'now-7d', to: 'now', display: 'Last 7 days', section: 0 },
-  { from: 'now-30d', to: 'now', display: 'Last 30 days', section: 0 },
-  { from: 'now-90d', to: 'now', display: 'Last 90 days', section: 0 },
-  { from: 'now-6M', to: 'now', display: 'Last 6 months', section: 0 },
-  { from: 'now-1y', to: 'now', display: 'Last 1 year', section: 0 },
-  { from: 'now-2y', to: 'now', display: 'Last 2 years', section: 0 },
-  { from: 'now-5y', to: 'now', display: 'Last 5 years', section: 0 },
+  { from: 'now-5m', to: 'now', display: 'Last 5 minutes' },
+  { from: 'now-15m', to: 'now', display: 'Last 15 minutes' },
+  { from: 'now-30m', to: 'now', display: 'Last 30 minutes' },
+  { from: 'now-1h', to: 'now', display: 'Last 1 hour' },
+  { from: 'now-3h', to: 'now', display: 'Last 3 hours' },
+  { from: 'now-6h', to: 'now', display: 'Last 6 hours' },
+  { from: 'now-12h', to: 'now', display: 'Last 12 hours' },
+  { from: 'now-24h', to: 'now', display: 'Last 24 hours' },
+  { from: 'now-2d', to: 'now', display: 'Last 2 days' },
+  { from: 'now-7d', to: 'now', display: 'Last 7 days' },
+  { from: 'now-30d', to: 'now', display: 'Last 30 days' },
+  { from: 'now-90d', to: 'now', display: 'Last 90 days' },
+  { from: 'now-6M', to: 'now', display: 'Last 6 months' },
+  { from: 'now-1y', to: 'now', display: 'Last 1 year' },
+  { from: 'now-2y', to: 'now', display: 'Last 2 years' },
+  { from: 'now-5y', to: 'now', display: 'Last 5 years' },
+  { from: 'now/fQ', to: 'now', display: 'This fiscal quarter so far' },
+  { from: 'now/fQ', to: 'now/fQ', display: 'This fiscal quarter' },
+  { from: 'now/fy', to: 'now', display: 'This fiscal year so far' },
+  { from: 'now/fy', to: 'now/fy', display: 'This fiscal year' },
 ];
 
-const hiddenRangeOptions = [
-  { from: 'now', to: 'now+1m', display: 'Next minute', section: 3 },
-  { from: 'now', to: 'now+5m', display: 'Next 5 minutes', section: 3 },
-  { from: 'now', to: 'now+15m', display: 'Next 15 minutes', section: 3 },
-  { from: 'now', to: 'now+30m', display: 'Next 30 minutes', section: 3 },
-  { from: 'now', to: 'now+1h', display: 'Next hour', section: 3 },
-  { from: 'now', to: 'now+3h', display: 'Next 3 hours', section: 3 },
-  { from: 'now', to: 'now+6h', display: 'Next 6 hours', section: 3 },
-  { from: 'now', to: 'now+12h', display: 'Next 12 hours', section: 3 },
-  { from: 'now', to: 'now+24h', display: 'Next 24 hours', section: 3 },
-  { from: 'now', to: 'now+2d', display: 'Next 2 days', section: 0 },
-  { from: 'now', to: 'now+7d', display: 'Next 7 days', section: 0 },
-  { from: 'now', to: 'now+30d', display: 'Next 30 days', section: 0 },
-  { from: 'now', to: 'now+90d', display: 'Next 90 days', section: 0 },
-  { from: 'now', to: 'now+6M', display: 'Next 6 months', section: 0 },
-  { from: 'now', to: 'now+1y', display: 'Next year', section: 0 },
-  { from: 'now', to: 'now+2y', display: 'Next 2 years', section: 0 },
-  { from: 'now', to: 'now+5y', display: 'Next 5 years', section: 0 },
+const hiddenRangeOptions: TimeOption[] = [
+  { from: 'now', to: 'now+1m', display: 'Next minute' },
+  { from: 'now', to: 'now+5m', display: 'Next 5 minutes' },
+  { from: 'now', to: 'now+15m', display: 'Next 15 minutes' },
+  { from: 'now', to: 'now+30m', display: 'Next 30 minutes' },
+  { from: 'now', to: 'now+1h', display: 'Next hour' },
+  { from: 'now', to: 'now+3h', display: 'Next 3 hours' },
+  { from: 'now', to: 'now+6h', display: 'Next 6 hours' },
+  { from: 'now', to: 'now+12h', display: 'Next 12 hours' },
+  { from: 'now', to: 'now+24h', display: 'Next 24 hours' },
+  { from: 'now', to: 'now+2d', display: 'Next 2 days' },
+  { from: 'now', to: 'now+7d', display: 'Next 7 days' },
+  { from: 'now', to: 'now+30d', display: 'Next 30 days' },
+  { from: 'now', to: 'now+90d', display: 'Next 90 days' },
+  { from: 'now', to: 'now+6M', display: 'Next 6 months' },
+  { from: 'now', to: 'now+1y', display: 'Next year' },
+  { from: 'now', to: 'now+2y', display: 'Next 2 years' },
+  { from: 'now', to: 'now+5y', display: 'Next 5 years' },
 ];
 
-const rangeIndex: any = {};
-each(rangeOptions, (frame: any) => {
+const rangeIndex: Record<string, TimeOption> = {};
+each(rangeOptions, (frame) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
-each(hiddenRangeOptions, (frame: any) => {
+each(hiddenRangeOptions, (frame) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
-
-export function getRelativeTimesList(timepickerSettings: any, currentDisplay: any) {
-  const groups = groupBy(rangeOptions, (option: any) => {
-    option.active = option.display === currentDisplay;
-    return option.section;
-  });
-
-  // _.each(timepickerSettings.time_options, (duration: string) => {
-  //   let info = describeTextRange(duration);
-  //   if (info.section) {
-  //     groups[info.section].push(info);
-  //   }
-  // });
-
-  return groups;
-}
 
 // handles expressions like
 // 5m
@@ -114,7 +100,7 @@ export function getRelativeTimesList(timepickerSettings: any, currentDisplay: an
 // now/d to now
 // now/d
 // if no to <expr> then to now is assumed
-export function describeTextRange(expr: any) {
+export function describeTextRange(expr: string): TimeOption {
   const isLast = expr.indexOf('+') !== 0;
   if (expr.indexOf('now') === -1) {
     expr = (isLast ? 'now-' : 'now') + expr;
@@ -126,9 +112,9 @@ export function describeTextRange(expr: any) {
   }
 
   if (isLast) {
-    opt = { from: expr, to: 'now' };
+    opt = { from: expr, to: 'now', display: '' };
   } else {
-    opt = { from: 'now', to: expr };
+    opt = { from: 'now', to: expr, display: '' };
   }
 
   const parts = /^now([-+])(\d+)(\w)/.exec(expr);
@@ -212,9 +198,14 @@ export const describeTimeRangeAbbreviation = (range: TimeRange, timeZone?: TimeZ
   return parsed ? timeZoneAbbrevation(parsed, { timeZone }) : '';
 };
 
-export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeRange => {
-  const from = dateTimeParse(raw.from, { roundUp: false, timeZone });
-  const to = dateTimeParse(raw.to, { roundUp: true, timeZone });
+export const convertRawToRange = (
+  raw: RawTimeRange,
+  timeZone?: TimeZone,
+  fiscalYearStartMonth?: number,
+  format?: string
+): TimeRange => {
+  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format });
+  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format });
 
   if (dateMath.isMathString(raw.from) || dateMath.isMathString(raw.to)) {
     return { from, to, raw };
@@ -223,9 +214,18 @@ export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone): TimeR
   return { from, to, raw: { from, to } };
 };
 
-function isRelativeTime(v: DateTime | string) {
+export function isRelativeTime(v: DateTime | string) {
   if (typeof v === 'string') {
-    return (v as string).indexOf('now') >= 0;
+    return v.indexOf('now') >= 0;
+  }
+  return false;
+}
+
+export function isFiscal(timeRange: TimeRange) {
+  if (typeof timeRange.raw.from === 'string' && timeRange.raw.from.indexOf('f') > 0) {
+    return true;
+  } else if (typeof timeRange.raw.to === 'string' && timeRange.raw.to.indexOf('f') > 0) {
+    return true;
   }
   return false;
 }
@@ -263,6 +263,23 @@ export function secondsToHms(seconds: number): string {
   return 'less than a millisecond'; //'just now' //or other string you like;
 }
 
+// Format timeSpan (in sec) to string used in log's meta info
+export function msRangeToTimeString(rangeMs: number): string {
+  const rangeSec = Number((rangeMs / 1000).toFixed());
+
+  const h = Math.floor(rangeSec / 60 / 60);
+  const m = Math.floor(rangeSec / 60) - h * 60;
+  const s = Number((rangeSec % 60).toFixed());
+  let formattedH = h ? h + 'h' : '';
+  let formattedM = m ? m + 'min' : '';
+  let formattedS = s ? s + 'sec' : '';
+
+  formattedH && formattedM ? (formattedH = formattedH + ' ') : (formattedH = formattedH);
+  (formattedM || formattedH) && formattedS ? (formattedM = formattedM + ' ') : (formattedM = formattedM);
+
+  return formattedH + formattedM + formattedS || 'less than 1sec';
+}
+
 export function calculateInterval(range: TimeRange, resolution: number, lowLimitInterval?: string): IntervalValues {
   let lowLimitMs = 1; // 1 millisecond default low limit
   if (lowLimitInterval) {
@@ -279,9 +296,9 @@ export function calculateInterval(range: TimeRange, resolution: number, lowLimit
   };
 }
 
-const interval_regex = /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
+const interval_regex = /(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
 // histogram & trends
-const intervals_in_seconds = {
+const intervals_in_seconds: Record<string, number> = {
   y: 31536000,
   M: 2592000,
   w: 604800,
@@ -303,15 +320,24 @@ export function describeInterval(str: string) {
   }
 
   const matches = str.match(interval_regex);
-  if (!matches || !has(intervals_in_seconds, matches[2])) {
+  if (!matches) {
     throw new Error(
       `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
         intervals_in_seconds
       ).join(', ')}"`
     );
   }
+
+  const sec = intervals_in_seconds[matches[2]];
+  if (sec === undefined) {
+    // this can never happen, because above we
+    // already made sure the key is correct,
+    // but we handle it to be safe.
+    throw new Error('describeInterval failed: invalid interval string');
+  }
+
   return {
-    sec: (intervals_in_seconds as any)[matches[2]] as number,
+    sec,
     type: matches[2],
     count: parseInt(matches[1], 10),
   };
@@ -329,6 +355,9 @@ export function intervalToMs(str: string): number {
 
 export function roundInterval(interval: number) {
   switch (true) {
+    // 0.01s
+    case interval < 10:
+      return 1; // 0.001s
     // 0.015s
     case interval < 15:
       return 10; // 0.01s
@@ -380,7 +409,7 @@ export function roundInterval(interval: number) {
     // 12.5m
     case interval < 750000:
       return 600000; // 10m
-    // 12.5m
+    // 17.5m
     case interval < 1050000:
       return 900000; // 15m
     // 25m
@@ -416,4 +445,36 @@ export function roundInterval(interval: number) {
     default:
       return 31536000000; // 1y
   }
+}
+
+/**
+ * Converts a TimeRange to a RelativeTimeRange that can be used in
+ * e.g. alerting queries/rules.
+ *
+ * @internal
+ */
+export function timeRangeToRelative(timeRange: TimeRange, now: DateTime = dateTime()): RelativeTimeRange {
+  const from = now.unix() - timeRange.from.unix();
+  const to = now.unix() - timeRange.to.unix();
+
+  return {
+    from,
+    to,
+  };
+}
+
+/**
+ * Converts a RelativeTimeRange to a TimeRange
+ *
+ * @internal
+ */
+export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: DateTime = dateTime()): TimeRange {
+  const from = dateTime(now).subtract(relativeTimeRange.from, 's');
+  const to = relativeTimeRange.to === 0 ? dateTime(now) : dateTime(now).subtract(relativeTimeRange.to, 's');
+
+  return {
+    from,
+    to,
+    raw: { from, to },
+  };
 }

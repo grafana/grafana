@@ -1,31 +1,47 @@
-import React from 'react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { IconButton } from '../IconButton/IconButton';
-import { ContextMenu } from './ContextMenu';
-import { WithContextMenu } from './WithContextMenu';
-import mdx from './ContextMenu.mdx';
+import { action } from '@storybook/addon-actions';
+import { StoryFn, Meta } from '@storybook/react';
+import * as React from 'react';
 
-export default {
+import { IconButton } from '../IconButton/IconButton';
+
+import { ContextMenu, ContextMenuProps } from './ContextMenu';
+import mdx from './ContextMenu.mdx';
+import { renderMenuItems } from './ContextMenuStoryHelper';
+import { WithContextMenu, WithContextMenuProps } from './WithContextMenu';
+
+const meta: Meta<typeof ContextMenu> = {
   title: 'General/ContextMenu',
   component: ContextMenu,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['renderMenuItems', 'renderHeader', 'onClose', 'children'],
+    },
+  },
+  args: {
+    x: 200,
+    y: 300,
+    focusOnOpen: true,
+    renderMenuItems: renderMenuItems,
   },
 };
 
-const menuItems = [{ label: 'Test', items: [{ label: 'First' }, { label: 'Second' }] }];
-
-export const Basic = () => {
-  return <ContextMenu x={10} y={11} onClose={() => {}} items={menuItems} />;
+const renderHeader = (): React.ReactNode => {
+  return <h6>Menu</h6>;
 };
 
-export const WithState = () => {
+export const Basic: StoryFn<typeof ContextMenu> = (args: ContextMenuProps) => {
+  return <ContextMenu {...args} onClose={() => action('onClose')('closed menu')} renderHeader={renderHeader} />;
+};
+
+export const WithState: StoryFn<typeof WithContextMenu> = (args: WithContextMenuProps) => {
   return (
-    <WithContextMenu getContextMenuItems={() => menuItems}>
-      {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} />}
+    <WithContextMenu {...args}>
+      {({ openMenu }) => <IconButton name="info-circle" onClick={openMenu} tooltip="More information" />}
     </WithContextMenu>
   );
 };
+
+export default meta;

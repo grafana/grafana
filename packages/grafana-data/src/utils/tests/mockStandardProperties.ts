@@ -1,5 +1,5 @@
-import { identityOverrideProcessor } from '../../field';
-import { ThresholdsMode } from '../../types';
+import { displayNameOverrideProcessor, identityOverrideProcessor } from '../../field/overrides/processors';
+import { ThresholdsMode } from '../../types/thresholds';
 
 export const mockStandardProperties = () => {
   const title = {
@@ -9,7 +9,7 @@ export const mockStandardProperties = () => {
     description: "Field's display name",
     editor: () => null,
     override: () => null,
-    process: identityOverrideProcessor,
+    process: displayNameOverrideProcessor,
     settings: {
       placeholder: 'none',
       expandTemplateVars: true,
@@ -55,6 +55,23 @@ export const mockStandardProperties = () => {
     path: 'max',
     name: 'Max',
     description: 'Maximum expected value',
+
+    editor: () => null,
+    override: () => null,
+    process: identityOverrideProcessor,
+
+    settings: {
+      placeholder: 'auto',
+    },
+
+    shouldApply: () => true,
+  };
+
+  const fieldMinMax = {
+    id: 'fieldMinMax',
+    path: 'fieldMinMax',
+    name: 'localminmax',
+    description: 'Calculate min/max per field ',
 
     editor: () => null,
     override: () => null,
@@ -166,5 +183,5 @@ export const mockStandardProperties = () => {
     shouldApply: () => true,
   };
 
-  return [unit, min, max, decimals, title, noValue, thresholds, mappings, links, color];
+  return [unit, min, max, fieldMinMax, decimals, title, noValue, thresholds, mappings, links, color];
 };

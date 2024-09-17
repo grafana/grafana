@@ -1,15 +1,18 @@
-import _ from 'lodash';
+import { IScope, IAngularStatic } from 'angular';
 import $ from 'jquery';
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { defaults } from 'lodash';
+
+import { isTableData, PanelEvents, PanelPlugin } from '@grafana/data';
+import { AnnotationsSrv } from 'app/angular/services/annotations_srv';
 import config from 'app/core/config';
-import { transformDataToTable } from './transformers';
-import { tablePanelEditor } from './editor';
-import { columnOptionsTab } from './column_options';
-import { TableRenderer } from './renderer';
-import { isTableData, PanelEvents, PanelPlugin, PanelProps } from '@grafana/data';
-import { dispatch } from 'app/store/store';
-import { ComponentType } from 'react';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { dispatch } from 'app/store/store';
+
+import { columnOptionsTab } from './column_options';
+import { tablePanelEditor } from './editor';
+import { TableRenderer } from './renderer';
+import { transformDataToTable } from './transformers';
 
 export class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -18,8 +21,10 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   dataRaw: any;
   table: any;
   renderer: any;
+  panelHasRowColorMode: boolean;
+  panelHasLinks: boolean;
 
-  panelDefaults: any = {
+  panelDefaults = {
     targets: [{}],
     transform: 'timeseries_to_columns',
     pageSize: null,
@@ -50,8 +55,14 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
     sort: { col: 0, desc: true },
   };
 
-  /** @ngInject */
-  constructor($scope: any, $injector: any, private annotationsSrv: any, private $sanitize: any) {
+  static $inject = ['$scope', '$injector', 'annotationsSrv', '$sanitize'];
+
+  constructor(
+    $scope: IScope,
+    $injector: IAngularStatic['injector'],
+    private annotationsSrv: AnnotationsSrv,
+    private $sanitize: any
+  ) {
     super($scope, $injector);
 
     this.pageIndex = 0;
@@ -63,7 +74,10 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       delete this.panel.fields;
     }
 
-    _.defaults(this.panel, this.panelDefaults);
+    defaults(this.panel, this.panelDefaults);
+
+    this.panelHasRowColorMode = Boolean(this.panel.styles.find((style: any) => style.colorMode === 'row'));
+    this.panelHasLinks = Boolean(this.panel.styles.find((style: any) => style.link));
 
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
@@ -73,6 +87,10 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   onInitEditMode() {
     this.addEditorTab('Options', tablePanelEditor, 2);
     this.addEditorTab('Column Styles', columnOptionsTab, 3);
+  }
+
+  migrateToPanel(type: string) {
+    this.onPluginTypeChange(config.panels[type]);
   }
 
   issueQueries(datasource: any) {
@@ -85,12 +103,11 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
           panel: this.panel,
           range: this.range,
         })
-        .then((anno: any) => {
+        .then((anno) => {
           this.loading = false;
           this.dataRaw = anno;
           this.pageIndex = 0;
           this.render();
-          return { data: this.dataRaw }; // Not used
         });
     }
 
@@ -129,7 +146,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       this.dashboard.getTimezone(),
       this.$sanitize,
       this.templateSrv,
-      config.theme
+      config.theme2
     );
 
     return super.render(this.table);
@@ -154,7 +171,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  link(scope: any, elem: JQuery, attrs: any, ctrl: TablePanelCtrl) {
+  link(scope: IScope, elem: JQuery, attrs: any, ctrl: TablePanelCtrl) {
     let data: any;
     const panel = ctrl.panel;
     let pageCount = 0;
@@ -175,7 +192,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       tbodyElem.html(ctrl.renderer.render(ctrl.pageIndex));
     }
 
-    function switchPage(e: any) {
+    function switchPage(e: JQueryEventObject) {
       const el = $(e.currentTarget);
       ctrl.pageIndex = parseInt(el.text(), 10) - 1;
       renderPanel();
@@ -226,7 +243,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       selector: '[data-link-tooltip]',
     });
 
-    function addFilterClicked(e: any) {
+    function addFilterClicked(e: JQueryEventObject) {
       const filterData = $(e.currentTarget).data();
       const options = {
         datasource: panel.datasource,
@@ -247,7 +264,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       unbindDestroy();
     });
 
-    ctrl.events.on(PanelEvents.render, (renderData: any) => {
+    ctrl.events.on(PanelEvents.render, (renderData: unknown) => {
       data = renderData || data;
       if (data) {
         renderPanel();
@@ -257,6 +274,6 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   }
 }
 
-export const plugin = new PanelPlugin((null as unknown) as ComponentType<PanelProps<any>>);
+export const plugin = new PanelPlugin(null);
 plugin.angularPanelCtrl = TablePanelCtrl;
 plugin.setNoPadding();

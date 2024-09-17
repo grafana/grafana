@@ -1,43 +1,49 @@
-import React, { FC, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
+
+import { selectors } from '@grafana/e2e-selectors';
+import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Legend } from '@grafana/ui';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+
 import {
-  Button,
-  FormAPI,
-  FormsOnSubmit,
-  HorizontalGroup,
-  FormFieldErrors,
-  Input,
-  Field,
-  InputControl,
-  Legend,
-} from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
+  DashboardInput,
+  DashboardInputs,
+  DataSourceInput,
+  ImportDashboardDTO,
+  LibraryPanelInputState,
+} from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
 
-interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState' | 'watch'> {
+import { ImportDashboardLibraryPanelsList } from './ImportDashboardLibraryPanelsList';
+
+interface Props extends Pick<UseFormReturn<ImportDashboardDTO>, 'register' | 'control' | 'getValues' | 'watch'> {
   uidReset: boolean;
   inputs: DashboardInputs;
-  initialFolderId: number;
-
+  initialFolderUid: string;
+  errors: FieldErrors<ImportDashboardDTO>;
   onCancel: () => void;
   onUidReset: () => void;
   onSubmit: FormsOnSubmit<ImportDashboardDTO>;
 }
 
-export const ImportDashboardForm: FC<Props> = ({
+export const ImportDashboardForm = ({
   register,
   errors,
   control,
   getValues,
   uidReset,
   inputs,
-  initialFolderId,
+  initialFolderUid,
   onUidReset,
   onCancel,
   onSubmit,
-}) => {
+  watch,
+}: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
+  const watchDataSources = watch('dataSources');
+  const watchFolder = watch('folder');
 
   /*
     This useEffect is needed for overwriting a dashboard. It
@@ -45,37 +51,38 @@ export const ImportDashboardForm: FC<Props> = ({
   */
   useEffect(() => {
     if (isSubmitted && (errors.title || errors.uid)) {
-      onSubmit(getValues({ nest: true }), {} as any);
+      onSubmit(getValues());
     }
-  }, [errors]);
+  }, [errors, getValues, isSubmitted, onSubmit]);
+  const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];
+  const existingLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.Exists) ?? [];
 
   return (
     <>
       <Legend>Options</Legend>
       <Field label="Name" invalid={!!errors.title} error={errors.title && errors.title.message}>
         <Input
-          name="title"
-          type="text"
-          ref={register({
+          {...register('title', {
             required: 'Name is required',
-            validate: async (v: string) => await validateTitle(v, getValues().folder.id),
+            validate: async (v: string) => await validateTitle(v, getValues().folder.uid),
           })}
+          type="text"
+          data-testid={selectors.components.ImportDashboardForm.name}
         />
       </Field>
       <Field label="Folder">
-        <InputControl
-          as={FolderPicker}
+        <Controller
+          render={({ field: { ref, ...field } }) => (
+            <OldFolderPicker {...field} enableCreateNew initialFolderUid={initialFolderUid} />
+          )}
           name="folder"
-          useNewForms
-          enableCreateNew
-          initialFolderId={initialFolderId}
           control={control}
         />
       </Field>
       <Field
-        label="Unique identifier (uid)"
-        description="The unique identifier (uid) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
-                The uid allows having consistent URL’s for accessing dashboards so changing the title of a dashboard will not break any
+        label="Unique identifier (UID)"
+        description="The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs.
+                The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any
                 bookmarked links to that dashboard."
         invalid={!!errors.uid}
         error={errors.uid && errors.uid.message}
@@ -83,32 +90,42 @@ export const ImportDashboardForm: FC<Props> = ({
         <>
           {!uidReset ? (
             <Input
-              name="uid"
               disabled
-              ref={register({ validate: async (v: string) => await validateUid(v) })}
+              {...register('uid', { validate: async (v: string) => await validateUid(v) })}
               addonAfter={!uidReset && <Button onClick={onUidReset}>Change uid</Button>}
             />
           ) : (
-            <Input name="uid" ref={register({ required: true, validate: async (v: string) => await validateUid(v) })} />
+            <Input {...register('uid', { required: true, validate: async (v: string) => await validateUid(v) })} />
           )}
         </>
       </Field>
       {inputs.dataSources &&
         inputs.dataSources.map((input: DataSourceInput, index: number) => {
-          const dataSourceOption = `dataSources[${index}]`;
+          if (input.pluginId === ExpressionDatasourceRef.type) {
+            return null;
+          }
+          const dataSourceOption = `dataSources.${index}` as const;
+          const current = watchDataSources ?? [];
           return (
             <Field
               label={input.label}
+              description={input.description}
               key={dataSourceOption}
               invalid={errors.dataSources && !!errors.dataSources[index]}
               error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}
             >
-              <InputControl
-                as={DataSourcePicker}
-                name={`${dataSourceOption}`}
-                datasources={input.options}
+              <Controller
+                name={dataSourceOption}
+                render={({ field: { ref, ...field } }) => (
+                  <DataSourcePicker
+                    {...field}
+                    noDefault={true}
+                    placeholder={input.info}
+                    pluginId={input.pluginId}
+                    current={current[index]?.uid}
+                  />
+                )}
                 control={control}
-                placeholder={input.info}
                 rules={{ required: true }}
               />
             </Field>
@@ -116,7 +133,7 @@ export const ImportDashboardForm: FC<Props> = ({
         })}
       {inputs.constants &&
         inputs.constants.map((input: DashboardInput, index) => {
-          const constantIndex = `constants[${index}]`;
+          const constantIndex = `constants.${index}` as const;
           return (
             <Field
               label={input.label}
@@ -124,13 +141,26 @@ export const ImportDashboardForm: FC<Props> = ({
               invalid={errors.constants && !!errors.constants[index]}
               key={constantIndex}
             >
-              <Input ref={register({ required: true })} name={`${constantIndex}`} defaultValue={input.value} />
+              <Input {...register(constantIndex, { required: true })} defaultValue={input.value} />
             </Field>
           );
         })}
-      <HorizontalGroup>
+      <ImportDashboardLibraryPanelsList
+        inputs={newLibraryPanels}
+        label="New library panels"
+        description="List of new library panels that will get imported."
+        folderName={watchFolder.title}
+      />
+      <ImportDashboardLibraryPanelsList
+        inputs={existingLibraryPanels}
+        label="Existing library panels"
+        description="List of existing library panels. These panels are not affected by the import."
+        folderName={watchFolder.title}
+      />
+      <Stack>
         <Button
           type="submit"
+          data-testid={selectors.components.ImportDashboardForm.submit}
           variant={getButtonVariant(errors)}
           onClick={() => {
             setSubmitted(true);
@@ -141,7 +171,7 @@ export const ImportDashboardForm: FC<Props> = ({
         <Button type="reset" variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
-      </HorizontalGroup>
+      </Stack>
     </>
   );
 };

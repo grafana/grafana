@@ -1,9 +1,24 @@
-import React, { useContext } from 'react';
-import { css } from 'emotion';
-import { ThemeContext, LinkButton, CallToActionCard, Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { LinkButton, CallToActionCard, Icon, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
+
+function getCardStyles(theme: GrafanaTheme2) {
+  return css({
+    maxWidth: `${theme.breakpoints.values.lg}px`,
+    marginTop: theme.spacing(2),
+    alignSelf: 'center',
+  });
+}
 
 export const NoDataSourceCallToAction = () => {
-  const theme = useContext(ThemeContext);
+  const cardStyles = useStyles2(getCardStyles);
+
+  const canCreateDataSource =
+    contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) &&
+    contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   const message =
     'Explore requires at least one data source. Once you have added a data source, you can query it here.';
@@ -12,7 +27,7 @@ export const NoDataSourceCallToAction = () => {
       <Icon name="rocket" />
       <> ProTip: You can also define data sources through configuration files. </>
       <a
-        href="http://docs.grafana.org/administration/provisioning/#datasources?utm_source=explore"
+        href="http://docs.grafana.org/administration/provisioning/?utm_source=explore#data-sources"
         target="_blank"
         rel="noreferrer"
         className="text-link"
@@ -23,24 +38,10 @@ export const NoDataSourceCallToAction = () => {
   );
 
   const ctaElement = (
-    <LinkButton size="lg" href="datasources/new" icon="database">
+    <LinkButton size="lg" href="datasources/new" icon="database" disabled={!canCreateDataSource}>
       Add data source
     </LinkButton>
   );
 
-  const cardClassName = css`
-    max-width: ${theme.breakpoints.lg};
-    margin-top: ${theme.spacing.md};
-    align-self: center;
-  `;
-
-  return (
-    <CallToActionCard
-      callToActionElement={ctaElement}
-      className={cardClassName}
-      footer={footer}
-      message={message}
-      theme={theme}
-    />
-  );
+  return <CallToActionCard callToActionElement={ctaElement} className={cardStyles} footer={footer} message={message} />;
 };

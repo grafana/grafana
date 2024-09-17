@@ -1,27 +1,29 @@
-import React, { FC } from 'react';
-import { LinkButton, VerticalGroup } from '@grafana/ui';
-import { css } from 'emotion';
-import { getConfig } from 'app/core/config';
+import { css } from '@emotion/css';
 
-export const UserSignup: FC<{}> = () => {
+import { LinkButton, Stack } from '@grafana/ui';
+import { getConfig } from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
+
+export const UserSignup = () => {
   const href = getConfig().verifyEmailEnabled ? `${getConfig().appSubUrl}/verify` : `${getConfig().appSubUrl}/signup`;
+  const paddingTop = css({ paddingTop: '16px' });
+
   return (
-    <VerticalGroup
-      className={css`
-        margin-top: 8px;
-      `}
-    >
-      <span>New to Grafana?</span>
+    <Stack direction="column">
+      <div className={paddingTop}>
+        <Trans i18nKey="login.signup.new-to-question">New to Grafana?</Trans>
+      </div>
       <LinkButton
-        className={css`
-          width: 100%;
-          justify-content: center;
-        `}
+        className={css({
+          width: '100%',
+          justifyContent: 'center',
+        })}
         href={href}
         variant="secondary"
+        fill="outline"
       >
-        Sign Up
+        <Trans i18nKey="login.signup.button-label">Sign up</Trans>
       </LinkButton>
-    </VerticalGroup>
+    </Stack>
   );
 };

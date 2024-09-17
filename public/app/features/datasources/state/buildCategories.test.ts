@@ -1,6 +1,7 @@
-import { buildCategories } from './buildCategories';
-import { getMockPlugin } from '../../plugins/__mocks__/pluginMocks';
 import { DataSourcePluginMeta } from '@grafana/data';
+import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+
+import { buildCategories } from './buildCategories';
 
 const plugins: DataSourcePluginMeta[] = [
   {
@@ -50,7 +51,10 @@ describe('buildCategories', () => {
   });
 
   it('should add enterprise phantom plugins', () => {
-    expect(categories[3].title).toBe('Enterprise plugins');
-    expect(categories[3].plugins.length).toBe(10);
+    const enterprisePluginsCategory = categories[3];
+    expect(enterprisePluginsCategory.title).toBe('Enterprise plugins');
+    expect(enterprisePluginsCategory.plugins.length).toBe(28);
+    expect(enterprisePluginsCategory.plugins[0].name).toBe('Adobe Analytics');
+    expect(enterprisePluginsCategory.plugins[enterprisePluginsCategory.plugins.length - 1].name).toBe('Wavefront');
   });
 });

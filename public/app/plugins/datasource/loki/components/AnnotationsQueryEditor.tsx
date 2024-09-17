@@ -1,52 +1,124 @@
 // Libraries
-import React, { memo } from 'react';
+import { memo } from 'react';
+
+import { AnnotationQuery } from '@grafana/data';
+import { EditorField, EditorRow } from '@grafana/experimental';
+import { Input, Stack } from '@grafana/ui';
 
 // Types
-import { LokiQuery } from '../types';
-import { useLokiSyntaxAndLabels } from './useLokiSyntaxAndLabels';
-import { LokiQueryFieldForm } from './LokiQueryFieldForm';
-import LokiDatasource from '../datasource';
+import { getNormalizedLokiQuery } from '../queryUtils';
+import { LokiQuery, LokiQueryType } from '../types';
 
-interface Props {
-  expr: string;
-  datasource: LokiDatasource;
-  onChange: (expr: string) => void;
-}
+import { LokiOptionFields } from './LokiOptionFields';
+import { LokiQueryField } from './LokiQueryField';
+import { LokiQueryEditorProps } from './types';
+
+type Props = LokiQueryEditorProps & {
+  annotation?: AnnotationQuery<LokiQuery>;
+  onAnnotationChange?: (annotation: AnnotationQuery<LokiQuery>) => void;
+};
 
 export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEditor(props: Props) {
-  const { expr, datasource, onChange } = props;
+  const { annotation, onAnnotationChange, history } = props;
 
-  // Timerange to get existing labels from. Hard coding like this seems to be good enough right now.
-  const absolute = {
-    from: Date.now() - 10000,
-    to: Date.now(),
+  // this should never happen, but we want to keep typescript happy
+  if (annotation === undefined || onAnnotationChange === undefined) {
+    return null;
+  }
+
+  const onChangeQuery = (query: LokiQuery) => {
+    // the current version of annotations only stores an optional boolean
+    // field `instant` to handle the instant/range switch.
+    // we need to maintain compatibility for now, so we do the same.
+    // we explicitly call `getNormalizedLokiQuery` to make sure `queryType`
+    // is set up correctly.
+    const instant = getNormalizedLokiQuery(query).queryType === LokiQueryType.Instant;
+    onAnnotationChange({
+      ...annotation,
+      expr: query.expr,
+      maxLines: query.maxLines,
+      instant,
+    });
   };
 
-  const { isSyntaxReady, setActiveOption, refreshLabels, syntax, logLabelOptions } = useLokiSyntaxAndLabels(
-    datasource.languageProvider,
-    absolute
-  );
-
-  const query: LokiQuery = {
+  const queryWithRefId: LokiQuery = {
     refId: '',
-    expr,
+    expr: annotation.expr,
+    maxLines: annotation.maxLines,
+    instant: annotation.instant,
+    queryType: annotation.queryType,
   };
-
   return (
-    <div className="gf-form-group">
-      <LokiQueryFieldForm
-        datasource={datasource}
-        query={query}
-        onChange={(query: LokiQuery) => onChange(query.expr)}
-        onRunQuery={() => {}}
-        history={[]}
-        onLoadOptions={setActiveOption}
-        onLabelsRefresh={refreshLabels}
-        absoluteRange={absolute}
-        syntax={syntax}
-        syntaxLoaded={isSyntaxReady}
-        logLabelOptions={logLabelOptions}
-      />
-    </div>
+    <Stack gap={5} direction="column">
+      <Stack gap={0} direction="column">
+        <LokiQueryField
+          datasource={props.datasource}
+          query={queryWithRefId}
+          onChange={onChangeQuery}
+          onRunQuery={() => {}}
+          history={history}
+          ExtraFieldElement={
+            <LokiOptionFields
+              lineLimitValue={queryWithRefId?.maxLines?.toString() || ''}
+              resolution={queryWithRefId.resolution || 1}
+              query={queryWithRefId}
+              onRunQuery={() => {}}
+              onChange={onChangeQuery}
+            />
+          }
+        />
+      </Stack>
+      <EditorRow>
+        <EditorField
+          label="Title"
+          tooltip={
+            'Use either the name or a pattern. For example, {{instance}} is replaced with label value for the label instance.'
+          }
+        >
+          <Input
+            type="text"
+            placeholder="alertname"
+            value={annotation.titleFormat}
+            onChange={(event) => {
+              onAnnotationChange({
+                ...annotation,
+                titleFormat: event.currentTarget.value,
+              });
+            }}
+          />
+        </EditorField>
+        <EditorField label="Tags">
+          <Input
+            type="text"
+            placeholder="label1,label2"
+            value={annotation.tagKeys}
+            onChange={(event) => {
+              onAnnotationChange({
+                ...annotation,
+                tagKeys: event.currentTarget.value,
+              });
+            }}
+          />
+        </EditorField>
+        <EditorField
+          label="Text"
+          tooltip={
+            'Use either the name or a pattern. For example, {{instance}} is replaced with label value for the label instance.'
+          }
+        >
+          <Input
+            type="text"
+            placeholder="instance"
+            value={annotation.textFormat}
+            onChange={(event) => {
+              onAnnotationChange({
+                ...annotation,
+                textFormat: event.currentTarget.value,
+              });
+            }}
+          />
+        </EditorField>
+      </EditorRow>
+    </Stack>
   );
 });

@@ -1,117 +1,152 @@
-import React, { PureComponent } from 'react';
-import appEvents from 'app/core/app_events';
-import { CoreEvents } from 'app/types';
-import { Help, MetricQueryEditor, QueryTypeSelector, SLOQueryEditor } from './';
-import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery } from '../types';
-import { defaultQuery } from './MetricQueryEditor';
-import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
-import { formatCloudMonitoringError, toOption } from '../functions';
+import deepEqual from 'fast-deep-equal';
+import { isEqual } from 'lodash';
+import { useEffect, useState } from 'react';
+
+import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
+import { EditorRows } from '@grafana/experimental';
+import { ConfirmModal } from '@grafana/ui';
+
 import CloudMonitoringDatasource from '../datasource';
-import { ExploreQueryFieldProps } from '@grafana/data';
+import { selectors } from '../e2e/selectors';
+import { CloudMonitoringQuery, PromQLQuery, QueryType, SLOQuery } from '../types/query';
+import { CloudMonitoringOptions } from '../types/types';
 
-export type Props = ExploreQueryFieldProps<CloudMonitoringDatasource, CloudMonitoringQuery>;
+import { defaultTimeSeriesList, defaultTimeSeriesQuery } from './MetricQueryEditor';
+import { PromQLQueryEditor } from './PromQLEditor';
+import { QueryHeader } from './QueryHeader';
+import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
 
-interface State {
-  lastQueryError: string;
-}
+import { MetricQueryEditor, SLOQueryEditor } from './';
 
-export class QueryEditor extends PureComponent<Props, State> {
-  state: State = { lastQueryError: '' };
+export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
-  async UNSAFE_componentWillMount() {
-    const { datasource, query } = this.props;
+export const QueryEditor = (props: Props) => {
+  const { datasource, query, onRunQuery, onChange, range } = props;
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
 
-    // Unfortunately, migrations like this need to go componentWillMount. As soon as there's
-    // migration hook for this module.ts, we can do the migrations there instead.
-    if (!this.props.query.hasOwnProperty('metricQuery')) {
-      const { hide, refId, datasource, key, queryType, maxLines, metric, ...metricQuery } = this.props.query as any;
-      this.props.query.metricQuery = metricQuery;
+  useEffect(() => {
+    const migrated = datasource.migrateQuery(query);
+    if (!deepEqual(migrated, query)) {
+      onChange({ ...migrated });
     }
+  }, [query, datasource, onChange]);
 
-    if (!this.props.query.hasOwnProperty('queryType')) {
-      this.props.query.queryType = QueryType.METRICS;
+  const [currentQuery, setCurrentQuery] = useState<CloudMonitoringQuery>(query);
+  const [queryHasBeenEdited, setQueryHasBeenEdited] = useState<boolean>(false);
+
+  const sloQuery = { ...defaultSLOQuery(datasource), ...query.sloQuery };
+  const onSLOQueryChange = (q: SLOQuery) => {
+    onChange({ ...query, sloQuery: q });
+    onRunQuery();
+  };
+
+  const promQLQuery = {
+    ...{ projectName: datasource.getDefaultProject(), expr: '', step: '10s' },
+    ...query.promQLQuery,
+  };
+  const onPromQLQueryChange = (q: PromQLQuery) => {
+    onChange({ ...query, promQLQuery: q });
+  };
+
+  const onMetricQueryChange = (q: CloudMonitoringQuery) => {
+    if (
+      (q.queryType === QueryType.TIME_SERIES_LIST && !isEqual(q.timeSeriesList, defaultTimeSeriesList(datasource))) ||
+      (q.queryType === QueryType.TIME_SERIES_QUERY && !isEqual(q.timeSeriesQuery, defaultTimeSeriesQuery(datasource)))
+    ) {
+      setQueryHasBeenEdited(true);
     }
+    onChange(q);
+  };
 
-    await datasource.ensureGCEDefaultProject();
-    if (!query.metricQuery.projectName) {
-      this.props.query.metricQuery.projectName = datasource.getDefaultProject();
+  const meta = props.data?.series.length ? props.data?.series[0].meta : {};
+  const customMetaData = meta?.custom ?? {};
+  const variableOptionGroup = {
+    label: 'Template Variables',
+    expanded: false,
+    options: datasource.getVariables().map(toOption),
+  };
+
+  // Use a known query type
+  useEffect(() => {
+    if (!query.queryType || !Object.values(QueryType).includes(query.queryType)) {
+      onChange({ ...query, queryType: QueryType.TIME_SERIES_LIST });
     }
-  }
+  });
+  const queryType = query.queryType;
 
-  componentDidMount() {
-    appEvents.on(CoreEvents.dsRequestError, this.onDataError.bind(this));
-    appEvents.on(CoreEvents.dsRequestResponse, this.onDataResponse.bind(this));
-  }
+  const checkForModalDisplay = (q: CloudMonitoringQuery) => {
+    if (
+      queryHasBeenEdited &&
+      (currentQuery.queryType === QueryType.TIME_SERIES_LIST || currentQuery.queryType === QueryType.TIME_SERIES_QUERY)
+    ) {
+      if (currentQuery.queryType !== q.queryType) {
+        setModalIsOpen(true);
+      }
+    } else {
+      onChange(q);
+    }
+    setCurrentQuery(q);
+  };
 
-  componentWillUnmount() {
-    appEvents.off(CoreEvents.dsRequestResponse, this.onDataResponse.bind(this));
-    appEvents.on(CoreEvents.dsRequestError, this.onDataError.bind(this));
-  }
-
-  onDataResponse() {
-    this.setState({ lastQueryError: '' });
-  }
-
-  onDataError(error: any) {
-    this.setState({ lastQueryError: formatCloudMonitoringError(error) });
-  }
-
-  onQueryChange(prop: string, value: any) {
-    this.props.onChange({ ...this.props.query, [prop]: value });
-    this.props.onRunQuery();
-  }
-
-  render() {
-    const { datasource, query, onRunQuery, onChange } = this.props;
-    const metricQuery = { ...defaultQuery(datasource), ...query.metricQuery };
-    const sloQuery = { ...defaultSLOQuery(datasource), ...query.sloQuery };
-    const queryType = query.queryType || QueryType.METRICS;
-    const meta = this.props.data?.series.length ? this.props.data?.series[0].meta : {};
-    const usedAlignmentPeriod = meta?.alignmentPeriod;
-    const variableOptionGroup = {
-      label: 'Template Variables',
-      expanded: false,
-      options: datasource.getVariables().map(toOption),
-    };
-
-    return (
-      <>
-        <QueryTypeSelector
-          value={queryType}
-          templateVariableOptions={variableOptionGroup.options}
-          onChange={(queryType: QueryType) => {
-            onChange({ ...query, sloQuery, queryType });
-            onRunQuery();
+  return (
+    <span data-testid={selectors.components.queryEditor.container}>
+      <EditorRows>
+        <ConfirmModal
+          data-testid="switch-query-type-modal"
+          title="Warning"
+          body="By switching your query type, your current query will be lost."
+          isOpen={modalIsOpen}
+          onConfirm={() => {
+            setModalIsOpen(false);
+            onChange(currentQuery);
+            setQueryHasBeenEdited(false);
           }}
-        ></QueryTypeSelector>
+          confirmText="Confirm"
+          onDismiss={() => {
+            setModalIsOpen(false);
+            setCurrentQuery(query);
+          }}
+        />
+        <QueryHeader query={query} onChange={checkForModalDisplay} onRunQuery={onRunQuery} />
 
-        {queryType === QueryType.METRICS && (
+        {queryType === QueryType.PROMQL && (
+          <PromQLQueryEditor
+            refId={query.refId}
+            variableOptionGroup={variableOptionGroup}
+            onChange={onPromQLQueryChange}
+            onRunQuery={onRunQuery}
+            datasource={datasource}
+            query={promQLQuery}
+          />
+        )}
+
+        {queryType !== QueryType.SLO && (
           <MetricQueryEditor
             refId={query.refId}
             variableOptionGroup={variableOptionGroup}
-            usedAlignmentPeriod={usedAlignmentPeriod}
-            onChange={(query: MetricQuery) => this.onQueryChange('metricQuery', query)}
+            customMetaData={customMetaData}
+            onChange={onMetricQueryChange}
             onRunQuery={onRunQuery}
             datasource={datasource}
-            query={metricQuery}
-          ></MetricQueryEditor>
+            query={query}
+            range={range || getDefaultTimeRange()}
+          />
         )}
 
         {queryType === QueryType.SLO && (
           <SLOQueryEditor
+            refId={query.refId}
             variableOptionGroup={variableOptionGroup}
-            usedAlignmentPeriod={usedAlignmentPeriod}
-            onChange={(query: SLOQuery) => this.onQueryChange('sloQuery', query)}
+            customMetaData={customMetaData}
+            onChange={onSLOQueryChange}
             onRunQuery={onRunQuery}
             datasource={datasource}
             query={sloQuery}
-          ></SLOQueryEditor>
+            aliasBy={query.aliasBy}
+            onChangeAliasBy={(aliasBy: string) => onChange({ ...query, aliasBy })}
+          />
         )}
-        <Help
-          rawQuery={decodeURIComponent(meta?.executedQueryString ?? '')}
-          lastQueryError={this.state.lastQueryError}
-        />
-      </>
-    );
-  }
-}
+      </EditorRows>
+    </span>
+  );
+};

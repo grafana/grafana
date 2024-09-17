@@ -1,0 +1,83 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          1
+//      ],
+//      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 4 Rows
+//  +-----------------------------------+---------------------+
+//  | Name: Time                        | Name: Value         |
+//  | Labels:                           | Labels: level=error |
+//  | Type: []time.Time                 | Type: []float64     |
+//  +-----------------------------------+---------------------+
+//  | 2021-12-10 08:36:06.511 +0000 UTC | 0.4                 |
+//  | 2021-12-10 08:36:46.512 +0000 UTC | 0.2                 |
+//  | 2021-12-10 08:36:56.513 +0000 UTC | 0.2                 |
+//  | 2021-12-10 08:37:46.514 +0000 UTC | 0.6                 |
+//  +-----------------------------------+---------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            1
+          ],
+          "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "interval": 42000
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {
+              "level": "error"
+            },
+            "config": {
+              "displayNameFromDS": "{level=\"error\"}"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1639125366511,
+            1639125406512,
+            1639125416513,
+            1639125466514
+          ],
+          [
+            0.4,
+            0.2,
+            0.2,
+            0.6
+          ]
+        ]
+      }
+    }
+  ]
+}

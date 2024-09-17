@@ -1,59 +1,44 @@
-import React, { useCallback, useRef } from 'react';
-import { css } from 'emotion';
-import uniqueId from 'lodash/uniqueId';
-import { SelectableValue } from '@grafana/data';
-import { RadioButtonSize, RadioButton } from './RadioButton';
+import { css, cx } from '@emotion/css';
+import { uniqueId } from 'lodash';
+import { useCallback, useEffect, useRef } from 'react';
+
+import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
+
+import { useStyles2 } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
 
-const getRadioButtonGroupStyles = () => {
-  return {
-    wrapper: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
-      position: relative;
-    `,
-    radioGroup: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: nowrap;
+import { RadioButtonSize, RadioButton } from './RadioButton';
 
-      label {
-        border-radius: 0px;
-
-        &:first-of-type {
-          border-radius: 2px 0px 0px 2px;
-        }
-
-        &:last-of-type {
-          border-radius: 0px 2px 2px 0px;
-        }
-      }
-    `,
-    icon: css`
-      margin-right: 6px;
-    `,
-  };
-};
-
-interface RadioButtonGroupProps<T> {
+export interface RadioButtonGroupProps<T> {
   value?: T;
+  id?: string;
   disabled?: boolean;
   disabledOptions?: T[];
   options: Array<SelectableValue<T>>;
-  onChange?: (value?: T) => void;
+  onChange?: (value: T) => void;
+  onClick?: (value: T) => void;
   size?: RadioButtonSize;
   fullWidth?: boolean;
+  className?: string;
+  autoFocus?: boolean;
+  ['aria-label']?: string;
+  invalid?: boolean;
 }
 
 export function RadioButtonGroup<T>({
   options,
   value,
   onChange,
+  onClick,
   disabled,
   disabledOptions,
   size = 'md',
+  id,
+  className,
   fullWidth = false,
+  autoFocus = false,
+  'aria-label': ariaLabel,
+  invalid = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
     (option: SelectableValue) => {
@@ -65,27 +50,57 @@ export function RadioButtonGroup<T>({
     },
     [onChange]
   );
-  const id = uniqueId('radiogroup-');
-  const groupName = useRef(id);
-  const styles = getRadioButtonGroupStyles();
+  const handleOnClick = useCallback(
+    (option: SelectableValue) => {
+      return () => {
+        if (onClick) {
+          onClick(option.value);
+        }
+      };
+    },
+    [onClick]
+  );
+
+  const internalId = id ?? uniqueId('radiogroup-');
+  const groupName = useRef(internalId);
+  const styles = useStyles2(getStyles);
+
+  const activeButtonRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (autoFocus && activeButtonRef.current) {
+      activeButtonRef.current.focus();
+    }
+  }, [autoFocus]);
 
   return (
-    <div className={styles.radioGroup}>
-      {options.map((o, i) => {
-        const isItemDisabled = disabledOptions && o.value && disabledOptions.includes(o.value);
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className={cx(styles.radioGroup, fullWidth && styles.fullWidth, invalid && styles.invalid, className)}
+    >
+      {options.map((opt, i) => {
+        const isItemDisabled = disabledOptions && opt.value && disabledOptions.includes(opt.value);
+        const icon = opt.icon ? toIconName(opt.icon) : undefined;
+        const hasNonIconPart = Boolean(opt.imgUrl || opt.label || opt.component);
+
         return (
           <RadioButton
             size={size}
             disabled={isItemDisabled || disabled}
-            active={value === o.value}
+            active={value === opt.value}
             key={`o.label-${i}`}
-            onChange={handleOnChange(o)}
-            id={`option-${o.value}-${id}`}
+            aria-label={opt.ariaLabel}
+            onChange={handleOnChange(opt)}
+            onClick={handleOnClick(opt)}
+            id={`option-${opt.value}-${internalId}`}
             name={groupName.current}
+            description={opt.description}
             fullWidth={fullWidth}
+            ref={value === opt.value ? activeButtonRef : undefined}
           >
-            {o.icon && <Icon name={o.icon} className={styles.icon} />}
-            {o.label}
+            {icon && <Icon name={icon} className={cx(hasNonIconPart && styles.icon)} />}
+            {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}
+            {opt.label} {opt.component ? <opt.component /> : null}
           </RadioButton>
         );
       })}
@@ -94,3 +109,31 @@ export function RadioButtonGroup<T>({
 }
 
 RadioButtonGroup.displayName = 'RadioButtonGroup';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    radioGroup: css({
+      backgroundColor: theme.colors.background.primary,
+      display: 'inline-flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      border: `1px solid ${theme.components.input.borderColor}`,
+      borderRadius: theme.shape.radius.default,
+      padding: '2px',
+    }),
+    fullWidth: css({
+      display: 'flex',
+    }),
+    icon: css({
+      marginRight: '6px',
+    }),
+    img: css({
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      marginRight: theme.spacing(1),
+    }),
+    invalid: css({
+      border: `1px solid ${theme.colors.error.border}`,
+    }),
+  };
+};

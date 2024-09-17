@@ -1,9 +1,10 @@
-import { ObservableMatchers } from './types';
-import { toEmitValues } from './toEmitValues';
-import { toEmitValuesWith } from './toEmitValuesWith';
 import { Observable } from 'rxjs';
 
-export const matchers: ObservableMatchers<void, Observable<any>> = {
+import { toEmitValues } from './toEmitValues';
+import { toEmitValuesWith } from './toEmitValuesWith';
+import { ObservableMatchers } from './types';
+
+export const matchers: ObservableMatchers<void, Observable<unknown>> = {
   toEmitValues,
   toEmitValuesWith,
 };

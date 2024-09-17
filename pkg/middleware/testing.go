@@ -4,99 +4,94 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
-	"gopkg.in/macaron.v1"
+	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/smartystreets/goconvey/convey"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type scenarioContext struct {
-	m                    *macaron.Macaron
-	context              *models.ReqContext
-	resp                 *httptest.ResponseRecorder
-	apiKey               string
-	authHeader           string
-	tokenSessionCookie   string
-	respJson             map[string]interface{}
-	handlerFunc          handlerFunc
-	defaultHandler       macaron.Handler
-	url                  string
-	userAuthTokenService *auth.FakeUserAuthTokenService
-	remoteCacheService   *remotecache.RemoteCache
+	t              *testing.T
+	m              *web.Mux
+	context        *contextmodel.ReqContext
+	resp           *httptest.ResponseRecorder
+	respJson       map[string]any
+	handlerFunc    handlerFunc
+	defaultHandler web.Handler
+	url            string
+	authnService   *authntest.FakeService
+	userService    *usertest.FakeUserService
+	cfg            *setting.Cfg
 
 	req *http.Request
 }
 
-func (sc *scenarioContext) withValidApiKey() *scenarioContext {
-	sc.apiKey = "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9"
-	return sc
-}
-
-func (sc *scenarioContext) withTokenSessionCookie(unhashedToken string) *scenarioContext {
-	sc.tokenSessionCookie = unhashedToken
-	return sc
-}
-
-func (sc *scenarioContext) withAuthorizationHeader(authHeader string) *scenarioContext {
-	sc.authHeader = authHeader
-	return sc
+// set identity to use for request
+func (sc *scenarioContext) withIdentity(identity *authn.Identity) {
+	sc.authnService.ExpectedErr = nil
+	sc.authnService.ExpectedIdentity = identity
 }
 
 func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
+	sc.t.Helper()
+
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
-	convey.So(err, convey.ShouldBeNil)
-	sc.req = req
+	require.NoError(sc.t, err)
+
+	reqCtx := &contextmodel.ReqContext{
+		Context: web.FromContext(req.Context()),
+	}
+	sc.req = req.WithContext(ctxkey.Set(req.Context(), reqCtx))
 
 	return sc
 }
 
 func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map[string]string) *scenarioContext {
+	sc.t.Helper()
+
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
+	require.NoError(sc.t, err)
+
 	q := req.URL.Query()
 	for k, v := range queryParams {
 		q.Add(k, v)
 	}
+
 	req.URL.RawQuery = q.Encode()
-	convey.So(err, convey.ShouldBeNil)
-	sc.req = req
+	req.RequestURI = req.URL.RequestURI()
 
-	return sc
-}
+	require.NoError(sc.t, err)
 
-func (sc *scenarioContext) handler(fn handlerFunc) *scenarioContext {
-	sc.handlerFunc = fn
+	reqCtx := &contextmodel.ReqContext{
+		Context: web.FromContext(req.Context()),
+	}
+	sc.req = req.WithContext(ctxkey.Set(req.Context(), reqCtx))
+
 	return sc
 }
 
 func (sc *scenarioContext) exec() {
-	if sc.apiKey != "" {
-		sc.req.Header.Add("Authorization", "Bearer "+sc.apiKey)
-	}
-
-	if sc.authHeader != "" {
-		sc.req.Header.Add("Authorization", sc.authHeader)
-	}
-
-	if sc.tokenSessionCookie != "" {
-		sc.req.AddCookie(&http.Cookie{
-			Name:  setting.LoginCookieName,
-			Value: sc.tokenSessionCookie,
-		})
-	}
+	sc.t.Helper()
 
 	sc.m.ServeHTTP(sc.resp, sc.req)
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
 		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
-		convey.So(err, convey.ShouldBeNil)
+		require.NoError(sc.t, err)
+		sc.t.Log("Decoded JSON", "json", sc.respJson)
+	} else {
+		sc.t.Log("Not decoding JSON")
 	}
 }
 
-type scenarioFunc func(c *scenarioContext)
-type handlerFunc func(c *models.ReqContext)
+type scenarioFunc func(t *testing.T, c *scenarioContext)
+type handlerFunc func(c *contextmodel.ReqContext)

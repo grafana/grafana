@@ -1,14 +1,20 @@
 // Libraries
 import { AnyAction, createAction } from '@reduxjs/toolkit';
-import { RefreshPicker } from '@grafana/ui';
-import { DataSourceApi, HistoryItem } from '@grafana/data';
-import { stopQueryState } from 'app/core/utils/explore';
-import { ExploreItemState, ThunkResult } from 'app/types';
 
-import { ExploreId } from 'app/types/explore';
+import { DataSourceApi, HistoryItem } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema';
+import { RefreshPicker } from '@grafana/ui';
+import { stopQueryState } from 'app/core/utils/explore';
+import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { ExploreItemState, createAsyncThunk } from 'app/types';
+
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
+
+import { saveCorrelationsAction } from './explorePane';
 import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
-import { createEmptyQueryResponse, loadAndInitDatasource, makeInitialUpdateState } from './utils';
+import { createEmptyQueryResponse, getDatasourceUIDs, loadAndInitDatasource } from './utils';
 
 //
 // Actions and Payloads
@@ -18,7 +24,7 @@ import { createEmptyQueryResponse, loadAndInitDatasource, makeInitialUpdateState
  * Updates datasource instance before datasource loading has started
  */
 export interface UpdateDatasourceInstancePayload {
-  exploreId: ExploreId;
+  exploreId: string;
   datasourceInstance: DataSourceApi;
   history: HistoryItem[];
 }
@@ -33,16 +39,24 @@ export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInsta
 /**
  * Loads a new datasource identified by the given name.
  */
-export function changeDatasource(
-  exploreId: ExploreId,
-  datasourceName: string,
-  options?: { importQueries: boolean }
-): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    const orgId = getState().user.orgId;
-    const { history, instance } = await loadAndInitDatasource(orgId, datasourceName);
-    const currentDataSourceInstance = getState().explore[exploreId].datasourceInstance;
 
+interface ChangeDatasourcePayload {
+  exploreId: string;
+  datasource: string | DataSourceRef;
+  options?: { importQueries: boolean };
+}
+export const changeDatasource = createAsyncThunk(
+  'explore/changeDatasource',
+  async ({ datasource, exploreId, options }: ChangeDatasourcePayload, { getState, dispatch }) => {
+    const orgId = getState().user.orgId;
+    const { history, instance } = await loadAndInitDatasource(orgId, datasource);
+    const currentDataSourceInstance = getState().explore.panes[exploreId]!.datasourceInstance;
+
+    reportInteraction('explore_change_ds', {
+      from: (currentDataSourceInstance?.meta?.mixed ? 'mixed' : currentDataSourceInstance?.type) || 'unknown',
+      to: instance.meta.mixed ? 'mixed' : instance.type,
+      exploreId,
+    });
     dispatch(
       updateDatasourceInstanceAction({
         exploreId,
@@ -51,22 +65,26 @@ export function changeDatasource(
       })
     );
 
-    const queries = getState().explore[exploreId].queries;
+    const queries = getState().explore.panes[exploreId]!.queries;
+
+    const datasourceUIDs = getDatasourceUIDs(instance.uid, queries);
+    const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+    dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
 
     if (options?.importQueries) {
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));
     }
 
-    if (getState().explore[exploreId].isLive) {
-      dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
+    if (getState().explore.panes[exploreId]!.isLive) {
+      dispatch(changeRefreshInterval({ exploreId, refreshInterval: RefreshPicker.offOption.value }));
     }
 
     // Exception - we only want to run queries on data source change, if the queries were imported
     if (options?.importQueries) {
-      dispatch(runQueries(exploreId));
+      dispatch(runQueries({ exploreId }));
     }
-  };
-}
+  }
+);
 
 //
 // Reducer
@@ -93,15 +111,10 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       graphResult: null,
       tableResult: null,
       logsResult: null,
-      latency: 0,
+      supplementaryQueries: loadSupplementaryQueries(),
       queryResponse: createEmptyQueryResponse(),
-      loading: false,
       queryKeys: [],
-      originPanelId: state.urlState && state.urlState.originPanelId,
       history,
-      datasourceMissing: false,
-      logsHighlighterExpressions: undefined,
-      update: makeInitialUpdateState(),
     };
   }
 

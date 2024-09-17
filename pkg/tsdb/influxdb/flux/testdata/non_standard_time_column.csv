@@ -1,4 +1,4 @@
-#group,false,false,true,true,false,true
+#group,false,false,false,false,false,true
 #datatype,string,long,dateTime:RFC3339,dateTime:RFC3339,double,string
 #default,_result,,,,,
 ,result,table,_start_water,_stop_water,_value,st

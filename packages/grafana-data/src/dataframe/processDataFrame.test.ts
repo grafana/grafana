@@ -1,16 +1,21 @@
+import { dateTime } from '../datetime/moment_wrapper';
+import { TimeSeries, TableData } from '../types/data';
+import { FieldType, DataFrameDTO, Field } from '../types/dataFrame';
+
+import { ArrayDataFrame } from './ArrayDataFrame';
 import {
+  createDataFrame,
+  getFieldTypeFromValue,
+  guessFieldTypeForField,
   guessFieldTypeFromValue,
   guessFieldTypes,
   isDataFrame,
   isTableData,
+  reverseDataFrame,
   sortDataFrame,
   toDataFrame,
   toLegacyResponseData,
 } from './processDataFrame';
-import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
-import { dateTime } from '../datetime/moment_wrapper';
-import { MutableDataFrame } from './MutableDataFrame';
-import { ArrayDataFrame } from './ArrayDataFrame';
 
 describe('toDataFrame', () => {
   it('converts timeseries to series', () => {
@@ -80,12 +85,11 @@ describe('toDataFrame', () => {
       { a: 1, b: 2 },
       { a: 3, b: 4 },
     ];
-    const array = new ArrayDataFrame(orig);
+    const array = new ArrayDataFrame(orig); // will return a simple DataFrame
     const frame = toDataFrame(array);
     expect(frame).toEqual(array);
-    expect(frame instanceof ArrayDataFrame).toEqual(true);
     expect(frame.length).toEqual(orig.length);
-    expect(frame.fields.map(f => f.name)).toEqual(['a', 'b']);
+    expect(frame.fields.map((f) => f.name)).toEqual(['a', 'b']);
   });
 
   it('throws when table rows is not array', () => {
@@ -118,19 +122,17 @@ describe('toDataFrame', () => {
     expect(guessFieldTypeFromValue('xxxx')).toBe(FieldType.string);
   });
 
-  it('Guess Column Types from strings', () => {
-    expect(guessFieldTypeFromValue('1')).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue('1.234')).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue('NaN')).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue('3.125e7')).toBe(FieldType.number);
-    expect(guessFieldTypeFromValue('True')).toBe(FieldType.boolean);
-    expect(guessFieldTypeFromValue('FALSE')).toBe(FieldType.boolean);
-    expect(guessFieldTypeFromValue('true')).toBe(FieldType.boolean);
-    expect(guessFieldTypeFromValue('xxxx')).toBe(FieldType.string);
+  it('Get column types from values', () => {
+    expect(getFieldTypeFromValue(1)).toBe(FieldType.number);
+    expect(getFieldTypeFromValue(1.234)).toBe(FieldType.number);
+    expect(getFieldTypeFromValue(NaN)).toBe(FieldType.number);
+    expect(getFieldTypeFromValue(3.125e7)).toBe(FieldType.number);
+    expect(getFieldTypeFromValue(true)).toBe(FieldType.boolean);
+    expect(getFieldTypeFromValue('xxxx')).toBe(FieldType.string);
   });
 
   it('Guess Column Types from series', () => {
-    const series = new MutableDataFrame({
+    const series = createDataFrame({
       fields: [
         { name: 'A (number)', values: [123, null] },
         { name: 'B (strings)', values: [null, 'Hello'] },
@@ -173,6 +175,48 @@ describe('toDataFrame', () => {
     const v0 = dataFrame.fields[0].values;
     expect(v0.length).toEqual(1);
     expect(v0.get(0)).toEqual(input1.datapoints[0]);
+  });
+
+  it('converts JSON response to dataframes', () => {
+    const msg = {
+      schema: {
+        fields: [
+          {
+            name: 'First',
+            type: 'string',
+          },
+          {
+            name: 'Second',
+            type: 'number',
+          },
+        ],
+      },
+      data: {
+        values: [
+          ['2019-02-15', '2019-03-15', '2019-04-15'],
+          [3, 9, 16],
+        ],
+      },
+    };
+    const dataFrame = toDataFrame(msg);
+    expect(dataFrame.fields.map((f) => ({ [f.name]: f.values }))).toMatchInlineSnapshot(`
+      [
+        {
+          "First": [
+            "2019-02-15",
+            "2019-03-15",
+            "2019-04-15",
+          ],
+        },
+        {
+          "Second": [
+            3,
+            9,
+            16,
+          ],
+        },
+      ]
+    `);
   });
 });
 
@@ -276,7 +320,7 @@ describe('SeriesData backwards compatibility', () => {
     expect(table.refId).toBe(series.refId);
     expect(table.meta).toEqual(series.meta);
 
-    const names = table.columns.map(c => c.text);
+    const names = table.columns.map((c) => c.text);
     expect(names).toEqual(['T', 'N', 'S']);
   });
 
@@ -318,19 +362,92 @@ describe('sorted DataFrame', () => {
       { name: 'fist', type: FieldType.time, values: [1, 2, 3] },
       { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
       { name: 'third', type: FieldType.number, values: [2000, 3000, 1000] },
+      { name: 'fourth', type: FieldType.time, values: [1, 2, 3], nanos: [10, 20, 30] },
     ],
   });
   it('Should sort numbers', () => {
     const sorted = sortDataFrame(frame, 0, true);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
-    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[0].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[0].nanos).toBeUndefined();
+    expect(sorted.fields[1].values).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[1].nanos).toBeUndefined();
+    expect(sorted.fields[3].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[3].nanos).toEqual([30, 20, 10]);
   });
 
   it('Should sort strings', () => {
     const sorted = sortDataFrame(frame, 1, true);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
-    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[0].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[0].nanos).toBeUndefined();
+    expect(sorted.fields[1].values).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[1].nanos).toBeUndefined();
+    expect(sorted.fields[3].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[3].nanos).toEqual([30, 20, 10]);
+  });
+});
+
+describe('reverse DataFrame', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'fist', type: FieldType.time, values: [1, 2, 3], nanos: [10, 20, 30] },
+      { name: 'third', type: FieldType.string, values: ['a', 'b', 'c'] },
+    ],
+  });
+  it('should reverse dataframe', () => {
+    const rev = reverseDataFrame(frame);
+    expect(rev.length).toEqual(3);
+    expect(rev.fields[0].values).toEqual([3, 2, 1]);
+    expect(rev.fields[0].nanos).toEqual([30, 20, 10]);
+    expect(rev.fields[1].values).toEqual(['c', 'b', 'a']);
+    expect(rev.fields[1].nanos).toBeUndefined();
+  });
+});
+
+describe('guessFieldTypeForField', () => {
+  it('should guess types if value exists', () => {
+    const field: Field = {
+      name: 'Field',
+      config: {},
+      type: FieldType.other,
+      values: [1, 2, 3],
+    };
+
+    expect(guessFieldTypeForField(field)).toBe(FieldType.number);
+
+    field.values = [null, null, 3];
+
+    expect(guessFieldTypeForField(field)).toBe(FieldType.number);
+  });
+
+  it('should guess type if name suggests time values', () => {
+    const field: Field = {
+      name: 'Date',
+      config: {},
+      type: FieldType.other,
+      values: [1, 2, 3],
+    };
+
+    expect(guessFieldTypeForField(field)).toBe(FieldType.time);
+
+    field.name = 'time';
+
+    expect(guessFieldTypeForField(field)).toBe(FieldType.time);
+  });
+
+  it('should return undefined if no values present', () => {
+    const field: Field = {
+      name: 'Val',
+      config: {},
+      type: FieldType.other,
+      values: [null, null],
+    };
+
+    expect(guessFieldTypeForField(field)).toBe(undefined);
+
+    field.values = [];
+
+    expect(guessFieldTypeForField(field)).toBe(undefined);
   });
 });

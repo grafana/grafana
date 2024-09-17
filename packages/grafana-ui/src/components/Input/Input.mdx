@@ -1,7 +1,7 @@
-import { Props, Preview } from "@storybook/addon-docs/blocks";
-import { Input } from "./Input";
-import { Field } from "../Forms/Field";
-import { Icon } from "../Icon/Icon";
+import { ArgTypes, Preview } from '@storybook/blocks';
+import { Input } from './Input';
+import { Field } from '../Forms/Field';
+import { Icon } from '../Icon/Icon';
 
 # Input
 
@@ -9,7 +9,7 @@ Used for regular text input. For an array of data or tree-structured data, consi
 
 ## Prefix and suffix
 
-To add more context to the input you can add either text or an icon before or after the input. You can use the `prefix` and `suffix` props for this. Try some examples in the canvas!
+To add more context to the input you can add either text or an icon before or after the input. You can use the `prefix` and `suffix` props for this. Try some examples in the Preview!
 
 ```jsx
 <Input prefix={<Icon name="search" />} />
@@ -37,4 +37,4 @@ To add more context to the input you can add either text or an icon before or af
     <Input name="importantInput" required />
   </Field>
 </Preview>
-<Props of={Input} />
+<ArgTypes of={Input} />

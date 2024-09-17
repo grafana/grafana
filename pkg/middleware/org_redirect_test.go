@@ -1,67 +1,65 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/authn"
 )
 
 func TestOrgRedirectMiddleware(t *testing.T) {
-	Convey("Can redirect to correct org", t, func() {
-		middlewareScenario(t, "when setting a correct org for the user", func(sc *scenarioContext) {
-			sc.withTokenSessionCookie("token")
-			bus.AddHandler("test", func(query *models.SetUsingOrgCommand) error {
-				return nil
-			})
+	testCases := []struct {
+		desc        string
+		input       string
+		expStatus   int
+		expLocation string
+	}{
+		{
+			desc:        "when setting a correct org for the user",
+			input:       "/?orgId=3",
+			expStatus:   302,
+			expLocation: "/?orgId=3",
+		},
+		{
+			desc:        "when setting a correct org for the user with '&kiosk'",
+			input:       "/?orgId=3&kiosk",
+			expStatus:   302,
+			expLocation: "/?orgId=3&kiosk",
+		},
+		{
+			desc:        "when setting a correct org for the user with '&kiosk=",
+			input:       "/?kiosk=&orgId=3",
+			expStatus:   302,
+			expLocation: "/?orgId=3&kiosk",
+		},
+		{
+			desc:        "when setting a correct org for the user with '&kiosk=tv'",
+			input:       "/?kiosk=tv&orgId=3",
+			expStatus:   302,
+			expLocation: "/?kiosk=tv&orgId=3",
+		},
+	}
 
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
-				return nil
-			})
-
-			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-				return &models.UserToken{
-					UserId:        0,
-					UnhashedToken: "",
-				}, nil
-			}
-
+	for _, tc := range testCases {
+		middlewareScenario(t, tc.desc, func(t *testing.T, sc *scenarioContext) {
+			sc.withIdentity(&authn.Identity{})
 			sc.m.Get("/", sc.defaultHandler)
-			sc.fakeReq("GET", "/?orgId=3").exec()
+			sc.fakeReq("GET", tc.input).exec()
 
-			Convey("change org and redirect", func() {
-				So(sc.resp.Code, ShouldEqual, 302)
-			})
+			require.Equal(t, tc.expStatus, sc.resp.Code)
+			require.Equal(t, tc.expLocation, sc.resp.Header().Get("Location"))
 		})
+	}
 
-		middlewareScenario(t, "when setting an invalid org for user", func(sc *scenarioContext) {
-			sc.withTokenSessionCookie("token")
-			bus.AddHandler("test", func(query *models.SetUsingOrgCommand) error {
-				return fmt.Errorf("")
-			})
+	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
+		sc.withIdentity(&authn.Identity{})
+		sc.userService.ExpectedError = fmt.Errorf("")
 
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: 1, UserId: 12}
-				return nil
-			})
+		sc.m.Get("/", sc.defaultHandler)
+		sc.fakeReq("GET", "/?orgId=1").exec()
 
-			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-				return &models.UserToken{
-					UserId:        12,
-					UnhashedToken: "",
-				}, nil
-			}
-
-			sc.m.Get("/", sc.defaultHandler)
-			sc.fakeReq("GET", "/?orgId=3").exec()
-
-			Convey("not allowed to change org", func() {
-				So(sc.resp.Code, ShouldEqual, 404)
-			})
-		})
+		require.Equal(t, 404, sc.resp.Code)
 	})
 }

@@ -1,7 +1,9 @@
-import { Props } from '@storybook/addon-docs/blocks';
+import { ArgTypes, Preview } from '@storybook/blocks';
+import { Field } from '../Forms/Field';
 import { TextArea } from './TextArea';
 
 # TextArea
+
 Use for multi line inputs like descriptions.
 
 ### Usage
@@ -16,14 +18,17 @@ Use for multi line inputs like descriptions.
 
 ```jsx
 <Field label="Important information" description="This information is very important, so you really need to fill it in">
-  <Textarea name="importantTextarea" required />
+  <TextArea name="importantTextarea" required />
 </Field>
 ```
 
 <Preview>
-  <Field label="Important information" description="This information is very important, so you really need to fill it in">
-    <Textarea name="importantTextarea" required />
+  <Field
+    label="Important information"
+    description="This information is very important, so you really need to fill it in"
+  >
+    <TextArea name="importantTextarea" required />
   </Field>
 </Preview>
 
-<Props of={TextArea} />
+<ArgTypes of={TextArea} />

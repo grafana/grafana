@@ -1,72 +1,81 @@
-import React, { FC, MouseEvent } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
+import { MouseEvent } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
-import { cardContent, cardStyle, iconStyle } from './sharedStyles';
+
 import { TutorialCardType } from '../types';
+
+import { cardContent, cardStyle } from './sharedStyles';
 
 interface Props {
   card: TutorialCardType;
 }
 
-export const TutorialCard: FC<Props> = ({ card }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme, card.done);
+export const TutorialCard = ({ card }: Props) => {
+  const styles = useStyles2(getStyles, card.done);
 
   return (
-    <a className={styles.card} onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}>
+    <a
+      className={styles.card}
+      target="_blank"
+      rel="noreferrer"
+      href={`${card.href}?utm_source=grafana_gettingstarted`}
+      onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}
+    >
       <div className={cardContent}>
         <div className={styles.type}>{card.type}</div>
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
-        <h4>{card.title}</h4>
+        <h4 className={styles.cardTitle}>{card.title}</h4>
         <div className={styles.info}>{card.info}</div>
-        <Icon className={iconStyle(theme, card.done)} name={card.icon} size="xxl" />
       </div>
     </a>
   );
 };
 
 const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: TutorialCardType) => {
-  event.preventDefault();
   const isSet = store.get(card.key);
   if (!isSet) {
     store.set(card.key, true);
   }
-  window.open(`${card.href}?utm_source=grafana_gettingstarted`, '_blank');
+  reportInteraction('grafana_getting_started_tutorial', { title: card.title });
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
-  const textColor = `${complete ? theme.palette.blue95 : '#FFB357'}`;
+const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
   return {
     card: css`
       ${cardStyle(theme, complete)}
       width: 460px;
       min-width: 460px;
 
-      @media only screen and (max-width: ${theme.breakpoints.xl}) {
+      ${theme.breakpoints.down('xl')} {
         min-width: 368px;
       }
 
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+      ${theme.breakpoints.down('lg')} {
         min-width: 272px;
       }
     `,
     type: css`
-      color: ${textColor};
+      color: ${theme.colors.primary.text};
       text-transform: uppercase;
     `,
     heading: css`
       text-transform: uppercase;
-      color: ${textColor};
-      margin-bottom: ${theme.spacing.sm};
+      color: ${theme.colors.primary.text};
+      margin-bottom: ${theme.spacing(1)};
+    `,
+    cardTitle: css`
+      margin-bottom: ${theme.spacing(2)};
     `,
     info: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
     status: css`
       display: flex;
       justify-content: flex-end;
     `,
   };
-});
+};

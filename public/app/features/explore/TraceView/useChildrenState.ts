@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { TraceSpan } from '@grafana/data';
+
+import { TraceSpan } from './components';
 
 /**
  * Children state means whether spans are collapsed or not. Also provides some functions to manipulate that state.
@@ -101,6 +102,6 @@ export function useChildrenState() {
 }
 
 function shouldDisableCollapse(allSpans: TraceSpan[], hiddenSpansIds: Set<string>) {
-  const allParentSpans = allSpans.filter(s => s.hasChildren);
+  const allParentSpans = allSpans.filter((s) => s.hasChildren);
   return allParentSpans.length === hiddenSpansIds.size;
 }

@@ -1,7 +1,10 @@
-import React, { HTMLProps } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../themes';
+import { css, cx } from '@emotion/css';
+import { HTMLProps } from 'react';
+import * as React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 
 enum Orientation {
   Horizontal,
@@ -28,7 +31,10 @@ export interface ContainerProps {
   shrink?: number;
 }
 
-export const Layout: React.FC<LayoutProps> = ({
+/**
+ * @deprecated use Stack component instead
+ */
+export const Layout = ({
   children,
   orientation = Orientation.Horizontal,
   spacing = 'sm',
@@ -36,12 +42,13 @@ export const Layout: React.FC<LayoutProps> = ({
   align = 'normal',
   wrap = false,
   width = '100%',
+  height = '100%',
   ...rest
-}) => {
-  const theme = useTheme();
-  const styles = getStyles(theme, orientation, spacing, justify, align, wrap);
+}: LayoutProps) => {
+  const styles = useStyles2(getStyles, orientation, spacing, justify, align, wrap);
+
   return (
-    <div className={styles.layout} style={{ width }} {...rest}>
+    <div className={styles.layout} style={{ width, height }} {...rest}>
       {React.Children.toArray(children)
         .filter(Boolean)
         .map((child, index) => {
@@ -55,52 +62,63 @@ export const Layout: React.FC<LayoutProps> = ({
   );
 };
 
-export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({
+/**
+ * @deprecated use Stack component instead
+ */
+export const HorizontalGroup = ({
   children,
   spacing,
   justify,
   align = 'center',
   wrap,
   width,
-}) => (
+  height,
+}: Omit<LayoutProps, 'orientation'>) => (
   <Layout
     spacing={spacing}
     justify={justify}
     orientation={Orientation.Horizontal}
     align={align}
     width={width}
+    height={height}
     wrap={wrap}
   >
     {children}
   </Layout>
 );
-export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation' | 'wrap'>> = ({
+
+/**
+ * @deprecated use Stack component with the "column" direction instead
+ */
+export const VerticalGroup = ({
   children,
   spacing,
   justify,
   align,
   width,
-}) => (
-  <Layout spacing={spacing} justify={justify} orientation={Orientation.Vertical} align={align} width={width}>
+  height,
+}: Omit<LayoutProps, 'orientation' | 'wrap'>) => (
+  <Layout
+    spacing={spacing}
+    justify={justify}
+    orientation={Orientation.Vertical}
+    align={align}
+    width={width}
+    height={height}
+  >
     {children}
   </Layout>
 );
 
-export const Container: React.FC<ContainerProps> = ({ children, padding, margin, grow, shrink }) => {
-  const theme = useTheme();
-  const styles = getContainerStyles(theme, padding, margin);
+export const Container = ({ children, padding, margin, grow, shrink }: React.PropsWithChildren<ContainerProps>) => {
+  const styles = useStyles2(getContainerStyles, padding, margin);
+
   return (
     <div
       className={cx(
         styles.wrapper,
-        grow !== undefined &&
-          css`
-            flex-grow: ${grow};
-          `,
-        shrink !== undefined &&
-          css`
-            flex-shrink: ${shrink};
-          `
+        grow !== undefined && css({ flexGrow: grow }),
+        shrink !== undefined && css({ flexShrink: shrink })
       )}
     >
       {children}
@@ -108,50 +126,66 @@ export const Container: React.FC<ContainerProps> = ({ children, padding, margin,
   );
 };
 
-const getStyles = stylesFactory(
-  (theme: GrafanaTheme, orientation: Orientation, spacing: Spacing, justify: Justify, align, wrap) => {
-    const finalSpacing = spacing !== 'none' ? theme.spacing[spacing] : 0;
-    // compensate for last row margin when wrapped, horizontal layout
-    const marginCompensation =
-      (orientation === Orientation.Horizontal && !wrap) || orientation === Orientation.Vertical
-        ? 0
-        : `-${finalSpacing}`;
+const getStyles = (
+  theme: GrafanaTheme2,
+  orientation: Orientation,
+  spacing: Spacing,
+  justify: Justify,
+  align: Align,
+  wrap: boolean
+) => {
+  const finalSpacing = spacing !== 'none' ? theme.spacing(spacingToNumber[spacing]) : 0;
 
-    return {
-      layout: css`
-        label: HorizontalGroup;
-        display: flex;
-        flex-direction: ${orientation === Orientation.Vertical ? 'column' : 'row'};
-        flex-wrap: ${wrap ? 'wrap' : 'nowrap'};
-        justify-content: ${justify};
-        align-items: ${align};
-        height: 100%;
-        max-width: 100%;
-        // compensate for last row margin when wrapped, horizontal layout
-        margin-bottom: ${marginCompensation};
-      `,
-      childWrapper: css`
-        margin-bottom: ${orientation === Orientation.Horizontal && !wrap ? 0 : finalSpacing};
-        margin-right: ${orientation === Orientation.Horizontal ? finalSpacing : 0};
-        display: flex;
-        align-items: ${align};
+  // compensate for last row margin when wrapped, horizontal layout
+  const marginCompensation =
+    (orientation === Orientation.Horizontal && !wrap) || orientation === Orientation.Vertical ? 0 : `-${finalSpacing}`;
 
-        &:last-child {
-          margin-bottom: ${orientation === Orientation.Vertical && 0};
-          margin-right: ${orientation === Orientation.Horizontal && 0};
-        }
-      `,
-    };
-  }
-);
+  const label = orientation === Orientation.Vertical ? 'vertical-group' : 'horizontal-group';
 
-const getContainerStyles = stylesFactory((theme: GrafanaTheme, padding?: Spacing, margin?: Spacing) => {
-  const paddingSize = (padding && padding !== 'none' && theme.spacing[padding]) || 0;
-  const marginSize = (margin && margin !== 'none' && theme.spacing[margin]) || 0;
   return {
-    wrapper: css`
-      margin: ${marginSize};
-      padding: ${paddingSize};
-    `,
+    layout: css({
+      label: label,
+      display: 'flex',
+      flexDirection: orientation === Orientation.Vertical ? 'column' : 'row',
+      flexWrap: wrap ? 'wrap' : 'nowrap',
+      justifyContent: justify,
+      alignItems: align,
+      height: '100%',
+      maxWidth: '100%',
+      // compensate for last row margin when wrapped, horizontal layout
+      marginBottom: marginCompensation,
+    }),
+    childWrapper: css({
+      label: 'layoutChildrenWrapper',
+      marginBottom: orientation === Orientation.Horizontal && !wrap ? 0 : finalSpacing,
+      marginRight: orientation === Orientation.Horizontal ? finalSpacing : 0,
+      display: 'flex',
+      alignItems: align,
+
+      '&:last-child': {
+        marginBottom: orientation === Orientation.Vertical ? 0 : undefined,
+        marginRight: orientation === Orientation.Horizontal ? 0 : undefined,
+      },
+    }),
   };
-});
+};
+
+const spacingToNumber: Record<Spacing, number> = {
+  none: 0,
+  xs: 0.5,
+  sm: 1,
+  md: 2,
+  lg: 3,
+};
+
+const getContainerStyles = (theme: GrafanaTheme2, padding?: Spacing, margin?: Spacing) => {
+  const paddingSize = (padding && padding !== 'none' && theme.spacing(spacingToNumber[padding])) || 0;
+  const marginSize = (margin && margin !== 'none' && theme.spacing(spacingToNumber[margin])) || 0;
+  return {
+    wrapper: css({
+      label: 'container',
+      margin: marginSize,
+      padding: paddingSize,
+    }),
+  };
+};

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -115,7 +115,7 @@ func TestUploadToGCS_DefaultCredentials(t *testing.T) {
 	content := []byte("test\n")
 	tmpDir := t.TempDir()
 	fpath := filepath.Join(tmpDir, "test.png")
-	err := ioutil.WriteFile(fpath, content, 0600)
+	err := os.WriteFile(fpath, content, 0600)
 	require.NoError(t, err)
 
 	t.Run("Without signed URL", func(t *testing.T) {
@@ -149,7 +149,7 @@ type signedURLOptsMatcher struct {
 	opts *storage.SignedURLOptions
 }
 
-func (m signedURLOptsMatcher) Matches(x interface{}) bool {
+func (m signedURLOptsMatcher) Matches(x any) bool {
 	suOpts, ok := x.(*storage.SignedURLOptions)
 	if !ok {
 		return false

@@ -1,146 +1,81 @@
 const path = require('path');
+const webpack = require('webpack');
 
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
-// https://github.com/visionmedia/debug/issues/701#issuecomment-505487361
-function shouldExclude(filename) {
-  // There is external js code inside this which needs to be processed by babel.
-  if (filename.indexOf(`jaeger-ui-components`) > 0) {
-    return false;
-  }
-
-  const packagesToProcessbyBabel = [
-    'debug',
-    'lru-cache',
-    'yallist',
-    'apache-arrow',
-    'react-hook-form',
-    'rc-trigger',
-    '@iconscout/react-unicons',
-    'monaco-editor',
-  ];
-  for (const package of packagesToProcessbyBabel) {
-    if (filename.indexOf(`node_modules/${package}`) > 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
-console.log(path.resolve());
 module.exports = {
   target: 'web',
   entry: {
     app: './public/app/index.ts',
+    swagger: './public/swagger/index.tsx',
   },
   output: {
+    clean: true,
     path: path.resolve(__dirname, '../../public/build'),
-    filename: '[name].[hash].js',
+    filename: '[name].[contenthash].js',
     // Keep publicPath relative for host.com/grafana/ deployments
     publicPath: 'public/build/',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
     alias: {
-      // rc-trigger uses babel-runtime which has internal dependency to core-js@2
-      // this alias maps that dependency to core-js@t3
-      'core-js/library/fn': 'core-js/stable',
+      // some of data source plugins use global Prism object to add the language definition
+      // we want to have same Prism object in core and in grafana/ui
+      prismjs: require.resolve('prismjs'),
+      // some sub-dependencies use a different version of @emotion/react and generate warnings
+      // in the browser about @emotion/react loaded twice. We want to only load it once
+      '@emotion/react': require.resolve('@emotion/react'),
+      // due to our webpack configuration not understanding package.json `exports`
+      // correctly we must alias this package to the correct file
+      // the alternative to this alias is to copy-paste the file into our
+      // source code and miss out in updates
+      '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
+        '@locker/near-membrane-dom/custom-devtools-formatter.js'
+      ),
     },
     modules: [
+      // default value
       'node_modules',
-      path.resolve('public'),
-      // we need full path to root node_modules for grafana-enterprise symlink to work
+
+      // required for grafana enterprise resolution
       path.resolve('node_modules'),
+
+      // required to for 'bare' imports (like 'app/core/utils' etc)
+      path.resolve('public'),
     ],
+    fallback: {
+      buffer: false,
+      fs: false,
+      stream: false,
+      http: false,
+      https: false,
+      string_decoder: false,
+    },
   },
-  stats: {
-    children: false,
-    warningsFilter: /export .* was not found in/,
-    source: false,
-  },
-  node: {
-    fs: 'empty',
-  },
+  ignoreWarnings: [
+    /export .* was not found in/,
+    {
+      module: /@kusto\/language-service\/bridge\.min\.js$/,
+      message: /^Critical dependency: the request of a dependency is an expression$/,
+    },
+  ],
   plugins: [
-    new MonacoWebpackPlugin({
-      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
-      filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
-      features: [
-        '!accessibilityHelp',
-        'bracketMatching',
-        'caretOperations',
-        '!clipboard',
-        '!codeAction',
-        '!codelens',
-        '!colorDetector',
-        '!comment',
-        '!contextmenu',
-        '!coreCommands',
-        '!cursorUndo',
-        '!dnd',
-        '!find',
-        'folding',
-        '!fontZoom',
-        '!format',
-        '!gotoError',
-        '!gotoLine',
-        '!gotoSymbol',
-        '!hover',
-        '!iPadShowKeyboard',
-        '!inPlaceReplace',
-        '!inspectTokens',
-        '!linesOperations',
-        '!links',
-        '!multicursor',
-        'parameterHints',
-        '!quickCommand',
-        '!quickOutline',
-        '!referenceSearch',
-        '!rename',
-        '!smartSelect',
-        '!snippets',
-        'suggest',
-        '!toggleHighContrast',
-        '!toggleTabFocusMode',
-        '!transpose',
-        '!wordHighlighter',
-        '!wordOperations',
-        '!wordPartOperations',
-      ],
+    new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
+      resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
+    }),
+    new CorsWorkerPlugin(),
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
     }),
   ],
   module: {
     rules: [
-      /**
-       * Some npm packages are bundled with es2015 syntax, ie. debug
-       * To make them work with PhantomJS we need to transpile them
-       * to get rid of unsupported syntax.
-       */
-      {
-        test: /\.js$/,
-        exclude: shouldExclude,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              presets: [['@babel/preset-env']],
-            },
-          },
-        ],
-      },
       {
         test: require.resolve('jquery'),
-        use: [
-          {
-            loader: 'expose-loader',
-            query: 'jQuery',
-          },
-          {
-            loader: 'expose-loader',
-            query: '$',
-          },
-        ],
+        loader: 'expose-loader',
+        options: {
+          exposes: ['$', 'jQuery'],
+        },
       },
       {
         test: /\.html$/,
@@ -152,29 +87,40 @@ module.exports = {
           {
             loader: 'html-loader',
             options: {
-              attrs: [],
-              minimize: true,
-              removeComments: false,
-              collapseWhitespace: false,
+              sources: false,
+              minimize: {
+                removeComments: false,
+                collapseWhitespace: false,
+              },
             },
           },
         ],
       },
       {
         test: /\.css$/,
-        // include: MONACO_DIR, // https://github.com/react-monaco-editor/react-monaco-editor
         use: ['style-loader', 'css-loader'],
       },
       {
         test: /\.(svg|ico|jpg|jpeg|png|gif|eot|otf|webp|ttf|woff|woff2|cur|ani|pdf)(\?.*)?$/,
-        loader: 'file-loader',
-        options: { name: 'static/img/[name].[hash:8].[ext]' },
+        type: 'asset/resource',
+        generator: { filename: 'static/img/[name].[hash:8][ext]' },
+      },
+      // for pre-caching SVGs as part of the JS bundles
+      {
+        test: /(unicons|mono|custom|solid)[\\/].*\.svg$/,
+        type: 'asset/source',
+      },
+      {
+        // Required for msagl library (used in Nodegraph panel) to work
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
       },
     ],
   },
   // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
   optimization: {
-    moduleIds: 'hashed',
     runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all',
@@ -198,7 +144,7 @@ module.exports = {
           priority: 50,
           enforce: true,
         },
-        vendors: {
+        defaultVendors: {
           test: /[\\/]node_modules[\\/].*[jt]sx?$/,
           chunks: 'initial',
           priority: -10,

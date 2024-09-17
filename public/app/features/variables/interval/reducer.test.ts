@@ -1,11 +1,13 @@
-import cloneDeep from 'lodash/cloneDeep';
+import { cloneDeep } from 'lodash';
 
-import { getVariableTestContext } from '../state/helpers';
-import { toVariablePayload } from '../state/types';
-import { createIntervalVariableAdapter } from './adapter';
-import { IntervalVariableModel } from '../types';
+import { IntervalVariableModel } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { VariablesState } from '../state/variablesReducer';
+import { getVariableTestContext } from '../state/helpers';
+import { VariablesState } from '../state/types';
+import { toVariablePayload } from '../utils';
+
+import { createIntervalVariableAdapter } from './adapter';
 import { createIntervalOptions, intervalVariableReducer } from './reducer';
 
 describe('intervalVariableReducer', () => {

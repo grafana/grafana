@@ -1,44 +1,18 @@
-import React from 'react';
-import { Themeable } from '../../types/theme';
-import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
-import { stylesFactory } from '../../themes';
+import { css, cx } from '@emotion/css';
 
-export interface CallToActionCardProps extends Themeable {
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+
+export interface CallToActionCardProps {
   message?: string | JSX.Element;
   callToActionElement: JSX.Element;
   footer?: string | JSX.Element;
   className?: string;
 }
 
-const getCallToActionCardStyles = stylesFactory((theme: GrafanaTheme) => ({
-  wrapper: css`
-    label: call-to-action-card;
-    padding: ${theme.spacing.lg};
-    background: ${theme.colors.bg2};
-    border-radius: ${theme.border.radius.md};
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  `,
-  message: css`
-    margin-bottom: ${theme.spacing.lg};
-    font-style: italic;
-  `,
-  footer: css`
-    margin-top: ${theme.spacing.lg};
-  `,
-}));
-
-export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = ({
-  message,
-  callToActionElement,
-  footer,
-  theme,
-  className,
-}) => {
-  const css = getCallToActionCardStyles(theme);
+export const CallToActionCard = ({ message, callToActionElement, footer, className }: CallToActionCardProps) => {
+  const css = useStyles2(getStyles);
 
   return (
     <div className={cx([css.wrapper, className])}>
@@ -48,3 +22,27 @@ export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = 
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    label: 'call-to-action-card',
+    background: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 1,
+    padding: theme.spacing(3),
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(3, 1),
+    },
+  }),
+  message: css({
+    marginBottom: theme.spacing(3),
+    fontStyle: 'italic',
+  }),
+  footer: css({
+    marginTop: theme.spacing(3),
+  }),
+});

@@ -77,6 +77,8 @@ func (t NodeType) String() string {
 		return "NodeString"
 	case NodeNumber:
 		return "NodeNumber"
+	case NodeVar:
+		return "NodeVar"
 	default:
 		return "NodeUnknown"
 	}
@@ -88,7 +90,7 @@ func (t NodeType) String() string {
 type VarNode struct {
 	NodeType
 	Pos
-	Name string // Without the $
+	Name string // Without the $ or {}
 	Text string // Raw
 }
 
@@ -401,6 +403,10 @@ const (
 	TypeSeriesSet
 	// TypeVariantSet is a collection of the same type Number, Series, or Scalar.
 	TypeVariantSet
+	// TypeNoData is a no data response without a known data type.
+	TypeNoData
+	// TypeTableData is a tabular data response.
+	TypeTableData
 )
 
 // String returns a string representation of the ReturnType.
@@ -416,6 +422,10 @@ func (f ReturnType) String() string {
 		return "scalar"
 	case TypeVariantSet:
 		return "variant"
+	case TypeNoData:
+		return "noData"
+	case TypeTableData:
+		return "tableData"
 	default:
 		return "unknown"
 	}

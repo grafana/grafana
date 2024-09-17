@@ -3,25 +3,41 @@ on:
   workflow_dispatch:
     inputs:
       version:
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
         required: true
-        default: '7.x.x'
+      push:
+        default: true
+        required: false
+      dry_run:
+        default: false
+        required: false
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v2
+      - name: Checkout Grafana
+        uses: actions/checkout@v4
+      - name: Update package.json versions
+        uses: ./pkg/build/actions/bump-version
         with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-      - uses: actions/setup-node@v1
+          version: ${{ inputs.version }}
+      - if: ${{ inputs.push }}
+        name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          node-version: '12'
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-      - name: Run bump version
-        uses: ./actions/bump-version
-        with:
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - if: ${{ inputs.push }}
+        name: Push & Create PR
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local --add --bool push.autoSetupRemote true
+          git checkout -b "bump-version/${{ github.run_id }}/${{ inputs.version }}"
+          git add .
+          git commit -m "bump version ${{ inputs.version }}"
+          git push
+          gh pr create --dry-run=${{ inputs.dry_run }} -l "type/ci" -l "no-changelog" -B "${{ github.ref_name }}" --title "Release: Bump version to ${{ inputs.version }}" --body "Updated version to ${{ inputs.version }}"
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}

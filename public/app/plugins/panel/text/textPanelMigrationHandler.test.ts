@@ -1,17 +1,18 @@
-import { textPanelMigrationHandler } from './textPanelMigrationHandler';
-import { TextMode, TextOptions } from './types';
 import { FieldConfigSource, PanelModel } from '@grafana/data';
+
+import { TextMode, Options } from './panelcfg.gen';
+import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 describe('textPanelMigrationHandler', () => {
   describe('when invoked and previous version was old Angular text panel', () => {
     it('then should migrate options', () => {
-      const panel: any = {
+      const panel = {
         content: '<span>Hello World<span>',
         mode: 'html',
         options: {},
       };
 
-      const result = textPanelMigrationHandler(panel);
+      const result = textPanelMigrationHandler(panel as unknown as PanelModel);
 
       expect(result.content).toEqual('<span>Hello World<span>');
       expect(result.mode).toEqual('html');
@@ -22,14 +23,14 @@ describe('textPanelMigrationHandler', () => {
 
   describe('when invoked and previous version 7.1 or later', () => {
     it('then not migrate options', () => {
-      const panel: any = {
+      const panel = {
         content: '<span>Hello World<span>',
         mode: 'html',
         options: { content: 'New content' },
         pluginVersion: '7.1.0',
       };
 
-      const result = textPanelMigrationHandler(panel);
+      const result = textPanelMigrationHandler(panel as unknown as PanelModel);
 
       expect(result.content).toEqual('New content');
     });
@@ -37,15 +38,16 @@ describe('textPanelMigrationHandler', () => {
 
   describe('when invoked and previous version was not old Angular text panel', () => {
     it('then should just pass options through', () => {
-      const panel: PanelModel<TextOptions> = {
+      const panel: PanelModel<Options> = {
         id: 1,
-        fieldConfig: ({} as unknown) as FieldConfigSource,
+        type: 'text',
+        fieldConfig: {} as unknown as FieldConfigSource,
         options: {
           content: `# Title
 
         For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)
       `,
-          mode: 'markdown',
+          mode: TextMode.Markdown,
         },
       };
 
@@ -61,10 +63,11 @@ describe('textPanelMigrationHandler', () => {
 
   describe('when invoked and previous version was using text mode', () => {
     it('then should switch to markdown', () => {
-      const mode = ('text' as unknown) as TextMode;
-      const panel: PanelModel<TextOptions> = {
+      const mode = 'text' as unknown as TextMode;
+      const panel: PanelModel<Options> = {
         id: 1,
-        fieldConfig: ({} as unknown) as FieldConfigSource,
+        type: 'text',
+        fieldConfig: {} as unknown as FieldConfigSource,
         options: {
           content: `# Title
 

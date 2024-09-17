@@ -1,29 +1,35 @@
 import { of, throwError } from 'rxjs';
-import { DefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
 import { delay } from 'rxjs/operators';
 
-import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
-import { queryBuilder } from '../shared/testing/builders';
-import { QueryRunner, QueryRunners } from './queryRunners';
-import { toVariableIdentifier, VariableIdentifier } from '../state/types';
-import { QueryVariableModel } from '../types';
-import { updateVariableOptions, updateVariableTags } from './reducer';
+import {
+  DataSourceApi,
+  getDefaultTimeRange,
+  LoadingState,
+  QueryVariableModel,
+  VariableSupportType,
+} from '@grafana/data';
 
-type DoneCallback = {
-  (...args: any[]): any;
-  fail(error?: string | { message: string }): any;
-};
+import { queryBuilder } from '../shared/testing/builders';
+import { getPreloadedState } from '../state/helpers';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { initialTransactionState } from '../state/transactionReducer';
+import { KeyedVariableIdentifier } from '../state/types';
+import { toKeyedVariableIdentifier } from '../utils';
+
+import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
+import { QueryRunner, QueryRunners } from './queryRunners';
+import { updateVariableOptions } from './reducer';
 
 function expectOnResults(args: {
   runner: VariableQueryRunner;
-  identifier: VariableIdentifier;
-  done: DoneCallback;
+  identifier: KeyedVariableIdentifier;
+  done: jest.DoneCallback;
   expect: (results: UpdateOptionsResults[]) => void;
 }) {
   const { runner, identifier, done, expect: expectCallback } = args;
   const results: UpdateOptionsResults[] = [];
   const subscription = runner.getResponse(identifier).subscribe({
-    next: value => {
+    next: (value) => {
       results.push(value);
       if (value.state === LoadingState.Done || value.state === LoadingState.Error) {
         try {
@@ -32,7 +38,7 @@ function expectOnResults(args: {
           done();
         } catch (err) {
           subscription.unsubscribe();
-          done.fail(err);
+          done(err);
         }
       }
     },
@@ -40,38 +46,33 @@ function expectOnResults(args: {
 }
 
 function getTestContext(variable?: QueryVariableModel) {
-  variable =
-    variable ??
-    queryBuilder()
-      .withId('query')
-      .build();
   const getTimeSrv = jest.fn().mockReturnValue({
-    timeRange: jest.fn().mockReturnValue(DefaultTimeRange),
+    timeRange: jest.fn().mockReturnValue(getDefaultTimeRange()),
   });
-  const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([]) };
-  const identifier = toVariableIdentifier(variable);
+  const key = '0123456789';
+  variable = variable ?? queryBuilder().withId('query').withRootStateKey(key).withName('query').build();
+  const datasource = { metricFindQuery: jest.fn().mockResolvedValue([]) } as unknown as DataSourceApi;
+  const identifier = toKeyedVariableIdentifier(variable);
   const searchFilter = undefined;
   const getTemplatedRegex = jest.fn().mockReturnValue('getTemplatedRegex result');
   const dispatch = jest.fn().mockResolvedValue({});
-  const getState = jest.fn().mockReturnValue({
-    templating: {
-      transaction: {
-        uid: '0123456789',
-      },
-    },
+  const templatingState = {
+    transaction: { ...initialTransactionState, uid: key },
     variables: {
       [variable.id]: variable,
     },
-  });
+  };
+  const getState = jest.fn().mockReturnValue(getPreloadedState(key, templatingState));
   const queryRunner: QueryRunner = {
     type: VariableSupportType.Standard,
     canRun: jest.fn().mockReturnValue(true),
     getTarget: jest.fn().mockReturnValue({ refId: 'A', query: 'A query' }),
     runRequest: jest.fn().mockReturnValue(of({ series: [], state: LoadingState.Done })),
   };
-  const queryRunners = ({
+  const queryRunners = {
+    isQueryRunnerAvailableForDatasource: jest.fn().mockReturnValue(true),
     getRunnerForDatasource: jest.fn().mockReturnValue(queryRunner),
-  } as unknown) as QueryRunners;
+  } as unknown as QueryRunners;
   const getVariable = jest.fn().mockReturnValue(variable);
   const runRequest = jest.fn().mockReturnValue(of({}));
   const runner = new VariableQueryRunner({
@@ -85,6 +86,7 @@ function getTestContext(variable?: QueryVariableModel) {
   });
 
   return {
+    key,
     identifier,
     datasource,
     runner,
@@ -103,22 +105,14 @@ function getTestContext(variable?: QueryVariableModel) {
 
 describe('VariableQueryRunner', () => {
   describe('happy case', () => {
-    it('then it should work as expected', done => {
-      const {
-        identifier,
-        runner,
-        datasource,
-        getState,
-        getVariable,
-        queryRunners,
-        queryRunner,
-        dispatch,
-      } = getTestContext();
+    it('then it should work as expected', (done) => {
+      const { key, identifier, runner, datasource, getState, getVariable, queryRunners, queryRunner, dispatch } =
+        getTestContext();
 
       expectOnResults({
         identifier,
         runner,
-        expect: results => {
+        expect: (results) => {
           // verify that the observable works as expected
           expect(results).toEqual([
             { state: LoadingState.Loading, identifier },
@@ -136,66 +130,15 @@ describe('VariableQueryRunner', () => {
           // updateVariableOptions and validateVariableSelectionState
           expect(dispatch).toHaveBeenCalledTimes(2);
           expect(dispatch.mock.calls[0][0]).toEqual(
-            updateVariableOptions({
-              id: 'query',
-              type: 'query',
-              data: { results: [], templatedRegex: 'getTemplatedRegex result' },
-            })
+            toKeyedAction(
+              key,
+              updateVariableOptions({
+                id: 'query',
+                type: 'query',
+                data: { results: [], templatedRegex: 'getTemplatedRegex result' },
+              })
+            )
           );
-        },
-        done,
-      });
-
-      runner.queueRequest({ identifier, datasource });
-    });
-  });
-
-  describe('tags case', () => {
-    it('then it should work as expected', done => {
-      const variable = queryBuilder()
-        .withId('query')
-        .withTags(true)
-        .withTagsQuery('A tags query')
-        .build();
-      const {
-        identifier,
-        runner,
-        datasource,
-        getState,
-        getVariable,
-        queryRunners,
-        queryRunner,
-        dispatch,
-      } = getTestContext(variable);
-
-      expectOnResults({
-        identifier,
-        runner,
-        expect: results => {
-          // verify that the observable works as expected
-          expect(results).toEqual([
-            { state: LoadingState.Loading, identifier },
-            { state: LoadingState.Done, identifier },
-          ]);
-
-          // verify that mocks have been called as expected
-          expect(getState).toHaveBeenCalledTimes(3);
-          expect(getVariable).toHaveBeenCalledTimes(1);
-          expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
-          expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
-          expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
-          expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
-
-          // updateVariableOptions, updateVariableTags and validateVariableSelectionState
-          expect(dispatch).toHaveBeenCalledTimes(3);
-          expect(dispatch.mock.calls[0][0]).toEqual(
-            updateVariableOptions({
-              id: 'query',
-              type: 'query',
-              data: { results: [], templatedRegex: 'getTemplatedRegex result' },
-            })
-          );
-          expect(dispatch.mock.calls[1][0]).toEqual(updateVariableTags({ id: 'query', type: 'query', data: [] }));
         },
         done,
       });
@@ -205,37 +148,30 @@ describe('VariableQueryRunner', () => {
   });
 
   describe('error cases', () => {
-    describe('queryRunners.getRunnerForDatasource throws', () => {
-      it('then it should work as expected', done => {
-        const {
-          identifier,
-          runner,
-          datasource,
-          getState,
-          getVariable,
-          queryRunners,
-          queryRunner,
-          dispatch,
-        } = getTestContext();
+    describe('queryRunners.isQueryRunnerAvailableForDatasource throws', () => {
+      it('then it should work as expected', (done) => {
+        const { identifier, runner, datasource, getState, getVariable, queryRunners, queryRunner, dispatch } =
+          getTestContext();
 
-        queryRunners.getRunnerForDatasource = jest.fn().mockImplementation(() => {
-          throw new Error('getRunnerForDatasource error');
-        });
-
+        queryRunners.isQueryRunnerAvailableForDatasource = jest.fn().mockReturnValue(false);
         expectOnResults({
           identifier,
           runner,
-          expect: results => {
+          expect: (results) => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },
-              { state: LoadingState.Error, identifier, error: new Error('getRunnerForDatasource error') },
+              {
+                state: LoadingState.Error,
+                identifier,
+                error: new Error('Query Runner is not available for datasource.'),
+              },
             ]);
 
             // verify that mocks have been called as expected
             expect(getState).toHaveBeenCalledTimes(2);
             expect(getVariable).toHaveBeenCalledTimes(1);
-            expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
+            expect(queryRunners.isQueryRunnerAvailableForDatasource).toHaveBeenCalledTimes(1);
             expect(queryRunner.getTarget).not.toHaveBeenCalled();
             expect(queryRunner.runRequest).not.toHaveBeenCalled();
             expect(datasource.metricFindQuery).not.toHaveBeenCalled();
@@ -249,24 +185,16 @@ describe('VariableQueryRunner', () => {
     });
 
     describe('runRequest throws', () => {
-      it('then it should work as expected', done => {
-        const {
-          identifier,
-          runner,
-          datasource,
-          getState,
-          getVariable,
-          queryRunners,
-          queryRunner,
-          dispatch,
-        } = getTestContext();
+      it('then it should work as expected', (done) => {
+        const { identifier, runner, datasource, getState, getVariable, queryRunners, queryRunner, dispatch } =
+          getTestContext();
 
         queryRunner.runRequest = jest.fn().mockReturnValue(throwError(new Error('runRequest error')));
 
         expectOnResults({
           identifier,
           runner,
-          expect: results => {
+          expect: (results) => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },
@@ -288,57 +216,11 @@ describe('VariableQueryRunner', () => {
         runner.queueRequest({ identifier, datasource });
       });
     });
-
-    describe('metricFindQuery throws', () => {
-      it('then it should work as expected', done => {
-        const variable = queryBuilder()
-          .withId('query')
-          .withTags(true)
-          .withTagsQuery('A tags query')
-          .build();
-        const {
-          identifier,
-          runner,
-          datasource,
-          getState,
-          getVariable,
-          queryRunners,
-          queryRunner,
-          dispatch,
-        } = getTestContext(variable);
-
-        datasource.metricFindQuery = jest.fn().mockRejectedValue(new Error('metricFindQuery error'));
-
-        expectOnResults({
-          identifier,
-          runner,
-          expect: results => {
-            // verify that the observable works as expected
-            expect(results).toEqual([
-              { state: LoadingState.Loading, identifier },
-              { state: LoadingState.Error, identifier, error: new Error('metricFindQuery error') },
-            ]);
-
-            // verify that mocks have been called as expected
-            expect(getState).toHaveBeenCalledTimes(3);
-            expect(getVariable).toHaveBeenCalledTimes(1);
-            expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
-            expect(queryRunner.getTarget).toHaveBeenCalledTimes(1);
-            expect(queryRunner.runRequest).toHaveBeenCalledTimes(1);
-            expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
-            expect(dispatch).toHaveBeenCalledTimes(1);
-          },
-          done,
-        });
-
-        runner.queueRequest({ identifier, datasource });
-      });
-    });
   });
 
   describe('cancellation cases', () => {
     describe('long running request is cancelled', () => {
-      it('then it should work as expected', done => {
+      it('then it should work as expected', (done) => {
         const { identifier, datasource, runner, queryRunner } = getTestContext();
 
         queryRunner.runRequest = jest
@@ -348,7 +230,7 @@ describe('VariableQueryRunner', () => {
         expectOnResults({
           identifier,
           runner,
-          expect: results => {
+          expect: (results) => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },
@@ -365,7 +247,7 @@ describe('VariableQueryRunner', () => {
     });
 
     describe('an identical request is triggered before first request is finished', () => {
-      it('then it should work as expected', done => {
+      it('then it should work as expected', (done) => {
         const { identifier, datasource, runner, queryRunner } = getTestContext();
 
         queryRunner.runRequest = jest
@@ -376,7 +258,7 @@ describe('VariableQueryRunner', () => {
         expectOnResults({
           identifier,
           runner,
-          expect: results => {
+          expect: (results) => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },

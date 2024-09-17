@@ -1,15 +1,18 @@
-import React, { useState, useCallback, ChangeEvent, FunctionComponent } from 'react';
+import { cx } from '@emotion/css';
+import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
-import { cx } from 'emotion';
-import { Global } from '@emotion/core';
-import { useTheme } from '../../themes/ThemeContext';
+import { useState, useCallback, ChangeEvent, FocusEvent } from 'react';
+
+import { useStyles2 } from '../../themes/ThemeContext';
+import { Input } from '../Input/Input';
+
 import { getStyles } from './styles';
 import { SliderProps } from './types';
 
 /**
  * @public
  */
-export const Slider: FunctionComponent<SliderProps> = ({
+export const Slider = ({
   min,
   max,
   onChange,
@@ -18,62 +21,102 @@ export const Slider: FunctionComponent<SliderProps> = ({
   reverse,
   step,
   value,
-}) => {
+  ariaLabelForHandle,
+  marks,
+  included,
+}: SliderProps) => {
   const isHorizontal = orientation === 'horizontal';
-  const theme = useTheme();
-  const styles = getStyles(theme, isHorizontal);
+  const styles = useStyles2(getStyles, isHorizontal, Boolean(marks));
   const SliderWithTooltip = SliderComponent;
-  const [slidervalue, setSliderValue] = useState<number>(value || min);
-  const onSliderChange = useCallback((v: number) => {
-    setSliderValue(v);
+  const [sliderValue, setSliderValue] = useState<number>(value ?? min);
 
-    if (onChange) {
-      onChange(v);
-    }
-  }, []);
-  const onSliderInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    let v = +e.target.value;
+  const onSliderChange = useCallback(
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? v : v[0];
 
-    v > max && (v = max);
-    v < min && (v = min);
+      setSliderValue(value);
+      onChange?.(value);
+    },
+    [setSliderValue, onChange]
+  );
 
-    setSliderValue(v);
+  const onSliderInputChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      let v = +e.target.value;
 
-    if (onChange) {
-      onChange(v);
-    }
+      if (Number.isNaN(v)) {
+        v = 0;
+      }
 
-    if (onAfterChange) {
-      onAfterChange(v);
-    }
-  }, []);
+      setSliderValue(v);
+
+      if (onChange) {
+        onChange(v);
+      }
+
+      if (onAfterChange) {
+        onAfterChange(v);
+      }
+    },
+    [onChange, onAfterChange]
+  );
+
+  // Check for min/max on input blur so user is able to enter
+  // custom values that might seem above/below min/max on first keystroke
+  const onSliderInputBlur = useCallback(
+    (e: FocusEvent<HTMLInputElement>) => {
+      const v = +e.target.value;
+
+      if (v > max) {
+        setSliderValue(max);
+      } else if (v < min) {
+        setSliderValue(min);
+      }
+    },
+    [max, min]
+  );
+
+  const handleChangeComplete = useCallback(
+    (v: number | number[]) => {
+      const value = typeof v === 'number' ? v : v[0];
+      onAfterChange?.(value);
+    },
+    [onAfterChange]
+  );
+
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
   const sliderInputFieldClassNames = !isHorizontal ? [styles.sliderInputFieldVertical] : [];
+
   return (
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}
       <Global styles={styles.tooltip} />
-      <label className={cx(styles.sliderInput, ...sliderInputClassNames)}>
+      <div className={cx(styles.sliderInput, ...sliderInputClassNames)}>
         <SliderWithTooltip
           min={min}
           max={max}
           step={step}
           defaultValue={value}
-          value={slidervalue}
+          value={sliderValue}
           onChange={onSliderChange}
-          onAfterChange={onAfterChange}
+          onChangeComplete={handleChangeComplete}
           vertical={!isHorizontal}
           reverse={reverse}
+          ariaLabelForHandle={ariaLabelForHandle}
+          marks={marks}
+          included={included}
         />
-        <input
+
+        <Input
+          type="text"
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
-          type="number"
-          value={`${slidervalue}`} // to fix the react leading zero issue
+          value={sliderValue}
           onChange={onSliderInputChange}
+          onBlur={onSliderInputBlur}
           min={min}
           max={max}
         />
-      </label>
+      </div>
     </div>
   );
 };

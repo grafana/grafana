@@ -1,27 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import { css } from 'emotion';
-import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
-const { Switch, FormField } = LegacyForms;
-import { VariableSuggestion } from '@grafana/data';
-import { DataSourceSelectItem } from '@grafana/data';
-
-import { DerivedFieldConfig } from '../types';
-import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { css } from '@emotion/css';
+import { ChangeEvent, useEffect, useState } from 'react';
+import * as React from 'react';
 import { usePrevious } from 'react-use';
 
-const getStyles = stylesFactory(() => ({
+import { GrafanaTheme2, DataSourceInstanceSettings, VariableSuggestion } from '@grafana/data';
+import { DataSourcePicker } from '@grafana/runtime';
+import { Button, DataLinkInput, Field, Icon, Input, Label, Tooltip, useStyles2, Select, Switch } from '@grafana/ui';
+
+import { DerivedFieldConfig } from '../types';
+
+type MatcherType = 'label' | 'regex';
+
+const getStyles = (theme: GrafanaTheme2) => ({
   row: css`
     display: flex;
     align-items: baseline;
   `,
   nameField: css`
     flex: 2;
+    margin-right: ${theme.spacing(0.5)};
   `,
   regexField: css`
     flex: 3;
+    margin-right: ${theme.spacing(0.5)};
   `,
-}));
+  urlField: css`
+    flex: 1;
+    margin-right: ${theme.spacing(0.5)};
+  `,
+  urlDisplayLabelField: css`
+    flex: 1;
+  `,
+  internalLink: css`
+    margin-right: ${theme.spacing(1)};
+  `,
+  dataSource: css``,
+  nameMatcherField: css({
+    width: theme.spacing(20),
+    marginRight: theme.spacing(0.5),
+  }),
+});
 
 type Props = {
   value: DerivedFieldConfig;
@@ -29,12 +47,14 @@ type Props = {
   onDelete: () => void;
   suggestions: VariableSuggestion[];
   className?: string;
+  validateName: (name: string) => boolean;
 };
 export const DerivedField = (props: Props) => {
-  const { value, onChange, onDelete, suggestions, className } = props;
-  const styles = getStyles();
+  const { value, onChange, onDelete, suggestions, className, validateName } = props;
+  const styles = useStyles2(getStyles);
   const [showInternalLink, setShowInternalLink] = useState(!!value.datasourceUid);
   const previousUid = usePrevious(value.datasourceUid);
+  const [fieldType, setFieldType] = useState<MatcherType>(value.matcherType ?? 'regex');
 
   // Force internal link visibility change if uid changed outside of this component.
   useEffect(() => {
@@ -53,52 +73,77 @@ export const DerivedField = (props: Props) => {
     });
   };
 
+  const invalidName = !validateName(value.name);
+
   return (
-    <div className={className}>
-      <div className={styles.row}>
-        <FormField
-          className={styles.nameField}
-          labelWidth={5}
-          // A bit of a hack to prevent using default value for the width from FormField
-          inputWidth={null}
-          label="Name"
-          type="text"
-          value={value.name}
-          onChange={handleChange('name')}
-        />
-        <FormField
-          className={styles.regexField}
-          inputWidth={null}
-          label="Regex"
-          type="text"
-          value={value.matcherRegex}
-          onChange={handleChange('matcherRegex')}
-          tooltip={
-            'Use to parse and capture some part of the log message. You can use the captured groups in the template.'
+    <div className={className} data-testid="derived-field">
+      <div className="gf-form">
+        <Field className={styles.nameField} label="Name" invalid={invalidName} error="The name is already in use">
+          <Input value={value.name} onChange={handleChange('name')} placeholder="Field name" invalid={invalidName} />
+        </Field>
+        <Field
+          className={styles.nameMatcherField}
+          label={
+            <TooltipLabel
+              label="Type"
+              content="Derived fields can be created from labels or by applying a regular expression to the log message."
+            />
           }
-        />
-        <Button
-          variant="destructive"
-          title="Remove field"
-          icon="times"
-          onClick={event => {
-            event.preventDefault();
-            onDelete();
-          }}
-          className={css`
-            margin-left: 8px;
-          `}
-        />
+        >
+          <Select
+            options={[
+              { label: 'Regex in log line', value: 'regex' },
+              { label: 'Label', value: 'label' },
+            ]}
+            value={fieldType}
+            onChange={(type) => {
+              // make sure this is a valid MatcherType
+              if (type.value === 'label' || type.value === 'regex') {
+                setFieldType(type.value);
+                onChange({
+                  ...value,
+                  matcherType: type.value,
+                });
+              }
+            }}
+          />
+        </Field>
+        <Field
+          className={styles.regexField}
+          label={
+            <>
+              {fieldType === 'regex' && (
+                <TooltipLabel
+                  label="Regex"
+                  content="Use to parse and capture some part of the log message. You can use the captured groups in the template."
+                />
+              )}
+
+              {fieldType === 'label' && <TooltipLabel label="Label" content="Use to derive the field from a label." />}
+            </>
+          }
+        >
+          <Input value={value.matcherRegex} onChange={handleChange('matcherRegex')} />
+        </Field>
+        <Field label="">
+          <Button
+            variant="destructive"
+            title="Remove field"
+            icon="times"
+            onClick={(event) => {
+              event.preventDefault();
+              onDelete();
+            }}
+          />
+        </Field>
       </div>
 
-      <FormField
-        label={showInternalLink ? 'Query' : 'URL'}
-        labelWidth={5}
-        inputEl={
+      <div className="gf-form">
+        <Field label={showInternalLink ? 'Query' : 'URL'} className={styles.urlField}>
           <DataLinkInput
             placeholder={showInternalLink ? '${__value.raw}' : 'http://example.com/${__value.raw}'}
             value={value.url || ''}
-            onChange={newValue =>
+            onChange={(newValue) =>
               onChange({
                 ...value,
                 url: newValue,
@@ -106,70 +151,62 @@ export const DerivedField = (props: Props) => {
             }
             suggestions={suggestions}
           />
-        }
-        className={css`
-          width: 100%;
-        `}
-      />
+        </Field>
+        <Field
+          className={styles.urlDisplayLabelField}
+          label={
+            <TooltipLabel
+              label="URL Label"
+              content="Use to override the button label when this derived field is found in a log."
+            />
+          }
+        >
+          <Input value={value.urlDisplayLabel} onChange={handleChange('urlDisplayLabel')} />
+        </Field>
+      </div>
 
-      <div className={styles.row}>
-        <Switch
-          label="Internal link"
-          checked={showInternalLink}
-          onChange={() => {
-            if (showInternalLink) {
-              onChange({
-                ...value,
-                datasourceUid: undefined,
-              });
-            }
-            setShowInternalLink(!showInternalLink);
-          }}
-        />
+      <div className="gf-form">
+        <Field label="Internal link" className={styles.internalLink}>
+          <Switch
+            value={showInternalLink}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              const { checked } = e.currentTarget;
+              if (!checked) {
+                onChange({
+                  ...value,
+                  datasourceUid: undefined,
+                });
+              }
+              setShowInternalLink(checked);
+            }}
+          />
+        </Field>
 
         {showInternalLink && (
-          <DataSourceSection
-            onChange={datasourceUid => {
-              onChange({
-                ...value,
-                datasourceUid,
-              });
-            }}
-            datasourceUid={value.datasourceUid}
-          />
+          <Field label="" className={styles.dataSource}>
+            <DataSourcePicker
+              tracing={true}
+              onChange={(ds: DataSourceInstanceSettings) =>
+                onChange({
+                  ...value,
+                  datasourceUid: ds.uid,
+                })
+              }
+              current={value.datasourceUid}
+              noDefault
+            />
+          </Field>
         )}
       </div>
     </div>
   );
 };
 
-type DataSourceSectionProps = {
-  datasourceUid?: string;
-  onChange: (uid: string) => void;
-};
-
-const DataSourceSection = (props: DataSourceSectionProps) => {
-  const { datasourceUid, onChange } = props;
-  const datasources: DataSourceSelectItem[] = getDatasourceSrv()
-    .getExternal()
-    // At this moment only Jaeger and Zipkin datasource is supported as the link target.
-    .filter(ds => ds.meta.tracing)
-    .map(
-      ds =>
-        ({
-          value: ds.uid,
-          name: ds.name,
-          meta: ds.meta,
-        } as DataSourceSelectItem)
-    );
-
-  let selectedDatasource = datasourceUid && datasources.find(d => d.value === datasourceUid);
-  return (
-    <DataSourcePicker
-      // Uid and value should be always set in the db and so in the items.
-      onChange={ds => onChange(ds.value!)}
-      datasources={datasources}
-      current={selectedDatasource || undefined}
-    />
-  );
-};
+const TooltipLabel = ({ content, label }: { content: string; label: string }) => (
+  <Label>
+    {label}
+    <Tooltip placement="top" content={content} theme="info">
+      <Icon tabIndex={0} name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
+    </Tooltip>
+  </Label>
+);

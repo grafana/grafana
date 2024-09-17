@@ -1,51 +1,74 @@
-import _ from 'lodash';
-import { PanelModel, PanelPlugin } from '@grafana/data';
-import { DashList } from './DashList';
-import { DashListOptions } from './types';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import React from 'react';
+import { PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { PermissionLevelString } from 'app/types';
 
-export const plugin = new PanelPlugin<DashListOptions>(DashList)
-  .setPanelOptions(builder => {
+import { DashList } from './DashList';
+import { dashlistMigrationHandler } from './migrations';
+import { defaultOptions, Options } from './panelcfg.gen';
+
+export const plugin = new PanelPlugin<Options>(DashList)
+  .setPanelOptions((builder) => {
     builder
+      .addBooleanSwitch({
+        path: 'keepTime',
+        name: 'Include current time range',
+        defaultValue: defaultOptions.keepTime,
+      })
+      .addBooleanSwitch({
+        path: 'includeVars',
+        name: 'Include current template variable values',
+        defaultValue: defaultOptions.includeVars,
+      })
       .addBooleanSwitch({
         path: 'showStarred',
         name: 'Starred',
-        defaultValue: true,
+        defaultValue: defaultOptions.showStarred,
       })
       .addBooleanSwitch({
         path: 'showRecentlyViewed',
         name: 'Recently viewed',
-        defaultValue: false,
+        defaultValue: defaultOptions.showRecentlyViewed,
       })
       .addBooleanSwitch({
         path: 'showSearch',
         name: 'Search',
-        defaultValue: false,
+        defaultValue: defaultOptions.showSearch,
       })
       .addBooleanSwitch({
         path: 'showHeadings',
         name: 'Show headings',
-        defaultValue: true,
+        defaultValue: defaultOptions.showHeadings,
+      })
+      .addBooleanSwitch({
+        path: 'showFolderNames',
+        name: 'Show folder names',
+        defaultValue: defaultOptions.showFolderNames,
       })
       .addNumberInput({
         path: 'maxItems',
         name: 'Max items',
-        defaultValue: 10,
+        defaultValue: defaultOptions.maxItems,
       })
       .addTextInput({
         path: 'query',
         name: 'Query',
-        defaultValue: '',
+        defaultValue: defaultOptions.query,
       })
       .addCustomEditor({
-        path: 'folderId',
+        path: 'folderUID',
         name: 'Folder',
-        id: 'folderId',
-        defaultValue: null,
-        editor: props => {
-          return <FolderPicker initialTitle="All" enableReset={true} onChange={({ id }) => props.onChange(id)} />;
+        id: 'folderUID',
+        defaultValue: undefined,
+        editor: function RenderFolderPicker({ value, onChange }) {
+          return (
+            <FolderPicker
+              clearable
+              permission={PermissionLevelString.View}
+              value={value}
+              onChange={(folderUID) => onChange(folderUID)}
+            />
+          );
         },
       })
       .addCustomEditor({
@@ -53,29 +76,10 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         path: 'tags',
         name: 'Tags',
         description: '',
-        defaultValue: [],
-        editor: props => {
+        defaultValue: defaultOptions.tags,
+        editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       });
   })
-  .setMigrationHandler((panel: PanelModel<DashListOptions> & Record<string, any>) => {
-    const newOptions = {
-      showStarred: panel.options.showStarred ?? panel.starred,
-      showRecentlyViewed: panel.options.showRecentlyViewed ?? panel.recent,
-      showSearch: panel.options.showSearch ?? panel.search,
-      showHeadings: panel.options.showHeadings ?? panel.headings,
-      maxItems: panel.options.maxItems ?? panel.limit,
-      query: panel.options.query ?? panel.query,
-      folderId: panel.options.folderId ?? panel.folderId,
-      tags: panel.options.tags ?? panel.tags,
-    };
-
-    const previousVersion = parseFloat(panel.pluginVersion || '6.1');
-    if (previousVersion < 6.3) {
-      const oldProps = ['starred', 'recent', 'search', 'headings', 'limit', 'query', 'folderId'];
-      oldProps.forEach(prop => delete panel[prop]);
-    }
-
-    return newOptions;
-  });
+  .setMigrationHandler(dashlistMigrationHandler);

@@ -1,7 +1,9 @@
-import React, { ReactNode } from 'react';
-import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
+import { forwardRef, ReactNode } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 
 export interface Props {
   /** Children should be a single <Tab /> or an array of <Tab /> */
@@ -11,32 +13,32 @@ export interface Props {
   hideBorder?: boolean;
 }
 
-const getTabsBarStyles = stylesFactory((theme: GrafanaTheme, hideBorder = false) => {
-  const colors = theme.colors;
-
-  return {
-    tabsWrapper:
-      !hideBorder &&
-      css`
-        border-bottom: 1px solid ${colors.pageHeaderBorder};
-      `,
-    tabs: css`
-      position: relative;
-      top: 1px;
-      display: flex;
-      // Sometimes TabsBar is rendered without any tabs, and should preserve height
-      height: 41px;
-    `,
-  };
-});
-
-export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder }, ref) => {
-  const theme = useTheme();
-  const tabsStyles = getTabsBarStyles(theme, hideBorder);
+export const TabsBar = forwardRef<HTMLDivElement, Props>(({ children, className, hideBorder = false }, ref) => {
+  const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(tabsStyles.tabsWrapper, className)} ref={ref}>
-      <ul className={tabsStyles.tabs}>{children}</ul>
+    <div className={cx(styles.tabsWrapper, hideBorder && styles.noBorder, className)} ref={ref}>
+      <div className={styles.tabs} role="tablist">
+        {children}
+      </div>
     </div>
   );
 });
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  tabsWrapper: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    overflowX: 'auto',
+  }),
+  noBorder: css({
+    borderBottom: 0,
+  }),
+  tabs: css({
+    position: 'relative',
+    display: 'flex',
+    height: `${theme.components.menuTabs.height}px`,
+    alignItems: 'center',
+  }),
+});
+
+TabsBar.displayName = 'TabsBar';

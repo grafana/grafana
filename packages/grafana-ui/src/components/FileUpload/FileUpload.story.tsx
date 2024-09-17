@@ -1,27 +1,40 @@
-import React from 'react';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { FileUpload } from '@grafana/ui';
-import mdx from './FileUpload.mdx';
-import { useSize } from '../../utils/storybook/useSize';
-import { ComponentSize } from '../../types/size';
+import { Meta, StoryFn } from '@storybook/react';
 
-export default {
+import { FileUpload } from '@grafana/ui';
+
+import mdx from './FileUpload.mdx';
+
+const meta: Meta<typeof FileUpload> = {
   title: 'Forms/FileUpload',
   component: FileUpload,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['className', 'onFileUpload'],
+    },
+  },
+  argTypes: {
+    size: {
+      control: {
+        type: 'select',
+      },
+      options: ['xs', 'sm', 'md', 'lg'],
+    },
   },
 };
 
-export const Single = () => {
-  const size = useSize();
+export const Basic: StoryFn<typeof FileUpload> = (args) => {
   return (
     <FileUpload
-      size={size as ComponentSize}
+      size={args.size}
       onFileUpload={({ currentTarget }) => console.log('file', currentTarget?.files && currentTarget.files[0])}
     />
   );
 };
+Basic.args = {
+  size: 'md',
+};
+
+export default meta;

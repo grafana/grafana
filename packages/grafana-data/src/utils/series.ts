@@ -10,7 +10,7 @@ export const getSeriesTimeStep = (timeField: Field): number => {
   let returnTimeStep = Number.MAX_VALUE;
 
   for (let i = 0; i < timeField.values.length; i++) {
-    const currentTime = timeField.values.get(i);
+    const currentTime = timeField.values[i];
 
     if (previousTime !== undefined) {
       const timeStep = currentTime - previousTime;
@@ -34,7 +34,7 @@ export const getSeriesTimeStep = (timeField: Field): number => {
  */
 export const hasMsResolution = (timeField: Field) => {
   for (let i = 0; i < timeField.values.length; i++) {
-    const value = timeField.values.get(i);
+    const value = timeField.values[i];
     if (value !== null && value !== undefined) {
       const timestamp = value.toString();
       if (timestamp.length === 13 && timestamp % 1000 !== 0) {

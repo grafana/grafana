@@ -1,5 +1,5 @@
-import { PureComponent } from 'react';
-import ReactDOM from 'react-dom';
+import { PureComponent, createRef } from 'react';
+import * as React from 'react';
 
 export interface Props {
   /**
@@ -22,12 +22,13 @@ interface State {
   hasEventListener: boolean;
 }
 
-export class ClickOutsideWrapper extends PureComponent<Props, State> {
+export class ClickOutsideWrapper extends PureComponent<React.PropsWithChildren<Props>, State> {
   static defaultProps = {
     includeButtonPress: true,
-    parent: window,
+    parent: typeof window !== 'undefined' ? window : undefined,
     useCapture: false,
   };
+  myRef = createRef<HTMLDivElement>();
   state = {
     hasEventListener: false,
   };
@@ -47,15 +48,15 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
     }
   }
 
-  onOutsideClick = (event: any) => {
-    const domNode = ReactDOM.findDOMNode(this) as Element;
+  onOutsideClick: EventListener = (event) => {
+    const domNode = this.myRef.current;
 
-    if (!domNode || !domNode.contains(event.target)) {
+    if (!domNode || (event.target instanceof Node && !domNode.contains(event.target))) {
       this.props.onClick();
     }
   };
 
   render() {
-    return this.props.children;
+    return <div ref={this.myRef}>{this.props.children}</div>;
   }
 }

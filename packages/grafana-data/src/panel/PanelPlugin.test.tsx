@@ -1,7 +1,13 @@
-import React from 'react';
-import { identityOverrideProcessor, standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../field';
+import { identityOverrideProcessor } from '../field/overrides/processors';
+import {
+  StandardEditorsRegistryItem,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
+} from '../field/standardFieldConfigEditorRegistry';
+import { FieldConfigProperty, FieldConfigPropertyItem } from '../types/fieldOverrides';
+import { PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
+
 import { PanelPlugin } from './PanelPlugin';
-import { FieldConfigProperty } from '../types';
 
 describe('PanelPlugin', () => {
   describe('declarative options', () => {
@@ -16,14 +22,14 @@ describe('PanelPlugin', () => {
             id: FieldConfigProperty.Max,
             path: 'max',
           },
-        ] as any;
+        ] as FieldConfigPropertyItem[];
       });
       standardEditorsRegistry.setInit(() => {
         return [
           {
             id: 'number',
           },
-        ] as any;
+        ] as StandardEditorsRegistryItem[];
       });
     });
 
@@ -33,7 +39,7 @@ describe('PanelPlugin', () => {
       });
 
       panel.useFieldConfig({
-        useCustomConfig: builder => {
+        useCustomConfig: (builder) => {
           builder.addCustomEditor({
             id: 'custom',
             path: 'custom',
@@ -58,7 +64,7 @@ describe('PanelPlugin', () => {
         return <div>Panel</div>;
       });
 
-      panel.setPanelOptions(builder => {
+      panel.setPanelOptions((builder) => {
         builder.addCustomEditor({
           id: 'option',
           path: 'option',
@@ -70,8 +76,12 @@ describe('PanelPlugin', () => {
         });
       });
 
-      expect(panel.optionEditors).toBeDefined();
-      expect(panel.optionEditors!.list()).toHaveLength(1);
+      const supplier = panel.getPanelOptionsSupplier();
+      expect(supplier).toBeDefined();
+
+      const builder = new PanelOptionsEditorBuilder();
+      supplier(builder, { data: [] });
+      expect(builder.getItems()).toHaveLength(1);
     });
   });
 
@@ -82,7 +92,7 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.setPanelOptions(builder => {
+        panel.setPanelOptions((builder) => {
           builder
             .addNumberInput({
               path: 'numericOption',
@@ -120,7 +130,7 @@ describe('PanelPlugin', () => {
           return <div>Panel</div>;
         });
 
-        panel.setPanelOptions(builder => {
+        panel.setPanelOptions((builder) => {
           builder.addNumberInput({
             path: 'numericOption.nested',
             name: 'Option editor',
@@ -144,7 +154,7 @@ describe('PanelPlugin', () => {
         });
 
         panel.useFieldConfig({
-          useCustomConfig: builder => {
+          useCustomConfig: (builder) => {
             builder
               .addNumberInput({
                 path: 'numericOption',
@@ -182,13 +192,34 @@ describe('PanelPlugin', () => {
         expect(panel.fieldConfigDefaults.defaults.custom).toEqual(expectedDefaults);
       });
 
+      test('throw error with array fieldConfigs', () => {
+        const panel = new PanelPlugin(() => {
+          return <div>Panel</div>;
+        });
+
+        panel.useFieldConfig({
+          useCustomConfig: (builder) => {
+            builder.addCustomEditor({
+              id: 'somethingUnique',
+              path: 'numericOption[0]',
+              name: 'Option editor',
+              description: 'Option editor description',
+              defaultValue: 10,
+            } as FieldConfigPropertyItem);
+          },
+        });
+        expect(() => panel.fieldConfigRegistry).toThrowErrorMatchingInlineSnapshot(
+          `"[undefined] Field config paths do not support arrays: custom.somethingUnique"`
+        );
+      });
+
       test('default values for nested paths', () => {
         const panel = new PanelPlugin(() => {
           return <div>Panel</div>;
         });
 
         panel.useFieldConfig({
-          useCustomConfig: builder => {
+          useCustomConfig: (builder) => {
             builder.addNumberInput({
               path: 'numericOption.nested',
               name: 'Option editor',

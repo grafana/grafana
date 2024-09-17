@@ -1,23 +1,26 @@
-import { RssFeed } from './types';
-import { ArrayVector, FieldType, DataFrame, dateTime } from '@grafana/data';
+import { FieldType, DataFrame, dateTime } from '@grafana/data';
 
-export function feedToDataFrame(feed: RssFeed): DataFrame {
-  const date = new ArrayVector<number>([]);
-  const title = new ArrayVector<string>([]);
-  const link = new ArrayVector<string>([]);
-  const content = new ArrayVector<string>([]);
+import { Feed } from './types';
+
+export function feedToDataFrame(feed: Feed): DataFrame {
+  const date: number[] = [];
+  const title: string[] = [];
+  const link: string[] = [];
+  const content: string[] = [];
+  const ogImage: Array<string | undefined | null> = [];
 
   for (const item of feed.items) {
     const val = dateTime(item.pubDate);
 
     try {
-      date.buffer.push(val.valueOf());
-      title.buffer.push(item.title);
-      link.buffer.push(item.link);
+      date.push(val.valueOf());
+      title.push(item.title);
+      link.push(item.link);
+      ogImage.push(item.ogImage);
 
       if (item.content) {
         const body = item.content.replace(/<\/?[^>]+(>|$)/g, '');
-        content.buffer.push(body);
+        content.push(body);
       }
     } catch (err) {
       console.warn('Error reading news item:', err, item);
@@ -30,6 +33,7 @@ export function feedToDataFrame(feed: RssFeed): DataFrame {
       { name: 'title', type: FieldType.string, config: {}, values: title },
       { name: 'link', type: FieldType.string, config: {}, values: link },
       { name: 'content', type: FieldType.string, config: {}, values: content },
+      { name: 'ogImage', type: FieldType.string, config: {}, values: ogImage },
     ],
     length: date.length,
   };

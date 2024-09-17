@@ -1,14 +1,42 @@
+import { toDataFrame } from '../../dataframe/processDataFrame';
+import { FieldType, Field } from '../../types/dataFrame';
+import { DataTransformerConfig } from '../../types/transformations';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, Field, FieldType } from '../../types';
-import { DataTransformerID } from './ids';
-import { toDataFrame } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
-import { ArrayVector } from '../../vector';
+
+import { DataTransformerID } from './ids';
 import { seriesToRowsTransformer, SeriesToRowsTransformerOptions } from './seriesToRows';
 
 describe('Series to rows', () => {
   beforeAll(() => {
     mockTransformationsRegistry([seriesToRowsTransformer]);
+  });
+
+  it('should do transform even with only one series', async () => {
+    const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
+      id: DataTransformerID.seriesToRows,
+      options: {},
+    };
+
+    const seriesA = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000] },
+        { name: 'Temp', type: FieldType.number, values: [1] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const result = received[0];
+
+      const expected: Field[] = [
+        createField('Time', FieldType.time, [1000]),
+        createField('Metric', FieldType.string, ['A']),
+        createField('Value', FieldType.number, [1]),
+      ];
+
+      expect(unwrap(result[0].fields)).toEqual(expected);
+    });
   });
 
   it('combine two series into one', async () => {
@@ -33,7 +61,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -68,7 +96,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -111,7 +139,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB, seriesC])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB, seriesC])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -134,7 +162,12 @@ describe('Series to rows', () => {
       name: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [100, 150, 200], config: { displayName: 'Random time' } },
-        { name: 'Temp', type: FieldType.number, values: [1, 4, 5], config: { displayName: 'Temp' } },
+        {
+          name: 'Temp',
+          type: FieldType.number,
+          values: [1, 4, 5],
+          config: { displayName: 'Temp', displayNameFromDS: 'dsName' },
+        },
       ],
     });
 
@@ -146,7 +179,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -184,7 +217,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -222,7 +255,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith((received) => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -239,17 +272,10 @@ describe('Series to rows', () => {
   });
 });
 
-const createField = (name: string, type: FieldType, values: any[], config = {}): Field => {
-  return { name, type, values: new ArrayVector(values), config, labels: undefined };
+const createField = (name: string, type: FieldType, values: unknown[], config = {}): Field => {
+  return { name, type, values: values, config, labels: undefined };
 };
 
 const unwrap = (fields: Field[]): Field[] => {
-  return fields.map(field =>
-    createField(
-      field.name,
-      field.type,
-      field.values.toArray().map((value: any) => value),
-      field.config
-    )
-  );
+  return fields.map((field) => createField(field.name, field.type, field.values, field.config));
 };

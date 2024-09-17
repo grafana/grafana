@@ -1,7 +1,7 @@
+import { isNumber } from 'lodash';
+
+import { isDateTimeInput, dateTime } from '../datetime/moment_wrapper';
 import { Field, FieldType } from '../types/dataFrame';
-import { Vector } from '../types/vector';
-import { dateTime } from '../datetime';
-import isNumber from 'lodash/isNumber';
 
 type IndexComparer = (a: number, b: number) => number;
 
@@ -16,13 +16,16 @@ export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer
     case FieldType.boolean:
       return booleanIndexComparer(values, reverse);
     case FieldType.time:
+      if (typeof field.values[0] === 'number') {
+        return timestampIndexComparer(values, reverse);
+      }
       return timeIndexComparer(values, reverse);
     default:
       return naturalIndexComparer(reverse);
   }
 };
 
-export const timeComparer = (a: any, b: any): number => {
+const timeComparer = (a: unknown, b: unknown): number => {
   if (!a || !b) {
     return falsyComparer(a, b);
   }
@@ -31,33 +34,35 @@ export const timeComparer = (a: any, b: any): number => {
     return numericComparer(a, b);
   }
 
-  if (dateTime(a).isBefore(b)) {
-    return -1;
-  }
+  if (isDateTimeInput(a) && isDateTimeInput(b)) {
+    if (dateTime(a).isBefore(b)) {
+      return -1;
+    }
 
-  if (dateTime(b).isBefore(a)) {
-    return 1;
+    if (dateTime(b).isBefore(a)) {
+      return 1;
+    }
   }
 
   return 0;
 };
 
-export const numericComparer = (a: number, b: number): number => {
+const numericComparer = (a: number, b: number): number => {
   return a - b;
 };
 
-export const stringComparer = (a: string, b: string): number => {
+const stringComparer = (a: string, b: string): number => {
   if (!a || !b) {
     return falsyComparer(a, b);
   }
   return a.localeCompare(b);
 };
 
-export const booleanComparer = (a: boolean, b: boolean): number => {
+const booleanComparer = (a: boolean, b: boolean): number => {
   return falsyComparer(a, b);
 };
 
-const falsyComparer = (a: any, b: any): number => {
+const falsyComparer = (a: unknown, b: unknown): number => {
   if (!a && b) {
     return 1;
   }
@@ -69,34 +74,39 @@ const falsyComparer = (a: any, b: any): number => {
   return 0;
 };
 
-const timeIndexComparer = (values: Vector<any>, reverse: boolean): IndexComparer => {
+const timestampIndexComparer = (values: number[], reverse: boolean): IndexComparer => {
+  let mult = reverse ? -1 : 1;
+  return (a: number, b: number): number => mult * (values[a] - values[b]);
+};
+
+const timeIndexComparer = (values: unknown[], reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA = values.get(a);
-    const vB = values.get(b);
+    const vA = values[a];
+    const vB = values[b];
     return reverse ? timeComparer(vB, vA) : timeComparer(vA, vB);
   };
 };
 
-const booleanIndexComparer = (values: Vector<any>, reverse: boolean): IndexComparer => {
+const booleanIndexComparer = (values: boolean[], reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA: boolean = values.get(a);
-    const vB: boolean = values.get(b);
+    const vA = values[a];
+    const vB = values[b];
     return reverse ? booleanComparer(vB, vA) : booleanComparer(vA, vB);
   };
 };
 
-const numericIndexComparer = (values: Vector<any>, reverse: boolean): IndexComparer => {
+const numericIndexComparer = (values: number[], reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA: number = values.get(a);
-    const vB: number = values.get(b);
+    const vA = values[a];
+    const vB = values[b];
     return reverse ? numericComparer(vB, vA) : numericComparer(vA, vB);
   };
 };
 
-const stringIndexComparer = (values: Vector<any>, reverse: boolean): IndexComparer => {
+const stringIndexComparer = (values: string[], reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA: string = values.get(a);
-    const vB: string = values.get(b);
+    const vA = values[a];
+    const vB = values[b];
     return reverse ? stringComparer(vB, vA) : stringComparer(vA, vB);
   };
 };

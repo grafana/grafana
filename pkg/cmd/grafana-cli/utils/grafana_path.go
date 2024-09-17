@@ -1,11 +1,11 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func GetGrafanaPluginDir(currentOS string) string {
@@ -16,13 +16,13 @@ func GetGrafanaPluginDir(currentOS string) string {
 	return returnOsDefault(currentOS)
 }
 
-// getGrafanaRoot tries to get root of directory when developing grafana ie repo root. It is not perfect it just
-// checks what is the binary path and tries to guess based on that but if it is not running in dev env you get a bogus
+// getGrafanaRoot tries to get root of directory when developing grafana, ie. repo root. It is not perfect, it just
+// checks what is the binary path and tries to guess based on that, but if it is not running in dev env you get a bogus
 // path back.
 func getGrafanaRoot() (string, error) {
 	ex, err := os.Executable()
 	if err != nil {
-		return "", errutil.Wrap("failed to get executable path", err)
+		return "", fmt.Errorf("%v: %w", "failed to get executable path", err)
 	}
 	exPath := filepath.Dir(ex)
 	_, last := filepath.Split(exPath)

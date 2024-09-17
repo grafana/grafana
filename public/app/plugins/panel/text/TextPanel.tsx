@@ -1,89 +1,111 @@
-// Libraries
-import React, { PureComponent } from 'react';
-import { debounce } from 'lodash';
-import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
-// Utils
-import config from 'app/core/config';
-// Types
-import { TextOptions } from './types';
-import { CustomScrollbar, stylesFactory } from '@grafana/ui';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
+import { useState } from 'react';
+import { useDebounce } from 'react-use';
 
-interface Props extends PanelProps<TextOptions> {}
+import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, InterpolateFunction } from '@grafana/data';
+import { CustomScrollbar, CodeEditor, useStyles2 } from '@grafana/ui';
+import config from 'app/core/config';
 
-interface State {
-  html: string;
-}
+import { defaultCodeOptions, Options, TextMode } from './panelcfg.gen';
 
-export class TextPanel extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
+export interface Props extends PanelProps<Options> {}
 
-    this.state = {
-      html: this.processContent(props.options),
-    };
-  }
+export function TextPanel(props: Props) {
+  const styles = useStyles2(getStyles);
+  const [processed, setProcessed] = useState<Options>({
+    mode: props.options.mode,
+    content: processContent(props.options, props.replaceVariables, config.disableSanitizeHtml),
+  });
 
-  updateHTML = debounce(() => {
-    const html = this.processContent(this.props.options);
-    if (html !== this.state.html) {
-      this.setState({ html });
-    }
-  }, 150);
+  useDebounce(
+    () => {
+      const { options, replaceVariables } = props;
+      const content = processContent(options, replaceVariables, config.disableSanitizeHtml);
+      if (content !== processed.content || options.mode !== processed.mode) {
+        setProcessed({
+          mode: options.mode,
+          content,
+        });
+      }
+    },
+    100,
+    [props]
+  );
 
-  componentDidUpdate(prevProps: Props) {
-    // Since any change could be referenced in a template variable,
-    // This needs to process every time (with debounce)
-    this.updateHTML();
-  }
-
-  prepareHTML(html: string): string {
-    return this.interpolateAndSanitizeString(html);
-  }
-
-  prepareMarkdown(content: string): string {
-    // Sanitize is disabled here as we handle that after variable interpolation
-    return renderMarkdown(this.interpolateAndSanitizeString(content), { noSanitize: config.disableSanitizeHtml });
-  }
-
-  interpolateAndSanitizeString(content: string): string {
-    const { replaceVariables } = this.props;
-
-    content = replaceVariables(content, {}, 'html');
-
-    return config.disableSanitizeHtml ? content : textUtil.sanitize(content);
-  }
-
-  processContent(options: TextOptions): string {
-    const { mode, content } = options;
-
-    if (!content) {
-      return '';
-    }
-
-    if (mode === 'markdown') {
-      return this.prepareMarkdown(content);
-    }
-
-    return this.prepareHTML(content);
-  }
-
-  render() {
-    const { html } = this.state;
-    const styles = getStyles();
+  if (processed.mode === TextMode.Code) {
+    const code = props.options.code ?? defaultCodeOptions;
     return (
-      <CustomScrollbar autoHeightMin="100%">
-        <DangerouslySetHtmlContent html={html} className={cx('markdown-html', styles.content)} />
-      </CustomScrollbar>
+      <CodeEditor
+        key={`${code.showLineNumbers}/${code.showMiniMap}`} // will reinit-on change
+        value={processed.content}
+        language={code.language ?? defaultCodeOptions.language!}
+        width={props.width}
+        height={props.height}
+        containerStyles={styles.codeEditorContainer}
+        showMiniMap={code.showMiniMap}
+        showLineNumbers={code.showLineNumbers}
+        readOnly={true} // future
+      />
     );
   }
+
+  return (
+    <CustomScrollbar autoHeightMin="100%" className={styles.containStrict}>
+      <DangerouslySetHtmlContent
+        allowRerender
+        html={processed.content}
+        className={styles.markdown}
+        data-testid="TextPanel-converted-content"
+      />
+    </CustomScrollbar>
+  );
 }
 
-const getStyles = stylesFactory(() => {
-  return {
-    content: css`
+function processContent(options: Options, interpolate: InterpolateFunction, disableSanitizeHtml: boolean): string {
+  let { mode, content } = options;
+
+  // Variables must be interpolated before content is converted to markdown so using variables
+  // in URLs work properly
+  content = interpolate(content, {}, options.code?.language === 'json' ? 'json' : 'html');
+
+  if (!content) {
+    return ' ';
+  }
+
+  switch (mode) {
+    case TextMode.Code:
+      break; // nothing
+    case TextMode.HTML:
+      if (!disableSanitizeHtml) {
+        content = textUtil.sanitizeTextPanelContent(content);
+      }
+      break;
+    case TextMode.Markdown:
+    default:
+      // default to markdown
+      content = renderTextPanelMarkdown(content, {
+        noSanitize: disableSanitizeHtml,
+      });
+  }
+
+  return content;
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  codeEditorContainer: css`
+    .monaco-editor .margin,
+    .monaco-editor-background {
+      background-color: ${theme.colors.background.primary};
+    }
+  `,
+  markdown: cx(
+    'markdown-html',
+    css`
       height: 100%;
-    `,
-  };
+    `
+  ),
+  containStrict: css({
+    contain: 'strict',
+  }),
 });

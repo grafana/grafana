@@ -1,5 +1,7 @@
-import { StoreState } from 'app/types';
 import { Store } from 'redux';
+
+import { initialKeyedVariablesState } from 'app/features/variables/state/keyedVariablesReducer';
+import { StoreState } from 'app/types';
 
 export let store: Store<StoreState>;
 
@@ -9,11 +11,7 @@ export function setStore(newStore: Store<StoreState>) {
 
 export function getState(): StoreState {
   if (!store || !store.getState) {
-    return {
-      templating: {
-        variables: {},
-      },
-    } as StoreState; // used by tests
+    return { templating: { ...initialKeyedVariablesState, lastKey: 'key' } } as StoreState; // used by tests
   }
 
   return store.getState();

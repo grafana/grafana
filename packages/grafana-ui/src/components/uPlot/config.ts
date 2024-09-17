@@ -1,85 +1,83 @@
 import { SelectableValue } from '@grafana/data';
+import {
+  AxisPlacement,
+  BarAlignment,
+  GraphDrawStyle,
+  GraphGradientMode,
+  GraphThresholdsStyleMode,
+  LineInterpolation,
+  VisibilityMode,
+  StackingMode,
+} from '@grafana/schema';
 
-export enum AxisPlacement {
-  Auto = 'auto', // First axis on the left, the rest on the right
-  Top = 'top',
-  Right = 'right',
-  Bottom = 'bottom',
-  Left = 'left',
-  Hidden = 'hidden',
-}
+/**
+ * @alpha
+ */
+export const graphFieldOptions: {
+  drawStyle: Array<SelectableValue<GraphDrawStyle>>;
+  lineInterpolation: Array<SelectableValue<LineInterpolation>>;
+  barAlignment: Array<SelectableValue<BarAlignment>>;
+  showPoints: Array<SelectableValue<VisibilityMode>>;
+  axisPlacement: Array<SelectableValue<AxisPlacement>>;
+  fillGradient: Array<SelectableValue<GraphGradientMode>>;
+  stacking: Array<SelectableValue<StackingMode>>;
+  thresholdsDisplayModes: Array<SelectableValue<GraphThresholdsStyleMode>>;
+} = {
+  drawStyle: [
+    { label: 'Lines', value: GraphDrawStyle.Line },
+    { label: 'Bars', value: GraphDrawStyle.Bars },
+    { label: 'Points', value: GraphDrawStyle.Points },
+  ],
 
-export function getUPlotSideFromAxis(axis: AxisPlacement) {
-  switch (axis) {
-    case AxisPlacement.Top:
-      return 0;
-    case AxisPlacement.Right:
-      return 1;
-    case AxisPlacement.Bottom:
-      return 2;
-    case AxisPlacement.Left:
-  }
-  return 3; // default everythign to the left
-}
+  lineInterpolation: [
+    { description: 'Linear', value: LineInterpolation.Linear, icon: 'gf-interpolation-linear' },
+    { description: 'Smooth', value: LineInterpolation.Smooth, icon: 'gf-interpolation-smooth' },
+    { description: 'Step before', value: LineInterpolation.StepBefore, icon: 'gf-interpolation-step-before' },
+    { description: 'Step after', value: LineInterpolation.StepAfter, icon: 'gf-interpolation-step-after' },
+  ],
 
-export enum PointMode {
-  Auto = 'auto', // will show points when the density is low or line is hidden
-  Always = 'always',
-  Never = 'never',
-}
+  barAlignment: [
+    { description: 'Before', value: BarAlignment.Before, icon: 'gf-bar-alignment-before' },
+    { description: 'Center', value: BarAlignment.Center, icon: 'gf-bar-alignment-center' },
+    { description: 'After', value: BarAlignment.After, icon: 'gf-bar-alignment-after' },
+  ],
 
-export enum GraphMode {
-  Line = 'line', // default
-  Bar = 'bar', // will also have a gap percent
-  Points = 'points', // Only show points
-}
-
-export enum LineInterpolation {
-  Linear = 'linear',
-  Staircase = 'staircase', // https://leeoniya.github.io/uPlot/demos/line-stepped.html
-  Smooth = 'smooth', // https://leeoniya.github.io/uPlot/demos/line-smoothing.html
-}
-
-export interface GraphFieldConfig {
-  mode: GraphMode;
-
-  lineMode?: LineInterpolation;
-  lineWidth?: number; // pixels
-  fillAlpha?: number; // 0-1
-
-  points?: PointMode;
-  pointRadius?: number; // pixels
-  symbol?: string; // eventually dot,star, etc
-
-  // Axis is actually unique based on the unit... not each field!
-  axisPlacement?: AxisPlacement;
-  axisLabel?: string;
-  axisWidth?: number; // pixels ideally auto?
-}
-
-export const graphFieldOptions = {
-  mode: [
-    { label: 'Lines', value: GraphMode.Line },
-    { label: 'Bars', value: GraphMode.Bar },
-    { label: 'Points', value: GraphMode.Points },
-  ] as Array<SelectableValue<GraphMode>>,
-
-  lineMode: [
-    { label: 'Linear', value: LineInterpolation.Linear },
-    { label: 'Staircase', value: LineInterpolation.Staircase },
-    { label: 'Smooth', value: LineInterpolation.Smooth },
-  ] as Array<SelectableValue<LineInterpolation>>,
-
-  points: [
-    { label: 'Auto', value: PointMode.Auto, description: 'Show points when the density is low' },
-    { label: 'Always', value: PointMode.Always },
-    { label: 'Never', value: PointMode.Never },
-  ] as Array<SelectableValue<PointMode>>,
+  showPoints: [
+    { label: 'Auto', value: VisibilityMode.Auto, description: 'Show points when the density is low' },
+    { label: 'Always', value: VisibilityMode.Always },
+    { label: 'Never', value: VisibilityMode.Never },
+  ],
 
   axisPlacement: [
     { label: 'Auto', value: AxisPlacement.Auto, description: 'First field on the left, everything else on the right' },
     { label: 'Left', value: AxisPlacement.Left },
     { label: 'Right', value: AxisPlacement.Right },
     { label: 'Hidden', value: AxisPlacement.Hidden },
-  ] as Array<SelectableValue<AxisPlacement>>,
+  ],
+
+  fillGradient: [
+    { label: 'None', value: GraphGradientMode.None },
+    { label: 'Opacity', value: GraphGradientMode.Opacity, description: 'Enable fill opacity gradient' },
+    { label: 'Hue', value: GraphGradientMode.Hue, description: 'Small color hue gradient' },
+    {
+      label: 'Scheme',
+      value: GraphGradientMode.Scheme,
+      description: 'Use color scheme to define gradient',
+    },
+  ],
+
+  stacking: [
+    { label: 'Off', value: StackingMode.None },
+    { label: 'Normal', value: StackingMode.Normal },
+    { label: '100%', value: StackingMode.Percent },
+  ],
+
+  thresholdsDisplayModes: [
+    { label: 'Off', value: GraphThresholdsStyleMode.Off },
+    { label: 'As lines', value: GraphThresholdsStyleMode.Line },
+    { label: 'As lines (dashed)', value: GraphThresholdsStyleMode.Dashed },
+    { label: 'As filled regions', value: GraphThresholdsStyleMode.Area },
+    { label: 'As filled regions and lines', value: GraphThresholdsStyleMode.LineAndArea },
+    { label: 'As filled regions and lines (dashed)', value: GraphThresholdsStyleMode.DashedAndArea },
+  ],
 };

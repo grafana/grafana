@@ -1,9 +1,19 @@
-jest.mock('app/features/annotations/all', () => ({
-  EventManager: () => {
-    return {
-      on: () => {},
-      addFlotEvents: () => {},
-    };
+import $ from 'jquery';
+
+import { dateTime, EventBusSrv } from '@grafana/data';
+import { MetricsPanelCtrl } from 'app/angular/panel/metrics_panel_ctrl';
+import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
+import config from 'app/core/config';
+import TimeSeries from 'app/core/time_series2';
+
+import { createDashboardModelFixture } from '../../../../features/dashboard/state/__fixtures__/dashboardFixtures';
+import { graphDirective, GraphElement } from '../graph';
+import { GraphCtrl } from '../module';
+
+jest.mock('../event_manager', () => ({
+  EventManager: class EventManagerMock {
+    on() {}
+    addFlotEvents() {}
   },
 }));
 
@@ -12,20 +22,10 @@ jest.mock('app/core/core', () => ({
     directive: () => {},
   },
   appEvents: {
+    subscribe: () => {},
     on: () => {},
   },
 }));
-
-import '../module';
-import { GraphCtrl } from '../module';
-import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
-import { PanelCtrl } from 'app/features/panel/panel_ctrl';
-import config from 'app/core/config';
-
-import TimeSeries from 'app/core/time_series2';
-import $ from 'jquery';
-import { graphDirective } from '../graph';
-import { dateTime, EventBusSrv } from '@grafana/data';
 
 const ctx = {} as any;
 let ctrl: any;
@@ -45,8 +45,8 @@ describe('grafanaGraph', () => {
       user: {
         lightTheme: false,
       },
-    };
-    GraphCtrl.prototype = {
+    } as any;
+    Object.assign(GraphCtrl.prototype, {
       ...MetricsPanelCtrl.prototype,
       ...PanelCtrl.prototype,
       ...GraphCtrl.prototype,
@@ -78,6 +78,9 @@ describe('grafanaGraph', () => {
         tooltip: {
           shared: true,
         },
+        fieldConfig: {
+          defaults: {},
+        },
       },
       renderingCompleted: jest.fn(),
       hiddenSeries: {},
@@ -92,7 +95,7 @@ describe('grafanaGraph', () => {
       annotationsSrv: {
         getAnnotations: () => Promise.resolve({}),
       },
-    } as any;
+    }) as any;
 
     ctx.data = [];
     ctx.data.push(
@@ -117,11 +120,14 @@ describe('grafanaGraph', () => {
     ctrl = new GraphCtrl(
       {
         $on: () => {},
+        $parent: {
+          panel: GraphCtrl.prototype.panel,
+          dashboard: GraphCtrl.prototype.dashboard,
+        },
       },
       {
         get: () => {},
-      } as any,
-      {} as any
+      } as any
     );
 
     // @ts-ignore
@@ -1286,4 +1292,66 @@ describe('grafanaGraph', () => {
       ).toBe(300);
     });
   });
+
+  describe('getContextMenuItemsSupplier', () => {
+    describe('when called and user can edit the dashboard', () => {
+      it('then the correct menu items should be returned', () => {
+        const element = getGraphElement({ canEdit: true, canMakeEditable: false });
+        jest.spyOn(element.dashboard, 'canAddAnnotations').mockReturnValue(true);
+
+        const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
+
+        expect(result.length).toEqual(1);
+        expect(result[0].items.length).toEqual(1);
+        expect(result[0].items[0].label).toEqual('Add annotation');
+        expect(result[0].items[0].icon).toEqual('comment-alt');
+        expect(result[0].items[0].onClick).toBeDefined();
+      });
+    });
+
+    describe('when called and user can make the dashboard editable', () => {
+      it('then the correct menu items should be returned', () => {
+        const element = getGraphElement({ canEdit: false, canMakeEditable: true });
+        jest.spyOn(element.dashboard, 'canAddAnnotations').mockReturnValue(true);
+
+        const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
+
+        expect(result.length).toEqual(1);
+        expect(result[0].items.length).toEqual(1);
+        expect(result[0].items[0].label).toEqual('Add annotation');
+        expect(result[0].items[0].icon).toEqual('comment-alt');
+        expect(result[0].items[0].onClick).toBeDefined();
+      });
+    });
+
+    describe('when called and user can not edit the dashboard and can not make the dashboard editable', () => {
+      it('then the correct menu items should be returned', () => {
+        const element = getGraphElement({ canEdit: false, canMakeEditable: false });
+
+        const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
+
+        expect(result.length).toEqual(0);
+      });
+    });
+  });
 });
+
+function getGraphElement({ canEdit, canMakeEditable }: { canEdit?: boolean; canMakeEditable?: boolean } = {}) {
+  const dashboard = createDashboardModelFixture({});
+  dashboard.events.on = jest.fn();
+  dashboard.meta.canEdit = canEdit;
+  dashboard.meta.canMakeEditable = canMakeEditable;
+  const element = new GraphElement(
+    {
+      ctrl: {
+        contextMenuCtrl: {},
+        dashboard,
+        events: { on: jest.fn() },
+      },
+    },
+    { mouseleave: jest.fn(), bind: jest.fn() } as any,
+    {} as any
+  );
+
+  return element;
+}

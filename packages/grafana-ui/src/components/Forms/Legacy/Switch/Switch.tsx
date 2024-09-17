@@ -1,17 +1,25 @@
-import React, { PureComponent } from 'react';
-import uniqueId from 'lodash/uniqueId';
-import { Tooltip } from '../../../Tooltip/Tooltip';
-import * as PopperJS from 'popper.js';
-import { Icon } from '../../..';
+import { css, cx } from '@emotion/css';
+import { Placement } from '@popperjs/core';
+import { uniqueId } from 'lodash';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
-export interface Props {
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { withTheme2 } from '../../../../themes';
+import { Themeable2 } from '../../../../types';
+import { Icon } from '../../../Icon/Icon';
+import { Tooltip } from '../../../Tooltip/Tooltip';
+
+export interface Props extends Themeable2 {
   label: string;
   checked: boolean;
+  disabled?: boolean;
   className?: string;
   labelClass?: string;
   switchClass?: string;
   tooltip?: string;
-  tooltipPlacement?: PopperJS.Placement;
+  tooltipPlacement?: Placement;
   transparent?: boolean;
   onChange: (event: React.SyntheticEvent<HTMLInputElement>) => void;
 }
@@ -20,7 +28,8 @@ export interface State {
   id: string;
 }
 
-export class Switch extends PureComponent<Props, State> {
+/** @deprecated Please use the `Switch` component, {@link https://developers.grafana.com/ui/latest/index.html?path=/story/forms-switch--controlled as seen in Storybook} */
+class UnthemedSwitch extends PureComponent<Props, State> {
   state = {
     id: uniqueId(),
   };
@@ -36,37 +45,112 @@ export class Switch extends PureComponent<Props, State> {
       switchClass = '',
       label,
       checked,
+      disabled,
       transparent,
       className,
+      theme,
       tooltip,
       tooltipPlacement,
     } = this.props;
+    const styles = getStyles(theme);
 
     const labelId = this.state.id;
     const labelClassName = `gf-form-label ${labelClass} ${transparent ? 'gf-form-label--transparent' : ''} pointer`;
-    const switchClassName = `gf-form-switch ${switchClass} ${transparent ? 'gf-form-switch--transparent' : ''}`;
+    const switchClassName = cx(styles.switch, switchClass, {
+      [styles.switchTransparent]: transparent,
+    });
 
     return (
-      <div className="gf-form-switch-container-react">
-        <label htmlFor={labelId} className={`gf-form gf-form-switch-container ${className || ''}`}>
+      <div className={styles.container}>
+        <label htmlFor={labelId} className={cx('gf-form', styles.labelContainer, className)}>
           {label && (
             <div className={labelClassName}>
               {label}
               {tooltip && (
                 <Tooltip placement={tooltipPlacement ? tooltipPlacement : 'auto'} content={tooltip} theme={'info'}>
-                  <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-                    <Icon name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
-                  </div>
+                  <Icon name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
                 </Tooltip>
               )}
             </div>
           )}
           <div className={switchClassName}>
-            <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
-            <span className="gf-form-switch__slider" />
+            <input
+              disabled={disabled}
+              id={labelId}
+              type="checkbox"
+              checked={checked}
+              onChange={this.internalOnChange}
+            />
+            <span className={styles.slider} />
           </div>
         </label>
       </div>
     );
   }
 }
+
+export const Switch = withTheme2(UnthemedSwitch);
+
+const getStyles = (theme: GrafanaTheme2) => {
+  const slider = css({
+    background: theme.v1.palette.gray1,
+    borderRadius: theme.shape.radius.pill,
+    height: '16px',
+    width: '32px',
+    display: 'block',
+    position: 'relative',
+
+    '&::before': {
+      position: 'absolute',
+      content: "''",
+      height: '12px',
+      width: '12px',
+      left: '2px',
+      top: '2px',
+      background: theme.components.input.background,
+      transition: '0.4s',
+      borderRadius: theme.shape.radius.circle,
+      boxShadow: theme.shadows.z1,
+    },
+  });
+  return {
+    container: css({
+      display: 'flex',
+      flexShrink: 0,
+    }),
+    labelContainer: css({
+      display: 'flex',
+      cursor: 'pointer',
+      marginRight: theme.spacing(0.5),
+    }),
+    switch: css({
+      display: 'flex',
+      position: 'relative',
+      width: '56px',
+      height: theme.spacing(4),
+      background: theme.components.input.background,
+      border: `1px solid ${theme.components.input.borderColor}`,
+      borderRadius: theme.shape.radius.default,
+      alignItems: 'center',
+      justifyContent: 'center',
+      input: {
+        opacity: 0,
+        width: 0,
+        height: 0,
+      },
+      [`input:checked + .${slider}`]: {
+        background: theme.colors.primary.main,
+      },
+
+      [`input:checked + .${slider}::before`]: {
+        transform: 'translateX(16px)',
+      },
+    }),
+    switchTransparent: css({
+      background: 'transparent',
+      border: 0,
+      width: '40px',
+    }),
+    slider,
+  };
+};

@@ -1,162 +1,161 @@
-import React, { useEffect } from 'react';
-import { css, cx } from 'emotion';
-import { hot } from 'react-hot-loader';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { NavModel } from '@grafana/data';
-import { Pagination, Tooltip, HorizontalGroup, stylesFactory, LinkButton, Input, Icon } from '@grafana/ui';
-import { StoreState, UserDTO } from '../../types';
-import Page from 'app/core/components/Page/Page';
-import { getNavModel } from '../../core/selectors/navModel';
-import { fetchUsers, changeQuery, changePage } from './state/actions';
-import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
+import { css } from '@emotion/css';
+import { ComponentType, useEffect } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-interface OwnProps {}
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 
-interface ConnectedProps {
-  navModel: NavModel;
-  users: UserDTO[];
-  query: string;
-  showPaging: boolean;
-  totalPages: number;
-  page: number;
+import { AccessControlAction, StoreState, UserFilter } from '../../types';
+
+import { UsersTable } from './Users/UsersTable';
+import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
+
+export interface FilterProps {
+  filters: UserFilter[];
+  onChange: (filter: UserFilter) => void;
+  className?: string;
 }
-
-interface DispatchProps {
-  fetchUsers: typeof fetchUsers;
-  changeQuery: typeof changeQuery;
-  changePage: typeof changePage;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
-
-const UserListAdminPageUnConnected: React.FC<Props> = props => {
-  const styles = getStyles();
-
-  useEffect(() => {
-    props.fetchUsers();
-  }, []);
-
-  return (
-    <Page navModel={props.navModel}>
-      <Page.Contents>
-        <>
-          <div>
-            <HorizontalGroup justify="space-between">
-              <Input
-                width={40}
-                type="text"
-                placeholder="Search user by login, email or name"
-                tabIndex={1}
-                autoFocus={true}
-                value={props.query}
-                spellCheck={false}
-                onChange={event => props.changeQuery(event.currentTarget.value)}
-                prefix={<Icon name="search" />}
-              />
-              <LinkButton href="admin/users/create" variant="primary">
-                New user
-              </LinkButton>
-            </HorizontalGroup>
-          </div>
-
-          <div className={cx(styles.table, 'admin-list-table')}>
-            <table className="filter-table form-inline filter-table--hover">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Login</th>
-                  <th>Email</th>
-                  <th>Name</th>
-                  <th>
-                    Seen&nbsp;
-                    <Tooltip placement="top" content="Time since user was seen using Grafana">
-                      <Icon name="question-circle" />
-                    </Tooltip>
-                  </th>
-                  <th></th>
-                  <th style={{ width: '1%' }}></th>
-                </tr>
-              </thead>
-              <tbody>{props.users.map(renderUser)}</tbody>
-            </table>
-          </div>
-          {props.showPaging && (
-            <Pagination numberOfPages={props.totalPages} currentPage={props.page} onNavigate={props.changePage} />
-          )}
-        </>
-      </Page.Contents>
-    </Page>
-  );
+const extraFilters: Array<ComponentType<FilterProps>> = [];
+export const addExtraFilters = (filter: ComponentType<FilterProps>) => {
+  extraFilters.push(filter);
 };
 
-const renderUser = (user: UserDTO) => {
-  const editUrl = `admin/users/edit/${user.id}`;
+const selectors = e2eSelectors.pages.UserListPage.UserListAdminPage;
 
-  return (
-    <tr key={user.id}>
-      <td className="width-4 text-center link-td">
-        <a href={editUrl}>
-          <img className="filter-table__avatar" src={user.avatarUrl} />
-        </a>
-      </td>
-      <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.login}>
-          {user.login}
-        </a>
-      </td>
-      <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.email}>
-          {user.email}
-        </a>
-      </td>
-      <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.name}>
-          {user.name}
-        </a>
-      </td>
-      <td className="link-td">{user.lastSeenAtAge && <a href={editUrl}>{user.lastSeenAtAge}</a>}</td>
-      <td className="link-td">
-        {user.isAdmin && (
-          <a href={editUrl}>
-            <Tooltip placement="top" content="Grafana Admin">
-              <Icon name="shield" />
-            </Tooltip>
-          </a>
-        )}
-      </td>
-      <td className="text-right">
-        {Array.isArray(user.authLabels) && user.authLabels.length > 0 && (
-          <TagBadge label={user.authLabels[0]} removeIcon={false} count={0} />
-        )}
-      </td>
-      <td className="text-right">
-        {user.isDisabled && <span className="label label-tag label-tag--gray">Disabled</span>}
-      </td>
-    </tr>
-  );
-};
-
-const getStyles = stylesFactory(() => {
-  return {
-    table: css`
-      margin-top: 28px;
-    `,
-  };
-});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+const mapDispatchToProps = {
   fetchUsers,
   changeQuery,
   changePage,
+  changeFilter,
+  changeSort,
 };
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  navModel: getNavModel(state.navIndex, 'global-users'),
+const mapStateToProps = (state: StoreState) => ({
   users: state.userListAdmin.users,
   query: state.userListAdmin.query,
   showPaging: state.userListAdmin.showPaging,
   totalPages: state.userListAdmin.totalPages,
   page: state.userListAdmin.page,
+  filters: state.userListAdmin.filters,
+  isLoading: state.userListAdmin.isLoading,
 });
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UserListAdminPageUnConnected));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+interface OwnProps {}
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+const UserListAdminPageUnConnected = ({
+  fetchUsers,
+  query,
+  changeQuery,
+  users,
+  showPaging,
+  changeFilter,
+  filters,
+  totalPages,
+  page,
+  changePage,
+  changeSort,
+  isLoading,
+}: Props) => {
+  const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  return (
+    <Page.Contents>
+      <div className={styles.actionBar} data-testid={selectors.container}>
+        <div className={styles.row}>
+          <FilterInput
+            placeholder="Search user by login, email, or name."
+            autoFocus={true}
+            value={query}
+            onChange={changeQuery}
+          />
+          <RadioButtonGroup
+            options={[
+              { label: 'All users', value: false },
+              { label: 'Active last 30 days', value: true },
+            ]}
+            onChange={(value) => changeFilter({ name: 'activeLast30Days', value })}
+            value={filters.find((f) => f.name === 'activeLast30Days')?.value}
+            className={styles.filter}
+          />
+          {extraFilters.map((FilterComponent, index) => (
+            <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
+          ))}
+          {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
+            <LinkButton href="admin/users/create" variant="primary">
+              New user
+            </LinkButton>
+          )}
+        </div>
+      </div>
+      {!isLoading && users.length === 0 ? (
+        <EmptyState message={t('users.empty-state.message', 'No users found')} variant="not-found" />
+      ) : (
+        <UsersTable
+          users={users}
+          showPaging={showPaging}
+          totalPages={totalPages}
+          onChangePage={changePage}
+          currentPage={page}
+          fetchData={changeSort}
+        />
+      )}
+    </Page.Contents>
+  );
+};
+
+export const UserListAdminPageContent = connector(UserListAdminPageUnConnected);
+
+export function UserListAdminPage() {
+  return (
+    <Page navId="global-users">
+      <UserListAdminPageContent />
+    </Page>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    filter: css({
+      margin: theme.spacing(0, 1),
+      [theme.breakpoints.down('sm')]: {
+        margin: 0,
+      },
+    }),
+    actionBar: css({
+      marginBottom: theme.spacing(2),
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: theme.spacing(2),
+      [theme.breakpoints.down('sm')]: {
+        flexWrap: 'wrap',
+      },
+    }),
+    row: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      textAlign: 'left',
+      marginBottom: theme.spacing(0.5),
+      flexGrow: 1,
+
+      [theme.breakpoints.down('sm')]: {
+        flexWrap: 'wrap',
+        gap: theme.spacing(2),
+        width: '100%',
+      },
+    }),
+  };
+};
+
+export default UserListAdminPage;

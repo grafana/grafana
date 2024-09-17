@@ -1,0 +1,170 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          },
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 1394,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+      {
+        "datasource": {
+          "uid": "PD8C576611E62080A",
+          "type": "testdata"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "color": {
+              "mode": "thresholds"
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 2,
+        "targets": [
+          {
+            "scenarioId": "csv_content",
+            "refId": "A",
+            "datasource": {
+              "uid": "PD8C576611E62080A",
+              "type": "testdata"
+            },
+            "csvContent": "AAA\n1\n2\n3\n4"
+          },
+          {
+            "scenarioId": "csv_content",
+            "refId": "B",
+            "datasource": {
+              "uid": "PD8C576611E62080A",
+              "type": "testdata"
+            },
+            "csvContent": "BBB\n1\n2\n3\n4\n",
+            "hide": false
+          }
+        ],
+        "title": "Transformer query filters",
+        "type": "table",
+        "transformations": [
+          {
+            "id": "reduce",
+            "options": {
+              "reducers": [
+                "min"
+              ],
+              "mode": "reduceFields",
+              "includeTimeField": false
+            },
+            "filter": {
+              "id": "byRefId",
+              "options": "A"
+            }
+          },
+          {
+            "id": "reduce",
+            "options": {
+              "reducers": [
+                "max"
+              ],
+              "mode": "reduceFields",
+              "includeTimeField": false
+            },
+            "filter": {
+              "id": "byRefId",
+              "options": "B"
+            }
+          },
+          {
+            "id": "concatenate",
+            "options": {}
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "indexByName": {},
+              "renameByName": {
+                "AAA": "Min from Query A",
+                "BBB": "Max from Query B"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true,
+          "footer": {
+            "show": false,
+            "reducer": [
+              "sum"
+            ],
+            "countRows": false,
+            "fields": ""
+          },
+          "frameIndex": 0
+        },
+        "pluginVersion": "9.4.0-pre"
+      }
+    ],
+    "schemaVersion": 37,
+      "tags": [
+      "gdev",
+      "transform"
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Transforms - Filters",
+    "uid": "fGWBVW4k"
+  }

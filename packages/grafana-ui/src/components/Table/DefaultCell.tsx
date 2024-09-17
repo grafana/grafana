@@ -1,78 +1,168 @@
-import React, { FC, MouseEventHandler, ReactElement } from 'react';
-import { DisplayValue, Field, formattedValueToString, LinkModel } from '@grafana/data';
+import { cx } from '@emotion/css';
+import { ReactElement, useState } from 'react';
+import * as React from 'react';
 
-import { TableCellDisplayMode, TableCellProps } from './types';
-import tinycolor from 'tinycolor2';
+import { DisplayValue, formattedValueToString } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
+
+import { useStyles2 } from '../../themes';
+import { getCellLinks } from '../../utils';
+import { clearLinkButtonStyles } from '../Button';
+import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
+
+import { CellActions } from './CellActions';
+import { TableCellInspectorMode } from './TableCellInspector';
 import { TableStyles } from './styles';
-import { FilterActions } from './FilterActions';
-import { getTextColorForBackground } from '../../utils';
+import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
+import { getCellColors, getCellOptions } from './utils';
 
-export const DefaultCell: FC<TableCellProps> = props => {
-  const { field, cell, tableStyles, row, cellProps } = props;
+export const DefaultCell = (props: TableCellProps) => {
+  const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
 
+  const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
 
+  const showFilters = props.onCellFilterAdded && field.config.filterable;
+  const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
+  const cellOptions = getCellOptions(field);
+  const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
+  const [hover, setHover] = useState(false);
   let value: string | ReactElement;
-  if (React.isValidElement(cell.value)) {
-    value = cell.value;
+
+  const OG_TWEET_LENGTH = 140; // 🙏
+
+  const onMouseLeave = () => {
+    setHover(false);
+  };
+  const onMouseEnter = () => {
+    setHover(true);
+  };
+
+  if (cellOptions.type === TableCellDisplayMode.Custom) {
+    const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
+    value = <CustomCellComponent field={field} value={cell.value} rowIndex={row.index} frame={frame} />;
   } else {
-    value = formattedValueToString(displayValue);
+    if (React.isValidElement(cell.value)) {
+      value = cell.value;
+    } else {
+      value = formattedValueToString(displayValue);
+    }
   }
 
-  const cellStyle = getCellStyle(tableStyles, field, displayValue);
-  const showFilters = field.config.filterable;
+  const isStringValue = typeof value === 'string';
 
-  let link: LinkModel<any> | undefined;
-  let onClick: MouseEventHandler<HTMLAnchorElement> | undefined;
+  // Text should wrap when the content length is less than or equal to the length of an OG tweet and it contains whitespace
+  const textShouldWrap = displayValue.text.length <= OG_TWEET_LENGTH && /\s/.test(displayValue.text);
+  const cellStyle = getCellStyle(
+    tableStyles,
+    cellOptions,
+    displayValue,
+    inspectEnabled,
+    isStringValue,
+    textShouldWrap,
+    textWrapped,
+    rowStyled,
+    rowExpanded
+  );
 
-  if (field.getLinks) {
-    link = field.getLinks({
-      valueRowIndex: row.index,
-    })[0];
+  if (isStringValue) {
+    let justifyContent = cellProps.style?.justifyContent;
+
+    if (justifyContent === 'flex-end') {
+      cellProps.style = { ...cellProps.style, textAlign: 'right' };
+    } else if (justifyContent === 'center') {
+      cellProps.style = { ...cellProps.style, textAlign: 'center' };
+    }
   }
 
-  if (link && link.onClick) {
-    onClick = event => {
-      // Allow opening in new tab
-      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link!.onClick) {
-        event.preventDefault();
-        link!.onClick(event);
-      }
-    };
+  if (height) {
+    cellProps.style = { ...cellProps.style, height };
   }
+
+  if (textWrapped) {
+    cellProps.style = { ...cellProps.style, textWrap: 'wrap' };
+  }
+
+  const { key, ...rest } = cellProps;
 
   return (
-    <div {...cellProps} className={cellStyle}>
-      {!link && <div className={tableStyles.cellText}>{value}</div>}
-      {link && (
-        <a href={link.href} onClick={onClick} target={link.target} title={link.title} className={tableStyles.cellLink}>
-          {value}
-        </a>
+    <div
+      key={key}
+      {...rest}
+      onMouseEnter={showActions ? onMouseEnter : undefined}
+      onMouseLeave={showActions ? onMouseLeave : undefined}
+      className={cellStyle}
+    >
+      {!hasLinks && (isStringValue ? `${value}` : <div className={tableStyles.cellText}>{value}</div>)}
+
+      {hasLinks && (
+        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+          {(api) => {
+            if (api.openMenu) {
+              return (
+                <button
+                  className={cx(clearButtonStyle, getLinkStyle(tableStyles, cellOptions, api.targetClassName))}
+                  onClick={api.openMenu}
+                >
+                  {value}
+                </button>
+              );
+            } else {
+              return <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
+            }
+          }}
+        </DataLinksContextMenu>
       )}
-      {showFilters && cell.value !== undefined && <FilterActions {...props} />}
+
+      {hover && showActions && (
+        <CellActions {...props} previewMode={TableCellInspectorMode.text} showFilters={showFilters} />
+      )}
     </div>
   );
 };
 
-function getCellStyle(tableStyles: TableStyles, field: Field, displayValue: DisplayValue) {
-  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorText) {
-    return tableStyles.buildCellContainerStyle(displayValue.color);
+function getCellStyle(
+  tableStyles: TableStyles,
+  cellOptions: TableCellOptions,
+  displayValue: DisplayValue,
+  disableOverflowOnHover = false,
+  isStringValue = false,
+  shouldWrapText = false,
+  textWrapped = false,
+  rowStyled = false,
+  rowExpanded = false
+) {
+  // Setup color variables
+  let textColor: string | undefined = undefined;
+  let bgColor: string | undefined = undefined;
+  let bgHoverColor: string | undefined = undefined;
+
+  // Get colors
+  const colors = getCellColors(tableStyles, cellOptions, displayValue);
+  textColor = colors.textColor;
+  bgColor = colors.bgColor;
+  bgHoverColor = colors.bgHoverColor;
+
+  // If we have definied colors return those styles
+  // Otherwise we return default styles
+  return tableStyles.buildCellContainerStyle(
+    textColor,
+    bgColor,
+    bgHoverColor,
+    !disableOverflowOnHover,
+    isStringValue,
+    shouldWrapText,
+    textWrapped,
+    rowStyled,
+    rowExpanded
+  );
+}
+
+function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, targetClassName: string | undefined) {
+  if (cellOptions.type === TableCellDisplayMode.Auto) {
+    return cx(tableStyles.cellLink, targetClassName);
   }
 
-  if (field.config.custom?.displayMode === TableCellDisplayMode.ColorBackground) {
-    const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
-    const bgColor2 = tinycolor(displayValue.color)
-      .darken(10 * themeFactor)
-      .spin(5)
-      .toRgbString();
-
-    const textColor = getTextColorForBackground(displayValue.color!);
-
-    return tableStyles.buildCellContainerStyle(
-      textColor,
-      `linear-gradient(120deg, ${bgColor2}, ${displayValue.color})`
-    );
-  }
-
-  return tableStyles.cellContainer;
+  return cx(tableStyles.cellLinkForColoredCell, targetClassName);
 }

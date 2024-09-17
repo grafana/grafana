@@ -1,5 +1,3 @@
-import { MutableVector } from '../types/vector';
-import { vectorToArray } from './vectorToArray';
 import { FunctionalVector } from './FunctionalVector';
 
 interface CircularOptions<T> {
@@ -14,8 +12,11 @@ interface CircularOptions<T> {
  *
  * This supports adding to the 'head' or 'tail' and will grow the buffer
  * to match a configured capacity.
+ *
+ * @public
+ * @deprecated use a simple Arrays
  */
-export class CircularVector<T = any> extends FunctionalVector implements MutableVector<T> {
+export class CircularVector<T = any> extends FunctionalVector<T> {
   private buffer: T[];
   private index: number;
   private capacity: number;
@@ -33,6 +34,27 @@ export class CircularVector<T = any> extends FunctionalVector implements Mutable
     if (options.capacity) {
       this.setCapacity(options.capacity);
     }
+    return new Proxy(this, {
+      get(target: CircularVector<T>, property: string, receiver: CircularVector<T>) {
+        if (typeof property !== 'symbol') {
+          const idx = +property;
+          if (String(idx) === property) {
+            return target.get(idx);
+          }
+        }
+        return Reflect.get(target, property, receiver);
+      },
+      set(target: CircularVector<T>, property: string, value: T, receiver: CircularVector<T>) {
+        if (typeof property !== 'symbol') {
+          const idx = +property;
+          if (String(idx) === property) {
+            target.set(idx, value);
+            return true;
+          }
+        }
+        return Reflect.set(target, property, value, receiver);
+      },
+    });
   }
 
   /**
@@ -40,7 +62,7 @@ export class CircularVector<T = any> extends FunctionalVector implements Mutable
    *  * head vs tail
    *  * growing buffer vs overwriting values
    */
-  private getAddFunction() {
+  private getAddFunction(): (value: T) => void {
     // When we are not at capacity, it should actually modify the buffer
     if (this.capacity > this.buffer.length) {
       if (this.tail) {
@@ -111,13 +133,8 @@ export class CircularVector<T = any> extends FunctionalVector implements Mutable
   }
 
   reverse() {
-    this.buffer.reverse();
+    return this.buffer.reverse();
   }
-
-  /**
-   * Add the value to the buffer
-   */
-  add: (value: T) => void;
 
   get(index: number) {
     return this.buffer[(index + this.index) % this.buffer.length];
@@ -129,13 +146,5 @@ export class CircularVector<T = any> extends FunctionalVector implements Mutable
 
   get length() {
     return this.buffer.length;
-  }
-
-  toArray(): T[] {
-    return vectorToArray(this);
-  }
-
-  toJSON(): T[] {
-    return vectorToArray(this);
   }
 }

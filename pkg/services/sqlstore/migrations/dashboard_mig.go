@@ -225,4 +225,22 @@ func addDashboardMigration(mg *Migrator) {
 
 	mg.AddMigration("delete stars for deleted dashboards", NewRawSQLMigration(
 		"DELETE FROM star WHERE dashboard_id NOT IN (SELECT id FROM dashboard)"))
+
+	mg.AddMigration("Add index for dashboard_is_folder", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"is_folder"},
+		Type: IndexType,
+	}))
+
+	mg.AddMigration("Add isPublic for dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "is_public", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Add deleted for dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "deleted", Type: DB_DateTime, Nullable: true,
+	}))
+
+	mg.AddMigration("Add index for deleted", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"deleted"},
+		Type: IndexType,
+	}))
 }

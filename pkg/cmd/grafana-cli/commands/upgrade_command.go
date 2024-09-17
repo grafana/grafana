@@ -1,36 +1,47 @@
 package commands
 
 import (
+	"context"
+	"errors"
+	"fmt"
+
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-func (cmd Command) upgradeCommand(c utils.CommandLine) error {
+func upgradeCommand(c utils.CommandLine) error {
+	ctx := context.Background()
 	pluginsDir := c.PluginDirectory()
-	pluginName := c.Args().First()
+	pluginID := c.Args().First()
+	if pluginID == "" {
+		return errors.New("please specify plugin to update")
+	}
 
-	localPlugin, err := services.ReadPlugin(pluginsDir, pluginName)
-
+	localPlugin, err := services.GetLocalPlugin(pluginsDir, pluginID)
 	if err != nil {
 		return err
 	}
 
-	plugin, err2 := cmd.Client.GetPlugin(pluginName, c.RepoDirectory())
-	if err2 != nil {
-		return err2
+	plugin, err := services.GetPluginInfoFromRepo(pluginID, c.PluginRepoURL())
+	if err != nil {
+		return err
 	}
 
-	if shouldUpgrade(localPlugin.Info.Version, &plugin) {
-		if err := services.RemoveInstalledPlugin(pluginsDir, pluginName); err != nil {
-			return errutil.Wrapf(err, "failed to remove plugin '%s'", pluginName)
+	if shouldUpgrade(localPlugin, plugin) {
+		if err = uninstallPlugin(ctx, pluginID, c); err != nil {
+			return fmt.Errorf("failed to remove plugin '%s': %w", pluginID, err)
 		}
 
-		return InstallPlugin(pluginName, "", c, cmd.Client)
+		err = installPlugin(ctx, pluginID, "", newInstallPluginOpts(c))
+		if err == nil {
+			logRestartNotice()
+		}
+		return err
 	}
 
-	logger.Infof("%s %s is up to date \n", color.GreenString("✔"), pluginName)
+	logger.Infof("%s %s is up to date \n", color.GreenString("✔"), pluginID)
 	return nil
 }

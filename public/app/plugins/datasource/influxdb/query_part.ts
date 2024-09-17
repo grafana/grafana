@@ -1,8 +1,9 @@
-import _ from 'lodash';
-import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/core/components/query_part/query_part';
+import { clone, map } from 'lodash';
+
+import { functionRenderer, QueryPart, QueryPartDef, suffixRenderer } from 'app/features/alerting/state/query_part';
 
 const index: any[] = [];
-const categories: any = {
+const categories = {
   Aggregations: [],
   Selectors: [],
   Transformations: [],
@@ -12,7 +13,7 @@ const categories: any = {
   Fields: [],
 };
 
-function createPart(part: any): any {
+function createPart(part: any) {
   const def = index[part.type];
   if (!def) {
     throw { message: 'Could not find query part ' + part.type };
@@ -32,11 +33,24 @@ function aliasRenderer(part: { params: string[] }, innerExpr: string) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
 }
 
-function fieldRenderer(part: { params: string[] }, innerExpr: any) {
-  if (part.params[0] === '*') {
+function fieldRenderer(part: { params: string[] }) {
+  const param = part.params[0];
+
+  if (param === '*') {
     return '*';
   }
-  return '"' + part.params[0] + '"';
+
+  let escapedParam = `"${param}"`;
+
+  if (param.endsWith('::tag')) {
+    escapedParam = `"${param.slice(0, -5)}"::tag`;
+  }
+
+  if (param.endsWith('::field')) {
+    escapedParam = `"${param.slice(0, -7)}"::field`;
+  }
+
+  return escapedParam;
 }
 
 function replaceAggregationAddStrategy(selectParts: any[], partModel: { def: { type: string } }) {
@@ -126,8 +140,8 @@ function addAliasStrategy(selectParts: any[], partModel: any) {
 
 function addFieldStrategy(selectParts: any, partModel: any, query: { selectModels: any[][] }) {
   // copy all parts
-  const parts = _.map(selectParts, (part: any) => {
-    return createPart({ type: part.def.type, params: _.clone(part.params) });
+  const parts = map(selectParts, (part) => {
+    return createPart({ type: part.def.type, params: clone(part.params) });
   });
 
   query.selectModels.push(parts);

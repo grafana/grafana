@@ -1,35 +1,33 @@
 package notifications
 
 import (
-	"io/ioutil"
+	"context"
+	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestEmailIntegrationTest(t *testing.T) {
-	SkipConvey("Given the notifications service", t, func() {
-		setting.StaticRootPath = "../../../public/"
+	t.Run("Given the notifications service", func(t *testing.T) {
 		setting.BuildVersion = "4.0.0"
 
-		ns := &NotificationService{}
-		ns.Bus = bus.New()
-		ns.Cfg = setting.NewCfg()
-		ns.Cfg.Smtp.Enabled = true
-		ns.Cfg.Smtp.TemplatesPattern = "emails/*.html"
-		ns.Cfg.Smtp.FromAddress = "from@address.com"
-		ns.Cfg.Smtp.FromName = "Grafana Admin"
+		cfg := setting.NewCfg()
+		cfg.Smtp.Enabled = true
+		cfg.StaticRootPath = "../../../public/"
+		cfg.Smtp.TemplatesPatterns = []string{"emails/*.html", "emails/*.txt"}
+		cfg.Smtp.FromAddress = "from@address.com"
+		cfg.Smtp.FromName = "Grafana Admin"
+		cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
+		ns, err := ProvideService(newBus(t), cfg, NewFakeMailer(), nil)
+		require.NoError(t, err)
 
-		err := ns.Init()
-		So(err, ShouldBeNil)
+		t.Run("When sending reset email password", func(t *testing.T) {
+			cmd := &SendEmailCommand{
 
-		Convey("When sending reset email password", func() {
-			cmd := &models.SendEmailCommand{
-
-				Data: map[string]interface{}{
+				Data: map[string]any{
 					"Title":         "[CRITICAL] Imaginary timeseries alert",
 					"State":         "Firing",
 					"Name":          "Imaginary timeseries alert",
@@ -52,17 +50,27 @@ func TestEmailIntegrationTest(t *testing.T) {
 					},
 				},
 				To:       []string{"asdf@asdf.com"},
-				Template: "alert_notification.html",
+				Template: "alert_notification",
 			}
 
-			err := ns.sendEmailCommandHandler(cmd)
-			So(err, ShouldBeNil)
+			err := ns.SendEmailCommandHandler(context.Background(), cmd)
+			require.NoError(t, err)
 
 			sentMsg := <-ns.mailQueue
-			So(sentMsg.From, ShouldEqual, "Grafana Admin <from@address.com>")
-			So(sentMsg.To[0], ShouldEqual, "asdf@asdf.com")
-			err = ioutil.WriteFile("../../../tmp/test_email.html", []byte(sentMsg.Body), 0777)
-			So(err, ShouldBeNil)
+			require.Equal(t, "\"Grafana Admin\" <from@address.com>", sentMsg.From)
+			require.Equal(t, "asdf@asdf.com", sentMsg.To[0])
+			require.Equal(t, "[CRITICAL] Imaginary timeseries alert", sentMsg.Subject)
+			require.Contains(t, sentMsg.Body["text/html"], "<title>[CRITICAL] Imaginary timeseries alert</title>")
+
+			path, err := os.MkdirTemp("../../..", "tmp")
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = os.RemoveAll(path)
+			})
+			err = os.WriteFile(path+"/test_email.html", []byte(sentMsg.Body["text/html"]), 0777)
+			require.NoError(t, err)
+			err = os.WriteFile(path+"/test_email.txt", []byte(sentMsg.Body["text/plain"]), 0777)
+			require.NoError(t, err)
 		})
 	})
 }

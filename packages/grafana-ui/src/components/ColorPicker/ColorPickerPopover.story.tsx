@@ -1,30 +1,52 @@
+import { Meta } from '@storybook/react';
+import { useState } from 'react';
+
+import { useTheme2 } from '../../themes';
+
+import mdx from './ColorPicker.mdx';
 import { ColorPickerPopover } from './ColorPickerPopover';
-
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
-import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 
-export default {
+const meta: Meta<typeof ColorPickerPopover> = {
   title: 'Pickers and Editors/ColorPicker/Popovers',
   component: ColorPickerPopover,
-  subcomponents: { SeriesColorPickerPopover },
-  decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
-export const basic = () => {
-  return renderComponentWithTheme(ColorPickerPopover, {
-    color: '#BC67E6',
-    onChange: (color: any) => {
-      console.log(color);
-    },
-  });
+export const Basic = () => {
+  return (
+    <div style={{ position: 'absolute' }}>
+      <ColorPickerPopover
+        color="#BC67E6"
+        onChange={(color: string) => {
+          console.log(color);
+        }}
+      />
+    </div>
+  );
 };
 
-export const seriesColorPickerPopover = () => {
-  return renderComponentWithTheme(SeriesColorPickerPopover, {
-    color: '#BC67E6',
-    onChange: (color: any) => {
-      console.log(color);
-    },
-  });
+export const SeriesColorPickerPopoverExample = () => {
+  const theme = useTheme2();
+  const [yAxis, setYAxis] = useState(0);
+
+  return (
+    <div style={{ position: 'absolute' }}>
+      <SeriesColorPickerPopover
+        theme={theme}
+        yaxis={yAxis}
+        onToggleAxis={() => (yAxis ? setYAxis(0) : setYAxis(2))}
+        color="#BC67E6"
+        onChange={(color: string) => {
+          console.log(color);
+        }}
+      />
+    </div>
+  );
 };
+
+export default meta;

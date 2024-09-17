@@ -3,18 +3,22 @@ package ldap
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"net"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/davecgh/go-spew/spew"
+	"github.com/go-ldap/ldap/v3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"gopkg.in/ldap.v3"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -30,8 +34,8 @@ type IConnection interface {
 
 // IServer is interface for LDAP authorization
 type IServer interface {
-	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
-	Users([]string) ([]*models.ExternalUserInfo, error)
+	Login(*login.LoginUserQuery) (*login.ExternalUserInfo, error)
+	Users([]string) ([]*login.ExternalUserInfo, error)
 	Bind() error
 	UserBind(string, string) error
 	Dial() error
@@ -40,6 +44,7 @@ type IServer interface {
 
 // Server is basic struct of LDAP authorization
 type Server struct {
+	cfg        *Config
 	Config     *ServerConfig
 	Connection IConnection
 	log        log.Logger
@@ -80,9 +85,10 @@ var (
 )
 
 // New creates the new LDAP connection
-func New(config *ServerConfig) IServer {
+func New(config *ServerConfig, cfg *Config) IServer {
 	return &Server{
 		Config: config,
+		cfg:    cfg,
 		log:    log.New("ldap"),
 	}
 }
@@ -90,50 +96,45 @@ func New(config *ServerConfig) IServer {
 // Dial dials in the LDAP
 // TODO: decrease cyclomatic complexity
 func (server *Server) Dial() error {
-	var err error
-	var certPool *x509.CertPool
-	if server.Config.RootCACert != "" {
-		certPool = x509.NewCertPool()
-		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
-			pem, err := ioutil.ReadFile(caCertFile)
-			if err != nil {
-				return err
-			}
-			if !certPool.AppendCertsFromPEM(pem) {
-				return errors.New("Failed to append CA certificate " + caCertFile)
-			}
-		}
+	certPool, err := getRootCACertPool(*server.Config)
+	if err != nil {
+		return err
 	}
-	var clientCert tls.Certificate
-	if server.Config.ClientCert != "" && server.Config.ClientKey != "" {
-		clientCert, err = tls.LoadX509KeyPair(server.Config.ClientCert, server.Config.ClientKey)
-		if err != nil {
-			return err
-		}
+
+	clientCert, err := getClientCert(*server.Config)
+	if err != nil {
+		return err
 	}
+
+	timeout := time.Duration(server.Config.Timeout) * time.Second
+
 	for _, host := range strings.Split(server.Config.Host, " ") {
+		// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
+		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
 		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
 		if server.Config.UseSSL {
 			tlsCfg := &tls.Config{
 				InsecureSkipVerify: server.Config.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
+				MinVersion:         server.Config.MinTLSVersionID,
+				CipherSuites:       server.Config.TLSCipherIDs,
 			}
 			if len(clientCert.Certificate) > 0 {
 				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if server.Config.StartTLS {
-				server.Connection, err = ldap.Dial("tcp", address)
+				server.Connection, err = dialWithTimeout("tcp", address, timeout)
 				if err == nil {
 					if err = server.Connection.StartTLS(tlsCfg); err == nil {
 						return nil
 					}
 				}
 			} else {
-				server.Connection, err = ldap.DialTLS("tcp", address, tlsCfg)
+				server.Connection, err = dialTLSWithTimeout("tcp", address, tlsCfg, timeout)
 			}
 		} else {
-			server.Connection, err = ldap.Dial("tcp", address)
+			server.Connection, err = dialWithTimeout("tcp", address, timeout)
 		}
 
 		if err == nil {
@@ -141,6 +142,30 @@ func (server *Server) Dial() error {
 		}
 	}
 	return err
+}
+
+// dialWithTimeout applies the specified timeout
+// and connects to the given address on the given network using net.Dial
+func dialWithTimeout(network, addr string, timeout time.Duration) (*ldap.Conn, error) {
+	c, err := net.DialTimeout(network, addr, timeout)
+	if err != nil {
+		return nil, err
+	}
+	conn := ldap.NewConn(c, false)
+	conn.Start()
+	return conn, nil
+}
+
+// dialTLSWithTimeout applies the specified timeout
+// connects to the given address on the given network using tls.Dial
+func dialTLSWithTimeout(network, addr string, config *tls.Config, timeout time.Duration) (*ldap.Conn, error) {
+	c, err := tls.DialWithDialer(&net.Dialer{Timeout: timeout}, network, addr, config)
+	if err != nil {
+		return nil, err
+	}
+	conn := ldap.NewConn(c, true)
+	conn.Start()
+	return conn, nil
 }
 
 // Close closes the LDAP connection
@@ -168,8 +193,8 @@ func (server *Server) Close() {
 //
 // Dial() sets the connection with the server for this Struct. Therefore, we require a
 // call to Dial() before being able to execute this function.
-func (server *Server) Login(query *models.LoginUserQuery) (
-	*models.ExternalUserInfo, error,
+func (server *Server) Login(query *login.LoginUserQuery) (
+	*login.ExternalUserInfo, error,
 ) {
 	var err error
 	var authAndBind bool
@@ -245,26 +270,21 @@ func (server *Server) shouldSingleBind() bool {
 // Dial() sets the connection with the server for this Struct. Therefore, we require a
 // call to Dial() before being able to execute this function.
 func (server *Server) Users(logins []string) (
-	[]*models.ExternalUserInfo,
+	[]*login.ExternalUserInfo,
 	error,
 ) {
-	var users []*ldap.Entry
+	var users [][]*ldap.Entry
 	err := getUsersIteration(logins, func(previous, current int) error {
-		entries, err := server.users(logins[previous:current])
-		if err != nil {
-			return err
-		}
-
-		users = append(users, entries...)
-
-		return nil
+		iterationUsers, err := server.users(logins[previous:current])
+		users = append(users, iterationUsers...)
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	if len(users) == 0 {
-		return []*models.ExternalUserInfo{}, nil
+		return []*login.ExternalUserInfo{}, nil
 	}
 
 	serializedUsers, err := server.serializeUsers(users)
@@ -273,10 +293,70 @@ func (server *Server) Users(logins []string) (
 	}
 
 	server.log.Debug(
-		"LDAP users found", "users", spew.Sdump(serializedUsers),
+		"LDAP users found", "users", fmt.Sprintf("%+v", serializedUsers),
 	)
 
 	return serializedUsers, nil
+}
+
+func getRootCACertPool(config ServerConfig) (*x509.CertPool, error) {
+	var pemCerts [][]byte
+
+	if config.RootCACert != "" {
+		for _, caCertFile := range util.SplitString(config.RootCACert) {
+			// nolint:gosec
+			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
+			pem, err := os.ReadFile(caCertFile)
+			if err != nil {
+				return nil, err
+			}
+
+			pemCerts = append(pemCerts, pem)
+		}
+	} else if len(config.RootCACertValue) > 0 {
+		for _, cert := range config.RootCACertValue {
+			pem, err := base64.StdEncoding.DecodeString(cert)
+			if err != nil {
+				return nil, err
+			}
+
+			pemCerts = append(pemCerts, pem)
+		}
+	}
+
+	if len(pemCerts) > 0 {
+		certPool := x509.NewCertPool()
+
+		for _, pem := range pemCerts {
+			if !certPool.AppendCertsFromPEM(pem) {
+				return nil, errors.New("failed to append CA certificate")
+			}
+		}
+
+		return certPool, nil
+	}
+
+	return nil, nil
+}
+
+func getClientCert(config ServerConfig) (tls.Certificate, error) {
+	if config.ClientCert != "" && config.ClientKey != "" {
+		return tls.LoadX509KeyPair(config.ClientCert, config.ClientKey)
+	} else if config.ClientCertValue != "" && config.ClientKeyValue != "" {
+		certPem, err := base64.StdEncoding.DecodeString(config.ClientCertValue)
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+
+		keyPem, err := base64.StdEncoding.DecodeString(config.ClientKeyValue)
+		if err != nil {
+			return tls.Certificate{}, err
+		}
+
+		return tls.X509KeyPair(certPem, keyPem)
+	}
+
+	return tls.Certificate{}, nil
 }
 
 // getUsersIteration is a helper function for Users() method.
@@ -304,12 +384,14 @@ func getUsersIteration(logins []string, fn func(int, int) error) error {
 
 // users is helper method for the Users()
 func (server *Server) users(logins []string) (
-	[]*ldap.Entry,
+	[][]*ldap.Entry,
 	error,
 ) {
 	var result *ldap.SearchResult
 	var Config = server.Config
 	var err error
+
+	var entries = make([][]*ldap.Entry, 0, len(Config.SearchBaseDNs))
 
 	for _, base := range Config.SearchBaseDNs {
 		result, err = server.Connection.Search(
@@ -320,19 +402,20 @@ func (server *Server) users(logins []string) (
 		}
 
 		if len(result.Entries) > 0 {
-			break
+			entries = append(entries, result.Entries)
 		}
 	}
 
-	return result.Entries, nil
+	return entries, nil
 }
 
 // validateGrafanaUser validates user access.
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
-func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
-	if len(server.Config.Groups) > 0 && len(user.OrgRoles) < 1 {
-		server.log.Error(
+func (server *Server) validateGrafanaUser(user *login.ExternalUserInfo) error {
+	if !server.cfg.SkipOrgRoleSync && len(server.Config.Groups) > 0 &&
+		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
+		server.log.Warn(
 			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
 			"groups", user.Groups,
@@ -391,15 +474,15 @@ func (server *Server) getSearchRequest(
 }
 
 // buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo
-func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserInfo, error) {
+func (server *Server) buildGrafanaUser(user *ldap.Entry) (*login.ExternalUserInfo, error) {
 	memberOf, err := server.getMemberOf(user)
 	if err != nil {
 		return nil, err
 	}
 
 	attrs := server.Config.Attr
-	extUser := &models.ExternalUserInfo{
-		AuthModule: models.AuthModuleLDAP,
+	extUser := &login.ExternalUserInfo{
+		AuthModule: login.LDAPAuthModule,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
 			fmt.Sprintf(
@@ -411,26 +494,37 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 		Login:    getAttribute(attrs.Username, user),
 		Email:    getAttribute(attrs.Email, user),
 		Groups:   memberOf,
-		OrgRoles: map[int64]models.RoleType{},
+		OrgRoles: map[int64]org.RoleType{},
 	}
 
+	// Skipping org role sync
+	if server.cfg.SkipOrgRoleSync {
+		server.log.Debug("Skipping organization role mapping.")
+		return extUser, nil
+	}
+
+	isGrafanaAdmin := false
 	for _, group := range server.Config.Groups {
 		// only use the first match for each org
 		if extUser.OrgRoles[group.OrgId] != "" {
 			continue
 		}
 
-		if isMemberOf(memberOf, group.GroupDN) {
-			extUser.OrgRoles[group.OrgId] = group.OrgRole
-			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
-				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
+		if IsMemberOf(memberOf, group.GroupDN) {
+			if group.OrgRole != "" {
+				extUser.OrgRoles[group.OrgId] = group.OrgRole
+			}
+
+			if !isGrafanaAdmin && (group.IsGrafanaAdmin != nil && *group.IsGrafanaAdmin) {
+				isGrafanaAdmin = true
 			}
 		}
 	}
+	extUser.IsGrafanaAdmin = &isGrafanaAdmin
 
 	// If there are group org mappings configured, but no matching mappings,
 	// the user will not be able to login and will be disabled
-	if len(server.Config.Groups) > 0 && len(extUser.OrgRoles) == 0 {
+	if len(server.Config.Groups) > 0 && (len(extUser.OrgRoles) == 0 && (extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin)) {
 		extUser.IsDisabled = true
 	}
 
@@ -461,7 +555,7 @@ func (server *Server) AdminBind() error {
 	err := server.userBind(server.Config.BindDN, server.Config.BindPassword)
 	if err != nil {
 		server.log.Error(
-			"Cannot authenticate admin user in LDAP",
+			"Cannot authenticate admin user in LDAP. Verify bind configuration",
 			"error",
 			err,
 		)
@@ -553,17 +647,26 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 // serializeUsers serializes the users
 // from LDAP result to ExternalInfo struct
 func (server *Server) serializeUsers(
-	entries []*ldap.Entry,
-) ([]*models.ExternalUserInfo, error) {
-	var serialized []*models.ExternalUserInfo
+	entries [][]*ldap.Entry,
+) ([]*login.ExternalUserInfo, error) {
+	var serialized []*login.ExternalUserInfo
+	var users = map[string]struct{}{}
 
-	for _, user := range entries {
-		extUser, err := server.buildGrafanaUser(user)
-		if err != nil {
-			return nil, err
+	for _, dn := range entries {
+		for _, user := range dn {
+			extUser, err := server.buildGrafanaUser(user)
+			if err != nil {
+				return nil, err
+			}
+
+			if _, exists := users[extUser.Login]; exists {
+				// ignore duplicates
+				continue
+			}
+			users[extUser.Login] = struct{}{}
+
+			serialized = append(serialized, extUser)
 		}
-
-		serialized = append(serialized, extUser)
 	}
 
 	return serialized, nil

@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "State timeline",
+  "id": "state-timeline",
+
+  "info": {
+    "description": "State changes and durations",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/timeline.svg",
+      "large": "img/timeline.svg"
+    }
+  }
+}

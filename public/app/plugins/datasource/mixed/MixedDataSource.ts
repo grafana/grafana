@@ -1,23 +1,28 @@
-import cloneDeep from 'lodash/cloneDeep';
-import groupBy from 'lodash/groupBy';
-import { forkJoin, from, Observable, of } from 'rxjs';
-import { catchError, map, mergeAll, mergeMap } from 'rxjs/operators';
+import { cloneDeep, groupBy } from 'lodash';
+import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
+import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
 
 import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
+  ScopedVars,
 } from '@grafana/data';
-import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { CustomFormatterVariable } from '@grafana/scenes';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
+export const mixedRequestId = (queryIdx: number, requestId?: string) => `mixed-${queryIdx}-${requestId || ''}`;
+
 export interface BatchedQueries {
   datasource: Promise<DataSourceApi>;
-  targets: DataQuery[];
+  queries: DataQuery[];
+  scopedVars: ScopedVars;
 }
 
 export class MixedDatasource extends DataSourceApi<DataQuery> {
@@ -27,29 +32,81 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     // Remove any invalid queries
-    const queries = request.targets.filter(t => {
-      return t.datasource !== MIXED_DATASOURCE_NAME;
+    const queries = request.targets.filter((t) => {
+      return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
     });
 
     if (!queries.length) {
-      return of({ data: [] } as DataQueryResponse); // nothing
+      return of({ data: [] }); // nothing
     }
 
     // Build groups of queries to run in parallel
-    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource');
-    const mixed: BatchedQueries[] = [];
+    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
+    const batches: BatchedQueries[] = [];
 
     for (const key in sets) {
-      const targets = sets[key];
-      const dsName = targets[0].datasource;
+      batches.push(...this.getBatchesForQueries(sets[key], request));
+    }
 
-      mixed.push({
-        datasource: getDataSourceSrv().get(dsName, request.scopedVars),
-        targets,
+    // Missing UIDs?
+    if (!batches.length) {
+      return of({ data: [] }); // nothing
+    }
+
+    return this.batchQueries(batches, request);
+  }
+
+  /**
+   * Almost always returns a single batch for each set of queries.
+   * Unless the query is using a multi value variable.
+   */
+  private getBatchesForQueries(queries: DataQuery[], request: DataQueryRequest<DataQuery>) {
+    const dsRef = queries[0].datasource;
+    const batches: BatchedQueries[] = [];
+
+    // Using the templateSrv.replace function here with a custom formatter as that is the cleanest way
+    // to access the raw value or value array of a variable.
+    const datasourceUid = getTemplateSrv().replace(
+      dsRef?.uid,
+      request.scopedVars,
+      (value: string | string[], variable: CustomFormatterVariable) => {
+        // If it's not a data source variable, or single value
+        if (!Array.isArray(value)) {
+          return value;
+        }
+
+        for (const uid of value) {
+          if (uid === 'default') {
+            continue;
+          }
+
+          const dsSettings = getDataSourceSrv().getInstanceSettings(uid);
+
+          batches.push({
+            datasource: getDataSourceSrv().get(uid),
+            queries: cloneDeep(queries),
+            scopedVars: {
+              ...request.scopedVars,
+              [variable.name]: { value: uid, text: dsSettings?.name },
+            },
+          });
+        }
+
+        return '';
+      }
+    );
+
+    if (datasourceUid !== '') {
+      batches.push({
+        datasource: getDataSourceSrv().get(datasourceUid),
+        queries: cloneDeep(queries),
+        scopedVars: {
+          ...request.scopedVars,
+        },
       });
     }
 
-    return this.batchQueries(mixed, request);
+    return batches;
   }
 
   batchQueries(mixed: BatchedQueries[], request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
@@ -57,44 +114,47 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       from(query.datasource).pipe(
         mergeMap((api: DataSourceApi) => {
           const dsRequest = cloneDeep(request);
-          dsRequest.requestId = `mixed-${i}-${dsRequest.requestId || ''}`;
-          dsRequest.targets = query.targets;
+          dsRequest.requestId = mixedRequestId(i, dsRequest.requestId);
+          dsRequest.targets = query.queries;
+          dsRequest.scopedVars = query.scopedVars;
 
           return from(api.query(dsRequest)).pipe(
-            map(response => {
+            map((response) => {
               return {
                 ...response,
                 data: response.data || [],
                 state: LoadingState.Loading,
-                key: `mixed-${i}-${response.key || ''}`,
-              } as DataQueryResponse;
+                key: mixedRequestId(i, response.key),
+              };
             }),
-            catchError(err => {
+            toArray(),
+            catchError((err) => {
               err = toDataQueryError(err);
-
               err.message = `${api.name}: ${err.message}`;
 
-              return of({
-                data: [],
-                state: LoadingState.Error,
-                error: err,
-                key: `mixed-${i}-${dsRequest.requestId || ''}`,
-              });
+              return of<DataQueryResponse[]>([
+                {
+                  data: [],
+                  state: LoadingState.Error,
+                  error: err,
+                  key: mixedRequestId(i, dsRequest.requestId),
+                },
+              ]);
             })
           );
         })
       )
     );
 
-    return forkJoin(runningQueries).pipe(map(this.finalizeResponses), mergeAll());
+    return forkJoin(runningQueries).pipe(flattenResponses(), map(this.finalizeResponses), mergeAll());
   }
 
-  testDatasource() {
-    return Promise.resolve({});
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 
   private isQueryable(query: BatchedQueries): boolean {
-    return query && Array.isArray(query.targets) && query.targets.length > 0;
+    return query && Array.isArray(query.queries) && query.queries.length > 0;
   }
 
   private finalizeResponses(responses: DataQueryResponse[]): DataQueryResponse[] {
@@ -104,7 +164,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       return responses;
     }
 
-    const error = responses.find(response => response.state === LoadingState.Error);
+    const error = responses.find((response) => response.state === LoadingState.Error);
     if (error) {
       responses.push(error); // adds the first found error entry so error shows up in the panel
     } else {
@@ -113,4 +173,13 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     return responses;
   }
+}
+
+function flattenResponses(): OperatorFunction<DataQueryResponse[][], DataQueryResponse[]> {
+  return reduce((all: DataQueryResponse[], current) => {
+    return current.reduce((innerAll, innerCurrent) => {
+      innerAll.push.apply(innerAll, innerCurrent);
+      return innerAll;
+    }, all);
+  }, []);
 }

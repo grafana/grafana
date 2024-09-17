@@ -4,41 +4,28 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 )
 
-type testLogger struct {
-	log.Logger
-	warnCalled  bool
-	warnMessage string
-}
-
-func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
-	stub.warnCalled = true
-	stub.warnMessage = testMessage
-}
 func TestSessionSettings(t *testing.T) {
-	Convey("session config", t, func() {
-		skipStaticRootValidation = true
+	skipStaticRootValidation = true
 
-		Convey("Reading session should log error ", func() {
-			var (
-				cfg      = NewCfg()
-				homePath = "../../"
-			)
+	t.Run("Reading session should log error ", func(t *testing.T) {
+		cfg := NewCfg()
+		homePath := "../../"
 
-			stub := &testLogger{}
-			cfg.Logger = stub
+		logger := &logtest.Fake{}
+		cfg.Logger = logger
 
-			err := cfg.Load(&CommandLineArgs{
-				HomePath: homePath,
-				Config:   filepath.Join(homePath, "pkg/setting/testdata/session.ini"),
-			})
-			So(err, ShouldBeNil)
-
-			So(stub.warnCalled, ShouldEqual, true)
-			So(len(stub.warnMessage), ShouldBeGreaterThan, 0)
+		err := cfg.Load(CommandLineArgs{
+			HomePath: homePath,
+			Config:   filepath.Join(homePath, "pkg/setting/testdata/session.ini"),
 		})
+		require.Nil(t, err)
+
+		require.Equal(t, 1, logger.WarnLogs.Calls)
+		require.Greater(t, len(logger.WarnLogs.Message), 0)
 	})
 }

@@ -1,4 +1,6 @@
-import { DashboardDatasource } from './datasource';
 import { DataSourcePlugin } from '@grafana/data';
 
-export const plugin = new DataSourcePlugin(DashboardDatasource);
+import { DashboardQueryEditor } from './DashboardQueryEditor';
+import { DashboardDatasource } from './datasource';
+
+export const plugin = new DataSourcePlugin(DashboardDatasource).setQueryEditor(DashboardQueryEditor);

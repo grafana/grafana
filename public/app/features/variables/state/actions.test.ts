@@ -1,23 +1,46 @@
 import { AnyAction } from 'redux';
-import { UrlQueryMap } from '@grafana/data';
 
-import { getRootReducer, getTemplatingAndLocationRootReducer, getTemplatingRootReducer } from './helpers';
-import { variableAdapters } from '../adapters';
-import { createQueryVariableAdapter } from '../query/adapter';
-import { createCustomVariableAdapter } from '../custom/adapter';
-import { createTextBoxVariableAdapter } from '../textbox/adapter';
-import { createConstantVariableAdapter } from '../constant/adapter';
+import { ConstantVariableModel, LoadingState, VariableRefresh } from '@grafana/data';
+import * as runtime from '@grafana/runtime';
+import { DataSourceSrv, LocationService } from '@grafana/runtime';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { DashboardModel } from 'app/features/dashboard/state';
+
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
-import { TemplatingState } from 'app/features/variables/state/reducers';
+import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
+import { variableAdapters } from '../adapters';
+import { createConstantVariableAdapter } from '../constant/adapter';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID } from '../constants';
+import { createCustomVariableAdapter } from '../custom/adapter';
+import { createCustomOptionsFromQuery } from '../custom/reducer';
+import { changeVariableName } from '../editor/actions';
+import { changeVariableNameFailed, changeVariableNameSucceeded, cleanEditorState } from '../editor/reducer';
+import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
+import { createQueryVariableAdapter } from '../query/adapter';
+import { updateVariableOptions } from '../query/reducer';
+import {
+  constantBuilder,
+  customBuilder,
+  datasourceBuilder,
+  queryBuilder,
+  textboxBuilder,
+} from '../shared/testing/builders';
+import { createTextBoxVariableAdapter } from '../textbox/adapter';
+import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import {
   cancelVariables,
   changeVariableMultiValue,
   cleanUpVariables,
+  fixSelectedInconsistency,
   initDashboardTemplating,
-  initVariablesTransaction,
+  isVariableUrlValueDifferentFromCurrent,
   processVariables,
   validateVariableSelectionState,
 } from './actions';
+import { getPreloadedState, getTemplatingRootReducer, TemplatingReducerType } from './helpers';
+import { toKeyedAction } from './keyedVariablesReducer';
 import {
   addVariable,
   changeVariableProp,
@@ -27,40 +50,8 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import {
-  ALL_VARIABLE_TEXT,
-  ALL_VARIABLE_VALUE,
-  NEW_VARIABLE_ID,
-  toVariableIdentifier,
-  toVariablePayload,
-} from './types';
-import {
-  constantBuilder,
-  customBuilder,
-  datasourceBuilder,
-  queryBuilder,
-  textboxBuilder,
-} from '../shared/testing/builders';
-import { changeVariableName } from '../editor/actions';
-import {
-  changeVariableNameFailed,
-  changeVariableNameSucceeded,
-  initialVariableEditorState,
-  setIdInEditor,
-} from '../editor/reducer';
-import { DashboardState, LocationState } from '../../../types';
-import {
-  TransactionStatus,
-  variablesClearTransaction,
-  variablesCompleteTransaction,
-  variablesInitTransaction,
-} from './transactionReducer';
-import { initialState } from '../pickers/OptionsPicker/reducer';
+import { variablesClearTransaction, variablesInitTransaction } from './transactionReducer';
 import { cleanVariables } from './variablesReducer';
-import { expect } from '../../../../test/lib/common';
-import { VariableRefresh } from '../types';
-import { updateVariableOptions } from '../query/reducer';
-import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -82,54 +73,74 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: jest.fn(() => ({
-    get: getDatasource,
-    getMetricSources,
-  })),
-}));
+runtime.setDataSourceSrv({
+  get: getDatasource,
+  getList: getMetricSources,
+} as unknown as DataSourceSrv);
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
     it('then correct actions are dispatched', () => {
+      const key = 'key';
       const query = queryBuilder().build();
       const constant = constantBuilder().build();
       const datasource = datasourceBuilder().build();
       const custom = customBuilder().build();
       const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
+      const dashboard = { templating: { list } } as DashboardModel;
 
-      reduxTester<{ templating: TemplatingState }>()
+      reduxTester<TemplatingReducerType>()
         .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(initDashboardTemplating(list))
-        .thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+        .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
+        .thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
           expect(dispatchedActions.length).toEqual(8);
           expect(dispatchedActions[0]).toEqual(
-            addVariable(toVariablePayload(query, { global: false, index: 0, model: query }))
+            toKeyedAction(key, addVariable(toVariablePayload(query, { global: false, index: 0, model: query })))
           );
           expect(dispatchedActions[1]).toEqual(
-            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+            toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
           );
           expect(dispatchedActions[2]).toEqual(
-            addVariable(toVariablePayload(custom, { global: false, index: 2, model: custom }))
+            toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 2, model: custom })))
           );
           expect(dispatchedActions[3]).toEqual(
-            addVariable(toVariablePayload(textbox, { global: false, index: 3, model: textbox }))
+            toKeyedAction(key, addVariable(toVariablePayload(textbox, { global: false, index: 3, model: textbox })))
           );
 
           // because uuid are dynamic we need to get the uuid from the resulting state
           // an alternative would be to add our own uuids in the model above instead
           expect(dispatchedActions[4]).toEqual(
-            variableStateNotStarted(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
+            toKeyedAction(
+              key,
+              variableStateNotStarted(
+                toVariablePayload({ ...query, id: dispatchedActions[4].payload.action.payload.id })
+              )
+            )
           );
           expect(dispatchedActions[5]).toEqual(
-            variableStateNotStarted(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
+            toKeyedAction(
+              key,
+              variableStateNotStarted(
+                toVariablePayload({ ...constant, id: dispatchedActions[5].payload.action.payload.id })
+              )
+            )
           );
           expect(dispatchedActions[6]).toEqual(
-            variableStateNotStarted(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
+            toKeyedAction(
+              key,
+              variableStateNotStarted(
+                toVariablePayload({ ...custom, id: dispatchedActions[6].payload.action.payload.id })
+              )
+            )
           );
           expect(dispatchedActions[7]).toEqual(
-            variableStateNotStarted(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
+            toKeyedAction(
+              key,
+              variableStateNotStarted(
+                toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.action.payload.id })
+              )
+            )
           );
 
           return true;
@@ -138,39 +149,104 @@ describe('shared actions', () => {
   });
 
   describe('when processVariables is dispatched', () => {
+    it('then circular dependencies fail gracefully', async () => {
+      const key = 'key';
+      const var1 = queryBuilder().withName('var1').withQuery('$var2').build();
+      const var2 = queryBuilder().withName('var2').withQuery('$var1').build();
+      const dashboard = { templating: { list: [var1, var2] } } as DashboardModel;
+      const preloadedState = getPreloadedState(key, {});
+
+      await expect(async () => {
+        await reduxTester<TemplatingReducerType>({ preloadedState })
+          .givenRootReducer(getTemplatingRootReducer())
+          .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+          .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
+          .whenAsyncActionIsDispatched(processVariables(key), true);
+      }).rejects.toThrow(/circular dependency in dashboard variables detected/i);
+    });
+
     it('then correct actions are dispatched', async () => {
+      const key = 'key';
       const query = queryBuilder().build();
       const constant = constantBuilder().build();
       const datasource = datasourceBuilder().build();
       const custom = customBuilder().build();
       const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
+      const dashboard = { templating: { list } } as DashboardModel;
+      const preloadedState = getPreloadedState(key, {});
+      const locationService = { getSearchObject: () => ({}) } as LocationService;
+      runtime.setLocationService(locationService);
+      const variableQueryRunner = {
+        cancelRequest: jest.fn(),
+        queueRequest: jest.fn(),
+        getResponse: () => toAsyncOfResult({ state: LoadingState.Done, identifier: toKeyedVariableIdentifier(query) }),
+        destroy: jest.fn(),
+      } as unknown as VariableQueryRunner;
+      setVariableQueryRunner(variableQueryRunner);
 
-      const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
-        preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query: {} } },
-      })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
-        .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
-        .whenActionIsDispatched(initDashboardTemplating(list))
-        .whenAsyncActionIsDispatched(processVariables(), true);
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+        .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
+        .whenAsyncActionIsDispatched(processVariables(key), true);
 
-      await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
-        expect(dispatchedActions.length).toEqual(4);
+      await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
+        expect(dispatchedActions.length).toEqual(7);
 
         expect(dispatchedActions[0]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
+          toKeyedAction(
+            key,
+            variableStateFetching(toVariablePayload({ ...query, id: dispatchedActions[0].payload.action.payload.id }))
+          )
         );
 
         expect(dispatchedActions[1]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...constant, id: dispatchedActions[1].payload.id }))
+          toKeyedAction(
+            key,
+            variableStateCompleted(
+              toVariablePayload({ ...constant, id: dispatchedActions[1].payload.action.payload.id })
+            )
+          )
         );
 
         expect(dispatchedActions[2]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.id }))
+          toKeyedAction(
+            key,
+            variableStateFetching(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.action.payload.id }))
+          )
         );
 
         expect(dispatchedActions[3]).toEqual(
-          variableStateCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
+          toKeyedAction(
+            key,
+            variableStateCompleted(
+              toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.action.payload.id })
+            )
+          )
+        );
+
+        expect(dispatchedActions[4]).toEqual(
+          toKeyedAction(
+            key,
+            createCustomOptionsFromQuery(
+              toVariablePayload({ ...custom, id: dispatchedActions[4].payload.action.payload.id }, '')
+            )
+          )
+        );
+
+        expect(dispatchedActions[5]).toEqual(
+          toKeyedAction(
+            key,
+            variableStateCompleted(toVariablePayload({ ...custom, id: dispatchedActions[5].payload.action.payload.id }))
+          )
+        );
+
+        expect(dispatchedActions[6]).toEqual(
+          toKeyedAction(
+            key,
+            variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[6].payload.action.payload.id }))
+          )
         );
 
         return true;
@@ -180,8 +256,10 @@ describe('shared actions', () => {
     // Fix for https://github.com/grafana/grafana/issues/28791
     it('fix for https://github.com/grafana/grafana/issues/28791', async () => {
       setVariableQueryRunner(new VariableQueryRunner());
+      const key = 'key';
       const stats = queryBuilder()
         .withId('stats')
+        .withRootStateKey(key)
         .withName('stats')
         .withQuery('stats.*')
         .withRefresh(VariableRefresh.onDashboardLoad)
@@ -192,6 +270,7 @@ describe('shared actions', () => {
 
       const substats = queryBuilder()
         .withId('substats')
+        .withRootStateKey(key)
         .withName('substats')
         .withQuery('stats.$stats.*')
         .withRefresh(VariableRefresh.onDashboardLoad)
@@ -201,41 +280,64 @@ describe('shared actions', () => {
         .build();
 
       const list = [stats, substats];
+      const dashboard = { templating: { list } } as DashboardModel;
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
-      const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
-        preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query } },
-      })
-        .givenRootReducer(getTemplatingAndLocationRootReducer())
-        .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
-        .whenActionIsDispatched(initDashboardTemplating(list))
-        .whenAsyncActionIsDispatched(processVariables(), true);
+      const locationService = { getSearchObject: () => query } as unknown as LocationService;
+      runtime.setLocationService(locationService);
+      const preloadedState = getPreloadedState(key, {});
+
+      const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
+        .givenRootReducer(getTemplatingRootReducer())
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+        .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
+        .whenAsyncActionIsDispatched(processVariables(key), true);
 
       await tester.thenDispatchedActionsShouldEqual(
-        variableStateFetching(toVariablePayload(stats)),
-        updateVariableOptions(
-          toVariablePayload(stats, { results: [{ text: 'responses' }, { text: 'timers' }], templatedRegex: '' })
+        toKeyedAction(key, variableStateFetching(toVariablePayload(stats))),
+        toKeyedAction(
+          key,
+          updateVariableOptions(
+            toVariablePayload(stats, { results: [{ text: 'responses' }, { text: 'timers' }], templatedRegex: '' })
+          )
         ),
-        setCurrentVariableValue(
-          toVariablePayload(stats, { option: { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false } })
+        toKeyedAction(
+          key,
+          setCurrentVariableValue(
+            toVariablePayload(stats, {
+              option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
+            })
+          )
         ),
-        variableStateCompleted(toVariablePayload(stats)),
-        setCurrentVariableValue(
-          toVariablePayload(stats, { option: { text: ['response'], value: ['response'], selected: false } })
+        toKeyedAction(key, variableStateCompleted(toVariablePayload(stats))),
+        toKeyedAction(
+          key,
+          setCurrentVariableValue(
+            toVariablePayload(stats, { option: { text: ['response'], value: ['response'], selected: false } })
+          )
         ),
-        variableStateFetching(toVariablePayload(substats)),
-        updateVariableOptions(
-          toVariablePayload(substats, { results: [{ text: '200' }, { text: '500' }], templatedRegex: '' })
+        toKeyedAction(key, variableStateFetching(toVariablePayload(substats))),
+        toKeyedAction(
+          key,
+          updateVariableOptions(
+            toVariablePayload(substats, { results: [{ text: '200' }, { text: '500' }], templatedRegex: '' })
+          )
         ),
-        setCurrentVariableValue(
-          toVariablePayload(substats, {
-            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
-          })
+        toKeyedAction(
+          key,
+          setCurrentVariableValue(
+            toVariablePayload(substats, {
+              option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
+            })
+          )
         ),
-        variableStateCompleted(toVariablePayload(substats)),
-        setCurrentVariableValue(
-          toVariablePayload(substats, {
-            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: false },
-          })
+        toKeyedAction(key, variableStateCompleted(toVariablePayload(substats))),
+        toKeyedAction(
+          key,
+          setCurrentVariableValue(
+            toVariablePayload(substats, {
+              option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: false },
+            })
+          )
         )
       );
     });
@@ -253,44 +355,114 @@ describe('shared actions', () => {
         ${undefined}       | ${'B'}       | ${undefined} | ${'should not dispatch setCurrentVariableValue'}
       `('then correct actions are dispatched', async ({ withOptions, withCurrent, defaultValue, expected }) => {
         let custom;
-
+        const key = 'key';
         if (!withOptions) {
-          custom = customBuilder()
-            .withId('0')
-            .withCurrent(withCurrent)
-            .withoutOptions()
-            .build();
+          custom = customBuilder().withId('0').withRootStateKey(key).withCurrent(withCurrent).withoutOptions().build();
         } else {
           custom = customBuilder()
             .withId('0')
+            .withRootStateKey(key)
             .withOptions(...withOptions)
             .withCurrent(withCurrent)
             .build();
         }
 
-        const tester = await reduxTester<{ templating: TemplatingState }>()
+        const tester = await reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          .whenActionIsDispatched(
+            toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          )
           .whenAsyncActionIsDispatched(
-            validateVariableSelectionState(toVariableIdentifier(custom), defaultValue),
+            validateVariableSelectionState(toKeyedVariableIdentifier(custom), defaultValue),
             true
           );
 
-        await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
-          const expectedActions: AnyAction[] = !withOptions
-            ? []
-            : [
-                setCurrentVariableValue(
-                  toVariablePayload(
-                    { type: 'custom', id: '0' },
-                    { option: { text: expected, value: expected, selected: false } }
+        await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
+          const expectedActions: AnyAction[] = withOptions
+            ? [
+                toKeyedAction(
+                  key,
+                  setCurrentVariableValue(
+                    toVariablePayload(
+                      { type: 'custom', id: '0' },
+                      { option: { text: expected, value: expected, selected: false } }
+                    )
                   )
                 ),
-              ];
+              ]
+            : [];
           expect(dispatchedActions).toEqual(expectedActions);
           return true;
         });
       });
+    });
+
+    describe('and not multivalue, but with currentValue specified', () => {
+      const A = { text: 'A', value: 'a-uid' };
+      const B = { text: 'B', value: 'b-uid' };
+      const C = { text: 'C', value: 'c-uid' };
+
+      it.each`
+        withOptions  | currentText  | currentValue | defaultValue | expected
+        ${[A, B, C]} | ${undefined} | ${undefined} | ${undefined} | ${A}
+        ${[A, B, C]} | ${'B'}       | ${'b-uid'}   | ${undefined} | ${B}
+        ${[A, B, C]} | ${'B'}       | ${undefined} | ${undefined} | ${B}
+        ${[A, B, C]} | ${undefined} | ${'b-uid'}   | ${undefined} | ${B}
+        ${[A, B, C]} | ${'Old B'}   | ${'b-uid'}   | ${undefined} | ${B}
+        ${[A, B, C]} | ${undefined} | ${'x-uid'}   | ${'b-uid'}   | ${B}
+        ${[A, B, C]} | ${undefined} | ${'b-uid'}   | ${'c-uid'}   | ${B}
+        ${[A, B, C]} | ${undefined} | ${'x-uid'}   | ${undefined} | ${A}
+        ${undefined} | ${undefined} | ${'b-uid'}   | ${undefined} | ${'should not dispatch setCurrentVariableValue'}
+      `(
+        'then correct actions are dispatched',
+        async ({ withOptions, currentText, currentValue, defaultValue, expected }) => {
+          let custom;
+          const key = 'key';
+          if (!withOptions) {
+            custom = customBuilder()
+              .withId('0')
+              .withRootStateKey(key)
+              .withCurrent(currentText, currentValue)
+              .withoutOptions()
+              .build();
+          } else {
+            custom = customBuilder()
+              .withId('0')
+              .withRootStateKey(key)
+              .withOptions(...withOptions)
+              .withCurrent(currentText, currentValue)
+              .build();
+          }
+
+          const tester = await reduxTester<TemplatingReducerType>()
+            .givenRootReducer(getTemplatingRootReducer())
+            .whenActionIsDispatched(
+              toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+            )
+            .whenAsyncActionIsDispatched(
+              validateVariableSelectionState(toKeyedVariableIdentifier(custom), defaultValue),
+              true
+            );
+
+          await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
+            const expectedActions: AnyAction[] = withOptions
+              ? [
+                  toKeyedAction(
+                    key,
+                    setCurrentVariableValue(
+                      toVariablePayload(
+                        { type: 'custom', id: '0' },
+                        { option: { text: expected.text, value: expected.value, selected: false } }
+                      )
+                    )
+                  ),
+                ]
+              : [];
+            expect(dispatchedActions).toEqual(expectedActions);
+            return true;
+          });
+        }
+      );
     });
 
     describe('and multivalue', () => {
@@ -300,16 +472,17 @@ describe('shared actions', () => {
         ${['A', 'B', 'C']} | ${['B']}      | ${'C'}       | ${['B']}      | ${true}
         ${['A', 'B', 'C']} | ${['B', 'C']} | ${undefined} | ${['B', 'C']} | ${true}
         ${['A', 'B', 'C']} | ${['B', 'C']} | ${'C'}       | ${['B', 'C']} | ${true}
-        ${['A', 'B', 'C']} | ${['X']}      | ${undefined} | ${'A'}        | ${false}
-        ${['A', 'B', 'C']} | ${['X']}      | ${'C'}       | ${'A'}        | ${false}
+        ${['A', 'B', 'C']} | ${['X']}      | ${undefined} | ${['A']}      | ${true}
+        ${['A', 'B', 'C']} | ${['X']}      | ${'C'}       | ${['A']}      | ${true}
       `(
         'then correct actions are dispatched',
         async ({ withOptions, withCurrent, defaultValue, expectedText, expectedSelected }) => {
           let custom;
-
+          const key = 'key';
           if (!withOptions) {
             custom = customBuilder()
               .withId('0')
+              .withRootStateKey(key)
               .withMulti()
               .withCurrent(withCurrent)
               .withoutOptions()
@@ -317,31 +490,37 @@ describe('shared actions', () => {
           } else {
             custom = customBuilder()
               .withId('0')
+              .withRootStateKey(key)
               .withMulti()
               .withOptions(...withOptions)
               .withCurrent(withCurrent)
               .build();
           }
 
-          const tester = await reduxTester<{ templating: TemplatingState }>()
+          const tester = await reduxTester<TemplatingReducerType>()
             .givenRootReducer(getTemplatingRootReducer())
-            .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+            .whenActionIsDispatched(
+              toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+            )
             .whenAsyncActionIsDispatched(
-              validateVariableSelectionState(toVariableIdentifier(custom), defaultValue),
+              validateVariableSelectionState(toKeyedVariableIdentifier(custom), defaultValue),
               true
             );
 
-          await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
-            const expectedActions: AnyAction[] = !withOptions
-              ? []
-              : [
-                  setCurrentVariableValue(
-                    toVariablePayload(
-                      { type: 'custom', id: '0' },
-                      { option: { text: expectedText, value: expectedText, selected: expectedSelected } }
+          await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
+            const expectedActions: AnyAction[] = withOptions
+              ? [
+                  toKeyedAction(
+                    key,
+                    setCurrentVariableValue(
+                      toVariablePayload(
+                        { type: 'custom', id: '0' },
+                        { option: { text: expectedText, value: expectedText, selected: expectedSelected } }
+                      )
                     )
                   ),
-                ];
+                ]
+              : [];
             expect(dispatchedActions).toEqual(expectedActions);
             return true;
           });
@@ -353,163 +532,194 @@ describe('shared actions', () => {
   describe('changeVariableName', () => {
     describe('when changeVariableName is dispatched with the same name', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const key = 'key';
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
-        reduxTester<{ templating: TemplatingState }>()
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+            toKeyedAction(key, addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           )
-          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), constant.name), true)
+          .whenActionIsDispatched(
+            toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
+          )
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), constant.name), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableNameSucceeded({ type: 'constant', id: 'constant', data: { newName: 'constant' } })
+            toKeyedAction(
+              key,
+              changeVariableNameSucceeded({ type: 'constant', id: 'constant', data: { newName: 'constant' } })
+            )
           );
       });
     });
     describe('when changeVariableName is dispatched with an unique name', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const key = 'key';
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
-        reduxTester<{ templating: TemplatingState }>()
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+            toKeyedAction(key, addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           )
-          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'constant1'), true)
+          .whenActionIsDispatched(
+            toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
+          )
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), 'constant1'), true)
           .thenDispatchedActionsShouldEqual(
-            addVariable({
-              type: 'constant',
-              id: 'constant1',
-              data: {
-                global: false,
-                index: 1,
-                model: { ...constant, name: 'constant1', id: 'constant1', global: false, index: 1 },
-              },
-            }),
-            changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),
-            setIdInEditor({ id: 'constant1' }),
-            removeVariable({ type: 'constant', id: 'constant', data: { reIndex: false } })
+            toKeyedAction(
+              key,
+              addVariable({
+                type: 'constant',
+                id: 'constant1',
+                data: {
+                  global: false,
+                  index: 1,
+                  model: {
+                    ...constant,
+                    name: 'constant1',
+                    id: 'constant1',
+                    global: false,
+                    index: 1,
+                    current: { selected: true, text: '', value: '' },
+                    options: [{ selected: true, text: '', value: '' }],
+                  } as ConstantVariableModel,
+                },
+              })
+            ),
+            toKeyedAction(
+              key,
+              changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } })
+            ),
+            toKeyedAction(key, removeVariable({ type: 'constant', id: 'constant', data: { reIndex: false } }))
           );
       });
     });
 
     describe('when changeVariableName is dispatched with an unique name for a new variable', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId(NEW_VARIABLE_ID)
-          .withName('constant')
-          .build();
+        const key = 'key';
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId(NEW_VARIABLE_ID).withRootStateKey(key).withName('constant').build();
 
-        reduxTester<{ templating: TemplatingState }>()
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+            toKeyedAction(key, addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           )
-          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'constant1'), true)
+          .whenActionIsDispatched(
+            toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
+          )
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), 'constant1'), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableNameSucceeded({ type: 'constant', id: NEW_VARIABLE_ID, data: { newName: 'constant1' } })
+            toKeyedAction(
+              key,
+              addVariable({
+                type: 'constant',
+                id: 'constant1',
+                data: {
+                  global: false,
+                  index: 1,
+                  model: {
+                    ...constant,
+                    name: 'constant1',
+                    id: 'constant1',
+                    global: false,
+                    index: 1,
+                    current: { selected: true, text: '', value: '' },
+                    options: [{ selected: true, text: '', value: '' }],
+                  } as ConstantVariableModel,
+                },
+              })
+            ),
+            toKeyedAction(
+              key,
+              changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } })
+            ),
+            toKeyedAction(key, removeVariable({ type: 'constant', id: NEW_VARIABLE_ID, data: { reIndex: false } }))
           );
       });
     });
 
     describe('when changeVariableName is dispatched with __newName', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const key = 'key';
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
-        reduxTester<{ templating: TemplatingState }>()
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+            toKeyedAction(key, addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           )
-          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), '__newName'), true)
+          .whenActionIsDispatched(
+            toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
+          )
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), '__newName'), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableNameFailed({
-              newName: '__newName',
-              errorText: "Template names cannot begin with '__', that's reserved for Grafana's global variables",
-            })
+            toKeyedAction(
+              key,
+              changeVariableNameFailed({
+                newName: '__newName',
+                errorText: "Template names cannot begin with '__', that's reserved for Grafana's global variables",
+              })
+            )
           );
       });
     });
 
     describe('when changeVariableName is dispatched with illegal characters', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const key = 'key';
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
-        reduxTester<{ templating: TemplatingState }>()
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+            toKeyedAction(key, addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           )
-          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), '#constant!'), true)
+          .whenActionIsDispatched(
+            toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
+          )
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), '#constant!'), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableNameFailed({
-              newName: '#constant!',
-              errorText: 'Only word and digit characters are allowed in variable names',
-            })
+            toKeyedAction(
+              key,
+              changeVariableNameFailed({
+                newName: '#constant!',
+                errorText: 'Only word characters are allowed in variable names',
+              })
+            )
           );
       });
     });
 
     describe('when changeVariableName is dispatched with a name that is already used', () => {
       it('then the correct actions are dispatched', () => {
-        const textbox = textboxBuilder()
-          .withId('textbox')
-          .withName('textbox')
-          .build();
-        const constant = constantBuilder()
-          .withId('constant')
-          .withName('constant')
-          .build();
+        const key = 'key';
+        const textbox = textboxBuilder().withId('textbox').withRootStateKey(key).withName('textbox').build();
+        const constant = constantBuilder().withId('constant').withRootStateKey(key).withName('constant').build();
 
-        reduxTester<{ templating: TemplatingState }>()
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           .whenActionIsDispatched(
-            addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant }))
+            toKeyedAction(key, addVariable(toVariablePayload(textbox, { global: false, index: 0, model: textbox })))
           )
-          .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'textbox'), true)
+          .whenActionIsDispatched(
+            toKeyedAction(key, addVariable(toVariablePayload(constant, { global: false, index: 1, model: constant })))
+          )
+          .whenActionIsDispatched(changeVariableName(toKeyedVariableIdentifier(constant), 'textbox'), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableNameFailed({
-              newName: 'textbox',
-              errorText: 'Variable with the same name already exists',
-            })
+            toKeyedAction(
+              key,
+              changeVariableNameFailed({
+                newName: 'textbox',
+                errorText: 'Variable with the same name already exists',
+              })
+            )
           );
       });
     });
@@ -518,32 +728,42 @@ describe('shared actions', () => {
   describe('changeVariableMultiValue', () => {
     describe('when changeVariableMultiValue is dispatched for variable with multi enabled', () => {
       it('then correct actions are dispatched', () => {
+        const key = 'key';
         const custom = customBuilder()
           .withId('custom')
+          .withRootStateKey(key)
           .withMulti(true)
           .withCurrent(['A'], ['A'])
           .build();
 
-        reduxTester<{ templating: TemplatingState }>()
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
-          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), false), true)
+          .whenActionIsDispatched(
+            toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          )
+          .whenActionIsDispatched(changeVariableMultiValue(toKeyedVariableIdentifier(custom), false), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableProp(
-              toVariablePayload(custom, {
-                propName: 'multi',
-                propValue: false,
-              })
+            toKeyedAction(
+              key,
+              changeVariableProp(
+                toVariablePayload(custom, {
+                  propName: 'multi',
+                  propValue: false,
+                })
+              )
             ),
-            changeVariableProp(
-              toVariablePayload(custom, {
-                propName: 'current',
-                propValue: {
-                  value: 'A',
-                  text: 'A',
-                  selected: true,
-                },
-              })
+            toKeyedAction(
+              key,
+              changeVariableProp(
+                toVariablePayload(custom, {
+                  propName: 'current',
+                  propValue: {
+                    value: 'A',
+                    text: 'A',
+                    selected: true,
+                  },
+                })
+              )
             )
           );
       });
@@ -551,113 +771,44 @@ describe('shared actions', () => {
 
     describe('when changeVariableMultiValue is dispatched for variable with multi disabled', () => {
       it('then correct actions are dispatched', () => {
+        const key = 'key';
         const custom = customBuilder()
           .withId('custom')
+          .withRootStateKey(key)
           .withMulti(false)
           .withCurrent(['A'], ['A'])
           .build();
 
-        reduxTester<{ templating: TemplatingState }>()
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
-          .whenActionIsDispatched(changeVariableMultiValue(toVariableIdentifier(custom), true), true)
+          .whenActionIsDispatched(
+            toKeyedAction(key, addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
+          )
+          .whenActionIsDispatched(changeVariableMultiValue(toKeyedVariableIdentifier(custom), true), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableProp(
-              toVariablePayload(custom, {
-                propName: 'multi',
-                propValue: true,
-              })
+            toKeyedAction(
+              key,
+              changeVariableProp(
+                toVariablePayload(custom, {
+                  propName: 'multi',
+                  propValue: true,
+                })
+              )
             ),
-            changeVariableProp(
-              toVariablePayload(custom, {
-                propName: 'current',
-                propValue: {
-                  value: ['A'],
-                  text: ['A'],
-                  selected: true,
-                },
-              })
+            toKeyedAction(
+              key,
+              changeVariableProp(
+                toVariablePayload(custom, {
+                  propName: 'current',
+                  propValue: {
+                    value: ['A'],
+                    text: ['A'],
+                    selected: true,
+                  },
+                })
+              )
             )
           );
-      });
-    });
-  });
-
-  describe('initVariablesTransaction', () => {
-    type ReducersUsedInContext = {
-      templating: TemplatingState;
-      dashboard: DashboardState;
-      location: LocationState;
-    };
-    const constant = constantBuilder()
-      .withId('constant')
-      .withName('constant')
-      .build();
-    const templating: any = { list: [constant] };
-    const uid = 'uid';
-    const dashboard: any = { title: 'Some dash', uid, templating };
-
-    describe('when called and the previous dashboard has completed', () => {
-      it('then correct actions are dispatched', async () => {
-        const tester = await reduxTester<ReducersUsedInContext>()
-          .givenRootReducer(getRootReducer())
-          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
-
-        tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
-          expect(dispatchedActions[0]).toEqual(variablesInitTransaction({ uid }));
-          expect(dispatchedActions[1].type).toEqual(addVariable.type);
-          expect(dispatchedActions[1].payload.id).toEqual('__dashboard');
-          expect(dispatchedActions[2].type).toEqual(addVariable.type);
-          expect(dispatchedActions[2].payload.id).toEqual('__org');
-          expect(dispatchedActions[3].type).toEqual(addVariable.type);
-          expect(dispatchedActions[3].payload.id).toEqual('__user');
-          expect(dispatchedActions[4]).toEqual(
-            addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
-          );
-          expect(dispatchedActions[5]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
-          expect(dispatchedActions[6]).toEqual(variableStateCompleted(toVariablePayload(constant)));
-
-          expect(dispatchedActions[7]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 8;
-        });
-      });
-    });
-
-    describe('when called and the previous dashboard is still processing variables', () => {
-      it('then correct actions are dispatched', async () => {
-        const transactionState = { uid: 'previous-uid', status: TransactionStatus.Fetching };
-
-        const tester = await reduxTester<ReducersUsedInContext>({
-          preloadedState: ({
-            templating: {
-              transaction: transactionState,
-              variables: {},
-              optionsPicker: { ...initialState },
-              editor: { ...initialVariableEditorState },
-            },
-          } as unknown) as ReducersUsedInContext,
-        })
-          .givenRootReducer(getRootReducer())
-          .whenAsyncActionIsDispatched(initVariablesTransaction(uid, dashboard));
-
-        tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
-          expect(dispatchedActions[0]).toEqual(cleanVariables());
-          expect(dispatchedActions[1]).toEqual(variablesClearTransaction());
-          expect(dispatchedActions[2]).toEqual(variablesInitTransaction({ uid }));
-          expect(dispatchedActions[3].type).toEqual(addVariable.type);
-          expect(dispatchedActions[3].payload.id).toEqual('__dashboard');
-          expect(dispatchedActions[4].type).toEqual(addVariable.type);
-          expect(dispatchedActions[4].payload.id).toEqual('__org');
-          expect(dispatchedActions[5].type).toEqual(addVariable.type);
-          expect(dispatchedActions[5].payload.id).toEqual('__user');
-          expect(dispatchedActions[6]).toEqual(
-            addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
-          );
-          expect(dispatchedActions[7]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
-          expect(dispatchedActions[8]).toEqual(variableStateCompleted(toVariablePayload(constant)));
-          expect(dispatchedActions[9]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 10;
-        });
       });
     });
   });
@@ -665,28 +816,188 @@ describe('shared actions', () => {
   describe('cleanUpVariables', () => {
     describe('when called', () => {
       it('then correct actions are dispatched', async () => {
-        reduxTester<{ templating: TemplatingState }>()
+        const key = 'key';
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(cleanUpVariables())
-          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+          .whenActionIsDispatched(cleanUpVariables(key))
+          .thenDispatchedActionsShouldEqual(
+            toKeyedAction(key, cleanVariables()),
+            toKeyedAction(key, cleanEditorState()),
+            toKeyedAction(key, cleanPickerState()),
+            toKeyedAction(key, variablesClearTransaction())
+          );
       });
     });
   });
 
   describe('cancelVariables', () => {
     const cancelAllInFlightRequestsMock = jest.fn();
-    const backendSrvMock: any = {
+    const backendSrvMock = {
       cancelAllInFlightRequests: cancelAllInFlightRequestsMock,
-    };
+    } as unknown as BackendSrv;
 
     describe('when called', () => {
       it('then cancelAllInFlightRequests should be called and correct actions are dispatched', async () => {
-        reduxTester<{ templating: TemplatingState }>()
+        const key = 'key';
+        reduxTester<TemplatingReducerType>()
           .givenRootReducer(getTemplatingRootReducer())
-          .whenActionIsDispatched(cancelVariables({ getBackendSrv: () => backendSrvMock }))
-          .thenDispatchedActionsShouldEqual(cleanVariables(), variablesClearTransaction());
+          .whenActionIsDispatched(cancelVariables(key, { getBackendSrv: () => backendSrvMock }))
+          .thenDispatchedActionsShouldEqual(
+            toKeyedAction(key, cleanVariables()),
+            toKeyedAction(key, cleanEditorState()),
+            toKeyedAction(key, cleanPickerState()),
+            toKeyedAction(key, variablesClearTransaction())
+          );
 
         expect(cancelAllInFlightRequestsMock).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('fixSelectedInconsistency', () => {
+    describe('when called for a single value variable', () => {
+      describe('and there is an inconsistency between current and selected in options', () => {
+        it('then it should set the correct selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent('A').withOptions('A', 'B', 'C').build();
+          variable.options[1].selected = true;
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: false },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+        });
+      });
+
+      describe('and there is no matching option in options', () => {
+        it('then the first option should be selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent('A').withOptions('X', 'Y', 'Z').build();
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: false },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: true },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+        });
+      });
+    });
+
+    describe('when called for a multi value variable', () => {
+      describe('and there is an inconsistency between current and selected in options', () => {
+        it('then it should set the correct selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent(['A', 'C']).withOptions('A', 'B', 'C').build();
+          variable.options[1].selected = true;
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: false },
+            { text: 'B', value: 'B', selected: true },
+            { text: 'C', value: 'C', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: false },
+            { text: 'C', value: 'C', selected: true },
+          ]);
+        });
+      });
+
+      describe('and there is no matching option in options', () => {
+        it('then the first option should be selected', () => {
+          const variable = customBuilder().withId('custom').withCurrent(['A', 'C']).withOptions('X', 'Y', 'Z').build();
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: false },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+
+          fixSelectedInconsistency(variable);
+
+          expect(variable.options).toEqual([
+            { text: 'X', value: 'X', selected: true },
+            { text: 'Y', value: 'Y', selected: false },
+            { text: 'Z', value: 'Z', selected: false },
+          ]);
+        });
+      });
+    });
+  });
+
+  describe('isVariableUrlValueDifferentFromCurrent', () => {
+    describe('when called with a single valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'A';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(false).withCurrent('A', 'A').build();
+          const urlValue = 'B';
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+      });
+    });
+
+    describe('when called with a multi valued variable', () => {
+      describe('and values are equal', () => {
+        it('then it should return false', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['A'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return false', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'A';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(false);
+          });
+        });
+      });
+
+      describe('and values are different', () => {
+        it('then it should return true', () => {
+          const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+          const urlValue = ['C'];
+
+          expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+        });
+
+        describe('but urlValue is not an array', () => {
+          it('then it should return true', () => {
+            const variable = queryBuilder().withMulti(true).withCurrent(['A'], ['A']).build();
+            const urlValue = 'C';
+
+            expect(isVariableUrlValueDifferentFromCurrent(variable, urlValue)).toBe(true);
+          });
+        });
       });
     });
   });

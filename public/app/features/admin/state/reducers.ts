@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import {
   LdapConnectionInfo,
   LdapError,
@@ -11,14 +12,18 @@ import {
   UserOrg,
   UserSession,
   UserListAdminState,
+  UserFilter,
+  UserListAnonymousDevicesState,
+  UserAnonymousDeviceDTO,
+  AnonUserFilter,
 } from 'app/types';
 
 const initialLdapState: LdapState = {
   connectionInfo: [],
-  syncInfo: null,
-  user: null,
-  connectionError: null,
-  userError: null,
+  syncInfo: undefined,
+  user: undefined,
+  connectionError: undefined,
+  userError: undefined,
 };
 
 const ldapSlice = createSlice({
@@ -27,7 +32,7 @@ const ldapSlice = createSlice({
   reducers: {
     ldapConnectionInfoLoadedAction: (state, action: PayloadAction<LdapConnectionInfo>): LdapState => ({
       ...state,
-      ldapError: null,
+      ldapError: undefined,
       connectionInfo: action.payload,
     }),
     ldapFailedAction: (state, action: PayloadAction<LdapError>): LdapState => ({
@@ -41,20 +46,20 @@ const ldapSlice = createSlice({
     userMappingInfoLoadedAction: (state, action: PayloadAction<LdapUser>): LdapState => ({
       ...state,
       user: action.payload,
-      userError: null,
+      userError: undefined,
     }),
     userMappingInfoFailedAction: (state, action: PayloadAction<LdapError>): LdapState => ({
       ...state,
-      user: null,
+      user: undefined,
       userError: action.payload,
     }),
     clearUserMappingInfoAction: (state, action: PayloadAction<undefined>): LdapState => ({
       ...state,
-      user: null,
+      user: undefined,
     }),
     clearUserErrorAction: (state, action: PayloadAction<undefined>): LdapState => ({
       ...state,
-      userError: null,
+      userError: undefined,
     }),
   },
 });
@@ -74,11 +79,11 @@ export const ldapReducer = ldapSlice.reducer;
 // UserAdminPage
 
 const initialUserAdminState: UserAdminState = {
-  user: null,
+  user: undefined,
   sessions: [],
   orgs: [],
   isLoading: true,
-  error: null,
+  error: undefined,
 };
 
 export const userAdminSlice = createSlice({
@@ -128,6 +133,8 @@ const initialUserListAdminState: UserListAdminState = {
   perPage: 50,
   totalPages: 1,
   showPaging: false,
+  filters: [{ name: 'activeLast30Days', value: false }],
+  isLoading: true,
 };
 
 interface UsersFetched {
@@ -151,7 +158,14 @@ export const userListAdminSlice = createSlice({
         totalPages,
         perPage,
         showPaging: totalPages > 1,
+        isLoading: false,
       };
+    },
+    usersFetchBegin: (state) => {
+      return { ...state, isLoading: true };
+    },
+    usersFetchEnd: (state) => {
+      return { ...state, isLoading: false };
     },
     queryChanged: (state, action: PayloadAction<string>) => ({
       ...state,
@@ -162,14 +176,109 @@ export const userListAdminSlice = createSlice({
       ...state,
       page: action.payload,
     }),
+    sortChanged: (state, action: PayloadAction<UserListAdminState['sort']>) => ({
+      ...state,
+      page: 0,
+      sort: action.payload,
+    }),
+    filterChanged: (state, action: PayloadAction<UserFilter>) => {
+      const { name, value } = action.payload;
+
+      if (state.filters.some((filter) => filter.name === name)) {
+        return {
+          ...state,
+          page: 0,
+          filters: state.filters.map((filter) => (filter.name === name ? { ...filter, value } : filter)),
+        };
+      }
+      return {
+        ...state,
+        page: 0,
+        filters: [...state.filters, action.payload],
+      };
+    },
   },
 });
 
-export const { usersFetched, queryChanged, pageChanged } = userListAdminSlice.actions;
+export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged, sortChanged } =
+  userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
+
+// UserListAnonymousPage
+
+const initialUserListAnonymousDevicesState: UserListAnonymousDevicesState = {
+  devices: [],
+  query: '',
+  page: 0,
+  perPage: 50,
+  totalPages: 1,
+  showPaging: false,
+  filters: [{ name: 'activeLast30Days', value: true }],
+};
+
+interface UsersAnonymousDevicesFetched {
+  devices: UserAnonymousDeviceDTO[];
+  perPage: number;
+  page: number;
+  totalCount: number;
+}
+
+export const userListAnonymousDevicesSlice = createSlice({
+  name: 'userListAnonymousDevices',
+  initialState: initialUserListAnonymousDevicesState,
+  reducers: {
+    usersAnonymousDevicesFetched: (state, action: PayloadAction<UsersAnonymousDevicesFetched>) => {
+      const { totalCount, perPage, ...rest } = action.payload;
+      const totalPages = Math.ceil(totalCount / perPage);
+
+      return {
+        ...state,
+        ...rest,
+        totalPages,
+        perPage,
+        showPaging: totalPages > 1,
+      };
+    },
+    anonQueryChanged: (state, action: PayloadAction<string>) => ({
+      ...state,
+      query: action.payload,
+      page: 0,
+    }),
+    anonPageChanged: (state, action: PayloadAction<number>) => ({
+      ...state,
+      page: action.payload,
+    }),
+    anonUserSortChanged: (state, action: PayloadAction<UserListAnonymousDevicesState['sort']>) => ({
+      ...state,
+      page: 0,
+      sort: action.payload,
+    }),
+    filterChanged: (state, action: PayloadAction<AnonUserFilter>) => {
+      const { name, value } = action.payload;
+
+      if (state.filters.some((filter) => filter.name === name)) {
+        return {
+          ...state,
+          page: 0,
+          filters: state.filters.map((filter) => (filter.name === name ? { ...filter, value } : filter)),
+        };
+      }
+      return {
+        ...state,
+        page: 0,
+        filters: [...state.filters, action.payload],
+      };
+    },
+  },
+});
+
+export const { usersAnonymousDevicesFetched, anonUserSortChanged, anonPageChanged, anonQueryChanged } =
+  userListAnonymousDevicesSlice.actions;
+export const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
 
 export default {
   ldap: ldapReducer,
   userAdmin: userAdminReducer,
   userListAdmin: userListAdminReducer,
+  userListAnonymousDevices: userListAnonymousDevicesReducer,
 };

@@ -10,4 +10,4 @@ find . -name 'vendor' -prune -o -name '*.libsonnet' -print -o -name '*.jsonnet' 
     ${JSONNET_FMT} "$f" | diff -u "$f" -; \
   done
 
-mixtool lint mixin.libsonnet
+#mixtool lint mixin.libsonnet

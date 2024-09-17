@@ -1,5 +1,6 @@
 #!/bin/bash
 
-. e2e/variables
+. scripts/grafana-server/variables
 
-SUITE=verify ./e2e/run-suite
+# The run-suite script requires a second argument to determine if videos should be recorded
+./e2e/run-suite verify/specs true

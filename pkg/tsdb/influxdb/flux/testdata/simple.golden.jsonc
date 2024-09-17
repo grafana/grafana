@@ -1,0 +1,78 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
+//  Name: test
+//  Dimensions: 2 Fields by 2 Rows
+//  +-----------------------------------------+-------------------------+
+//  | Name: Time                              | Name: f                 |
+//  | Labels:                                 | Labels: a=1, b=adsfasdf |
+//  | Type: []*time.Time                      | Type: []*float64        |
+//  +-----------------------------------------+-------------------------+
+//  | 2020-02-18 10:34:08.135814545 +0000 UTC | 1.4                     |
+//  | 2020-02-18 22:08:44.850214724 +0000 UTC | 6.6                     |
+//  +-----------------------------------------+-------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "test",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "f",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "a": "1",
+              "b": "adsfasdf"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1582022048135,
+            1582063724850
+          ],
+          [
+            1.4,
+            6.6
+          ]
+        ],
+        "nanos": [
+          [
+            814545,
+            214724
+          ],
+          null
+        ]
+      }
+    }
+  ]
+}

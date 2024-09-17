@@ -2,7 +2,6 @@
 .dockerignore
 .git
 .gitignore
-.github
 .vscode
 bin
 data*
@@ -12,7 +11,14 @@ Dockerfile
 docs
 dump.rdb
 node_modules
-/local
+**/node_modules
 /tmp
 *.yml
+!.yarnrc.yml
 *.md
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/versions
+!.yarn/cache

@@ -1,4 +1,5 @@
 #### Alias patterns
+
 - replaced with measurement name
 - $measurement = replaced with measurement name
 - $1 - $9 = replaced with part of measurement name (if you separate your measurement name with dots)
@@ -7,6 +8,7 @@
 - You can also use [[tag_exampletag]] pattern replacement syntax
 
 #### Stacking and fill
+
 - When stacking is enabled it is important that points align
 - If there are missing points for one series it can cause gaps or missing bars
 - You must use fill(0), and select a group by time low limit
@@ -14,6 +16,7 @@
 - This will insert zeros for series that are missing measurements and will make stacking work properly
 
 #### Group by time
+
 - Group by time is important, otherwise the query could return many thousands of datapoints that will slow down Grafana
 - Leave the group by time field empty for each query and it will be calculated based on time range and pixel width of the graph
 - If you use fill(0) or fill(null) set a low limit for the auto group by time interval

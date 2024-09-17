@@ -9,10 +9,12 @@ import {
   TimeRange,
   ValueFormatterIndex,
   rangeUtil,
+  escapeRegex,
 } from '@grafana/data';
 
+const valueFormats: ValueFormatterIndex = {};
 const kbn = {
-  valueFormats: {} as ValueFormatterIndex,
+  valueFormats,
   intervalRegex: /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/,
   intervalsInSeconds: {
     y: 31536000,
@@ -23,8 +25,12 @@ const kbn = {
     m: 60,
     s: 1,
     ms: 0.001,
-  } as { [index: string]: number },
-  regexEscape: (value: string) => value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&'),
+  } as const,
+  /** @deprecated since 9.4, use grafana/data */
+  regexEscape: (value: string): string => {
+    deprecationWarning('kbn.ts', 'kbn.regexEscape()', 'escapeRegex from @grafana/data');
+    return escapeRegex(value);
+  },
 
   /** @deprecated since 7.2, use grafana/data */
   roundInterval: (interval: number) => {
@@ -47,16 +53,10 @@ const kbn = {
     return strings.join(':');
   },
   toPercent: (nr: number, outOf: number) => Math.floor((nr / outOf) * 10000) / 100 + '%',
-  addSlashes: (str: string) => {
-    str = str.replace(/\\/g, '\\\\');
-    str = str.replace(/\'/g, "\\'");
-    str = str.replace(/\"/g, '\\"');
-    str = str.replace(/\0/g, '\\0');
-    return str;
-  },
+  addSlashes: (str: string) => str.replace(/[\'\"\\0]/g, '\\$&'),
   /** @deprecated since 7.2, use grafana/data */
   describeInterval: (str: string) => {
-    deprecationWarning('kbn.ts', 'kbn.stringToJsRegex()', '@grafana/data');
+    deprecationWarning('kbn.ts', 'kbn.describeInterval()', '@grafana/data');
     return rangeUtil.describeInterval(str);
   },
   /** @deprecated since 7.2, use grafana/data */
@@ -111,7 +111,7 @@ const kbn = {
       const decimalPos = formatted.indexOf('.');
       const precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
       if (precision < decimals) {
-        return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
+        return (precision ? formatted : formatted + '.') + String(factor).slice(1, decimals - precision + 1);
       }
     }
 

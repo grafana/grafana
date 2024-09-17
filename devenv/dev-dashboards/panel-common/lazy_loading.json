@@ -2193,7 +2193,6 @@
   ],
   "refresh": "",
   "schemaVersion": 18,
-  "style": "dark",
   "tags": ["gdev", "demo"],
   "templating": {
     "list": []

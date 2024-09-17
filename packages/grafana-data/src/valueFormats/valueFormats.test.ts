@@ -1,7 +1,8 @@
-import { toFixed, getValueFormat, scaledUnits, formattedValueToString } from './valueFormats';
+import { dateTime } from '../datetime/moment_wrapper';
 import { DecimalCount } from '../types/displayValue';
-import { TimeZone } from '../types';
-import { dateTime } from '../datetime';
+import { TimeZone } from '../types/time';
+
+import { toFixed, getValueFormat, scaledUnits, formattedValueToString } from './valueFormats';
 
 interface ValueFormatTest {
   id: string;
@@ -12,77 +13,73 @@ interface ValueFormatTest {
   result: string;
 }
 
-const formatTests: ValueFormatTest[] = [
-  // Currency
-  { id: 'currencyUSD', decimals: 2, value: 1532.82, result: '$1.53K' },
-  { id: 'currencyKRW', decimals: 2, value: 1532.82, result: '₩1.53K' },
-  { id: 'currencyIDR', decimals: 2, value: 1532.82, result: 'Rp1.53K' },
-
-  // Standard
-  { id: 'ms', decimals: 4, value: 0.0024, result: '0.0024 ms' },
-  { id: 'ms', decimals: 0, value: 100, result: '100 ms' },
-  { id: 'ms', decimals: 2, value: 1250, result: '1.25 s' },
-  { id: 'ms', decimals: 1, value: 10000086.123, result: '2.8 hour' },
-  { id: 'ms', decimals: 0, value: 1200, result: '1 s' },
-  { id: 'short', decimals: 0, scaledDecimals: -1, value: 98765, result: '98.77 K' },
-  { id: 'short', decimals: 0, scaledDecimals: 0, value: 9876543, result: '9.876543 Mil' },
-  { id: 'short', decimals: 2, scaledDecimals: null, value: 9876543, result: '9.88 Mil' },
-  { id: 'kbytes', decimals: 3, value: 10000000, result: '9.537 GiB' },
-  { id: 'deckbytes', decimals: 3, value: 10000000, result: '10.000 GB' },
-  { id: 'megwatt', decimals: 3, value: 1000, result: '1.000 GW' },
-  { id: 'kohm', decimals: 3, value: 1000, result: '1.000 MΩ' },
-  { id: 'Mohm', decimals: 3, value: 1000, result: '1.000 GΩ' },
-
-  { id: 'farad', decimals: 3, value: 1000, result: '1.000 kF' },
-  { id: 'µfarad', decimals: 3, value: 1000, result: '1.000 mF' },
-  { id: 'nfarad', decimals: 3, value: 1000, result: '1.000 µF' },
-  { id: 'pfarad', decimals: 3, value: 1000, result: '1.000 nF' },
-  { id: 'ffarad', decimals: 3, value: 1000, result: '1.000 pF' },
-
-  { id: 'henry', decimals: 3, value: 1000, result: '1.000 kH' },
-  { id: 'mhenry', decimals: 3, value: 1000, result: '1.000 H' },
-  { id: 'µhenry', decimals: 3, value: 1000, result: '1.000 mH' },
-
-  // Suffix (unknown units append to the end)
-  { id: 'a', decimals: 0, value: 1532.82, result: '1533 a' },
-  { id: 'b', decimals: 0, value: 1532.82, result: '1533 b' },
-
-  // Prefix (unknown units append to the end)
-  { id: 'prefix:b', value: 1532.82, result: 'b1533' },
-  { id: 'suffix:d', value: 1532.82, result: '1533 d' },
-
-  // SI Units
-  { id: 'si:µF', value: 1234, decimals: 2, result: '1.23 mF' },
-  { id: 'si:µF', value: 1234000000, decimals: 2, result: '1.23 kF' },
-  { id: 'si:µF', value: 1234000000000000, decimals: 2, result: '1.23 GF' },
-
-  // Counts (suffix)
-  { id: 'count:xpm', value: 1234567, decimals: 2, result: '1.23M xpm' },
-  { id: 'count:x/min', value: 1234, decimals: 2, result: '1.23K x/min' },
-
-  // Currency (prefix)
-  { id: 'currency:@', value: 1234567, decimals: 2, result: '@1.23M' },
-  { id: 'currency:@', value: 1234, decimals: 2, result: '@1.23K' },
-
-  // Time format
-  { id: 'time:YYYY', decimals: 0, value: dateTime(new Date(1999, 6, 2)).valueOf(), result: '1999' },
-  { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010.07' },
-  { id: 'dateTimeAsIso', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010-07-02 00:00:00' },
-  {
-    id: 'dateTimeAsUS',
-    decimals: 0,
-    value: dateTime(new Date(2010, 6, 2)).valueOf(),
-    result: '07/02/2010 12:00:00 am',
-  },
-  {
-    id: 'dateTimeAsSystem',
-    decimals: 0,
-    value: dateTime(new Date(2010, 6, 2)).valueOf(),
-    result: '2010-07-02 00:00:00',
-  },
-];
-
 describe('valueFormats', () => {
+  it.each`
+    format                | decimals     | value                                       | expected
+    ${'currencyUSD'}      | ${2}         | ${1532.82}                                  | ${'$1.53K'}
+    ${'currencyKRW'}      | ${2}         | ${1532.82}                                  | ${'₩1.53K'}
+    ${'currencyIDR'}      | ${2}         | ${1532.82}                                  | ${'Rp1.53K'}
+    ${'none'}             | ${undefined} | ${3.23}                                     | ${'3.23'}
+    ${'none'}             | ${undefined} | ${0.0245}                                   | ${'0.0245'}
+    ${'none'}             | ${undefined} | ${1 / 3}                                    | ${'0.333'}
+    ${'ms'}               | ${4}         | ${0.0024}                                   | ${'0.0024 ms'}
+    ${'ms'}               | ${0}         | ${100}                                      | ${'100 ms'}
+    ${'ms'}               | ${2}         | ${1250}                                     | ${'1.25 s'}
+    ${'ms'}               | ${1}         | ${10000086.123}                             | ${'2.8 hours'}
+    ${'ms'}               | ${1}         | ${-10000086.123}                            | ${'-2.8 hours'}
+    ${'ms'}               | ${undefined} | ${1000}                                     | ${'1 s'}
+    ${'ms'}               | ${0}         | ${1200}                                     | ${'1 s'}
+    ${'short'}            | ${undefined} | ${1000}                                     | ${'1 K'}
+    ${'short'}            | ${undefined} | ${1200}                                     | ${'1.20 K'}
+    ${'short'}            | ${undefined} | ${1250}                                     | ${'1.25 K'}
+    ${'short'}            | ${undefined} | ${1000000}                                  | ${'1 Mil'}
+    ${'short'}            | ${undefined} | ${1500000}                                  | ${'1.50 Mil'}
+    ${'short'}            | ${undefined} | ${1000120}                                  | ${'1.00 Mil'}
+    ${'short'}            | ${undefined} | ${98765}                                    | ${'98.8 K'}
+    ${'short'}            | ${undefined} | ${9876543}                                  | ${'9.88 Mil'}
+    ${'short'}            | ${undefined} | ${9876543}                                  | ${'9.88 Mil'}
+    ${'kbytes'}           | ${undefined} | ${10000000}                                 | ${'9.54 GiB'}
+    ${'deckbytes'}        | ${undefined} | ${10000000}                                 | ${'10 GB'}
+    ${'megwatt'}          | ${3}         | ${1000}                                     | ${'1.000 GW'}
+    ${'mohm'}             | ${3}         | ${1000}                                     | ${'1.000 Ω'}
+    ${'kohm'}             | ${3}         | ${1000}                                     | ${'1.000 MΩ'}
+    ${'Mohm'}             | ${3}         | ${1000}                                     | ${'1.000 GΩ'}
+    ${'farad'}            | ${3}         | ${1000}                                     | ${'1.000 kF'}
+    ${'µfarad'}           | ${3}         | ${1000}                                     | ${'1.000 mF'}
+    ${'nfarad'}           | ${3}         | ${1000}                                     | ${'1.000 µF'}
+    ${'pfarad'}           | ${3}         | ${1000}                                     | ${'1.000 nF'}
+    ${'ffarad'}           | ${3}         | ${1000}                                     | ${'1.000 pF'}
+    ${'henry'}            | ${3}         | ${1000}                                     | ${'1.000 kH'}
+    ${'mhenry'}           | ${3}         | ${1000}                                     | ${'1.000 H'}
+    ${'µhenry'}           | ${3}         | ${1000}                                     | ${'1.000 mH'}
+    ${'a'}                | ${0}         | ${1532.82}                                  | ${'1533 a'}
+    ${'b'}                | ${0}         | ${1532.82}                                  | ${'1533 b'}
+    ${'prefix:b'}         | ${undefined} | ${1532.82}                                  | ${'b1533'}
+    ${'suffix:d'}         | ${undefined} | ${1532.82}                                  | ${'1533 d'}
+    ${'si:µF'}            | ${2}         | ${0}                                        | ${'0.00 µF'}
+    ${'si:µF'}            | ${2}         | ${1234}                                     | ${'1.23 mF'}
+    ${'si:µF'}            | ${2}         | ${1234000000}                               | ${'1.23 kF'}
+    ${'si:µF'}            | ${2}         | ${1234000000000000}                         | ${'1.23 GF'}
+    ${'count:xpm'}        | ${2}         | ${1234567}                                  | ${'1.23M xpm'}
+    ${'count:x/min'}      | ${2}         | ${1234}                                     | ${'1.23K x/min'}
+    ${'currency:@'}       | ${2}         | ${1234567}                                  | ${'@1.23M'}
+    ${'currency:@'}       | ${2}         | ${1234}                                     | ${'@1.23K'}
+    ${'time:YYYY'}        | ${0}         | ${dateTime(new Date(1999, 6, 2)).valueOf()} | ${'1999'}
+    ${'time:YYYY.MM'}     | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'2010.07'}
+    ${'dateTimeAsIso'}    | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'2010-07-02 00:00:00'}
+    ${'dateTimeAsUS'}     | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'07/02/2010 12:00:00 am'}
+    ${'dateTimeAsSystem'} | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'2010-07-02 00:00:00'}
+    ${'dtdurationms'}     | ${undefined} | ${100000}                                   | ${'1 minute'}
+    ${'dtdurationms'}     | ${undefined} | ${150000}                                   | ${'2 minutes'}
+  `(
+    'With format=$format decimals=$decimals and value=$value then result should be = $expected',
+    async ({ format, value, decimals, expected }) => {
+      const result = getValueFormat(format)(value, decimals, undefined, undefined);
+      const full = formattedValueToString(result);
+      expect(full).toBe(expected);
+    }
+  );
+
   it('Manually check a format', () => {
     // helpful for adding tests one at a time with the debugger
     const tests: ValueFormatTest[] = [
@@ -94,22 +91,21 @@ describe('valueFormats', () => {
     expect(full).toBe(test.result);
   });
 
-  for (const test of formatTests) {
-    describe(`value format: ${test.id}`, () => {
-      it(`should translate ${test.value} as ${test.result}`, () => {
-        const result = getValueFormat(test.id)(test.value, test.decimals, test.scaledDecimals);
-        const full = formattedValueToString(result);
-        expect(full).toBe(test.result);
-      });
-    });
-  }
-
   describe('normal cases', () => {
     it('toFixed should handle number correctly if decimal is null', () => {
       expect(toFixed(100)).toBe('100');
 
       expect(toFixed(100.4)).toBe('100');
       expect(toFixed(100.5)).toBe('101');
+      expect(toFixed(27.4)).toBe('27.4');
+      expect(toFixed(27.5)).toBe('27.5');
+
+      expect(toFixed(-100)).toBe('-100');
+
+      expect(toFixed(-100.5)).toBe('-100');
+      expect(toFixed(-100.6)).toBe('-101');
+      expect(toFixed(-27.5)).toBe('-27.5');
+      expect(toFixed(-27.6)).toBe('-27.6');
     });
 
     it('toFixed should handle number correctly if decimal is not null', () => {
@@ -120,6 +116,9 @@ describe('valueFormats', () => {
 
       expect(toFixed(100.4, 2)).toBe('100.40');
       expect(toFixed(100.5, 2)).toBe('100.50');
+
+      expect(toFixed(0, 1)).toBe('0.0');
+      expect(toFixed(0, 2)).toBe('0.00');
     });
   });
 

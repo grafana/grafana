@@ -1,111 +1,126 @@
 /* eslint-disable max-len */
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+
 import { renderGeneratedFileBanner } from '../utils/generatedFileBanner';
+
 import { styleMixins } from '.';
 
-export const lightThemeVarsTemplate = (theme: GrafanaTheme) =>
+export const lightThemeVarsTemplate = (theme: GrafanaTheme2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/light.ts', 'grafana-ui/src/themes/_variable.light.scss.tmpl.ts')}
+@use 'sass:color';
 // Global values
 // --------------------------------------------------
 
 $theme-name: light;
 
+$colors-action-hover: ${theme.colors.action.hover};
+$colors-action-selected: ${theme.colors.action.selected};
+
 // New Colors
 // -------------------------
-$blue-light: ${theme.palette.blue95};
-$blue-base: ${theme.palette.blue80};
-$blue-shade: ${theme.palette.blue77};
-$red-base: ${theme.palette.redBase};
-$red-shade: ${theme.palette.redShade};
-$green-base: ${theme.palette.greenBase};
-$green-shade: ${theme.palette.greenShade};
-$orange-dark: ${theme.palette.orangeDark};
+$blue-light: ${theme.colors.primary.text};
+$blue-base: ${theme.colors.primary.main};
+$blue-shade: ${theme.colors.primary.shade};
+$red-base: ${theme.colors.error.main};
+$red-shade: ${theme.colors.error.shade};
+$green-base: ${theme.colors.success.main};
+$green-shade: ${theme.colors.success.shade};
+$orange-dark: ${theme.v1.palette.orangeDark};
 
-$gray98: ${theme.palette.gray98};
-$gray95: ${theme.palette.gray95};
-$gray85: ${theme.palette.gray85};
-$gray70: ${theme.palette.gray70};
-$gray60: ${theme.palette.gray60};
-$gray33: ${theme.palette.gray33};
-$gray25: ${theme.palette.gray25};
-$gray15: ${theme.palette.gray15};
-$gray10: ${theme.palette.gray10};
-$gray05: ${theme.palette.gray05};
+$gray98: ${theme.v1.palette.gray98};
+$gray95: ${theme.v1.palette.gray95};
+$gray85: ${theme.v1.palette.gray85};
+$gray70: ${theme.v1.palette.gray70};
+$gray60: ${theme.v1.palette.gray60};
+$gray33: ${theme.v1.palette.gray33};
+$gray25: ${theme.v1.palette.gray25};
+$gray15: ${theme.v1.palette.gray15};
+$gray10: ${theme.v1.palette.gray10};
+$gray05: ${theme.v1.palette.gray05};
 
 // Grays
 // -------------------------
-$black: ${theme.palette.black};
+$black: ${theme.v1.palette.black};
 
-$dark-1: ${theme.palette.dark1};
-$dark-2: ${theme.palette.dark2};
-$dark-4: ${theme.palette.dark4};
-$dark-10: ${theme.palette.dark10};
-$gray-1: ${theme.palette.gray1};
-$gray-2: ${theme.palette.gray2};
-$gray-3: ${theme.palette.gray3};
-$gray-4: ${theme.palette.gray4};
-$gray-5: ${theme.palette.gray5};
-$gray-6: ${theme.palette.gray6};
-$gray-7: ${theme.palette.gray7};
+$dark-1: ${theme.v1.palette.dark1};
+$dark-2: ${theme.v1.palette.dark2};
+$dark-4: ${theme.v1.palette.dark4};
+$dark-10: ${theme.v1.palette.dark10};
+$gray-1: ${theme.v1.palette.gray1};
+$gray-2: ${theme.v1.palette.gray2};
+$gray-3: ${theme.v1.palette.gray3};
+$gray-4: ${theme.v1.palette.gray4};
+$gray-5: ${theme.v1.palette.gray5};
+$gray-6: ${theme.v1.palette.gray6};
+$gray-7: ${theme.v1.palette.gray7};
 
-$white: ${theme.palette.white};
+$white: ${theme.v1.palette.white};
+
+$layer0: ${theme.colors.background.canvas};
+$layer1: ${theme.colors.background.primary};
+$layer2: ${theme.colors.background.secondary};
+
+$divider: ${theme.colors.border.weak};
+$border0: ${theme.colors.border.weak};
+$border1: ${theme.colors.border.medium};
 
 // Accent colors
 // -------------------------
-$blue: ${theme.colors.textBlue};
+$blue: ${theme.colors.primary.text};
 $red: $red-base;
-$yellow: ${theme.palette.yellow};
-$orange: ${theme.palette.orange};
-$purple: ${theme.palette.purple};
-$variable: ${theme.colors.textBlue};
+$yellow: ${theme.v1.palette.yellow};
+$orange: ${theme.v1.palette.orange};
+$purple: ${theme.v1.palette.purple};
+$variable: ${theme.colors.primary.text};
 
-$brand-primary: ${theme.palette.brandPrimary};
-$brand-success: ${theme.palette.brandSuccess};
-$brand-warning: ${theme.palette.brandWarning};
-$brand-danger: ${theme.palette.brandDanger};
+$brand-primary: ${theme.v1.palette.orange};
+$brand-success: ${theme.colors.success.main};
+$brand-warning: ${theme.colors.warning.main};
+$brand-danger: ${theme.colors.error.main};
 
-$query-red: ${theme.palette.queryRed};
-$query-green: ${theme.palette.queryGreen};
-$query-purple: ${theme.palette.queryPurple};
-$query-orange: ${theme.palette.orange};
+$query-red: ${theme.colors.error.text};
+$query-green: ${theme.colors.success.text};
+$query-purple: #fe85fc;
+$query-orange: ${theme.v1.palette.orange};
 
 // Status colors
 // -------------------------
-$online: ${theme.palette.online};
-$warn: ${theme.palette.warn};
-$critical: ${theme.palette.critical};
+$online: ${theme.colors.success.text};
+$warn: ${theme.colors.warning.text};
+$critical: ${theme.colors.error.text};
+
 
 // Scaffolding
 // -------------------------
-$body-bg: ${theme.colors.bodyBg};
-$page-bg: ${theme.colors.bodyBg};
-$dashboard-bg: ${theme.colors.dashboardBg};
+$body-bg: ${theme.colors.background.canvas};
+$page-bg: ${theme.colors.background.canvas};
+$dashboard-bg: ${theme.colors.background.canvas};
 
-$text-color: ${theme.colors.text};
-$text-color-strong: ${theme.colors.textStrong};
-$text-color-semi-weak: ${theme.colors.textSemiWeak};
-$text-color-weak: ${theme.colors.textWeak};
-$text-color-faint: ${theme.colors.textFaint};
-$text-color-emphasis: ${theme.colors.textStrong};
-$text-blue: ${theme.colors.textBlue};
+$text-color: ${theme.colors.text.primary};
+$text-color-strong: ${theme.colors.text.maxContrast};
+$text-color-semi-weak: ${theme.colors.text.secondary};
+$text-color-weak: ${theme.colors.text.secondary};
+$text-color-faint: ${theme.colors.text.disabled};
+$text-color-emphasis: ${theme.colors.text.maxContrast};
+$text-blue: ${theme.colors.primary.text};
 
 $text-shadow-faint: none;
 
 // gradients
-$brand-gradient-horizontal: linear-gradient(to right, #f05a28 30%, #fbca0a 99%);
-$brand-gradient-vertical: linear-gradient(#f05a28 30%, #fbca0a 99%);
+$brand-gradient-horizontal: ${theme.colors.gradients.brandHorizontal};
+$brand-gradient-vertical: ${theme.colors.gradients.brandVertical};
 
 // Links
 // -------------------------
-$link-color: ${theme.colors.link};
-$link-color-disabled: ${theme.colors.linkDisabled};
-$link-hover-color: ${theme.colors.linkHover};
-$external-link-color: ${theme.colors.linkExternal};
+$link-color: ${theme.colors.text.primary};
+$link-color-disabled: ${theme.colors.text.disabled};
+$link-hover-color: ${theme.colors.text.maxContrast};
+$external-link-color: ${theme.colors.text.link};
 
 // Typography
 // -------------------------
-$headings-color: ${theme.colors.textHeading};
+$headings-color: ${theme.colors.text.primary};
 $abbr-border-color: $gray-2 !default;
 $text-muted: $text-color-weak;
 
@@ -113,29 +128,30 @@ $hr-border-color: $gray-4 !default;
 
 // Panel
 // -------------------------
-$panel-bg: ${theme.colors.panelBg};
-$panel-border: 1px solid ${theme.colors.panelBorder};
-$panel-header-hover-bg: ${theme.colors.bg2};
-$panel-corner: $gray-4;
+$panel-bg: ${theme.components.panel.background};
+$panel-border: 1px solid ${theme.components.panel.borderColor};
+$panel-header-hover-bg: ${theme.colors.action.hover};
+$panel-box-shadow: ${theme.components.panel.boxShadow};
+$panel-corner: $panel-bg;
 
 // Page header
-$page-header-bg: ${theme.colors.pageHeaderBg};
+$page-header-bg: ${theme.colors.background.canvas};
 $page-header-shadow: inset 0px -3px 10px $gray-6;
-$page-header-border-color: ${theme.colors.pageHeaderBorder};
+$page-header-border-color: ${theme.colors.background.canvas};
 
 $divider-border-color: $gray-2;
 
 // Graphite Target Editor
-$tight-form-func-bg: ${theme.colors.bg2};
-$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$tight-form-func-bg: ${theme.colors.background.secondary};
+$tight-form-func-highlight-bg: ${styleMixins.hoverColor(theme.colors.background.secondary, theme)};
 
-$modal-backdrop-bg: ${theme.colors.bg1};
+$modal-backdrop-bg: ${theme.colors.background.primary};
 $code-tag-bg: $gray-6;
 $code-tag-border: $gray-4;
 
 // cards
-$card-background: ${theme.colors.bg2};
-$card-background-hover: ${styleMixins.hoverColor(theme.colors.bg2, theme)};
+$card-background: ${theme.colors.background.secondary};
+$card-background-hover: ${theme.colors.background.secondary};
 $card-shadow: none;
 
 // Lists
@@ -152,11 +168,10 @@ $scrollbarBorder: $gray-7;
 
 // Tables
 // -------------------------
-$table-bg-accent: ${styleMixins.hoverColor(theme.colors.bg1, theme)};
-$table-border: $gray-3; // table and cell border
-
-$table-bg-odd: $gray-6;
-$table-bg-hover: $gray-5;
+$table-bg-accent: ${theme.colors.background.secondary};
+$table-border: ${theme.colors.border.medium};
+$table-bg-odd: ${theme.colors.emphasize(theme.colors.background.primary, 0.02)};
+$table-bg-hover: ${theme.colors.emphasize(theme.colors.background.primary, 0.05)};
 
 // Buttons
 // -------------------------
@@ -192,17 +207,17 @@ $btn-active-box-shadow: 0px 0px 4px rgba(234, 161, 51, 0.6);
 
 // Forms
 // -------------------------
-$input-bg: $white;
-$input-bg-disabled: $gray-5;
+$input-bg: ${theme.components.input.background};
+$input-bg-disabled: ${theme.colors.action.disabledBackground};
 
-$input-color: ${theme.colors.formInputText};
-$input-border-color: ${theme.colors.formInputBorder};
+$input-color: ${theme.components.input.text};
+$input-border-color: ${theme.components.input.borderColor};
 $input-box-shadow: none;
-$input-border-focus: ${theme.palette.blue95};
-$input-box-shadow-focus: ${theme.palette.blue95};
-$input-color-placeholder: ${theme.colors.formInputPlaceholderText};
-$input-label-bg: ${theme.colors.bg2};
-$input-color-select-arrow: ${theme.palette.gray60};
+$input-border-focus: ${theme.v1.palette.blue95};
+$input-box-shadow-focus: ${theme.v1.palette.blue95};
+$input-color-placeholder: ${theme.colors.text.disabled};
+$input-label-bg: ${theme.colors.background.secondary};
+$input-color-select-arrow: ${theme.v1.palette.gray60};
 
 // search
 $search-shadow: 0 1px 5px 0 $gray-5;
@@ -214,10 +229,11 @@ $typeahead-selected-color: $yellow;
 
 // Dropdowns
 // -------------------------
-$dropdownBackground: $white;
-$dropdownBorder: $gray-4;
-$dropdownDividerTop: $gray-6;
-$dropdownDividerBottom: $gray-4;
+$dropdownBackground: ${theme.colors.background.primary};
+$dropdownBorder: ${theme.colors.border.weak};
+$dropdownDividerTop: ${theme.colors.border.weak};
+$dropdownDividerBottom: ${theme.colors.border.weak};
+$dropdownShadow: ${theme.shadows.z3};
 
 $dropdownLinkColor: $dark-2;
 $dropdownLinkColorHover: $link-color;
@@ -234,66 +250,62 @@ $horizontalComponentOffset: 180px;
 $navbarHeight: 52px;
 $navbarBorder: 1px solid $gray-5;
 
-$navbarButtonBackground: $panel-bg;
-$navbar-button-border: $gray-4;
-
 // Sidemenu
 // -------------------------
-$side-menu-bg: ${theme.palette.gray15};
-$side-menu-border: 1px solid ${theme.palette.gray25};
+$side-menu-bg: ${theme.v1.palette.gray15};
+$side-menu-border: 1px solid ${theme.v1.palette.gray25};
 $side-menu-bg-mobile: rgba(0, 0, 0, 0); //$gray-6;
-$side-menu-item-hover-bg: ${theme.palette.gray25};
+$side-menu-item-hover-bg: ${theme.v1.palette.gray25};
 $side-menu-shadow: 5px 0px 10px -5px $gray-1;
 $side-menu-link-color: $gray-4;
-$side-menu-icon-color: ${theme.palette.gray70};
-$side-menu-header-color: ${theme.palette.gray95};
+$side-menu-icon-color: ${theme.v1.palette.gray70};
+$side-menu-header-color: ${theme.v1.palette.gray95};
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg: $panel-bg;
-$menu-dropdown-hover-bg: $gray-6;
-$menu-dropdown-shadow: 5px 5px 10px -5px $gray-1;
+$menu-dropdown-bg: ${theme.colors.background.primary};
+$menu-dropdown-hover-bg: ${theme.colors.action.hover};
+$menu-dropdown-shadow: ${theme.shadows.z3};
 
 // Tabs
 // -------------------------
 $tab-border-color: $gray-5;
 
-// Toolbar
-$toolbar-bg: white;
-
 // Form states and alerts
 // -------------------------
-$warning-text-color: lighten($orange, 10%);
-$error-text-color: $red-shade;
-$success-text-color: lighten($green-base, 10%);
+$warning-text-color: ${theme.colors.warning.text};
+$error-text-color: ${theme.colors.error.text};
+$success-text-color: ${theme.colors.success.text};
 
-$alert-error-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-success-bg: linear-gradient(90deg, $green-base, $green-shade);
-$alert-warning-bg: linear-gradient(90deg, $red-base, $red-shade);
-$alert-info-bg: linear-gradient(100deg, $blue-base, $blue-shade);
+$alert-error-bg: ${theme.colors.error.main};
+$alert-success-bg: ${theme.colors.success.main};
+$alert-warning-bg: ${theme.colors.warning.main};
+$alert-info-bg: ${theme.colors.warning.main};
 
 // Tooltips and popovers
-$tooltipBackground: $gray-1;
-$tooltipColor: $gray-7;
-$tooltipArrowColor: $tooltipBackground; // Used by Angular tooltip
-$tooltipBackgroundError: $brand-danger;
-$tooltipShadow: 0 0 5px $gray60;
+$tooltipBackground: ${theme.components.tooltip.background};
+$tooltipColor: ${theme.components.tooltip.text};
+$tooltipArrowColor: ${theme.components.tooltip.background};
+$tooltipBackgroundError: ${theme.colors.error.main};
+$tooltipShadow: ${theme.shadows.z2};
+
+$popover-bg: ${theme.colors.background.primary};
+$popover-color: ${theme.colors.text.primary};
+$popover-border-color: ${theme.colors.border.weak};
+$popover-header-bg: ${theme.colors.background.secondary};
+$popover-shadow: ${theme.shadows.z3};
+
 $graph-tooltip-bg: $gray-5;
 
 $tooltipArrowWidth: 5px;
-$tooltipLinkColor: lighten($tooltipColor, 5%);
-
-$popover-bg: $page-bg;
-$popover-color: $text-color;
-$popover-border-color: $gray-5;
-$popover-header-bg: $gray-5;
-$popover-shadow: 0 0 20px $white;
+$tooltipLinkColor: color.adjust($tooltipColor, $lightness: 5%);
+$tooltipExternalLinkColor: #6E9FFF;
 
 $popover-error-bg: $btn-danger-bg;
 $popover-help-bg: $tooltipBackground;
 $popover-help-color: $tooltipColor;
 
-$popover-code-bg: ${theme.colors.bg1};
+$popover-code-bg: ${theme.colors.background.primary};
 $popover-code-boxshadow: 0 0 5px $gray60;
 
 // images
@@ -303,7 +315,7 @@ $checkboxImageUrl: '../img/checkbox_white.png';
 $info-box-border-color: $blue-base;
 
 // footer
-$footer-link-color: $gray-3;
+$footer-link-color: $gray-1;
 $footer-link-hover: $dark-2;
 
 // json explorer
@@ -322,14 +334,14 @@ $json-explorer-url-color: $blue-base;
 
 // Changelog and diff
 // -------------------------
-$diff-label-bg: $gray-7;
+$diff-label-bg: ${theme.colors.action.hover};
 $diff-label-fg: $gray-2;
 
 $diff-arrow-color: $dark-2;
-$diff-group-bg: $gray-6;
+$diff-group-bg: ${theme.colors.background.secondary};
 
-$diff-json-bg: $gray-6;
-$diff-json-fg: $gray-1;
+$diff-json-bg: ${theme.colors.background.secondary};
+$diff-json-fg: ${theme.colors.text.primary};
 
 $diff-json-added: $blue-shade;
 $diff-json-deleted: $red-shade;
@@ -342,15 +354,12 @@ $diff-json-changed-num: $gray-4;
 
 $diff-json-icon: $gray-4;
 
-//Submenu
-$variable-option-bg: $dropdownLinkBackgroundHover;
-
 //Switch Slider
 // -------------------------
 $switch-bg: $white;
 $switch-slider-color: $gray-7;
 $switch-slider-off-bg: $gray-5;
-$switch-slider-on-bg: ${theme.palette.blue77};
+$switch-slider-on-bg: ${theme.v1.palette.blue77};
 $switch-slider-shadow: 0 0 3px $dark-2;
 
 //Checkbox
@@ -368,16 +377,13 @@ $panel-editor-viz-item-shadow: 0 0 4px $gray-3;
 $panel-editor-viz-item-border: 1px solid $gray-3;
 $panel-editor-viz-item-shadow-hover: 0 0 4px $blue-light;
 $panel-editor-viz-item-border-hover: 1px solid $blue-light;
-$panel-editor-viz-item-bg: $white;
+$panel-editor-viz-item-bg: $card-background;
 $panel-editor-tabs-line-color: $dark-2;
 
-$panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
+$panel-editor-viz-item-bg-hover: color.adjust($blue-base, $lightness: 45%);
 
-$panel-options-group-border: none;
-$panel-options-group-header-bg: $gray-5;
-
-$panel-grid-placeholder-bg: lighten(${theme.palette.blue95}, 30%);
-$panel-grid-placeholder-shadow: 0 0 4px ${theme.palette.blue95};
+$panel-grid-placeholder-bg: color.adjust(${theme.v1.palette.blue95}, $lightness: 30%);
+$panel-grid-placeholder-shadow: 0 0 4px ${theme.v1.palette.blue95};
 
 // logs
 $logs-color-unknown: $gray-5;
@@ -394,4 +400,5 @@ $vertical-resize-handle-dots-hover: $gray-2;
 // Calendar
 $calendar-bg-days: $white;
 $calendar-bg-now: $gray-6;
+
 `;

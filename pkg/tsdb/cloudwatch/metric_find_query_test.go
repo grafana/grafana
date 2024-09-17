@@ -2,233 +2,39 @@ package cloudwatch
 
 import (
 	"context"
+	"encoding/json"
+	"net/url"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestQuery_Metrics(t *testing.T) {
-	origNewCWClient := newCWClient
-	t.Cleanup(func() {
-		newCWClient = origNewCWClient
-	})
-
-	var client fakeCWClient
-
-	newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-		return client
-	}
-
-	t.Run("Custom metrics", func(t *testing.T) {
-		client = fakeCWClient{
-			metrics: []*cloudwatch.Metric{
-				{
-					MetricName: aws.String("Test_MetricName"),
-					Dimensions: []*cloudwatch.Dimension{
-						{
-							Name: aws.String("Test_DimensionName"),
-						},
-					},
-				},
-			},
-		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
-				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"type":      "metricFindQuery",
-						"subtype":   "metrics",
-						"region":    "us-east-1",
-						"namespace": "custom",
-					}),
-				},
-			},
-		})
-		require.NoError(t, err)
-
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 1,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"Test_MetricName",
-									"Test_MetricName",
-								},
-							},
-						},
-					},
-				},
-			},
-		}, resp)
-	})
-
-	t.Run("Dimension keys for custom metrics", func(t *testing.T) {
-		client = fakeCWClient{
-			metrics: []*cloudwatch.Metric{
-				{
-					MetricName: aws.String("Test_MetricName"),
-					Dimensions: []*cloudwatch.Dimension{
-						{
-							Name: aws.String("Test_DimensionName"),
-						},
-					},
-				},
-			},
-		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
-				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"type":      "metricFindQuery",
-						"subtype":   "dimension_keys",
-						"region":    "us-east-1",
-						"namespace": "custom",
-					}),
-				},
-			},
-		})
-		require.NoError(t, err)
-
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 1,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"Test_DimensionName",
-									"Test_DimensionName",
-								},
-							},
-						},
-					},
-				},
-			},
-		}, resp)
-	})
-}
-
-func TestQuery_Regions(t *testing.T) {
-	origNewEC2Client := newEC2Client
-	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
-	})
-
-	var cli fakeEC2Client
-
-	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
-		return cli
-	}
-
-	t.Run("An extra region", func(t *testing.T) {
-		const regionName = "xtra-region"
-		cli = fakeEC2Client{
-			regions: []string{regionName},
-		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
-				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"type":      "metricFindQuery",
-						"subtype":   "regions",
-						"region":    "us-east-1",
-						"namespace": "custom",
-					}),
-				},
-			},
-		})
-		require.NoError(t, err)
-
-		rows := []tsdb.RowValues{}
-		for _, region := range knownRegions {
-			rows = append(rows, []interface{}{
-				region,
-				region,
-			})
-		}
-		rows = append(rows, []interface{}{
-			regionName,
-			regionName,
-		})
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": len(knownRegions) + 1,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: rows,
-						},
-					},
-				},
-			},
-		}, resp)
-	})
-}
-
 func TestQuery_InstanceAttributes(t *testing.T) {
-	origNewEC2Client := newEC2Client
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
+		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
+	var cli oldEC2Client
 
-	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("Get instance ID", func(t *testing.T) {
 		const instanceID = "i-12345678"
-		cli = fakeEC2Client{
+		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
 				{
 					Instances: []*ec2.Instance{
@@ -245,70 +51,51 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
-				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"type":          "metricFindQuery",
-						"subtype":       "ec2_instance_attribute",
-						"region":        "us-east-1",
-						"attributeName": "InstanceId",
-						"filters": map[string]interface{}{
-							"tag:Environment": []string{"production"},
-						},
-					}),
-				},
-			},
+
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
+
+		filterMap := map[string][]string{
+			"tag:Environment": {"production"},
+		}
+		filterJson, err := json.Marshal(filterMap)
 		require.NoError(t, err)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 1,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									instanceID,
-									instanceID,
-								},
-							},
-						},
-					},
-				},
+		executor := newExecutor(im, log.NewNullLogger())
+		resp, err := executor.handleGetEc2InstanceAttribute(
+			context.Background(),
+			backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":        []string{"us-east-1"},
+				"attributeName": []string{"InstanceId"},
+				"filters":       []string{string(filterJson)},
 			},
-		}, resp)
+		)
+		require.NoError(t, err)
+
+		expResponse := []suggestData{
+			{Text: instanceID, Value: instanceID, Label: instanceID},
+		}
+		assert.Equal(t, expResponse, resp)
 	})
 }
 
 func TestQuery_EBSVolumeIDs(t *testing.T) {
-	origNewEC2Client := newEC2Client
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
+		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
+	var cli oldEC2Client
 
-	newEC2Client = func(client.ConfigProvider) ec2iface.EC2API {
+	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("", func(t *testing.T) {
-		const instanceIDs = "{i-1, i-2, i-3}"
-
-		cli = fakeEC2Client{
+		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
 				{
 					Instances: []*ec2.Instance{
@@ -348,68 +135,29 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
-				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"type":       "metricFindQuery",
-						"subtype":    "ebs_volume_ids",
-						"region":     "us-east-1",
-						"instanceId": instanceIDs,
-					}),
-				},
-			},
+
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
+
+		executor := newExecutor(im, log.NewNullLogger())
+		resp, err := executor.handleGetEbsVolumeIds(
+			context.Background(),
+			backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":     []string{"us-east-1"},
+				"instanceId": []string{"{i-1, i-2, i-3}"},
+			},
+		)
 		require.NoError(t, err)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 6,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"vol-1-1",
-									"vol-1-1",
-								},
-								{
-									"vol-1-2",
-									"vol-1-2",
-								},
-								{
-									"vol-2-1",
-									"vol-2-1",
-								},
-								{
-									"vol-2-2",
-									"vol-2-2",
-								},
-								{
-									"vol-3-1",
-									"vol-3-1",
-								},
-								{
-									"vol-3-2",
-									"vol-3-2",
-								},
-							},
-						},
-					},
-				},
-			},
-		}, resp)
+		expValues := []string{"vol-1-1", "vol-1-2", "vol-2-1", "vol-2-2", "vol-3-1", "vol-3-2"}
+		expResponse := []suggestData{}
+		for _, value := range expValues {
+			expResponse = append(expResponse, suggestData{Text: value, Value: value, Label: value})
+		}
+		assert.Equal(t, expResponse, resp)
 	})
 }
 
@@ -448,54 +196,38 @@ func TestQuery_ResourceARNs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor(nil)
-		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
-			Queries: []*tsdb.Query{
-				{
-					Model: simplejson.NewFromAny(map[string]interface{}{
-						"type":         "metricFindQuery",
-						"subtype":      "resource_arns",
-						"region":       "us-east-1",
-						"resourceType": "ec2:instance",
-						"tags": map[string]interface{}{
-							"Environment": []string{"production"},
-						},
-					}),
-				},
-			},
+
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}, sessions: &fakeSessionCache{}}, nil
 		})
+
+		tagMap := map[string][]string{
+			"Environment": {"production"},
+		}
+		tagJson, err := json.Marshal(tagMap)
 		require.NoError(t, err)
 
-		assert.Equal(t, &tsdb.Response{
-			Results: map[string]*tsdb.QueryResult{
-				"": {
-					Meta: simplejson.NewFromAny(map[string]interface{}{
-						"rowCount": 2,
-					}),
-					Tables: []*tsdb.Table{
-						{
-							Columns: []tsdb.TableColumn{
-								{
-									Text: "text",
-								},
-								{
-									Text: "value",
-								},
-							},
-							Rows: []tsdb.RowValues{
-								{
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
-								},
-								{
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
-									"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
-								},
-							},
-						},
-					},
-				},
+		executor := newExecutor(im, log.NewNullLogger())
+		resp, err := executor.handleGetResourceArns(
+			context.Background(),
+			backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+			}, url.Values{
+				"region":       []string{"us-east-1"},
+				"resourceType": []string{"ec2:instance"},
+				"tags":         []string{string(tagJson)},
 			},
-		}, resp)
+		)
+		require.NoError(t, err)
+
+		expValues := []string{
+			"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
+			"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
+		}
+		expResponse := []suggestData{}
+		for _, value := range expValues {
+			expResponse = append(expResponse, suggestData{Text: value, Value: value, Label: value})
+		}
+		assert.Equal(t, expResponse, resp)
 	})
 }

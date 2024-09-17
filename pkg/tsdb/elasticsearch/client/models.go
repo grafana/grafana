@@ -2,43 +2,24 @@ package es
 
 import (
 	"encoding/json"
-	"net/http"
+	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-type response struct {
-	httpResponse *http.Response
-	reqInfo      *SearchRequestInfo
-}
-
-type SearchRequestInfo struct {
-	Method string `json:"method"`
-	Url    string `json:"url"`
-	Data   string `json:"data"`
-}
-
-type SearchResponseInfo struct {
-	Status int              `json:"status"`
-	Data   *simplejson.Json `json:"data"`
-}
-
-type SearchDebugInfo struct {
-	Request  *SearchRequestInfo  `json:"request"`
-	Response *SearchResponseInfo `json:"response"`
-}
+// DateFormatEpochMS represents a date format of epoch milliseconds (epoch_millis)
+const DateFormatEpochMS = "epoch_millis"
 
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
-	Interval    tsdb.Interval
+	Interval    time.Duration
 	Size        int
 	Sort        map[string]interface{}
 	Query       *Query
 	Aggs        AggArray
 	CustomProps map[string]interface{}
+	TimeRange   backend.TimeRange
 }
 
 // MarshalJSON returns the JSON encoding of the request.
@@ -84,7 +65,6 @@ type MultiSearchRequest struct {
 type MultiSearchResponse struct {
 	Status    int               `json:"status,omitempty"`
 	Responses []*SearchResponse `json:"responses"`
-	DebugInfo *SearchDebugInfo  `json:"-"`
 }
 
 // Query represents a query
@@ -137,13 +117,10 @@ func (f *QueryStringFilter) MarshalJSON() ([]byte, error) {
 type RangeFilter struct {
 	Filter
 	Key    string
-	Gte    string
-	Lte    string
+	Gte    int64
+	Lte    int64
 	Format string
 }
-
-// DateFormatEpochMS represents a date format of epoch milliseconds (epoch_millis)
-const DateFormatEpochMS = "epoch_millis"
 
 // MarshalJSON returns the JSON encoding of the query string filter.
 func (f *RangeFilter) MarshalJSON() ([]byte, error) {
@@ -238,13 +215,20 @@ type HistogramAgg struct {
 
 // DateHistogramAgg represents a date histogram aggregation
 type DateHistogramAgg struct {
-	Field          string          `json:"field"`
-	Interval       string          `json:"interval,omitempty"`
-	MinDocCount    int             `json:"min_doc_count"`
-	Missing        *string         `json:"missing,omitempty"`
-	ExtendedBounds *ExtendedBounds `json:"extended_bounds"`
-	Format         string          `json:"format"`
-	Offset         string          `json:"offset,omitempty"`
+	Field            string          `json:"field"`
+	FixedInterval    string          `json:"fixed_interval,omitempty"`
+	CalendarInterval string          `json:"calendar_interval,omitempty"`
+	MinDocCount      int             `json:"min_doc_count"`
+	Missing          *string         `json:"missing,omitempty"`
+	ExtendedBounds   *ExtendedBounds `json:"extended_bounds"`
+	Format           string          `json:"format"`
+	Offset           string          `json:"offset,omitempty"`
+	TimeZone         string          `json:"time_zone,omitempty"`
+}
+
+// GetCalendarIntervals provides the list of intervals used for building calendar bucketAgg
+func GetCalendarIntervals() []string {
+	return []string{"1w", "1M", "1q", "1y"}
 }
 
 // FiltersAggregation represents a filters aggregation
@@ -261,10 +245,15 @@ type TermsAggregation struct {
 	Missing     *string                `json:"missing,omitempty"`
 }
 
+// NestedAggregation represents a nested aggregation
+type NestedAggregation struct {
+	Path string `json:"path"`
+}
+
 // ExtendedBounds represents extended bounds
 type ExtendedBounds struct {
-	Min string `json:"min"`
-	Max string `json:"max"`
+	Min int64 `json:"min"`
+	Max int64 `json:"max"`
 }
 
 // GeoHashGridAggregation represents a geo hash grid aggregation
@@ -275,14 +264,45 @@ type GeoHashGridAggregation struct {
 
 // MetricAggregation represents a metric aggregation
 type MetricAggregation struct {
+	Type     string
 	Field    string
 	Settings map[string]interface{}
 }
 
 // MarshalJSON returns the JSON encoding of the metric aggregation
 func (a *MetricAggregation) MarshalJSON() ([]byte, error) {
-	root := map[string]interface{}{
-		"field": a.Field,
+	if a.Type == "top_metrics" {
+		root := map[string]interface{}{}
+		var rootMetrics []map[string]string
+
+		order, hasOrder := a.Settings["order"]
+		orderBy, hasOrderBy := a.Settings["orderBy"]
+
+		root["size"] = "1"
+
+		metrics, hasMetrics := a.Settings["metrics"].([]interface{})
+		if hasMetrics {
+			for _, v := range metrics {
+				metricValue := map[string]string{"field": v.(string)}
+				rootMetrics = append(rootMetrics, metricValue)
+			}
+			root["metrics"] = rootMetrics
+		}
+
+		if hasOrderBy && hasOrder {
+			root["sort"] = []map[string]interface{}{
+				{
+					orderBy.(string): order,
+				},
+			}
+		}
+
+		return json.Marshal(root)
+	}
+	root := map[string]interface{}{}
+
+	if a.Field != "" {
+		root["field"] = a.Field
 	}
 
 	for k, v := range a.Settings {

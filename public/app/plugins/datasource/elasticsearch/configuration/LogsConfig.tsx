@@ -1,6 +1,8 @@
-import React from 'react';
-import { LegacyForms } from '@grafana/ui';
-const { FormField } = LegacyForms;
+import * as React from 'react';
+
+import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/experimental';
+import { Input, InlineField } from '@grafana/ui';
+
 import { ElasticsearchOptions } from '../types';
 
 type Props = {
@@ -9,38 +11,51 @@ type Props = {
 };
 export const LogsConfig = (props: Props) => {
   const { value, onChange } = props;
-  const changeHandler = (key: keyof ElasticsearchOptions) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    onChange({
-      ...value,
-      [key]: event.currentTarget.value,
-    });
-  };
+  const changeHandler =
+    (key: keyof ElasticsearchOptions) => (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
+      onChange({
+        ...value,
+        [key]: event.currentTarget.value,
+      });
+    };
 
   return (
-    <>
-      <h3 className="page-heading">Logs</h3>
+    <ConfigSubSection
+      title="Logs"
+      description={
+        <ConfigDescriptionLink
+          description="Configure which fields the data source uses for log messages and log levels."
+          suffix="elasticsearch/#logs"
+          feature="Elasticsearch log fields"
+        />
+      }
+    >
+      <InlineField
+        label="Message field name"
+        labelWidth={22}
+        tooltip="Configure the field to be used for log messages."
+      >
+        <Input
+          id="es_logs-config_logMessageField"
+          value={value.logMessageField}
+          onChange={changeHandler('logMessageField')}
+          placeholder="_source"
+          width={24}
+        />
+      </InlineField>
 
-      <div className="gf-form-group">
-        <div className="gf-form max-width-30">
-          <FormField
-            labelWidth={11}
-            label="Message field name"
-            value={value.logMessageField}
-            onChange={changeHandler('logMessageField')}
-            placeholder="_source"
-          />
-        </div>
-        <div className="gf-form max-width-30">
-          <FormField
-            labelWidth={11}
-            label="Level field name"
-            value={value.logLevelField}
-            onChange={changeHandler('logLevelField')}
-          />
-        </div>
-      </div>
-    </>
+      <InlineField
+        label="Level field name"
+        labelWidth={22}
+        tooltip="Configure the field that determines the level of each log message."
+      >
+        <Input
+          id="es_logs-config_logLevelField"
+          value={value.logLevelField}
+          onChange={changeHandler('logLevelField')}
+          width={24}
+        />
+      </InlineField>
+    </ConfigSubSection>
   );
 };

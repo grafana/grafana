@@ -1,13 +1,16 @@
-import React, { FC, useState } from 'react';
-import Page from 'app/core/components/Page/Page';
-import { getBackendSrv, config } from '@grafana/runtime';
-import { UserOrg } from 'app/types';
-import { useAsync } from 'react-use';
-import { Button, HorizontalGroup } from '@grafana/ui';
+import { connect, ConnectedProps } from 'react-redux';
+import { useEffectOnce } from 'react-use';
+
+import { config } from '@grafana/runtime';
+import { Button, Stack } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import { StoreState, UserOrg } from 'app/types';
+
+import { getUserOrganizations, setUserOrganization } from './state/actions';
 
 const navModel = {
   main: {
-    icon: 'grafana',
+    icon: 'grafana' as const,
     subTitle: 'Preferences',
     text: 'Select active organization',
   },
@@ -16,43 +19,51 @@ const navModel = {
   },
 };
 
-const getUserOrgs = async () => {
-  return await getBackendSrv().get('/api/user/orgs');
-};
-const setUserOrg = async (org: UserOrg) => {
-  return await getBackendSrv()
-    .post('/api/user/using/' + org.orgId)
-    .then(() => {
-      window.location.href = config.appSubUrl + '/';
-    });
+const mapStateToProps = (state: StoreState) => {
+  return {
+    userOrgs: state.organization.userOrgs,
+  };
 };
 
-export const SelectOrgPage: FC = () => {
-  const [orgs, setOrgs] = useState<UserOrg[]>();
+const mapDispatchToProps = {
+  setUserOrganization,
+  getUserOrganizations,
+};
 
-  useAsync(async () => {
-    setOrgs(await getUserOrgs());
-  }, []);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = ConnectedProps<typeof connector>;
+
+export const SelectOrgPage = ({ setUserOrganization, getUserOrganizations, userOrgs }: Props) => {
+  const setUserOrg = async (org: UserOrg) => {
+    await setUserOrganization(org.orgId);
+    window.location.href = config.appSubUrl + '/';
+  };
+
+  useEffectOnce(() => {
+    getUserOrganizations();
+  });
+
   return (
     <Page navModel={navModel}>
       <Page.Contents>
         <div>
           <p>
-            You have been added to another Organization due to an open invitation! Please select which organization you
-            want to use right now (you can change this later at any time).
+            You have been invited to another organization! Please select which organization that you want to use right
+            now. You can change this later at any time.
           </p>
-          <HorizontalGroup wrap>
-            {orgs &&
-              orgs.map(org => (
+          <Stack wrap="wrap">
+            {userOrgs &&
+              userOrgs.map((org) => (
                 <Button key={org.orgId} icon="signin" onClick={() => setUserOrg(org)}>
                   {org.name}
                 </Button>
               ))}
-          </HorizontalGroup>
+          </Stack>
         </div>
       </Page.Contents>
     </Page>
   );
 };
 
-export default SelectOrgPage;
+export default connector(SelectOrgPage);

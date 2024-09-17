@@ -1,4 +1,4 @@
-import React, { FC, CSSProperties } from 'react';
+import { CSSProperties, useRef } from 'react';
 import Transition, { ExitHandler } from 'react-transition-group/Transition';
 
 interface Props {
@@ -9,7 +9,8 @@ interface Props {
   onExited?: ExitHandler<HTMLDivElement>;
 }
 
-export const FadeIn: FC<Props> = props => {
+export const FadeIn = (props: Props) => {
+  const transitionRef = useRef(null);
   const defaultStyle: CSSProperties = {
     transition: `opacity ${props.duration}ms linear`,
     opacity: 0,
@@ -28,9 +29,11 @@ export const FadeIn: FC<Props> = props => {
       timeout={props.duration}
       unmountOnExit={props.unmountOnExit || false}
       onExited={props.onExited}
+      nodeRef={transitionRef}
     >
-      {state => (
+      {(state) => (
         <div
+          ref={transitionRef}
           style={{
             ...defaultStyle,
             ...transitionStyles[state],

@@ -1,61 +1,19 @@
-import React from 'react';
-import { useTheme, stylesFactory } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
+import * as React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
-import tinycolor from 'tinycolor2';
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
   children: React.ReactNode;
   description?: React.ReactNode;
-  category?: string[];
+  category?: React.ReactNode[];
 }
 
-export const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    label: css`
-      label: Label;
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
-      line-height: 1.25;
-      margin: ${theme.spacing.formLabelMargin};
-      padding: ${theme.spacing.formLabelPadding};
-      color: ${theme.colors.formLabel};
-      max-width: 480px;
-    `,
-    labelContent: css`
-      display: flex;
-      align-items: center;
-    `,
-    description: css`
-      label: Label-description;
-      color: ${theme.colors.formDescription};
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.regular};
-      margin-top: ${theme.spacing.xxs};
-      display: block;
-    `,
-    categories: css`
-      label: Label-categories;
-      color: ${theme.isLight
-        ? tinycolor(theme.colors.formLabel)
-            .lighten(10)
-            .toHexString()
-        : tinycolor(theme.colors.formLabel)
-            .darken(10)
-            .toHexString()};
-      display: inline-flex;
-      align-items: center;
-    `,
-    chevron: css`
-      margin: 0 ${theme.spacing.xxs};
-    `,
-  };
-});
-
-export const Label: React.FC<LabelProps> = ({ children, description, className, category, ...labelProps }) => {
-  const theme = useTheme();
-  const styles = getLabelStyles(theme);
+export const Label = ({ children, description, className, category, ...labelProps }: LabelProps) => {
+  const styles = useStyles2(getLabelStyles);
   const categories = category?.map((c, i) => {
     return (
       <span className={styles.categories} key={`${c}/${i}`}>
@@ -77,3 +35,35 @@ export const Label: React.FC<LabelProps> = ({ children, description, className, 
     </div>
   );
 };
+
+export const getLabelStyles = (theme: GrafanaTheme2) => ({
+  label: css({
+    label: 'Label',
+    fontSize: theme.typography.size.sm,
+    fontWeight: theme.typography.fontWeightMedium,
+    lineHeight: 1.25,
+    marginBottom: theme.spacing(0.5),
+    color: theme.colors.text.primary,
+    maxWidth: '480px',
+  }),
+  labelContent: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  description: css({
+    label: 'Label-description',
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.size.sm,
+    fontWeight: theme.typography.fontWeightRegular,
+    marginTop: theme.spacing(0.25),
+    display: 'block',
+  }),
+  categories: css({
+    label: 'Label-categories',
+    display: 'inline-flex',
+    alignItems: 'center',
+  }),
+  chevron: css({
+    margin: theme.spacing(0, 0.25),
+  }),
+});

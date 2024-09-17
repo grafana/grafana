@@ -6,9 +6,9 @@ global:
 
 # Load and evaluate rules in this file every 'evaluation_interval' seconds.
 rule_files:
-  - "alert.rules"
-  # - "first.rules"
-  # - "second.rules"
+  - "alert.yml"
+  - "recording.yml"
+# - "second.rules"
 
 alerting:
   alertmanagers:
@@ -32,8 +32,20 @@ scrape_configs:
 
   - job_name: 'grafana'
     static_configs:
-      - targets: ['grafana:3000']
+      - targets: ['host.docker.internal:3000']
 
   - job_name: 'prometheus-random-data'
     static_configs:
       - targets: ['prometheus-random-data:8080']
+
+  - job_name: 'prometheus-high-card'
+    static_configs:
+      - targets: ['prometheus-high-card:9111']
+
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysql-exporter:9104']
+  # - job_name: 'grafana-test-datasource'
+  #   metrics_path: /metrics/plugins/grafana-test-datasource
+  #   static_configs:
+  #     - targets: ['host.docker.internal:3000']

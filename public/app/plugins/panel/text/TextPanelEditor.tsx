@@ -1,27 +1,26 @@
-import React, { FC, useMemo } from 'react';
-import { css, cx } from 'emotion';
+import { css, cx } from '@emotion/css';
+import { useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
+
+import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import {
   CodeEditor,
-  stylesFactory,
-  useTheme,
+  useStyles2,
   CodeEditorSuggestionItem,
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
-import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
 
-import { TextOptions } from './types';
+import { Options, TextMode } from './panelcfg.gen';
 
-export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> = ({ value, onChange, context }) => {
-  const language = useMemo(() => context.options?.mode ?? 'markdown', [context]);
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, {}, Options>) => {
+  const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);
+  const styles = useStyles2(getStyles);
 
   const getSuggestions = (): CodeEditorSuggestionItem[] => {
     if (!context.getSuggestions) {
       return [];
     }
-    return context.getSuggestions().map(v => variableSuggestionToCodeEditorSuggestion(v));
+    return context.getSuggestions().map((v) => variableSuggestionToCodeEditorSuggestion(v));
   };
 
   return (
@@ -40,7 +39,7 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
               width={width}
               showMiniMap={false}
               showLineNumbers={false}
-              height="200px"
+              height="500px"
               getSuggestions={getSuggestions}
             />
           );
@@ -50,12 +49,12 @@ export const TextPanelEditor: FC<StandardEditorProps<string, any, TextOptions>> 
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   editorBox: css`
     label: editorBox;
-    border: ${theme.border.width.sm} solid ${theme.colors.border2};
-    border-radius: ${theme.border.radius.sm};
-    margin: ${theme.spacing.xs} 0;
+    border: 1px solid ${theme.colors.border.medium};
+    border-radius: ${theme.shape.radius.default};
+    margin: ${theme.spacing(0.5)} 0;
     width: 100%;
   `,
-}));
+});

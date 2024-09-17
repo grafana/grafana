@@ -1,11 +1,11 @@
 import { of } from 'rxjs';
 import { first } from 'rxjs/operators';
+
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { FetchQueue, FetchQueueUpdate } from './FetchQueue';
-import { ResponseQueue } from './ResponseQueue';
 import { subscribeTester } from './FetchQueue.test';
-import { describe, expect } from '../../../test/lib/common';
+import { ResponseQueue } from './ResponseQueue';
 
 const getTestContext = () => {
   const id = 'id';
@@ -17,22 +17,22 @@ const getTestContext = () => {
     status: 200,
     statusText: 'OK',
     ok: true,
-    headers: (null as unknown) as Headers,
+    headers: null as unknown as Headers,
     redirected: false,
-    type: (null as unknown) as ResponseType,
+    type: null as unknown as ResponseType,
     url: options.url,
-    config: (null as unknown) as BackendSrvRequest,
+    config: null as unknown as BackendSrvRequest,
   });
 
   const fetchMock = jest.fn().mockReturnValue(fetchResult);
   const setInProgressMock = jest.fn();
 
-  const queueMock: FetchQueue = ({
+  const queueMock: FetchQueue = {
     add: jest.fn(),
     setInProgress: setInProgressMock,
     setDone: jest.fn(),
     getUpdates: jest.fn(),
-  } as unknown) as FetchQueue;
+  } as unknown as FetchQueue;
 
   const responseQueue = new ResponseQueue(queueMock, fetchMock);
 
@@ -50,19 +50,19 @@ describe('ResponseQueue', () => {
         expect(setInProgressMock.mock.calls).toEqual([['id']]);
       });
 
-      it('then a response entry with correct id should be published', done => {
+      it('then a response entry with correct id should be published', (done) => {
         const { id, options, responseQueue } = getTestContext();
 
         subscribeTester({
           observable: responseQueue.getResponses(id).pipe(first()),
-          expectCallback: data => expect(data.id).toEqual(id),
+          expectCallback: (data) => expect(data.id).toEqual(id),
           doneCallback: done,
         });
 
         responseQueue.add(id, options);
       });
 
-      it('then fetch is called with correct options', done => {
+      it('then fetch is called with correct options', (done) => {
         const { id, options, responseQueue, fetchMock } = getTestContext();
 
         subscribeTester({
@@ -78,12 +78,12 @@ describe('ResponseQueue', () => {
       });
 
       describe('and when the fetch Observable is completed', () => {
-        it('then the matching fetchQueue entry should be set to Done', done => {
+        it('then the matching fetchQueue entry should be set to Done', (done) => {
           const { id, options, responseQueue, setInProgressMock } = getTestContext();
 
           subscribeTester({
             observable: responseQueue.getResponses(id).pipe(first()),
-            expectCallback: data => {
+            expectCallback: (data) => {
               data.observable.subscribe().unsubscribe();
               expect(setInProgressMock.mock.calls).toEqual([['id']]);
             },

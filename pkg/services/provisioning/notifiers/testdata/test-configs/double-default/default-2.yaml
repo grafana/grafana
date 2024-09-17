@@ -1,7 +1,0 @@
-notifiers:
-  - name: second-default
-    type: email
-    uid: notifier2
-    is_default: true
-    settings:
-      addresses: example@example.com

@@ -1,6 +1,8 @@
 # Storybook
 
-[Storybook](https://storybook.js.org/) is a tool which we use to manage our design system and the components which are a part of it. Storybook consists of _stories:_ each story represents a component and a case in which it is used. To show a wide variety of use cases is good both documentation wise and for troubleshooting -- it might be possible to reproduce a bug for an edge case in a story.
+[Storybook](https://storybook.js.org/) is a tool which Grafana uses to manage our design system and its components. Storybook consists of _stories_. Each story represents a component and the case in which it is used.
+
+To show a wide variety of use cases is good both documentation wise and for troubleshooting—it might be possible to reproduce a bug for an edge case in a story.
 
 Storybook is:
 
@@ -10,16 +12,22 @@ Storybook is:
 
 ## How to create stories
 
-Stories for a component should be placed next to the component file. The Storybook file requires the same name as the component file. For example, a story for `SomeComponent.tsx` will have the file name `SomeComponent.story.tsx`. If a story should be internal, not visible in production, name the file `SomeComponent.story.internal.tsx`.
+Stories for a component should be placed next to the component file. The Storybook file requires the same name as the component file. For example, a story for `SomeComponent.tsx` has the file name `SomeComponent.story.tsx`.
+
+If a story should be internal—not visible in production—name the file `SomeComponent.story.internal.tsx`.
 
 ### Writing stories
 
-When writing stories, we use the [CSF format](https://storybook.js.org/docs/formats/component-story-format/). For more in-depth information on writing stories, see [Storybook’s documentation on writing stories](https://storybook.js.org/docs/basics/writing-stories/).
+When writing stories, we use the [CSF format](https://storybook.js.org/docs/formats/component-story-format/).
+
+> **Note:** For more in-depth information on writing stories, see [Storybook’s documentation](https://storybook.js.org/docs/basics/writing-stories/).
 
 With the CSF format, the default export defines some general information about the stories in the file:
 
-- `title`: Where the component is going to live in the hierarchy
-- `decorators`: A list which can contain wrappers or provide context, such as theming
+- **`title`**: Where the component is going to live in the hierarchy
+- **`decorators`**: A list which can contain wrappers or provide context, such as theming
+
+Example:
 
 ```jsx
 // In MyComponent.story.tsx
@@ -34,18 +42,18 @@ export default {
 
 ```
 
-When it comes to writing the actual stories, you continue in the same file with named exports. The exports are turned into the story name.
+When it comes to writing the actual stories, you should continue in the same file with named exports. The exports are turned into the story name like so:
 
 ```jsx
 // Will produce a story name “some story”
 export const someStory = () => <MyComponent />;
 ```
 
-If you want to write cover cases with different values for props, then using knobs is usually enough. You don’t need to create a new story. This will be covered further down.
+If you want to write cover cases with different values for props, then using knobs is usually enough. You don’t need to create a new story. This topic will be covered further down.
 
 ### Categorization
 
-We currently have these categories:
+We have these categories of components:
 
 - **Docs Overview** - Guidelines and information regarding the design system
 - **Forms** - Components commonly used in forms such as different kind of inputs
@@ -55,7 +63,7 @@ We currently have these categories:
 
 ## Writing MDX documentation
 
-An MDX file is basically a markdown file with the possibility to add jsx. These files are used by Storybook to create a “docs” tab.
+An MDX file is a markdown file with the possibility to add JSX. These files are used by Storybook to create a “docs” tab.
 
 ### Link the MDX file to a component’s stories
 
@@ -64,13 +72,13 @@ To link a component’s stories with an MDX file you have to do this:
 ```jsx
 // In TabsBar.story.tsx
 
-import { TabsBar } from "./TabsBar";
+import { TabsBar } from './TabsBar';
 
 // Import the MDX file
-import mdx from "./TabsBar.mdx";
+import mdx from './TabsBar.mdx';
 
 export default {
-  title: "General/Tabs/TabsBar",
+  title: 'General/Tabs/TabsBar',
   component: TabsBar,
   parameters: {
     docs: {
@@ -83,7 +91,7 @@ export default {
 
 ### MDX file structure
 
-There are some things that the MDX file should contain:
+The MDX file should contain the following items:
 
 - When and why the component should be used
 - Best practices - dos and don’ts for the component
@@ -93,15 +101,17 @@ There are some things that the MDX file should contain:
 ```jsx
 // In MyComponent.mdx
 
-import { Props } from "@storybook/addon-docs/blocks";
-import { MyComponent } from "./MyComponent";
+import { Props } from '@storybook/addon-docs/blocks';
+import { MyComponent } from './MyComponent';
 
 <Props of={MyComponent} />;
 ```
 
 ### MDX file without a relationship to a component
 
-An MDX file can exist by itself without any connection to a story. This can be good for writing things such as a general guidelines page. Two things are required for this to work:
+An MDX file can exist by itself without any connection to a story. This can be good for writing things such as a general guidelines page.
+
+Two conditions must be met for this to work:
 
 - The file needs to be named `*.story.mdx`
 - A `Meta` tag must exist that says where in the hierarchy the component lives. It can look like this:
@@ -115,7 +125,7 @@ An MDX file can exist by itself without any connection to a story. This can be g
 
 ```
 
-You can add parameters to the Meta tag. This example shows how to hide the tools:
+You can add parameters to the `Meta` tag. This example shows how to hide the tools:
 
 ```jsx
 <Meta title="Docs Overview/Color Palettes" parameters={{ options: { isToolshown: false }}}/>
@@ -128,11 +138,11 @@ You can add parameters to the Meta tag. This example shows how to hide the tools
 
 ## Documenting component properties
 
-A quick way to get an overview of what a component does is by looking at its properties. That's why it is important that we document these in a good way.
+A quick way to get an overview of what a component does is by looking at its properties. That's why it is important that you document these in a good way.
 
 ### Comments
 
-When writing the props interface for a component, it is possible to add a comment to that specific property, which will end up in the Props table in the MDX file. The comments are generated by [react-docgen](https://github.com/reactjs/react-docgen) and are formatted by writing `/** */`.
+When writing the props interface for a component, it's possible to add a comment to that specific property. When you do so, the comment will appear in the Props table in the MDX file. The comments are generated by [react-docgen](https://github.com/reactjs/react-docgen) and are formatted by writing `/** */`.
 
 ```jsx
 interface MyProps {
@@ -141,42 +151,71 @@ interface MyProps {
 }
 ```
 
-### Knobs
+### Controls
 
-Knobs is an [addon to Storybook](https://github.com/storybookjs/storybook/tree/master/addons/knobs) which can be used to easily switch values in the UI. A good use case for it is to try different props for the component. Using knobs is easy. Grafana is set up so knobs can be used straight out of the box. Here is an example of how you might use it.
+The [controls addon](https://storybook.js.org/docs/react/essentials/controls) provides a way to interact with a component's properties dynamically. It also requires much less code than knobs.
 
-```jsx
-// In MyComponent.story.tsx
+Knobs are deprecated in favor of using controls.
 
-import { number, text } from "@storybook/addon-knobs";
+#### Migrating a story from Knobs to Controls
 
-export const basicStory = () => (
-  <MyComponent
-    max={number("Max value", 10)}
-    min={number("Min value", -10)}
-    title={text("Title", "Look at the value!")}
-  />
-);
-```
+As a test, we migrated the [button story](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/src/components/Button/Button.story.tsx).
 
-The general convention is that the first parameter of the knob is its name and the second is the default value. There are some more types:
+Here's the guide on how to migrate a story to controls.
 
-| Knob      | Description                                                                                                                          |
-| --------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `text`    | Any text field                                                                                                                       |
-| `number`  | Any number input. Also [available as range](https://github.com/storybookjs/storybook/tree/master/addons/knobs#number-bound-by-range) |
-| `boolean` | A switch between true/false                                                                                                          |
-| `color`   | Color picker                                                                                                                         |
-| `object`  | JSON input or array. Good to use if the property requires more complex data structures.                                              |
-| `array`   | Array of strings separated by a comma                                                                                                |
-| `select`  | Select a value from an options object. Good for trying different test cases.                                                         |
-| `options` | Configurable UI for selecting a range of options                                                                                     |
-| `files`   | File selector                                                                                                                        |
-| `date`    | Select date as stringified Unix timestamp                                                                                            |
-| `button`  | Has a handler which is called when clicked                                                                                           |
+1.  Remove the `@storybook/addon-knobs` dependency.
+2.  Import the `Story` type from `@storybook/react`
+
+    `import { Story } from @storybook/react`
+
+3.  Import the props interface from the component you're working on (these must be exported in the component):
+
+    `import { Props } from './Component'`
+
+4.  Add the `Story` type to all stories in the file, then replace the props sent to the component and remove any knobs:
+
+    Before:
+
+    ```tsx
+    export const Simple = () => {
+      const prop1 = text('Prop1', 'Example text');
+      const prop2 = select('Prop2', ['option1', 'option2'], 'option1');
+
+      return <Component prop1={prop1} prop2={prop2} />;
+    };
+    ```
+
+    After:
+
+    ```tsx
+    export const Simple: Story<Props> = ({ prop1, prop2 }) => {
+      return <Component prop1={prop1} prop2={prop2} />;
+    };
+    ```
+
+5.  Add default props (or `args` in Storybook language):
+
+    ```tsx
+    Simple.args = {
+      prop1: 'Example text',
+      prop2: 'option 1',
+    };
+    ```
+
+6.  If the component has advanced props type (that is, other than string, number, or Boolean), you need to specify these in an `argTypes`. Do this in the default export of the story:
+
+    ```tsx
+    export default {
+      title: 'Component/Component',
+      component: Component,
+      argTypes: {
+        prop2: { control: { type: 'select', options: ['option1', 'option2'] } },
+      },
+    };
+    ```
 
 ## Best practices
 
-- When creating a new component or writing documentation for an existing one, always cover the basic use case it was intended for with a code example.
+- When creating a new component or writing documentation for an existing one, add a code example. The example should always cover the basic use case it was intended for.
 - Use stories and knobs to create edge cases. If you are trying to solve a bug, try to reproduce it with a story.
-- Do not create stories in the MDX, always create them in the `*.story.tsx` file.
+- Do not create stories in the MDX. Instead, create them in the `*.story.tsx` file.

@@ -1,19 +1,48 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { ZipkinDatasource, ZipkinQuery } from './datasource';
-import { AppEvents, ExploreQueryFieldProps } from '@grafana/data';
-import { ButtonCascader, CascaderOption } from '@grafana/ui';
-import { useAsyncFn, useMount, useMountedState } from 'react-use';
-import { appEvents } from '../../../core/core';
-import { apiPrefix } from './constants';
-import { ZipkinSpan } from './types';
+import { css } from '@emotion/css';
 import { fromPairs } from 'lodash';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAsyncFn, useMount, useMountedState } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsyncFn';
 
-type Props = ExploreQueryFieldProps<ZipkinDatasource, ZipkinQuery>;
+import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
+import {
+  ButtonCascader,
+  CascaderOption,
+  FileDropzone,
+  InlineField,
+  InlineFieldRow,
+  RadioButtonGroup,
+  useTheme2,
+  QueryField,
+  useStyles2,
+  Modal,
+  HorizontalGroup,
+  Button,
+} from '@grafana/ui';
 
-export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) => {
-  const serviceOptions = useServices(datasource);
-  const { onLoadOptions, allOptions } = useLoadOptions(datasource);
+import { apiPrefix } from './constants';
+import { ZipkinDatasource } from './datasource';
+import { ZipkinQuery, ZipkinQueryType, ZipkinSpan } from './types';
+
+type Props = QueryEditorProps<ZipkinDatasource, ZipkinQuery>;
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    tracesCascader: css({
+      label: 'tracesCascader',
+      marginRight: theme.spacing(1),
+    }),
+  };
+};
+
+export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Props) => {
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [alertText, setAlertText] = useState('');
+  const serviceOptions = useServices(datasource, setAlertText);
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+  const { onLoadOptions, allOptions } = useLoadOptions(datasource, setAlertText);
 
   const onSelectTrace = useCallback(
     (values: string[], selectedOptions: CascaderOption[]) => {
@@ -26,46 +55,105 @@ export const QueryField = ({ query, onChange, onRunQuery, datasource }: Props) =
     [onChange, onRunQuery, query]
   );
 
+  useEffect(() => {
+    if (!query.queryType) {
+      onChange({
+        ...query,
+        queryType: 'traceID',
+      });
+    }
+  }, [query, onChange]);
+
+  const onChangeQuery = (value: string) => {
+    const nextQuery = { ...query, query: value };
+    onChange(nextQuery);
+  };
+
   let cascaderOptions = useMapToCascaderOptions(serviceOptions, allOptions);
 
   return (
     <>
-      <div className="gf-form-inline gf-form-inline--nowrap">
-        <div className="gf-form flex-shrink-0">
-          <ButtonCascader options={cascaderOptions} onChange={onSelectTrace} loadData={onLoadOptions}>
+      <Modal title={'Upload trace'} isOpen={uploadModalOpen} onDismiss={() => setUploadModalOpen(false)}>
+        <div className={css({ padding: theme.spacing(2) })}>
+          <FileDropzone
+            options={{ multiple: false }}
+            onLoad={(result) => {
+              datasource.uploadedJson = result;
+              onChange({
+                ...query,
+                queryType: 'upload',
+              });
+              setUploadModalOpen(false);
+              onRunQuery();
+            }}
+          />
+        </div>
+      </Modal>
+      <InlineFieldRow>
+        <InlineField label="Query type" grow={true}>
+          <HorizontalGroup spacing={'sm'} align={'center'} justify={'space-between'}>
+            <RadioButtonGroup<ZipkinQueryType>
+              options={[{ value: 'traceID', label: 'TraceID' }]}
+              value={query.queryType || 'traceID'}
+              onChange={(v) =>
+                onChange({
+                  ...query,
+                  queryType: v,
+                })
+              }
+              size="md"
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setUploadModalOpen(true);
+              }}
+            >
+              Import trace
+            </Button>
+          </HorizontalGroup>
+        </InlineField>
+      </InlineFieldRow>
+      {query.queryType === 'traceID' && (
+        <InlineFieldRow>
+          <ButtonCascader
+            options={cascaderOptions}
+            onChange={onSelectTrace}
+            loadData={onLoadOptions}
+            variant="secondary"
+            buttonProps={{ className: styles.tracesCascader }}
+          >
             Traces
           </ButtonCascader>
-        </div>
-        <div className="gf-form gf-form--grow flex-shrink-1">
-          <div className={'slate-query-field__wrapper'}>
-            <div className="slate-query-field">
-              <input
-                style={{ width: '100%' }}
-                value={query.query || ''}
-                onChange={e =>
-                  onChange({
-                    ...query,
-                    query: e.currentTarget.value,
-                  })
-                }
-              />
-            </div>
+          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
+            <QueryField
+              query={query.query}
+              onChange={onChangeQuery}
+              onRunQuery={onRunQuery}
+              placeholder={'Insert Trace ID (run with Shift+Enter)'}
+              portalOrigin="zipkin"
+            />
           </div>
-        </div>
-      </div>
+        </InlineFieldRow>
+      )}
+      {alertText && <TemporaryAlert text={alertText} severity={'error'} />}
     </>
   );
 };
 
 // Exported for tests
-export function useServices(datasource: ZipkinDatasource): AsyncState<CascaderOption[]> {
+export function useServices(
+  datasource: ZipkinDatasource,
+  setErrorText: (text: string) => void
+): AsyncState<CascaderOption[]> {
   const url = `${apiPrefix}/services`;
 
   const [servicesOptions, fetch] = useAsyncFn(async (): Promise<CascaderOption[]> => {
     try {
       const services: string[] | null = await datasource.metadataRequest(url);
       if (services) {
-        return services.sort().map(service => ({
+        return services.sort().map((service) => ({
           label: service,
           value: service,
           isLeaf: false,
@@ -73,7 +161,9 @@ export function useServices(datasource: ZipkinDatasource): AsyncState<CascaderOp
       }
       return [];
     } catch (error) {
-      appEvents.emit(AppEvents.alertError, ['Failed to load services from Zipkin', error]);
+      const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
+      const errorText = `Failed to load spans from Zipkin: ${errorToShow.toString()}`;
+      setErrorText(errorText);
       throw error;
     }
   }, [datasource]);
@@ -95,9 +185,9 @@ type OptionsState = {
 };
 
 // Exported for tests
-export function useLoadOptions(datasource: ZipkinDatasource) {
+export function useLoadOptions(datasource: ZipkinDatasource, setErrorText: (text: string) => void) {
   const isMounted = useMountedState();
-  const [allOptions, setAllOptions] = useState({} as OptionsState);
+  const [allOptions, setAllOptions] = useState<OptionsState>({});
 
   const [, fetchSpans] = useAsyncFn(
     async function findSpans(service: string): Promise<void> {
@@ -108,7 +198,7 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
         // TODO: check if this is some issue of version used or something else
         const response: string[] = await datasource.metadataRequest(url, { serviceName: service });
         if (isMounted()) {
-          setAllOptions(state => {
+          setAllOptions((state) => {
             const spanOptions = fromPairs(response.map((span: string) => [span, undefined]));
             return {
               ...state,
@@ -117,7 +207,9 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
           });
         }
       } catch (error) {
-        appEvents.emit(AppEvents.alertError, ['Failed to load spans from Zipkin', error]);
+        const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
+        const errorText = `Failed to load spans from Zipkin: ${errorToShow.toString()}`;
+        setErrorText(errorText);
         throw error;
       }
     },
@@ -138,15 +230,15 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
         if (isMounted()) {
           const newTraces = traces.length
             ? fromPairs(
-                traces.map(trace => {
-                  const rootSpan = trace.find(span => !span.parentId)!;
+                traces.map((trace) => {
+                  const rootSpan = trace.find((span) => !span.parentId)!;
 
                   return [`${rootSpan.name} [${Math.floor(rootSpan.duration / 1000)} ms]`, rootSpan.traceId];
                 })
               )
             : noTracesOptions;
 
-          setAllOptions(state => {
+          setAllOptions((state) => {
             const spans = state[serviceName];
             return {
               ...state,
@@ -158,7 +250,9 @@ export function useLoadOptions(datasource: ZipkinDatasource) {
           });
         }
       } catch (error) {
-        appEvents.emit(AppEvents.alertError, ['Failed to load spans from Zipkin', error]);
+        const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
+        const errorText = `Failed to load spans from Zipkin: ${errorToShow.toString()}`;
+        setErrorText(errorText);
         throw error;
       }
     },
@@ -189,19 +283,19 @@ function useMapToCascaderOptions(services: AsyncState<CascaderOption[]>, allOpti
     let cascaderOptions: CascaderOption[] = [];
 
     if (services.value && services.value.length) {
-      cascaderOptions = services.value.map(services => {
+      cascaderOptions = services.value.map((services) => {
         return {
           ...services,
           children:
             allOptions[services.value] &&
-            Object.keys(allOptions[services.value]).map(spanName => {
+            Object.keys(allOptions[services.value]).map((spanName) => {
               return {
                 label: spanName,
                 value: spanName,
                 isLeaf: false,
                 children:
                   allOptions[services.value][spanName] &&
-                  Object.keys(allOptions[services.value][spanName]).map(traceName => {
+                  Object.keys(allOptions[services.value][spanName]).map((traceName) => {
                     return {
                       label: traceName,
                       value: allOptions[services.value][spanName][traceName],

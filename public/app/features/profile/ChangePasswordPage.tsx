@@ -1,41 +1,46 @@
-import React, { PureComponent } from 'react';
-import { hot } from 'react-hot-loader';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
+import { useMount } from 'react-use';
+
+import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
-import { NavModel } from '@grafana/data';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { UserProvider } from 'app/core/utils/UserProvider';
-import Page from 'app/core/components/Page/Page';
+
 import { ChangePasswordForm } from './ChangePasswordForm';
+import { changePassword, loadUser } from './state/actions';
 
-export interface Props {
-  navModel: NavModel;
-}
-
-export class ChangePasswordPage extends PureComponent<Props> {
-  render() {
-    const { navModel } = this.props;
-    return (
-      <Page navModel={navModel}>
-        <UserProvider>
-          {({ changePassword }, states) => (
-            <Page.Contents>
-              <h3 className="page-sub-heading">Change Your Password</h3>
-              <ChangePasswordForm onChangePassword={changePassword} isSaving={states.changePassword} />
-            </Page.Contents>
-          )}
-        </UserProvider>
-      </Page>
-    );
-  }
-}
+export interface OwnProps {}
 
 function mapStateToProps(state: StoreState) {
+  const userState = state.user;
+  const { isUpdating, user } = userState;
   return {
-    navModel: getNavModel(state.navIndex, `change-password`),
+    isUpdating,
+    user,
   };
 }
 
-const mapDispatchToProps = {};
+const mapDispatchToProps = {
+  loadUser,
+  changePassword,
+};
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ChangePasswordPage));
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+export function ChangePasswordPage({ loadUser, isUpdating, user, changePassword }: Props) {
+  useMount(() => loadUser());
+
+  return (
+    <Page navId="profile/password">
+      <Page.Contents isLoading={!Boolean(user)}>
+        {user ? (
+          <>
+            <ChangePasswordForm user={user} onChangePassword={changePassword} isSaving={isUpdating} />
+          </>
+        ) : null}
+      </Page.Contents>
+    </Page>
+  );
+}
+
+export default connector(ChangePasswordPage);

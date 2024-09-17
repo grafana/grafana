@@ -1,0 +1,1 @@
+example.com/foo/foo.go:x:y: "mu" is prevented from injecting by wire

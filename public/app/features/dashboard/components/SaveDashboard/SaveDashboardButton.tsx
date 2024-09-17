@@ -1,35 +1,32 @@
-import React from 'react';
-import { Button, ButtonVariant, ModalsController, FullWidthButtonContainer } from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
+import { Button, ButtonVariant, ComponentSize, ModalsController } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { connectWithProvider } from 'app/core/utils/connectWithReduxStore';
-import { provideModalsContext } from 'app/routes/ReactContainer';
-import { SaveDashboardAsModal } from './SaveDashboardAsModal';
-import { SaveDashboardModalProxy } from './SaveDashboardModalProxy';
+
+import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
 interface SaveDashboardButtonProps {
   dashboard: DashboardModel;
-  /**
-   * Added for being able to render this component as Angular directive!
-   * TODO[angular-migrations]: Remove when we migrate Dashboard Settings view to React
-   */
-  getDashboard?: () => DashboardModel;
   onSaveSuccess?: () => void;
+  size?: ComponentSize;
+  onClick?: () => void;
 }
 
-export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess, getDashboard }) => {
+export const SaveDashboardButton = ({ dashboard, onSaveSuccess, size }: SaveDashboardButtonProps) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
         return (
           <Button
+            size={size}
             onClick={() => {
-              showModal(SaveDashboardModalProxy, {
-                // TODO[angular-migrations]: Remove tenary op when we migrate Dashboard Settings view to React
-                dashboard: getDashboard ? getDashboard() : dashboard,
+              showModal(SaveDashboardDrawer, {
+                dashboard,
                 onSaveSuccess,
                 onDismiss: hideModal,
               });
             }}
+            aria-label={selectors.pages.Dashboard.Settings.General.saveDashBoard}
           >
             Save dashboard
           </Button>
@@ -39,41 +36,32 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
   );
 };
 
-export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps & { variant?: ButtonVariant }> = ({
-  dashboard,
-  onSaveSuccess,
-  getDashboard,
-  variant,
-}) => {
+type Props = SaveDashboardButtonProps & { variant?: ButtonVariant };
+
+export const SaveDashboardAsButton = ({ dashboard, onClick, onSaveSuccess, variant, size }: Props) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
         return (
-          <FullWidthButtonContainer>
-            <Button
-              onClick={() => {
-                showModal(SaveDashboardAsModal, {
-                  // TODO[angular-migrations]: Remove tenary op when we migrate Dashboard Settings view to React
-                  dashboard: getDashboard ? getDashboard() : dashboard,
-                  onSaveSuccess,
-                  onDismiss: hideModal,
-                });
-              }}
-              // TODO[angular-migrations]: Hacking the different variants for this single button
-              // In Dashboard Settings in sidebar we need to use new form but with inverse variant to make it look like it should
-              // Everywhere else we use old button component :(
-              variant={variant as ButtonVariant}
-            >
-              Save As...
-            </Button>
-          </FullWidthButtonContainer>
+          <Button
+            size={size}
+            onClick={() => {
+              reportInteraction('grafana_dashboard_save_as_clicked');
+              onClick?.();
+              showModal(SaveDashboardDrawer, {
+                dashboard,
+                onSaveSuccess,
+                onDismiss: hideModal,
+                isCopy: true,
+              });
+            }}
+            variant={variant}
+            aria-label={selectors.pages.Dashboard.Settings.General.saveAsDashBoard}
+          >
+            Save as
+          </Button>
         );
       }}
     </ModalsController>
   );
 };
-
-// TODO: this is an ugly solution for the save button to have access to Redux and Modals controller
-// When we migrate dashboard settings to Angular it won't be necessary.
-export const SaveDashboardButtonConnected = connectWithProvider(provideModalsContext(SaveDashboardButton));
-export const SaveDashboardAsButtonConnected = connectWithProvider(provideModalsContext(SaveDashboardAsButton));

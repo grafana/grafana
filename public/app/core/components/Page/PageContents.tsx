@@ -1,20 +1,16 @@
 // Libraries
-import React, { Component } from 'react';
+import * as React from 'react';
 
-// Components
 import PageLoader from '../PageLoader/PageLoader';
 
 interface Props {
   isLoading?: boolean;
   children: React.ReactNode;
+  className?: string;
 }
 
-class PageContents extends Component<Props> {
-  render() {
-    const { isLoading } = this.props;
+export const PageContents = ({ isLoading, children, className }: Props) => {
+  let content = className ? <div className={className}>{children}</div> : children;
 
-    return <div className="page-container page-body">{isLoading ? <PageLoader /> : this.props.children}</div>;
-  }
-}
-
-export default PageContents;
+  return <>{isLoading ? <PageLoader /> : content}</>;
+};

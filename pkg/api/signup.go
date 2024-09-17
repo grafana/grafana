@@ -1,70 +1,94 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // GET /api/user/signup/options
-func GetSignUpOptions(c *models.ReqContext) Response {
-	return JSON(200, util.DynMap{
-		"verifyEmailEnabled": setting.VerifyEmailEnabled,
-		"autoAssignOrg":      setting.AutoAssignOrg,
+func (hs *HTTPServer) GetSignUpOptions(c *contextmodel.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, util.DynMap{
+		"verifyEmailEnabled": hs.Cfg.VerifyEmailEnabled,
+		"autoAssignOrg":      hs.Cfg.AutoAssignOrg,
 	})
 }
 
 // POST /api/user/signup
-func SignUp(c *models.ReqContext, form dtos.SignUpForm) Response {
-	if !setting.AllowUserSignUp {
-		return Error(401, "User signup is disabled", nil)
-	}
-
-	existing := models.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := bus.Dispatch(&existing); err == nil {
-		return Error(422, "User with same email address already exists", nil)
-	}
-
-	cmd := models.CreateTempUserCommand{}
-	cmd.OrgId = -1
-	cmd.Email = form.Email
-	cmd.Status = models.TmpUserSignUpStarted
-	cmd.InvitedByUserId = c.UserId
+func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
+	form := dtos.SignUpForm{}
 	var err error
+	if err = web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	if !hs.Cfg.AllowUserSignUp {
+		return response.Error(http.StatusUnauthorized, "User signup is disabled", nil)
+	}
+
+	form.Email, err = ValidateAndNormalizeEmail(form.Email)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "Invalid email address", nil)
+	}
+
+	existing := user.GetUserByLoginQuery{LoginOrEmail: form.Email}
+	_, err = hs.userService.GetByLogin(c.Req.Context(), &existing)
+	if err == nil {
+		return response.Error(http.StatusUnprocessableEntity, "User with same email address already exists", nil)
+	}
+
+	userID, err := identity.UserIdentifier(c.SignedInUser.GetID())
+	if err != nil {
+		hs.log.Debug("Failed to parse user id", "err", err)
+	}
+
+	cmd := tempuser.CreateTempUserCommand{}
+	cmd.OrgID = -1
+	cmd.Email = form.Email
+	cmd.Status = tempuser.TmpUserSignUpStarted
+	cmd.InvitedByUserID = userID
 	cmd.Code, err = util.GetRandomString(20)
 	if err != nil {
-		return Error(500, "Failed to generate random string", err)
+		return response.Error(http.StatusInternalServerError, "Failed to generate random string", err)
 	}
-	cmd.RemoteAddr = c.Req.RemoteAddr
+	cmd.RemoteAddr = c.RemoteAddr()
 
-	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to create signup", err)
+	if _, err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create signup", err)
 	}
 
-	if err := bus.Publish(&events.SignUpStarted{
+	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpStarted{
 		Email: form.Email,
 		Code:  cmd.Code,
 	}); err != nil {
-		return Error(500, "Failed to publish event", err)
+		return response.Error(http.StatusInternalServerError, "Failed to publish event", err)
 	}
 
 	metrics.MApiUserSignUpStarted.Inc()
 
-	return JSON(200, util.DynMap{"status": "SignUpCreated"})
+	return response.JSON(http.StatusOK, util.DynMap{"status": "SignUpCreated"})
 }
 
-func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2Form) Response {
-	if !setting.AllowUserSignUp {
-		return Error(401, "User signup is disabled", nil)
+func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response {
+	form := dtos.SignUpStep2Form{}
+	if err := web.Bind(c.Req, &form); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	if !hs.Cfg.AllowUserSignUp {
+		return response.Error(http.StatusUnauthorized, "User signup is disabled", nil)
 	}
 
-	createUserCmd := models.CreateUserCommand{
+	createUserCmd := user.CreateUserCommand{
 		Email:    form.Email,
 		Login:    form.Username,
 		Name:     form.Name,
@@ -73,73 +97,74 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 	}
 
 	// verify email
-	if setting.VerifyEmailEnabled {
-		if ok, rsp := verifyUserSignUpEmail(form.Email, form.Code); !ok {
+	if hs.Cfg.VerifyEmailEnabled {
+		if ok, rsp := hs.verifyUserSignUpEmail(c.Req.Context(), form.Email, form.Code); !ok {
 			return rsp
 		}
 		createUserCmd.EmailVerified = true
 	}
 
-	// dispatch create command
-	if err := bus.Dispatch(&createUserCmd); err != nil {
-		if errors.Is(err, models.ErrUserAlreadyExists) {
-			return Error(401, "User with same email address already exists", nil)
+	usr, err := hs.userService.Create(c.Req.Context(), &createUserCmd)
+	if err != nil {
+		if errors.Is(err, user.ErrUserAlreadyExists) {
+			return response.Error(http.StatusUnauthorized, "User with same email address already exists", nil)
 		}
 
-		return Error(500, "Failed to create user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to create user", err)
 	}
 
 	// publish signup event
-	user := &createUserCmd.Result
-	if err := bus.Publish(&events.SignUpCompleted{
-		Email: user.Email,
-		Name:  user.NameOrFallback(),
+	if err := hs.bus.Publish(c.Req.Context(), &events.SignUpCompleted{
+		Email: usr.Email,
+		Name:  usr.NameOrFallback(),
 	}); err != nil {
-		return Error(500, "Failed to publish event", err)
+		return response.Error(http.StatusInternalServerError, "Failed to publish event", err)
 	}
 
 	// mark temp user as completed
-	if ok, rsp := updateTempUserStatus(form.Code, models.TmpUserCompleted); !ok {
+	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), form.Code, tempuser.TmpUserCompleted); !ok {
 		return rsp
 	}
 
 	// check for pending invites
-	invitesQuery := models.GetTempUsersQuery{Email: form.Email, Status: models.TmpUserInvitePending}
-	if err := bus.Dispatch(&invitesQuery); err != nil {
-		return Error(500, "Failed to query database for invites", err)
+	invitesQuery := tempuser.GetTempUsersQuery{Email: form.Email, Status: tempuser.TmpUserInvitePending}
+	invitesQueryResult, err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &invitesQuery)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to query database for invites", err)
 	}
 
 	apiResponse := util.DynMap{"message": "User sign up completed successfully", "code": "redirect-to-landing-page"}
-	for _, invite := range invitesQuery.Result {
-		if ok, rsp := applyUserInvite(user, invite, false); !ok {
+	for _, invite := range invitesQueryResult {
+		if ok, rsp := hs.applyUserInvite(c.Req.Context(), usr, invite, false); !ok {
 			return rsp
 		}
 		apiResponse["code"] = "redirect-to-select-org"
 	}
 
-	err := hs.loginUserWithUser(user, c)
+	err = hs.loginUserWithUser(usr, c)
 	if err != nil {
-		return Error(500, "failed to login user", err)
+		return response.Error(http.StatusInternalServerError, "failed to login user", err)
 	}
 
 	metrics.MApiUserSignUpCompleted.Inc()
 
-	return JSON(200, apiResponse)
+	return response.JSON(http.StatusOK, apiResponse)
 }
 
-func verifyUserSignUpEmail(email string, code string) (bool, Response) {
-	query := models.GetTempUserByCodeQuery{Code: code}
+func (hs *HTTPServer) verifyUserSignUpEmail(ctx context.Context, email string, code string) (bool, response.Response) {
+	query := tempuser.GetTempUserByCodeQuery{Code: code}
 
-	if err := bus.Dispatch(&query); err != nil {
-		if errors.Is(err, models.ErrTempUserNotFound) {
-			return false, Error(404, "Invalid email verification code", nil)
+	queryResult, err := hs.tempUserService.GetTempUserByCode(ctx, &query)
+	if err != nil {
+		if errors.Is(err, tempuser.ErrTempUserNotFound) {
+			return false, response.Error(http.StatusNotFound, "Invalid email verification code", nil)
 		}
-		return false, Error(500, "Failed to read temp user", err)
+		return false, response.Error(http.StatusInternalServerError, "Failed to read temp user", err)
 	}
 
-	tempUser := query.Result
+	tempUser := queryResult
 	if tempUser.Email != email {
-		return false, Error(404, "Email verification code does not match email", nil)
+		return false, response.Error(http.StatusNotFound, "Email verification code does not match email", nil)
 	}
 
 	return true, nil

@@ -1,49 +1,176 @@
-+++
-title = "Data sources"
-aliases = ["/docs/grafana/latest/datasources/overview/"]
-weight = 60
-+++
+---
+aliases:
+  - data-sources/
+  - overview/
+  - ./features/datasources/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: Data sources
+weight: 60
+refs:
+  query-transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
+  alerts:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+  grafana-enterprise:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/
+  organization-roles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles
+  explore:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+  data-source-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  plugin-management:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/
+    - pattern: /docs/grafana-cloud
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/
+  panels:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/
+---
 
-# Data sources
+# Grafana data sources
 
-Grafana supports many different storage backends for your time series data (data source). Each data source has a specific Query Editor that is customized for the features and capabilities that the particular data source exposes.
+Grafana comes with built-in support for many _data sources_.
+If you need other data sources, you can also install one of the many data source plugins.
+If the plugin you need doesn't exist, you can develop a custom plugin.
 
-## Querying
+{{< youtube id="cqHO0oYW6Ic" >}}
 
-The query language and capabilities of each data source are obviously very different. You can combine data from multiple data sources onto a single Dashboard, but each Panel is tied to a specific data source that belongs to a particular Organization.
+Each data source comes with a _query editor_,
+which formulates custom queries according to the source's structure.
+After you add and configure a data source, you can use it as an input for many operations, including:
 
-## Supported data sources
+- Query the data with [Explore](ref:explore).
+- Visualize it in [panels](ref:panels).
+- Create rules for [alerts](ref:alerts).
 
-The following data sources are officially supported:
+This documentation describes how to manage data sources in general,
+and how to configure or query the built-in data sources.
+For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
 
-- [AWS CloudWatch]({{< relref "cloudwatch.md" >}})
-- [Azure Monitor]({{< relref "azuremonitor.md" >}})
-- [Elasticsearch]({{< relref "elasticsearch.md" >}})
-- [Google Cloud Monitoring]({{< relref "cloudmonitoring.md" >}})
-- [Graphite]({{< relref "graphite.md" >}})
-- [InfluxDB]({{< relref "influxdb.md" >}})
-- [Loki]({{< relref "loki.md" >}})
-- [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
-- [MySQL]({{< relref "mysql.md" >}})
-- [OpenTSDB]({{< relref "opentsdb.md" >}})
-- [PostgreSQL]({{< relref "postgres.md" >}})
-- [Prometheus]({{< relref "prometheus.md" >}})
-- [Jaeger]({{< relref "jaeger.md" >}})
-- [Zipkin]({{< relref "zipkin.md" >}})
-- [Tempo]({{< relref "tempo.md" >}})
-- [Testdata]({{< relref "testdata.md" >}})
+To develop a custom plugin, refer to [Create a data source plugin](#create-a-data-source-plugin).
 
-In addition to the data sources that you have configured in your Grafana, there are three special data sources available:
+## Manage data sources
 
-- **Grafana -** A built-in data source that generates random walk data. Useful for testing visualizations and running experiments.
-- **Mixed -** Select this to query multiple data sources in the same panel. When this data source is selected, Grafana allows you to select a data source for every new query that you add.
-  - The first query will use the data source that was selected before you selected **Mixed**.
-  - You cannot change an existing query to use the Mixed Data Source.
-  - Grafana Play example: [Mixed data sources](https://play.grafana.org/d/000000100/mixed-datasources?orgId=1)
-- **Dashboard -** Select this to use a result set from another panel in the same dashboard.
+Only users with the [organization administrator role](ref:organization-roles) can add or remove data sources.
+To access data source management tools in Grafana as an administrator, navigate to **Configuration > Data Sources** in the Grafana sidebar.
 
-## Data source plugins
+For details on data source management, including instructions on how configure user permissions for queries, refer to the [administration documentation](ref:data-source-management).
 
-Since Grafana 3.0 you can install data sources as plugins. Check out [Grafana.com/plugins](https://grafana.com/plugins) for more data sources.
+## Add a data source
 
-<!-- BEGIN Optimal Workshop Intercept Snippet --><div id='owInviteSnippet' style='position:fixed;right:20px;bottom:20px;width:280px;padding:20px;margin:0;border-radius:6px;background:#1857B8;color:#F7F8FA;text-align:left;z-index:2200000000;opacity:0;transition:opacity 500ms;-webkit-transition:opacity 500ms;display:none;'><div id='owInviteMessage' style='padding:0;margin:0 0 20px 0;font-size:16px;'>Got a spare two and a half minutes to help us improve the docs?</div><a id='owInviteOk' href='https://Grafana.optimalworkshop.com/questions/grafana-docs?tag=docs&utm_medium=intercept' onclick='this.parentNode.style.display="none";' target='_blank' style='color:#F7FAFF;font-size:16px;font-weight:bold;text-decoration:underline;'>Yes, I&#x27;ll help</a><a id='owInviteCancel' href='javascript:void(0)' onclick='this.parentNode.style.display="none";' style='color:#F7F8FA;font-size:14px;text-decoration:underline;float:right;'>Close</a></div><script>var owOnload=function(){if(-1==document.cookie.indexOf('ow-intercept-quiz-4ior230e')){var o=new XMLHttpRequest;o.onloadend=function(){try{var o=document.getElementById('owInviteSnippet');var date=new Date();date.setMonth(date.getMonth()+1);this.response&&JSON.parse(this.response).active===!0&&(document.cookie='ow-intercept-quiz-4ior230e=Done;path=/;expires='+date.toUTCString()+';',setTimeout(function(){o.style.display='block',o.style.opacity=1},2e3))}catch(e){}},o.open('POST','https://app.optimalworkshop.com/survey_status/questions/4ior230e/active'),o.send()}};if(window.addEventListener){window.addEventListener('load',function(){owOnload();});}else if(window.attachEvent){window.attachEvent('onload',function(){owOnload();});}</script><!-- END Optimal Workshop snippet -->
+Before you can create your first dashboard, you need to add your data source.
+
+{{% admonition type="note" %}}
+Only users with the organization admin role can add data sources.
+{{% /admonition %}}
+
+**To add a data source:**
+
+1. Click **Connections** in the left-side menu.
+1. Enter the name of a specific data source in the search dialog. You can filter by **Data source** to only see data sources.
+1. Click the data source you want to add.
+1. Configure the data source following instructions specific to that data source.
+
+## Use query editors
+
+{{< figure src="/static/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" caption="The InfluxDB query editor" >}}
+
+Each data source's **query editor** provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
+You use a data source's query editor when you create queries in [dashboard panels](ref:query-transform-data) or [Explore](ref:explore).
+
+Because of the differences between query languages, each data source query editor looks and functions differently.
+Depending on your data source, the query editor might provide auto-completion features, metric names, variable suggestions, or a visual query-building interface.
+
+For example, this video demonstrates the visual Prometheus query builder:
+
+{{< vimeo 720004179 >}}
+
+For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data](ref:query-transform-data).
+
+## Special data sources
+
+Grafana includes three special data sources:
+
+### Grafana
+
+A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
+
+### Mixed
+
+An abstraction that lets you query multiple data sources in the same panel. When you select Mixed, you can then select a different data source for each new query that you add.
+
+- The first query uses the data source that was selected before you selected **Mixed**.
+- You can't change an existing query to use the **Mixed** data source.
+
+{{< docs/play title="Mixed Datasources Example" url="https://play.grafana.org/d/000000100/" >}}
+
+### Dashboard
+
+A data source that uses the result set from another panel in the same dashboard. The dashboard data source can use data either directly from the selected panel or from annotations attached to the selected panel.
+
+{{< docs/play title="Panel as a Data Source" url="https://play.grafana.org/d/ede8zps8ndb0gc/" >}}
+
+## Built-in core data sources
+
+These built-in core data sources are also included in the Grafana documentation:
+
+- [Alertmanager]({{< relref "./alertmanager" >}})
+- [AWS CloudWatch]({{< relref "./aws-cloudwatch" >}})
+- [Azure Monitor]({{< relref "./azure-monitor" >}})
+- [Elasticsearch]({{< relref "./elasticsearch" >}})
+- [Google Cloud Monitoring]({{< relref "./google-cloud-monitoring" >}})
+- [Graphite]({{< relref "./graphite" >}})
+- [InfluxDB]({{< relref "./influxdb" >}})
+- [Jaeger]({{< relref "./jaeger" >}})
+- [Loki]({{< relref "./loki" >}})
+- [Microsoft SQL Server (MSSQL)]({{< relref "./mssql" >}})
+- [MySQL]({{< relref "./mysql" >}})
+- [OpenTSDB]({{< relref "./opentsdb" >}})
+- [PostgreSQL]({{< relref "./postgres" >}})
+- [Prometheus]({{< relref "./prometheus" >}})
+- [Pyroscope]({{< relref "./pyroscope" >}})
+- [Tempo]({{< relref "./tempo" >}})
+- [Testdata]({{< relref "./testdata" >}})
+- [Zipkin]({{< relref "./zipkin" >}})
+
+## Add additional data source plugins
+
+You can add additional data sources as plugins (that are not available in core Grafana), which you can install or create yourself.
+
+### Find data source plugins in the plugin catalog
+
+To view available data source plugins, go to the [plugin catalog](/grafana/plugins/?type=datasource) and select the "Data sources" filter.
+For details about the plugin catalog, refer to [Plugin management](ref:plugin-management).
+
+You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
+If you use [Grafana Enterprise](ref:grafana-enterprise), you can also filter by Enterprise-supported plugins.
+
+For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
+
+### Create a data source plugin
+
+To build your own data source plugin, refer to the [Build a data source plugin](/developers/plugin-tools/tutorials/build-a-data-source-plugin) tutorial and [Plugin tools](/developers/plugin-tools).

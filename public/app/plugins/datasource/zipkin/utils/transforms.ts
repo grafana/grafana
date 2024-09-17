@@ -1,66 +1,95 @@
-import { identity } from 'lodash';
-import { keyBy } from 'lodash';
+import { DataFrame, FieldType, MutableDataFrame, TraceKeyValuePair, TraceLog, TraceSpanRow } from '@grafana/data';
+
 import { ZipkinAnnotation, ZipkinEndpoint, ZipkinSpan } from '../types';
-import { TraceKeyValuePair, TraceLog, TraceProcess, TraceSpanData, TraceData } from '@grafana/data';
 
 /**
- * Transforms response to format similar to Jaegers as we use Jaeger ui on the frontend.
+ * Transforms response to Grafana trace data frame.
  */
-export function transformResponse(zSpans: ZipkinSpan[]): TraceData & { spans: TraceSpanData[] } {
-  return {
-    processes: gatherProcesses(zSpans),
-    traceID: zSpans[0].traceId,
-    spans: zSpans.map(transformSpan),
-    warnings: null,
-  };
+export function transformResponse(zSpans: ZipkinSpan[]): DataFrame {
+  const spanRows = zSpans.map(transformSpan);
+  const frame = new MutableDataFrame({
+    fields: [
+      { name: 'traceID', type: FieldType.string, values: [] },
+      { name: 'spanID', type: FieldType.string, values: [] },
+      { name: 'parentSpanID', type: FieldType.string, values: [] },
+      { name: 'operationName', type: FieldType.string, values: [] },
+      { name: 'serviceName', type: FieldType.string, values: [] },
+      { name: 'serviceTags', type: FieldType.other, values: [] },
+      { name: 'startTime', type: FieldType.number, values: [] },
+      { name: 'duration', type: FieldType.number, values: [] },
+      { name: 'logs', type: FieldType.other, values: [] },
+      { name: 'tags', type: FieldType.other, values: [] },
+    ],
+    meta: {
+      preferredVisualisationType: 'trace',
+      custom: {
+        traceFormat: 'zipkin',
+      },
+    },
+  });
+
+  for (const span of spanRows) {
+    frame.add(span);
+  }
+
+  return frame;
 }
 
-function transformSpan(span: ZipkinSpan): TraceSpanData {
-  const jaegerSpan: TraceSpanData = {
-    duration: span.duration,
-    // TODO: not sure what this is
-    flags: 1,
-    logs: span.annotations?.map(transformAnnotation) ?? [],
-    operationName: span.name,
-    processID: span.localEndpoint?.serviceName || span.remoteEndpoint?.serviceName || 'unknown',
-    startTime: span.timestamp,
-    spanID: span.id,
+function transformSpan(span: ZipkinSpan): TraceSpanRow {
+  const row = {
     traceID: span.traceId,
-    warnings: null as any,
-    tags: Object.keys(span.tags || {}).map(key => {
-      // If tag is error we remap it to simple boolean so that the Jaeger ui will show an error icon.
-      return {
-        key,
-        type: key === 'error' ? 'bool' : 'string',
-        value: key === 'error' ? true : span.tags![key],
-      };
-    }),
-    references: span.parentId
-      ? [
-          {
-            refType: 'CHILD_OF',
-            spanID: span.parentId,
-            traceID: span.traceId,
-          },
-        ]
-      : [],
+    spanID: span.id,
+    parentSpanID: span.parentId,
+    operationName: span.name,
+    serviceName: span.localEndpoint?.serviceName || span.remoteEndpoint?.serviceName || 'unknown',
+    serviceTags: serviceTags(span),
+    startTime: span.timestamp / 1000,
+    duration: span.duration / 1000,
+    logs: span.annotations?.map(transformAnnotation) ?? [],
+    tags: Object.keys(span.tags || {}).reduce<TraceKeyValuePair[]>((acc, key) => {
+      // If tag is error we remap it to simple boolean so that the trace ui will show an error icon.
+      if (key === 'error') {
+        acc.push({
+          key: 'error',
+          value: true,
+        });
+
+        acc.push({
+          key: 'errorValue',
+          value: span.tags!['error'],
+        });
+        return acc;
+      }
+      acc.push({ key, value: span.tags![key] });
+      return acc;
+    }, []),
   };
+
   if (span.kind) {
-    jaegerSpan.tags = [
+    row.tags = [
       {
         key: 'kind',
-        type: 'string',
         value: span.kind,
       },
-      ...jaegerSpan.tags,
+      ...(row.tags ?? []),
     ];
   }
 
-  return jaegerSpan;
+  if (span.shared) {
+    row.tags = [
+      {
+        key: 'shared',
+        value: span.shared,
+      },
+      ...(row.tags ?? []),
+    ];
+  }
+
+  return row;
 }
 
 /**
- * Maps annotations as a Jaeger log as that seems to be the closest thing.
+ * Maps annotations as a log as that seems to be the closest thing.
  * See https://zipkin.io/zipkin-api/#/default/get_trace__traceId_
  */
 function transformAnnotation(annotation: ZipkinAnnotation): TraceLog {
@@ -69,44 +98,89 @@ function transformAnnotation(annotation: ZipkinAnnotation): TraceLog {
     fields: [
       {
         key: 'annotation',
-        type: 'string',
         value: annotation.value,
       },
     ],
   };
 }
 
-function gatherProcesses(zSpans: ZipkinSpan[]): Record<string, TraceProcess> {
-  const processes = zSpans.reduce((acc, span) => {
-    if (span.localEndpoint) {
-      acc.push(endpointToProcess(span.localEndpoint));
-    }
-    if (span.remoteEndpoint) {
-      acc.push(endpointToProcess(span.remoteEndpoint));
-    }
-    return acc;
-  }, [] as TraceProcess[]);
-  return keyBy(processes, 'serviceName');
+function serviceTags(span: ZipkinSpan): TraceKeyValuePair[] {
+  const endpoint = span.localEndpoint || span.remoteEndpoint;
+  if (!endpoint) {
+    return [];
+  }
+  return [
+    valueToTag('ipv4', endpoint.ipv4),
+    valueToTag('ipv6', endpoint.ipv6),
+    valueToTag('port', endpoint.port),
+    valueToTag('endpointType', span.localEndpoint ? 'local' : 'remote'),
+  ].filter((item): item is TraceKeyValuePair => Boolean(item));
 }
 
-function endpointToProcess(endpoint: ZipkinEndpoint): TraceProcess {
-  return {
-    serviceName: endpoint.serviceName,
-    tags: [
-      valueToTag('ipv4', endpoint.ipv4, 'string'),
-      valueToTag('ipv6', endpoint.ipv6, 'string'),
-      valueToTag('port', endpoint.port, 'number'),
-    ].filter(identity) as TraceKeyValuePair[],
-  };
-}
-
-function valueToTag(key: string, value: string | number | undefined, type: string): TraceKeyValuePair | undefined {
+function valueToTag<T>(key: string, value: T): TraceKeyValuePair<T> | undefined {
   if (!value) {
     return undefined;
   }
   return {
     key,
-    type,
     value,
   };
 }
+
+/**
+ * Transforms data frame to Zipkin response
+ */
+export const transformToZipkin = (data: MutableDataFrame): ZipkinSpan[] => {
+  let response: ZipkinSpan[] = [];
+
+  for (let i = 0; i < data.length; i++) {
+    const span = data.get(i);
+    response.push({
+      traceId: span.traceID,
+      parentId: span.parentSpanID,
+      name: span.operationName,
+      id: span.spanID,
+      timestamp: span.startTime * 1000,
+      duration: span.duration * 1000,
+      ...getEndpoint(span),
+      annotations: span.logs.length
+        ? span.logs.map((l: TraceLog) => ({ timestamp: l.timestamp, value: l.fields[0].value }))
+        : undefined,
+      tags: span.tags.length
+        ? span.tags
+            .filter((t: TraceKeyValuePair) => t.key !== 'kind' && t.key !== 'endpointType' && t.key !== 'shared')
+            .reduce((tags: { [key: string]: string }, t: TraceKeyValuePair) => {
+              if (t.key === 'error') {
+                return {
+                  ...tags,
+                  [t.key]: span.tags.find((t: TraceKeyValuePair) => t.key === 'errorValue').value || '',
+                };
+              }
+              return { ...tags, [t.key]: t.value };
+            }, {})
+        : undefined,
+      kind: span.tags.find((t: TraceKeyValuePair) => t.key === 'kind')?.value,
+      shared: span.tags.find((t: TraceKeyValuePair) => t.key === 'shared')?.value,
+    });
+  }
+
+  return response;
+};
+
+// Returns remote or local endpoint object
+const getEndpoint = (span: any): { [key: string]: ZipkinEndpoint } | undefined => {
+  const key =
+    span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'endpointType')?.value === 'local'
+      ? 'localEndpoint'
+      : 'remoteEndpoint';
+  return span.serviceName !== 'unknown'
+    ? {
+        [key]: {
+          serviceName: span.serviceName,
+          ipv4: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv4')?.value,
+          ipv6: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'ipv6')?.value,
+          port: span.serviceTags.find((t: TraceKeyValuePair) => t.key === 'port')?.value,
+        },
+      }
+    : undefined;
+};

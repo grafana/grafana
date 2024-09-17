@@ -4,14 +4,14 @@
 /*
  * Escapes `"` characters from string
  */
-function escapeString(str: string): string {
-  return str.replace('"', '"');
+export function formatString(str: string): string {
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 /*
  * Determines if a value is an object
  */
-export function isObject(value: any): boolean {
+export function isObject(value: unknown): boolean {
   const type = typeof value;
   return !!value && type === 'object';
 }
@@ -62,7 +62,7 @@ export function getValuePreview(object: object, value: string): string {
   }
 
   if (type === 'string') {
-    value = '"' + escapeString(value) + '"';
+    value = '"' + formatString(value) + '"';
   }
   if (type === 'function') {
     // Remove content of the function
@@ -103,7 +103,11 @@ export function cssClass(className: string): string {
  * Creates a new DOM element with given type and class
  * TODO: move me to helpers
  */
-export function createElement(type: string, className?: string, content?: Element | string): Element {
+export function createElement<T extends keyof HTMLElementTagNameMap>(
+  type: T,
+  className?: string,
+  content?: Element | string
+) {
   const el = document.createElement(type);
   if (className) {
     el.classList.add(cssClass(className));

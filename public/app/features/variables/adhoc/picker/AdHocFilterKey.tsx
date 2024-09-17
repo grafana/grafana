@@ -1,39 +1,48 @@
-import React, { FC, ReactElement } from 'react';
+import { ReactElement } from 'react';
+
+import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
 import { Icon, SegmentAsync } from '@grafana/ui';
+
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
-import { SelectableValue } from '@grafana/data';
 
 interface Props {
-  datasource: string;
+  datasource: DataSourceRef;
   filterKey: string | null;
   onChange: (item: SelectableValue<string | null>) => void;
+  allFilters: AdHocVariableFilter[];
+  disabled?: boolean;
 }
 
-export const AdHocFilterKey: FC<Props> = ({ datasource, onChange, filterKey }) => {
-  const loadKeys = () => fetchFilterKeys(datasource);
-  const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource);
+const MIN_WIDTH = 90;
+export const AdHocFilterKey = ({ datasource, onChange, disabled, filterKey, allFilters }: Props) => {
+  const loadKeys = () => fetchFilterKeys(datasource, filterKey, allFilters);
+  const loadKeysWithRemove = () => fetchFilterKeysWithRemove(datasource, filterKey, allFilters);
 
   if (filterKey === null) {
     return (
-      <div className="gf-form">
+      <div className="gf-form" data-testid="AdHocFilterKey-add-key-wrapper">
         <SegmentAsync
+          disabled={disabled}
           className="query-segment-key"
           Component={plusSegment}
           value={filterKey}
           onChange={onChange}
           loadOptions={loadKeys}
+          inputMinWidth={MIN_WIDTH}
         />
       </div>
     );
   }
 
   return (
-    <div className="gf-form">
+    <div className="gf-form" data-testid="AdHocFilterKey-key-wrapper">
       <SegmentAsync
+        disabled={disabled}
         className="query-segment-key"
         value={filterKey}
         onChange={onChange}
         loadOptions={loadKeysWithRemove}
+        inputMinWidth={MIN_WIDTH}
       />
     </div>
   );
@@ -43,23 +52,33 @@ export const REMOVE_FILTER_KEY = '-- remove filter --';
 const REMOVE_VALUE = { label: REMOVE_FILTER_KEY, value: REMOVE_FILTER_KEY };
 
 const plusSegment: ReactElement = (
-  <a className="gf-form-label query-part">
+  <span className="gf-form-label query-part" aria-label="Add Filter">
     <Icon name="plus" />
-  </a>
+  </span>
 );
 
-const fetchFilterKeys = async (datasource: string): Promise<Array<SelectableValue<string>>> => {
+const fetchFilterKeys = async (
+  datasource: DataSourceRef,
+  currentKey: string | null,
+  allFilters: AdHocVariableFilter[]
+): Promise<Array<SelectableValue<string>>> => {
   const ds = await getDatasourceSrv().get(datasource);
 
   if (!ds || !ds.getTagKeys) {
     return [];
   }
 
-  const metrics = await ds.getTagKeys();
-  return metrics.map(m => ({ label: m.text, value: m.text }));
+  const otherFilters = allFilters.filter((f) => f.key !== currentKey);
+  const response = await ds.getTagKeys({ filters: otherFilters });
+  const metrics = Array.isArray(response) ? response : response.data;
+  return metrics.map((m) => ({ label: m.text, value: m.text }));
 };
 
-const fetchFilterKeysWithRemove = async (datasource: string): Promise<Array<SelectableValue<string>>> => {
-  const keys = await fetchFilterKeys(datasource);
+const fetchFilterKeysWithRemove = async (
+  datasource: DataSourceRef,
+  currentKey: string | null,
+  allFilters: AdHocVariableFilter[]
+): Promise<Array<SelectableValue<string>>> => {
+  const keys = await fetchFilterKeys(datasource, currentKey, allFilters);
   return [REMOVE_VALUE, ...keys];
 };

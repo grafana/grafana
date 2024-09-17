@@ -97,6 +97,16 @@ var lexTests = []lexTest{
 		{itemNumber, 0, "1.2e-4"},
 		tEOF,
 	}},
+	{"curly brace var", "${My Var}", []item{
+		{itemVar, 0, "${My Var}"},
+		tEOF,
+	}},
+	{"curly brace var plus 1", "${My Var} + 1", []item{
+		{itemVar, 0, "${My Var}"},
+		tPlus,
+		{itemNumber, 0, "1"},
+		tEOF,
+	}},
 	{"number plus var", "1 + $A", []item{
 		{itemNumber, 0, "1"},
 		tPlus,
@@ -112,6 +122,9 @@ var lexTests = []lexTest{
 	}},
 	{"invalid var", "$", []item{
 		{itemError, 0, "incomplete variable"},
+	}},
+	{"invalid curly var", "${adf sd", []item{
+		{itemError, 0, "unterminated variable missing closing }"},
 	}},
 }
 

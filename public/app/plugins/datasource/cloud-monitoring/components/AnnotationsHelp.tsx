@@ -1,10 +1,9 @@
-import React, { FC } from 'react';
+import { Alert } from '@grafana/ui';
 
-export const AnnotationsHelp: FC = () => {
+export const AnnotationsHelp = () => {
   return (
-    <div className="gf-form grafana-info-box alert-info">
+    <Alert severity="info" title="Annotation Query Format">
       <div>
-        <h5>Annotation Query Format</h5>
         <p>
           An annotation is an event that is overlaid on top of graphs. Annotation rendering is expensive so it is
           important to limit the number of rows returned.{' '}
@@ -19,7 +18,7 @@ export const AnnotationsHelp: FC = () => {
         <p>
           Example Result: <code>monitoring.googleapis.com/uptime_check/http_status has this value: 502</code>
         </p>
-        <label>Patterns:</label>
+        <span>Patterns:</span>
         <p>
           <code>{`${'{{metric.value}}'}`}</code> = value of the metric/point
         </p>
@@ -39,6 +38,6 @@ export const AnnotationsHelp: FC = () => {
           <code>{`${'{{resource.label.label_name}}'}`}</code> = Resource label metadata e.g. resource.label.zone
         </p>
       </div>
-    </div>
+    </Alert>
   );
 };

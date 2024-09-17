@@ -1,29 +1,75 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { commonOptionsBuilder } from '@grafana/ui';
+
+import { addStandardDataReduceOptions } from '../stat/common';
+
 import { PieChartPanel } from './PieChartPanel';
-import { PieChartOptions } from './types';
-import { addStandardDataReduceOptions } from '../stat/types';
-import { PieChartType } from '@grafana/ui';
+import { PieChartPanelChangedHandler } from './migrations';
+import { Options, FieldConfig, PieChartType, PieChartLabels, PieChartLegendValues } from './panelcfg.gen';
+import { PieChartSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<PieChartOptions>(PieChartPanel).setPanelOptions(builder => {
-  addStandardDataReduceOptions(builder, false);
+export const plugin = new PanelPlugin<Options, FieldConfig>(PieChartPanel)
+  .setPanelChangeHandler(PieChartPanelChangedHandler)
+  .useFieldConfig({
+    disableStandardOptions: [FieldConfigProperty.Thresholds],
+    standardOptions: {
+      [FieldConfigProperty.Color]: {
+        settings: {
+          byValueSupport: false,
+          bySeriesSupport: true,
+          preferThresholdsMode: false,
+        },
+        defaultValue: {
+          mode: FieldColorModeId.PaletteClassic,
+        },
+      },
+    },
+    useCustomConfig: (builder) => {
+      commonOptionsBuilder.addHideFrom(builder);
+    },
+  })
+  .setPanelOptions((builder) => {
+    addStandardDataReduceOptions(builder);
+    builder
+      .addRadio({
+        name: 'Piechart type',
+        description: 'How the piechart should be rendered',
+        path: 'pieType',
+        settings: {
+          options: [
+            { value: PieChartType.Pie, label: 'Pie' },
+            { value: PieChartType.Donut, label: 'Donut' },
+          ],
+        },
+        defaultValue: PieChartType.Pie,
+      })
+      .addMultiSelect({
+        name: 'Labels',
+        path: 'displayLabels',
+        description: 'Select the labels to be displayed in the pie chart',
+        settings: {
+          options: [
+            { value: PieChartLabels.Percent, label: 'Percent' },
+            { value: PieChartLabels.Name, label: 'Name' },
+            { value: PieChartLabels.Value, label: 'Value' },
+          ],
+        },
+      });
 
-  builder
-    .addRadio({
-      name: 'Piechart type',
-      description: 'How the piechart should be rendered',
-      path: 'pieType',
+    commonOptionsBuilder.addTooltipOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, false);
+
+    builder.addMultiSelect({
+      name: 'Legend values',
+      path: 'legend.values',
+      category: ['Legend'],
       settings: {
         options: [
-          { value: PieChartType.PIE, label: 'Pie' },
-          { value: PieChartType.DONUT, label: 'Donut' },
+          { value: PieChartLegendValues.Percent, label: 'Percent' },
+          { value: PieChartLegendValues.Value, label: 'Value' },
         ],
       },
-      defaultValue: PieChartType.PIE,
-    })
-    .addNumberInput({
-      name: 'Width',
-      description: 'Width of the piechart outline',
-      path: 'strokeWidth',
-      defaultValue: 1,
+      showIf: (c) => c.legend.showLegend !== false,
     });
-});
+  })
+  .setSuggestionsSupplier(new PieChartSuggestionsSupplier());

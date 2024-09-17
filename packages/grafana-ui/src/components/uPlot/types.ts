@@ -1,42 +1,56 @@
-import React from 'react';
-import uPlot from 'uplot';
-import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
+import * as React from 'react';
+import uPlot, { Options, AlignedData } from 'uplot';
+
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
-export type PlotSeriesConfig = Pick<uPlot.Options, 'series' | 'scales' | 'axes'>;
-export type PlotPlugin = {
-  id: string;
-  /** can mutate provided opts as necessary */
-  opts?: (self: uPlot, opts: uPlot.Options) => void;
-  hooks: uPlot.PluginHooks;
-};
+/**
+ * @internal -- not a public API
+ */
+export const FIXED_UNIT = '__fixed';
 
-export interface PlotPluginProps {
-  id: string;
-}
+export type PlotConfig = Pick<
+  Options,
+  'mode' | 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate' | 'padding'
+>;
+
+export type FacetValues = any[];
+export type FacetSeries = FacetValues[];
+export type FacetedData = [_: null, ...series: FacetSeries];
 
 export interface PlotProps {
-  data: DataFrame;
-  timeRange: TimeRange;
-  timeZone: TimeZone;
+  data: AlignedData | FacetedData;
   width: number;
   height: number;
   config: UPlotConfigBuilder;
-  children?: React.ReactElement[];
-  /** Callback performed when uPlot data is updated */
-  onDataUpdate?: (data: uPlot.AlignedData) => {};
-  /** Callback performed when uPlot is (re)initialized */
-  onPlotInit?: () => {};
+  children?: React.ReactNode;
+  // Reference to uPlot instance
+  plotRef?: (u: uPlot) => void;
 }
 
 export abstract class PlotConfigBuilder<P, T> {
-  constructor(protected props: P) {}
+  constructor(public props: P) {}
   abstract getConfig(): T;
 }
 
-export enum AxisSide {
-  Top, // 0
-  Right, // 1
-  Bottom, // 2
-  Left, // 3
+/**
+ * @alpha
+ */
+export type PlotTooltipInterpolator = (
+  updateActiveSeriesIdx: (sIdx: number | null) => void,
+  updateActiveDatapointIdx: (dIdx: number | null) => void,
+  updateTooltipPosition: (clear?: boolean) => void,
+  u: uPlot
+) => void;
+
+export interface PlotSelection {
+  min: number;
+  max: number;
+
+  // selection bounding box, relative to canvas
+  bbox: {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  };
 }

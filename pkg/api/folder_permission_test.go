@@ -1,270 +1,152 @@
 package api
 
 import (
-	"fmt"
+	"encoding/json"
+	"net/http"
+	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func TestFolderPermissionAPIEndpoint(t *testing.T) {
-	t.Run("Given folder not exists", func(t *testing.T) {
-		mock := &fakeFolderService{
-			GetFolderByUIDError: models.ErrFolderNotFound,
-		}
+func TestHTTPServer_GetFolderPermissionList(t *testing.T) {
+	t.Run("should not be able to list acl when user does not have permission to do so", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {})
 
-		origNewFolderService := dashboards.NewFolderService
-		t.Cleanup(func() {
-			dashboards.NewFolderService = origNewFolderService
-		})
-		mockFolderService(mock)
-
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-			callGetFolderPermissions(sc)
-			assert.Equal(t, 404, sc.resp.Code)
-		})
-
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
-				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-			},
-		}
-
-		updateFolderPermissionScenario(t, "When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-			callUpdateFolderPermissions(sc)
-			assert.Equal(t, 404, sc.resp.Code)
-		})
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, nil)))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("Given user has no admin permissions", func(t *testing.T) {
-		origNewGuardian := guardian.New
-		origNewFolderService := dashboards.NewFolderService
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-			dashboards.NewFolderService = origNewFolderService
+	t.Run("should be able to list acl with correct permission", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.folderService = &foldertest.FakeService{ExpectedFolder: &folder.Folder{UID: "1"}}
+			hs.folderPermissionsService = &actest.FakePermissionsService{
+				ExpectedPermissions: []accesscontrol.ResourcePermission{},
+			}
 		})
 
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanAdminValue: false})
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
+		})))
 
-		mock := &fakeFolderService{
-			GetFolderByUIDResult: &models.Folder{
-				Id:    1,
-				Uid:   "uid",
-				Title: "Folder",
-			},
-		}
-
-		mockFolderService(mock)
-
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-			callGetFolderPermissions(sc)
-			assert.Equal(t, 403, sc.resp.Code)
-		})
-
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
-				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-			},
-		}
-
-		updateFolderPermissionScenario(t, "When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-			callUpdateFolderPermissions(sc)
-			assert.Equal(t, 403, sc.resp.Code)
-		})
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
-	t.Run("Given user has admin permissions and permissions to update", func(t *testing.T) {
-		origNewGuardian := guardian.New
-		origNewFolderService := dashboards.NewFolderService
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-			dashboards.NewFolderService = origNewFolderService
-		})
+	t.Run("should filter out hidden users from acl", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			cfg := setting.NewCfg()
+			cfg.HiddenUsers = map[string]struct{}{"hidden": {}}
+			hs.Cfg = cfg
+			hs.folderService = &foldertest.FakeService{ExpectedFolder: &folder.Folder{UID: "1"}}
 
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-			CanAdminValue:                    true,
-			CheckPermissionBeforeUpdateValue: true,
-			GetAclValue: []*models.DashboardAclInfoDTO{
-				{OrgId: 1, DashboardId: 1, UserId: 2, Permission: models.PERMISSION_VIEW},
-				{OrgId: 1, DashboardId: 1, UserId: 3, Permission: models.PERMISSION_EDIT},
-				{OrgId: 1, DashboardId: 1, UserId: 4, Permission: models.PERMISSION_ADMIN},
-				{OrgId: 1, DashboardId: 1, TeamId: 1, Permission: models.PERMISSION_VIEW},
-				{OrgId: 1, DashboardId: 1, TeamId: 2, Permission: models.PERMISSION_ADMIN},
-			},
-		})
-
-		mock := &fakeFolderService{
-			GetFolderByUIDResult: &models.Folder{
-				Id:    1,
-				Uid:   "uid",
-				Title: "Folder",
-			},
-		}
-
-		mockFolderService(mock)
-
-		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
-			callGetFolderPermissions(sc)
-			assert.Equal(t, 200, sc.resp.Code)
-			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-			require.NoError(t, err)
-			assert.Equal(t, 5, len(respJSON.MustArray()))
-			assert.Equal(t, 2, respJSON.GetIndex(0).Get("userId").MustInt())
-			assert.Equal(t, int(models.PERMISSION_VIEW), respJSON.GetIndex(0).Get("permission").MustInt())
-		})
-
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
-				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-			},
-		}
-
-		updateFolderPermissionScenario(t, "When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-			callUpdateFolderPermissions(sc)
-			assert.Equal(t, 200, sc.resp.Code)
-			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-			require.NoError(t, err)
-			assert.Equal(t, 1, respJSON.Get("id").MustInt())
-			assert.Equal(t, "Folder", respJSON.Get("title").MustString())
-		})
-	})
-
-	t.Run("When trying to update permissions with duplicate permissions", func(t *testing.T) {
-		origNewGuardian := guardian.New
-		origNewFolderService := dashboards.NewFolderService
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-			dashboards.NewFolderService = origNewFolderService
-		})
-
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-			CanAdminValue:                    true,
-			CheckPermissionBeforeUpdateValue: false,
-			CheckPermissionBeforeUpdateError: guardian.ErrGuardianPermissionExists,
-		})
-
-		mock := &fakeFolderService{
-			GetFolderByUIDResult: &models.Folder{
-				Id:    1,
-				Uid:   "uid",
-				Title: "Folder",
-			},
-		}
-
-		mockFolderService(mock)
-
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
-				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-			},
-		}
-
-		updateFolderPermissionScenario(t, "When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-			callUpdateFolderPermissions(sc)
-			assert.Equal(t, 400, sc.resp.Code)
-		})
-	})
-
-	t.Run("When trying to update team or user permissions with a role", func(t *testing.T) {
-		role := models.ROLE_ADMIN
-		cmds := []dtos.UpdateDashboardAclCommand{
-			{
-				Items: []dtos.DashboardAclUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
+			hs.folderPermissionsService = &actest.FakePermissionsService{
+				ExpectedPermissions: []accesscontrol.ResourcePermission{
+					{UserId: 1, UserLogin: "regular", IsManaged: true},
+					{UserId: 2, UserLogin: "hidden", IsManaged: true},
 				},
-			},
-			{
-				Items: []dtos.DashboardAclUpdateItem{
-					{TeamID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
-				},
-			},
-		}
-
-		for _, cmd := range cmds {
-			updateFolderPermissionScenario(t, "When calling POST on", "/api/folders/uid/permissions",
-				"/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-					callUpdateFolderPermissions(sc)
-					assert.Equal(t, 400, sc.resp.Code)
-					respJSON, err := jsonMap(sc.resp.Body.Bytes())
-					require.NoError(t, err)
-					assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON["error"])
-				})
-		}
-	})
-
-	t.Run("When trying to override inherited permissions with lower precedence", func(t *testing.T) {
-		origNewGuardian := guardian.New
-		origNewFolderService := dashboards.NewFolderService
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-			dashboards.NewFolderService = origNewFolderService
+			}
 		})
 
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-			CanAdminValue:                    true,
-			CheckPermissionBeforeUpdateValue: false,
-			CheckPermissionBeforeUpdateError: guardian.ErrGuardianOverride},
-		)
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
+		})))
 
-		mock := &fakeFolderService{
-			GetFolderByUIDResult: &models.Folder{
-				Id:    1,
-				Uid:   "uid",
-				Title: "Folder",
-			},
-		}
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 
-		mockFolderService(mock)
+		var result []dashboards.DashboardACLInfoDTO
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
 
-		cmd := dtos.UpdateDashboardAclCommand{
-			Items: []dtos.DashboardAclUpdateItem{
-				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
-			},
-		}
-
-		updateFolderPermissionScenario(t, "When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-			callUpdateFolderPermissions(sc)
-			assert.Equal(t, 400, sc.resp.Code)
-		})
+		assert.Len(t, result, 1)
+		assert.Equal(t, result[0].UserLogin, "regular")
+		require.NoError(t, res.Body.Close())
 	})
 }
 
-func callGetFolderPermissions(sc *scenarioContext) {
-	sc.handlerFunc = GetFolderPermissionList
-	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-}
+func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
+	t.Run("should not be able to update acl when user does not have permission to do so", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {})
 
-func callUpdateFolderPermissions(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *models.UpdateDashboardAclCommand) error {
-		return nil
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", nil), userWithPermissions(1, nil)))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
-	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-}
-
-func updateFolderPermissionScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.UpdateDashboardAclCommand, fn scenarioFunc) {
-	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
-
-		sc := setupScenarioContext(t, url)
-
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
-			sc.context = c
-			sc.context.OrgId = testOrgID
-			sc.context.UserId = testUserID
-
-			return UpdateFolderPermissions(c, cmd)
+	t.Run("should be able to update acl with correct permissions", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.folderService = &foldertest.FakeService{ExpectedFolder: &folder.Folder{UID: "1"}}
+			hs.folderPermissionsService = &actest.FakePermissionsService{}
 		})
 
-		sc.m.Post(routePattern, sc.defaultHandler)
+		body := `{"items": []}`
+		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+		})))
 
-		fn(sc)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should not be able to specify team and user in same acl", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.folderService = &foldertest.FakeService{ExpectedFolder: &folder.Folder{UID: "1"}}
+			hs.folderPermissionsService = &actest.FakePermissionsService{}
+		})
+
+		body := `{"items": [{ userId:1, teamId: 2 }]}`
+		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should not be able to specify team and role in same acl", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.folderService = &foldertest.FakeService{ExpectedFolder: &folder.Folder{UID: "1"}}
+			hs.folderPermissionsService = &actest.FakePermissionsService{}
+		})
+
+		body := `{"items": [{ teamId:1, role: "Admin" }]}`
+		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should not be able to specify user and role in same acl", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.folderService = &foldertest.FakeService{ExpectedFolder: &folder.Folder{UID: "1"}}
+			hs.folderPermissionsService = &actest.FakePermissionsService{}
+		})
+
+		body := `{"items": [{ userId:1, role: "Admin" }]}`
+		res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/folders/1/permissions", strings.NewReader(body)), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }

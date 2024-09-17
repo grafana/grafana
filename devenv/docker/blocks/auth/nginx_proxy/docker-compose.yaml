@@ -1,0 +1,15 @@
+# This will proxy all requests for http://localhost:10080/grafana/ to
+# http://localhost:3000 (Grafana running locally)
+#
+# Please note that you'll need to change the root_url in the Grafana configuration:
+# root_url = %(protocol)s://%(domain)s:10080/grafana/
+
+  nginxproxy:
+    image: nginx:1.24-alpine
+    volumes:
+      - "./docker/blocks/auth/nginx_proxy/nginx.conf:/etc/nginx/nginx.conf"
+      - "./docker/blocks/auth/nginx_proxy/htpasswd:/etc/nginx/htpasswd"
+    ports:
+      - "8090:8090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

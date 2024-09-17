@@ -1,33 +1,36 @@
-import React from 'react';
-import { action } from '@storybook/addon-actions';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { UseState } from '../../utils/storybook/UseState';
-import { TagsInput } from '@grafana/ui';
+import { Meta, StoryFn } from '@storybook/react';
+import { useState } from 'react';
+
+import { StoryExample } from '../../utils/storybook/StoryExample';
+
+import { TagsInput } from './TagsInput';
 import mdx from './TagsInput.mdx';
 
-const mockTags = ['Some', 'Tags', 'With', 'This', 'New', 'Component'];
-
-export default {
+const meta: Meta<typeof TagsInput> = {
   title: 'Forms/TagsInput',
   component: TagsInput,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['onChange', 'className', 'tags'],
+    },
   },
 };
 
-export const basic = () => {
-  return <TagsInput tags={[]} onChange={tags => action('tags updated')(tags)} />;
+export const Basic: StoryFn<typeof TagsInput> = (props) => {
+  const [tags, setTags] = useState<string[]>([]);
+  return <TagsInput {...props} tags={tags} onChange={setTags} />;
 };
 
-export const withMockTags = () => {
+export const WithManyTags = () => {
+  const [tags, setTags] = useState<string[]>(['dashboard', 'prod', 'server', 'frontend', 'game', 'kubernetes']);
   return (
-    <UseState initialState={mockTags}>
-      {tags => {
-        return <TagsInput tags={tags} onChange={tags => action('tags updated')(tags)} />;
-      }}
-    </UseState>
+    <StoryExample name="With many tags">
+      <TagsInput tags={tags} onChange={setTags} />
+    </StoryExample>
   );
 };
+
+export default meta;

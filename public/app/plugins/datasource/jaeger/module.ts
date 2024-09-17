@@ -1,8 +1,11 @@
 import { DataSourcePlugin } from '@grafana/data';
+
+import CheatSheet from './CheatSheet';
+import { QueryEditor } from './components/QueryEditor';
+import { ConfigEditor } from './configuration/ConfigEditor';
 import { JaegerDatasource } from './datasource';
-import { JaegerQueryField } from './QueryField';
-import { ConfigEditor } from './ConfigEditor';
 
 export const plugin = new DataSourcePlugin(JaegerDatasource)
   .setConfigEditor(ConfigEditor)
-  .setExploreQueryField(JaegerQueryField);
+  .setQueryEditor(QueryEditor)
+  .setQueryEditorHelp(CheatSheet);

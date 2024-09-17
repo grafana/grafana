@@ -1,0 +1,4 @@
+apiVersion: 1
+templates:
+  - name: my_first_template
+    template: "test"

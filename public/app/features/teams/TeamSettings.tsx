@@ -1,60 +1,84 @@
-import React, { FC } from 'react';
-import { connect } from 'react-redux';
-import { Input, Field, Form, Button, FieldSet, VerticalGroup } from '@grafana/ui';
+import { useForm } from 'react-hook-form';
+import { connect, ConnectedProps } from 'react-redux';
 
+import { Input, Field, Button, FieldSet, Stack } from '@grafana/ui';
+import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
+import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction, Team } from 'app/types';
+
 import { updateTeam } from './state/actions';
-import { getRouteParamsId } from 'app/core/selectors/location';
-import { getTeam } from './state/selectors';
-import { Team } from 'app/types';
-
-export interface Props {
-  team: Team;
-  updateTeam: typeof updateTeam;
-}
-
-export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
-  return (
-    <VerticalGroup>
-      <FieldSet label="Team Settings">
-        <Form
-          defaultValues={{ ...team }}
-          onSubmit={(formTeam: Team) => {
-            updateTeam(formTeam.name, formTeam.email);
-          }}
-        >
-          {({ register }) => (
-            <>
-              <Field label="Name">
-                <Input name="name" ref={register({ required: true })} />
-              </Field>
-
-              <Field
-                label="Email"
-                description="This is optional and is primarily used to set the team profile avatar (via gravatar service)"
-              >
-                <Input placeholder="team@email.com" type="email" name="email" ref={register} />
-              </Field>
-              <Button type="submit">Update</Button>
-            </>
-          )}
-        </Form>
-      </FieldSet>
-      <SharedPreferences resourceUri={`teams/${team.id}`} />
-    </VerticalGroup>
-  );
-};
-
-function mapStateToProps(state: any) {
-  const teamId = getRouteParamsId(state.location);
-
-  return {
-    team: getTeam(state.team, teamId),
-  };
-}
 
 const mapDispatchToProps = {
   updateTeam,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(TeamSettings);
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
+  team: Team;
+}
+export type Props = ConnectedProps<typeof connector> & OwnProps;
+
+export const TeamSettings = ({ team, updateTeam }: Props) => {
+  const canWriteTeamSettings = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsWrite, team);
+  const currentOrgId = contextSrv.user.orgId;
+
+  const [{ roleOptions }] = useRoleOptions(currentOrgId);
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm<Team>({ defaultValues: team });
+
+  const canUpdateRoles =
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesAdd) &&
+    contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesRemove);
+
+  const canListRoles =
+    contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRolesList, team) &&
+    contextSrv.hasPermission(AccessControlAction.ActionRolesList);
+
+  const onSubmit = async (formTeam: Team) => {
+    updateTeam(formTeam.name, formTeam.email || '');
+  };
+
+  return (
+    <Stack direction={'column'} gap={3}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px' }}>
+        <FieldSet label="Team details">
+          <Field
+            label="Name"
+            disabled={!canWriteTeamSettings}
+            required
+            invalid={!!errors.name}
+            error="Name is required"
+          >
+            <Input {...register('name', { required: true })} id="name-input" />
+          </Field>
+
+          {contextSrv.licensedAccessControlEnabled() && canListRoles && (
+            <Field label="Role">
+              <TeamRolePicker teamId={team.id} roleOptions={roleOptions} disabled={!canUpdateRoles} maxWidth="100%" />
+            </Field>
+          )}
+
+          <Field
+            label="Email"
+            description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
+            disabled={!canWriteTeamSettings}
+          >
+            <Input {...register('email')} placeholder="team@email.com" type="email" id="email-input" />
+          </Field>
+          <Button type="submit" disabled={!canWriteTeamSettings}>
+            Update
+          </Button>
+        </FieldSet>
+      </form>
+      <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} preferenceType="team" />
+    </Stack>
+  );
+};
+
+export default connector(TeamSettings);

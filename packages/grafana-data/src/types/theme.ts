@@ -1,3 +1,5 @@
+import { ThemeVisualizationColors } from '../themes/createVisualizationColors';
+
 export enum GrafanaThemeType {
   Light = 'light',
   Dark = 'dark',
@@ -53,6 +55,7 @@ export interface GrafanaThemeCommons {
     };
   };
   spacing: {
+    base: number;
     insetSquishMd: string;
     d: string;
     xxs: string;
@@ -105,6 +108,7 @@ export interface GrafanaThemeCommons {
     tooltip: number;
     modalBackdrop: number;
     modal: number;
+    portal: number;
     typeahead: number;
   };
 }
@@ -136,6 +140,7 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
 
     // New greys palette used by next-gen form elements
     gray98: string;
+    gray97: string;
     gray95: string;
     gray90: string;
     gray85: string;
@@ -232,17 +237,9 @@ export interface GrafanaTheme extends GrafanaThemeCommons {
     formInputPlaceholderText: string;
     formValidationMessageText: string;
     formValidationMessageBg: string;
-    formSwitchBg: string;
-    formSwitchBgActive: string;
-    formSwitchBgActiveHover: string;
-    formSwitchBgHover: string;
-    formSwitchBgDisabled: string;
-    formSwitchDot: string;
-    formCheckboxBgChecked: string;
-    formCheckboxBgCheckedHover: string;
-    formCheckboxCheckmark: string;
   };
   shadows: {
     listItem: string;
   };
+  visualization: ThemeVisualizationColors;
 }

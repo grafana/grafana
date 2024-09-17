@@ -1,27 +1,80 @@
-import { ZipkinDatasource, ZipkinQuery } from './datasource';
-import { DataQueryRequest, DataSourceInstanceSettings } from '@grafana/data';
-import { BackendSrv, BackendSrvRequest, setBackendSrv } from '@grafana/runtime';
-import { jaegerTrace, zipkinResponse } from './utils/testData';
+import { lastValueFrom, of } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
+
+import { DataQueryRequest, DataSourceInstanceSettings, DataSourcePluginMeta, FieldType } from '@grafana/data';
+import { BackendSrv, TemplateSrv } from '@grafana/runtime';
+
+import { ZipkinDatasource } from './datasource';
+import mockJson from './mockJsonResponse.json';
+import { ZipkinQuery, ZipkinSpan } from './types';
+import { traceFrameFields, zipkinResponse } from './utils/testData';
+
+export const backendSrv = { fetch: jest.fn() } as unknown as BackendSrv;
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('ZipkinDatasource', () => {
   describe('query', () => {
+    const templateSrv: TemplateSrv = {
+      replace: jest.fn(),
+      getVariables: jest.fn(),
+      containsTemplate: jest.fn(),
+      updateTimeRange: jest.fn(),
+    };
+
     it('runs query', async () => {
-      setupBackendSrv({ url: '/api/datasources/proxy/1/api/v2/trace/12345', response: zipkinResponse });
-      const ds = new ZipkinDatasource(defaultSettings);
-      const response = await ds.query({ targets: [{ query: '12345' }] } as DataQueryRequest<ZipkinQuery>).toPromise();
-      expect(response.data[0].fields[0].values.get(0)).toEqual(jaegerTrace);
+      setupBackendSrv(zipkinResponse);
+      const ds = new ZipkinDatasource(defaultSettings, templateSrv);
+      await expect(ds.query({ targets: [{ query: '12345' }] } as DataQueryRequest<ZipkinQuery>)).toEmitValuesWith(
+        (val) => {
+          expect(val[0].data[0].fields).toMatchObject(traceFrameFields);
+        }
+      );
     });
+
     it('runs query with traceId that includes special characters', async () => {
-      setupBackendSrv({ url: '/api/datasources/proxy/1/api/v2/trace/a%2Fb', response: zipkinResponse });
+      setupBackendSrv(zipkinResponse);
+      const ds = new ZipkinDatasource(defaultSettings, templateSrv);
+      await expect(ds.query({ targets: [{ query: 'a/b' }] } as DataQueryRequest<ZipkinQuery>)).toEmitValuesWith(
+        (val) => {
+          expect(val[0].data[0].fields).toMatchObject(traceFrameFields);
+        }
+      );
+    });
+
+    it('should handle json file upload', async () => {
       const ds = new ZipkinDatasource(defaultSettings);
-      const response = await ds.query({ targets: [{ query: 'a/b' }] } as DataQueryRequest<ZipkinQuery>).toPromise();
-      expect(response.data[0].fields[0].values.get(0)).toEqual(jaegerTrace);
+      ds.uploadedJson = JSON.stringify(mockJson);
+      const response = await lastValueFrom(
+        ds.query({
+          targets: [{ queryType: 'upload', refId: 'A' }],
+        } as DataQueryRequest<ZipkinQuery>)
+      );
+      const field = response.data[0].fields[0];
+      expect(field.name).toBe('traceID');
+      expect(field.type).toBe(FieldType.string);
+      expect(field.values.length).toBe(3);
+    });
+
+    it('should fail on invalid json file upload', async () => {
+      const ds = new ZipkinDatasource(defaultSettings);
+      ds.uploadedJson = JSON.stringify({ key: 'value', arr: [] });
+      const response = await lastValueFrom(
+        ds.query({
+          targets: [{ queryType: 'upload', refId: 'A' }],
+        } as DataQueryRequest<ZipkinQuery>)
+      );
+      expect(response.error?.message).toBeDefined();
+      expect(response.data.length).toBe(0);
     });
   });
 
   describe('metadataRequest', () => {
     it('runs query', async () => {
-      setupBackendSrv({ url: '/api/datasources/proxy/1/api/v2/services', response: ['service 1', 'service 2'] });
+      setupBackendSrv(['service 1', 'service 2'] as unknown as ZipkinSpan[]);
       const ds = new ZipkinDatasource(defaultSettings);
       const response = await ds.metadataRequest('/api/v2/services');
       expect(response).toEqual(['service 1', 'service 2']);
@@ -29,15 +82,11 @@ describe('ZipkinDatasource', () => {
   });
 });
 
-function setupBackendSrv<T>({ url, response }: { url: string; response: T }): void {
-  setBackendSrv({
-    datasourceRequest(options: BackendSrvRequest): Promise<any> {
-      if (options.url === url) {
-        return Promise.resolve({ data: response });
-      }
-      throw new Error(`Unexpected url ${options.url}`);
-    },
-  } as BackendSrv);
+function setupBackendSrv(response: ZipkinSpan[]) {
+  const defaultMock = () => of(createFetchResponse(response));
+
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
+  fetchMock.mockImplementation(defaultMock);
 }
 
 const defaultSettings: DataSourceInstanceSettings = {
@@ -45,6 +94,8 @@ const defaultSettings: DataSourceInstanceSettings = {
   uid: '1',
   type: 'tracing',
   name: 'zipkin',
-  meta: {} as any,
+  meta: {} as DataSourcePluginMeta,
   jsonData: {},
+  access: 'proxy',
+  readOnly: false,
 };

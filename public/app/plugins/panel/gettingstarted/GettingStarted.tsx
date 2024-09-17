@@ -1,17 +1,17 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import { css, cx } from '@emotion/css';
+import { PureComponent } from 'react';
+
 import { PanelProps } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, stylesFactory } from '@grafana/ui';
-import { config } from '@grafana/runtime';
-import { css, cx } from 'emotion';
 import { contextSrv } from 'app/core/core';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+
 import { Step } from './components/Step';
-import imageDark from './img/Onboarding_Panel_dark.svg';
-import imageLight from './img/Onboarding_Panel_light.svg';
 import { getSteps } from './steps';
-import { Card, SetupStep } from './types';
+import { SetupStep } from './types';
 
 interface State {
   checksDone: boolean;
@@ -30,15 +30,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
     const { steps } = this.state;
 
     const checkedStepsPromises: Array<Promise<SetupStep>> = steps.map(async (step: SetupStep) => {
-      const checkedCardsPromises: Array<Promise<Card>> = step.cards.map((card: Card) => {
-        return card.check().then(passed => {
+      const checkedCardsPromises = step.cards.map(async (card) => {
+        return card.check().then((passed) => {
           return { ...card, done: passed };
         });
       });
       const checkedCards = await Promise.all(checkedCardsPromises);
       return {
         ...step,
-        done: checkedCards.every(c => c.done),
+        done: checkedCards.every((c) => c.done),
         cards: checkedCards,
       };
     });
@@ -53,13 +53,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   }
 
   onForwardClick = () => {
-    this.setState(prevState => ({
+    reportInteraction('grafana_getting_started_button_to_advanced_tutorials');
+    this.setState((prevState) => ({
       currentStep: prevState.currentStep + 1,
     }));
   };
 
   onPreviousClick = () => {
-    this.setState(prevState => ({
+    reportInteraction('grafana_getting_started_button_to_basic_tutorials');
+    this.setState((prevState) => ({
       currentStep: prevState.currentStep - 1,
     }));
   };
@@ -67,19 +69,15 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
   dismiss = () => {
     const { id } = this.props;
     const dashboard = getDashboardSrv().getCurrent();
-    const panel = dashboard.getPanelById(id);
+    const panel = dashboard?.getPanelById(id);
 
-    dashboard.removePanel(panel!);
+    reportInteraction('grafana_getting_started_remove_panel');
 
-    backendSrv
-      .request({
-        method: 'PUT',
-        url: '/api/user/helpflags/1',
-        showSuccessAlert: false,
-      })
-      .then((res: any) => {
-        contextSrv.user.helpFlags1 = res.helpFlags1;
-      });
+    dashboard?.removePanel(panel!);
+
+    backendSrv.put('/api/user/helpflags/1', undefined, { showSuccessAlert: false }).then((res) => {
+      contextSrv.user.helpFlags1 = res.helpFlags1;
+    });
   };
 
   render() {
@@ -92,25 +90,33 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
         {!checksDone ? (
           <div className={styles.loading}>
             <div className={styles.loadingText}>Checking completed setup steps</div>
-            <Spinner size={24} inline />
+            <Spinner size="xl" inline />
           </div>
         ) : (
           <>
-            <div className={styles.dismiss}>
-              <div onClick={this.dismiss}>Remove this panel</div>
-            </div>
+            <Button variant="secondary" fill="text" className={styles.dismiss} onClick={this.dismiss}>
+              Remove this panel
+            </Button>
             {currentStep === steps.length - 1 && (
-              <div className={cx(styles.backForwardButtons, styles.previous)} onClick={this.onPreviousClick}>
-                <Button icon="angle-left" variant="secondary" />
-              </div>
+              <Button
+                className={cx(styles.backForwardButtons, styles.previous)}
+                onClick={this.onPreviousClick}
+                aria-label="To basic tutorials"
+                icon="angle-left"
+                variant="secondary"
+              />
             )}
             <div className={styles.content}>
               <Step step={step} />
             </div>
             {currentStep < steps.length - 1 && (
-              <div className={cx(styles.backForwardButtons, styles.forward)} onClick={this.onForwardClick}>
-                <Button icon="angle-right" variant="secondary" />
-              </div>
+              <Button
+                className={cx(styles.backForwardButtons, styles.forward)}
+                onClick={this.onForwardClick}
+                aria-label="To advanced tutorials"
+                icon="angle-right"
+                variant="secondary"
+              />
             )}
           </>
         )}
@@ -120,93 +126,85 @@ export class GettingStarted extends PureComponent<PanelProps, State> {
 }
 
 const getStyles = stylesFactory(() => {
-  const { theme } = config;
-  const backgroundImage = theme.isDark ? imageDark : imageLight;
+  const theme = config.theme2;
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      background: url(${backgroundImage}) no-repeat;
-      background-size: cover;
-      padding: ${theme.spacing.xl} ${theme.spacing.md} 0;
-    `,
-    content: css`
-      label: content;
-      display: flex;
-      justify-content: center;
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      backgroundSize: 'cover',
+      padding: `${theme.spacing(4)} ${theme.spacing(2)} 0`,
+    }),
+    content: css({
+      label: 'content',
+      display: 'flex',
+      justifyContent: 'center',
 
-      @media only screen and (max-width: ${theme.breakpoints.xxl}) {
-        margin-left: ${theme.spacing.lg};
-        justify-content: flex-start;
-      }
-    `,
-    header: css`
-      label: header;
-      margin-bottom: ${theme.spacing.lg};
-      display: flex;
-      flex-direction: column;
+      [theme.breakpoints.down('xxl')]: {
+        marginLeft: theme.spacing(3),
+        justifyContent: 'flex-start',
+      },
+    }),
+    header: css({
+      label: 'header',
+      marginBottom: theme.spacing(3),
+      display: 'flex',
+      flexDirection: 'column',
 
-      @media only screen and (min-width: ${theme.breakpoints.lg}) {
-        flex-direction: row;
-      }
-    `,
-    headerLogo: css`
-      height: 58px;
-      padding-right: ${theme.spacing.md};
-      display: none;
+      [theme.breakpoints.down('lg')]: {
+        flexDirection: 'row',
+      },
+    }),
+    headerLogo: css({
+      height: '58px',
+      paddingRight: theme.spacing(2),
+      display: 'none',
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
-        display: block;
-      }
-    `,
-    heading: css`
-      label: heading;
-      margin-right: ${theme.spacing.lg};
-      margin-bottom: ${theme.spacing.lg};
-      flex-grow: 1;
-      display: flex;
+      [theme.breakpoints.up('md')]: {
+        display: 'block',
+      },
+    }),
+    heading: css({
+      label: 'heading',
+      marginRight: theme.spacing(3),
+      marginBottom: theme.spacing(3),
+      flexGrow: 1,
+      display: 'flex',
 
-      @media only screen and (min-width: ${theme.breakpoints.md}) {
-        margin-bottom: 0;
-      }
-    `,
-    backForwardButtons: css`
-      position: absolute;
-      bottom: 50%;
-      top: 50%;
-      height: 50px;
-    `,
-    previous: css`
-      left: 10px;
-
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        left: 0;
-      }
-    `,
-    forward: css`
-      right: 10px;
-
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
-        right: 0;
-      }
-    `,
-    dismiss: css`
-      display: flex;
-      justify-content: flex-end;
-      cursor: pointer;
-      text-decoration: underline;
-      margin-right: ${theme.spacing.md};
-      margin-bottom: ${theme.spacing.sm};
-    `,
-    loading: css`
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-    `,
-    loadingText: css`
-      margin-right: ${theme.spacing.sm};
-    `,
+      [theme.breakpoints.up('md')]: {
+        marginBottom: 0,
+      },
+    }),
+    backForwardButtons: css({
+      position: 'absolute',
+      top: '50%',
+      transform: 'translateY(-50%)',
+    }),
+    previous: css({
+      left: '10px',
+      [theme.breakpoints.down('md')]: {
+        left: 0,
+      },
+    }),
+    forward: css({
+      right: '10px',
+      [theme.breakpoints.down('md')]: {
+        right: 0,
+      },
+    }),
+    dismiss: css({
+      alignSelf: 'flex-end',
+      textDecoration: 'underline',
+      marginBottom: theme.spacing(1),
+    }),
+    loading: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100%',
+    }),
+    loadingText: css({
+      marginRight: theme.spacing(1),
+    }),
   };
 });

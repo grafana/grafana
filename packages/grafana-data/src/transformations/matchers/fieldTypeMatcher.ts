@@ -1,6 +1,7 @@
 import { Field, FieldType, DataFrame } from '../../types/dataFrame';
-import { FieldMatcherID } from './ids';
 import { FieldMatcherInfo } from '../../types/transformations';
+
+import { FieldMatcherID } from './ids';
 
 // General Field matcher
 const fieldTypeMatcher: FieldMatcherInfo<FieldType> = {
@@ -17,6 +18,24 @@ const fieldTypeMatcher: FieldMatcherInfo<FieldType> = {
 
   getOptionsDisplayText: (type: FieldType) => {
     return `Field type: ${type}`;
+  },
+};
+
+// General Field matcher (multiple types)
+const fieldTypesMatcher: FieldMatcherInfo<Set<FieldType>> = {
+  id: FieldMatcherID.byTypes,
+  name: 'Field Type',
+  description: 'match based on the field types',
+  defaultOptions: new Set(),
+
+  get: (types) => {
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      return types.has(field.type);
+    };
+  },
+
+  getOptionsDisplayText: (types) => {
+    return `Field types: ${[...types].join(' | ')}`;
   },
 };
 
@@ -55,5 +74,5 @@ const timeMatcher: FieldMatcherInfo = {
  * Registry Initialization
  */
 export function getFieldTypeMatchers(): FieldMatcherInfo[] {
-  return [fieldTypeMatcher, numericMatcher, timeMatcher];
+  return [fieldTypeMatcher, fieldTypesMatcher, numericMatcher, timeMatcher];
 }

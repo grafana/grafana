@@ -1,69 +1,58 @@
-import React, { PureComponent } from 'react';
-import { AsyncSelect } from '@grafana/ui';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { Organization } from 'app/types';
-import { SelectableValue } from '@grafana/data';
+import { useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
 
-export interface OrgSelectItem {
-  id: number;
-  value: number;
-  label: string;
-  name: string;
-}
+import { SelectableValue } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { AsyncSelect } from '@grafana/ui';
+import { Organization, UserOrg } from 'app/types';
+
+export type OrgSelectItem = SelectableValue<Organization>;
 
 export interface Props {
   onSelected: (org: OrgSelectItem) => void;
   className?: string;
+  inputId?: string;
+  autoFocus?: boolean;
+  excludeOrgs?: UserOrg[];
 }
 
-export interface State {
-  isLoading: boolean;
-}
-
-export class OrgPicker extends PureComponent<Props, State> {
-  orgs: Organization[];
-
-  state: State = {
-    isLoading: false,
-  };
-
-  async loadOrgs() {
-    this.setState({ isLoading: true });
-    const orgs = await getBackendSrv().get('/api/orgs');
-    this.orgs = orgs;
-    this.setState({ isLoading: false });
-    return orgs;
-  }
-
-  getOrgOptions = async (query: string): Promise<Array<SelectableValue<number>>> => {
-    if (!this.orgs) {
-      await this.loadOrgs();
+export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOrgs }: Props) {
+  // For whatever reason the autoFocus prop doesn't seem to work
+  // with AsyncSelect, hence this workaround. Maybe fixed in a later version?
+  useEffect(() => {
+    if (autoFocus && inputId) {
+      document.getElementById(inputId)?.focus();
     }
-    return this.orgs.map(
-      (org: Organization): SelectableValue<number> => ({
-        id: org.id,
-        value: org.id,
-        label: org.name,
-        name: org.name,
-      })
-    );
-  };
+  }, [autoFocus, inputId]);
 
-  render() {
-    const { className, onSelected } = this.props;
-    const { isLoading } = this.state;
+  const [orgOptionsState, getOrgOptions] = useAsyncFn(async () => {
+    const orgs: Organization[] = await getBackendSrv().get('/api/orgs');
+    const allOrgs = orgs.map((org) => ({ value: { id: org.id, name: org.name }, label: org.name }));
+    if (excludeOrgs) {
+      let idArray = excludeOrgs.map((anOrg) => anOrg.orgId);
+      const filteredOrgs = allOrgs.filter((item) => {
+        return !idArray.includes(item.value.id);
+      });
+      return filteredOrgs;
+    } else {
+      return allOrgs;
+    }
+  });
 
-    return (
-      <AsyncSelect
-        className={className}
-        isLoading={isLoading}
-        defaultOptions={true}
-        isSearchable={false}
-        loadOptions={this.getOrgOptions}
-        onChange={onSelected}
-        placeholder="Select organization"
-        noOptionsMessage="No organizations found"
-      />
-    );
-  }
+  return (
+    <AsyncSelect
+      inputId={inputId}
+      className={className}
+      isLoading={orgOptionsState.loading}
+      defaultOptions={true}
+      loadOptions={getOrgOptions}
+      filterOption={(option, rawInput) => {
+        const input = rawInput.toLowerCase();
+        return !!option.value?.name.toLowerCase().includes(input);
+      }}
+      onChange={onSelected}
+      placeholder="Select organization"
+      noOptionsMessage="No organizations found"
+    />
+  );
 }

@@ -1,11 +1,10 @@
-import React from 'react';
+import { components, IndicatorsContainerProps } from 'react-select';
+
 import { Icon } from '../../../Icon/Icon';
+import { Select } from '../../../Select/Select';
 
-// Ignoring because I couldn't get @types/react-select work with Torkel's fork
-// @ts-ignore
-import { components } from '@torkelo/react-select';
-
-export const IndicatorsContainer = (props: any) => {
+/** @deprecated Please use the {@link Select} component*/
+export const IndicatorsContainer = (props: IndicatorsContainerProps) => {
   const isOpen = props.selectProps.menuIsOpen;
   return (
     <components.IndicatorsContainer {...props}>

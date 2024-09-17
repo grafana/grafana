@@ -1,27 +1,50 @@
-import config from '../../../core/config';
+import {
+  DataSourcePluginMeta,
+  DataSourceSettings,
+  locationUtil,
+  TestDataSourceResponse,
+  DataSourceTestSucceeded,
+  DataSourceTestFailed,
+} from '@grafana/data';
+import {
+  config,
+  DataSourceSrv,
+  DataSourceWithBackend,
+  HealthCheckError,
+  HealthCheckResultDetails,
+  isFetchError,
+  locationService,
+} from '@grafana/runtime';
+import { updateNavIndex } from 'app/core/actions';
+import { appEvents, contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DatasourceAPIVersions } from 'app/features/apiserver/client';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { updateLocation, updateNavIndex } from 'app/core/actions';
-import { buildNavModel } from './navModel';
-import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
-import { DataSourcePluginCategory, ThunkResult, ThunkDispatch } from 'app/types';
-import { getPluginSettings } from 'app/features/plugins/PluginSettingsCache';
+import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { importDataSourcePlugin } from 'app/features/plugins/plugin_loader';
+import { AccessControlAction, DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types';
+
+import * as api from '../api';
+import { DATASOURCES_ROUTES } from '../constants';
+import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
+
+import { buildCategories } from './buildCategories';
+import { buildNavModel } from './navModel';
 import {
   dataSourceLoaded,
   dataSourceMetaLoaded,
   dataSourcePluginsLoad,
   dataSourcePluginsLoaded,
+  dataSourcesLoad,
   dataSourcesLoaded,
   initDataSourceSettingsFailed,
   initDataSourceSettingsSucceeded,
+  testDataSourceFailed,
   testDataSourceStarting,
   testDataSourceSucceeded,
-  testDataSourceFailed,
 } from './reducers';
-import { buildCategories } from './buildCategories';
 import { getDataSource, getDataSourceMeta } from './selectors';
-import { getDataSourceSrv } from '@grafana/runtime';
 
 export interface DataSourceTypesLoadedPayload {
   plugins: DataSourcePluginMeta[];
@@ -30,51 +53,81 @@ export interface DataSourceTypesLoadedPayload {
 
 export interface InitDataSourceSettingDependencies {
   loadDataSource: typeof loadDataSource;
+  loadDataSourceMeta: typeof loadDataSourceMeta;
   getDataSource: typeof getDataSource;
   getDataSourceMeta: typeof getDataSourceMeta;
   importDataSourcePlugin: typeof importDataSourcePlugin;
 }
 
 export interface TestDataSourceDependencies {
-  getDatasourceSrv: typeof getDataSourceSrv;
+  getDatasourceSrv: () => Pick<DataSourceSrv, 'get'>;
   getBackendSrv: typeof getBackendSrv;
 }
 
+type parseDataSourceSaveResponse = {
+  message?: string | undefined;
+  status?: string;
+  details?: HealthCheckResultDetails | { message?: string; verboseMessage?: string };
+};
+
+const parseHealthCheckError = (errorResponse: any): parseDataSourceSaveResponse => {
+  let message: string | undefined;
+  let details: HealthCheckResultDetails;
+
+  if (errorResponse.error && errorResponse.error instanceof HealthCheckError) {
+    message = errorResponse.error.message;
+    details = errorResponse.error.details;
+  } else if (isFetchError(errorResponse)) {
+    message = errorResponse.data.message ?? `HTTP error ${errorResponse.statusText}`;
+  } else if (errorResponse instanceof Error) {
+    message = errorResponse.message;
+  }
+
+  return { message, details };
+};
+
+const parseHealthCheckSuccess = (response: TestDataSourceResponse): parseDataSourceSaveResponse => {
+  const { details, message, status } = response;
+
+  return { status, message, details };
+};
+
 export const initDataSourceSettings = (
-  pageId: number,
+  uid: string,
   dependencies: InitDataSourceSettingDependencies = {
     loadDataSource,
+    loadDataSourceMeta,
     getDataSource,
     getDataSourceMeta,
     importDataSourcePlugin,
   }
 ): ThunkResult<void> => {
-  return async (dispatch: ThunkDispatch, getState) => {
-    if (isNaN(pageId)) {
-      dispatch(initDataSourceSettingsFailed(new Error('Invalid ID')));
+  return async (dispatch, getState) => {
+    if (!uid) {
+      dispatch(initDataSourceSettingsFailed(new Error('Invalid UID')));
       return;
     }
 
     try {
-      await dispatch(dependencies.loadDataSource(pageId));
-      if (getState().dataSourceSettings.plugin) {
-        return;
-      }
+      const loadedDataSource = await dispatch(dependencies.loadDataSource(uid));
+      await dispatch(dependencies.loadDataSourceMeta(loadedDataSource));
 
-      const dataSource = dependencies.getDataSource(getState().dataSources, pageId);
+      const dataSource = dependencies.getDataSource(getState().dataSources, uid);
       const dataSourceMeta = dependencies.getDataSourceMeta(getState().dataSources, dataSource!.type);
       const importedPlugin = await dependencies.importDataSourcePlugin(dataSourceMeta);
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      console.error('Failed to import plugin module', err);
-      dispatch(initDataSourceSettingsFailed(err));
+      if (err instanceof Error) {
+        dispatch(initDataSourceSettingsFailed(err));
+      }
     }
   };
 };
 
 export const testDataSource = (
   dataSourceName: string,
+  editRoute = DATASOURCES_ROUTES.Edit,
   dependencies: TestDataSourceDependencies = {
     getDatasourceSrv,
     getBackendSrv,
@@ -82,6 +135,7 @@ export const testDataSource = (
 ): ThunkResult<void> => {
   return async (dispatch: ThunkDispatch, getState) => {
     const dsApi = await dependencies.getDatasourceSrv().get(dataSourceName);
+    const editLink = editRoute.replace(/:uid/gi, dataSourceName);
 
     if (!dsApi.testDatasource) {
       return;
@@ -93,143 +147,165 @@ export const testDataSource = (
       try {
         const result = await dsApi.testDatasource();
 
-        dispatch(testDataSourceSucceeded(result));
+        const parsedResult = parseHealthCheckSuccess({ ...result, details: { ...result.details } });
+        dispatch(testDataSourceSucceeded(parsedResult));
+
+        trackDataSourceTested({
+          grafana_version: config.buildInfo.version,
+          plugin_id: dsApi.type,
+          datasource_uid: dsApi.uid,
+          success: true,
+          path: editLink,
+        });
+        appEvents.publish(new DataSourceTestSucceeded());
       } catch (err) {
-        let message = '';
+        const formattedError = parseHealthCheckError(err);
 
-        if (err.statusText) {
-          message = 'HTTP Error ' + err.statusText;
-        } else {
-          message = err.message;
-        }
-
-        dispatch(testDataSourceFailed({ message }));
+        dispatch(testDataSourceFailed({ ...formattedError }));
+        trackDataSourceTested({
+          grafana_version: config.buildInfo.version,
+          plugin_id: dsApi.type,
+          datasource_uid: dsApi.uid,
+          success: false,
+          path: editLink,
+        });
+        appEvents.publish(new DataSourceTestFailed());
       }
     });
   };
 };
 
-export function loadDataSources(): ThunkResult<void> {
-  return async dispatch => {
-    const response = await getBackendSrv().get('/api/datasources');
+export function loadDataSources(): ThunkResult<Promise<void>> {
+  return async (dispatch) => {
+    if (!contextSrv.hasPermission(AccessControlAction.DataSourcesRead)) {
+      return;
+    }
+    dispatch(dataSourcesLoad());
+    const response = await api.getDataSources();
     dispatch(dataSourcesLoaded(response));
   };
 }
 
-export function loadDataSource(id: number): ThunkResult<void> {
-  return async dispatch => {
-    const dataSource = (await getBackendSrv().get(`/api/datasources/${id}`)) as DataSourceSettings;
-    const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
-    const plugin = await importDataSourcePlugin(pluginInfo);
+export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSettings>> {
+  return async (dispatch) => {
+    let dataSource = await api.getDataSourceByIdOrUid(uid);
+
+    // Reload route to use UID instead
+    // -------------------------------
+    // In case we were trying to fetch and reference a data-source with an old numeric ID
+    // (which can happen by referencing it with a "old" URL), we would like to automatically redirect
+    // to the new URL format using the UID.
+    // [Please revalidate the following]: Unfortunately we can update the location using react router, but need to fully reload the
+    // route as the nav model page index is not matching with the url in that case.
+    // And react router has no way to unmount remount a route.
+    if (uid !== dataSource.uid) {
+      window.location.href = locationUtil.assureBaseUrl(`/datasources/edit/${dataSource.uid}`);
+
+      // Avoid a flashing error while the reload happens
+      dataSource = {} as DataSourceSettings;
+    }
 
     dispatch(dataSourceLoaded(dataSource));
-    dispatch(dataSourceMetaLoaded(pluginInfo));
+
+    return dataSource;
+  };
+}
+
+export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<void> {
+  return async (dispatch) => {
+    const pluginInfo: DataSourcePluginMeta = await getPluginSettings(dataSource.type);
+    const plugin = await importDataSourcePlugin(pluginInfo);
+    const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
+    const meta = {
+      ...pluginInfo,
+      isBackend: pluginInfo.backend || isBackend,
+    };
+
+    dispatch(dataSourceMetaLoaded(meta));
+
+    plugin.meta = meta;
     dispatch(updateNavIndex(buildNavModel(dataSource, plugin)));
   };
 }
 
-export function addDataSource(plugin: DataSourcePluginMeta): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    await dispatch(loadDataSources());
-
-    const dataSources = getStore().dataSources.dataSources;
-
+export function addDataSource(
+  plugin: DataSourcePluginMeta,
+  editRoute = DATASOURCES_ROUTES.Edit
+): ThunkResult<Promise<void>> {
+  return async () => {
     const newInstance = {
-      name: plugin.name,
       type: plugin.id,
       access: 'proxy',
-      isDefault: dataSources.length === 0,
     };
 
-    if (nameExits(dataSources, newInstance.name)) {
-      newInstance.name = findNewName(dataSources, newInstance.name);
-    }
+    const result = await api.createDataSource(newInstance);
+    const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);
 
-    const result = await getBackendSrv().post('/api/datasources', newInstance);
-    dispatch(updateLocation({ path: `/datasources/edit/${result.id}` }));
+    await getDatasourceSrv().reload();
+    await contextSrv.fetchUserPermissions();
+
+    trackDataSourceCreated({
+      grafana_version: config.buildInfo.version,
+      plugin_id: plugin.id,
+      datasource_uid: result.datasource.uid,
+      plugin_version: result.meta?.info?.version,
+      path: editLink,
+    });
+
+    locationService.push(editLink);
   };
 }
 
 export function loadDataSourcePlugins(): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     dispatch(dataSourcePluginsLoad());
-    const plugins = await getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
+    const plugins = await api.getDataSourcePlugins();
     const categories = buildCategories(plugins);
     dispatch(dataSourcePluginsLoaded({ plugins, categories }));
   };
 }
 
-export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<void> {
-  return async dispatch => {
-    await getBackendSrv().put(`/api/datasources/${dataSource.id}`, dataSource);
-    await updateFrontendSettings();
-    return dispatch(loadDataSource(dataSource.id));
-  };
-}
+const dsApiVersions = new DatasourceAPIVersions();
 
-export function deleteDataSource(): ThunkResult<void> {
-  return async (dispatch, getStore) => {
-    const dataSource = getStore().dataSources.dataSource;
-    await getBackendSrv().delete(`/api/datasources/${dataSource.id}`);
-    await updateFrontendSettings();
-    dispatch(updateLocation({ path: '/datasources' }));
-  };
-}
+export function updateDataSource(dataSource: DataSourceSettings) {
+  return async (
+    dispatch: (
+      dataSourceSettings: ThunkResult<Promise<DataSourceSettings>> | { payload: unknown; type: string }
+    ) => DataSourceSettings
+  ) => {
+    try {
+      if (config.featureToggles.grafanaAPIServerWithExperimentalAPIs) {
+        dataSource.apiVersion = await dsApiVersions.get(dataSource.type);
+      }
+      await api.updateDataSource(dataSource);
+    } catch (err) {
+      const formattedError = parseHealthCheckError(err);
 
-interface ItemWithName {
-  name: string;
-}
-
-export function nameExits(dataSources: ItemWithName[], name: string) {
-  return (
-    dataSources.filter(dataSource => {
-      return dataSource.name.toLowerCase() === name.toLowerCase();
-    }).length > 0
-  );
-}
-
-export function findNewName(dataSources: ItemWithName[], name: string) {
-  // Need to loop through current data sources to make sure
-  // the name doesn't exist
-  while (nameExits(dataSources, name)) {
-    // If there's a duplicate name that doesn't end with '-x'
-    // we can add -1 to the name and be done.
-    if (!nameHasSuffix(name)) {
-      name = `${name}-1`;
-    } else {
-      // if there's a duplicate name that ends with '-x'
-      // we can try to increment the last digit until the name is unique
-
-      // remove the 'x' part and replace it with the new number
-      name = `${getNewName(name)}${incrementLastDigit(getLastDigit(name))}`;
+      dispatch(testDataSourceFailed(formattedError));
+      const errorInfo = isFetchError(err) ? err.data : { message: 'An unexpected error occurred.', traceID: '' };
+      return Promise.reject(errorInfo);
     }
-  }
 
-  return name;
+    await getDatasourceSrv().reload();
+
+    return dispatch(loadDataSource(dataSource.uid));
+  };
 }
 
-function updateFrontendSettings() {
-  return getBackendSrv()
-    .get('/api/frontend/settings')
-    .then((settings: any) => {
-      config.datasources = settings.datasources;
-      config.defaultDatasource = settings.defaultDatasource;
-      getDatasourceSrv().init();
-    });
-}
+export function deleteLoadedDataSource(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const { uid } = getStore().dataSources.dataSource;
 
-function nameHasSuffix(name: string) {
-  return name.endsWith('-', name.length - 1);
-}
+    try {
+      await api.deleteDataSource(uid);
+      await getDatasourceSrv().reload();
 
-function getLastDigit(name: string) {
-  return parseInt(name.slice(-1), 10);
-}
+      const datasourcesUrl = CONNECTIONS_ROUTES.DataSources;
 
-function incrementLastDigit(digit: number) {
-  return isNaN(digit) ? 1 : digit + 1;
-}
-
-function getNewName(name: string) {
-  return name.slice(0, name.length - 1);
+      locationService.push(datasourcesUrl);
+    } catch (err) {
+      const formattedError = parseHealthCheckError(err);
+      dispatch(testDataSourceFailed(formattedError));
+    }
+  };
 }

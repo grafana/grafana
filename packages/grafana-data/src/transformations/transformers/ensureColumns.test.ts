@@ -1,10 +1,11 @@
-import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
+
 import { ensureColumnsTransformer } from './ensureColumns';
-import { seriesToColumnsTransformer } from './seriesToColumns';
+import { DataTransformerID } from './ids';
+import { joinByFieldTransformer } from './joinByField';
 
 const seriesA = toDataFrame({
   fields: [
@@ -32,7 +33,7 @@ const seriesNoTime = toDataFrame({
 
 describe('ensureColumns transformer', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([ensureColumnsTransformer, seriesToColumnsTransformer]);
+    mockTransformationsRegistry([ensureColumnsTransformer, joinByFieldTransformer]);
   });
 
   it('will transform to columns if time field exists and multiple frames', async () => {
@@ -43,58 +44,73 @@ describe('ensureColumns transformer', () => {
 
     const data = [seriesA, seriesBC];
 
-    await expect(transformDataFrame([cfg], data)).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], data)).toEmitValuesWith((received) => {
       const filtered = received[0];
       expect(filtered.length).toEqual(1);
 
       const frame = filtered[0];
       expect(frame.fields.length).toEqual(5);
-      expect(filtered[0]).toEqual(
-        toDataFrame({
-          fields: [
+      expect(filtered[0]).toMatchInlineSnapshot(`
+        {
+          "fields": [
             {
-              name: 'TheTime',
-              type: 'time',
-              config: {},
-              values: [1000, 2000],
-              labels: undefined,
+              "config": {},
+              "name": "TheTime",
+              "state": {},
+              "type": "time",
+              "values": [
+                1000,
+                2000,
+              ],
             },
             {
-              name: 'A',
-              type: 'number',
-              config: {},
-              values: [1, 100],
-              labels: {},
+              "config": {},
+              "labels": {},
+              "name": "A",
+              "state": {},
+              "type": "number",
+              "values": [
+                1,
+                100,
+              ],
             },
             {
-              name: 'B',
-              type: 'number',
-              config: {},
-              values: [2, 200],
-              labels: {},
+              "config": {},
+              "labels": {},
+              "name": "B",
+              "state": {},
+              "type": "number",
+              "values": [
+                2,
+                200,
+              ],
             },
             {
-              name: 'C',
-              type: 'number',
-              config: {},
-              values: [3, 300],
-              labels: {},
+              "config": {},
+              "labels": {},
+              "name": "C",
+              "state": {},
+              "type": "number",
+              "values": [
+                3,
+                300,
+              ],
             },
             {
-              name: 'D',
-              type: 'string',
-              config: {},
-              values: ['first', 'second'],
-              labels: {},
+              "config": {},
+              "labels": {},
+              "name": "D",
+              "state": {},
+              "type": "string",
+              "values": [
+                "first",
+                "second",
+              ],
             },
           ],
-          meta: {
-            transformations: ['ensureColumns'],
-          },
-          name: undefined,
-          refId: undefined,
-        })
-      );
+          "length": 2,
+        }
+      `);
     });
   });
 

@@ -1,18 +1,21 @@
-import React, { FC, HTMLProps } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../themes';
+import { css, cx } from '@emotion/css';
+import { HTMLProps } from 'react';
+import * as React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+
 import { Legend } from './Legend';
 
-export interface Props extends HTMLProps<HTMLFieldSetElement> {
+export interface Props extends Omit<HTMLProps<HTMLFieldSetElement>, 'label'> {
   children: React.ReactNode[] | React.ReactNode;
-  /** Text for the fieldset's legend */
-  label?: string;
+  /** Label for the fieldset's legend */
+  label?: React.ReactNode;
 }
 
-export const FieldSet: FC<Props> = ({ label, children, className, ...rest }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export const FieldSet = ({ label, children, className, ...rest }: Props) => {
+  const styles = useStyles2(getStyles);
 
   return (
     <fieldset className={cx(styles.wrapper, className)} {...rest}>
@@ -22,10 +25,12 @@ export const FieldSet: FC<Props> = ({ label, children, className, ...rest }) => 
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    wrapper: css`
-      margin-bottom: ${theme.spacing.formSpacingBase * 4}px;
-    `,
-  };
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    marginBottom: theme.spacing(4),
+
+    '&:last-child': {
+      marginBottom: 0,
+    },
+  }),
 });

@@ -1,8 +1,10 @@
 import { EchoBackend, EchoEvent, EchoEventType } from '@grafana/runtime';
 
+import { backendSrv } from '../../backend_srv';
+
 export interface PerformanceEventPayload {
-  metricName: string;
-  duration: number;
+  name: string;
+  value: number;
 }
 
 export interface PerformanceEvent extends EchoEvent<EchoEventType.Performance, PerformanceEventPayload> {}
@@ -16,13 +18,13 @@ export interface PerformanceBackendOptions {
  * Reports performance metrics to given url (TODO)
  */
 export class PerformanceBackend implements EchoBackend<PerformanceEvent, PerformanceBackendOptions> {
-  private buffer: PerformanceEvent[] = [];
+  private buffer: PerformanceEventPayload[] = [];
   supportedEvents = [EchoEventType.Performance];
 
   constructor(public options: PerformanceBackendOptions) {}
 
   addEvent = (e: EchoEvent) => {
-    this.buffer.push(e);
+    this.buffer.push(e.payload);
   };
 
   flush = () => {
@@ -30,20 +32,18 @@ export class PerformanceBackend implements EchoBackend<PerformanceEvent, Perform
       return;
     }
 
-    const result = {
-      metrics: this.buffer,
-    };
-
-    // Currently we don't have an API for sending the metrics hence logging to console in dev environment
-    if (process.env.NODE_ENV === 'development') {
-      console.log('PerformanceBackend flushing:', result);
-    }
+    backendSrv
+      .post(
+        '/api/frontend-metrics',
+        {
+          events: this.buffer,
+        },
+        { showErrorAlert: false }
+      )
+      .catch(() => {
+        // Just swallow this error - it's non-critical
+      });
 
     this.buffer = [];
-
-    // TODO: Enable backend request when we have metrics API
-    // if (this.options.url) {
-    // backendSrv.post(this.options.url, result);
-    // }
   };
 }

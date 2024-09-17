@@ -1,25 +1,24 @@
-import { isString } from 'lodash';
 import { PanelPlugin } from '@grafana/data';
-import { NewsPanel } from './NewsPanel';
-import { NewsOptions } from './types';
-import { DEFAULT_FEED_URL, PROXY_PREFIX } from './constants';
 
-export const plugin = new PanelPlugin<NewsOptions>(NewsPanel).setPanelOptions(builder => {
+import { NewsPanel } from './NewsPanel';
+import { DEFAULT_FEED_URL } from './constants';
+import { Options, defaultOptions } from './panelcfg.gen';
+
+export const plugin = new PanelPlugin<Options>(NewsPanel).setPanelOptions((builder) => {
   builder
     .addTextInput({
       path: 'feedUrl',
       name: 'URL',
-      description: 'Only RSS feed formats are supported (not Atom).',
+      description: 'Supports RSS and Atom feeds',
       settings: {
         placeholder: DEFAULT_FEED_URL,
       },
+      defaultValue: defaultOptions.feedUrl,
     })
     .addBooleanSwitch({
-      path: 'useProxy',
-      name: 'Use Proxy',
-      description: 'If the feed is unable to connect, consider a CORS proxy',
-      showIf: (currentConfig: NewsOptions) => {
-        return isString(currentConfig.feedUrl) && !currentConfig.feedUrl.startsWith(PROXY_PREFIX);
-      },
+      path: 'showImage',
+      name: 'Show image',
+      description: 'Controls if the news item social (og:image) image is shown above text content',
+      defaultValue: defaultOptions.showImage,
     });
 });

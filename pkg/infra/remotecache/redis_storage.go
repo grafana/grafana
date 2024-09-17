@@ -1,15 +1,17 @@
 package remotecache
 
 import (
+	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/go-redis/redis/v8"
+
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
-	redis "gopkg.in/redis.v5"
 )
 
 const redisCacheType = "redis"
@@ -28,7 +30,7 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		if len(keyValueTuple) != 2 {
 			if strings.HasPrefix(rawKeyValue, "password") {
 				// don't log the password
-				rawKeyValue = "password******"
+				rawKeyValue = "password" + setting.RedactedPassword
 			}
 			return nil, fmt.Errorf("incorrect redis connection string format detected for '%v', format is key=value,key=value", rawKeyValue)
 		}
@@ -42,13 +44,13 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 		case "db":
 			i, err := strconv.Atoi(connVal)
 			if err != nil {
-				return nil, errutil.Wrap("value for db in redis connection string must be a number", err)
+				return nil, fmt.Errorf("%v: %w", "value for db in redis connection string must be a number", err)
 			}
 			options.DB = i
 		case "pool_size":
 			i, err := strconv.Atoi(connVal)
 			if err != nil {
-				return nil, errutil.Wrap("value for pool_size in redis connection string must be a number", err)
+				return nil, fmt.Errorf("%v: %w", "value for pool_size in redis connection string must be a number", err)
 			}
 			options.PoolSize = i
 		case "ssl":
@@ -84,35 +86,27 @@ func newRedisStorage(opts *setting.RemoteCacheOptions) (*redisStorage, error) {
 	return &redisStorage{c: redis.NewClient(opt)}, nil
 }
 
-// Set sets value to given key in session.
-func (s *redisStorage) Set(key string, val interface{}, expires time.Duration) error {
-	item := &cachedItem{Val: val}
-	value, err := encodeGob(item)
-	if err != nil {
-		return err
-	}
-	status := s.c.Set(key, string(value), expires)
+// Set sets value to a given key
+func (s *redisStorage) Set(ctx context.Context, key string, data []byte, expires time.Duration) error {
+	status := s.c.Set(ctx, key, data, expires)
 	return status.Err()
 }
 
-// Get gets value by given key in session.
-func (s *redisStorage) Get(key string) (interface{}, error) {
-	v := s.c.Get(key)
-
-	item := &cachedItem{}
-	err := decodeGob([]byte(v.Val()), item)
-
-	if err == nil {
-		return item.Val, nil
+// GetByteArray returns the value as byte array
+func (s *redisStorage) Get(ctx context.Context, key string) ([]byte, error) {
+	item, err := s.c.Get(ctx, key).Bytes()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrCacheItemNotFound
+		}
+		return nil, err
 	}
-	if err.Error() == "EOF" {
-		return nil, ErrCacheItemNotFound
-	}
-	return nil, err
+
+	return item, nil
 }
 
 // Delete delete a key from session.
-func (s *redisStorage) Delete(key string) error {
-	cmd := s.c.Del(key)
+func (s *redisStorage) Delete(ctx context.Context, key string) error {
+	cmd := s.c.Del(ctx, key)
 	return cmd.Err()
 }

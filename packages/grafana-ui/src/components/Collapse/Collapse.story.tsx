@@ -1,43 +1,60 @@
-import React from 'react';
+import { action } from '@storybook/addon-actions';
+import { useArgs } from '@storybook/preview-api';
+import { Meta, StoryFn } from '@storybook/react';
+
 import { Collapse, ControlledCollapse } from './Collapse';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { UseState } from '../../utils/storybook/UseState';
 import mdx from './Collapse.mdx';
 
-export default {
+const EXCLUDED_PROPS = ['className', 'onToggle'];
+
+const meta: Meta<typeof Collapse> = {
   title: 'Layout/Collapse',
   component: Collapse,
-  decorators: [withCenteredStory, withHorizontallyCenteredStory],
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: EXCLUDED_PROPS,
+    },
+  },
+  args: {
+    children: 'Panel data',
+    isOpen: false,
+    label: 'Collapse panel',
+    collapsible: true,
+  },
+  argTypes: {
+    onToggle: { action: 'toggled' },
   },
 };
 
-export const basic = () => {
+export const Basic: StoryFn<typeof Collapse> = (args) => {
+  const [, updateArgs] = useArgs();
   return (
-    <UseState initialState={{ isOpen: false }}>
-      {(state, updateValue) => {
-        return (
-          <Collapse
-            collapsible
-            label="Collapse panel"
-            isOpen={state.isOpen}
-            onToggle={() => updateValue({ isOpen: !state.isOpen })}
-          >
-            <p>Panel data</p>
-          </Collapse>
-        );
+    <Collapse
+      {...args}
+      onToggle={() => {
+        action('onToggle')({ isOpen: !args.isOpen });
+        updateArgs({ isOpen: !args.isOpen });
       }}
-    </UseState>
+    >
+      <p>{args.children}</p>
+    </Collapse>
   );
 };
 
-export const controlled = () => {
+export const Controlled: StoryFn<typeof ControlledCollapse> = (args) => {
   return (
-    <ControlledCollapse label="Collapse panel">
-      <p>Panel data</p>
+    <ControlledCollapse {...args}>
+      <p>{args.children}</p>
     </ControlledCollapse>
   );
 };
+Controlled.parameters = {
+  controls: {
+    exclude: [...EXCLUDED_PROPS, 'isOpen'],
+  },
+};
+
+export default meta;

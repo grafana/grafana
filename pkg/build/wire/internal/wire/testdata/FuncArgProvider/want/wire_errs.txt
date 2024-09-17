@@ -1,0 +1,1 @@
+example.com/foo/wire.go:x:y: var fn func() *example.com/foo.Foo is not a provider or a provider set

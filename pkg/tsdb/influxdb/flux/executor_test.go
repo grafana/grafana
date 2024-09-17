@@ -3,9 +3,9 @@ package flux
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -14,20 +14,19 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/components/securejsondata"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
-
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-//--------------------------------------------------------------
+// --------------------------------------------------------------
 // TestData -- reads result from saved files
-//--------------------------------------------------------------
+// --------------------------------------------------------------
 
 // MockRunner reads local file path for testdata.
 type MockRunner struct {
@@ -35,7 +34,7 @@ type MockRunner struct {
 }
 
 func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableResult, error) {
-	bytes, err := ioutil.ReadFile(filepath.Join("testdata", r.testDataPath))
+	bytes, err := os.ReadFile(filepath.Join("testdata", r.testDataPath))
 	if err != nil {
 		return nil, err
 	}
@@ -58,156 +57,159 @@ func (r *MockRunner) runQuery(ctx context.Context, q string) (*api.QueryTableRes
 	return client.QueryAPI("x").Query(ctx, q)
 }
 
-func verifyGoldenResponse(t *testing.T, name string) *backend.DataResponse {
+func executeMockedQuery(t *testing.T, name string, query queryModel) *backend.DataResponse {
 	runner := &MockRunner{
 		testDataPath: name + ".csv",
 	}
 
-	dr := executeQuery(context.Background(), queryModel{MaxDataPoints: 100}, runner, 50)
-	err := experimental.CheckGoldenDataResponse(filepath.Join("testdata", fmt.Sprintf("%s.golden.txt", name)),
-		&dr, true)
-	require.NoError(t, err)
-	require.NoError(t, dr.Error)
-
+	dr := executeQuery(context.Background(), glog, query, runner, 50)
 	return &dr
 }
 
-func TestExecuteSimple(t *testing.T) {
-	t.Run("Simple Test", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "simple")
-		require.Len(t, dr.Frames, 1)
-		require.Contains(t, dr.Frames[0].Name, "test")
-		require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
-		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
+func verifyGoldenResponse(t *testing.T, name string) *backend.DataResponse {
+	dr := executeMockedQuery(t, name, queryModel{MaxDataPoints: 100})
 
-		st, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(st)
-		fmt.Println("----------------------")
-	})
+	experimental.CheckGoldenJSONResponse(t, "testdata", name+".golden", dr, true)
+	require.NoError(t, dr.Error)
+
+	return dr
+}
+
+func TestExecuteSimple(t *testing.T) {
+	dr := verifyGoldenResponse(t, "simple")
+	require.Len(t, dr.Frames, 1)
+	require.Contains(t, dr.Frames[0].Name, "test")
+	require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
+
+	st, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(st)
+	fmt.Println("----------------------")
 }
 
 func TestExecuteSingle(t *testing.T) {
-	t.Run("Single value", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "single")
-		require.Len(t, dr.Frames, 1)
-	})
+	dr := verifyGoldenResponse(t, "single")
+	require.Len(t, dr.Frames, 1)
 }
 
 func TestExecuteMultiple(t *testing.T) {
-	t.Run("Multiple Test", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "multiple")
-		require.Len(t, dr.Frames, 4)
-		require.Contains(t, dr.Frames[0].Name, "test")
-		require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
-		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
+	dr := verifyGoldenResponse(t, "multiple")
+	require.Len(t, dr.Frames, 3)
+	require.Contains(t, dr.Frames[0].Name, "test")
+	require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
-		st, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(st)
-		fmt.Println("----------------------")
-	})
+	st, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(st)
+	fmt.Println("----------------------")
+}
+
+func TestExecuteColumnNamedTable(t *testing.T) {
+	dr := verifyGoldenResponse(t, "table")
+	require.Len(t, dr.Frames, 1)
 }
 
 func TestExecuteGrouping(t *testing.T) {
-	t.Run("Grouping Test", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "grouping")
-		require.Len(t, dr.Frames, 3)
-		require.Contains(t, dr.Frames[0].Name, "system")
-		require.Len(t, dr.Frames[0].Fields[1].Labels, 1)
-		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
+	dr := verifyGoldenResponse(t, "grouping")
+	require.Len(t, dr.Frames, 3)
+	require.Contains(t, dr.Frames[0].Name, "system")
+	require.Len(t, dr.Frames[0].Fields[1].Labels, 1)
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 
-		st, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(st)
-		fmt.Println("----------------------")
-	})
+	st, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(st)
+	fmt.Println("----------------------")
 }
 
 func TestAggregateGrouping(t *testing.T) {
-	t.Run("Grouping Test", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "aggregate")
-		require.Len(t, dr.Frames, 1)
+	dr := verifyGoldenResponse(t, "aggregate")
+	require.Len(t, dr.Frames, 1)
 
-		str, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(str)
+	str, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(str)
 
-		// 	 `Name:
-		// Dimensions: 2 Fields by 3 Rows
-		// +-------------------------------+--------------------------+
-		// | Name: Time                    | Name:                    |
-		// | Labels:                       | Labels: host=hostname.ru |
-		// | Type: []time.Time             | Type: []*float64         |
-		// +-------------------------------+--------------------------+
-		// | 2020-06-05 12:06:00 +0000 UTC | 8.291                    |
-		// | 2020-06-05 12:07:00 +0000 UTC | 0.534                    |
-		// | 2020-06-05 12:08:00 +0000 UTC | 0.667                    |
-		// +-------------------------------+--------------------------+
-		// `
+	// 	 `Name:
+	// Dimensions: 2 Fields by 3 Rows
+	// +-------------------------------+--------------------------+
+	// | Name: Time                    | Name: Value              |
+	// | Labels:                       | Labels: host=hostname.ru |
+	// | Type: []*time.Time            | Type: []*float64         |
+	// +-------------------------------+--------------------------+
+	// | 2020-06-05 12:06:00 +0000 UTC | 8.291                    |
+	// | 2020-06-05 12:07:00 +0000 UTC | 0.534                    |
+	// | 2020-06-05 12:08:00 +0000 UTC | 0.667                    |
+	// +-------------------------------+--------------------------+
+	// `
 
-		expectedFrame := data.NewFrame("",
-			data.NewField("Time", nil, []time.Time{
-				time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC),
-				time.Date(2020, 6, 5, 12, 7, 0, 0, time.UTC),
-				time.Date(2020, 6, 5, 12, 8, 0, 0, time.UTC),
-			}),
-			data.NewField("", map[string]string{"host": "hostname.ru"}, []*float64{
-				pointer.Float64(8.291),
-				pointer.Float64(0.534),
-				pointer.Float64(0.667),
-			}),
-		)
-		expectedFrame.Meta = &data.FrameMeta{}
+	t1 := time.Date(2020, 6, 5, 12, 6, 0, 0, time.UTC)
+	t2 := time.Date(2020, 6, 5, 12, 7, 0, 0, time.UTC)
+	t3 := time.Date(2020, 6, 5, 12, 8, 0, 0, time.UTC)
 
-		diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
-		assert.Empty(t, diff)
-	})
+	expectedFrame := data.NewFrame("",
+		data.NewField("Time", nil, []*time.Time{&t1, &t2, &t3}),
+		data.NewField("Value", map[string]string{"host": "hostname.ru"}, []*float64{
+			util.Pointer(8.291),
+			util.Pointer(0.534),
+			util.Pointer(0.667),
+		}),
+	)
+	expectedFrame.Meta = &data.FrameMeta{}
+
+	diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
+	assert.Empty(t, diff)
 }
 
 func TestNonStandardTimeColumn(t *testing.T) {
-	t.Run("Time Column", func(t *testing.T) {
-		dr := verifyGoldenResponse(t, "non_standard_time_column")
-		require.Len(t, dr.Frames, 1)
+	dr := verifyGoldenResponse(t, "non_standard_time_column")
+	require.Len(t, dr.Frames, 1)
 
-		str, err := dr.Frames[0].StringTable(-1, -1)
-		require.NoError(t, err)
-		fmt.Println(str)
+	str, err := dr.Frames[0].StringTable(-1, -1)
+	require.NoError(t, err)
+	fmt.Println(str)
 
-		// Dimensions: 2 Fields by 1 Rows
-		// +-----------------------------------------+------------------+
-		// | Name: _start_water                      | Name:            |
-		// | Labels:                                 | Labels: st=1     |
-		// | Type: []time.Time                       | Type: []*float64 |
-		// +-----------------------------------------+------------------+
-		// | 2020-06-28 17:50:13.012584046 +0000 UTC | 156.304          |
-		// +-----------------------------------------+------------------+
+	// Dimensions: 3 Fields by 1 Rows
+	// +-----------------------------------------+-----------------------------------------+------------------+
+	// | Name: _start_water                      | Name: _stop_water                       | Name: _value     |
+	// | Labels: st=1                            | Labels: st=1                            | Labels: st=1     |
+	// | Type: []*time.Time                      | Type: []*time.Time                      | Type: []*float64 |
+	// +-----------------------------------------+-----------------------------------------+------------------+
+	// | 2020-06-28 17:50:13.012584046 +0000 UTC | 2020-06-29 17:50:13.012584046 +0000 UTC | 156.304          |
+	// +-----------------------------------------+-----------------------------------------+------------------+
 
-		expectedFrame := data.NewFrame("",
-			data.NewField("_start_water", nil, []time.Time{
-				time.Date(2020, 6, 28, 17, 50, 13, 12584046, time.UTC),
-			}),
-			data.NewField("", map[string]string{"st": "1"}, []*float64{
-				pointer.Float64(156.304),
-			}),
-		)
-		expectedFrame.Meta = &data.FrameMeta{}
+	t1 := time.Date(2020, 6, 28, 17, 50, 13, 12584046, time.UTC)
+	t2 := time.Date(2020, 6, 29, 17, 50, 13, 12584046, time.UTC)
 
-		diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
-		assert.Empty(t, diff)
-	})
+	expectedFrame := data.NewFrame("",
+		data.NewField("_start_water", map[string]string{"st": "1"}, []*time.Time{&t1}),
+		data.NewField("_stop_water", map[string]string{"st": "1"}, []*time.Time{&t2}),
+		data.NewField("_value", map[string]string{"st": "1"}, []*float64{
+			util.Pointer(156.304),
+		}),
+	)
+	expectedFrame.Meta = &data.FrameMeta{}
+
+	diff := cmp.Diff(expectedFrame, dr.Frames[0], data.FrameTestCompareOptions()...)
+	assert.Empty(t, diff)
 }
 
 func TestBuckets(t *testing.T) {
-	t.Run("Buckes", func(t *testing.T) {
-		verifyGoldenResponse(t, "buckets")
-	})
+	verifyGoldenResponse(t, "buckets")
+}
+
+func TestBooleanTagGrouping(t *testing.T) {
+	verifyGoldenResponse(t, "boolean_tag")
+}
+
+func TestBooleanData(t *testing.T) {
+	verifyGoldenResponse(t, "boolean_data")
 }
 
 func TestGoldenFiles(t *testing.T) {
-	t.Run("Renamed", func(t *testing.T) {
-		verifyGoldenResponse(t, "renamed")
-	})
+	verifyGoldenResponse(t, "renamed")
 }
 
 func TestRealQuery(t *testing.T) {
@@ -217,22 +219,100 @@ func TestRealQuery(t *testing.T) {
 		json := simplejson.New()
 		json.Set("organization", "test-org")
 
-		dsInfo := &models.DataSource{
-			Url:      "http://localhost:9999", // NOTE! no api/v2
-			JsonData: json,
-			SecureJsonData: securejsondata.GetEncryptedJsonData(map[string]string{
-				"token": "PjSEcM5oWhqg2eI6IXcqYJFe5UbMM_xt-UNlAL0BRYJqLeVpcdMWidiPfWxGhu4Xrh6wioRR-CiadCg-ady68Q==",
-			}),
+		dsInfo := &models.DatasourceInfo{
+			URL:     "http://localhost:9999", // NOTE! no api/v2
+			Timeout: 30 * time.Second,
 		}
 
 		runner, err := runnerFromDataSource(dsInfo)
 		require.NoError(t, err)
 
-		dr := executeQuery(context.Background(), queryModel{
+		dr := executeQuery(context.Background(), glog, queryModel{
 			MaxDataPoints: 100,
 			RawQuery:      "buckets()",
 		}, runner, 50)
-		err = experimental.CheckGoldenDataResponse(filepath.Join("testdata", "buckets-real.golden.txt"), &dr, true)
-		require.NoError(t, err)
+		experimental.CheckGoldenJSONResponse(t, "testdata", "buckets-real.golden", &dr, true)
 	})
+}
+
+func assertDataResponseDimensions(t *testing.T, dr *backend.DataResponse, rows int, columns int) {
+	require.Len(t, dr.Frames, 1)
+	fields := dr.Frames[0].Fields
+	require.Len(t, fields, rows)
+	require.Equal(t, fields[0].Len(), columns)
+	require.Equal(t, fields[1].Len(), columns)
+}
+
+func TestMaxDataPointsExceededNoAggregate(t *testing.T) {
+	// unfortunately the golden-response style tests do not support
+	// responses that contain errors, so we can only do manual checks
+	// on the DataResponse
+	dr := executeMockedQuery(t, "max_data_points_exceeded", queryModel{MaxDataPoints: 2})
+
+	// it should contain the error-message
+	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2. Try using the aggregateWindow() function in your query to reduce the number of points returned.")
+	assertDataResponseDimensions(t, dr, 2, 21)
+}
+
+func TestMaxDataPointsExceededWithAggregate(t *testing.T) {
+	// unfortunately the golden-response style tests do not support
+	// responses that contain errors, so we can only do manual checks
+	// on the DataResponse
+	dr := executeMockedQuery(t, "max_data_points_exceeded", queryModel{RawQuery: "aggregateWindow()", MaxDataPoints: 2})
+
+	// it should contain the error-message
+	require.EqualError(t, dr.Error, "A query returned too many datapoints and the results have been truncated at 21 points to prevent memory issues. At the current graph size, Grafana can only draw 2.")
+	assertDataResponseDimensions(t, dr, 2, 21)
+}
+
+func TestMultivalue(t *testing.T) {
+	// we await a non-labeled _time column
+	// and two value-columns named _value and _value2
+	dr := verifyGoldenResponse(t, "multivalue")
+	require.Len(t, dr.Frames, 4)
+	frame := dr.Frames[0]
+	require.Len(t, frame.Fields, 3)
+	require.Equal(t, frame.Fields[0].Name, "_time")
+	require.Equal(t, frame.Fields[0].Len(), 2)
+	require.Len(t, frame.Fields[0].Labels, 0)
+	require.Equal(t, frame.Fields[1].Name, "_value")
+	require.Len(t, frame.Fields[1].Labels, 5)
+	require.Equal(t, frame.Fields[2].Name, "_value2")
+	require.Len(t, frame.Fields[2].Labels, 5)
+}
+
+func TestMultiTime(t *testing.T) {
+	// we await three columns, _time, _time2, _value
+	// all have all labels
+	dr := verifyGoldenResponse(t, "multitime")
+	require.Len(t, dr.Frames, 4)
+	frame := dr.Frames[0]
+	require.Len(t, frame.Fields, 3)
+	require.Equal(t, frame.Fields[0].Name, "_time")
+	require.Equal(t, frame.Fields[0].Len(), 1)
+	require.Len(t, frame.Fields[0].Labels, 5)
+	require.Equal(t, frame.Fields[1].Name, "_time2")
+	require.Len(t, frame.Fields[1].Labels, 5)
+	require.Equal(t, frame.Fields[2].Name, "_value")
+	require.Len(t, frame.Fields[2].Labels, 5)
+}
+
+func TestTimestampFirst(t *testing.T) {
+	dr := verifyGoldenResponse(t, "time_first")
+	require.Len(t, dr.Frames, 1)
+	// we make sure the timestamp-column is the first column
+	// in the dataframe, even if it was not the first column
+	// in the csv.
+	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
+	require.Equal(t, "Value", dr.Frames[0].Fields[1].Name)
+}
+
+func TestWithoutTimeColumn(t *testing.T) {
+	dr := verifyGoldenResponse(t, "without-time-column")
+	require.Len(t, dr.Frames, 5)
+	// we make sure the timestamp-column is the first column
+	// in the dataframe, even if it was not the first column
+	// in the csv.
+	require.Equal(t, "cpu", dr.Frames[0].Fields[0].Name)
+	require.Equal(t, "host", dr.Frames[0].Fields[1].Name)
 }

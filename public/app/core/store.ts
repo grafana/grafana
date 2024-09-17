@@ -16,7 +16,9 @@ export class Store {
     return window.localStorage[key] === 'true';
   }
 
-  getObject(key: string, def?: any) {
+  getObject<T = unknown>(key: string): T | undefined;
+  getObject<T = unknown>(key: string, def: T): T;
+  getObject<T = unknown>(key: string, def?: T) {
     let ret = def;
     if (this.exists(key)) {
       const json = window.localStorage[key];
@@ -30,7 +32,7 @@ export class Store {
   }
 
   /* Returns true when successfully stored, throws error if not successfully stored */
-  setObject(key: string, value: any) {
+  setObject(key: string, value: unknown) {
     let json;
     try {
       json = JSON.stringify(value);
@@ -41,7 +43,11 @@ export class Store {
       this.set(key, json);
     } catch (error) {
       // Likely hitting storage quota
-      throw new Error(`Could not save item in localStorage: ${key}. [${error}]`);
+      const errorToThrow = new Error(`Could not save item in localStorage: ${key}. [${error}]`);
+      if (error instanceof Error) {
+        errorToThrow.name = error.name;
+      }
+      throw errorToThrow;
     }
     return true;
   }

@@ -1,0 +1,90 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
+//  Name: 
+//  Dimensions: 4 Fields by 2 Rows
+//  +-------------------------+-------------------------------+----------------+---------------------+
+//  | Name: __labels          | Name: Time                    | Name: Line     | Name: TS            |
+//  | Labels:                 | Labels:                       | Labels:        | Labels:             |
+//  | Type: []json.RawMessage | Type: []time.Time             | Type: []string | Type: []string      |
+//  +-------------------------+-------------------------------+----------------+---------------------+
+//  | {"label1":"value1"}     | 2022-06-17 06:49:51 +0000 UTC | text1          | 1655448591000000000 |
+//  | {"label2":"value2"}     | 2022-06-17 06:49:52 +0000 UTC | text2          | 1655448592000000000 |
+//  +-------------------------+-------------------------------+----------------+---------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
+        "fields": [
+          {
+            "name": "__labels",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Line",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "TS",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            {
+              "label1": "value1"
+            },
+            {
+              "label2": "value2"
+            }
+          ],
+          [
+            1655448591000,
+            1655448592000
+          ],
+          [
+            "text1",
+            "text2"
+          ],
+          [
+            "1655448591000000000",
+            "1655448592000000000"
+          ]
+        ]
+      }
+    }
+  ]
+}

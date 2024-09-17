@@ -300,8 +300,9 @@ func (t *Tree) v() Node {
 func (t *Tree) Var() (v *VarNode) {
 	token := t.next()
 	varNoPrefix := strings.TrimPrefix(token.val, "$")
-	t.VarNames = append(t.VarNames, varNoPrefix)
-	return newVar(token.pos, varNoPrefix, token.val)
+	varNoBraces := strings.TrimSuffix(strings.TrimPrefix(varNoPrefix, "{"), "}")
+	t.VarNames = append(t.VarNames, varNoBraces)
+	return newVar(token.pos, varNoBraces, token.val)
 }
 
 // Func parses a FuncNode.

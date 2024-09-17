@@ -1,40 +1,93 @@
-import React, { FunctionComponent } from 'react';
-import { LokiQueryFieldForm, LokiQueryFieldFormProps } from './LokiQueryFieldForm';
-import { useLokiSyntaxAndLabels } from './useLokiSyntaxAndLabels';
-import LokiLanguageProvider from '../language_provider';
+import { PureComponent, ReactNode } from 'react';
 
-type LokiQueryFieldProps = Omit<
-  LokiQueryFieldFormProps,
-  'syntax' | 'syntaxLoaded' | 'onLoadOptions' | 'onLabelsRefresh' | 'logLabelOptions' | 'absoluteRange'
->;
+import { QueryEditorProps } from '@grafana/data';
 
-export const LokiQueryField: FunctionComponent<LokiQueryFieldProps> = props => {
-  const { datasource, range, ...otherProps } = props;
-  const absoluteTimeRange = { from: range!.from!.valueOf(), to: range!.to!.valueOf() }; // Range here is never optional
+import { LokiDatasource } from '../datasource';
+import { shouldRefreshLabels } from '../languageUtils';
+import { LokiQuery, LokiOptions } from '../types';
 
-  const { isSyntaxReady, setActiveOption, refreshLabels, syntax, logLabelOptions } = useLokiSyntaxAndLabels(
-    datasource.languageProvider as LokiLanguageProvider,
-    absoluteTimeRange
-  );
+import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 
-  return (
-    <LokiQueryFieldForm
-      datasource={datasource}
-      /**
-       * setActiveOption name is intentional. Because of the way rc-cascader requests additional data
-       * https://github.com/react-component/cascader/blob/master/src/Cascader.jsx#L165
-       * we are notyfing useLokiSyntax hook, what the active option is, and then it's up to the hook logic
-       * to fetch data of options that aren't fetched yet
-       */
-      onLoadOptions={setActiveOption}
-      onLabelsRefresh={refreshLabels}
-      absoluteRange={absoluteTimeRange}
-      syntax={syntax}
-      syntaxLoaded={isSyntaxReady}
-      logLabelOptions={logLabelOptions}
-      {...otherProps}
-    />
-  );
-};
+export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, LokiQuery, LokiOptions> {
+  ExtraFieldElement?: ReactNode;
+  placeholder?: string;
+  'data-testid'?: string;
+}
 
-export default LokiQueryField;
+interface LokiQueryFieldState {
+  labelsLoaded: boolean;
+}
+
+export class LokiQueryField extends PureComponent<LokiQueryFieldProps, LokiQueryFieldState> {
+  _isMounted = false;
+
+  constructor(props: LokiQueryFieldProps) {
+    super(props);
+
+    this.state = { labelsLoaded: false };
+  }
+
+  async componentDidMount() {
+    this._isMounted = true;
+    await this.props.datasource.languageProvider.start(this.props.range);
+    if (this._isMounted) {
+      this.setState({ labelsLoaded: true });
+    }
+  }
+
+  componentWillUnmount() {
+    this._isMounted = false;
+  }
+
+  componentDidUpdate(prevProps: LokiQueryFieldProps) {
+    const {
+      range,
+      datasource: { languageProvider },
+    } = this.props;
+    const refreshLabels = shouldRefreshLabels(range, prevProps.range);
+    // We want to refresh labels when range changes (we round up intervals to a minute)
+    if (refreshLabels) {
+      languageProvider.fetchLabels({ timeRange: range });
+    }
+  }
+
+  onChangeQuery = (value: string, override?: boolean) => {
+    // Send text change to parent
+    const { query, onChange, onRunQuery } = this.props;
+    if (onChange) {
+      const nextQuery = { ...query, expr: value };
+      onChange(nextQuery);
+
+      if (override && onRunQuery) {
+        onRunQuery();
+      }
+    }
+  };
+
+  render() {
+    const { ExtraFieldElement, query, datasource, history, onRunQuery, range } = this.props;
+    const placeholder = this.props.placeholder ?? 'Enter a Loki query (run with Shift+Enter)';
+
+    return (
+      <>
+        <div
+          className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1"
+          data-testid={this.props['data-testid']}
+        >
+          <div className="gf-form--grow flex-shrink-1 min-width-15">
+            <MonacoQueryFieldWrapper
+              datasource={datasource}
+              history={history ?? []}
+              onChange={this.onChangeQuery}
+              onRunQuery={onRunQuery}
+              initialValue={query.expr ?? ''}
+              placeholder={placeholder}
+              timeRange={range}
+            />
+          </div>
+        </div>
+        {ExtraFieldElement}
+      </>
+    );
+  }
+}

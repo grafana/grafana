@@ -1,10 +1,8 @@
-import { Field } from '../types/dataFrame';
 import { NullValueMode } from '../types/data';
+import { Field } from '../types/dataFrame';
 import { GraphSeriesValue } from '../types/graph';
 import { TimeRange } from '../types/time';
 
-// Types
-// import { NullValueMode, GraphSeriesValue, Field, TimeRange } from '@grafana/data';
 export interface FlotPairsOptions {
   xField: Field;
   yField: Field;
@@ -25,8 +23,8 @@ export function getFlotPairs({ xField, yField, nullValueMode }: FlotPairsOptions
   const pairs: any[][] = [];
 
   for (let i = 0; i < length; i++) {
-    const x = vX.get(i);
-    let y = vY.get(i);
+    const x = vX[i];
+    let y = vY[i];
 
     if (y === null) {
       if (ignoreNulls) {

@@ -15,7 +15,7 @@ type appFromConfig struct {
 	Enabled        bool
 	Pinned         bool
 	PluginVersion  string
-	JSONData       map[string]interface{}
+	JSONData       map[string]any
 	SecureJSONData map[string]string
 }
 

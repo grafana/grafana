@@ -1,5 +1,5 @@
 export {
-  SingleStatBaseOptions,
+  type SingleStatBaseOptions,
   sharedSingleStatMigrationHandler,
   convertOldAngularValueMapping,
   sharedSingleStatPanelChangedHandler,

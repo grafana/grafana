@@ -1,14 +1,16 @@
-import React from 'react';
-// @ts-ignore
 import renderer from 'react-test-renderer';
-import { CloudMonitoringVariableQueryEditor, Props } from './VariableQueryEditor';
-import { CloudMonitoringVariableQuery, MetricFindQueryTypes } from '../types';
-import CloudMonitoringDatasource from '../datasource';
+
 import { VariableModel } from '@grafana/data';
 
+import CloudMonitoringDatasource from '../datasource';
+import { MetricFindQueryTypes } from '../types/query';
+import { CloudMonitoringVariableQuery } from '../types/types';
+
+import { CloudMonitoringVariableQueryEditor, Props } from './VariableQueryEditor';
+
 jest.mock('../functions', () => ({
-  getMetricTypes: (): any => ({ metricTypes: [], selectedMetricType: '' }),
-  extractServicesFromMetricDescriptors: (): any[] => [],
+  getMetricTypes: () => ({ metricTypes: [], selectedMetricType: '' }),
+  extractServicesFromMetricDescriptors: () => [],
 }));
 
 jest.mock('@grafana/runtime', () => {
@@ -17,21 +19,22 @@ jest.mock('@grafana/runtime', () => {
     ...original,
     getTemplateSrv: () => ({
       replace: (s: string) => s,
-      getVariables: () => ([] as unknown) as VariableModel[],
+      getVariables: () => [] as unknown as VariableModel[],
     }),
   };
 });
 
 const props: Props = {
-  onChange: query => {},
-  query: ({} as unknown) as CloudMonitoringVariableQuery,
-  datasource: ({
+  onChange: (query) => {},
+  query: {} as unknown as CloudMonitoringVariableQuery,
+  datasource: {
     getDefaultProject: () => '',
     getProjects: async () => Promise.resolve([]),
     getMetricTypes: async (projectName: string) => Promise.resolve([]),
     getSLOServices: async (projectName: string) => Promise.resolve([]),
     getServiceLevelObjectives: (projectName: string, serviceId: string) => Promise.resolve([]),
-  } as unknown) as CloudMonitoringDatasource,
+    ensureGCEDefaultProject: async () => Promise.resolve(''),
+  } as unknown as CloudMonitoringDatasource,
   onRunQuery: () => {},
 };
 
@@ -42,8 +45,8 @@ describe('VariableQueryEditor', () => {
   });
 
   describe('and a new variable is created', () => {
-    it('should trigger a query using the first query type in the array', done => {
-      props.onChange = query => {
+    it('should trigger a query using the first query type in the array', (done) => {
+      props.onChange = (query) => {
         expect(query.selectedQueryType).toBe('projects');
         done();
       };
@@ -52,9 +55,9 @@ describe('VariableQueryEditor', () => {
   });
 
   describe('and an existing variable is edited', () => {
-    it('should trigger new query using the saved query type', done => {
-      props.query = ({ selectedQueryType: MetricFindQueryTypes.LabelKeys } as unknown) as CloudMonitoringVariableQuery;
-      props.onChange = query => {
+    it('should trigger new query using the saved query type', (done) => {
+      props.query = { selectedQueryType: MetricFindQueryTypes.LabelKeys } as unknown as CloudMonitoringVariableQuery;
+      props.onChange = (query) => {
         expect(query.selectedQueryType).toBe('labelKeys');
         done();
       };

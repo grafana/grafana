@@ -1,162 +1,111 @@
-import Centrifuge from 'centrifuge/dist/centrifuge.protobuf';
-import SockJS from 'sockjs-client';
-import { GrafanaLiveSrv, setGrafanaLiveSrv, getGrafanaLiveSrv, config } from '@grafana/runtime';
-import { BehaviorSubject } from 'rxjs';
-import { LiveChannel, LiveChannelScope, LiveChannelAddress } from '@grafana/data';
-import { CentrifugeLiveChannel, getErrorChannel } from './channel';
+import { from, map, of, switchMap } from 'rxjs';
+
+import { DataFrame, toLiveChannelId, StreamingDataFrame } from '@grafana/data';
+import { BackendSrv, GrafanaLiveSrv, toDataQueryResponse } from '@grafana/runtime';
 import {
-  GrafanaLiveScope,
-  grafanaLiveCoreFeatures,
-  GrafanaLiveDataSourceScope,
-  GrafanaLivePluginScope,
-} from './scopes';
-import { registerLiveFeatures } from './features';
+  standardStreamOptionsProvider,
+  toStreamingDataResponse,
+} from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
-export const sessionId =
-  (window as any)?.grafanaBootData?.user?.id +
-  '/' +
-  Date.now().toString(16) +
-  '/' +
-  Math.random()
-    .toString(36)
-    .substring(2, 15);
+import { CentrifugeSrv, StreamingDataQueryResponse } from './centrifuge/service';
+import { isStreamingResponseData, StreamingResponseDataType } from './data/utils';
 
-export class CentrifugeSrv implements GrafanaLiveSrv {
-  readonly open = new Map<string, CentrifugeLiveChannel>();
+type GrafanaLiveServiceDeps = {
+  centrifugeSrv: CentrifugeSrv;
+  backendSrv: BackendSrv;
+};
 
-  readonly centrifuge: Centrifuge;
-  readonly connectionState: BehaviorSubject<boolean>;
-  readonly connectionBlocker: Promise<void>;
-  readonly scopes: Record<LiveChannelScope, GrafanaLiveScope>;
-
-  constructor() {
-    this.centrifuge = new Centrifuge(`${config.appUrl}live/sockjs`, {
-      debug: true,
-      sockjs: SockJS,
-    });
-    this.centrifuge.setConnectData({
-      sessionId,
-    });
-    this.centrifuge.connect(); // do connection
-    this.connectionState = new BehaviorSubject<boolean>(this.centrifuge.isConnected());
-    this.connectionBlocker = new Promise<void>(resolve => {
-      if (this.centrifuge.isConnected()) {
-        return resolve();
-      }
-      const connectListener = () => {
-        resolve();
-        this.centrifuge.removeListener('connect', connectListener);
-      };
-      this.centrifuge.addListener('connect', connectListener);
-    });
-
-    this.scopes = {
-      [LiveChannelScope.Grafana]: grafanaLiveCoreFeatures,
-      [LiveChannelScope.DataSource]: new GrafanaLiveDataSourceScope(),
-      [LiveChannelScope.Plugin]: new GrafanaLivePluginScope(),
-    };
-
-    // Register global listeners
-    this.centrifuge.on('connect', this.onConnect);
-    this.centrifuge.on('disconnect', this.onDisconnect);
-    this.centrifuge.on('publish', this.onServerSideMessage);
-  }
-
-  //----------------------------------------------------------
-  // Internal functions
-  //----------------------------------------------------------
-
-  onConnect = (context: any) => {
-    console.log('CONNECT', context);
-    this.connectionState.next(true);
-  };
-
-  onDisconnect = (context: any) => {
-    console.log('onDisconnect', context);
-    this.connectionState.next(false);
-  };
-
-  onServerSideMessage = (context: any) => {
-    console.log('Publication from server-side channel', context);
-  };
-
-  /**
-   * Get a channel.  If the scope, namespace, or path is invalid, a shutdown
-   * channel will be returned with an error state indicated in its status
-   */
-  getChannel<TMessage, TPublish = any>(addr: LiveChannelAddress): LiveChannel<TMessage, TPublish> {
-    const id = `${addr.scope}/${addr.namespace}/${addr.path}`;
-    let channel = this.open.get(id);
-    if (channel != null) {
-      return channel;
-    }
-
-    const scope = this.scopes[addr.scope];
-    if (!scope) {
-      return getErrorChannel('invalid scope', id, addr);
-    }
-
-    channel = new CentrifugeLiveChannel(id, addr);
-    channel.shutdownCallback = () => {
-      this.open.delete(id); // remove it from the list of open channels
-    };
-    this.open.set(id, channel);
-
-    // Initialize the channel in the background
-    this.initChannel(scope, channel).catch(err => {
-      channel?.shutdownWithError(err);
-      this.open.delete(id);
-    });
-
-    // return the not-yet initalized channel
-    return channel;
-  }
-
-  private async initChannel(scope: GrafanaLiveScope, channel: CentrifugeLiveChannel): Promise<void> {
-    const { addr } = channel;
-    const support = await scope.getChannelSupport(addr.namespace);
-    if (!support) {
-      throw new Error(channel.addr.namespace + 'does not support streaming');
-    }
-    const config = support.getChannelConfig(addr.path);
-    if (!config) {
-      throw new Error('unknown path: ' + addr.path);
-    }
-    if (config.canPublish?.()) {
-      channel.publish = (data: any) => this.centrifuge.publish(channel.id, data);
-    }
-    const events = channel.initalize(config);
-    if (!this.centrifuge.isConnected()) {
-      await this.connectionBlocker;
-    }
-    channel.subscription = this.centrifuge.subscribe(channel.id, events);
-    return;
-  }
-
-  //----------------------------------------------------------
-  // Exported functions
-  //----------------------------------------------------------
-
-  /**
-   * Is the server currently connected
-   */
-  isConnected() {
-    return this.centrifuge.isConnected();
-  }
+export class GrafanaLiveService implements GrafanaLiveSrv {
+  constructor(private deps: GrafanaLiveServiceDeps) {}
 
   /**
    * Listen for changes to the connection state
    */
-  getConnectionState() {
-    return this.connectionState.asObservable();
-  }
-}
+  getConnectionState = () => {
+    return this.deps.centrifugeSrv.getConnectionState();
+  };
 
-export function getGrafanaLiveCentrifugeSrv() {
-  return getGrafanaLiveSrv() as CentrifugeSrv;
-}
+  /**
+   * Connect to a channel and return results as DataFrames
+   */
+  getDataStream: GrafanaLiveSrv['getDataStream'] = (options) => {
+    let buffer: StreamingDataFrame;
 
-export function initGrafanaLive() {
-  setGrafanaLiveSrv(new CentrifugeSrv());
-  registerLiveFeatures();
+    const updateBuffer = (next: StreamingDataQueryResponse): void => {
+      const data = next.data[0];
+      if (!buffer && !isStreamingResponseData(data, StreamingResponseDataType.FullFrame)) {
+        console.warn(`expected first packet to contain a full frame, received ${data?.type}`);
+        return;
+      }
+
+      switch (data.type) {
+        case StreamingResponseDataType.FullFrame: {
+          buffer = StreamingDataFrame.deserialize(data.frame);
+          return;
+        }
+        case StreamingResponseDataType.NewValuesSameSchema: {
+          buffer.pushNewValues(data.values);
+          return;
+        }
+      }
+    };
+
+    return this.deps.centrifugeSrv.getDataStream(options).pipe(
+      map((next) => {
+        updateBuffer(next);
+        return {
+          ...next,
+          data: [buffer ?? StreamingDataFrame.empty()],
+        };
+      })
+    );
+  };
+
+  /**
+   * Watch for messages in a channel
+   */
+  getStream: GrafanaLiveSrv['getStream'] = (address) => {
+    return this.deps.centrifugeSrv.getStream(address);
+  };
+
+  /**
+   * Execute a query over the live websocket and potentially subscribe to a live channel.
+   *
+   * Since the initial request and subscription are on the same socket, this will support HA setups
+   */
+  getQueryData: GrafanaLiveSrv['getQueryData'] = (options) => {
+    return from(this.deps.centrifugeSrv.getQueryData(options)).pipe(
+      switchMap((rawResponse) => {
+        const parsedResponse = toDataQueryResponse(rawResponse, options.request.targets);
+
+        const isSubscribable =
+          parsedResponse.data?.length && parsedResponse.data.find((f: DataFrame) => f.meta?.channel);
+
+        return isSubscribable
+          ? toStreamingDataResponse(parsedResponse, options.request, standardStreamOptionsProvider)
+          : of(parsedResponse);
+      })
+    );
+  };
+
+  /**
+   * Publish into a channel
+   *
+   * @alpha -- experimental
+   */
+  publish: GrafanaLiveSrv['publish'] = async (address, data) => {
+    return this.deps.backendSrv.post(`api/live/publish`, {
+      channel: toLiveChannelId(address), // orgId is from user
+      data,
+    });
+  };
+
+  /**
+   * For channels that support presence, this will request the current state from the server.
+   *
+   * Join and leave messages will be sent to the open stream
+   */
+  getPresence: GrafanaLiveSrv['getPresence'] = (address) => {
+    return this.deps.centrifugeSrv.getPresence(address);
+  };
 }

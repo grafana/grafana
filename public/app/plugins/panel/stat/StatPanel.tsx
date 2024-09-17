@@ -1,27 +1,24 @@
-import React, { PureComponent } from 'react';
-import {
-  BigValue,
-  BigValueGraphMode,
-  BigValueSparkline,
-  DataLinksContextMenu,
-  VizRepeater,
-  VizRepeaterRenderValueProps,
-  BigValueTextMode,
-} from '@grafana/ui';
+import { isNumber } from 'lodash';
+import { PureComponent } from 'react';
+
 import {
   DisplayValueAlignmentFactors,
   FieldDisplay,
+  FieldType,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
+  NumericRange,
   PanelProps,
-  ReducerID,
 } from '@grafana/data';
-
-import { config } from 'app/core/config';
-import { StatPanelOptions } from './types';
+import { findNumericFieldMinMax } from '@grafana/data/src/field/fieldOverrides';
+import { BigValueTextMode, BigValueGraphMode } from '@grafana/schema';
+import { BigValue, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
+import { config } from 'app/core/config';
 
-export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
+import { Options } from './panelcfg.gen';
+
+export class StatPanel extends PureComponent<PanelProps<Options>> {
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
@@ -29,21 +26,9 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     const { timeRange, options } = this.props;
     const { value, alignmentFactors, width, height, count } = valueProps;
     const { openMenu, targetClassName } = menuProps;
-    let sparkline: BigValueSparkline | undefined;
-
-    if (value.sparkline) {
-      sparkline = {
-        data: value.sparkline,
-        xMin: timeRange.from.valueOf(),
-        xMax: timeRange.to.valueOf(),
-        yMin: value.field.min,
-        yMax: value.field.max,
-      };
-
-      const calc = options.reduceOptions.calcs[0];
-      if (calc === ReducerID.last) {
-        sparkline.highlightIndex = sparkline.data.length - 1;
-      }
+    let sparkline = value.sparkline;
+    if (sparkline) {
+      sparkline.timeRange = timeRange;
     }
 
     return (
@@ -56,11 +41,14 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}
         alignmentFactors={alignmentFactors}
+        text={options.text}
         width={width}
         height={height}
-        theme={config.theme}
+        theme={config.theme2}
         onClick={openMenu}
         className={targetClassName}
+        disableWideLayout={!options.wideLayout}
+        percentChangeColorMode={options.percentChangeColorMode}
       />
     );
   };
@@ -83,7 +71,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     if (hasLinks && getLinks) {
       return (
         <DataLinksContextMenu links={getLinks}>
-          {api => {
+          {(api) => {
             return this.renderComponent(valueProps, api);
           }}
         </DataLinksContextMenu>
@@ -96,14 +84,36 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
 
+    let globalRange: NumericRange | undefined = undefined;
+
+    for (let frame of data.series) {
+      for (let field of frame.fields) {
+        let { config } = field;
+        // mostly copied from fieldOverrides, since they are skipped during streaming
+        // Set the Min/Max value automatically
+        if (field.type === FieldType.number) {
+          if (field.state?.range) {
+            continue;
+          }
+          if (!globalRange && (!isNumber(config.min) || !isNumber(config.max))) {
+            globalRange = findNumericFieldMinMax(data.series);
+          }
+          const min = config.min ?? globalRange!.min;
+          const max = config.max ?? globalRange!.max;
+          field.state = field.state ?? {};
+          field.state.range = { min, max, delta: max! - min! };
+        }
+      }
+    }
+
     return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
-      theme: config.theme,
+      theme: config.theme2,
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
-      autoMinMax: true,
+      percentChange: options.showPercentChange,
       timeZone,
     });
   };

@@ -3,13 +3,17 @@ package ldap
 import (
 	"crypto/tls"
 
-	"gopkg.in/ldap.v3"
+	"github.com/go-ldap/ldap/v3"
+
+	//TODO(sh0rez): remove once import cycle resolved
+	_ "github.com/grafana/grafana/pkg/api/response"
 )
+
+type searchFunc = func(request *ldap.SearchRequest) (*ldap.SearchResult, error)
 
 // MockConnection struct for testing
 type MockConnection struct {
-	SearchResult     *ldap.SearchResult
-	SearchError      error
+	SearchFunc       searchFunc
 	SearchCalled     bool
 	SearchAttributes []string
 
@@ -56,11 +60,19 @@ func (c *MockConnection) Close() {
 }
 
 func (c *MockConnection) setSearchResult(result *ldap.SearchResult) {
-	c.SearchResult = result
+	c.SearchFunc = func(request *ldap.SearchRequest) (*ldap.SearchResult, error) {
+		return result, nil
+	}
 }
 
 func (c *MockConnection) setSearchError(err error) {
-	c.SearchError = err
+	c.SearchFunc = func(request *ldap.SearchRequest) (*ldap.SearchResult, error) {
+		return nil, err
+	}
+}
+
+func (c *MockConnection) setSearchFunc(fn searchFunc) {
+	c.SearchFunc = fn
 }
 
 // Search mocks Search connection function
@@ -68,11 +80,7 @@ func (c *MockConnection) Search(sr *ldap.SearchRequest) (*ldap.SearchResult, err
 	c.SearchCalled = true
 	c.SearchAttributes = sr.Attributes
 
-	if c.SearchError != nil {
-		return nil, c.SearchError
-	}
-
-	return c.SearchResult, nil
+	return c.SearchFunc(sr)
 }
 
 // Add mocks Add connection function

@@ -1,124 +1,172 @@
-import React, { FC, ReactNode } from 'react';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { useTheme } from '../../themes';
-import { Icon } from '../Icon/Icon';
-import { IconName } from '../../types/icon';
-import { getColorsFromSeverity } from '../../utils/colors';
+import { css, cx } from '@emotion/css';
+import { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import * as React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { useTheme2 } from '../../themes';
+import { IconName } from '../../types/icon';
+import { Button } from '../Button/Button';
+import { Icon } from '../Icon/Icon';
+import { Box } from '../Layout/Box/Box';
+import { Text } from '../Text/Text';
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
-export interface Props {
+export interface Props extends HTMLAttributes<HTMLDivElement> {
   title: string;
   /** On click handler for alert button, mostly used for dismissing the alert */
   onRemove?: (event: React.MouseEvent) => void;
   severity?: AlertVariant;
   children?: ReactNode;
-  /** Custom component or text for alert button */
-  buttonContent?: ReactNode | string;
-  /** @deprecated */
-  /** Deprecated use onRemove instead */
-  onButtonClick?: (event: React.MouseEvent) => void;
-  /** @deprecated */
-  /** Deprecated use buttonContent instead */
-  buttonText?: string;
+  elevated?: boolean;
+  buttonContent?: React.ReactNode | string;
+  bottomSpacing?: number;
+  topSpacing?: number;
 }
 
-function getIconFromSeverity(severity: AlertVariant): string {
+export const Alert = React.forwardRef<HTMLDivElement, Props>(
+  (
+    {
+      title,
+      onRemove,
+      children,
+      buttonContent,
+      elevated,
+      bottomSpacing,
+      topSpacing,
+      className,
+      severity = 'error',
+      ...restProps
+    },
+    ref
+  ) => {
+    const theme = useTheme2();
+    const hasTitle = Boolean(title);
+    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
+    const rolesBySeverity: Record<AlertVariant, AriaRole> = {
+      error: 'alert',
+      warning: 'alert',
+      info: 'status',
+      success: 'status',
+    };
+    const role = restProps['role'] || rolesBySeverity[severity];
+    const ariaLabel = restProps['aria-label'] || title;
+
+    return (
+      <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
+        <Box
+          data-testid={selectors.components.Alert.alertV2(severity)}
+          display="flex"
+          backgroundColor={severity}
+          borderRadius="default"
+          paddingY={1}
+          paddingX={2}
+          borderStyle="solid"
+          borderColor={severity}
+          alignItems="stretch"
+          boxShadow={elevated ? 'z3' : undefined}
+        >
+          <Box paddingTop={1} paddingRight={2}>
+            <div className={styles.icon}>
+              <Icon size="xl" name={getIconFromSeverity(severity)} />
+            </div>
+          </Box>
+
+          <Box paddingY={1} grow={1}>
+            <Text color="primary" weight="medium">
+              {title}
+            </Text>
+            {children && <div className={styles.content}>{children}</div>}
+          </Box>
+          {/* If onRemove is specified, giving preference to onRemove */}
+          {onRemove && !buttonContent && (
+            <div className={styles.close}>
+              <Button
+                aria-label="Close alert"
+                icon="times"
+                onClick={onRemove}
+                type="button"
+                fill="text"
+                variant="secondary"
+              />
+            </div>
+          )}
+
+          {onRemove && buttonContent && (
+            <Box marginLeft={1} display="flex" alignItems="center">
+              <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
+                {buttonContent}
+              </Button>
+            </Box>
+          )}
+        </Box>
+      </div>
+    );
+  }
+);
+
+Alert.displayName = 'Alert';
+
+export const getIconFromSeverity = (severity: AlertVariant): IconName => {
   switch (severity) {
     case 'error':
+      return 'exclamation-circle';
     case 'warning':
       return 'exclamation-triangle';
     case 'info':
       return 'info-circle';
     case 'success':
       return 'check';
-    default:
-      return '';
   }
-}
-
-export const Alert: FC<Props> = ({
-  title,
-  buttonText,
-  onButtonClick,
-  onRemove,
-  children,
-  buttonContent,
-  severity = 'error',
-}) => {
-  const theme = useTheme();
-  const styles = getStyles(theme, severity, !!buttonContent);
-
-  return (
-    <div className={styles.alert} aria-label={selectors.components.Alert.alert(severity)}>
-      <div className={styles.icon}>
-        <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
-      </div>
-      <div className={styles.body}>
-        <div className={styles.title}>{title}</div>
-        {children && <div>{children}</div>}
-      </div>
-      {/* If onRemove is specified, giving preference to onRemove */}
-      {onRemove ? (
-        <button type="button" className={styles.close} onClick={onRemove}>
-          {buttonContent || <Icon name="times" size="lg" />}
-        </button>
-      ) : onButtonClick ? (
-        <button type="button" className="btn btn-outline-danger" onClick={onButtonClick}>
-          {buttonText}
-        </button>
-      ) : null}
-    </div>
-  );
 };
 
-const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean) => {
-  const { white } = theme.palette;
-  const severityColors = getColorsFromSeverity(severity, theme);
-  const background = css`
-    background: linear-gradient(90deg, ${severityColors[0]}, ${severityColors[0]});
-  `;
+const getStyles = (
+  theme: GrafanaTheme2,
+  severity: AlertVariant,
+  hasTitle: boolean,
+  elevated?: boolean,
+  bottomSpacing?: number,
+  topSpacing?: number
+) => {
+  const color = theme.colors[severity];
 
   return {
-    alert: css`
-      padding: 15px 20px;
-      margin-bottom: ${theme.spacing.xs};
-      position: relative;
-      color: ${white};
-      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-      border-radius: ${theme.border.radius.md};
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      ${background}
-    `,
-    icon: css`
-      padding: 0 ${theme.spacing.md} 0 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 35px;
-    `,
-    title: css`
-      font-weight: ${theme.typography.weight.semibold};
-    `,
-    body: css`
-      flex-grow: 1;
-      margin: 0 ${theme.spacing.md} 0 0;
+    wrapper: css({
+      flexGrow: 1,
+      marginBottom: theme.spacing(bottomSpacing ?? 2),
+      marginTop: theme.spacing(topSpacing ?? 0),
+      position: 'relative',
 
-      a {
-        color: ${white};
-        text-decoration: underline;
-      }
-    `,
-    close: css`
-      background: none;
-      display: flex;
-      align-items: center;
-      border: ${outline ? `1px solid ${white}` : 'none'};
-      border-radius: ${theme.border.radius.sm};
-    `,
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+        background: theme.colors.background.primary,
+        zIndex: -1,
+      },
+    }),
+    icon: css({
+      color: color.text,
+      position: 'relative',
+      top: '-1px',
+    }),
+    content: css({
+      color: theme.colors.text.primary,
+      paddingTop: hasTitle ? theme.spacing(0.5) : 0,
+      maxHeight: '50vh',
+      overflowY: 'auto',
+    }),
+    close: css({
+      position: 'relative',
+      color: theme.colors.text.secondary,
+      background: 'none',
+      display: 'flex',
+      top: '-6px',
+      right: '-14px',
+    }),
   };
 };

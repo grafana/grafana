@@ -1,72 +1,128 @@
-import React, { FC } from 'react';
-import { css, cx } from 'emotion';
-import { DataFrame, DataLink, GrafanaTheme, VariableSuggestion } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../../themes';
-import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';
+import { css, cx } from '@emotion/css';
+import { Draggable } from '@hello-pangea/dnd';
+
+import { DataFrame, DataLink, GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../../themes';
+import { isCompactUrl } from '../../../utils';
+import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
+import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
 
-interface DataLinksListItemProps {
+export interface DataLinksListItemProps {
   index: number;
   link: DataLink;
   data: DataFrame[];
   onChange: (index: number, link: DataLink) => void;
   onEdit: () => void;
   onRemove: () => void;
-  suggestions: VariableSuggestion[];
   isEditing?: boolean;
+  itemKey: string;
 }
 
-export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, onRemove }) => {
-  const theme = useTheme();
-  const styles = getDataLinkListItemStyles(theme);
+export const DataLinksListItem = ({ link, onEdit, onRemove, index, itemKey }: DataLinksListItemProps) => {
+  const styles = useStyles2(getDataLinkListItemStyles);
+  const { title = '', url = '' } = link;
 
-  const hasTitle = link.title.trim() !== '';
-  const hasUrl = link.url.trim() !== '';
+  const hasTitle = title.trim() !== '';
+  const hasUrl = url.trim() !== '';
+
+  const isCompactExploreUrl = isCompactUrl(url);
 
   return (
-    <div className={styles.wrapper}>
-      <VerticalGroup spacing="xs">
-        <HorizontalGroup justify="space-between" align="flex-start" width="100%">
-          <div className={cx(styles.title, !hasTitle && styles.notConfigured)}>
-            {hasTitle ? link.title : 'Data link title not provided'}
+    <Draggable key={itemKey} draggableId={itemKey} index={index}>
+      {(provided) => (
+        <>
+          <div
+            className={cx(styles.wrapper, styles.dragRow)}
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            key={index}
+          >
+            <div className={styles.linkDetails}>
+              <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
+                {hasTitle ? title : 'Data link title not provided'}
+              </div>
+              <div
+                className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
+                title={url}
+              >
+                {hasUrl ? url : 'Data link url not provided'}
+              </div>
+              {isCompactExploreUrl && (
+                <FieldValidationMessage>
+                  Explore data link may not work in the future. Please edit.
+                </FieldValidationMessage>
+              )}
+            </div>
+            <div className={styles.icons}>
+              <IconButton name="pen" onClick={onEdit} className={styles.icon} tooltip="Edit data link" />
+              <IconButton name="trash-alt" onClick={onRemove} className={styles.icon} tooltip="Remove data link" />
+              <div className={styles.dragIcon} {...provided.dragHandleProps}>
+                <Icon name="draggabledots" size="lg" />
+              </div>
+            </div>
           </div>
-          <HorizontalGroup>
-            <IconButton name="pen" onClick={onEdit} />
-            <IconButton name="times" onClick={onRemove} />
-          </HorizontalGroup>
-        </HorizontalGroup>
-        <div className={cx(styles.url, !hasUrl && styles.notConfigured)} title={link.url}>
-          {hasUrl ? link.url : 'Data link url not provided'}
-        </div>
-      </VerticalGroup>
-    </div>
+        </>
+      )}
+    </Draggable>
   );
 };
 
-const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme) => {
+const getDataLinkListItemStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      margin-bottom: ${theme.spacing.md};
-      width: 100%;
-      &:last-child {
-        margin-bottom: 0;
-      }
-    `,
-    notConfigured: css`
-      font-style: italic;
-    `,
-    title: css`
-      color: ${theme.colors.formLabel};
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.weight.semibold};
-    `,
-    url: css`
-      color: ${theme.colors.textWeak};
-      font-size: ${theme.typography.size.sm};
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 90%;
-    `,
+    wrapper: css({
+      display: 'flex',
+      flexGrow: 1,
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+      padding: '5px 0 5px 10px',
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.secondary,
+      gap: 8,
+    }),
+    linkDetails: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      maxWidth: `calc(100% - 100px)`,
+    }),
+    errored: css({
+      color: theme.colors.error.text,
+      fontStyle: 'italic',
+    }),
+    notConfigured: css({
+      fontStyle: 'italic',
+    }),
+    title: css({
+      color: theme.colors.text.primary,
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
+    url: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    }),
+    dragRow: css({
+      position: 'relative',
+    }),
+    icons: css({
+      display: 'flex',
+      padding: 6,
+      alignItems: 'center',
+      gap: 8,
+    }),
+    dragIcon: css({
+      cursor: 'grab',
+      color: theme.colors.text.secondary,
+      margin: theme.spacing(0, 0.5),
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
+    }),
   };
-});
+};

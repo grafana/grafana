@@ -1,15 +1,24 @@
-import _ from 'lodash';
-import TableModel from 'app/core/table_model';
+import { each, map, includes, flatten, keys } from 'lodash';
+
 import { FieldType, QueryResultMeta, TimeSeries, TableData } from '@grafana/data';
+import TableModel from 'app/core/TableModel';
+
+import { InfluxQuery } from './types';
 
 export default class InfluxSeries {
   refId?: string;
   series: any;
-  alias: any;
-  annotation: any;
+  alias?: string;
+  annotation?: InfluxQuery;
   meta?: QueryResultMeta;
 
-  constructor(options: { series: any; alias?: any; annotation?: any; meta?: QueryResultMeta; refId?: string }) {
+  constructor(options: {
+    series: any;
+    alias?: string;
+    annotation?: InfluxQuery;
+    meta?: QueryResultMeta;
+    refId?: string;
+  }) {
     this.series = options.series;
     this.alias = options.alias;
     this.annotation = options.annotation;
@@ -25,9 +34,9 @@ export default class InfluxSeries {
       return output;
     }
 
-    _.each(this.series, series => {
+    each(this.series, (series) => {
       const columns = series.columns.length;
-      const tags = _.map(series.tags, (value, key) => {
+      const tags = map(series.tags, (value, key) => {
         return key + ': ' + value;
       });
 
@@ -51,7 +60,14 @@ export default class InfluxSeries {
           }
         }
 
-        output.push({ target: seriesName, datapoints: datapoints, meta: this.meta, refId: this.refId });
+        output.push({
+          title: seriesName,
+          target: seriesName,
+          datapoints: datapoints,
+          tags: series.tags,
+          meta: this.meta,
+          refId: this.refId,
+        });
       }
     });
 
@@ -62,7 +78,7 @@ export default class InfluxSeries {
     const regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
     const segments = series.name.split('.');
 
-    return this.alias.replace(regex, (match: any, g1: any, g2: any) => {
+    return this.alias?.replace(regex, (match, g1, g2) => {
       const group = g1 || g2;
       const segIndex = parseInt(group, 10);
 
@@ -73,7 +89,7 @@ export default class InfluxSeries {
         return series.columns[index];
       }
       if (!isNaN(segIndex)) {
-        return segments[segIndex];
+        return segments[segIndex] ?? match;
       }
       if (group.indexOf('tag_') !== 0) {
         return match;
@@ -90,13 +106,14 @@ export default class InfluxSeries {
   getAnnotations() {
     const list: any[] = [];
 
-    _.each(this.series, series => {
+    each(this.series, (series) => {
       let titleCol: any = null;
       let timeCol: any = null;
+      let timeEndCol: any = null;
       const tagsCol: any = [];
       let textCol: any = null;
 
-      _.each(series.columns, (column, index) => {
+      each(series.columns, (column, index) => {
         if (column === 'time') {
           timeCol = index;
           return;
@@ -104,16 +121,20 @@ export default class InfluxSeries {
         if (column === 'sequence_number') {
           return;
         }
-        if (column === this.annotation.titleColumn) {
+        if (column === this.annotation?.titleColumn) {
           titleCol = index;
           return;
         }
-        if (_.includes((this.annotation.tagsColumn || '').replace(' ', '').split(','), column)) {
+        if (includes((this.annotation?.tagsColumn || '').replace(' ', '').split(','), column)) {
           tagsCol.push(index);
           return;
         }
-        if (column === this.annotation.textColumn) {
+        if (column === this.annotation?.textColumn) {
           textCol = index;
+          return;
+        }
+        if (column === this.annotation?.timeEndColumn) {
+          timeEndCol = index;
           return;
         }
         // legacy case
@@ -122,13 +143,14 @@ export default class InfluxSeries {
         }
       });
 
-      _.each(series.values, value => {
+      each(series.values, (value) => {
         const data = {
           annotation: this.annotation,
           time: +new Date(value[timeCol]),
           title: value[titleCol],
+          timeEnd: value[timeEndCol],
           // Remove empty values, then split in different tags for comma separated values
-          tags: _.flatten(
+          tags: flatten(
             tagsCol
               .filter((t: any) => {
                 return value[t];
@@ -158,19 +180,24 @@ export default class InfluxSeries {
       return table;
     }
 
-    _.each(this.series, (series: any, seriesIndex: number) => {
+    // the order is:
+    // - first the first item from the value-array (this is often (always?) the timestamp)
+    // - then all the tag-values
+    // - then the rest of the value-array
+    //
+    // we have to keep this order both in table.columns and table.rows
+
+    each(this.series, (series: any, seriesIndex: number) => {
       if (seriesIndex === 0) {
-        j = 0;
-        // Check that the first column is indeed 'time'
-        if (series.columns[0] === 'time') {
-          // Push this now before the tags and with the right type
-          table.columns.push({ text: 'Time', type: FieldType.time });
-          j++;
-        }
-        _.each(_.keys(series.tags), key => {
+        const firstCol = series.columns[0];
+        // Check the first column's name, if it is `time`, we
+        // mark it as having the type time
+        const firstTableCol = firstCol === 'time' ? { text: 'Time', type: FieldType.time } : { text: firstCol };
+        table.columns.push(firstTableCol);
+        each(keys(series.tags), (key) => {
           table.columns.push({ text: key });
         });
-        for (; j < series.columns.length; j++) {
+        for (j = 1; j < series.columns.length; j++) {
           table.columns.push({ text: series.columns[j] });
         }
       }

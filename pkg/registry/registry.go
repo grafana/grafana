@@ -2,86 +2,13 @@ package registry
 
 import (
 	"context"
-	"reflect"
-	"sort"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-type Descriptor struct {
-	Name         string
-	Instance     Service
-	InitPriority Priority
-}
-
-var services []*Descriptor
-
-func RegisterServiceWithPriority(instance Service, priority Priority) {
-	services = append(services, &Descriptor{
-		Name:         reflect.TypeOf(instance).Elem().Name(),
-		Instance:     instance,
-		InitPriority: priority,
-	})
-}
-
-func RegisterService(instance Service) {
-	services = append(services, &Descriptor{
-		Name:         reflect.TypeOf(instance).Elem().Name(),
-		Instance:     instance,
-		InitPriority: Medium,
-	})
-}
-
-func Register(descriptor *Descriptor) {
-	services = append(services, descriptor)
-}
-
-func GetServices() []*Descriptor {
-	slice := getServicesWithOverrides()
-
-	sort.Slice(slice, func(i, j int) bool {
-		return slice[i].InitPriority > slice[j].InitPriority
-	})
-
-	return slice
-}
-
-type OverrideServiceFunc func(descriptor Descriptor) (*Descriptor, bool)
-
-var overrides []OverrideServiceFunc
-
-func RegisterOverride(fn OverrideServiceFunc) {
-	overrides = append(overrides, fn)
-}
-
-func getServicesWithOverrides() []*Descriptor {
-	slice := []*Descriptor{}
-	for _, s := range services {
-		var descriptor *Descriptor
-		for _, fn := range overrides {
-			if newDescriptor, override := fn(*s); override {
-				descriptor = newDescriptor
-				break
-			}
-		}
-
-		if descriptor != nil {
-			slice = append(slice, descriptor)
-		} else {
-			slice = append(slice, s)
-		}
-	}
-
-	return slice
-}
-
-// Service interface is the lowest common shape that services
-// are expected to fulfill to be started within Grafana.
-type Service interface {
-	// Init is called by Grafana main process which gives the service
-	// the possibility do some initial work before its started. Things
-	// like adding routes, bus handlers should be done in the Init function
-	Init() error
+// BackgroundServiceRegistry provides background services.
+type BackgroundServiceRegistry interface {
+	GetServices() []BackgroundService
 }
 
 // CanBeDisabled allows the services to decide if it should
@@ -102,6 +29,18 @@ type BackgroundService interface {
 	Run(ctx context.Context) error
 }
 
+// UsageStatsProvidersRegistry provides services sharing their usage stats
+type UsageStatsProvidersRegistry interface {
+	GetServices() []ProvidesUsageStats
+}
+
+// ProvidesUsageStats is an interface for services that share their usage stats
+type ProvidesUsageStats interface {
+	// GetUsageStats is called on a schedule by the UsageStatsService
+	// Any errors occurring during usage stats collection should be collected and logged within the provider.
+	GetUsageStats(ctx context.Context) map[string]any
+}
+
 // DatabaseMigrator allows the caller to add migrations to
 // the migrator passed as argument
 type DatabaseMigrator interface {
@@ -110,17 +49,8 @@ type DatabaseMigrator interface {
 	AddMigration(mg *migrator.Migrator)
 }
 
-// IsDisabled returns whether a service is disabled.
-func IsDisabled(srv Service) bool {
+// IsDisabled returns whether a background service is disabled.
+func IsDisabled(srv BackgroundService) bool {
 	canBeDisabled, ok := srv.(CanBeDisabled)
 	return ok && canBeDisabled.IsDisabled()
 }
-
-type Priority int
-
-const (
-	High       Priority = 100
-	MediumHigh Priority = 75
-	Medium     Priority = 50
-	Low        Priority = 0
-)

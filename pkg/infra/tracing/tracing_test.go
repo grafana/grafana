@@ -1,95 +1,79 @@
 package tracing
 
 import (
-	"os"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
-func TestGroupSplit(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected map[string]string
-	}{
-		{
-			input: "tag1:value1,tag2:value2",
-			expected: map[string]string{
-				"tag1": "value1",
-				"tag2": "value2",
-			},
-		},
-		{
-			input:    "",
-			expected: map[string]string{},
-		},
-		{
-			input:    "tag1",
-			expected: map[string]string{},
-		},
+func TestInitSampler(t *testing.T) {
+	otel := &TracingService{}
+	otel.cfg = NewEmptyTracingConfig()
+	sampler, err := otel.initSampler()
+	require.NoError(t, err)
+	assert.Equal(t, "AlwaysOffSampler", sampler.Description())
+
+	otel.cfg.Sampler = "bogus"
+	_, err = otel.initSampler()
+	require.Error(t, err)
+
+	otel.cfg.Sampler = "const"
+	otel.cfg.SamplerParam = 0.5
+	_, err = otel.initSampler()
+	require.Error(t, err)
+
+	otel.cfg.Sampler = "const"
+	otel.cfg.SamplerParam = 1.0
+	sampler, err = otel.initSampler()
+	require.NoError(t, err)
+	assert.Equal(t, "AlwaysOnSampler", sampler.Description())
+
+	otel.cfg.Sampler = "probabilistic"
+	otel.cfg.SamplerParam = 0.5
+	sampler, err = otel.initSampler()
+	require.NoError(t, err)
+	assert.Equal(t, "TraceIDRatioBased{0.5}", sampler.Description())
+
+	otel.cfg.Sampler = "rateLimiting"
+	otel.cfg.SamplerParam = 100.25
+	sampler, err = otel.initSampler()
+	require.NoError(t, err)
+	assert.Equal(t, "RateLimitingSampler{100.25}", sampler.Description())
+}
+
+func TestStart(t *testing.T) {
+	name := "test-span"
+	attributes := []attribute.KeyValue{
+		attribute.String("test1", "1"),
+		attribute.Int("test2", 2),
 	}
 
-	for _, test := range tests {
-		tags := splitTagSettings(test.input)
-		for k, v := range test.expected {
-			value, exists := tags[k]
-			assert.Truef(t, exists, "Tag %q not found for input %q", k, test.input)
-			assert.Equalf(t, v, value, "Tag %q has wrong value for input %q", k, test.input)
-		}
-	}
-}
+	t.Run("should return noop span if there is not currently a span in context", func(t *testing.T) {
+		ctx := context.Background()
+		_, span := Start(ctx, name, attributes...)
+		defer span.End()
 
-func TestInitJaegerCfg_Default(t *testing.T) {
-	ts := &TracingService{}
-	cfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
+		require.NotNil(t, span)
+		require.False(t, span.SpanContext().IsValid())
+	})
 
-	assert.True(t, cfg.Disabled)
-}
+	t.Run("should return a span with a valid span context if there is currently a span in context", func(t *testing.T) {
+		spanCtx := trace.NewSpanContext(trace.SpanContextConfig{
+			TraceID:    trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+			SpanID:     trace.SpanID{1, 2, 3, 4, 5, 6, 7, 8},
+			TraceFlags: trace.FlagsSampled,
+		})
 
-func TestInitJaegerCfg_Enabled(t *testing.T) {
-	ts := &TracingService{enabled: true}
-	cfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
+		ctx := trace.ContextWithSpanContext(context.Background(), spanCtx)
+		_, childSpan := Start(ctx, name, attributes...)
+		defer childSpan.End()
 
-	assert.False(t, cfg.Disabled)
-	assert.Equal(t, "localhost:6831", cfg.Reporter.LocalAgentHostPort)
-}
-
-func TestInitJaegerCfg_DisabledViaEnv(t *testing.T) {
-	os.Setenv("JAEGER_DISABLED", "true")
-	defer func() {
-		os.Unsetenv("JAEGER_DISABLED")
-	}()
-
-	ts := &TracingService{enabled: true}
-	cfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
-
-	assert.True(t, cfg.Disabled)
-}
-
-func TestInitJaegerCfg_EnabledViaEnv(t *testing.T) {
-	os.Setenv("JAEGER_DISABLED", "false")
-	defer func() {
-		os.Unsetenv("JAEGER_DISABLED")
-	}()
-
-	ts := &TracingService{enabled: false}
-	cfg, err := ts.initJaegerCfg()
-	require.NoError(t, err)
-
-	assert.False(t, cfg.Disabled)
-}
-
-func TestInitJaegerCfg_InvalidEnvVar(t *testing.T) {
-	os.Setenv("JAEGER_DISABLED", "totallybogus")
-	defer func() {
-		os.Unsetenv("JAEGER_DISABLED")
-	}()
-
-	ts := &TracingService{}
-	_, err := ts.initJaegerCfg()
-	require.EqualError(t, err, "cannot parse env var JAEGER_DISABLED=totallybogus: strconv.ParseBool: parsing \"totallybogus\": invalid syntax")
+		require.NotNil(t, childSpan)
+		require.Equal(t, spanCtx.TraceID(), childSpan.SpanContext().TraceID())
+		require.True(t, childSpan.SpanContext().IsValid())
+	})
 }

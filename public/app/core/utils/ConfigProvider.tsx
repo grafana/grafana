@@ -1,34 +1,41 @@
-import React from 'react';
-import { config, GrafanaBootConfig } from '@grafana/runtime';
-import { ThemeContext, getTheme } from '@grafana/ui';
-import { GrafanaThemeType } from '@grafana/data';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
+import { SkeletonTheme } from 'react-loading-skeleton';
 
-export const ConfigContext = React.createContext<GrafanaBootConfig>(config);
-export const ConfigConsumer = ConfigContext.Consumer;
+import { GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { ThemeChangedEvent, config } from '@grafana/runtime';
 
-export const provideConfig = (component: React.ComponentType<any>) => {
-  const ConfigProvider = (props: any) => (
-    <ConfigContext.Provider value={config}>{React.createElement(component, { ...props })}</ConfigContext.Provider>
-  );
+import { appEvents } from '../core';
 
-  return ConfigProvider;
-};
+import 'react-loading-skeleton/dist/skeleton.css';
 
-export const getCurrentThemeName = () =>
-  config.bootData.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark;
+export const ThemeProvider = ({ children, value }: { children: React.ReactNode; value: GrafanaTheme2 }) => {
+  const [theme, setTheme] = useState(value);
 
-export const getCurrentTheme = () => getTheme(getCurrentThemeName());
+  useEffect(() => {
+    const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
+      config.theme2 = event.payload;
+      setTheme(event.payload);
+    });
 
-export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
+    return () => sub.unsubscribe();
+  }, []);
+
   return (
-    <ConfigConsumer>
-      {config => {
-        return <ThemeContext.Provider value={getCurrentTheme()}>{children}</ThemeContext.Provider>;
-      }}
-    </ConfigConsumer>
+    <ThemeContext.Provider value={theme}>
+      <SkeletonTheme
+        baseColor={theme.colors.emphasize(theme.colors.background.secondary)}
+        highlightColor={theme.colors.emphasize(theme.colors.background.secondary, 0.1)}
+        borderRadius={theme.shape.radius.default}
+      >
+        {children}
+      </SkeletonTheme>
+    </ThemeContext.Provider>
   );
 };
 
-export const provideTheme = (component: React.ComponentType<any>) => {
-  return provideConfig((props: any) => <ThemeProvider>{React.createElement(component, { ...props })}</ThemeProvider>);
+export const provideTheme = <P extends {}>(component: React.ComponentType<P>, theme: GrafanaTheme2) => {
+  return function ThemeProviderWrapper(props: P) {
+    return <ThemeProvider value={theme}>{React.createElement(component, { ...props })}</ThemeProvider>;
+  };
 };

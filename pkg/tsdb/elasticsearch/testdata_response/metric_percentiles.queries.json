@@ -1,0 +1,35 @@
+[
+  {
+    "alias": "",
+    "bucketAggs": [
+      {
+        "field": "testtime",
+        "id": "2",
+        "settings": {
+          "interval": "1m"
+        },
+        "type": "date_histogram"
+      }
+    ],
+    "datasource": {
+      "type": "elasticsearch",
+      "uid": "uid"
+    },
+    "datasourceId": 42,
+    "metrics": [
+      {
+        "field": "counter",
+        "id": "1",
+        "settings": {
+          "percents": [
+            "25",
+            " 75"
+          ]
+        },
+        "type": "percentiles"
+      }
+    ],
+    "query": "",
+    "refId": "A"
+  }
+]

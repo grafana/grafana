@@ -1,43 +1,26 @@
+import { DashboardInitPhase, DashboardState } from 'app/types';
+
+import { createDashboardModelFixture, createPanelSaveModel } from './__fixtures__/dashboardFixtures';
 import {
   dashboardInitCompleted,
   dashboardInitFailed,
   dashboardInitFetching,
-  dashboardInitSlow,
-  loadDashboardPermissions,
+  dashboardReducer,
+  initialState,
 } from './reducers';
-import { DashboardInitPhase, DashboardState, OrgRole, PermissionLevel } from 'app/types';
-import { dashboardReducer, initialState } from './reducers';
-import { DashboardModel } from './DashboardModel';
 
 describe('dashboard reducer', () => {
-  describe('loadDashboardPermissions', () => {
-    let state: DashboardState;
-
-    beforeEach(() => {
-      const action = loadDashboardPermissions([
-        { id: 2, dashboardId: 1, role: OrgRole.Viewer, permission: PermissionLevel.View },
-        { id: 3, dashboardId: 1, role: OrgRole.Editor, permission: PermissionLevel.Edit },
-      ]);
-      state = dashboardReducer(initialState, action);
-    });
-
-    it('should add permissions to state', async () => {
-      expect(state.permissions?.length).toBe(2);
-    });
-  });
-
   describe('dashboardInitCompleted', () => {
     let state: DashboardState;
 
     beforeEach(() => {
       state = dashboardReducer(initialState, dashboardInitFetching());
-      state = dashboardReducer(state, dashboardInitSlow());
       state = dashboardReducer(
         state,
         dashboardInitCompleted(
-          new DashboardModel({
+          createDashboardModelFixture({
             title: 'My dashboard',
-            panels: [{ id: 1 }, { id: 2 }],
+            panels: [createPanelSaveModel({ id: 1 }), createPanelSaveModel({ id: 2 })],
           })
         )
       );
@@ -45,15 +28,6 @@ describe('dashboard reducer', () => {
 
     it('should set model', async () => {
       expect(state.getModel()!.title).toBe('My dashboard');
-    });
-
-    it('should set reset isInitSlow', async () => {
-      expect(state.isInitSlow).toBe(false);
-    });
-
-    it('should create panel state', async () => {
-      expect(state.panels['1']).toBeDefined();
-      expect(state.panels['2']).toBeDefined();
     });
   });
 
@@ -67,10 +41,6 @@ describe('dashboard reducer', () => {
 
     it('should set model', async () => {
       expect(state.getModel()?.title).toBe('Dashboard init failed');
-    });
-
-    it('should set reset isInitSlow', async () => {
-      expect(state.isInitSlow).toBe(false);
     });
 
     it('should set initError', async () => {

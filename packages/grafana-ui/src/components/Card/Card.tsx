@@ -1,69 +1,49 @@
-import React, { memo, cloneElement, FC, HTMLAttributes, ReactNode, useCallback } from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { useTheme, styleMixins, stylesFactory } from '../../themes';
-import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
+import { css, cx } from '@emotion/css';
+import { memo, cloneElement, FC, useMemo, useContext, ReactNode } from 'react';
+import * as React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+import { getFocusStyles } from '../../themes/mixins';
+
+import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 
 /**
  * @public
  */
-export interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
-  /** Content for the card's tooltip */
-  tooltip?: PopoverContent;
-}
-
-const CardContainer: FC<ContainerProps> = ({ children, tooltip, ...props }) => {
-  return tooltip ? (
-    <Tooltip placement="top" content={tooltip} theme="info">
-      <div {...props}>{children}</div>
-    </Tooltip>
-  ) : (
-    <div {...props}>{children}</div>
-  );
-};
-
-/**
- * @public
- */
-export interface CardInnerProps {
-  href?: string;
-}
-
-const CardInner: FC<CardInnerProps> = ({ children, href }) => {
-  const theme = useTheme();
-  const styles = getCardStyles(theme);
-  return href ? (
-    <a className={styles.innerLink} href={href}>
-      {children}
-    </a>
-  ) : (
-    <>{children}</>
-  );
-};
-
-/**
- * @public
- */
-export interface Props extends ContainerProps {
-  /** Main heading for the Card **/
-  heading: ReactNode;
-  /** Card description text */
-  description?: string;
+export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disableHover'> {
   /** Indicates if the card and all its actions can be interacted with */
   disabled?: boolean;
   /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */
   href?: string;
   /** On click handler for the Card */
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
+  /** @deprecated Use `Card.Heading` instead */
+  heading?: ReactNode;
+  /** @deprecated Use `Card.Description` instead */
+  description?: string;
+  isSelected?: boolean;
+  /** If true, the padding of the Card will be smaller */
+  isCompact?: boolean;
 }
 
 export interface CardInterface extends FC<Props> {
+  Heading: typeof Heading;
   Tags: typeof Tags;
   Figure: typeof Figure;
   Meta: typeof Meta;
   Actions: typeof Actions;
   SecondaryActions: typeof SecondaryActions;
+  Description: typeof Description;
 }
+
+const CardContext = React.createContext<{
+  href?: string;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
+  disabled?: boolean;
+  isSelected?: boolean;
+} | null>(null);
 
 /**
  * Generic card component
@@ -71,239 +51,320 @@ export interface CardInterface extends FC<Props> {
  * @public
  */
 export const Card: CardInterface = ({
-  heading,
-  description,
   disabled,
-  tooltip,
   href,
   onClick,
-  className,
   children,
+  isSelected,
+  isCompact,
+  className,
   ...htmlProps
 }) => {
-  const theme = useTheme();
-  const styles = getCardStyles(theme);
-  const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(
-    item => {
-      const found = React.Children.toArray(children as React.ReactElement[]).find(child => {
-        return child?.type && (child.type as any).displayName === item;
-      });
-
-      if (found) {
-        return React.cloneElement(found, { disabled, styles, ...found.props });
-      }
-      return found;
-    }
+  const hasHeadingComponent = useMemo(
+    () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Heading),
+    [children]
   );
 
-  const hasActions = Boolean(actions || secondaryActions);
-  const disableHover = disabled || !onClick;
-  const disableEvents = disabled && !actions;
-
-  const containerStyles = getContainerStyles(theme, disableEvents, disableHover);
-  const onCardClick = useCallback(() => (disableHover ? () => {} : onClick), [disableHover, onClick]);
+  const disableHover = disabled || (!onClick && !href);
+  const onCardClick = onClick && !disabled ? onClick : undefined;
+  const styles = useStyles2(getCardContainerStyles, disabled, disableHover, isSelected, isCompact);
 
   return (
     <CardContainer
-      tooltip={tooltip}
-      tabIndex={disableHover ? undefined : 0}
-      className={cx(containerStyles, className)}
-      onClick={onCardClick}
+      disableEvents={disabled}
+      disableHover={disableHover}
+      isSelected={isSelected}
+      className={cx(styles.container, className)}
       {...htmlProps}
     >
-      <CardInner href={href}>
-        {figure}
-        <div className={styles.inner}>
-          <div className={styles.heading} role="heading">
-            {heading}
-          </div>
-          {meta}
-          {tags}
-          {description && <p className={styles.description}>{description}</p>}
-          {hasActions && (
-            <div className={styles.actionRow}>
-              {actions}
-              {secondaryActions}
-            </div>
-          )}
-        </div>
-      </CardInner>
+      <CardContext.Provider value={{ href, onClick: onCardClick, disabled, isSelected }}>
+        {!hasHeadingComponent && <Heading />}
+        {children}
+      </CardContext.Provider>
     </CardContainer>
   );
 };
 
-/**
- * @public
- */
-export const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
-  return css`
-    display: flex;
-    width: 100%;
-    color: ${theme.colors.textStrong};
-    background: ${theme.colors.bg2};
-    border-radius: ${theme.border.radius.sm};
-    padding: ${theme.spacing.md};
-    position: relative;
-    pointer-events: ${disabled ? 'none' : 'auto'};
-    margin-bottom: ${theme.spacing.sm};
-
-    &::after {
-      content: '';
-      display: ${disabled ? 'block' : 'none'};
-      position: absolute;
-      top: 1px;
-      left: 1px;
-      right: 1px;
-      bottom: 1px;
-      background: linear-gradient(180deg, rgba(75, 79, 84, 0.5) 0%, rgba(82, 84, 92, 0.5) 100%);
-      width: calc(100% - 2px);
-      height: calc(100% - 2px);
-      border-radius: ${theme.border.radius.sm};
-    }
-
-    &:hover {
-      background: ${disableHover ? theme.colors.bg2 : styleMixins.hoverColor(theme.colors.bg2, theme)};
-      cursor: ${disableHover ? 'default' : 'pointer'};
-    }
-
-    &:focus {
-      ${styleMixins.focusCss(theme)};
-    }
-  `;
-});
-
-/**
- * @public
- */
-export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    inner: css`
-      width: 100%;
-    `,
-    heading: css`
-      margin-bottom: 0;
-      font-size: ${theme.typography.size.md};
-      line-height: ${theme.typography.lineHeight.xs};
-    `,
-    metadata: css`
-      font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textSemiWeak};
-      margin: ${theme.spacing.sm} 0 0;
-      line-height: ${theme.typography.lineHeight.xs};
-    `,
-    description: css`
-      margin: ${theme.spacing.sm} 0 0;
-      color: ${theme.colors.textSemiWeak};
-      line-height: ${theme.typography.lineHeight.md};
-    `,
-    media: css`
-      margin-right: ${theme.spacing.md};
-      max-width: 40px;
-      & > * {
-        width: 100%;
-      }
-    `,
-    actionRow: css`
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      margin-top: ${theme.spacing.md};
-    `,
-    actions: css`
-      & > * {
-        margin-right: ${theme.spacing.sm};
-      }
-    `,
-    secondaryActions: css`
-      display: flex;
-      align-items: center;
-      color: ${theme.colors.textSemiWeak};
-      // align to the right
-      margin-left: auto;
-      & > * {
-        margin-right: ${theme.spacing.sm} !important;
-      }
-    `,
-    separator: css`
-      margin: 0 ${theme.spacing.sm};
-    `,
-    innerLink: css`
-      display: flex;
-      width: 100%;
-    `,
-    tagList: css`
-      margin-top: ${theme.spacing.sm};
-    `,
-  };
-});
-
 interface ChildProps {
-  styles?: ReturnType<typeof getCardStyles>;
+  className?: string;
   disabled?: boolean;
+  children?: React.ReactNode;
 }
 
-const Tags: FC<ChildProps> = ({ children, styles }) => {
-  return <div className={styles?.tagList}>{children}</div>;
+/** Main heading for the card */
+const Heading = ({ children, className, 'aria-label': ariaLabel }: ChildProps & { 'aria-label'?: string }) => {
+  const context = useContext(CardContext);
+  const styles = useStyles2(getHeadingStyles);
+
+  const { href, onClick, isSelected } = context ?? {
+    href: undefined,
+    onClick: undefined,
+    isSelected: undefined,
+  };
+
+  return (
+    <h2 className={cx(styles.heading, className)}>
+      {href ? (
+        <a href={href} className={styles.linkHack} aria-label={ariaLabel} onClick={onClick}>
+          {children}
+        </a>
+      ) : onClick ? (
+        <button onClick={onClick} className={styles.linkHack} aria-label={ariaLabel} type="button">
+          {children}
+        </button>
+      ) : (
+        <>{children}</>
+      )}
+      {/* Input must be readonly because we are providing a value for the checked prop with no onChange handler */}
+      {isSelected !== undefined && <input aria-label="option" type="radio" checked={isSelected} readOnly />}
+    </h2>
+  );
+};
+Heading.displayName = 'Heading';
+
+const getHeadingStyles = (theme: GrafanaTheme2) => ({
+  heading: css({
+    gridArea: 'Heading',
+    justifySelf: 'start',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 0,
+    fontSize: theme.typography.size.md,
+    letterSpacing: 'inherit',
+    lineHeight: theme.typography.body.lineHeight,
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeightMedium,
+    '& input[readonly]': {
+      cursor: 'inherit',
+    },
+  }),
+  linkHack: css({
+    all: 'unset',
+    '&::after': {
+      position: 'absolute',
+      content: '""',
+      top: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      borderRadius: theme.shape.radius.default,
+    },
+
+    '&:focus-visible': {
+      outline: 'none',
+      outlineOffset: 0,
+      boxShadow: 'none',
+
+      '&::after': {
+        ...getFocusStyles(theme),
+        zIndex: 1,
+      },
+    },
+  }),
+});
+
+const Tags = ({ children, className }: ChildProps) => {
+  const styles = useStyles2(getTagStyles);
+  return <div className={cx(styles.tagList, className)}>{children}</div>;
 };
 Tags.displayName = 'Tags';
 
-const Figure: FC<ChildProps> = ({ children, styles }) => {
-  return <div className={styles?.media}>{children}</div>;
-};
+const getTagStyles = (theme: GrafanaTheme2) => ({
+  tagList: css({
+    position: 'relative',
+    gridArea: 'Tags',
+    alignSelf: 'center',
+  }),
+});
 
+/** Card description text */
+const Description = ({ children, className }: ChildProps) => {
+  const styles = useStyles2(getDescriptionStyles);
+  return <p className={cx(styles.description, className)}>{children}</p>;
+};
+Description.displayName = 'Description';
+
+const getDescriptionStyles = (theme: GrafanaTheme2) => ({
+  description: css({
+    width: '100%',
+    gridArea: 'Description',
+    margin: theme.spacing(1, 0, 0),
+    color: theme.colors.text.secondary,
+    lineHeight: theme.typography.body.lineHeight,
+  }),
+});
+
+const Figure = ({ children, align = 'start', className }: ChildProps & { align?: 'start' | 'center' }) => {
+  const styles = useStyles2(getFigureStyles);
+  return (
+    <div
+      className={cx(
+        styles.media,
+        className,
+        css({
+          alignSelf: align,
+        })
+      )}
+    >
+      {children}
+    </div>
+  );
+};
 Figure.displayName = 'Figure';
 
-const Meta: FC<ChildProps> = memo(({ children, styles }) => {
+const getFigureStyles = (theme: GrafanaTheme2) => ({
+  media: css({
+    position: 'relative',
+    gridArea: 'Figure',
+
+    marginRight: theme.spacing(2),
+    width: '40px',
+
+    '> img': {
+      width: '100%',
+    },
+
+    '&:empty': {
+      display: 'none',
+    },
+  }),
+});
+
+const Meta = memo(({ children, className, separator = '|' }: ChildProps & { separator?: string }) => {
+  const styles = useStyles2(getMetaStyles);
   let meta = children;
 
-  // Join meta data elements by '|'
-  if (Array.isArray(children)) {
-    meta = React.Children.toArray(children).reduce((prev, curr, i) => [
+  const filtered = React.Children.toArray(children).filter(Boolean);
+  if (!filtered.length) {
+    return null;
+  }
+  meta = filtered.map((element, i) => (
+    <div key={`element_${i}`} className={styles.metadataItem}>
+      {element}
+    </div>
+  ));
+  // Join meta data elements by separator
+  if (filtered.length > 1 && separator) {
+    meta = filtered.reduce((prev, curr, i) => [
       prev,
-      <span key={`separator_${i}`} className={styles?.separator}>
-        |
+      <span key={`separator_${i}`} className={styles.separator}>
+        {separator}
       </span>,
       curr,
     ]);
   }
-  return <div className={styles?.metadata}>{meta}</div>;
+  return <div className={cx(styles.metadata, className)}>{meta}</div>;
 });
-
 Meta.displayName = 'Meta';
 
+const getMetaStyles = (theme: GrafanaTheme2) => ({
+  metadata: css({
+    gridArea: 'Meta',
+    display: 'flex',
+    alignItems: 'center',
+    width: '100%',
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.text.secondary,
+    margin: theme.spacing(0.5, 0, 0),
+    lineHeight: theme.typography.bodySmall.lineHeight,
+    overflowWrap: 'anywhere',
+  }),
+  metadataItem: css({
+    // Needed to allow for clickable children in metadata
+    zIndex: 0,
+  }),
+  separator: css({
+    margin: `0 ${theme.spacing(1)}`,
+  }),
+});
+
 interface ActionsProps extends ChildProps {
-  children: JSX.Element[];
+  children?: React.ReactNode;
   variant?: 'primary' | 'secondary';
 }
 
-const BaseActions: FC<ActionsProps> = ({ children, styles, disabled, variant }) => {
-  const css = variant === 'primary' ? styles?.actions : styles?.secondaryActions;
-  return <div className={css}>{React.Children.map(children, child => cloneElement(child, { disabled }))}</div>;
+const BaseActions = ({ children, disabled, variant, className }: ActionsProps) => {
+  const styles = useStyles2(getActionStyles);
+  const context = useContext(CardContext);
+  const isDisabled = context?.disabled || disabled;
+
+  const css = variant === 'primary' ? styles.actions : styles.secondaryActions;
+  return (
+    <div className={cx(css, className)}>
+      {React.Children.map(children, (child) => {
+        return React.isValidElement(child) ? cloneElement(child, { disabled: isDisabled, ...child.props }) : null;
+      })}
+    </div>
+  );
 };
 
-const Actions: FC<ActionsProps> = ({ children, styles, disabled }) => {
+const getActionStyles = (theme: GrafanaTheme2) => ({
+  actions: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    gridArea: 'Actions',
+    marginTop: theme.spacing(2),
+  }),
+  secondaryActions: css({
+    alignSelf: 'center',
+    color: theme.colors.text.secondary,
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    gridArea: 'Secondary',
+    marginTop: theme.spacing(2),
+  }),
+});
+
+const Actions = ({ children, disabled, className }: ChildProps) => {
   return (
-    <BaseActions variant="primary" disabled={disabled} styles={styles}>
+    <BaseActions variant="primary" disabled={disabled} className={className}>
       {children}
     </BaseActions>
   );
 };
-
 Actions.displayName = 'Actions';
 
-const SecondaryActions: FC<ActionsProps> = ({ children, styles, disabled }) => {
+const SecondaryActions = ({ children, disabled, className }: ChildProps) => {
   return (
-    <BaseActions variant="secondary" disabled={disabled} styles={styles}>
+    <BaseActions variant="secondary" disabled={disabled} className={className}>
       {children}
     </BaseActions>
   );
 };
-
 SecondaryActions.displayName = 'SecondaryActions';
 
+/**
+ * @public
+ * @deprecated Use `className` on respective components to modify styles
+ */
+export const getCardStyles = (theme: GrafanaTheme2) => {
+  return {
+    inner: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      flexWrap: 'wrap',
+    }),
+    ...getHeadingStyles(theme),
+    ...getMetaStyles(theme),
+    ...getDescriptionStyles(theme),
+    ...getFigureStyles(theme),
+    ...getActionStyles(theme),
+    ...getTagStyles(theme),
+  };
+};
+
+Card.Heading = Heading;
 Card.Tags = Tags;
 Card.Figure = Figure;
 Card.Meta = Meta;
 Card.Actions = Actions;
 Card.SecondaryActions = SecondaryActions;
+Card.Description = Description;

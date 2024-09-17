@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256px" height="256px" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 58 (84663) - https://sketch.com -->
+    <title>216px copy</title>
+    <desc>Created with Sketch.</desc>
+    <g id="App-Icons" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Labels-+-Background" transform="translate(-1640.000000, -740.000000)">
+            <g id="App-Icon" transform="translate(1640.000000, 740.000000)">
+                <rect id="App-Icon-Background" fill="#04AC38" x="0" y="0" width="256" height="256"></rect>
+                <g id="PagerDuty-Logo" stroke-width="1" fill="#FFFFFF">
+                    <polygon id="Fill-1" points="75 213 100 213 100 167.5 75 167.5"></polygon>
+                    <path
+                        d="M129.825299,124.131615 L99.8809036,124.131615 L99.8809036,64.5112748 L128.155461,64.2731633 C153.919002,64.0341983 166.800772,73.0966607 166.800772,93.6061146 C166.800772,115.78491 150.818077,124.131615 129.825299,124.131615 M169.014702,50.6800387 C155.655713,43.5258824 146.285497,42.3333333 124.339136,42.3333333 L74.8333333,42.3333333 L74.8333333,145.833333 L99.8809036,145.833333 L103.117851,145.833333 L124.100384,145.833333 C143.661222,145.833333 158.279419,144.640784 171.161474,136.055398 C185.235863,126.754256 192.5,111.253678 192.5,93.3671496 C192.5,74.0510982 183.566025,58.5493831 169.014702,50.6800387"
+                        id="Fill-2"></path>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

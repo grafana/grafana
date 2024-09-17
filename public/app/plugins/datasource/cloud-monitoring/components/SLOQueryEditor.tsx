@@ -1,108 +1,114 @@
-import React from 'react';
-import { Segment, SegmentAsync } from '@grafana/ui';
+import { useMemo } from 'react';
+import * as React from 'react';
+
 import { SelectableValue } from '@grafana/data';
-import { selectors } from '../constants';
-import { Project, AlignmentPeriods, AliasBy, QueryInlineField } from '.';
-import { SLOQuery } from '../types';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+
+import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
+import { selectors } from '../e2e/selectors';
+import { alignmentPeriodLabel } from '../functions';
+import { AlignmentTypes, SLOQuery } from '../types/query';
+import { CustomMetaData } from '../types/types';
+
+import { AliasBy } from './AliasBy';
+import { LookbackPeriodSelect } from './LookbackPeriodSelect';
+import { PeriodSelect } from './PeriodSelect';
+import { Project } from './Project';
+import { SLO } from './SLO';
+import { Selector } from './Selector';
+import { Service } from './Service';
 
 export interface Props {
-  usedAlignmentPeriod?: number;
+  refId: string;
+  customMetaData: CustomMetaData;
   variableOptionGroup: SelectableValue<string>;
   onChange: (query: SLOQuery) => void;
   onRunQuery: () => void;
   query: SLOQuery;
   datasource: CloudMonitoringDatasource;
+  aliasBy?: string;
+  onChangeAliasBy: (aliasBy: string) => void;
 }
 
-export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery = dataSource => ({
+export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery = (dataSource) => ({
   projectName: dataSource.getDefaultProject(),
   alignmentPeriod: 'cloud-monitoring-auto',
+  perSeriesAligner: AlignmentTypes.ALIGN_MEAN,
   aliasBy: '',
   selectorName: 'select_slo_health',
   serviceId: '',
+  serviceName: '',
   sloId: '',
+  sloName: '',
+  lookbackPeriod: '',
 });
 
 export function SLOQueryEditor({
+  refId,
   query,
   datasource,
   onChange,
   variableOptionGroup,
-  usedAlignmentPeriod,
+  customMetaData,
+  aliasBy,
+  onChangeAliasBy,
 }: React.PropsWithChildren<Props>) {
+  const alignmentLabel = useMemo(() => alignmentPeriodLabel(customMetaData, datasource), [customMetaData, datasource]);
   return (
-    <>
-      <Project
-        templateVariableOptions={variableOptionGroup.options}
-        projectName={query.projectName}
-        datasource={datasource}
-        onChange={projectName => onChange({ ...query, projectName })}
-      />
-      <QueryInlineField label="Service">
-        <SegmentAsync
-          allowCustomValue
-          value={query?.serviceId}
-          placeholder="Select service"
-          loadOptions={() =>
-            datasource.getSLOServices(query.projectName).then(services => [
-              {
-                label: 'Template Variables',
-                options: variableOptionGroup.options,
-              },
-              ...services,
-            ])
-          }
-          onChange={({ value: serviceId = '' }) => onChange({ ...query, serviceId, sloId: '' })}
+    <span data-testid={selectors.components.queryEditor.sloQueryEditor.container.input}>
+      <EditorRow>
+        <Project
+          refId={refId}
+          templateVariableOptions={variableOptionGroup.options}
+          projectName={query.projectName}
+          datasource={datasource}
+          onChange={(projectName) => onChange({ ...query, projectName })}
         />
-      </QueryInlineField>
-
-      <QueryInlineField label="SLO">
-        <SegmentAsync
-          allowCustomValue
-          value={query?.sloId}
-          placeholder="Select SLO"
-          loadOptions={() =>
-            datasource.getServiceLevelObjectives(query.projectName, query.serviceId).then(sloIds => [
-              {
-                label: 'Template Variables',
-                options: variableOptionGroup.options,
-              },
-              ...sloIds,
-            ])
-          }
-          onChange={async ({ value: sloId = '' }) => {
-            const slos = await datasource.getServiceLevelObjectives(query.projectName, query.serviceId);
-            const slo = slos.find(({ value }) => value === datasource.templateSrv.replace(sloId));
-            onChange({ ...query, sloId, goal: slo?.goal });
-          }}
+        <Service
+          refId={refId}
+          datasource={datasource}
+          templateVariableOptions={variableOptionGroup.options}
+          query={query}
+          onChange={onChange}
         />
-      </QueryInlineField>
-
-      <QueryInlineField label="Selector">
-        <Segment
-          allowCustomValue
-          value={[...selectors, ...variableOptionGroup.options].find(s => s.value === query?.selectorName ?? '')}
-          options={[
-            {
-              label: 'Template Variables',
-              options: variableOptionGroup.options,
-            },
-            ...selectors,
-          ]}
-          onChange={({ value: selectorName }) => onChange({ ...query, selectorName })}
+        <SLO
+          refId={refId}
+          datasource={datasource}
+          templateVariableOptions={variableOptionGroup.options}
+          query={query}
+          onChange={onChange}
         />
-      </QueryInlineField>
+        <Selector
+          refId={refId}
+          datasource={datasource}
+          templateVariableOptions={variableOptionGroup.options}
+          query={query}
+          onChange={onChange}
+        />
+        {query.selectorName === SLO_BURN_RATE_SELECTOR_NAME && (
+          <LookbackPeriodSelect
+            refId={refId}
+            onChange={(lookbackPeriod) => onChange({ ...query, lookbackPeriod: lookbackPeriod })}
+            current={query.lookbackPeriod}
+            templateVariableOptions={variableOptionGroup.options}
+          />
+        )}
 
-      <AlignmentPeriods
-        templateSrv={datasource.templateSrv}
-        templateVariableOptions={variableOptionGroup.options}
-        alignmentPeriod={query.alignmentPeriod || ''}
-        perSeriesAligner={query.selectorName === 'select_slo_health' ? 'ALIGN_MEAN' : 'ALIGN_NEXT_OLDER'}
-        usedAlignmentPeriod={usedAlignmentPeriod}
-        onChange={alignmentPeriod => onChange({ ...query, alignmentPeriod })}
-      />
-      <AliasBy value={query.aliasBy} onChange={aliasBy => onChange({ ...query, aliasBy })} />
-    </>
+        <EditorFieldGroup>
+          <EditorField label="Alignment period" tooltip={alignmentLabel}>
+            <PeriodSelect
+              inputId={`${refId}-alignment-period`}
+              templateVariableOptions={variableOptionGroup.options}
+              current={query.alignmentPeriod}
+              onChange={(period) => onChange({ ...query, alignmentPeriod: period })}
+              aligmentPeriods={ALIGNMENT_PERIODS}
+            />
+          </EditorField>
+        </EditorFieldGroup>
+
+        <AliasBy refId={refId} value={aliasBy} onChange={onChangeAliasBy} />
+      </EditorRow>
+    </span>
   );
 }

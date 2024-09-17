@@ -1,69 +1,81 @@
-import React from 'react';
-import { mount } from 'enzyme';
-import { ExploreId } from '../../../types/explore';
-import { SortOrder } from 'app/core/utils/richHistory';
-import { RichHistoryQueriesTab, Props } from './RichHistoryQueriesTab';
-import { RangeSlider } from '@grafana/ui';
+import { fireEvent, render, screen } from '@testing-library/react';
+import * as reactUse from 'react-use';
+import { TestProvider } from 'test/helpers/TestProvider';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
-const setup = (propOverrides?: Partial<Props>) => {
-  const props: Props = {
+import { RichHistoryQueriesTab, RichHistoryQueriesTabProps } from './RichHistoryQueriesTab';
+
+const asyncSpy = jest
+  .spyOn(reactUse, 'useAsync')
+  .mockReturnValue({ loading: false, value: [new MockDataSourceApi('test-ds')] });
+
+const setup = (propOverrides?: Partial<RichHistoryQueriesTabProps>) => {
+  const props: RichHistoryQueriesTabProps = {
     queries: [],
-    sortOrder: SortOrder.Ascending,
-    activeDatasourceOnly: false,
-    datasourceFilters: null,
-    retentionPeriod: 14,
+    totalQueries: 0,
+    loading: false,
+    updateFilters: jest.fn(),
+    clearRichHistoryResults: jest.fn(),
+    loadMoreRichHistory: jest.fn(),
+    richHistorySearchFilters: {
+      search: '',
+      sortOrder: SortOrder.Descending,
+      datasourceFilters: ['test-ds'],
+      from: 0,
+      to: 30,
+      starred: false,
+    },
+    richHistorySettings: {
+      retentionPeriod: 30,
+      activeDatasourcesOnly: false,
+      lastUsedDatasourceFilters: ['test-ds'],
+      starredTabAsFirstTab: false,
+    },
     height: 100,
-    exploreId: ExploreId.left,
-    onChangeSortOrder: jest.fn(),
-    onSelectDatasourceFilters: jest.fn(),
   };
 
   Object.assign(props, propOverrides);
 
-  const wrapper = mount(<RichHistoryQueriesTab {...props} />);
-  return wrapper;
+  return render(<RichHistoryQueriesTab {...props} />, { wrapper: TestProvider });
 };
 
 describe('RichHistoryQueriesTab', () => {
-  describe('slider', () => {
-    it('should render slider', () => {
-      const wrapper = setup();
-      expect(wrapper.find(RangeSlider)).toHaveLength(1);
-    });
-    it('should render slider with correct timerange', () => {
-      const wrapper = setup();
-      expect(
-        wrapper
-          .find('.label-slider')
-          .at(1)
-          .text()
-      ).toEqual('today');
-      expect(
-        wrapper
-          .find('.label-slider')
-          .at(2)
-          .text()
-      ).toEqual('two weeks ago');
-    });
+  beforeAll(() => {
+    const testDS = new MockDataSourceApi('test-ds');
+    setDataSourceSrv({
+      getList() {
+        return [testDS];
+      },
+    } as unknown as DataSourceSrv);
+  });
+  afterEach(() => {
+    asyncSpy.mockClear();
+  });
+  it('should render', async () => {
+    setup();
+    const filterHistory = await screen.findByText('Filter history');
+    expect(filterHistory).toBeInTheDocument();
   });
 
-  describe('sort options', () => {
-    it('should render sorter', () => {
-      const wrapper = setup();
-      expect(wrapper.find({ 'aria-label': 'Sort queries' })).toHaveLength(1);
-    });
+  it('should not regex escape filter input', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    const input = await screen.findByPlaceholderText(/search queries/i);
+    fireEvent.change(input, { target: { value: '|=' } });
+
+    expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ search: '|=' }));
   });
 
-  describe('select datasource', () => {
-    it('should render select datasource if activeDatasourceOnly is false', () => {
-      const wrapper = setup();
-      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(1);
-    });
-    it('should not render select datasource if activeDatasourceOnly is true', () => {
-      const wrapper = setup({ activeDatasourceOnly: true });
-      expect(wrapper.find({ 'aria-label': 'Filter datasources' })).toHaveLength(0);
-    });
+  it('should update the filter and get data once on mount, and update the filter when the it changes', async () => {
+    const updateFiltersSpy = jest.fn();
+    setup({ updateFilters: updateFiltersSpy });
+    expect(updateFiltersSpy).toHaveBeenCalledTimes(1);
+    expect(asyncSpy).toHaveBeenCalledTimes(1);
+    const input = await screen.findByLabelText(/remove/i);
+    fireEvent.click(input);
+    expect(updateFiltersSpy).toHaveBeenCalledTimes(2);
   });
 });

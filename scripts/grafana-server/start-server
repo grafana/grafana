@@ -1,0 +1,71 @@
+#!/bin/bash
+set -eo pipefail
+
+. scripts/grafana-server/variables
+
+PORT=${PORT:-$DEFAULT_PORT}
+ARCH=${ARCH:-$DEFAULT_ARCH}
+
+if [ "$ARCH" ]; then
+    ARCH+="/"
+fi
+
+./scripts/grafana-server/kill-server
+
+mkdir $RUNDIR
+
+echo -e "Copying grafana backend files to temp dir..."
+
+if [[ ! -f bin/"$ARCH"grafana-server ]]; then
+  echo "bin/linux-amd64/grafana-server missing, trying local grafana-server binary"
+fi
+
+echo starting server
+
+cp -r ./bin $RUNDIR
+cp -r ./tools $RUNDIR
+ln -s $(realpath ./public) $RUNDIR
+
+
+mkdir $RUNDIR/conf
+mkdir $PROV_DIR
+mkdir $PROV_DIR/datasources
+mkdir $PROV_DIR/dashboards
+mkdir $PROV_DIR/alerting
+mkdir $PROV_DIR/plugins
+
+cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
+cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
+
+echo -e "Copying custom plugins from e2e tests"
+
+mkdir -p "$RUNDIR/data/plugins"
+
+if [ -d "./e2e/test-plugins" ]; then
+  ln -s $(realpath ./e2e/test-plugins/*) "$RUNDIR/data/plugins"
+# when running in CI
+elif [ -d "../e2e/test-plugins" ]; then
+  cp -r "../e2e/test-plugins" "$RUNDIR/data/plugins"
+fi
+
+echo -e "Copy provisioning setup from devenv"
+
+cp devenv/datasources.yaml $PROV_DIR/datasources
+cp devenv/dashboards.yaml $PROV_DIR/dashboards
+cp devenv/alert_rules.yaml $PROV_DIR/alerting
+cp devenv/plugins.yaml $PROV_DIR/plugins
+
+cp -r devenv $RUNDIR
+
+echo -e "Starting Grafana Server port $PORT"
+
+$RUNDIR/bin/"$ARCH"grafana-server \
+  --homepath=$HOME_PATH \
+  --pidfile=$RUNDIR/pid \
+  cfg:server.http_port=$PORT \
+  cfg:server.router_logging=1 \
+  cfg:app_mode=development \
+  cfg:enterprise.license_path=$1
+
+# 2>&1 > $RUNDIR/output.log &
+# cfg:log.level=debug \

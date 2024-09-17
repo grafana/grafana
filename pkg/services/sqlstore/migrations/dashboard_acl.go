@@ -2,8 +2,8 @@ package migrations
 
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
-func addDashboardAclMigrations(mg *Migrator) {
-	dashboardAclV1 := Table{
+func addDashboardACLMigrations(mg *Migrator) {
+	dashboardACLV1 := Table{
 		Name: "dashboard_acl",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -20,15 +20,23 @@ func addDashboardAclMigrations(mg *Migrator) {
 			{Cols: []string{"dashboard_id"}},
 			{Cols: []string{"dashboard_id", "user_id"}, Type: UniqueIndex},
 			{Cols: []string{"dashboard_id", "team_id"}, Type: UniqueIndex},
+			{Cols: []string{"user_id"}},
+			{Cols: []string{"team_id"}},
+			{Cols: []string{"org_id", "role"}},
+			{Cols: []string{"permission"}},
 		},
 	}
 
-	mg.AddMigration("create dashboard acl table", NewAddTableMigration(dashboardAclV1))
+	mg.AddMigration("create dashboard acl table", NewAddTableMigration(dashboardACLV1))
 
 	//-------  indexes ------------------
-	mg.AddMigration("add index dashboard_acl_dashboard_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[0]))
-	mg.AddMigration("add unique index dashboard_acl_dashboard_id_user_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[1]))
-	mg.AddMigration("add unique index dashboard_acl_dashboard_id_team_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[2]))
+	mg.AddMigration("add index dashboard_acl_dashboard_id", NewAddIndexMigration(dashboardACLV1, dashboardACLV1.Indices[0]))
+	mg.AddMigration("add unique index dashboard_acl_dashboard_id_user_id", NewAddIndexMigration(dashboardACLV1, dashboardACLV1.Indices[1]))
+	mg.AddMigration("add unique index dashboard_acl_dashboard_id_team_id", NewAddIndexMigration(dashboardACLV1, dashboardACLV1.Indices[2]))
+	mg.AddMigration("add index dashboard_acl_user_id", NewAddIndexMigration(dashboardACLV1, dashboardACLV1.Indices[3]))
+	mg.AddMigration("add index dashboard_acl_team_id", NewAddIndexMigration(dashboardACLV1, dashboardACLV1.Indices[4]))
+	mg.AddMigration("add index dashboard_acl_org_id_role", NewAddIndexMigration(dashboardACLV1, dashboardACLV1.Indices[5]))
+	mg.AddMigration("add index dashboard_permission", NewAddIndexMigration(dashboardACLV1, dashboardACLV1.Indices[6]))
 
 	const rawSQL = `
 INSERT INTO dashboard_acl

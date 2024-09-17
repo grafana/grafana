@@ -1,18 +1,19 @@
-import React from 'react';
-import { stylesFactory, useTheme } from '@grafana/ui';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { css } from '@emotion/css';
+import * as React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const backgroundUrl = theme.isDark ? 'public/img/licensing/header_dark.svg' : 'public/img/licensing/header_light.svg';
-  const footerBg = theme.isDark ? theme.palette.dark9 : theme.palette.gray6;
+  const footerBg = theme.isDark ? theme.v1.palette.dark9 : theme.v1.palette.gray6;
 
   return {
     container: css`
       padding: 36px 79px;
-      background: ${theme.colors.panelBg};
+      background: ${theme.components.panel.background};
     `,
     footer: css`
       text-align: center;
@@ -24,19 +25,19 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: 40px 0 0 79px;
       position: relative;
       background: url('${backgroundUrl}') right;
-  `,
+    `,
   };
-});
+};
 
 interface Props {
   header: string;
   subheader?: string;
   editionNotice?: string;
+  children?: React.ReactNode;
 }
 
-export const LicenseChrome: React.FC<Props> = ({ header, editionNotice, subheader, children }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+export function LicenseChrome({ header, editionNotice, subheader, children }: Props) {
+  const styles = useStyles2(getStyles);
 
   return (
     <>
@@ -68,14 +69,15 @@ export const LicenseChrome: React.FC<Props> = ({ header, editionNotice, subheade
       {editionNotice && <div className={styles.footer}>{editionNotice}</div>}
     </>
   );
-};
+}
 
 interface CircleProps {
   size: string;
   style?: React.CSSProperties;
 }
 
-export const Circle: React.FC<CircleProps> = ({ size, style, children }) => {
+export const Circle = ({ size, style, children }: React.PropsWithChildren<CircleProps>) => {
+  const theme = useTheme2();
   return (
     <div
       style={{
@@ -84,7 +86,7 @@ export const Circle: React.FC<CircleProps> = ({ size, style, children }) => {
         position: 'absolute',
         bottom: 0,
         right: 0,
-        borderRadius: '50%',
+        borderRadius: theme.shape.radius.circle,
         ...style,
       }}
     >

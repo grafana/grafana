@@ -1,16 +1,20 @@
-import React, { FC, useCallback, useState } from 'react';
-import { AdHocVariableFilter } from 'app/features/variables/types';
-import { SelectableValue } from '@grafana/data';
+import { useCallback, useState } from 'react';
+import * as React from 'react';
+
+import { AdHocVariableFilter, DataSourceRef, SelectableValue } from '@grafana/data';
+import { t } from 'app/core/internationalization';
+
 import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';
 import { AdHocFilterRenderer } from './AdHocFilterRenderer';
 
 interface Props {
-  datasource: string;
+  datasource: DataSourceRef;
   onCompleted: (filter: AdHocVariableFilter) => void;
   appendBefore?: React.ReactNode;
+  allFilters: AdHocVariableFilter[];
 }
 
-export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onCompleted }) => {
+export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, allFilters }: Props) => {
   const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
 
@@ -25,26 +29,26 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
     [setKey]
   );
 
-  const onOperatorChanged = useCallback((item: SelectableValue<string>) => setOperator(item.value ?? ''), [
-    setOperator,
-  ]);
+  const onOperatorChanged = useCallback(
+    (item: SelectableValue<string>) => setOperator(item.value ?? ''),
+    [setOperator]
+  );
 
   const onValueChanged = useCallback(
     (item: SelectableValue<string>) => {
       onCompleted({
         value: item.value ?? '',
         operator: operator,
-        condition: '',
         key: key!,
       });
       setKey(null);
       setOperator('=');
     },
-    [onCompleted, key, setKey, setOperator]
+    [onCompleted, operator, key]
   );
 
   if (key === null) {
-    return <AdHocFilterKey datasource={datasource} filterKey={key} onChange={onKeyChanged} />;
+    return <AdHocFilterKey datasource={datasource} filterKey={key} onChange={onKeyChanged} allFilters={allFilters} />;
   }
 
   return (
@@ -52,11 +56,12 @@ export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onComp
       {appendBefore}
       <AdHocFilterRenderer
         datasource={datasource}
-        filter={{ key, value: '', operator, condition: '' }}
-        placeHolder="select value"
+        filter={{ key, value: '', operator }}
+        placeHolder={t('variable.adhoc.placeholder', 'Select value')}
         onKeyChange={onKeyChanged}
         onOperatorChange={onOperatorChanged}
         onValueChange={onValueChanged}
+        allFilters={allFilters}
       />
     </React.Fragment>
   );

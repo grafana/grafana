@@ -1,62 +1,145 @@
-// Libraries
-import React, { Component, HTMLAttributes } from 'react';
-import { getTitleFromNavModel } from 'app/core/selectors/navModel';
+import { css, cx } from '@emotion/css';
+import { useLayoutEffect } from 'react';
 
-// Components
-import PageHeader from '../PageHeader/PageHeader';
-import { Footer } from '../Footer/Footer';
-import PageContents from './PageContents';
-import { CustomScrollbar } from '@grafana/ui';
-import { NavModel } from '@grafana/data';
-import { isEqual } from 'lodash';
-import { Branding } from '../Branding/Branding';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
-interface Props extends HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode;
-  navModel: NavModel;
-}
+import NativeScrollbar from '../NativeScrollbar';
 
-class Page extends Component<Props> {
-  static Header = PageHeader;
-  static Contents = PageContents;
+import { PageContents } from './PageContents';
+import { PageHeader } from './PageHeader';
+import { PageTabs } from './PageTabs';
+import { PageType } from './types';
+import { usePageNav } from './usePageNav';
+import { usePageTitle } from './usePageTitle';
 
-  componentDidMount() {
-    this.updateTitle();
-  }
+export const Page: PageType = ({
+  navId,
+  navModel: oldNavProp,
+  pageNav,
+  renderTitle,
+  onEditTitle,
+  actions,
+  subTitle,
+  children,
+  className,
+  info,
+  layout = PageLayoutType.Standard,
+  onSetScrollRef,
+  ...otherProps
+}) => {
+  const styles = useStyles2(getStyles);
+  const navModel = usePageNav(navId, oldNavProp);
+  const { chrome } = useGrafana();
 
-  componentDidUpdate(prevProps: Props) {
-    if (!isEqual(prevProps.navModel, this.props.navModel)) {
-      this.updateTitle();
-    }
-  }
+  usePageTitle(navModel, pageNav);
 
-  updateTitle = () => {
-    const title = this.getPageTitle;
-    document.title = title ? title + ' - ' + Branding.AppTitle : Branding.AppTitle;
-  };
+  const pageHeaderNav = pageNav ?? navModel?.node;
 
-  get getPageTitle() {
-    const { navModel } = this.props;
+  // We use useLayoutEffect here to make sure that the chrome is updated before the page is rendered
+  // This prevents flickering sectionNav when going from dashboard to settings for example
+  useLayoutEffect(() => {
     if (navModel) {
-      return getTitleFromNavModel(navModel) || undefined;
+      chrome.update({
+        sectionNav: navModel,
+        pageNav: pageNav,
+        layout: layout,
+      });
     }
-    return undefined;
-  }
+  }, [navModel, pageNav, chrome, layout]);
 
-  render() {
-    const { navModel, children, ...otherProps } = this.props;
-    return (
-      <div {...otherProps} className="page-scrollbar-wrapper">
-        <CustomScrollbar autoHeightMin={'100%'} className="custom-scrollbar--page">
-          <div className="page-scrollbar-content">
-            <PageHeader model={navModel} />
-            {children}
-            <Footer />
+  return (
+    <div className={cx(styles.wrapper, className)} {...otherProps}>
+      {layout === PageLayoutType.Standard && (
+        <NativeScrollbar
+          // This id is used by the image renderer to scroll through the dashboard
+          divId="page-scrollbar"
+          onSetScrollRef={onSetScrollRef}
+        >
+          <div className={styles.pageInner}>
+            {pageHeaderNav && (
+              <PageHeader
+                actions={actions}
+                onEditTitle={onEditTitle}
+                navItem={pageHeaderNav}
+                renderTitle={renderTitle}
+                info={info}
+                subTitle={subTitle}
+              />
+            )}
+            {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
+            <div className={styles.pageContent}>{children}</div>
           </div>
-        </CustomScrollbar>
-      </div>
-    );
-  }
-}
+        </NativeScrollbar>
+      )}
 
-export default Page;
+      {layout === PageLayoutType.Canvas && (
+        <NativeScrollbar
+          // This id is used by the image renderer to scroll through the dashboard
+          divId="page-scrollbar"
+          onSetScrollRef={onSetScrollRef}
+        >
+          <div className={styles.canvasContent}>{children}</div>
+        </NativeScrollbar>
+      )}
+
+      {layout === PageLayoutType.Custom && children}
+    </div>
+  );
+};
+
+Page.Contents = PageContents;
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css(
+      config.featureToggles.bodyScrolling
+        ? {
+            label: 'page-wrapper',
+            display: 'flex',
+            flex: '1 1 0',
+            flexDirection: 'column',
+            position: 'relative',
+          }
+        : {
+            label: 'page-wrapper',
+            height: '100%',
+            display: 'flex',
+            flex: '1 1 0',
+            flexDirection: 'column',
+            minHeight: 0,
+          }
+    ),
+    pageContent: css({
+      label: 'page-content',
+      flexGrow: 1,
+    }),
+    primaryBg: css({
+      background: theme.colors.background.primary,
+    }),
+    pageInner: css({
+      label: 'page-inner',
+      padding: theme.spacing(2),
+      borderBottom: 'none',
+      background: theme.colors.background.primary,
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      margin: theme.spacing(0, 0, 0, 0),
+
+      [theme.breakpoints.up('md')]: {
+        padding: theme.spacing(4),
+      },
+    }),
+    canvasContent: css({
+      label: 'canvas-content',
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(2),
+      flexBasis: '100%',
+      flexGrow: 1,
+    }),
+  };
+};

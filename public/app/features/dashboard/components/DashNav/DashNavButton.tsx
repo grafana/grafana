@@ -1,78 +1,45 @@
 // Libraries
-import React, { FunctionComponent } from 'react';
-import { css } from 'emotion';
+import { css } from '@emotion/css';
+import { MouseEvent } from 'react';
+import * as React from 'react';
+
 // Components
-import { Tooltip, Icon, IconName, IconType, IconSize, IconButton, useTheme, stylesFactory } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
+import { IconName, IconType, IconSize, IconButton, useStyles2 } from '@grafana/ui';
 
 interface Props {
   icon?: IconName;
   tooltip: string;
-  classSuffix?: string;
-  onClick?: () => void;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
   href?: string;
   children?: React.ReactNode;
   iconType?: IconType;
   iconSize?: IconSize;
-  noBorder?: boolean;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
-  noBorderContainer: css`
-    padding: 0 ${theme.spacing.xs};
-    display: flex;
-  `,
-}));
+export const DashNavButton = ({ icon, iconType, iconSize, tooltip, onClick, children }: Props) => {
+  const styles = useStyles2(getStyles);
 
-export const DashNavButton: FunctionComponent<Props> = ({
-  icon,
-  iconType,
-  iconSize,
-  tooltip,
-  classSuffix,
-  onClick,
-  href,
-  children,
-  noBorder,
-}) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
-
-  if (noBorder) {
-    return (
-      <div className={styles.noBorderContainer}>
-        {icon && (
-          <IconButton
-            name={icon}
-            size={iconSize}
-            iconType={iconType}
-            tooltip={tooltip}
-            tooltipPlacement="bottom"
-            onClick={onClick}
-          />
-        )}
-        {children}
-      </div>
-    );
-  }
   return (
-    <Tooltip content={tooltip} placement="bottom">
-      {onClick ? (
-        <button
-          className={`btn navbar-button navbar-button--${classSuffix}`}
+    <div className={styles.noBorderContainer}>
+      {icon && (
+        <IconButton
+          name={icon}
+          size={iconSize}
+          iconType={iconType}
+          tooltip={tooltip}
+          tooltipPlacement="bottom"
           onClick={onClick}
-          aria-label={selectors.pages.Dashboard.Toolbar.toolbarItems(tooltip)}
-        >
-          {icon && <Icon name={icon} type={iconType} size={iconSize || 'lg'} />}
-          {children}
-        </button>
-      ) : (
-        <a className={`btn navbar-button navbar-button--${classSuffix}`} href={href}>
-          {icon && <Icon name={icon} type={iconType} size="lg" />}
-          {children}
-        </a>
+        />
       )}
-    </Tooltip>
+      {children}
+    </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  noBorderContainer: css({
+    padding: `0 ${theme.spacing(0.5)}`,
+    display: 'flex',
+  }),
+});

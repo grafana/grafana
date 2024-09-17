@@ -1,26 +1,30 @@
 package datasources
 
 import (
+	"context"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-	"gopkg.in/yaml.v2"
 )
 
 type configReader struct {
-	log log.Logger
+	log        log.Logger
+	orgService org.Service
 }
 
-func (cr *configReader) readConfig(path string) ([]*configs, error) {
+func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs, error) {
 	var datasources []*configs
 
-	files, err := ioutil.ReadDir(path)
+	files, err := os.ReadDir(path)
 	if err != nil {
 		cr.log.Error("can't read datasource provisioning files from directory", "path", path, "error", err)
 		return datasources, nil
@@ -39,7 +43,7 @@ func (cr *configReader) readConfig(path string) ([]*configs, error) {
 		}
 	}
 
-	err = cr.validateDefaultUniqueness(datasources)
+	err = cr.validateDefaultUniqueness(ctx, datasources)
 	if err != nil {
 		return nil, err
 	}
@@ -47,9 +51,12 @@ func (cr *configReader) readConfig(path string) ([]*configs, error) {
 	return datasources, nil
 }
 
-func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*configs, error) {
+func (cr *configReader) parseDatasourceConfig(path string, file fs.DirEntry) (*configs, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
-	yamlFile, err := ioutil.ReadFile(filename)
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -85,19 +92,19 @@ func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*c
 	return v0.mapToDatasourceFromConfig(apiVersion.APIVersion), nil
 }
 
-func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error {
+func (cr *configReader) validateDefaultUniqueness(ctx context.Context, datasources []*configs) error {
 	defaultCount := map[int64]int{}
 	for i := range datasources {
-		if datasources[i].Datasources == nil {
-			continue
-		}
-
 		for _, ds := range datasources[i].Datasources {
+			if ds == nil {
+				continue
+			}
+
 			if ds.OrgID == 0 {
 				ds.OrgID = 1
 			}
 
-			if err := cr.validateAccessAndOrgID(ds); err != nil {
+			if err := cr.validateAccessAndOrgID(ctx, ds); err != nil {
 				return fmt.Errorf("failed to provision %q data source: %w", ds.Name, err)
 			}
 
@@ -110,6 +117,10 @@ func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error 
 		}
 
 		for _, ds := range datasources[i].DeleteDatasources {
+			if ds == nil {
+				continue
+			}
+
 			if ds.OrgID == 0 {
 				ds.OrgID = 1
 			}
@@ -119,18 +130,18 @@ func (cr *configReader) validateDefaultUniqueness(datasources []*configs) error 
 	return nil
 }
 
-func (cr *configReader) validateAccessAndOrgID(ds *upsertDataSourceFromConfig) error {
-	if err := utils.CheckOrgExists(ds.OrgID); err != nil {
+func (cr *configReader) validateAccessAndOrgID(ctx context.Context, ds *upsertDataSourceFromConfig) error {
+	if err := utils.CheckOrgExists(ctx, cr.orgService, ds.OrgID); err != nil {
 		return err
 	}
 
 	if ds.Access == "" {
-		ds.Access = models.DS_ACCESS_PROXY
+		ds.Access = datasources.DS_ACCESS_PROXY
 	}
 
-	if ds.Access != models.DS_ACCESS_DIRECT && ds.Access != models.DS_ACCESS_PROXY {
+	if ds.Access != datasources.DS_ACCESS_DIRECT && ds.Access != datasources.DS_ACCESS_PROXY {
 		cr.log.Warn("invalid access value, will use 'proxy' instead", "value", ds.Access)
-		ds.Access = models.DS_ACCESS_PROXY
+		ds.Access = datasources.DS_ACCESS_PROXY
 	}
 	return nil
 }

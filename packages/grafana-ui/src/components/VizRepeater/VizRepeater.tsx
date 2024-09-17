@@ -1,5 +1,9 @@
-import React, { PureComponent, CSSProperties } from 'react';
+import { clamp } from 'lodash';
+import { PureComponent, CSSProperties } from 'react';
+import * as React from 'react';
+
 import { VizOrientation } from '@grafana/data';
+
 import { calculateGridDimensions } from '../../utils/squares';
 
 interface Props<V, D> {
@@ -17,14 +21,16 @@ interface Props<V, D> {
   renderValue: (props: VizRepeaterRenderValueProps<V, D>) => JSX.Element;
   height: number;
   width: number;
-  source: any; // If this changes, new values will be requested
+  source: unknown; // If this changes, new values will be requested
   getValues: () => V[];
   renderCounter: number; // force update of values & render
   orientation: VizOrientation;
   itemSpacing?: number;
   /** When orientation is set to auto layout items in a grid */
   autoGrid?: boolean;
+  minVizWidth?: number;
   minVizHeight?: number;
+  maxVizHeight?: number;
 }
 
 export interface VizRepeaterRenderValueProps<V, D = {}> {
@@ -49,12 +55,12 @@ interface State<V> {
   values: V[];
 }
 
-export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>> {
+export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D>, State<V>> {
   static defaultProps: DefaultProps = {
     itemSpacing: 8,
   };
 
-  constructor(props: Props<V, D>) {
+  constructor(props: PropsWithDefaults<V, D>) {
     super(props);
 
     this.state = {
@@ -84,8 +90,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   }
 
   renderGrid() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors, orientation } = this
-      .props as PropsWithDefaults<V, D>;
+    const { renderValue, height, width, itemSpacing, getAlignmentFactors, orientation } = this.props;
 
     const { values } = this.state;
     const grid = calculateGridDimensions(width, height, itemSpacing, values.length);
@@ -138,8 +143,18 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   }
 
   render() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors, autoGrid, orientation, minVizHeight } = this
-      .props as PropsWithDefaults<V, D>;
+    const {
+      renderValue,
+      height,
+      width,
+      itemSpacing,
+      getAlignmentFactors,
+      autoGrid,
+      orientation,
+      maxVizHeight,
+      minVizWidth,
+      minVizHeight,
+    } = this.props;
     const { values } = this.state;
 
     if (autoGrid && orientation === VizOrientation.Auto) {
@@ -152,28 +167,29 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const repeaterStyle: React.CSSProperties = {
       display: 'flex',
-      overflow: minVizHeight ? 'hidden auto' : 'hidden',
+      overflow: `${minVizWidth ? 'auto' : 'hidden'} ${minVizHeight ? 'auto' : 'hidden'}`,
     };
 
     let vizHeight = height;
     let vizWidth = width;
 
-    let resolvedOrientation = this.getOrientation();
+    const resolvedOrientation = this.getOrientation();
 
     switch (resolvedOrientation) {
       case VizOrientation.Horizontal:
+        const defaultVizHeight = (height + itemSpacing) / values.length - itemSpacing;
         repeaterStyle.flexDirection = 'column';
         repeaterStyle.height = `${height}px`;
         itemStyles.marginBottom = `${itemSpacing}px`;
         vizWidth = width;
-        vizHeight = Math.max(height / values.length - itemSpacing + itemSpacing / values.length, minVizHeight ?? 0);
+        vizHeight = clamp(defaultVizHeight, minVizHeight ?? 0, maxVizHeight ?? defaultVizHeight);
         break;
       case VizOrientation.Vertical:
         repeaterStyle.flexDirection = 'row';
         repeaterStyle.justifyContent = 'space-between';
         itemStyles.marginRight = `${itemSpacing}px`;
         vizHeight = height;
-        vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
+        vizWidth = Math.max(width / values.length - itemSpacing + itemSpacing / values.length, minVizWidth ?? 0);
     }
 
     itemStyles.width = `${vizWidth}px`;

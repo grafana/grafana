@@ -1,16 +1,6 @@
-import { rangeUtil } from '@grafana/data';
-import _ from 'lodash';
-import { dateTime } from '@grafana/data';
+import { rangeUtil, dateTime } from '@grafana/data';
 
 describe('rangeUtil', () => {
-  describe('Can get range grouped list of ranges', () => {
-    it('when custom settings should return default range list', () => {
-      const groups: any = rangeUtil.getRelativeTimesList({ time_options: [] }, 'Last 5 minutes');
-      expect(_.keys(groups).length).toBe(4);
-      expect(groups[3][0].active).toBe(true);
-    });
-  });
-
   describe('Can get range text described', () => {
     it('should handle simple old expression with only amount and unit', () => {
       const info = rangeUtil.describeTextRange('5m');

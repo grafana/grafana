@@ -1,6 +1,6 @@
-import { LayoutMode } from '../core/components/LayoutSelector/LayoutSelector';
-import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
-import { GenericDataSourcePlugin } from 'app/features/datasources/settings/PluginSettings';
+import { DataSourcePluginMeta, DataSourceSettings, LayoutMode } from '@grafana/data';
+import { TestingStatus } from '@grafana/runtime';
+import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 
 export interface DataSourcesState {
   dataSources: DataSourceSettings[];
@@ -10,19 +10,18 @@ export interface DataSourcesState {
   dataSourcesCount: number;
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;
-  hasFetched: boolean;
   isLoadingDataSources: boolean;
+  isLoadingDataSourcePlugins: boolean;
   plugins: DataSourcePluginMeta[];
   categories: DataSourcePluginCategory[];
+  isSortAscending: boolean;
 }
 
 export interface DataSourceSettingsState {
   plugin?: GenericDataSourcePlugin | null;
-  testingStatus?: {
-    message?: string | null;
-    status?: string | null;
-  };
+  testingStatus?: TestingStatus;
   loadError?: string | null;
+  loading: boolean;
 }
 
 export interface DataSourcePluginCategory {

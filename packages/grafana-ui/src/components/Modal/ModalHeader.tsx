@@ -1,29 +1,26 @@
-import React, { useContext } from 'react';
-import { getModalStyles } from './getModalStyles';
+import * as React from 'react';
+
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
-import { ThemeContext } from '../../themes';
-import { Icon } from '../Icon/Icon';
-import { Tooltip } from '..';
+
+import { getModalStyles } from './getModalStyles';
 
 interface Props {
   title: string;
+  id?: string;
+  /** @deprecated */
   icon?: IconName;
+  /** @deprecated */
   iconTooltip?: string;
 }
 
-export const ModalHeader: React.FC<Props> = ({ icon, iconTooltip, title, children }) => {
-  const theme = useContext(ThemeContext);
-  const styles = getModalStyles(theme);
+/** @internal */
+export const ModalHeader = ({ icon, iconTooltip, title, children, id }: React.PropsWithChildren<Props>) => {
+  const styles = useStyles2(getModalStyles);
 
   return (
     <>
-      <h2 className={styles.modalHeaderTitle}>
-        {icon && !iconTooltip && <Icon name={icon} size="lg" className={styles.modalHeaderIcon} />}
-        {icon && iconTooltip && (
-          <Tooltip content={iconTooltip}>
-            <Icon name={icon} size="lg" className={styles.modalHeaderIcon} />
-          </Tooltip>
-        )}
+      <h2 className={styles.modalHeaderTitle} id={id}>
         {title}
       </h2>
       {children}

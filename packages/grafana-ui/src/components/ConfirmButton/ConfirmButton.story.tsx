@@ -1,109 +1,98 @@
-import React from 'react';
-import { text, boolean, select } from '@storybook/addon-knobs';
-import { ConfirmButton } from '@grafana/ui';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { action } from '@storybook/addon-actions';
+import { Meta, StoryFn } from '@storybook/react';
+
+import { ConfirmButton } from '@grafana/ui';
+
 import { Button } from '../Button';
-import { DeleteButton } from './DeleteButton';
+
+import { Props } from './ConfirmButton';
 import mdx from './ConfirmButton.mdx';
+import { DeleteButton } from './DeleteButton';
 
-const getKnobs = () => {
-  return {
-    buttonText: text('Button text', 'Edit'),
-    confirmText: text('Confirm text', 'Save'),
-    size: select('Size', ['sm', 'md', 'lg'], 'md'),
-    confirmVariant: select(
-      'Confirm variant',
-      {
-        primary: 'primary',
-        secondary: 'secondary',
-        destructive: 'destructive',
-        link: 'link',
-      },
-      'primary'
-    ),
-    disabled: boolean('Disabled', false),
-    closeOnConfirm: boolean('Close on confirm', true),
-  };
-};
-
-export default {
+const meta: Meta = {
   title: 'Buttons/ConfirmButton',
   component: ConfirmButton,
-  decorators: [withCenteredStory],
+  // SB7 has broken subcomponent types due to dropping support for the feature
+  // https://github.com/storybookjs/storybook/issues/20782
+  // @ts-ignore
   subcomponents: { DeleteButton },
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['className', 'onClick', 'onCancel', 'onConfirm'],
+    },
+  },
+  args: {
+    buttonText: 'Edit',
+    confirmText: 'Save',
+    size: 'md',
+    confirmVariant: 'primary',
+    disabled: false,
+    closeOnConfirm: true,
+  },
+  argTypes: {
+    confirmVariant: {
+      control: {
+        type: 'select',
+      },
+      options: ['primary', 'secondary', 'destructive', 'link'],
+    },
+    size: { control: { type: 'select' }, options: ['xs', 'sm', 'md', 'lg'] },
   },
 };
 
-export const basic = () => {
-  const { size, buttonText, confirmText, confirmVariant, disabled, closeOnConfirm } = getKnobs();
+interface StoryProps extends Partial<Props> {
+  buttonText: string;
+}
+
+export const Basic: StoryFn<StoryProps> = (args) => {
   return (
-    <>
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <ConfirmButton
-            closeOnConfirm={closeOnConfirm}
-            size={size}
-            confirmText={confirmText}
-            disabled={disabled}
-            confirmVariant={confirmVariant}
-            onConfirm={() => {
-              action('Saved')('save!');
-            }}
-          >
-            {buttonText}
-          </ConfirmButton>
-        </div>
-      </div>
-    </>
+    <ConfirmButton
+      closeOnConfirm={args.closeOnConfirm}
+      size={args.size}
+      confirmText={args.confirmText}
+      disabled={args.disabled}
+      confirmVariant={args.confirmVariant}
+      onConfirm={() => {
+        action('Saved')('save!');
+      }}
+    >
+      {args.buttonText}
+    </ConfirmButton>
   );
 };
 
-export const withCustomButton = () => {
-  const { buttonText, confirmText, confirmVariant, disabled, size, closeOnConfirm } = getKnobs();
+export const WithCustomButton: StoryFn<StoryProps> = (args) => {
   return (
-    <>
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <ConfirmButton
-            closeOnConfirm={closeOnConfirm}
-            size={size}
-            confirmText={confirmText}
-            disabled={disabled}
-            confirmVariant={confirmVariant}
-            onConfirm={() => {
-              action('Saved')('save!');
-            }}
-          >
-            <Button size={size} variant="secondary" icon="pen">
-              {buttonText}
-            </Button>
-          </ConfirmButton>
-        </div>
-      </div>
-    </>
+    <ConfirmButton
+      closeOnConfirm={args.closeOnConfirm}
+      size={args.size}
+      confirmText={args.confirmText}
+      disabled={args.disabled}
+      confirmVariant={args.confirmVariant}
+      onConfirm={() => {
+        action('Saved')('save!');
+      }}
+    >
+      <Button size={args.size} variant="secondary" icon="pen">
+        {args.buttonText}
+      </Button>
+    </ConfirmButton>
   );
 };
 
-export const deleteButton = () => {
-  const { disabled, size } = getKnobs();
+export const Delete: StoryFn<StoryProps> = (args) => {
   return (
-    <>
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <DeleteButton
-            size={size}
-            disabled={disabled}
-            onConfirm={() => {
-              action('Deleted')('delete!');
-            }}
-          />
-        </div>
-      </div>
-    </>
+    <DeleteButton
+      size={args.size}
+      disabled={args.disabled}
+      onConfirm={() => {
+        action('Deleted')('delete!');
+      }}
+    />
   );
 };
+
+export default meta;

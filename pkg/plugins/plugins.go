@@ -5,484 +5,536 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"reflect"
+	"io"
+	"io/fs"
+	"path"
 	"runtime"
 	"strings"
-	"time"
+	"sync"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
-	DataSources  map[string]*DataSourcePlugin
-	Panels       map[string]*PanelPlugin
-	StaticRoutes []*PluginStaticRoute
-	Apps         map[string]*AppPlugin
-	Plugins      map[string]*PluginBase
-	PluginTypes  map[string]interface{}
-	Renderer     *RendererPlugin
-
-	GrafanaLatestVersion string
-	GrafanaHasUpdate     bool
-	plog                 log.Logger
-
-	pluginScanningErrors map[string]*PluginError
+	ErrFileNotExist              = errors.New("file does not exist")
+	ErrPluginFileRead            = errors.New("file could not be read")
+	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
+	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
+	ErrUnsupportedAlias          = errors.New("can not set alias in plugin.json")
 )
 
-type unsignedPluginConditionFunc = func(plugin *PluginBase) bool
+type Plugin struct {
+	JSONData
 
-type PluginScanner struct {
-	pluginPath                    string
-	errors                        []error
-	backendPluginManager          backendplugin.Manager
-	cfg                           *setting.Cfg
-	requireSigned                 bool
-	log                           log.Logger
-	plugins                       map[string]*PluginBase
-	allowUnsignedPluginsCondition unsignedPluginConditionFunc
+	FS    FS
+	Class Class
+
+	// App fields
+	IncludedInAppID string
+	DefaultNavURL   string
+	Pinned          bool
+
+	// Signature fields
+	Signature     SignatureStatus
+	SignatureType SignatureType
+	SignatureOrg  string
+	Parent        *Plugin
+	Children      []*Plugin
+	Error         *Error
+
+	// SystemJS fields
+	Module  string
+	BaseURL string
+
+	Angular AngularMeta
+
+	ExternalService *auth.ExternalService
+
+	Renderer       pluginextensionv2.RendererPlugin
+	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
+	client         backendplugin.Plugin
+	log            log.Logger
+
+	SkipHostEnvVars bool
+
+	mu sync.Mutex
 }
 
-type PluginManager struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	log                  log.Logger
-	scanningErrors       []error
+var (
+	_ = backend.CollectMetricsHandler(&Plugin{})
+	_ = backend.CheckHealthHandler(&Plugin{})
+	_ = backend.QueryDataHandler(&Plugin{})
+	_ = backend.CallResourceHandler(&Plugin{})
+	_ = backend.StreamHandler(&Plugin{})
+	_ = backend.AdmissionHandler(&Plugin{})
+	_ = backend.ConversionHandler(&Plugin{})
+)
 
-	// AllowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only runs when plugins are starting
-	// and running plugins will not be terminated if they violate the new policy.
-	AllowUnsignedPluginsCondition unsignedPluginConditionFunc
+type AngularMeta struct {
+	Detected        bool `json:"detected"`
+	HideDeprecation bool `json:"hideDeprecation"`
 }
 
-func init() {
-	registry.RegisterService(&PluginManager{})
+// JSONData represents the plugin's plugin.json
+type JSONData struct {
+	// Common settings
+	ID           string       `json:"id"`
+	Type         Type         `json:"type"`
+	Name         string       `json:"name"`
+	AliasIDs     []string     `json:"aliasIDs,omitempty"`
+	Info         Info         `json:"info"`
+	Dependencies Dependencies `json:"dependencies"`
+	Includes     []*Includes  `json:"includes"`
+	State        ReleaseState `json:"state,omitempty"`
+	Category     string       `json:"category"`
+	HideFromList bool         `json:"hideFromList,omitempty"`
+	Preload      bool         `json:"preload"`
+	Backend      bool         `json:"backend"`
+	Routes       []*Route     `json:"routes"`
+
+	// AccessControl settings
+	Roles      []RoleRegistration `json:"roles,omitempty"`
+	ActionSets []ActionSet        `json:"actionSets,omitempty"`
+
+	// Panel settings
+	SkipDataQuery bool `json:"skipDataQuery"`
+
+	// App settings
+	AutoEnabled bool `json:"autoEnabled"`
+
+	// Datasource settings
+	Annotations               bool            `json:"annotations"`
+	Metrics                   bool            `json:"metrics"`
+	Alerting                  bool            `json:"alerting"`
+	Explore                   bool            `json:"explore"`
+	Table                     bool            `json:"tables"`
+	Logs                      bool            `json:"logs"`
+	Tracing                   bool            `json:"tracing"`
+	QueryOptions              map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn                   bool            `json:"builtIn,omitempty"`
+	Mixed                     bool            `json:"mixed,omitempty"`
+	Streaming                 bool            `json:"streaming"`
+	SDK                       bool            `json:"sdk,omitempty"`
+	MultiValueFilterOperators bool            `json:"multiValueFilterOperators,omitempty"`
+
+	// Backend (Datasource + Renderer + SecretsManager)
+	Executable string `json:"executable,omitempty"`
+
+	// App Service Auth Registration
+	IAM *pfs.IAM `json:"iam,omitempty"`
 }
 
-func (pm *PluginManager) Init() error {
-	pm.log = log.New("plugins")
-	plog = log.New("plugins")
-
-	DataSources = map[string]*DataSourcePlugin{}
-	StaticRoutes = []*PluginStaticRoute{}
-	Panels = map[string]*PanelPlugin{}
-	Apps = map[string]*AppPlugin{}
-	Plugins = map[string]*PluginBase{}
-	PluginTypes = map[string]interface{}{
-		"panel":      PanelPlugin{},
-		"datasource": DataSourcePlugin{},
-		"app":        AppPlugin{},
-		"renderer":   RendererPlugin{},
-	}
-	pluginScanningErrors = map[string]*PluginError{}
-
-	pm.log.Info("Starting plugin search")
-
-	plugDir := filepath.Join(setting.StaticRootPath, "app/plugins")
-	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
-	if err := pm.scan(plugDir, false); err != nil {
-		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
+func ReadPluginJSON(reader io.Reader) (JSONData, error) {
+	plugin := JSONData{}
+	if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
+		return JSONData{}, err
 	}
 
-	plugDir = pm.Cfg.BundledPluginsPath
-	pm.log.Debug("Scanning bundled plugins directory", "dir", plugDir)
-	exists, err := fs.Exists(plugDir)
-	if err != nil {
-		return err
+	if err := validatePluginJSON(plugin); err != nil {
+		return JSONData{}, err
 	}
-	if exists {
-		if err := pm.scan(plugDir, false); err != nil {
-			return errutil.Wrapf(err, "failed to scan bundled plugins directory '%s'", plugDir)
+
+	// Hardcoded changes
+	switch plugin.ID {
+	case "grafana-piechart-panel":
+		plugin.Name = "Pie Chart (old)"
+	case "grafana-pyroscope-datasource":
+		fallthrough
+	case "grafana-testdata-datasource":
+		fallthrough
+	case "grafana-postgresql-datasource":
+		fallthrough
+	case "annolist":
+		fallthrough
+	case "debug":
+		if len(plugin.AliasIDs) == 0 {
+			return plugin, fmt.Errorf("expected alias to be set")
+		}
+	default: // TODO: when gcom validates the alias, this condition can be removed
+		if len(plugin.AliasIDs) > 0 {
+			return plugin, ErrUnsupportedAlias
 		}
 	}
 
-	// check if plugins dir exists
-	exists, err = fs.Exists(setting.PluginsPath)
-	if err != nil {
-		return err
+	if len(plugin.Dependencies.Plugins) == 0 {
+		plugin.Dependencies.Plugins = []Dependency{}
 	}
-	if !exists {
-		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
-			pm.log.Error("failed to create external plugins directory", "dir", setting.PluginsPath, "error", err)
-		} else {
-			pm.log.Info("External plugins directory created", "directory", setting.PluginsPath)
+
+	if plugin.Dependencies.GrafanaVersion == "" {
+		plugin.Dependencies.GrafanaVersion = "*"
+	}
+
+	for _, include := range plugin.Includes {
+		if include.Role == "" {
+			include.Role = org.RoleViewer
 		}
-	} else {
-		pm.log.Debug("Scanning external plugins directory", "dir", setting.PluginsPath)
-		if err := pm.scan(setting.PluginsPath, true); err != nil {
-			return errutil.Wrapf(err, "failed to scan external plugins directory '%s'",
-				setting.PluginsPath)
-		}
-	}
 
-	if err := pm.scanPluginPaths(); err != nil {
-		return err
-	}
-
-	for _, panel := range Panels {
-		panel.initFrontendPlugin()
-	}
-
-	for _, ds := range DataSources {
-		ds.initFrontendPlugin()
-	}
-
-	for _, app := range Apps {
-		app.initApp()
-	}
-
-	if Renderer != nil {
-		Renderer.initFrontendPlugin()
-	}
-
-	for _, p := range Plugins {
-		if p.IsCorePlugin {
-			p.Signature = PluginSignatureInternal
-		} else {
-			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
+		// Default to app access for app plugins
+		if plugin.Type == TypeApp && include.Role == org.RoleViewer && include.Action == "" {
+			include.Action = ActionAppAccess
 		}
 	}
 
+	return plugin, nil
+}
+
+func validatePluginJSON(data JSONData) error {
+	if data.ID == "" || !data.Type.IsValid() {
+		return ErrInvalidPluginJSON
+	}
 	return nil
 }
 
-func (pm *PluginManager) Run(ctx context.Context) error {
-	pm.updateAppDashboards()
-	pm.checkForUpdates()
-
-	ticker := time.NewTicker(time.Minute * 10)
-	run := true
-
-	for run {
-		select {
-		case <-ticker.C:
-			pm.checkForUpdates()
-		case <-ctx.Done():
-			run = false
+func (d JSONData) DashboardIncludes() []*Includes {
+	result := []*Includes{}
+	for _, include := range d.Includes {
+		if include.Type == TypeDashboard {
+			result = append(result, include)
 		}
 	}
 
-	return ctx.Err()
+	return result
 }
 
-// scanPluginPaths scans configured plugin paths.
-func (pm *PluginManager) scanPluginPaths() error {
-	for pluginID, settings := range pm.Cfg.PluginSettings {
-		path, exists := settings["path"]
-		if !exists || path == "" {
-			continue
-		}
-
-		if err := pm.scan(path, true); err != nil {
-			return errutil.Wrapf(err, "failed to scan directory configured for plugin '%s': '%s'", pluginID, path)
-		}
-	}
-
-	return nil
+// Route describes a plugin route that is defined in
+// the plugin.json file for a plugin.
+type Route struct {
+	Path         string          `json:"path"`
+	Method       string          `json:"method"`
+	ReqRole      org.RoleType    `json:"reqRole"`
+	ReqAction    string          `json:"reqAction"`
+	URL          string          `json:"url"`
+	URLParams    []URLParam      `json:"urlParams"`
+	Headers      []Header        `json:"headers"`
+	AuthType     string          `json:"authType"`
+	TokenAuth    *JWTTokenAuth   `json:"tokenAuth"`
+	JwtTokenAuth *JWTTokenAuth   `json:"jwtTokenAuth"`
+	Body         json.RawMessage `json:"body"`
 }
 
-// scan a directory for plugins.
-func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
-	scanner := &PluginScanner{
-		pluginPath:                    pluginDir,
-		backendPluginManager:          pm.BackendPluginManager,
-		cfg:                           pm.Cfg,
-		requireSigned:                 requireSigned,
-		log:                           pm.log,
-		plugins:                       map[string]*PluginBase{},
-		allowUnsignedPluginsCondition: pm.AllowUnsignedPluginsCondition,
-	}
-
-	// 1st pass: Scan plugins, also mapping plugins to their respective directories
-	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			pm.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginDir)
-			return nil
-		}
-		if errors.Is(err, os.ErrPermission) {
-			pm.log.Debug("Couldn't scan directory due to lack of permissions", "pluginDir", pluginDir)
-			return nil
-		}
-		if pluginDir != "data/plugins" {
-			pm.log.Warn("Could not scan dir", "pluginDir", pluginDir, "err", err)
-		}
-		return err
-	}
-
-	pm.log.Debug("Initial plugin loading done")
-
-	// 2nd pass: Validate and register plugins
-	for dpath, plugin := range scanner.plugins {
-		// Try to find any root plugin
-		ancestors := strings.Split(dpath, string(filepath.Separator))
-		ancestors = ancestors[0 : len(ancestors)-1]
-		aPath := ""
-		if runtime.GOOS != "windows" && filepath.IsAbs(dpath) {
-			aPath = "/"
-		}
-		for _, a := range ancestors {
-			aPath = filepath.Join(aPath, a)
-			if root, ok := scanner.plugins[aPath]; ok {
-				plugin.Root = root
-				break
-			}
-		}
-
-		pm.log.Debug("Found plugin", "id", plugin.Id, "signature", plugin.Signature, "hasRoot", plugin.Root != nil)
-		signingError := scanner.validateSignature(plugin)
-		if signingError != nil {
-			pm.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.Id,
-				"signature", plugin.Signature, "status", signingError.ErrorCode)
-			pluginScanningErrors[plugin.Id] = signingError
-			continue
-		}
-
-		pm.log.Debug("Attempting to add plugin", "id", plugin.Id)
-
-		pluginGoType, exists := PluginTypes[plugin.Type]
-		if !exists {
-			return fmt.Errorf("unknown plugin type %q", plugin.Type)
-		}
-
-		jsonFPath := filepath.Join(plugin.PluginDir, "plugin.json")
-
-		// External plugins need a module.js file for SystemJS to load
-		if !strings.HasPrefix(jsonFPath, setting.StaticRootPath) && !scanner.IsBackendOnlyPlugin(plugin.Type) {
-			module := filepath.Join(plugin.PluginDir, "module.js")
-			exists, err := fs.Exists(module)
-			if err != nil {
-				return err
-			}
-			if !exists {
-				scanner.log.Warn("Plugin missing module.js",
-					"name", plugin.Name,
-					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
-					"path", module)
-			}
-		}
-
-		reader, err := os.Open(jsonFPath)
-		if err != nil {
-			return err
-		}
-		defer reader.Close()
-
-		jsonParser := json.NewDecoder(reader)
-
-		loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
-
-		// Load the full plugin, and add it to manager
-		if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
-			if errors.Is(err, duplicatePluginError{}) {
-				pm.log.Warn("Plugin is duplicate", "error", err)
-				scanner.errors = append(scanner.errors, err)
-				continue
-			}
-			return err
-		}
-		pm.log.Debug("Successfully added plugin", "id", plugin.Id)
-	}
-
-	if len(scanner.errors) > 0 {
-		pm.log.Warn("Some plugins failed to load", "errors", scanner.errors)
-		pm.scanningErrors = scanner.errors
-	}
-
-	return nil
+// Header describes an HTTP header that is forwarded with
+// the proxied request for a plugin route
+type Header struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
 }
 
-// GetDatasource returns a datasource based on passed pluginID if it exists
-//
-// This function fetches the datasource from the global variable DataSources in this package.
-// Rather then refactor all dependencies on the global variable we can use this as an transition.
-func (pm *PluginManager) GetDatasource(pluginID string) (*DataSourcePlugin, bool) {
-	ds, exist := DataSources[pluginID]
-	return ds, exist
+// URLParam describes query string parameters for
+// a url in a plugin route
+type URLParam struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
 }
 
-func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
-	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
-	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
-	// is embedded in worldping app.
-	if err != nil {
-		return err
+// JWTTokenAuth struct is both for normal Token Auth and JWT Token Auth with
+// an uploaded JWT file.
+type JWTTokenAuth struct {
+	Url    string            `json:"url"`
+	Scopes []string          `json:"scopes"`
+	Params map[string]string `json:"params"`
+}
+
+func (p *Plugin) PluginID() string {
+	return p.ID
+}
+
+func (p *Plugin) Logger() log.Logger {
+	return p.log
+}
+
+func (p *Plugin) SetLogger(l log.Logger) {
+	p.log = l
+}
+
+func (p *Plugin) Start(ctx context.Context) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.client == nil {
+		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
 	}
 
-	if f.Name() == "node_modules" || f.Name() == "Chromium.app" {
-		return util.ErrWalkSkipDir
-	}
+	return p.client.Start(ctx)
+}
 
-	if f.IsDir() {
+func (p *Plugin) Stop(ctx context.Context) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.client == nil {
 		return nil
 	}
 
-	if f.Name() != "plugin.json" {
-		return nil
-	}
-
-	if err := s.loadPlugin(currentPath); err != nil {
-		s.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
-		s.errors = append(s.errors, err)
-	}
-
-	return nil
+	return p.client.Stop(ctx)
 }
 
-func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
-	s.log.Debug("Loading plugin", "path", pluginJSONFilePath)
-	currentDir := filepath.Dir(pluginJSONFilePath)
-	reader, err := os.Open(pluginJSONFilePath)
-	if err != nil {
-		return err
+func (p *Plugin) IsManaged() bool {
+	if p.client != nil {
+		return p.client.IsManaged()
 	}
-	defer reader.Close()
-
-	jsonParser := json.NewDecoder(reader)
-	pluginCommon := PluginBase{}
-	if err := jsonParser.Decode(&pluginCommon); err != nil {
-		return err
-	}
-
-	if pluginCommon.Id == "" || pluginCommon.Type == "" {
-		return errors.New("did not find type or id properties in plugin.json")
-	}
-
-	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
-	pluginCommon.Signature = getPluginSignatureState(s.log, &pluginCommon)
-
-	s.plugins[currentDir] = &pluginCommon
-
-	return nil
-}
-
-func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
-	return pluginType == "renderer"
-}
-
-// validateSignature validates a plugin's signature.
-func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
-	if plugin.Signature == PluginSignatureValid {
-		s.log.Debug("Plugin has valid signature", "id", plugin.Id)
-		return nil
-	}
-
-	if plugin.Root != nil {
-		// If a descendant plugin with invalid signature, set signature to that of root
-		if plugin.IsCorePlugin || plugin.Signature == PluginSignatureInternal {
-			s.log.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
-				"plugin", plugin.Id, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin)
-		} else {
-			s.log.Debug("Setting descendant plugin's signature to that of root", "plugin", plugin.Id,
-				"root", plugin.Root.Id, "signature", plugin.Signature, "rootSignature", plugin.Root.Signature)
-			plugin.Signature = plugin.Root.Signature
-			if plugin.Signature == PluginSignatureValid {
-				s.log.Debug("Plugin has valid signature (inherited from root)", "id", plugin.Id)
-				return nil
-			}
-		}
-	} else {
-		s.log.Debug("Non-valid plugin Signature", "pluginID", plugin.Id, "pluginDir", plugin.PluginDir,
-			"state", plugin.Signature)
-	}
-
-	// For the time being, we choose to only require back-end plugins to be signed
-	// NOTE: the state is calculated again when setting metadata on the object
-	if !plugin.Backend || !s.requireSigned {
-		return nil
-	}
-
-	switch plugin.Signature {
-	case PluginSignatureUnsigned:
-		if allowed := s.allowUnsigned(plugin); !allowed {
-			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
-			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
-			return &PluginError{
-				ErrorCode: signatureMissing,
-			}
-		}
-		s.log.Warn("Running an unsigned backend plugin", "pluginID", plugin.Id, "pluginDir",
-			plugin.PluginDir)
-		return nil
-	case PluginSignatureInvalid:
-		s.log.Debug("Plugin %q has an invalid signature", plugin.Id)
-		s.errors = append(s.errors, fmt.Errorf("plugin %q has an invalid signature", plugin.Id))
-		return &PluginError{
-			ErrorCode: signatureInvalid,
-		}
-	case PluginSignatureModified:
-		s.log.Debug("Plugin %q has a modified signature", plugin.Id)
-		s.errors = append(s.errors, fmt.Errorf("plugin %q's signature has been modified", plugin.Id))
-		return &PluginError{
-			ErrorCode: signatureModified,
-		}
-	default:
-		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.Id, plugin.Signature))
-	}
-}
-
-func (s *PluginScanner) allowUnsigned(plugin *PluginBase) bool {
-	if s.allowUnsignedPluginsCondition != nil {
-		return s.allowUnsignedPluginsCondition(plugin)
-	}
-
-	if setting.Env == setting.Dev {
-		return true
-	}
-
-	for _, plug := range s.cfg.PluginsAllowUnsigned {
-		if plug == plugin.Id {
-			return true
-		}
-	}
-
 	return false
 }
 
-func ScanningErrors() []PluginError {
-	scanningErrs := make([]PluginError, 0)
-	for id, e := range pluginScanningErrors {
-		scanningErrs = append(scanningErrs, PluginError{
-			ErrorCode: e.ErrorCode,
-			PluginID:  id,
-		})
+func (p *Plugin) Decommission() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.client != nil {
+		return p.client.Decommission()
 	}
-	return scanningErrs
+	return nil
 }
 
-func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
-	plug, exists := Plugins[pluginId]
-	if !exists {
-		return nil, PluginNotFoundError{pluginId}
+func (p *Plugin) IsDecommissioned() bool {
+	if p.client != nil {
+		return p.client.IsDecommissioned()
+	}
+	return false
+}
+
+func (p *Plugin) Exited() bool {
+	if p.client != nil {
+		return p.client.Exited()
+	}
+	return false
+}
+
+func (p *Plugin) Target() backendplugin.Target {
+	if !p.Backend {
+		return backendplugin.TargetNone
+	}
+	if p.client == nil {
+		return backendplugin.TargetUnknown
+	}
+	return p.client.Target()
+}
+
+func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.QueryData(ctx, req)
+}
+
+func (p *Plugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return ErrPluginUnavailable
+	}
+	return pluginClient.CallResource(ctx, req, sender)
+}
+
+func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.CheckHealth(ctx, req)
+}
+
+func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.CollectMetrics(ctx, req)
+}
+
+func (p *Plugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.SubscribeStream(ctx, req)
+}
+
+func (p *Plugin) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.PublishStream(ctx, req)
+}
+
+func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return ErrPluginUnavailable
+	}
+	return pluginClient.RunStream(ctx, req, sender)
+}
+
+// ValidateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ValidateAdmission(ctx, req)
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.MutateAdmission(ctx, req)
+}
+
+// ConvertObject implements backend.AdmissionHandler.
+func (p *Plugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, ErrPluginUnavailable
+	}
+	return pluginClient.ConvertObjects(ctx, req)
+}
+
+func (p *Plugin) File(name string) (fs.File, error) {
+	cleanPath, err := util.CleanRelativePath(name)
+	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
 	}
 
-	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
-	exists, err := fs.Exists(path)
+	if p.FS == nil {
+		return nil, ErrFileNotExist
+	}
+
+	f, err := p.FS.Open(cleanPath)
 	if err != nil {
 		return nil, err
 	}
-	if !exists {
-		path = filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToLower(name)))
+
+	return f, nil
+}
+
+func (p *Plugin) RegisterClient(c backendplugin.Plugin) {
+	p.client = c
+}
+
+func (p *Plugin) Client() (PluginClient, bool) {
+	if p.client != nil {
+		return p.client, true
+	}
+	return nil, false
+}
+
+func (p *Plugin) ExecutablePath() string {
+	if p.IsRenderer() {
+		return p.executablePath("plugin_start")
 	}
 
-	exists, err = fs.Exists(path)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return make([]byte, 0), nil
+	if p.IsSecretsManager() {
+		return p.executablePath("secrets_plugin_start")
 	}
 
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
+	return p.executablePath(p.Executable)
+}
+
+func (p *Plugin) executablePath(f string) string {
+	os := strings.ToLower(runtime.GOOS)
+	arch := runtime.GOARCH
+	extension := ""
+
+	if os == "windows" {
+		extension = ".exe"
 	}
-	return data, nil
+	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
+}
+
+type PluginClient interface {
+	backend.QueryDataHandler
+	backend.CollectMetricsHandler
+	backend.CheckHealthHandler
+	backend.CallResourceHandler
+	backend.AdmissionHandler
+	backend.ConversionHandler
+	backend.StreamHandler
+}
+
+func (p *Plugin) StaticRoute() *StaticRoute {
+	if p.IsCorePlugin() {
+		return nil
+	}
+
+	if p.FS == nil {
+		return nil
+	}
+
+	return &StaticRoute{Directory: p.FS.Base(), PluginID: p.ID}
+}
+
+func (p *Plugin) IsRenderer() bool {
+	return p.Type == TypeRenderer
+}
+
+func (p *Plugin) IsSecretsManager() bool {
+	return p.Type == TypeSecretsManager
+}
+
+func (p *Plugin) IsApp() bool {
+	return p.Type == TypeApp
+}
+
+func (p *Plugin) IsCorePlugin() bool {
+	return p.Class == ClassCore
+}
+
+func (p *Plugin) IsBundledPlugin() bool {
+	return p.Class == ClassBundled
+}
+
+func (p *Plugin) IsExternalPlugin() bool {
+	return !p.IsCorePlugin() && !p.IsBundledPlugin()
+}
+
+type Class string
+
+const (
+	ClassCore     Class = "core"
+	ClassBundled  Class = "bundled"
+	ClassExternal Class = "external"
+	ClassCDN      Class = "cdn"
+)
+
+func (c Class) String() string {
+	return string(c)
+}
+
+var PluginTypes = []Type{
+	TypeDataSource,
+	TypePanel,
+	TypeApp,
+	TypeRenderer,
+	TypeSecretsManager,
+}
+
+type Type string
+
+const (
+	TypeDataSource     Type = "datasource"
+	TypePanel          Type = "panel"
+	TypeApp            Type = "app"
+	TypeRenderer       Type = "renderer"
+	TypeSecretsManager Type = "secretsmanager"
+)
+
+func (pt Type) IsValid() bool {
+	switch pt {
+	case TypeDataSource, TypePanel, TypeApp, TypeRenderer, TypeSecretsManager:
+		return true
+	}
+	return false
 }

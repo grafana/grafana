@@ -1,40 +1,71 @@
-import { BigValueTextMode, sharedSingleStatMigrationHandler } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
-import { addStandardDataReduceOptions, StatPanelOptions } from './types';
-import { StatPanel } from './StatPanel';
+import {
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  PercentChangeColorMode,
+} from '@grafana/schema';
+import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
+
 import { statPanelChangedHandler } from './StatMigrations';
+import { StatPanel } from './StatPanel';
+import { addStandardDataReduceOptions, addOrientationOption } from './common';
+import { defaultOptions, Options } from './panelcfg.gen';
+import { StatSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
+export const plugin = new PanelPlugin<Options>(StatPanel)
   .useFieldConfig()
-  .setPanelOptions(builder => {
-    addStandardDataReduceOptions(builder);
+  .setPanelOptions((builder) => {
+    const mainCategory = ['Stat styles'];
 
-    builder.addSelect({
-      path: 'textMode',
-      name: 'Text mode',
-      description: 'Control if name and value is displayed or just name',
-      settings: {
-        options: [
-          { value: BigValueTextMode.Auto, label: 'Auto' },
-          { value: BigValueTextMode.Value, label: 'Value' },
-          { value: BigValueTextMode.ValueAndName, label: 'Value and name' },
-          { value: BigValueTextMode.Name, label: 'Name' },
-          { value: BigValueTextMode.None, label: 'None' },
-        ],
-      },
-      defaultValue: 'auto',
-    });
+    addStandardDataReduceOptions(builder);
+    addOrientationOption(builder, mainCategory);
+    commonOptionsBuilder.addTextSizeOptions(builder);
 
     builder
-      .addRadio({
-        path: 'colorMode',
-        name: 'Color mode',
-        description: 'Color either the value or the background',
-        defaultValue: 'value',
+      .addSelect({
+        path: 'textMode',
+        name: 'Text mode',
+        description: 'Control if name and value is displayed or just name',
+        category: mainCategory,
         settings: {
           options: [
-            { value: 'value', label: 'Value' },
-            { value: 'background', label: 'Background' },
+            { value: BigValueTextMode.Auto, label: 'Auto' },
+            { value: BigValueTextMode.Value, label: 'Value' },
+            { value: BigValueTextMode.ValueAndName, label: 'Value and name' },
+            { value: BigValueTextMode.Name, label: 'Name' },
+            { value: BigValueTextMode.None, label: 'None' },
+          ],
+        },
+        defaultValue: defaultOptions.textMode,
+      })
+      .addRadio({
+        path: 'wideLayout',
+        name: 'Wide layout',
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: true, label: 'On' },
+            { value: false, label: 'Off' },
+          ],
+        },
+        defaultValue: defaultOptions.wideLayout,
+        showIf: (config) => config.textMode === BigValueTextMode.ValueAndName,
+      });
+
+    builder
+      .addSelect({
+        path: 'colorMode',
+        name: 'Color mode',
+        defaultValue: BigValueColorMode.Value,
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: BigValueColorMode.None, label: 'None' },
+            { value: BigValueColorMode.Value, label: 'Value' },
+            { value: BigValueColorMode.Background, label: 'Background Gradient' },
+            { value: BigValueColorMode.BackgroundSolid, label: 'Background Solid' },
           ],
         },
       })
@@ -42,27 +73,50 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         path: 'graphMode',
         name: 'Graph mode',
         description: 'Stat panel graph / sparkline mode',
-        defaultValue: 'area',
+        category: mainCategory,
+        defaultValue: defaultOptions.graphMode,
         settings: {
           options: [
-            { value: 'none', label: 'None' },
-            { value: 'area', label: 'Area' },
+            { value: BigValueGraphMode.None, label: 'None' },
+            { value: BigValueGraphMode.Area, label: 'Area' },
           ],
         },
       })
       .addRadio({
         path: 'justifyMode',
-        name: 'Alignment mode',
-        description: 'Value & title posititioning',
-        defaultValue: 'auto',
+        name: 'Text alignment',
+        defaultValue: defaultOptions.justifyMode,
+        category: mainCategory,
         settings: {
           options: [
-            { value: 'auto', label: 'Auto' },
-            { value: 'center', label: 'Center' },
+            { value: BigValueJustifyMode.Auto, label: 'Auto' },
+            { value: BigValueJustifyMode.Center, label: 'Center' },
           ],
         },
+      })
+      .addBooleanSwitch({
+        path: 'showPercentChange',
+        name: 'Show percent change',
+        defaultValue: defaultOptions.showPercentChange,
+        category: mainCategory,
+        showIf: (config) => !config.reduceOptions.values,
+      })
+      .addSelect({
+        path: 'percentChangeColorMode',
+        name: 'Percent change color mode',
+        defaultValue: defaultOptions.percentChangeColorMode,
+        category: mainCategory,
+        settings: {
+          options: [
+            { value: PercentChangeColorMode.Standard, label: 'Standard' },
+            { value: PercentChangeColorMode.Inverted, label: 'Inverted' },
+            { value: PercentChangeColorMode.SameAsValue, label: 'Same as Value' },
+          ],
+        },
+        showIf: (config) => config.showPercentChange,
       });
   })
   .setNoPadding()
   .setPanelChangeHandler(statPanelChangedHandler)
+  .setSuggestionsSupplier(new StatSuggestionsSupplier())
   .setMigrationHandler(sharedSingleStatMigrationHandler);

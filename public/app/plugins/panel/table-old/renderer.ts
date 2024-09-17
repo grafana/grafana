@@ -1,4 +1,5 @@
-import _ from 'lodash';
+import { find, first, isArray, isString, escape } from 'lodash';
+
 import {
   escapeStringForRegex,
   formattedValueToString,
@@ -11,16 +12,16 @@ import {
   TimeZone,
   dateTimeFormatISO,
   dateTimeFormat,
-  getColorForTheme,
-  GrafanaTheme,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
+
 import { ColumnOptionsCtrl } from './column_options';
+import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 
 export class TableRenderer {
   formatters: any[] = [];
-  colorState: any;
+  colorState: Record<string, string | null> = {};
 
   constructor(
     private panel: { styles: ColumnStyle[]; pageSize: number },
@@ -28,7 +29,7 @@ export class TableRenderer {
     private timeZone: TimeZone,
     private sanitize: (v: any) => any,
     private templateSrv: TemplateSrv = getTemplateSrv(),
-    private theme: GrafanaTheme
+    private theme: GrafanaTheme2
   ) {
     this.initColumns();
   }
@@ -75,10 +76,10 @@ export class TableRenderer {
     }
     for (let i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
-        return getColorForTheme(style.colors[i], this.theme);
+        return this.theme.visualization.getColorByName(style.colors[i]);
       }
     }
-    return getColorForTheme(_.first(style.colors), this.theme);
+    return this.theme.visualization.getColorByName(first(style.colors));
   }
 
   defaultCellFormatter(v: any, style: ColumnStyle) {
@@ -86,14 +87,14 @@ export class TableRenderer {
       return '';
     }
 
-    if (_.isArray(v)) {
+    if (isArray(v)) {
       v = v.join(', ');
     }
 
     if (style && style.sanitize) {
       return this.sanitize(v);
     } else {
-      return _.escape(v);
+      return escape(v);
     }
   }
 
@@ -112,12 +113,12 @@ export class TableRenderer {
           return '-';
         }
 
-        if (_.isArray(v)) {
+        if (isArray(v)) {
           v = v[0];
         }
 
         // if is an epoch (numeric string and len > 12)
-        if (_.isString(v) && !isNaN(v as any) && v.length > 12) {
+        if (isString(v) && !isNaN(v as any) && v.length > 12) {
           v = parseInt(v, 10);
         }
 
@@ -135,8 +136,8 @@ export class TableRenderer {
     }
 
     if (column.style.type === 'string') {
-      return (v: any): any => {
-        if (_.isArray(v)) {
+      return (v: any) => {
+        if (isArray(v)) {
           v = v.join(', ');
         }
 
@@ -154,7 +155,7 @@ export class TableRenderer {
             }
 
             // Allow both numeric and string values to be mapped
-            if ((!_.isString(v) && Number(map.value) === Number(v)) || map.value === v) {
+            if ((!isString(v) && Number(map.value) === Number(v)) || map.value === v) {
               this.setColorState(v, column.style);
               return this.defaultCellFormatter(map.text, column.style);
             }
@@ -191,12 +192,12 @@ export class TableRenderer {
     if (column.style.type === 'number') {
       const valueFormatter = getValueFormat(column.unit || column.style.unit);
 
-      return (v: any): any => {
+      return (v: any) => {
         if (v === null || v === void 0) {
           return '-';
         }
 
-        if (isNaN(v) || _.isArray(v)) {
+        if (isNaN(v) || isArray(v)) {
           return this.defaultCellFormatter(v, column.style);
         }
 
@@ -210,12 +211,12 @@ export class TableRenderer {
     };
   }
 
-  setColorState(value: any, style: ColumnStyle) {
+  setColorState(value: unknown, style: ColumnStyle) {
     if (!style.colorMode) {
       return;
     }
 
-    if (value === null || value === void 0 || _.isArray(value)) {
+    if (value === null || value === void 0 || isArray(value)) {
       return;
     }
 
@@ -287,7 +288,7 @@ export class TableRenderer {
     }
 
     if (column.style && column.style.align) {
-      const textAlign = _.find(ColumnOptionsCtrl.alignTypesEnum, ['text', column.style.align]);
+      const textAlign = find(ColumnOptionsCtrl.alignTypesEnum, ['text', column.style.align]);
       if (textAlign && textAlign['value']) {
         cellStyles.push(`text-align:${textAlign['value']}`);
       }
@@ -371,7 +372,7 @@ export class TableRenderer {
 
   render_values() {
     const rows = [];
-    const visibleColumns = this.table.columns.filter(column => !column.hidden);
+    const visibleColumns = this.table.columns.filter((column) => !column.hidden);
 
     for (let y = 0; y < this.table.rows.length; y++) {
       const row = this.table.rows[y];

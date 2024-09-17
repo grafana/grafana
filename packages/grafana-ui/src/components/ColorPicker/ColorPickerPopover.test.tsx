@@ -1,75 +1,58 @@
-import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
-import { ColorPickerPopover } from './ColorPickerPopover';
-import { ColorSwatch } from './NamedColorsGroup';
-import flatten from 'lodash/flatten';
-import { getTheme } from '../../themes';
-import { GrafanaThemeType, getNamedColorPalette, getColorFromHexRgbOrName } from '@grafana/data';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-const allColors = flatten(Array.from(getNamedColorPalette().values()));
+import { createTheme } from '@grafana/data';
+
+import { ColorPickerPopover } from './ColorPickerPopover';
 
 describe('ColorPickerPopover', () => {
+  const theme = createTheme();
+
+  it('should be tabbable', async () => {
+    render(<ColorPickerPopover color={'red'} onChange={() => {}} />);
+    const color = screen.getByRole('button', { name: 'dark-red color' });
+    const customTab = screen.getByRole('button', { name: 'Custom' });
+
+    await userEvent.tab();
+    expect(customTab).toHaveFocus();
+
+    await userEvent.tab();
+    expect(color).toHaveFocus();
+  });
+
   describe('rendering', () => {
-    it('should render provided color as selected if color provided by name', () => {
-      const theme = getTheme();
-      const wrapper = mount(<ColorPickerPopover color={'green'} onChange={() => {}} theme={theme} />);
-      const selectedSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === 'green');
-      const notSelectedSwatches = wrapper.find(ColorSwatch).filterWhere(node => node.prop('isSelected') === false);
+    it('should render provided color as selected if color provided by name', async () => {
+      render(<ColorPickerPopover color={'green'} onChange={() => {}} />);
+      const color = screen.getByRole('button', { name: 'green color' });
+      const colorSwatchWrapper = screen.getAllByTestId('data-testid-colorswatch');
 
-      expect(selectedSwatch.length).toBe(1);
-      expect(notSelectedSwatches.length).toBe(allColors.length - 1);
-      expect(selectedSwatch.prop('isSelected')).toBe(true);
-    });
+      expect(color).toBeInTheDocument();
+      expect(colorSwatchWrapper[0]).toBeInTheDocument();
 
-    it('should render provided color as selected if color provided by hex', () => {
-      const theme = getTheme();
-      const wrapper = mount(<ColorPickerPopover color={'green'} onChange={() => {}} theme={theme} />);
-
-      const selectedSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === 'green');
-      const notSelectedSwatches = wrapper.find(ColorSwatch).filterWhere(node => node.prop('isSelected') === false);
-
-      expect(selectedSwatch.length).toBe(1);
-      expect(notSelectedSwatches.length).toBe(allColors.length - 1);
-      expect(selectedSwatch.prop('isSelected')).toBe(true);
+      await userEvent.click(colorSwatchWrapper[0]);
+      expect(color).toHaveStyle('box-shadow: inset 0 0 0 2px #73BF69,inset 0 0 0 4px #000000');
     });
   });
 
   describe('named colors support', () => {
     const onChangeSpy = jest.fn();
-    let wrapper: ReactWrapper;
 
-    afterEach(() => {
-      wrapper.unmount();
-      onChangeSpy.mockClear();
-    });
-
-    it('should pass hex color value to onChange prop by default', () => {
-      wrapper = mount(
-        <ColorPickerPopover color={'green'} onChange={onChangeSpy} theme={getTheme(GrafanaThemeType.Light)} />
-      );
-
-      const basicBlueSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === 'green');
-      basicBlueSwatch.simulate('click');
+    it('should pass hex color value to onChange prop by default', async () => {
+      render(<ColorPickerPopover color={'red'} onChange={onChangeSpy} />);
+      const color = screen.getByRole('button', { name: 'red color' });
+      await userEvent.click(color);
 
       expect(onChangeSpy).toBeCalledTimes(1);
-      expect(onChangeSpy).toBeCalledWith(getColorFromHexRgbOrName('green', GrafanaThemeType.Light));
+      expect(onChangeSpy).toHaveBeenCalledWith(theme.visualization.getColorByName('red'));
     });
 
-    it('should pass color name to onChange prop when named colors enabled', () => {
-      wrapper = mount(
-        <ColorPickerPopover
-          enableNamedColors
-          color={'green'}
-          onChange={onChangeSpy}
-          theme={getTheme(GrafanaThemeType.Light)}
-        />
-      );
+    it('should pass color name to onChange prop when named colors enabled', async () => {
+      render(<ColorPickerPopover color={'red'} enableNamedColors onChange={onChangeSpy} />);
+      const color = screen.getByRole('button', { name: 'red color' });
+      await userEvent.click(color);
 
-      const basicBlueSwatch = wrapper.find(ColorSwatch).findWhere(node => node.key() === 'green');
-      basicBlueSwatch.simulate('click');
-
-      expect(onChangeSpy).toBeCalledTimes(1);
-      expect(onChangeSpy).toBeCalledWith('green');
+      expect(onChangeSpy).toBeCalledTimes(2);
+      expect(onChangeSpy).toHaveBeenCalledWith(theme.visualization.getColorByName('red'));
     });
   });
 });

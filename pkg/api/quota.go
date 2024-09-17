@@ -1,67 +1,215 @@
 package api
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"net/http"
+	"strconv"
+
+	"github.com/grafana/grafana/pkg/api/response"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetOrgQuotas(c *models.ReqContext) Response {
-	if !setting.Quota.Enabled {
-		return Error(404, "Quotas not enabled", nil)
-	}
-	query := models.GetOrgQuotasQuery{OrgId: c.ParamsInt64(":orgId")}
-
-	if err := bus.Dispatch(&query); err != nil {
-		return Error(500, "Failed to get org quotas", err)
-	}
-
-	return JSON(200, query.Result)
+// swagger:route GET /org/quotas getCurrentOrg getCurrentOrgQuota
+//
+// Fetch Organization quota.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).
+//
+// Responses:
+// 200: getQuotaResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetCurrentOrgQuotas(c *contextmodel.ReqContext) response.Response {
+	return hs.getOrgQuotasHelper(c, c.SignedInUser.GetOrgID())
 }
 
-func UpdateOrgQuota(c *models.ReqContext, cmd models.UpdateOrgQuotaCmd) Response {
-	if !setting.Quota.Enabled {
-		return Error(404, "Quotas not enabled", nil)
+// swagger:route GET /orgs/{org_id}/quotas orgs getOrgQuota
+//
+// Fetch Organization quota.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:read` and scope `org:id:1` (orgIDScope).
+//
+// Responses:
+// 200: getQuotaResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetOrgQuotas(c *contextmodel.ReqContext) response.Response {
+	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Err(quota.ErrBadRequest.Errorf("orgId is invalid: %w", err))
 	}
-	cmd.OrgId = c.ParamsInt64(":orgId")
-	cmd.Target = c.Params(":target")
-
-	if _, ok := setting.Quota.Org.ToMap()[cmd.Target]; !ok {
-		return Error(404, "Invalid quota target", nil)
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to update org quotas", err)
-	}
-	return Success("Organization quota updated")
+	return hs.getOrgQuotasHelper(c, orgId)
 }
 
-func GetUserQuotas(c *models.ReqContext) Response {
-	if !setting.Quota.Enabled {
-		return Error(404, "Quotas not enabled", nil)
+func (hs *HTTPServer) getOrgQuotasHelper(c *contextmodel.ReqContext, orgID int64) response.Response {
+	ctx, span := hs.tracer.Start(c.Req.Context(), "api.getOrgQuotasHelper")
+	defer span.End()
+	q, err := hs.QuotaService.GetQuotasByScope(ctx, quota.OrgScope, orgID)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get quota", err)
 	}
-	query := models.GetUserQuotasQuery{UserId: c.ParamsInt64(":id")}
-
-	if err := bus.Dispatch(&query); err != nil {
-		return Error(500, "Failed to get org quotas", err)
-	}
-
-	return JSON(200, query.Result)
+	return response.JSON(http.StatusOK, q)
 }
 
-func UpdateUserQuota(c *models.ReqContext, cmd models.UpdateUserQuotaCmd) Response {
-	if !setting.Quota.Enabled {
-		return Error(404, "Quotas not enabled", nil)
+// swagger:route PUT /orgs/{org_id}/quotas/{quota_target} orgs updateOrgQuota
+//
+// Update user quota.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `orgs.quotas:write` and scope `org:id:1` (orgIDScope).
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) UpdateOrgQuota(c *contextmodel.ReqContext) response.Response {
+	ctx, span := hs.tracer.Start(c.Req.Context(), "api.UpdateOrgQuota")
+	defer span.End()
+	cmd := quota.UpdateQuotaCmd{}
+	var err error
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Err(quota.ErrBadRequest.Errorf("bad request data: %w", err))
 	}
-	cmd.UserId = c.ParamsInt64(":id")
-	cmd.Target = c.Params(":target")
+	cmd.OrgID, err = strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
+	if err != nil {
+		return response.Err(quota.ErrBadRequest.Errorf("orgId is invalid: %w", err))
+	}
+	cmd.Target = web.Params(c.Req)[":target"]
 
-	if _, ok := setting.Quota.User.ToMap()[cmd.Target]; !ok {
-		return Error(404, "Invalid quota target", nil)
+	if err := hs.QuotaService.Update(ctx, &cmd); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update org quotas", err)
+	}
+	return response.Success("Organization quota updated")
+}
+
+// swagger:route GET /admin/users/{user_id}/quotas admin_users getUserQuota
+//
+// Fetch user quota.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:list` and scope `global.users:1` (userIDScope).
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: getQuotaResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+
+// swagger:route GET /user/quotas signed_in_user getUserQuotas
+//
+// Fetch user quota.
+//
+// Responses:
+// 200: getQuotaResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) GetUserQuotas(c *contextmodel.ReqContext) response.Response {
+	ctx, span := hs.tracer.Start(c.Req.Context(), "api.GetUserQuotas")
+	defer span.End()
+	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Err(quota.ErrBadRequest.Errorf("id is invalid: %w", err))
 	}
 
-	if err := bus.Dispatch(&cmd); err != nil {
-		return Error(500, "Failed to update org quotas", err)
+	q, err := hs.QuotaService.GetQuotasByScope(ctx, quota.UserScope, id)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get org quotas", err)
 	}
-	return Success("Organization quota updated")
+
+	return response.JSON(http.StatusOK, q)
+}
+
+// swagger:route PUT /admin/users/{user_id}/quotas/{quota_target} admin_users updateUserQuota
+//
+// Update user quota.
+//
+// If you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `users.quotas:update` and scope `global.users:1` (userIDScope).
+//
+// Security:
+// - basic:
+//
+// Responses:
+// 200: okResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
+func (hs *HTTPServer) UpdateUserQuota(c *contextmodel.ReqContext) response.Response {
+	ctx, span := hs.tracer.Start(c.Req.Context(), "api.UpdateUserQuota")
+	defer span.End()
+	cmd := quota.UpdateQuotaCmd{}
+	var err error
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Err(quota.ErrBadRequest.Errorf("bad request data: %w", err))
+	}
+	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
+	if err != nil {
+		return response.Err(quota.ErrBadRequest.Errorf("id is invalid: %w", err))
+	}
+	cmd.Target = web.Params(c.Req)[":target"]
+
+	if err := hs.QuotaService.Update(ctx, &cmd); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update org quotas", err)
+	}
+	return response.Success("Organization quota updated")
+}
+
+// swagger:parameters updateUserQuota
+type UpdateUserQuotaParams struct {
+	// in:body
+	// required:true
+	Body quota.UpdateQuotaCmd `json:"body"`
+	// in:path
+	// required:true
+	QuotaTarget string `json:"quota_target"`
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getUserQuota
+type GetUserQuotaParams struct {
+	// in:path
+	// required:true
+	UserID int64 `json:"user_id"`
+}
+
+// swagger:parameters getOrgQuota
+type GetOrgQuotaParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:parameters updateOrgQuota
+type UpdateOrgQuotaParam struct {
+	// in:body
+	// required:true
+	Body quota.UpdateQuotaCmd `json:"body"`
+	// in:path
+	// required:true
+	QuotaTarget string `json:"quota_target"`
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
+// swagger:response getQuotaResponse
+type GetQuotaResponseResponse struct {
+	// in:body
+	Body []*quota.QuotaDTO `json:"body"`
 }

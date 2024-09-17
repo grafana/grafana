@@ -1,20 +1,37 @@
-import React from 'react';
-import { cx } from 'emotion';
+import { css } from '@emotion/css';
+import * as React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
-import { Icon } from '../Icon/Icon';
 
 interface Props {
+  /** @deprecated */
   icon?: IconName;
+  /** @deprecated */
   iconClass?: string;
 }
 
-export const ModalTabContent: React.FC<Props> = ({ icon, iconClass, children }) => {
+/** @internal */
+export const ModalTabContent = ({ children }: React.PropsWithChildren<Props>) => {
+  const styles = useStyles2(getStyles);
+
   return (
-    <div className="share-modal-body">
-      <div className="share-modal-header">
-        {icon && <Icon name={icon} size="xxl" className={cx(iconClass, 'share-modal-big-icon')} />}
-        <div className="share-modal-content">{children}</div>
+    <div>
+      <div className={styles.header}>
+        <div className={styles.content}>{children}</div>
       </div>
     </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  header: css({
+    display: 'flex',
+    margin: theme.spacing(0, 0, 3, 0),
+  }),
+  content: css({
+    flexGrow: 1,
+  }),
+});

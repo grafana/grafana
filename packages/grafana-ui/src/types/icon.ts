@@ -1,239 +1,48 @@
+import { availableIconsIndex, Field, FieldType, IconName } from '@grafana/data';
+
 import { ComponentSize } from './size';
-export type IconType = 'mono' | 'default';
+
+// Exported from here for backwards compatibility
+export type { IconName } from '@grafana/data';
+export { toIconName } from '@grafana/data';
+
+export type IconType = 'mono' | 'default' | 'solid';
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
+export const isIconSize = (value: string): value is IconSize => {
+  return ['xs', 'sm', 'md', 'lg', 'xl', 'xxl', 'xxxl'].includes(value);
+};
 
-export type IconName =
-  | 'fa fa-spinner'
-  | 'grafana'
-  | 'question-circle'
-  | 'angle-up'
-  | 'history'
-  | 'angle-down'
-  | 'filter'
-  | 'angle-left'
-  | 'angle-right'
-  | 'angle-double-right'
-  | 'angle-double-down'
-  | 'pen'
-  | 'envelope'
-  | 'percentage'
-  | 'rocket'
-  | 'power'
-  | 'trash-alt'
-  | 'slack'
-  | 'download-alt'
-  | 'mobile-android'
-  | 'plus-square'
-  | 'folder-plus'
-  | 'folder-open'
-  | 'folder'
-  | 'file-copy-alt'
-  | 'file-alt'
-  | 'exchange-alt'
-  | 'import'
-  | 'exclamation-triangle'
-  | 'times'
-  | 'signin'
-  | 'cloud-upload'
-  | 'step-backward'
-  | 'square-shape'
-  | 'share-alt'
-  | 'tag-alt'
-  | 'forward'
-  | 'check'
-  | 'check-circle'
-  | 'copy'
-  | 'lock'
-  | 'unlock'
-  | 'panel-add'
-  | 'arrow-random'
-  | 'arrow-down'
-  | 'arrows-h'
-  | 'comment-alt'
-  | 'code-branch'
-  | 'arrow-right'
-  | 'circle'
-  | 'arrow-up'
-  | 'arrow-from-right'
-  | 'keyboard'
-  | 'search'
-  | 'chart-line'
-  | 'search-minus'
-  | 'clock-nine'
-  | 'sync'
-  | 'sign-in-alt'
-  | 'cloud-download'
-  | 'cog'
-  | 'bars'
-  | 'save'
-  | 'apps'
-  | 'link'
-  | 'upload'
-  | 'columns'
-  | 'home-alt'
-  | 'channel-add'
-  | 'calendar-alt'
-  | 'play'
-  | 'pause'
-  | 'calculator-alt'
-  | 'compass'
-  | 'sliders-v-alt'
-  | 'bell'
-  | 'database'
-  | 'user'
-  | 'camera'
-  | 'plug'
-  | 'shield'
-  | 'key-skeleton-alt'
-  | 'users-alt'
-  | 'graph-bar'
-  | 'book'
-  | 'bolt'
-  | 'comments-alt'
-  | 'document-info'
-  | 'info-circle'
-  | 'bug'
-  | 'cube'
-  | 'star'
-  | 'list-ul'
-  | 'edit'
-  | 'eye'
-  | 'eye-slash'
-  | 'monitor'
-  | 'plus-circle'
-  | 'arrow-left'
-  | 'repeat'
-  | 'external-link-alt'
-  | 'minus'
-  | 'signal'
-  | 'search-plus'
-  | 'minus-circle'
-  | 'table'
-  | 'plus'
-  | 'heart'
-  | 'heart-break'
-  | 'ellipsis-v'
-  | 'favorite'
-  | 'line-alt'
-  | 'sort-amount-down'
-  | 'cloud'
-  | 'draggabledots'
-  | 'folder-upload';
+// function remains for backwards compatibility
+export const getAvailableIcons = () => Object.keys(availableIconsIndex);
 
-export const getAvailableIcons = (): IconName[] => [
-  'fa fa-spinner',
-  'grafana',
-  'question-circle',
-  'angle-up',
-  'history',
-  'angle-down',
-  'filter',
-  'angle-left',
-  'angle-right',
-  'angle-double-right',
-  'angle-double-down',
-  'pen',
-  'envelope',
-  'percentage',
-  'rocket',
-  'power',
-  'trash-alt',
-  'slack',
-  'download-alt',
-  'mobile-android',
-  'plus-square',
-  'folder-plus',
-  'folder-open',
-  'folder',
-  'file-copy-alt',
-  'file-alt',
-  'exchange-alt',
-  'import',
-  'exclamation-triangle',
-  'times',
-  'signin',
-  'cloud-upload',
-  'step-backward',
-  'square-shape',
-  'share-alt',
-  'tag-alt',
-  'forward',
-  'check',
-  'check-circle',
-  'copy',
-  'lock',
-  'unlock',
-  'panel-add',
-  'arrow-random',
-  'arrow-down',
-  'arrows-h',
-  'comment-alt',
-  'code-branch',
-  'arrow-right',
-  'circle',
-  'arrow-up',
-  'arrow-from-right',
-  'keyboard',
-  'search',
-  'chart-line',
-  'search-minus',
-  'clock-nine',
-  'sync',
-  'sign-in-alt',
-  'cloud-download',
-  'cog',
-  'bars',
-  'save',
-  'apps',
-  'link',
-  'upload',
-  'columns',
-  'home-alt',
-  'channel-add',
-  'calendar-alt',
-  'play',
-  'pause',
-  'calculator-alt',
-  'compass',
-  'sliders-v-alt',
-  'bell',
-  'database',
-  'user',
-  'camera',
-  'plug',
-  'shield',
-  'key-skeleton-alt',
-  'users-alt',
-  'graph-bar',
-  'book',
-  'bolt',
-  'comments-alt',
-  'document-info',
-  'info-circle',
-  'bug',
-  'cube',
-  'star',
-  'list-ul',
-  'edit',
-  'eye',
-  'eye-slash',
-  'monitor',
-  'plus-circle',
-  'arrow-left',
-  'repeat',
-  'external-link-alt',
-  'minus',
-  'signal',
-  'search-plus',
-  'minus-circle',
-  'table',
-  'plus',
-  'heart',
-  'heart-break',
-  'ellipsis-v',
-  'favorite',
-  'sort-amount-down',
-  'cloud',
-  'draggabledots',
-  'folder-upload',
-];
+/**
+ * Get the icon for a given field
+ */
+export function getFieldTypeIcon(field?: Field): IconName {
+  return getFieldTypeIconName(field?.type);
+}
+
+/** Get an icon for a given field type  */
+export function getFieldTypeIconName(type?: FieldType): IconName {
+  if (type) {
+    switch (type) {
+      case FieldType.time:
+        return 'clock-nine';
+      case FieldType.string:
+        return 'font';
+      case FieldType.number:
+        return 'calculator-alt';
+      case FieldType.boolean:
+        return 'toggle-on';
+      case FieldType.trace:
+        return 'info-circle';
+      case FieldType.enum:
+        return 'list-ol';
+      case FieldType.geo:
+        return 'map-marker';
+      case FieldType.other:
+        return 'brackets-curly';
+    }
+  }
+  return 'question-circle';
+}

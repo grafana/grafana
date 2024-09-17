@@ -1,0 +1,212 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`thresholdReducer Should update unlooadEvaluator when checking hysteresis 1`] = `
+{
+  "conditions": [
+    {
+      "evaluator": {
+        "params": [
+          10,
+          0,
+        ],
+        "type": "gt",
+      },
+      "query": {
+        "params": [
+          "A",
+          "B",
+        ],
+      },
+      "reducer": {
+        "params": [],
+        "type": "avg",
+      },
+      "type": "query",
+      "unloadEvaluator": {
+        "params": [
+          10,
+          0,
+        ],
+        "type": "lt",
+      },
+    },
+  ],
+  "refId": "A",
+  "type": "threshold",
+}
+`;
+
+exports[`thresholdReducer Should update unlooadEvaluator when unchecking hysteresis 1`] = `
+{
+  "conditions": [
+    {
+      "evaluator": {
+        "params": [
+          10,
+          0,
+        ],
+        "type": "gt",
+      },
+      "query": {
+        "params": [
+          "A",
+          "B",
+        ],
+      },
+      "reducer": {
+        "params": [],
+        "type": "avg",
+      },
+      "type": "query",
+      "unloadEvaluator": undefined,
+    },
+  ],
+  "refId": "A",
+  "type": "threshold",
+}
+`;
+
+exports[`thresholdReducer should update Threshold Type, and unloadEvaluator params and type  1`] = `
+{
+  "conditions": [
+    {
+      "evaluator": {
+        "params": [
+          10,
+          0,
+        ],
+        "type": "lt",
+      },
+      "query": {
+        "params": [
+          "A",
+          "B",
+        ],
+      },
+      "reducer": {
+        "params": [],
+        "type": "avg",
+      },
+      "type": "query",
+      "unloadEvaluator": {
+        "params": [
+          10,
+          0,
+        ],
+        "type": "gt",
+      },
+    },
+  ],
+  "refId": "A",
+  "type": "threshold",
+}
+`;
+
+exports[`thresholdReducer should update expression with RefId 1`] = `
+{
+  "conditions": [
+    {
+      "evaluator": {
+        "params": [
+          10,
+          0,
+        ],
+        "type": "gt",
+      },
+      "query": {
+        "params": [
+          "A",
+          "B",
+        ],
+      },
+      "reducer": {
+        "params": [],
+        "type": "avg",
+      },
+      "type": "query",
+      "unloadEvaluator": {
+        "params": [
+          10,
+          0,
+        ],
+        "type": "lt",
+      },
+    },
+  ],
+  "expression": "B",
+  "refId": "A",
+  "type": "threshold",
+}
+`;
+
+exports[`thresholdReducer should update unloadParams no error when are invalid 1`] = `
+{
+  "conditions": [
+    {
+      "evaluator": {
+        "params": [
+          10,
+          0,
+        ],
+        "type": "gt",
+      },
+      "query": {
+        "params": [
+          "A",
+          "B",
+        ],
+      },
+      "reducer": {
+        "params": [],
+        "type": "avg",
+      },
+      "type": "query",
+      "unloadEvaluator": {
+        "params": [
+          20,
+          0,
+        ],
+        "type": "lt",
+      },
+    },
+  ],
+  "refId": "A",
+  "type": "threshold",
+}
+`;
+
+exports[`thresholdReducer should update unloadParams with no error when are valid 1`] = `
+{
+  "conditions": [
+    {
+      "evaluator": {
+        "params": [
+          10,
+          0,
+        ],
+        "type": "gt",
+      },
+      "query": {
+        "params": [
+          "A",
+          "B",
+        ],
+      },
+      "reducer": {
+        "params": [],
+        "type": "avg",
+      },
+      "type": "query",
+      "unloadEvaluator": {
+        "params": [
+          9,
+          0,
+        ],
+        "type": "lt",
+      },
+    },
+  ],
+  "refId": "A",
+  "type": "threshold",
+}
+`;

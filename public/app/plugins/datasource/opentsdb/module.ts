@@ -1,13 +1,9 @@
-import OpenTsDatasource from './datasource';
-import { OpenTsQueryCtrl } from './query_ctrl';
 import { DataSourcePlugin } from '@grafana/data';
-import { ConfigEditor } from './components/ConfigEditor';
 
-class AnnotationsQueryCtrl {
-  static templateUrl = 'partials/annotations.editor.html';
-}
+import { ConfigEditor } from './components/ConfigEditor';
+import { OpenTsdbQueryEditor } from './components/OpenTsdbQueryEditor';
+import OpenTsDatasource from './datasource';
 
 export const plugin = new DataSourcePlugin(OpenTsDatasource)
-  .setQueryCtrl(OpenTsQueryCtrl)
-  .setConfigEditor(ConfigEditor)
-  .setAnnotationQueryCtrl(AnnotationsQueryCtrl);
+  .setQueryEditor(OpenTsdbQueryEditor)
+  .setConfigEditor(ConfigEditor);

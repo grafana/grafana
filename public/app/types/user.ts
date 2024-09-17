@@ -1,7 +1,9 @@
-import { TimeZone } from '@grafana/data';
+import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { Role } from 'app/types';
+
 import { OrgRole } from '.';
 
-export interface OrgUser {
+export interface OrgUser extends WithAccessControlMetadata {
   avatarUrl: string;
   email: string;
   lastSeenAt: string;
@@ -10,7 +12,12 @@ export interface OrgUser {
   name: string;
   orgId: number;
   role: OrgRole;
+  // RBAC roles
+  roles?: Role[];
   userId: number;
+  isDisabled: boolean;
+  authLabels?: string[];
+  isExternallySynced?: boolean;
 }
 
 export interface User {
@@ -23,7 +30,9 @@ export interface User {
   orgId?: number;
 }
 
-export interface UserDTO {
+export type Unit = { name: string; url: string };
+
+export interface UserDTO extends WithAccessControlMetadata {
   id: number;
   login: string;
   email: string;
@@ -37,7 +46,14 @@ export interface UserDTO {
   theme?: string;
   avatarUrl?: string;
   orgId?: number;
+  lastSeenAt?: string;
   lastSeenAtAge?: string;
+  licensedRole?: string;
+  permissions?: string[];
+  teams?: Unit[];
+  orgs?: Unit[];
+  isExternallySynced?: boolean;
+  isGrafanaAdminExternallySynced?: boolean;
 }
 
 export interface Invitee {
@@ -59,18 +75,16 @@ export interface Invitee {
 
 export interface UsersState {
   users: OrgUser[];
-  invitees: Invitee[];
   searchQuery: string;
-  canInvite: boolean;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
-  hasFetched: boolean;
-}
-
-export interface UserState {
-  orgId: number;
-  timeZone: TimeZone;
+  isLoading: boolean;
+  rolesLoading?: boolean;
+  page: number;
+  perPage: number;
+  totalPages: number;
+  sort?: string;
 }
 
 export interface UserSession {
@@ -93,11 +107,11 @@ export interface UserOrg {
 }
 
 export interface UserAdminState {
-  user: UserDTO | null;
+  user?: UserDTO;
   sessions: UserSession[];
   orgs: UserOrg[];
   isLoading: boolean;
-  error?: UserAdminError | null;
+  error?: UserAdminError;
 }
 
 export interface UserAdminError {
@@ -105,6 +119,7 @@ export interface UserAdminError {
   body: string;
 }
 
+export type UserFilter = Record<string, string | boolean | SelectableValue[]>;
 export interface UserListAdminState {
   users: UserDTO[];
   query: string;
@@ -112,4 +127,30 @@ export interface UserListAdminState {
   page: number;
   totalPages: number;
   showPaging: boolean;
+  filters: UserFilter[];
+  isLoading: boolean;
+  sort?: string;
+}
+
+export interface UserAnonymousDeviceDTO {
+  login?: string;
+  clientIp: string;
+  deviceId: string;
+  userAgent: string;
+  updatedAt: string;
+  lastSeenAt: string;
+  avatarUrl?: string;
+}
+
+export type AnonUserFilter = Record<string, string | boolean | SelectableValue[]>;
+
+export interface UserListAnonymousDevicesState {
+  devices: UserAnonymousDeviceDTO[];
+  query: string;
+  perPage: number;
+  page: number;
+  totalPages: number;
+  showPaging: boolean;
+  filters: AnonUserFilter[];
+  sort?: string;
 }

@@ -1,0 +1,180 @@
+{
+	"cost": 1439,
+	"timespan": "2022-09-28T15:33:05Z/2022-09-29T15:33:05Z",
+	"interval": "PT5M",
+	"value": [
+		{
+			"id": "subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/Microsoft.Insights/metrics/Percentage CPU",
+			"type": "Microsoft.Insights/metrics",
+			"name": {
+				"value": "Percentage CPU",
+				"localizedValue": "Percentage CPU"
+			},
+			"unit": "Percent",
+			"timeseries": [
+				{
+					"metadatavalues": [
+						{
+							"name": {
+								"value": "microsoft.resourceid",
+								"localizedValue": "microsoft.resourceid"
+							},
+							"value": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"
+						},
+						{
+							"name": {
+								"value": "test-dimension",
+								"localizedValue": "Test Dimension"
+							},
+							"value": "value-1"
+						}
+					],
+					"data": [
+                        {
+                            "timeStamp": "2019-02-08T10:13:00Z",
+                            "average": 2.0875
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:14:00Z",
+                            "average": 2.1525
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:15:00Z",
+                            "average": 2.155
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:16:00Z",
+                            "average": 3.6925
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:17:00Z",
+                            "average": 2.44
+                          }
+                    ]
+				},
+				{
+					"metadatavalues": [
+						{
+							"name": {
+								"value": "microsoft.resourceid",
+								"localizedValue": "microsoft.resourceid"
+							},
+							"value": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"
+						},
+						{
+							"name": {
+								"value": "test-dimension",
+								"localizedValue": "Test Dimension"
+							},
+							"value": "value-2"
+						}
+					],
+					"data": [
+                        {
+                            "timeStamp": "2019-02-08T10:13:00Z",
+                            "average": 2.0875
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:14:00Z",
+                            "average": 2.1525
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:15:00Z",
+                            "average": 2.155
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:16:00Z",
+                            "average": 3.6925
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:17:00Z",
+                            "average": 2.44
+                          }
+                    ]
+				},
+				{
+					"metadatavalues": [
+						{
+							"name": {
+								"value": "microsoft.resourceid",
+								"localizedValue": "microsoft.resourceid"
+							},
+							"value": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana-1"
+						},
+						{
+							"name": {
+								"value": "test-dimension",
+								"localizedValue": "Test Dimension"
+							},
+							"value": "value-1"
+						}
+					],
+					"data": [
+                        {
+                            "timeStamp": "2019-02-08T10:13:00Z",
+                            "average": 2.0875
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:14:00Z",
+                            "average": 2.1525
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:15:00Z",
+                            "average": 2.155
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:16:00Z",
+                            "average": 3.6925
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:17:00Z",
+                            "average": 2.44
+                          }
+                    ]
+				},
+				{
+					"metadatavalues": [
+						{
+							"name": {
+								"value": "microsoft.resourceid",
+								"localizedValue": "microsoft.resourceid"
+							},
+							"value": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana-1"
+						},
+						{
+							"name": {
+								"value": "test-dimension",
+								"localizedValue": "Test Dimension"
+							},
+							"value": "value-3"
+						}
+					],
+					"data": [
+                        {
+                            "timeStamp": "2019-02-08T10:13:00Z",
+                            "average": 2.0875
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:14:00Z",
+                            "average": 2.1525
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:15:00Z",
+                            "average": 2.155
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:16:00Z",
+                            "average": 3.6925
+                          },
+                          {
+                            "timeStamp": "2019-02-08T10:17:00Z",
+                            "average": 2.44
+                          }
+                    ]
+				}
+			]
+		}
+	],
+	"namespace": "Microsoft.Compute/virtualMachines",
+	"resourceregion": "northeurope"
+}

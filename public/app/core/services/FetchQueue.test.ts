@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { take } from 'rxjs/operators';
+
 import { BackendSrvRequest } from '@grafana/runtime';
 
 import { FetchQueue, FetchQueueUpdate, FetchStatus } from './FetchQueue';
@@ -12,7 +13,7 @@ type SubscribeTesterArgs<T> = {
 
 export const subscribeTester = <T>({ observable, expectCallback, doneCallback }: SubscribeTesterArgs<T>) => {
   observable.subscribe({
-    next: data => expectCallback(data),
+    next: (data) => expectCallback(data),
     complete: () => {
       doneCallback();
     },
@@ -22,7 +23,7 @@ export const subscribeTester = <T>({ observable, expectCallback, doneCallback }:
 describe('FetchQueue', () => {
   describe('add', () => {
     describe('when called twice', () => {
-      it('then an update with the correct state should be published', done => {
+      it('then an update with the correct state should be published', (done) => {
         const id = 'id';
         const id2 = 'id2';
         const options: BackendSrvRequest = { url: 'http://someurl' };
@@ -49,7 +50,7 @@ describe('FetchQueue', () => {
 
         subscribeTester({
           observable: queue.getUpdates().pipe(take(2)),
-          expectCallback: data => expect(data).toEqual(expects[calls++]),
+          expectCallback: (data) => expect(data).toEqual(expects[calls++]),
           doneCallback: done,
         });
 
@@ -61,7 +62,7 @@ describe('FetchQueue', () => {
 
   describe('setInProgress', () => {
     describe('when called', () => {
-      it('then an update with the correct state should be published', done => {
+      it('then an update with the correct state should be published', (done) => {
         const id = 'id';
         const id2 = 'id2';
         const options: BackendSrvRequest = { url: 'http://someurl' };
@@ -96,7 +97,7 @@ describe('FetchQueue', () => {
 
         subscribeTester({
           observable: queue.getUpdates().pipe(take(3)),
-          expectCallback: data => expect(data).toEqual(expects[calls++]),
+          expectCallback: (data) => expect(data).toEqual(expects[calls++]),
           doneCallback: done,
         });
 
@@ -109,7 +110,7 @@ describe('FetchQueue', () => {
 
   describe('setDone', () => {
     describe('when called', () => {
-      it('then an update with the correct state should be published', done => {
+      it('then an update with the correct state should be published', (done) => {
         const id = 'id';
         const id2 = 'id2';
         const options: BackendSrvRequest = { url: 'http://someurl' };
@@ -143,7 +144,7 @@ describe('FetchQueue', () => {
 
         subscribeTester({
           observable: queue.getUpdates().pipe(take(3)),
-          expectCallback: data => expect(data).toEqual(expects[calls++]),
+          expectCallback: (data) => expect(data).toEqual(expects[calls++]),
           doneCallback: done,
         });
 

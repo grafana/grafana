@@ -1,25 +1,29 @@
-import React, { useState } from 'react';
-import { ContextMenu, ContextMenuGroup } from '../ContextMenu/ContextMenu';
+import { useState } from 'react';
+import * as React from 'react';
 
-interface WithContextMenuProps {
+import { ContextMenu } from '../ContextMenu/ContextMenu';
+
+export interface WithContextMenuProps {
   /** Menu item trigger that accepts openMenu prop */
   children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
   /** A function that returns an array of menu items */
-  getContextMenuItems: () => ContextMenuGroup[];
+  renderMenuItems: () => React.ReactNode;
+  /** On menu open focus the first element */
+  focusOnOpen?: boolean;
 }
 
-export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getContextMenuItems }) => {
+export const WithContextMenu = ({ children, renderMenuItems, focusOnOpen = true }: WithContextMenuProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-
+  const isBodyScrolling = window.grafanaBootData?.settings.featureToggles.bodyScrolling;
   return (
     <>
       {children({
-        openMenu: e => {
+        openMenu: (e) => {
           setIsMenuOpen(true);
           setMenuPosition({
             x: e.pageX,
-            y: e.pageY,
+            y: isBodyScrolling ? e.pageY - window.scrollY : e.pageY,
           });
         },
       })}
@@ -29,7 +33,8 @@ export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getC
           onClose={() => setIsMenuOpen(false)}
           x={menuPosition.x}
           y={menuPosition.y}
-          items={getContextMenuItems()}
+          renderMenuItems={renderMenuItems}
+          focusOnOpen={focusOnOpen}
         />
       )}
     </>

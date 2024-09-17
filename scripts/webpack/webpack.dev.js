@@ -1,18 +1,38 @@
 'use strict';
-
-const merge = require('webpack-merge');
-const common = require('./webpack.common.js');
-const path = require('path');
-const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { getPackagesSync } = require('@manypkg/get-packages');
+const browserslist = require('browserslist');
+const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
+const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const path = require('path');
+const { DefinePlugin, EnvironmentPlugin } = require('webpack');
+const WebpackAssetsManifest = require('webpack-assets-manifest');
+const { merge } = require('webpack-merge');
+const WebpackBar = require('webpackbar');
 
-module.exports = (env = {}) =>
-  merge(common, {
-    devtool: 'cheap-module-source-map',
+const getEnvConfig = require('./env-util.js');
+const common = require('./webpack.common.js');
+const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
+// esbuild-loader 3.0.0+ requires format to be set to prevent it
+// from defaulting to 'iife' which breaks monaco/loader once minified.
+const esbuildOptions = {
+  target: esbuildTargets,
+  format: undefined,
+  jsx: 'automatic',
+};
+
+// To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
+function getDecoupledPlugins() {
+  const { packages } = getPackagesSync(process.cwd());
+  return packages.filter((pkg) => pkg.dir.includes('plugins/datasource')).map((pkg) => `${pkg.dir}/**`);
+}
+
+const envConfig = getEnvConfig();
+
+module.exports = (env = {}) => {
+  return merge(common, {
+    devtool: 'source-map',
     mode: 'development',
 
     entry: {
@@ -23,7 +43,23 @@ module.exports = (env = {}) =>
 
     // If we enabled watch option via CLI
     watchOptions: {
-      ignored: /node_modules/,
+      ignored: ['/node_modules/', ...getDecoupledPlugins()],
+    },
+
+    resolve: {
+      alias: {
+        // Packages linked for development need react to be resolved from the same location
+        react: path.resolve('./node_modules/react'),
+
+        // Also Grafana packages need to be resolved from the same location so they share
+        // the same singletons
+        '@grafana/runtime': path.resolve(__dirname, '../../packages/grafana-runtime'),
+        '@grafana/data': path.resolve(__dirname, '../../packages/grafana-data'),
+
+        // This is required to correctly resolve react-router-dom when linking with
+        //  local version of @grafana/scenes
+        'react-router-dom': path.resolve('./node_modules/react-router-dom'),
+      },
     },
 
     module: {
@@ -31,49 +67,10 @@ module.exports = (env = {}) =>
       rules: [
         {
           test: /\.tsx?$/,
-          exclude: /node_modules/,
-          use: [
-            {
-              loader: 'babel-loader',
-              options: {
-                cacheDirectory: true,
-                babelrc: false,
-                // Note: order is top-to-bottom and/or left-to-right
-                plugins: [
-                  [
-                    require('@rtsao/plugin-proposal-class-properties'),
-                    {
-                      loose: true,
-                    },
-                  ],
-                  '@babel/plugin-proposal-nullish-coalescing-operator',
-                  '@babel/plugin-proposal-optional-chaining',
-                  'angularjs-annotate',
-                ],
-                // Note: order is bottom-to-top and/or right-to-left
-                presets: [
-                  [
-                    '@babel/preset-env',
-                    {
-                      targets: {
-                        browsers: 'last 3 versions',
-                      },
-                      useBuiltIns: 'entry',
-                      corejs: 3,
-                      modules: false,
-                    },
-                  ],
-                  [
-                    '@babel/preset-typescript',
-                    {
-                      allowNamespaces: true,
-                    },
-                  ],
-                  '@babel/preset-react',
-                ],
-              },
-            },
-          ],
+          use: {
+            loader: 'esbuild-loader',
+            options: esbuildOptions,
+          },
         },
         require('./sass.rule.js')({
           sourceMap: false,
@@ -82,52 +79,72 @@ module.exports = (env = {}) =>
       ],
     },
 
+    // infrastructureLogging: { level: 'error' },
+
+    // https://webpack.js.org/guides/build-performance/#output-without-path-info
+    output: {
+      pathinfo: false,
+    },
+
+    // https://webpack.js.org/guides/build-performance/#avoid-extra-optimization-steps
+    optimization: {
+      moduleIds: 'named',
+      runtimeChunk: true,
+      removeAvailableModules: false,
+      removeEmptyChunks: false,
+      splitChunks: false,
+    },
+
+    // enable persistent cache for faster cold starts
+    cache: {
+      type: 'filesystem',
+      name: 'grafana-default-development',
+      buildDependencies: {
+        config: [__filename],
+      },
+    },
+
     plugins: [
-      new CleanWebpackPlugin(),
-      env.noTsCheck
-        ? new webpack.DefinePlugin({}) // bogus plugin to satisfy webpack API
+      parseInt(env.noTsCheck, 10)
+        ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
-            eslint: {
-              enabled: true,
-              files: ['public/app/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
-              options: {
-                cache: true,
-              },
-            },
+            async: true, // don't block webpack emit
             typescript: {
               mode: 'write-references',
+              memoryLimit: 4096,
               diagnosticOptions: {
                 semantic: true,
                 syntactic: true,
               },
             },
           }),
+      parseInt(env.noLint, 10)
+        ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
+        : new ESLintPlugin({
+            cache: true,
+            lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
+            extensions: ['.ts', '.tsx'],
+          }),
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[hash].css',
+        filename: 'grafana.[name].[contenthash].css',
       }),
-      new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../public/views/error.html'),
-        template: path.resolve(__dirname, '../../public/views/error-template.html'),
-        inject: false,
-        chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
-      }),
-      new HtmlWebpackPlugin({
-        filename: path.resolve(__dirname, '../../public/views/index.html'),
-        template: path.resolve(__dirname, '../../public/views/index-template.html'),
-        inject: false,
-        chunksSortMode: 'none',
-        excludeChunks: ['dark', 'light'],
-      }),
-      new webpack.NamedModulesPlugin(),
-      new webpack.HotModuleReplacementPlugin(),
-      new webpack.DefinePlugin({
+      new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),
         },
       }),
-      // new BundleAnalyzerPlugin({
-      //   analyzerPort: 8889
-      // })
+      new WebpackAssetsManifest({
+        entrypoints: true,
+        integrity: true,
+        publicPath: true,
+      }),
+      new WebpackBar({
+        color: '#eb7b18',
+        name: 'Grafana',
+      }),
+      new EnvironmentPlugin(envConfig),
     ],
+
+    stats: 'minimal',
   });
+};

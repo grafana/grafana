@@ -3,9 +3,11 @@ package migrations
 import (
 	"fmt"
 
+	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/usermig"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
-	"xorm.io/xorm"
 )
 
 func addUserMigrations(mg *Migrator) {
@@ -126,7 +128,47 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration("Add index user.login/user.email", NewAddIndexMigration(userV2, &Index{
 		Cols: []string{"login", "email"},
 	}))
+
+	//Service accounts are lightweight users with restricted permissions.  They support API keys
+	//and provisioning and tasks like alarms and reports.
+	// Issues in this migration: is_service_account should be nullable
+	mg.AddMigration("Add is_service_account column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "is_service_account", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Update is_service_account column to nullable",
+		NewRawSQLMigration("").
+			SQLite(migSQLITEisServiceAccountNullable).
+			Postgres("ALTER TABLE `user` ALTER COLUMN is_service_account DROP NOT NULL;").
+			Mysql("ALTER TABLE user MODIFY is_service_account BOOLEAN DEFAULT 0;"))
+
+	mg.AddMigration("Add uid column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
+
+	mg.AddMigration("Update uid column values for users", NewRawSQLMigration("").
+		SQLite("UPDATE user SET uid=printf('u%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
+
+	mg.AddMigration("Add unique index user_uid", NewAddIndexMigration(userV2, &Index{
+		Cols: []string{"uid"}, Type: UniqueIndex,
+	}))
+
+	// Service accounts login were not unique per org. this migration is part of making it unique per org
+	// to be able to create service accounts that are unique per org
+	mg.AddMigration(usermig.AllowSameLoginCrossOrgs, &usermig.ServiceAccountsSameLoginCrossOrgs{})
+
+	// Users login and email should be in lower case
+	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail, &usermig.UsersLowerCaseLoginAndEmail{})
+	// Users login and email should be in lower case - 2, fix for creating users not lowering login and email
+	mg.AddMigration(usermig.LowerCaseUserLoginAndEmail+"2", &usermig.UsersLowerCaseLoginAndEmail{})
 }
+
+const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;
+UPDATE user SET tmp_service_account = is_service_account;
+ALTER TABLE user DROP COLUMN is_service_account;
+ALTER TABLE user RENAME COLUMN tmp_service_account TO is_service_account;`
 
 type AddMissingUserSaltAndRandsMigration struct {
 	MigrationBase

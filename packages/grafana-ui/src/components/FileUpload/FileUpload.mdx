@@ -1,4 +1,4 @@
-import { Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { ArgTypes } from '@storybook/blocks';
 import { FileUpload } from './FileUpload';
 
 # FileUpload
@@ -10,8 +10,11 @@ A button-styled input that triggers file upload popup. Button text and accepted 
 ```jsx
 import { FileUpload } from '@grafana/ui';
 
-<FileUpload onFileUpload={({ currentTarget }) => console.log('file', currentTarget?.files && currentTarget.files[0])}/>
+<FileUpload
+  onFileUpload={({ currentTarget }) => console.log('file', currentTarget?.files && currentTarget.files[0])}
+/>;
 ```
 
 ### Props
-<Props of={FileUpload} />
+
+<ArgTypes of={FileUpload} />

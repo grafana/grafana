@@ -1,152 +1,189 @@
-# Theming Grafana
+# Work with Grafana themes
 
 ## Overview
 
-**Themes are implemented in Typescript.** That's because our goal is to share variables between Grafana TypeScript and [Sass](https://sass-lang.com/) code. Theme definitions are located in the following files:
+Themes in Grafana are implemented in TypeScript. We chose the TypeScript language in part because it shares variables between Grafana TypeScript and [Sass](https://sass-lang.com/) code.
 
-- [packages/grafana-ui/src/themes/dark.ts](../../packages/grafana-ui/src/themes/dark.ts)
-- [packages/grafana-ui/src/themes/default.ts](../../packages/grafana-ui/src/themes/default.ts)
-- [packages/grafana-ui/src/themes/light.ts](../../packages/grafana-ui/src/themes/light.ts)
+Theme definitions are located in the following files:
 
-The `default.ts` file holds common variables like typography and spacing definitions, while `[light|dark].ts` primarily specify colors used in themes.
+- [packages/grafana-data/src/themes/createTheme.ts](../../packages/grafana-data/src/themes/createTheme.ts)
+- [packages/grafana-data/src/themes/createColors.ts](../../packages/grafana-data/src/themes/createColors.ts)
 
 ## Usage
 
-This section provides usage guidelines.
+This section provides usage guidelines for themes.
 
-### Using themes in React components
+### Use themes in React components
 
-Here's how to use Grafana themes in React components.
+The following section describes how to use Grafana themes in React components.
 
-#### useStyles hook
+#### The useStyles2 hook
 
-`useStyles` memoizes the function and provides access to the theme.
+The `useStyles2` hook memoizes the function and provides access to the theme.
 
 ```tsx
-import React, { FC } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
-import { css } from 'emotion';
+import { FC } from 'react';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
 
-const getComponentStyles = (theme: GrafanaTheme) => css`
-  padding: ${theme.spacing.md};
-`;
-
-const Foo: FC<FooProps> = () => {
-  const styles = useStyles(getComponentsStyles);
-
+function Foo(props: FooProps) {
+  const styles = useStyles2(getStyles);
   // Use styles with className
-};
+}
+
+const getStyles = (theme: GrafanaTheme2) =>
+  css({
+    padding: theme.spacing(1, 2),
+  });
 ```
 
 #### Get the theme object
 
+Use code similar to the following to give your component access to the theme variables:
+
 ```tsx
-import React, { FC } from 'react';
-import { useTheme } from '@grafana/ui';
+import { FC } from 'react';
+import { useTheme2 } from '@grafana/ui';
 
 const Foo: FC<FooProps> = () => {
-  const theme = useTheme();
+  const theme = useTheme2();
 
   // Your component has access to the theme variables now
 };
 ```
 
-#### Using `ThemeContext` directly
+## Select a variable
+
+This section explains how to select the correct variables in your theme.
+
+### The rich color object and the state colors
+
+The `theme.colors` object has six rich color objects:
+
+- `primary`
+- `secondary`
+- `info`
+- `success`
+- `warning`
+- `error`
+
+All these objects use the same secondary colors which are associated with different use cases.
+
+| Property     | When to use                                                |
+| ------------ | ---------------------------------------------------------- |
+| main         | For backgrounds                                            |
+| shade        | For hover highlight                                        |
+| text         | For text color                                             |
+| border       | For borders, currently always the same as text color       |
+| contrastText | Text color to use for text placed on top of the main color |
+
+Example use cases:
+
+- Want a red background? Use `theme.colors.error.main`.
+- Want green text? Use `theme.colors.success.text`.
+- Want text to be visible when placed inside a background that uses `theme.colors.error.main`? Use `theme.colors.error.contrastText`.
+
+### Text colors
+
+| Property                      | When to use                                                                    |
+| ----------------------------- | ------------------------------------------------------------------------------ |
+| theme.colors.text.primary     | The default text color                                                         |
+| theme.colors.text.secondary   | Text color for things that should be a bit less prominent                      |
+| theme.colors.text.disabled    | Text color for disabled or faint things                                        |
+| theme.colors.text.link        | Text link color                                                                |
+| theme.colors.text.maxContrast | Maximum contrast (absolute white in dark theme, absolute black in white theme) |
+
+### Background colors
+
+| Property                          | When to use                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| theme.colors.background.canvas    | Dashboard background. A background surface for panels and panes that use primary background      |
+| theme.colors.background.primary   | The default content background for content panes and panels                                      |
+| theme.colors.background.secondary | For cards and other surfaces that need to stand out when placed on top of the primary background |
+
+### Borders
+
+| Property                   | When to use                                                  |
+| -------------------------- | ------------------------------------------------------------ |
+| theme.colors.border.weak   | Primary border for panels and panes and other subtle borders |
+| theme.colors.border.medium | For stronger borders like inputs                             |
+| theme.colors.border.strong | For even stronger border like hover highlighted border       |
+
+### Actions
+
+| Property                     | When to use                                           |
+| ---------------------------- | ----------------------------------------------------- |
+| theme.colors.action.hover    | Background color for hover on card, menu or list item |
+| theme.colors.action.focus    | Background color for focused card, menu or list item  |
+| theme.colors.action.selected | Background color for selected card, menu or list item |
+
+### Paddings and margins
+
+| Example                     | Result            |
+| --------------------------- | ----------------- |
+| theme.spacing(1)            | 8px               |
+| theme.spacing(1, 2)         | 8px 16px          |
+| theme.spacing(1, 2, 0.5, 4) | 8px 16px 4px 32px |
+
+### Border radius
+
+| Example                     | Result |
+| --------------------------- | ------ |
+| theme.shape.borderRadius(1) | 2px    |
+| theme.shape.borderRadius(2) | 4px    |
+
+### Typography
+
+To customize font family, font sizes, and line heights, use the variables under `theme.typography`.
+
+#### Set the context directly
+
+Use `ThemeContext` like this:
 
 ```tsx
-import { ThemeContext } from '@grafana/ui';
+import { ThemeContext } from '@grafana/data';
 
-<ThemeContext.Consumer>{theme => <Foo theme={theme} />}</ThemeContext.Consumer>;
+<ThemeContext.Consumer>{(theme) => <Foo theme={theme} />}</ThemeContext.Consumer>;
 ```
 
-#### Using `withTheme` higher-order component (HOC)
+#### Use `withTheme` higher-order component
 
-With this method your component will be automatically wrapped in `ThemeContext.Consumer` and provided with current theme via `theme` prop. Components used with `withTheme` must implement the `Themeable` interface.
+With this method your component will be automatically wrapped in `ThemeContext.Consumer` and provided with current theme via the `theme` prop. Components used with `withTheme` must implement the `Themeable` interface.
 
 ```ts
 import  { ThemeContext, Themeable } from '@grafana/ui';
 
-interface FooProps extends Themeable {}
+interface FooProps extends Themeable2 {}
 
 const Foo: React.FunctionComponent<FooProps> = () => ...
 
-export default withTheme(Foo);
+export default withTheme2(Foo);
 ```
 
-### Test components that use `ThemeContext`
+### Use a theme in tests
 
-When implementing snapshot tests for components that use the `withTheme` HOC, the snapshot will contain the entire theme object. Any change to the theme renders the snapshot outdated.
-
-To make your snapshot theme independent, use the `mockThemeContext` helper function:
+If you need to pass a theme object to a function that you are testing, then import `createTheme` and call it without any arguments. For example:
 
 ```tsx
-import { mockThemeContext } from '@grafana/ui';
-import { MyComponent } from './MyComponent';
+import { createTheme } from '@grafana/data';
 
 describe('MyComponent', () => {
-  let restoreThemeContext;
-
-  beforeAll(() => {
-    // Create ThemeContext mock before any snapshot test is executed
-    restoreThemeContext = mockThemeContext({ type: GrafanaThemeType.Dark });
-  });
-
-  afterAll(() => {
-    // Make sure the theme is restored after snapshot tests are performed
-    restoreThemeContext();
-  });
-
-
-  it('renders correctly', () => {
-    const wrapper = mount(<MyComponent />)
-    expect(wrapper).toMatchSnapshot();
+  it('should work', () => {
+    result = functionThatNeedsTheme(createTheme());
+    expect(result).toBe(true);
   });
 });
 ```
 
-## FAQ
+### Modify Sass variables
 
-This section provides insight into frequently-asked questions.
+If you need to modify the Sass variable files, we recommend that you migrate the styles to [Emotion](https://emotion.sh/docs/introduction).
 
-### How can I modify Sass variable files?
+For the following variables to apply, you need to run this `yarn dev` task:
 
-**If possible, migrate styles to Emotion**
+- `[_variables|_variables.dark|_variables.light].generated.scss`: These files must be referenced in the main Sass files for Sass variables to be available.
 
-> For the following to apply you need to run `yarn dev` task.
+If you need to modify the Sass variable files, be sure to update the files that end with `.tmpl.ts` and not the `.generated.scss` files.
 
-`[_variables|_variables.dark|_variables.light].generated.scss` files are the ones that are referenced in the main Sass files for Sass variables to be available. **These files are automatically generated and should never be modified by hand!**
-
-#### If you need to modify a _Sass variable value_ you need to modify the corresponding Typescript file that is the source of the variables:
-
-- `_variables.generated.scss` - modify `grafana-ui/src/themes/default.ts`
-- `_variables.light.generated.scss` - modify `grafana-ui/src/themes/light.ts`
-- `_variables.dark.generated.scss` - modify `grafana-ui/src/themes/dark.ts`
-
-#### If you need to _add new variable_ to Sass variables you need to modify corresponding template file:
-
-- `_variables.generated.scss` - modify `grafana-ui/src/themes/_variables.scss.tmpl.ts`
-- `_variables.light.generated.scss` - modify `grafana-ui/src/themes/_variables.light.scss.tmpl.ts`
-- `_variables.dark.generated.scss` - modify `grafana-ui/src/themes/_variables.dark.scss.tmpl.ts`
-
-## Limitations
-
-This section describes limitations with Grafana's theming system.
-
-### You must ensure `ThemeContext` provider is available in a React tree
-
-By default all react2angular directives have `ThemeContext.Provider` ensured. But, there are cases where we create another React tree via `ReactDOM.render`. This happens in the case of graph legend rendering and the `ReactContainer` directive. In such cases theme consumption will fail. To make sure theme context is available in such cases, you need to wrap your rendered component with ThemeContext.Provider using the `provideTheme` function:
-
-```ts
-// graph.ts
-import { provideTheme } from 'app/core/utils/ConfigProvider';
-
-// Create component with ThemeContext.Provider first.
-// Otherwise React will create new components every time it renders!
-const LegendWithThemeProvider = provideTheme(Legend);
-
-const legendReactElem = React.createElement(LegendWithThemeProvider, legendProps);
-ReactDOM.render(legendReactElem, this.legendElem, () => this.renderPanel());
-```
-
-`provideTheme` makes current theme available via ThemeContext by checking if user has `lightTheme` set in her boot data.
+> **Important:** These variable files are automatically generated and should never be modified by hand.

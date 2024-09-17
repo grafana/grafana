@@ -1,5 +1,6 @@
-import { FieldCache } from './FieldCache';
 import { FieldType } from '../types/dataFrame';
+
+import { FieldCache } from './FieldCache';
 import { toDataFrame } from './processDataFrame';
 
 describe('FieldCache', () => {
@@ -20,7 +21,7 @@ describe('FieldCache', () => {
 
     const expectedFieldNames = ['time', 'string', 'number', 'boolean', 'other', 'undefined'];
 
-    expect(allFields.map(f => f.name)).toEqual(expectedFieldNames);
+    expect(allFields.map((f) => f.name)).toEqual(expectedFieldNames);
 
     expect(fieldCache.hasFieldOfType(FieldType.time)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.string)).toBeTruthy();
@@ -28,11 +29,11 @@ describe('FieldCache', () => {
     expect(fieldCache.hasFieldOfType(FieldType.boolean)).toBeTruthy();
     expect(fieldCache.hasFieldOfType(FieldType.other)).toBeTruthy();
 
-    expect(fieldCache.getFields(FieldType.time).map(f => f.name)).toEqual([expectedFieldNames[0]]);
-    expect(fieldCache.getFields(FieldType.string).map(f => f.name)).toEqual([expectedFieldNames[1]]);
-    expect(fieldCache.getFields(FieldType.number).map(f => f.name)).toEqual([expectedFieldNames[2]]);
-    expect(fieldCache.getFields(FieldType.boolean).map(f => f.name)).toEqual([expectedFieldNames[3]]);
-    expect(fieldCache.getFields(FieldType.other).map(f => f.name)).toEqual([
+    expect(fieldCache.getFields(FieldType.time).map((f) => f.name)).toEqual([expectedFieldNames[0]]);
+    expect(fieldCache.getFields(FieldType.string).map((f) => f.name)).toEqual([expectedFieldNames[1]]);
+    expect(fieldCache.getFields(FieldType.number).map((f) => f.name)).toEqual([expectedFieldNames[2]]);
+    expect(fieldCache.getFields(FieldType.boolean).map((f) => f.name)).toEqual([expectedFieldNames[3]]);
+    expect(fieldCache.getFields(FieldType.other).map((f) => f.name)).toEqual([
       expectedFieldNames[4],
       expectedFieldNames[5],
     ]);
@@ -69,25 +70,52 @@ describe('FieldCache', () => {
   });
 
   describe('field retrieval', () => {
-    const frame = toDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: [100, 200, 300] },
-        { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
-        { name: 'value', type: FieldType.number, values: [1, 2, 3] },
-        { name: 'value', type: FieldType.number, values: [4, 5, 6] },
-      ],
+    let fieldCache: FieldCache;
+
+    beforeEach(() => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+          { name: 'name', type: FieldType.string, values: ['a', 'b', 'c'] },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+          { name: 'value', type: FieldType.number, values: [4, 5, 6] },
+        ],
+      });
+
+      // Because we're using duplicate field names in the test case, we need to disable the warning,
+      // so it doesn't show up in the test output
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      fieldCache = new FieldCache(frame);
+      consoleWarnSpy.mockRestore();
     });
-    const ext = new FieldCache(frame);
 
     it('should get the first field with a duplicate name', () => {
-      const field = ext.getFieldByName('value');
+      const field = fieldCache.getFieldByName('value');
       expect(field!.name).toEqual('value');
-      expect(field!.values.toArray()).toEqual([1, 2, 3]);
+      expect(field!.values).toEqual([1, 2, 3]);
     });
 
     it('should return index of the field', () => {
-      const field = ext.getFirstFieldOfType(FieldType.number);
+      const field = fieldCache.getFirstFieldOfType(FieldType.number);
       expect(field!.index).toEqual(2);
+    });
+  });
+
+  describe('getFirstFieldOfType', () => {
+    let fieldCache: FieldCache;
+    beforeEach(() => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [100, 200, 300] },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+        ],
+      });
+      fieldCache = new FieldCache(frame);
+    });
+
+    it('should return undefined if type is not present', () => {
+      const field = fieldCache.getFirstFieldOfType(FieldType.string);
+      expect(field).toBeUndefined();
     });
   });
 });

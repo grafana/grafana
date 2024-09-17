@@ -1,5 +1,5 @@
-import TableModel from 'app/core/table_model';
 import { Column } from '@grafana/data';
+import TableModel from 'app/core/TableModel';
 
 export interface TableTransform {
   description: string;

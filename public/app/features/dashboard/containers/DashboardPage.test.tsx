@@ -1,32 +1,80 @@
-import React from 'react';
-import { shallow, ShallowWrapper } from 'enzyme';
-import { DashboardPage, mapStateToProps, Props, State } from './DashboardPage';
-import { DashboardModel } from '../state';
+import { screen, waitFor } from '@testing-library/react';
+import { KBarProvider } from 'kbar';
+import { Component } from 'react';
+import { useEffectOnce } from 'react-use';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
-import { DashboardInitPhase, DashboardRouteInfo } from 'app/types';
-import { notifyApp, updateLocation } from 'app/core/actions';
-import { cleanUpDashboardAndVariables } from '../state/actions';
+import { render } from 'test/test-utils';
 
-jest.mock('app/features/dashboard/components/DashboardSettings/SettingsCtrl', () => ({}));
+import { createTheme } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { config, setDataSourceSrv } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
+import { notifyApp } from 'app/core/actions';
+import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { RouteDescriptor } from 'app/core/navigation/types';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
-interface ScenarioContext {
-  cleanUpDashboardAndVariablesMock: typeof cleanUpDashboardAndVariables;
-  dashboard?: DashboardModel | null;
-  setDashboardProp: (overrides?: any, metaOverrides?: any) => void;
-  wrapper?: ShallowWrapper<Props, State, DashboardPage>;
-  mount: (propOverrides?: Partial<Props>) => void;
-  setup: (fn: () => void) => void;
-}
+import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
+import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
+import { DashboardModel } from '../state';
+import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
-function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel {
+import { Props, UnthemedDashboardPage } from './DashboardPage';
+
+jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
+  const LazyLoader = ({ children, onLoad }: Pick<LazyLoaderProps, 'children' | 'onLoad'>) => {
+    useEffectOnce(() => {
+      onLoad?.();
+    });
+    return <>{typeof children === 'function' ? children({ isInView: true }) : children}</>;
+  };
+  return { LazyLoader };
+});
+
+jest.mock('app/features/dashboard/components/DashboardSettings/GeneralSettings', () => {
+  class GeneralSettings extends Component<{}, {}> {
+    render() {
+      return <>general settings</>;
+    }
+  }
+
+  return { GeneralSettings };
+});
+
+jest.mock('app/features/query/components/QueryGroup', () => {
+  return {
+    QueryGroup: () => null,
+  };
+});
+
+jest.mock('app/core/core', () => ({
+  appEvents: {
+    subscribe: () => {
+      return { unsubscribe: () => {} };
+    },
+  },
+  contextSrv: {
+    user: { orgId: 1 },
+  },
+}));
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
+}));
+
+function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
     {
       title: 'My dashboard',
       panels: [
         {
           id: 1,
-          type: 'graph',
-          title: 'My graph',
+          type: 'timeseries',
+          title: 'My panel title',
           gridPos: { x: 0, y: 0, w: 1, h: 1 },
         },
       ],
@@ -34,253 +82,221 @@ function getTestDashboard(overrides?: any, metaOverrides?: any): DashboardModel 
     overrides
   );
 
-  const meta = Object.assign({ canSave: true, canEdit: true }, metaOverrides);
-  return new DashboardModel(data, meta);
+  return createDashboardModelFixture(data, metaOverrides);
 }
 
-function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioContext) => void) {
-  describe(description, () => {
-    let setupFn: () => void;
+const mockInitDashboard = jest.fn();
+const mockCleanUpDashboardAndVariables = jest.fn();
 
-    const ctx: ScenarioContext = {
-      cleanUpDashboardAndVariablesMock: jest.fn(),
-      setup: fn => {
-        setupFn = fn;
+function setup(propOverrides?: Partial<Props>) {
+  config.bootData.navTree = [
+    { text: 'Dashboards', id: 'dashboards/browse' },
+    { text: 'Home', id: HOME_NAV_ID },
+    {
+      text: 'Help',
+      id: 'help',
+    },
+  ];
+
+  const props: Props = {
+    ...getRouteComponentProps({
+      match: { params: { slug: 'my-dash', uid: '11' }, isExact: false, path: '', url: '' },
+      route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
+    }),
+    navIndex: {
+      'dashboards/browse': {
+        text: 'Dashboards',
+        id: 'dashboards/browse',
+        parentItem: { text: 'Home', id: HOME_NAV_ID },
       },
-      setDashboardProp: (overrides?: any, metaOverrides?: any) => {
-        ctx.dashboard = getTestDashboard(overrides, metaOverrides);
-        ctx.wrapper?.setProps({ dashboard: ctx.dashboard });
-      },
-      mount: (propOverrides?: Partial<Props>) => {
-        const props: Props = {
-          urlSlug: 'my-dash',
-          $scope: {},
-          urlUid: '11',
-          $injector: {},
-          routeInfo: DashboardRouteInfo.Normal,
-          initPhase: DashboardInitPhase.NotStarted,
-          isInitSlow: false,
-          initDashboard: jest.fn(),
-          updateLocation: mockToolkitActionCreator(updateLocation),
-          notifyApp: mockToolkitActionCreator(notifyApp),
-          cleanUpDashboardAndVariables: ctx.cleanUpDashboardAndVariablesMock,
-          cancelVariables: jest.fn(),
-          dashboard: null,
-        };
+      [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
+    },
+    initPhase: DashboardInitPhase.NotStarted,
+    initError: null,
+    initDashboard: mockInitDashboard,
+    notifyApp: mockToolkitActionCreator(notifyApp),
+    cleanUpDashboardAndVariables: mockCleanUpDashboardAndVariables,
+    cancelVariables: jest.fn(),
+    templateVarsChangedInUrl: jest.fn(),
+    dashboard: null,
+    theme: createTheme(),
+  };
 
-        Object.assign(props, propOverrides);
+  Object.assign(props, propOverrides);
 
-        ctx.dashboard = props.dashboard;
-        ctx.wrapper = shallow(<DashboardPage {...props} />);
-      },
-    };
+  const { unmount, rerender } = render(<UnthemedDashboardPage {...props} />);
 
-    beforeEach(() => {
-      setupFn();
-    });
+  const wrappedRerender = (newProps: Partial<Props>) => {
+    Object.assign(props, newProps);
+    return rerender(<UnthemedDashboardPage {...props} />);
+  };
 
-    scenarioFn(ctx);
-  });
+  return { rerender: wrappedRerender, unmount };
 }
 
 describe('DashboardPage', () => {
-  dashboardPageScenario('Given initial state', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-    it('Should render nothing', () => {
-      expect(ctx.wrapper).toMatchSnapshot();
+  it('Should call initDashboard on mount', () => {
+    setup();
+    expect(mockInitDashboard).toBeCalledWith({
+      fixUrl: true,
+      routeName: 'normal-dashboard',
+      urlSlug: 'my-dash',
+      urlUid: '11',
+      keybindingSrv: expect.anything(),
     });
   });
 
-  dashboardPageScenario('Dashboard is fetching slowly', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.wrapper?.setProps({
-        isInitSlow: true,
-        initPhase: DashboardInitPhase.Fetching,
+  describe('Given a simple dashboard', () => {
+    it('Should render panels', async () => {
+      setup({ dashboard: getTestDashboard() });
+      expect(await screen.findByText('My panel title')).toBeInTheDocument();
+    });
+
+    it('Should update title', async () => {
+      setup({ dashboard: getTestDashboard() });
+      await waitFor(() => {
+        expect(document.title).toBe('My dashboard - Dashboards - Grafana');
       });
     });
 
-    it('Should render slow init state', () => {
-      expect(ctx.wrapper).toMatchSnapshot();
-    });
-  });
-
-  dashboardPageScenario('Dashboard init completed ', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp();
-    });
-
-    it('Should update title', () => {
-      expect(document.title).toBe('My dashboard - Grafana');
-    });
-
-    it('Should render dashboard grid', () => {
-      expect(ctx.wrapper).toMatchSnapshot();
-    });
-  });
-
-  dashboardPageScenario('When user goes into panel edit', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp();
-      ctx.wrapper?.setProps({
-        urlEditPanelId: '1',
-      });
-    });
-
-    it('Should update component state to fullscreen and edit', () => {
-      const state = ctx.wrapper?.state();
-      expect(state).not.toBe(null);
-      expect(state?.editPanel).toBeDefined();
-    });
-  });
-
-  dashboardPageScenario('When user goes into panel edit but has no edit permissions', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp({}, { canEdit: false });
-      ctx.wrapper?.setProps({
-        urlEditPanelId: '1',
-      });
-    });
-
-    it('Should update component state to fullscreen and edit', () => {
-      const state = ctx.wrapper?.state();
-      expect(state?.editPanel).toBe(null);
-    });
-  });
-  dashboardPageScenario('When user goes back to dashboard from view panel', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp();
-      ctx.wrapper?.setState({ scrollTop: 100 });
-      ctx.wrapper?.setProps({
-        urlEditPanelId: '1',
-      });
-      ctx.wrapper?.setProps({
-        urlEditPanelId: undefined,
-      });
-    });
-
-    it('Should update model state normal state', () => {
-      expect(ctx.dashboard).toBeDefined();
-      // @ts-ignore typescript doesn't understand that dashboard must be defined to reach the row below
-      expect(ctx.dashboard.panelInEdit).toBeUndefined();
-    });
-
-    it('Should update component state to normal and restore scrollTop', () => {
-      const state = ctx.wrapper?.state();
-      expect(ctx.wrapper).not.toBe(null);
-      expect(state).not.toBe(null);
-      expect(state?.editPanel).toBe(null);
-      expect(state?.scrollTop).toBe(100);
-    });
-  });
-
-  dashboardPageScenario('When dashboard has editview url state', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp();
-      ctx.wrapper?.setProps({
-        editview: 'settings',
-      });
-    });
-
-    it('should render settings view', () => {
-      expect(ctx.wrapper).toMatchSnapshot();
-    });
-  });
-
-  dashboardPageScenario('When adding panel', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp();
-      ctx.wrapper?.setState({ scrollTop: 100 });
-      ctx.wrapper?.instance().onAddPanel();
-    });
-
-    it('should set scrollTop to 0', () => {
-      expect(ctx.wrapper).not.toBe(null);
-      expect(ctx.wrapper?.state()).not.toBe(null);
-      expect(ctx.wrapper?.state().updateScrollTop).toBe(0);
-    });
-
-    it('should add panel widget to dashboard panels', () => {
-      expect(ctx.dashboard).not.toBe(null);
-      expect(ctx.dashboard?.panels[0].type).toBe('add-panel');
-    });
-  });
-
-  dashboardPageScenario('Given panel with id 0', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp({
-        panels: [{ id: 0, type: 'graph' }],
-        schemaVersion: 17,
-      });
-      ctx.wrapper?.setProps({
-        urlEditPanelId: '0',
-      });
-    });
-
-    it('Should go into edit mode', () => {
-      const state = ctx.wrapper?.state();
-      expect(ctx.wrapper).not.toBe(null);
-      expect(state).not.toBe(null);
-      expect(state?.editPanel).not.toBe(null);
-    });
-  });
-
-  dashboardPageScenario('When dashboard unmounts', ctx => {
-    ctx.setup(() => {
-      ctx.mount();
-      ctx.setDashboardProp({
-        panels: [{ id: 0, type: 'graph' }],
-        schemaVersion: 17,
-      });
-      ctx.wrapper?.unmount();
-    });
-
-    it('Should call clean up action', () => {
-      expect(ctx.cleanUpDashboardAndVariablesMock).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('mapStateToProps with editPanel', () => {
-    const props = mapStateToProps({
-      location: {
-        routeParams: {},
-        query: {
-          editPanel: '1',
+    it('only calls initDashboard once when wrapped in AppChrome', async () => {
+      const props: Props = {
+        ...getRouteComponentProps({
+          match: { params: { slug: 'my-dash', uid: '11' }, isExact: true, path: '', url: '' },
+          route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
+        }),
+        navIndex: {
+          'dashboards/browse': {
+            text: 'Dashboards',
+            id: 'dashboards/browse',
+            parentItem: { text: 'Home', id: HOME_NAV_ID },
+          },
+          [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
         },
-      },
-      panelEditor: {},
-      dashboard: {
-        getModel: () => ({} as DashboardModel),
-      },
-    } as any);
+        initPhase: DashboardInitPhase.Completed,
+        initError: null,
+        initDashboard: mockInitDashboard,
+        notifyApp: mockToolkitActionCreator(notifyApp),
+        cleanUpDashboardAndVariables: mockCleanUpDashboardAndVariables,
+        cancelVariables: jest.fn(),
+        templateVarsChangedInUrl: jest.fn(),
+        dashboard: getTestDashboard(),
+        theme: createTheme(),
+      };
 
-    expect(props.urlEditPanelId).toBe('1');
+      render(
+        <KBarProvider>
+          <AppChrome>
+            <UnthemedDashboardPage {...props} />
+          </AppChrome>
+        </KBarProvider>
+      );
+
+      await screen.findByText('My dashboard');
+      expect(mockInitDashboard).toHaveBeenCalledTimes(1);
+    });
   });
 
-  describe('mapStateToProps with string edit true', () => {
-    const props = mapStateToProps({
-      location: {
-        routeParams: {},
-        query: {
-          viewPanel: '2',
-        },
-      },
-      panelEditor: {},
-      dashboard: {
-        getModel: () => ({} as DashboardModel),
-      },
-    } as any);
+  describe('When going into view mode', () => {
+    beforeEach(() => {
+      setDataSourceSrv({
+        get: jest.fn().mockResolvedValue({ getRef: jest.fn(), query: jest.fn().mockResolvedValue([]) }),
+        getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
+        getList: jest.fn(),
+        reload: jest.fn(),
+      });
+      setDashboardSrv({
+        getCurrent: () => getTestDashboard(),
+      } as DashboardSrv);
+    });
 
-    expect(props.urlViewPanelId).toBe('2');
+    it('Should render panel in view mode', async () => {
+      const dashboard = getTestDashboard();
+      setup({
+        dashboard,
+        queryParams: { viewPanel: '1' },
+      });
+      await waitFor(() => {
+        expect(dashboard.panelInView).toBeDefined();
+        expect(dashboard.panels[0].isViewing).toBe(true);
+      });
+    });
+
+    it('Should reset state when leaving', async () => {
+      const dashboard = getTestDashboard();
+      const { rerender } = setup({
+        dashboard,
+        queryParams: { viewPanel: '1' },
+      });
+      rerender({ queryParams: {}, dashboard });
+
+      await waitFor(() => {
+        expect(dashboard.panelInView).toBeUndefined();
+        expect(dashboard.panels[0].isViewing).toBe(false);
+      });
+    });
+  });
+
+  describe('When going into edit mode', () => {
+    it('Should render panel in edit mode', async () => {
+      const dashboard = getTestDashboard();
+      setup({
+        dashboard,
+        queryParams: { editPanel: '1' },
+      });
+      await waitFor(() => {
+        expect(dashboard.panelInEdit).toBeDefined();
+      });
+    });
+  });
+
+  describe('When dashboard unmounts', () => {
+    it('Should call close action', async () => {
+      const { rerender, unmount } = setup();
+      rerender({ dashboard: getTestDashboard() });
+      unmount();
+      await waitFor(() => {
+        expect(mockCleanUpDashboardAndVariables).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('When dashboard changes', () => {
+    it('Should call clean up action and init', async () => {
+      const { rerender } = setup();
+      rerender({ dashboard: getTestDashboard() });
+      rerender({
+        match: { params: { uid: 'new-uid' }, isExact: false, path: '', url: '' },
+        dashboard: getTestDashboard({ title: 'Another dashboard' }),
+      });
+      await waitFor(() => {
+        expect(mockCleanUpDashboardAndVariables).toHaveBeenCalledTimes(1);
+        expect(mockInitDashboard).toHaveBeenCalledTimes(2);
+      });
+    });
+  });
+
+  describe('No kiosk mode tv', () => {
+    it('should render dashboard page toolbar with no submenu', async () => {
+      setup({
+        dashboard: getTestDashboard(),
+      });
+      expect(await screen.findAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(1);
+      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
+    });
+  });
+
+  describe('When in full kiosk mode', () => {
+    it('should not render page toolbar and submenu', async () => {
+      setup({ dashboard: getTestDashboard(), queryParams: { kiosk: true } });
+      await waitFor(() => {
+        expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
+        expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
+      });
+    });
   });
 });

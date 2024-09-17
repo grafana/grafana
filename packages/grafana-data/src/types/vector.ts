@@ -1,35 +1,55 @@
-export interface Vector<T = any> {
-  length: number;
-
-  /**
-   * Access the value by index (Like an array)
-   */
-  get(index: number): T;
-
-  /**
-   * Get the results as an array.
-   */
-  toArray(): T[];
+declare global {
+  interface Array<T> {
+    /** @deprecated Use [idx]. This only exists to help migrate Vector to Array */
+    get(idx: number): T;
+    /** @deprecated Use [idx]. This only exists to help migrate Vector to Array */
+    set(idx: number, value: T): void;
+    /** @deprecated Use .push(value). This only exists to help migrate Vector to Array */
+    add(value: T): void;
+    /** @deprecated this is not necessary.  This only exists to help migrate Vector to Array */
+    toArray(): T[];
+  }
 }
 
-/**
- * Apache arrow vectors are Read/Write
- */
-export interface ReadWriteVector<T = any> extends Vector<T> {
-  set: (index: number, value: T) => void;
+// JS original sin
+// this if condition is because Jest will re-exec this block multiple times (in a browser this only runs once)
+export function patchArrayVectorProrotypeMethods() {
+  if (!Object.getOwnPropertyDescriptor(Array.prototype, 'toArray')) {
+    Object.defineProperties(Array.prototype, {
+      get: {
+        value: function (idx: number) {
+          return this[idx];
+        },
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      },
+      set: {
+        value: function (idx: number, value: unknown) {
+          this[idx] = value;
+        },
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      },
+      add: {
+        value: function (value: unknown) {
+          this.push(value);
+        },
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      },
+      toArray: {
+        value: function () {
+          return this;
+        },
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      },
+    });
+  }
 }
-
-/**
- * Vector with standard manipulation functions
- */
-export interface MutableVector<T = any> extends ReadWriteVector<T> {
-  /**
-   * Adds the value to the vector
-   */
-  add: (value: T) => void;
-
-  /**
-   * modifies the vector so it is now the opposite order
-   */
-  reverse: () => void;
-}
+//this function call is intentional
+patchArrayVectorProrotypeMethods();

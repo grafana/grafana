@@ -1,27 +1,24 @@
-import React, { Component } from 'react';
-import _ from 'lodash';
-import { AsyncSelect } from '@grafana/ui';
-import { debounce } from 'lodash';
-import { getBackendSrv } from '@grafana/runtime';
+import { debounce, DebouncedFuncLeading, isNil } from 'lodash';
+import { Component } from 'react';
 
-export interface Team {
-  id: number;
-  label: string;
-  name: string;
-  avatarUrl: string;
-}
+import { SelectableValue } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { AsyncSelect } from '@grafana/ui';
+import { Team } from 'app/types';
 
 export interface Props {
-  onSelected: (team: Team) => void;
+  onSelected: (team: SelectableValue<Team>) => void;
   className?: string;
+  teamId?: number;
 }
 
 export interface State {
   isLoading: boolean;
+  value?: SelectableValue<Team>;
 }
 
 export class TeamPicker extends Component<Props, State> {
-  debouncedSearch: any;
+  debouncedSearch: DebouncedFuncLeading<typeof this.search>;
 
   constructor(props: Props) {
     super(props);
@@ -34,22 +31,39 @@ export class TeamPicker extends Component<Props, State> {
     });
   }
 
+  componentDidMount(): void {
+    const { teamId } = this.props;
+    if (!teamId) {
+      return;
+    }
+
+    getBackendSrv()
+      .get(`/api/teams/${teamId}`)
+      .then((team: Team) => {
+        this.setState({
+          value: {
+            value: team,
+            label: team.name,
+            imgUrl: team.avatarUrl,
+          },
+        });
+      });
+  }
+
   search(query?: string) {
     this.setState({ isLoading: true });
 
-    if (_.isNil(query)) {
+    if (isNil(query)) {
       query = '';
     }
 
     return getBackendSrv()
       .get(`/api/teams/search?perpage=100&page=1&query=${query}`)
-      .then((result: any) => {
-        const teams = result.teams.map((team: any) => {
+      .then((result: { teams: Team[] }) => {
+        const teams: Array<SelectableValue<Team>> = result.teams.map((team) => {
           return {
-            id: team.id,
-            value: team.id,
+            value: team,
             label: team.name,
-            name: team.name,
             imgUrl: team.avatarUrl,
           };
         });
@@ -61,17 +75,19 @@ export class TeamPicker extends Component<Props, State> {
 
   render() {
     const { onSelected, className } = this.props;
-    const { isLoading } = this.state;
+    const { isLoading, value } = this.state;
     return (
       <div className="user-picker" data-testid="teamPicker">
         <AsyncSelect
           isLoading={isLoading}
           defaultOptions={true}
           loadOptions={this.debouncedSearch}
+          value={value}
           onChange={onSelected}
           className={className}
           placeholder="Select a team"
           noOptionsMessage="No teams found"
+          aria-label="Team picker"
         />
       </div>
     );

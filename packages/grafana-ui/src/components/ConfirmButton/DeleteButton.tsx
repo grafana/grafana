@@ -1,7 +1,7 @@
-import React, { FC } from 'react';
-import { ConfirmButton } from './ConfirmButton';
 import { ComponentSize } from '../../types/size';
 import { Button } from '../Button';
+
+import { ConfirmButton } from './ConfirmButton';
 
 export interface Props {
   /** Confirm action callback */
@@ -10,9 +10,12 @@ export interface Props {
   size?: ComponentSize;
   /** Disable button click action */
   disabled?: boolean;
+  'aria-label'?: string;
+  /** Close after delete button is clicked */
+  closeOnConfirm?: boolean;
 }
 
-export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm }) => {
+export const DeleteButton = ({ size, disabled, onConfirm, 'aria-label': ariaLabel, closeOnConfirm }: Props) => {
   return (
     <ConfirmButton
       confirmText="Delete"
@@ -20,8 +23,9 @@ export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm }) => {
       size={size || 'md'}
       disabled={disabled}
       onConfirm={onConfirm}
+      closeOnConfirm={closeOnConfirm}
     >
-      <Button variant="destructive" icon="times" size={size || 'sm'} />
+      <Button aria-label={ariaLabel} variant="destructive" icon="times" size={size || 'sm'} />
     </ConfirmButton>
   );
 };

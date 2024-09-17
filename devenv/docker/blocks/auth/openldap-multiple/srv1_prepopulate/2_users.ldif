@@ -1,0 +1,30 @@
+# ldap-admin-srv1
+dn: cn=ldap-admin-srv1,ou=users,dc=srv1-grafana,dc=org
+mail: ldap-admin-srv1@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-admin-srv1
+cn: ldap-admin-srv1
+
+dn: cn=ldap-editor-srv1,ou=users,dc=srv1-grafana,dc=org
+mail: ldap-editor-srv1@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-editor-srv1
+cn: ldap-editor-srv1
+
+dn: cn=ldap-viewer-srv1,ou=users,dc=srv1-grafana,dc=org
+mail: ldap-viewer-srv1@grafana.com
+userPassword: grafana
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+sn: ldap-viewer-srv1
+cn: ldap-viewer-srv1

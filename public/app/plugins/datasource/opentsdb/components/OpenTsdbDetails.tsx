@@ -1,7 +1,8 @@
-import React, { SyntheticEvent } from 'react';
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select, Input } = LegacyForms;
+import { SyntheticEvent, useId } from 'react';
+
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { Select, Input, Field, FieldSet } from '@grafana/ui';
+
 import { OpenTsdbOptions } from '../types';
 
 const tsdbVersions = [
@@ -23,59 +24,65 @@ interface Props {
 export const OpenTsdbDetails = (props: Props) => {
   const { onChange, value } = props;
 
+  const idSuffix = useId();
+
   return (
     <>
-      <h5>OpenTSDB settings</h5>
-      <div className="gf-form">
-        <InlineFormLabel width={7}>Version</InlineFormLabel>
-        <Select
-          options={tsdbVersions}
-          value={tsdbVersions.find(version => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
-          onChange={onSelectChangeHandler('tsdbVersion', value, onChange)}
-        />
-      </div>
-      <div className="gf-form">
-        <InlineFormLabel width={7}>Resolution</InlineFormLabel>
-        <Select
-          options={tsdbResolutions}
-          value={
-            tsdbResolutions.find(resolution => resolution.value === value.jsonData.tsdbResolution) ?? tsdbResolutions[0]
-          }
-          onChange={onSelectChangeHandler('tsdbResolution', value, onChange)}
-        />
-      </div>
-      <div className="gf-form">
-        <InlineFormLabel width={7}>Lookup Limit</InlineFormLabel>
-        <Input
-          type="number"
-          value={value.jsonData.lookupLimit ?? 1000}
-          onChange={onInputChangeHandler('lookupLimit', value, onChange)}
-        />
-      </div>
+      <FieldSet label="OpenTSDB settings">
+        <Field htmlFor={`select-version-${idSuffix}`} label="Version">
+          <Select
+            inputId={`select-version-${idSuffix}`}
+            options={tsdbVersions}
+            value={tsdbVersions.find((version) => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
+            onChange={onSelectChangeHandler('tsdbVersion', value, onChange)}
+            width={20}
+          />
+        </Field>
+        <Field htmlFor={`select-resolution-${idSuffix}`} label="Resolution">
+          <Select
+            inputId={`select-resolution-${idSuffix}`}
+            options={tsdbResolutions}
+            value={
+              tsdbResolutions.find((resolution) => resolution.value === value.jsonData.tsdbResolution) ??
+              tsdbResolutions[0]
+            }
+            onChange={onSelectChangeHandler('tsdbResolution', value, onChange)}
+            width={20}
+          />
+        </Field>
+        <Field htmlFor={`lookup-input-${idSuffix}`} label="Lookup limit">
+          <Input
+            id={`lookup-input-${idSuffix}`}
+            type="number"
+            value={value.jsonData.lookupLimit ?? 1000}
+            onChange={onInputChangeHandler('lookupLimit', value, onChange)}
+            width={20}
+          />
+        </Field>
+      </FieldSet>
     </>
   );
 };
 
-const onSelectChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (
-  newValue: SelectableValue
-) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: newValue.value,
-    },
-  });
-};
+const onSelectChangeHandler =
+  (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (newValue: SelectableValue) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: newValue.value,
+      },
+    });
+  };
 
-const onInputChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (
-  event: SyntheticEvent<HTMLInputElement>
-) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: event.currentTarget.value,
-    },
-  });
-};
+const onInputChangeHandler =
+  (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: SyntheticEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.value,
+      },
+    });
+  };

@@ -1,109 +1,137 @@
-// +build integration
-
 package sqlstore
 
 import (
+	"context"
+	"os"
 	"testing"
+	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type sqlStoreTest struct {
-	name          string
-	dbType        string
-	dbHost        string
-	connStrValues []string
+func TestMain(m *testing.M) {
+	SetupTestDB()
+	code := m.Run()
+	CleanupTestDB()
+	os.Exit(code)
 }
 
-var sqlStoreTestCases = []sqlStoreTest{
-	{
-		name:          "MySQL IPv4",
-		dbType:        "mysql",
-		dbHost:        "1.2.3.4:5678",
-		connStrValues: []string{"tcp(1.2.3.4:5678)"},
-	},
-	{
-		name:          "Postgres IPv4",
-		dbType:        "postgres",
-		dbHost:        "1.2.3.4:5678",
-		connStrValues: []string{"host=1.2.3.4", "port=5678"},
-	},
-	{
-		name:          "Postgres IPv4 (Default Port)",
-		dbType:        "postgres",
-		dbHost:        "1.2.3.4",
-		connStrValues: []string{"host=1.2.3.4", "port=5432"},
-	},
-	{
-		name:          "MySQL IPv4 (Default Port)",
-		dbType:        "mysql",
-		dbHost:        "1.2.3.4",
-		connStrValues: []string{"tcp(1.2.3.4)"},
-	},
-	{
-		name:          "MySQL IPv6",
-		dbType:        "mysql",
-		dbHost:        "[fe80::24e8:31b2:91df:b177]:1234",
-		connStrValues: []string{"tcp([fe80::24e8:31b2:91df:b177]:1234)"},
-	},
-	{
-		name:          "Postgres IPv6",
-		dbType:        "postgres",
-		dbHost:        "[fe80::24e8:31b2:91df:b177]:1234",
-		connStrValues: []string{"host=fe80::24e8:31b2:91df:b177", "port=1234"},
-	},
-	{
-		name:          "MySQL IPv6 (Default Port)",
-		dbType:        "mysql",
-		dbHost:        "[::1]",
-		connStrValues: []string{"tcp([::1])"},
-	},
-	{
-		name:          "Postgres IPv6 (Default Port)",
-		dbType:        "postgres",
-		dbHost:        "[::1]",
-		connStrValues: []string{"host=::1", "port=5432"},
-	},
-}
+func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
+	store, _ := InitTestDB(t)
 
-func TestSQLConnectionString(t *testing.T) {
-	Convey("Testing SQL Connection Strings", t, func() {
-		t.Helper()
+	testCases := []struct {
+		desc string
+		f    func(*testing.T, *DBSession) error
+	}{
+		{
+			desc: "successfully detect primary key violations",
+			f: func(t *testing.T, sess *DBSession) error {
+				// Attempt to insert org with provided ID (primary key) twice
+				now := time.Now()
+				org := org.Org{Name: "test org primary key violation", Created: now, Updated: now, ID: 42}
+				err := sess.InsertId(&org, store.dialect)
+				require.NoError(t, err)
 
-		for _, testCase := range sqlStoreTestCases {
-			Convey(testCase.name, func() {
-				sqlstore := &SQLStore{}
-				sqlstore.Cfg = makeSQLStoreTestConfig(testCase.dbType, testCase.dbHost)
-				sqlstore.readConfig()
+				// Provide a different name to avoid unique constraint violation
+				org.Name = "test org 2"
+				return sess.InsertId(&org, store.dialect)
+			},
+		},
+		{
+			desc: "successfully detect unique constrain violations",
+			f: func(t *testing.T, sess *DBSession) error {
+				// Attempt to insert org with reserved name
+				now := time.Now()
+				org := org.Org{Name: "test org unique constrain violation", Created: now, Updated: now, ID: 43}
+				err := sess.InsertId(&org, store.dialect)
+				require.NoError(t, err)
 
-				connStr, err := sqlstore.buildConnectionString()
+				// Provide a different ID to avoid primary key violation
+				org.ID = 44
+				return sess.InsertId(&org, store.dialect)
+			},
+		},
+	}
 
-				So(err, ShouldBeNil)
-				for _, connSubStr := range testCase.connStrValues {
-					So(connStr, ShouldContainSubstring, connSubStr)
-				}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := store.WithDbSession(context.Background(), func(sess *DBSession) error {
+				return tc.f(t, sess)
 			})
-		}
-	})
+			require.Error(t, err)
+			assert.True(t, store.dialect.IsUniqueConstraintViolation(err))
+		})
+	}
 }
 
-func makeSQLStoreTestConfig(dbType string, host string) *setting.Cfg {
-	cfg := setting.NewCfg()
+func TestInitEngine_ParseTimeInConnectionString(t *testing.T) {
+	tests := []struct {
+		name               string
+		connectionString   string
+		dbType             string
+		featureEnabled     bool
+		expectedConnection string
+	}{
+		{
+			name:               "MySQL with parseTime already present",
+			connectionString:   "mysql://user:password@localhost:3306/alreadypresent?parseTime=false",
+			dbType:             "mysql",
+			featureEnabled:     true,
+			expectedConnection: "user:password@tcp(localhost:3306)/alreadypresent?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&parseTime=false",
+		},
+		{
+			name:               "MySQL with feature enabled",
+			connectionString:   "mysql://user:password@localhost:3306/existingparams?charset=utf8",
+			dbType:             "mysql",
+			featureEnabled:     true,
+			expectedConnection: "user:password@tcp(localhost:3306)/existingparams?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true&charset=utf8&parseTime=true",
+		},
+		{
+			name:               "MySQL with feature disabled",
+			connectionString:   "mysql://user:password@localhost:3306/disabled",
+			dbType:             "mysql",
+			featureEnabled:     false,
+			expectedConnection: "user:password@tcp(localhost:3306)/disabled?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true",
+		},
+		{
+			name:               "Postgres",
+			connectionString:   "postgres://username:password@localhost:5432/mydatabase",
+			dbType:             "postgres",
+			featureEnabled:     true,
+			expectedConnection: "user=username host=localhost port=5432 dbname=mydatabase sslmode='' sslcert='' sslkey='' sslrootcert='' password=password",
+		},
+	}
 
-	sec, err := cfg.Raw.NewSection("database")
-	So(err, ShouldBeNil)
-	_, err = sec.NewKey("type", dbType)
-	So(err, ShouldBeNil)
-	_, err = sec.NewKey("host", host)
-	So(err, ShouldBeNil)
-	_, err = sec.NewKey("user", "user")
-	So(err, ShouldBeNil)
-	_, err = sec.NewKey("name", "test_db")
-	So(err, ShouldBeNil)
-	_, err = sec.NewKey("password", "pass")
-	So(err, ShouldBeNil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			raw, err := ini.Load([]byte(`
+				[database]
+				url = ` + tt.connectionString))
+			require.NoError(t, err)
 
-	return cfg
+			ftMgr := featuremgmt.WithFeatures()
+			if tt.featureEnabled {
+				ftMgr = featuremgmt.WithFeatures(featuremgmt.FlagMysqlParseTime)
+			}
+
+			ss := &SQLStore{
+				cfg: &setting.Cfg{
+					Raw: raw,
+				},
+				features: ftMgr,
+				log:      log.New(),
+			}
+
+			// don't check the error, the db isn't running. Just check the connection string is okay
+			_ = ss.initEngine(nil)
+			assert.Equal(t, tt.expectedConnection, ss.dbCfg.ConnectionString)
+		})
+	}
 }

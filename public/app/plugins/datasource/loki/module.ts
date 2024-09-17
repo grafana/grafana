@@ -1,15 +1,17 @@
-import { DataSourcePlugin } from '@grafana/data';
-import Datasource from './datasource';
+import { DashboardLoadedEvent, DataSourcePlugin } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 
 import LokiCheatSheet from './components/LokiCheatSheet';
-import LokiExploreQueryEditor from './components/LokiExploreQueryEditor';
-import LokiQueryEditor from './components/LokiQueryEditor';
-import { LokiAnnotationsQueryCtrl } from './LokiAnnotationsQueryCtrl';
+import LokiQueryEditorByApp from './components/LokiQueryEditorByApp';
 import { ConfigEditor } from './configuration/ConfigEditor';
+import { LokiDatasource } from './datasource';
+import { onDashboardLoadedHandler } from './tracking';
+import { LokiQuery } from './types';
 
-export const plugin = new DataSourcePlugin(Datasource)
-  .setQueryEditor(LokiQueryEditor)
+export const plugin = new DataSourcePlugin(LokiDatasource)
+  .setQueryEditor(LokiQueryEditorByApp)
   .setConfigEditor(ConfigEditor)
-  .setExploreQueryField(LokiExploreQueryEditor)
-  .setExploreStartPage(LokiCheatSheet)
-  .setAnnotationQueryCtrl(LokiAnnotationsQueryCtrl);
+  .setQueryEditorHelp(LokiCheatSheet);
+
+// Subscribe to on dashboard loaded event so that we can track plugin adoption
+getAppEvents().subscribe<DashboardLoadedEvent<LokiQuery>>(DashboardLoadedEvent, onDashboardLoadedHandler);

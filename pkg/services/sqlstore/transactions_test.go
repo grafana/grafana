@@ -1,5 +1,3 @@
-// +build integration
-
 package sqlstore
 
 import (
@@ -7,52 +5,137 @@ import (
 	"errors"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var ErrProvokedError = errors.New("testing error")
+func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	ss, _ := InitTestDB(t)
 
-func TestTransaction(t *testing.T) {
-	ss := InitTestDB(t)
+	t.Run("top level transaction", func(t *testing.T) {
+		var outerSession *DBSession
+		err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
+			value := ctx.Value(ContextSessionKey{})
+			var ok bool
+			outerSession, ok = value.(*DBSession)
 
-	Convey("InTransaction", t, func() {
-		cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
+			require.True(t, ok, "Session should be available in the context but it does not exist")
+			require.True(t, outerSession.transactionOpen, "Transaction should be open")
 
-		err := AddApiKey(cmd)
-		So(err, ShouldBeNil)
+			require.NoError(t, ss.WithDbSession(ctx, func(sess *DBSession) error {
+				require.Equal(t, outerSession, sess)
+				require.False(t, sess.IsClosed(), "Session is closed but it should not be")
+				return nil
+			}))
 
-		deleteApiKeyCmd := &models.DeleteApiKeyCommand{Id: cmd.Result.Id, OrgId: 1}
+			require.NoError(t, ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+				require.Equal(t, outerSession, sess)
+				require.False(t, sess.IsClosed(), "Session is closed but it should not be")
+				return nil
+			}))
 
-		Convey("can update key", func() {
-			err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-				return DeleteApiKeyCtx(ctx, deleteApiKeyCmd)
-			})
-
-			So(err, ShouldBeNil)
-
-			query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-			err = GetApiKeyById(query)
-			So(err, ShouldEqual, models.ErrInvalidApiKey)
+			require.False(t, outerSession.IsClosed(), "Session is closed but it should not be")
+			return nil
 		})
 
-		Convey("won't update if one handler fails", func() {
-			err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-				err := DeleteApiKeyCtx(ctx, deleteApiKeyCmd)
-				if err != nil {
-					return err
-				}
+		require.NoError(t, err)
+		require.True(t, outerSession.IsClosed())
+	})
 
-				return ErrProvokedError
-			})
+	t.Run("fails if reuses session without transaction", func(t *testing.T) {
+		require.NoError(t, ss.WithDbSession(context.Background(), func(outerSession *DBSession) error {
+			require.NotNil(t, outerSession)
+			require.NotNil(t, outerSession.DB()) // init the session
+			require.False(t, outerSession.IsClosed(), "Session is closed but it should not be")
 
-			So(err, ShouldEqual, ErrProvokedError)
+			ctx := context.WithValue(context.Background(), ContextSessionKey{}, outerSession)
 
-			query := &models.GetApiKeyByIdQuery{ApiKeyId: cmd.Result.Id}
-			err = GetApiKeyById(query)
-			So(err, ShouldBeNil)
-			So(query.Result.Id, ShouldEqual, cmd.Result.Id)
-		})
+			require.NoError(t, ss.WithDbSession(ctx, func(sess *DBSession) error {
+				require.Equal(t, outerSession, sess)
+				require.False(t, sess.IsClosed(), "Session is closed but it should not be")
+				return nil
+			}))
+
+			require.Error(t, ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+				require.FailNow(t, "WithTransactionalDbSession should not be able to reuse session that did not open the transaction ")
+				return nil
+			}))
+			return nil
+		}))
 	})
 }
+
+func TestIntegrationPublishAfterCommitWithNestedTransactions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ss, _ := InitTestDB(t)
+	ctx := context.Background()
+
+	// On X success
+	var xHasSucceeded bool
+	ss.Bus().AddEventListener(func(ctx context.Context, e *X) error {
+		xHasSucceeded = true
+		t.Logf("Succeeded and committed: %T\n", e)
+		return nil
+	})
+
+	// On Y success
+	var yHasSucceeded bool
+	ss.Bus().AddEventListener(func(ctx context.Context, e *Y) error {
+		yHasSucceeded = true
+		t.Logf("Succeeded and committed: %T\n", e)
+		return nil
+	})
+
+	t.Run("When no session is stored into the context, each transaction should be independent", func(t *testing.T) {
+		t.Cleanup(func() { xHasSucceeded = false; yHasSucceeded = false })
+
+		err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+			t.Logf("Outer transaction: doing X... success!")
+			sess.PublishAfterCommit(&X{})
+
+			require.NoError(t, ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+				t.Log("Inner transaction: doing Y... success!")
+				sess.PublishAfterCommit(&Y{})
+				return nil
+			}))
+
+			t.Log("Outer transaction: doing Z... failure, rolling back...")
+			return errors.New("z failed")
+		})
+
+		assert.NotNil(t, err)
+		assert.False(t, xHasSucceeded)
+		assert.True(t, yHasSucceeded)
+	})
+
+	t.Run("When the session is stored into the context, the inner transaction should depend on the outer one", func(t *testing.T) {
+		t.Cleanup(func() { xHasSucceeded = false; yHasSucceeded = false })
+
+		err := ss.WithTransactionalDbSession(ctx, func(sess *DBSession) error {
+			t.Logf("Outer transaction: doing X... success!")
+			sess.PublishAfterCommit(&X{})
+
+			require.NoError(t, ss.InTransaction(ctx, func(ctx context.Context) error {
+				t.Log("Inner transaction: doing Y... success!")
+				sess.PublishAfterCommit(&Y{})
+				return nil
+			}))
+
+			t.Log("Outer transaction: doing Z... failure, rolling back...")
+			return errors.New("z failed")
+		})
+
+		assert.NotNil(t, err)
+		assert.False(t, xHasSucceeded)
+		assert.False(t, yHasSucceeded)
+	})
+}
+
+type X struct{}
+type Y struct{}

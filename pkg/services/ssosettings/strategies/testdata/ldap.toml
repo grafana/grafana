@@ -1,0 +1,38 @@
+[[servers]]
+host = "127.0.0.1"
+port = 3389
+use_ssl = false
+start_tls = false
+ssl_skip_verify = true
+
+bind_dn = "cn=ldapservice,ou=users,dc=ldap,dc=goauthentik,dc=io"
+bind_password = 'grafana'
+timeout = 10
+
+search_filter = "(cn=%s)"
+search_base_dns = ["DC=ldap,DC=goauthentik,DC=io"]
+
+# Specify names of the ldap attributes your ldap uses
+[servers.attributes]
+name = "displayName"
+surname = "sn"
+username = "cn"
+member_of = "memberOf"
+email =  "mail"
+
+# Map ldap groups to grafana org roles
+[[servers.group_mappings]]
+group_dn = "cn=admin,ou=groups,dc=ldap,dc=goauthentik,dc=io"
+org_role = "Admin"
+org_id = 1
+
+
+[[servers.group_mappings]]
+group_dn = "cn=editor,ou=groups,dc=ldap,dc=goauthentik,dc=io"
+org_role = "Editor"
+org_id = 1
+
+[[servers.group_mappings]]
+group_dn = "cn=viewer,ou=groups,dc=ldap,dc=goauthentik,dc=io"
+org_role = "Viewer"
+org_id = 1

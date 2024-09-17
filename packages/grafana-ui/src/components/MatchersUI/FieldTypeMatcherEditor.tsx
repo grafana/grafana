@@ -1,10 +1,14 @@
-import React, { memo, useMemo, useCallback } from 'react';
-import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+import { memo, useMemo, useCallback } from 'react';
+
 import { FieldMatcherID, fieldMatchers, SelectableValue, FieldType, DataFrame } from '@grafana/data';
+
+import { getFieldTypeIconName } from '../../types/icon';
 import { Select } from '../Select/Select';
 
-export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>(props => {
-  const { data, options, onChange: onChangeFromProps } = props;
+import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
+
+export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>((props) => {
+  const { data, options, onChange: onChangeFromProps, id } = props;
   const counts = useFieldCounts(data);
   const selectOptions = useSelectOptions(counts, options);
 
@@ -15,23 +19,27 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>(props => {
     [onChangeFromProps]
   );
 
-  const selectedOption = selectOptions.find(v => v.value === options);
-  return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
+  const selectedOption = selectOptions.find((v) => v.value === options);
+  return <Select inputId={id} value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
+FieldTypeMatcherEditor.displayName = 'FieldTypeMatcherEditor';
 
-const allTypes: Array<SelectableValue<FieldType>> = [
-  { value: FieldType.number, label: 'Numeric' },
-  { value: FieldType.string, label: 'String' },
-  { value: FieldType.time, label: 'Time' },
-  { value: FieldType.boolean, label: 'Boolean' },
-  { value: FieldType.trace, label: 'Traces' },
-  { value: FieldType.other, label: 'Other' },
+// Select options for all field types.
+// This is not eported to the published package, but used internally
+export const allFieldTypeIconOptions: Array<SelectableValue<FieldType>> = [
+  { value: FieldType.number, label: 'Number', icon: getFieldTypeIconName(FieldType.number) },
+  { value: FieldType.string, label: 'String', icon: getFieldTypeIconName(FieldType.string) },
+  { value: FieldType.time, label: 'Time', icon: getFieldTypeIconName(FieldType.time) },
+  { value: FieldType.boolean, label: 'Boolean', icon: getFieldTypeIconName(FieldType.boolean) },
+  { value: FieldType.trace, label: 'Traces', icon: getFieldTypeIconName(FieldType.trace) },
+  { value: FieldType.enum, label: 'Enum', icon: getFieldTypeIconName(FieldType.enum) },
+  { value: FieldType.other, label: 'Other', icon: getFieldTypeIconName(FieldType.other) },
 ];
 
 const useFieldCounts = (data: DataFrame[]): Map<FieldType, number> => {
   return useMemo(() => {
     const counts: Map<FieldType, number> = new Map();
-    for (const t of allTypes) {
+    for (const t of allFieldTypeIconOptions) {
       counts.set(t.value!, 0);
     }
     for (const frame of data) {
@@ -52,7 +60,7 @@ const useSelectOptions = (counts: Map<string, number>, opt?: string): Array<Sele
   return useMemo(() => {
     let found = false;
     const options: Array<SelectableValue<string>> = [];
-    for (const t of allTypes) {
+    for (const t of allFieldTypeIconOptions) {
       const count = counts.get(t.value!);
       const match = opt === t.value;
       if (count || match) {
@@ -81,5 +89,5 @@ export const fieldTypeMatcherItem: FieldMatcherUIRegistryItem<string> = {
   matcher: fieldMatchers.get(FieldMatcherID.byType),
   name: 'Fields with type',
   description: 'Set properties for fields of a specific type (number, string, boolean)',
-  optionsToLabel: options => options,
+  optionsToLabel: (options) => options,
 };

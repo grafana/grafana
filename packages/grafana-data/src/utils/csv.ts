@@ -1,13 +1,13 @@
 // Libraries
+import { defaults } from 'lodash';
 import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
-import defaults from 'lodash/defaults';
 
 // Types
-import { DataFrame, Field, FieldConfig, FieldType } from '../types';
-import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
-import { getFieldDisplayName } from '../field';
-import { formattedValueToString } from '../valueFormats';
+import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { getFieldDisplayName } from '../field/fieldState';
+import { DataFrame, Field, FieldConfig, FieldType } from '../types/dataFrame';
+import { formattedValueToString } from '../valueFormats/valueFormats';
 
 export enum CSVHeaderStyle {
   full,
@@ -34,7 +34,7 @@ export interface CSVParseCallbacks {
   onHeader: (fields: Field[]) => void;
 
   // Called after each row is read
-  onRow: (row: any[]) => void;
+  onRow: (row: string[]) => void;
 }
 
 export interface CSVOptions {
@@ -73,9 +73,9 @@ export class CSVReader {
   }
 
   // PapaParse callback on each line
-  private chunk = (results: ParseResult<any>, parser: Parser): void => {
+  private chunk = (results: ParseResult<string[]>, parser: Parser): void => {
     for (let i = 0; i < results.data.length; i++) {
-      const line: string[] = results.data[i];
+      const line = results.data[i];
       if (line.length < 1) {
         continue;
       }
@@ -87,7 +87,7 @@ export class CSVReader {
           // #{columkey}#a,b,c
           const idx = first.indexOf('#', 2);
           if (idx > 0) {
-            const k = first.substr(1, idx - 1);
+            const k = first.slice(1, idx);
             const isName = 'name' === k;
 
             // Simple object used to check if headers match
@@ -103,7 +103,7 @@ export class CSVReader {
                 this.data.push(this.current);
               }
 
-              const v = first.substr(idx + 1);
+              const v = first.slice(idx + 1);
               if (isName) {
                 this.current.addFieldFor(undefined, v);
                 for (let j = 1; j < line.length; j++) {
@@ -191,15 +191,18 @@ export class CSVReader {
   }
 }
 
-type FieldWriter = (value: any) => string;
+type FieldWriter = (value: unknown) => string;
 
-function writeValue(value: any, config: CSVConfig): string {
+function writeValue(value: unknown, config: CSVConfig): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
   const str = value.toString();
   if (str.includes('"')) {
     // Escape the double quote characters
     return config.quoteChar + str.replace(/"/gi, '""') + config.quoteChar;
   }
-  if (str.includes('\n') || str.includes(config.delimiter)) {
+  if (str.includes('\n') || (config.delimiter && str.includes(config.delimiter))) {
     return config.quoteChar + str + config.quoteChar;
   }
   return str;
@@ -207,13 +210,13 @@ function writeValue(value: any, config: CSVConfig): string {
 
 function makeFieldWriter(field: Field, config: CSVConfig): FieldWriter {
   if (field.display) {
-    return (value: any) => {
+    return (value: unknown) => {
       const displayValue = field.display!(value);
       return writeValue(formattedValueToString(displayValue), config);
     };
   }
 
-  return (value: any) => writeValue(value, config);
+  return (value: unknown) => writeValue(value, config);
 }
 
 function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string {
@@ -229,7 +232,7 @@ function getHeaderLine(key: string, fields: Field[], config: CSVConfig): string 
           line = line + config.delimiter;
         }
 
-        let v: any = fields[i].name;
+        let v = fields[i].name;
         if (isType) {
           v = fields[i].type;
         } else if (isName) {
@@ -270,7 +273,8 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
   });
   let csv = config.useExcelHeader ? `sep=${config.delimiter}${config.newline}` : '';
 
-  for (const series of data) {
+  for (let s = 0; s < data.length; s++) {
+    const series = data[s];
     const { fields } = series;
 
     // ignore frames with no fields
@@ -298,22 +302,32 @@ export function toCSV(data: DataFrame[], config?: CSVConfig): string {
     const length = fields[0].values.length;
 
     if (length > 0) {
-      const writers = fields.map(field => makeFieldWriter(field, config!));
+      const writers = fields.map((field) => makeFieldWriter(field, config!));
       for (let i = 0; i < length; i++) {
         for (let j = 0; j < fields.length; j++) {
           if (j > 0) {
             csv = csv + config.delimiter;
           }
 
-          const v = fields[j].values.get(i);
+          let v = fields[j].values[i];
+          // For FieldType frame, use value if it exists to prevent exporting [object object]
+          if (fields[j].type === FieldType.frame && fields[j].values[i].value) {
+            v = fields[j].values[i].value;
+          }
           if (v !== null) {
             csv = csv + writers[j](v);
           }
         }
-        csv = csv + config.newline;
+
+        if (i !== length - 1) {
+          csv = csv + config.newline;
+        }
       }
     }
-    csv = csv + config.newline;
+
+    if (s !== data.length - 1) {
+      csv = csv + config.newline;
+    }
   }
 
   return csv;

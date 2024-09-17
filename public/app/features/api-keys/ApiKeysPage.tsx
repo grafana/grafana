@@ -1,82 +1,66 @@
-import React, { PureComponent } from 'react';
-import ReactDOMServer from 'react-dom/server';
-import { connect } from 'react-redux';
-import { hot } from 'react-hot-loader';
+import { PureComponent } from 'react';
+import * as React from 'react';
+import { connect, ConnectedProps } from 'react-redux';
+
 // Utils
-import { ApiKey, CoreEvents, NewApiKey, OrgRole } from 'app/types';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { getApiKeys, getApiKeysCount } from './state/selectors';
-import { addApiKey, deleteApiKey, loadApiKeys } from './state/actions';
-import Page from 'app/core/components/Page/Page';
-import { SlideDown } from 'app/core/components/Animations/SlideDown';
-import ApiKeysAddedModal from './ApiKeysAddedModal';
-import config from 'app/core/config';
-import appEvents from 'app/core/app_events';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DeleteButton, EventsWithValidation, InlineFormLabel, LegacyForms, ValidationEvents, Icon } from '@grafana/ui';
-const { Input, Switch } = LegacyForms;
-import { NavModel, dateTimeFormat, rangeUtil } from '@grafana/data';
-import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
-import { store } from 'app/store/store';
+import { InlineField, InlineSwitch, Modal, Button, EmptyState } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { getTimeZone } from 'app/features/profile/state/selectors';
+import { AccessControlAction, ApiKey, ApikeyMigrationResult, StoreState } from 'app/types';
+
+import { ApiKeysActionBar } from './ApiKeysActionBar';
+import { ApiKeysTable } from './ApiKeysTable';
+import { MigrateToServiceAccountsCard } from './MigrateToServiceAccountsCard';
+import { deleteApiKey, migrateApiKey, migrateAll, loadApiKeys, toggleIncludeExpired } from './state/actions';
 import { setSearchQuery } from './state/reducers';
+import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 
-const timeRangeValidationEvents: ValidationEvents = {
-  [EventsWithValidation.onBlur]: [
-    {
-      rule: value => {
-        if (!value) {
-          return true;
-        }
-        try {
-          rangeUtil.intervalToSeconds(value);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      errorMessage: 'Not a valid duration',
-    },
-  ],
+function mapStateToProps(state: StoreState) {
+  const canCreate = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysCreate);
+  return {
+    apiKeys: getApiKeys(state.apiKeys),
+    searchQuery: state.apiKeys.searchQuery,
+    apiKeysCount: getApiKeysCount(state.apiKeys),
+    hasFetched: state.apiKeys.hasFetched,
+    timeZone: getTimeZone(state.user),
+    includeExpired: getIncludeExpired(state.apiKeys),
+    includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
+    canCreate: canCreate,
+    migrationResult: state.apiKeys.migrationResult,
+  };
+}
+
+const defaultPageProps = {
+  navId: 'apikeys',
 };
 
-export interface Props {
-  navModel: NavModel;
-  apiKeys: ApiKey[];
-  searchQuery: string;
-  hasFetched: boolean;
-  loadApiKeys: typeof loadApiKeys;
-  deleteApiKey: typeof deleteApiKey;
-  setSearchQuery: typeof setSearchQuery;
-  addApiKey: typeof addApiKey;
-  apiKeysCount: number;
-  includeExpired: boolean;
-}
-
-export interface State {
-  isAdding: boolean;
-  newApiKey: NewApiKey;
-}
-
-enum ApiKeyStateProps {
-  Name = 'name',
-  Role = 'role',
-  SecondsToLive = 'secondsToLive',
-}
-
-const initialApiKeyState = {
-  name: '',
-  role: OrgRole.Viewer,
-  secondsToLive: '',
+const mapDispatchToProps = {
+  loadApiKeys,
+  deleteApiKey,
+  migrateApiKey,
+  migrateAll,
+  setSearchQuery,
+  toggleIncludeExpired,
 };
 
-const tooltipText =
-  'The api key life duration. For example 1d if your key is going to last for one day. All the supported units are: s,m,h,d,w,M,y';
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export class ApiKeysPage extends PureComponent<Props, any> {
+interface OwnProps {}
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
+interface State {
+  showMigrationResult: boolean;
+}
+
+export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { isAdding: false, newApiKey: initialApiKeyState, includeExpired: false };
+    this.state = {
+      showMigrationResult: false,
+    };
   }
 
   componentDidMount() {
@@ -84,246 +68,164 @@ export class ApiKeysPage extends PureComponent<Props, any> {
   }
 
   async fetchApiKeys() {
-    await this.props.loadApiKeys(this.state.includeExpired);
+    await this.props.loadApiKeys();
   }
 
-  onDeleteApiKey(key: ApiKey) {
-    this.props.deleteApiKey(key.id, this.props.includeExpired);
-  }
+  onDeleteApiKey = (key: ApiKey) => {
+    this.props.deleteApiKey(key.id!);
+  };
+
+  onMigrateApiKey = (key: ApiKey) => {
+    this.props.migrateApiKey(key.id!);
+  };
 
   onSearchQueryChange = (value: string) => {
     this.props.setSearchQuery(value);
   };
 
-  onIncludeExpiredChange = (value: boolean) => {
-    this.setState({ hasFetched: false, includeExpired: value }, this.fetchApiKeys);
+  onIncludeExpiredChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+    this.props.toggleIncludeExpired();
   };
 
-  onToggleAdding = () => {
-    this.setState({ isAdding: !this.state.isAdding });
-  };
-
-  onAddApiKey = async (evt: any) => {
-    evt.preventDefault();
-
-    const openModal = (apiKey: string) => {
-      const rootPath = window.location.origin + config.appSubUrl;
-      const modalTemplate = ReactDOMServer.renderToString(<ApiKeysAddedModal apiKey={apiKey} rootPath={rootPath} />);
-
-      appEvents.emit(CoreEvents.showModal, {
-        templateHtml: modalTemplate,
+  onMigrateApiKeys = async () => {
+    try {
+      await this.props.migrateAll();
+      this.setState({
+        showMigrationResult: true,
       });
-    };
-
-    // make sure that secondsToLive is number or null
-    const secondsToLive = this.state.newApiKey['secondsToLive'];
-    this.state.newApiKey['secondsToLive'] = secondsToLive ? rangeUtil.intervalToSeconds(secondsToLive) : null;
-    this.props.addApiKey(this.state.newApiKey, openModal, this.props.includeExpired);
-    this.setState((prevState: State) => {
-      return {
-        ...prevState,
-        newApiKey: initialApiKeyState,
-        isAdding: false,
-      };
-    });
-  };
-
-  onApiKeyStateUpdate = (evt: any, prop: string) => {
-    const value = evt.currentTarget.value;
-    this.setState((prevState: State) => {
-      const newApiKey: any = {
-        ...prevState.newApiKey,
-      };
-      newApiKey[prop] = value;
-
-      return {
-        ...prevState,
-        newApiKey: newApiKey,
-      };
-    });
-  };
-
-  renderEmptyList() {
-    const { isAdding } = this.state;
-    return (
-      <>
-        {!isAdding && (
-          <EmptyListCTA
-            title="You haven't added any API Keys yet."
-            buttonIcon="key-skeleton-alt"
-            buttonLink="#"
-            onClick={this.onToggleAdding}
-            buttonTitle=" New API Key"
-            proTip="Remember you can provide view-only API access to other applications."
-          />
-        )}
-        {this.renderAddApiKeyForm()}
-      </>
-    );
-  }
-
-  formatDate(date: any, format?: string) {
-    if (!date) {
-      return 'No expiration date';
+    } catch (err) {
+      console.error(err);
     }
-    const timeZone = getTimeZone(store.getState().user);
-    return dateTimeFormat(date, { format, timeZone });
-  }
+  };
 
-  renderAddApiKeyForm() {
-    const { newApiKey, isAdding } = this.state;
-
-    return (
-      <SlideDown in={isAdding}>
-        <div className="gf-form-inline cta-form">
-          <button className="cta-form__close btn btn-transparent" onClick={this.onToggleAdding}>
-            <Icon name="times" />
-          </button>
-          <form className="gf-form-group" onSubmit={this.onAddApiKey}>
-            <h5>Add API Key</h5>
-            <div className="gf-form-inline">
-              <div className="gf-form max-width-21">
-                <span className="gf-form-label">Key name</span>
-                <Input
-                  type="text"
-                  className="gf-form-input"
-                  value={newApiKey.name}
-                  placeholder="Name"
-                  onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Name)}
-                />
-              </div>
-              <div className="gf-form">
-                <span className="gf-form-label">Role</span>
-                <span className="gf-form-select-wrapper">
-                  <select
-                    className="gf-form-input gf-size-auto"
-                    value={newApiKey.role}
-                    onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.Role)}
-                  >
-                    {Object.keys(OrgRole).map(role => {
-                      return (
-                        <option key={role} label={role} value={role}>
-                          {role}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </span>
-              </div>
-              <div className="gf-form max-width-21">
-                <InlineFormLabel tooltip={tooltipText}>Time to live</InlineFormLabel>
-                <Input
-                  type="text"
-                  className="gf-form-input"
-                  placeholder="1d"
-                  validationEvents={timeRangeValidationEvents}
-                  value={newApiKey.secondsToLive}
-                  onChange={evt => this.onApiKeyStateUpdate(evt, ApiKeyStateProps.SecondsToLive)}
-                />
-              </div>
-              <div className="gf-form">
-                <button className="btn gf-form-btn btn-primary">Add</button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </SlideDown>
-    );
-  }
-
-  renderApiKeyList() {
-    const { isAdding } = this.state;
-    const { apiKeys, searchQuery, includeExpired } = this.props;
-
-    return (
-      <>
-        <div className="page-action-bar">
-          <div className="gf-form gf-form--grow">
-            <FilterInput
-              labelClassName="gf-form--has-input-icon gf-form--grow"
-              inputClassName="gf-form-input"
-              placeholder="Search keys"
-              value={searchQuery}
-              onChange={this.onSearchQueryChange}
-            />
-          </div>
-
-          <div className="page-action-bar__spacer" />
-          <button className="btn btn-primary pull-right" onClick={this.onToggleAdding} disabled={isAdding}>
-            Add API key
-          </button>
-        </div>
-
-        {this.renderAddApiKeyForm()}
-
-        <h3 className="page-heading">Existing Keys</h3>
-        <Switch
-          label="Show expired"
-          checked={includeExpired}
-          onChange={event => {
-            // @ts-ignore
-            this.onIncludeExpiredChange(event.target.checked);
-          }}
-        />
-        <table className="filter-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Expires</th>
-              <th style={{ width: '34px' }} />
-            </tr>
-          </thead>
-          {apiKeys.length > 0 ? (
-            <tbody>
-              {apiKeys.map(key => {
-                return (
-                  <tr key={key.id}>
-                    <td>{key.name}</td>
-                    <td>{key.role}</td>
-                    <td>{this.formatDate(key.expiration)}</td>
-                    <td>
-                      <DeleteButton size="sm" onConfirm={() => this.onDeleteApiKey(key)} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          ) : null}
-        </table>
-      </>
-    );
-  }
+  dismissModal = async () => {
+    this.setState({ showMigrationResult: false });
+  };
 
   render() {
-    const { hasFetched, navModel, apiKeysCount } = this.props;
+    const {
+      hasFetched,
+      apiKeysCount,
+      apiKeys,
+      searchQuery,
+      timeZone,
+      includeExpired,
+      includeExpiredDisabled,
+      canCreate,
+      migrationResult,
+    } = this.props;
 
+    const showTable = apiKeysCount > 0;
     return (
-      <Page navModel={navModel}>
+      <Page {...defaultPageProps}>
         <Page.Contents isLoading={!hasFetched}>
-          {hasFetched && (apiKeysCount > 0 ? this.renderApiKeyList() : this.renderEmptyList())}
+          <MigrateToServiceAccountsCard onMigrate={this.onMigrateApiKeys} apikeysCount={apiKeysCount} />
+          {showTable ? (
+            <ApiKeysActionBar
+              searchQuery={searchQuery}
+              disabled={!canCreate}
+              onSearchChange={this.onSearchQueryChange}
+            />
+          ) : null}
+          <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
+            <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
+          </InlineField>
+          {apiKeys.length > 0 ? (
+            <ApiKeysTable
+              apiKeys={apiKeys}
+              timeZone={timeZone}
+              onMigrate={this.onMigrateApiKey}
+              onDelete={this.onDeleteApiKey}
+            />
+          ) : (
+            <EmptyState variant="not-found" message={t('api-keys.empty-state.message', 'No API keys found')} />
+          )}
         </Page.Contents>
+        {migrationResult && (
+          <MigrationSummary
+            visible={this.state.showMigrationResult}
+            data={migrationResult}
+            onDismiss={this.dismissModal}
+          />
+        )}
       </Page>
     );
   }
 }
-
-function mapStateToProps(state: any) {
-  return {
-    navModel: getNavModel(state.navIndex, 'apikeys'),
-    apiKeys: getApiKeys(state.apiKeys),
-    searchQuery: state.apiKeys.searchQuery,
-    includeExpired: state.includeExpired,
-    apiKeysCount: getApiKeysCount(state.apiKeys),
-    hasFetched: state.apiKeys.hasFetched,
-  };
-}
-
-const mapDispatchToProps = {
-  loadApiKeys,
-  deleteApiKey,
-  setSearchQuery,
-  addApiKey,
+export type MigrationSummaryProps = {
+  visible: boolean;
+  data: ApikeyMigrationResult;
+  onDismiss: () => void;
 };
 
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ApiKeysPage));
+const styles: { [key: string]: React.CSSProperties } = {
+  migrationSummary: {
+    padding: '20px',
+  },
+  infoText: {
+    color: '#007bff',
+  },
+  summaryDetails: {
+    marginTop: '20px',
+  },
+  summaryParagraph: {
+    margin: '10px 0',
+  },
+};
+
+export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, data, onDismiss }) => {
+  return (
+    <Modal title="Migration summary" isOpen={visible} closeOnBackdropClick={true} onDismiss={onDismiss}>
+      {data.failedApikeyIDs.length === 0 && (
+        <div style={styles.migrationSummary}>
+          <p>Migration Successful!</p>
+          <p>
+            <strong>Total: </strong>
+            {data.total}
+          </p>
+          <p>
+            <strong>Migrated: </strong>
+            {data.migrated}
+          </p>
+        </div>
+      )}
+      {data.failedApikeyIDs.length !== 0 && (
+        <div style={styles.migrationSummary}>
+          <p>
+            Migration Complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
+            assured, all of your API keys are fully functional and operational. Please try again or contact support.
+          </p>
+          <hr />
+          <p>
+            <strong>Total: </strong>
+            {data.total}
+          </p>
+          <p>
+            <strong>Migrated: </strong>
+            {data.migrated}
+          </p>
+          <p>
+            <strong>Failed: </strong>
+            {data.failed}
+          </p>
+          <p>
+            <strong>Failed Api Key IDs: </strong>
+            {data.failedApikeyIDs.join(', ')}
+          </p>
+          <p>
+            <strong>Failed Details: </strong>
+            {data.failedDetails.join(', ')}
+          </p>
+        </div>
+      )}
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss}>
+          Close
+        </Button>
+      </Modal.ButtonRow>
+    </Modal>
+  );
+};
+
+const ApiKeysPage = connector(ApiKeysPageUnconnected);
+export default ApiKeysPage;

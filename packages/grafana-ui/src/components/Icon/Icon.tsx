@@ -1,98 +1,94 @@
-import React from 'react';
-import { css, cx } from 'emotion';
-import { GrafanaTheme, toPascalCase } from '@grafana/data';
-import { stylesFactory } from '../../themes/stylesFactory';
-import { useTheme } from '../../themes/ThemeContext';
+import { css, cx } from '@emotion/css';
+import * as React from 'react';
+import SVG from 'react-inlinesvg';
+
+import { GrafanaTheme2, isIconName } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
-//@ts-ignore
-import * as DefaultIcon from '@iconscout/react-unicons';
-import * as MonoIcon from './assets';
+import { spin } from '../../utils/keyframes';
 
-const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart'];
+import { getIconRoot, getIconSubDir, getSvgSize } from './utils';
 
-export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | 'onError' | 'ref'> {
   name: IconName;
   size?: IconSize;
   type?: IconType;
+  /**
+   * Give your icon a semantic meaning. The icon will be hidden from screen readers, unless this prop or an aria-label is provided.
+   */
+  title?: string;
 }
 
-const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
+const getIconStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      label: Icon;
-      display: inline-block;
-    `,
-    icon: css`
-      vertical-align: middle;
-      display: inline-block;
-      margin-bottom: ${theme.spacing.xxs};
-      fill: currentColor;
-    `,
-    orange: css`
-      fill: ${theme.palette.orange};
-    `,
+    icon: css({
+      display: 'inline-block',
+      fill: 'currentColor',
+      flexShrink: 0,
+      label: 'Icon',
+      // line-height: 0; is needed for correct icon alignment in Safari
+      lineHeight: 0,
+      verticalAlign: 'middle',
+    }),
+    orange: css({
+      fill: theme.v1.palette.orange,
+    }),
+    spin: css({
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        animation: `${spin} 2s infinite linear`,
+      },
+    }),
   };
-});
+};
 
-export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
-  ({ size = 'md', type = 'default', name, className, style, ...divElementProps }, ref) => {
-    const theme = useTheme();
-    const styles = getIconStyles(theme);
+export const Icon = React.forwardRef<SVGElement, IconProps>(
+  ({ size = 'md', type = 'default', name, className, style, title = '', ...rest }, ref) => {
+    const styles = useStyles2(getIconStyles);
+
+    if (!isIconName(name)) {
+      console.warn('Icon component passed an invalid icon name', name);
+    }
+
+    // handle the deprecated 'fa fa-spinner'
+    const iconName: IconName = name === 'fa fa-spinner' ? 'spinner' : name;
+
+    const iconRoot = getIconRoot();
     const svgSize = getSvgSize(size);
+    const svgHgt = svgSize;
+    const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
+    const subDir = getIconSubDir(iconName, type);
+    const svgPath = `${iconRoot}${subDir}/${iconName}.svg`;
 
-    /* Temporary solution to display also font awesome icons */
-    const isFontAwesome = name?.includes('fa-');
-    if (isFontAwesome) {
-      return <i className={cx(name, className)} {...divElementProps} style={style} />;
-    }
-
-    if (alwaysMonoIcons.includes(name)) {
-      type = 'mono';
-    }
-
-    const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);
-
-    /* Unicons don't have type definitions */
-    //@ts-ignore
-    const Component = type === 'default' ? DefaultIcon[iconName] : MonoIcon[iconName];
-
-    if (!Component) {
-      return <div />;
-    }
+    const composedClassName = cx(
+      styles.icon,
+      className,
+      type === 'mono' ? { [styles.orange]: name === 'favorite' } : '',
+      {
+        [styles.spin]: iconName === 'spinner',
+      }
+    );
 
     return (
-      <div className={styles.container} {...divElementProps} ref={ref}>
-        {type === 'default' && <Component size={svgSize} className={cx(styles.icon, className)} style={style} />}
-        {type === 'mono' && (
-          <Component
-            size={svgSize}
-            className={cx(styles.icon, { [styles.orange]: name === 'favorite' }, className)}
-            style={style}
-          />
-        )}
-      </div>
+      <SVG
+        aria-hidden={
+          rest.tabIndex === undefined &&
+          !title &&
+          !rest['aria-label'] &&
+          !rest['aria-labelledby'] &&
+          !rest['aria-describedby']
+        }
+        innerRef={ref}
+        src={svgPath}
+        width={svgWid}
+        height={svgHgt}
+        title={title}
+        className={composedClassName}
+        style={style}
+        {...rest}
+      />
     );
   }
 );
 
 Icon.displayName = 'Icon';
-
-/* Transform string with px to number and add 2 pxs as path in svg is 2px smaller */
-export const getSvgSize = (size: IconSize) => {
-  switch (size) {
-    case 'xs':
-      return 12;
-    case 'sm':
-      return 14;
-    case 'md':
-      return 16;
-    case 'lg':
-      return 18;
-    case 'xl':
-      return 24;
-    case 'xxl':
-      return 36;
-    case 'xxxl':
-      return 48;
-  }
-};

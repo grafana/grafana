@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -245,14 +245,14 @@ func (p *publisher) apiURL(url string) string {
 	return fmt.Sprintf("%s/%s%s", p.apiURI, p.product, url)
 }
 
-func (p *publisher) postRequest(url string, obj interface{}, desc string) error {
+func (p *publisher) postRequest(url string, obj any, desc string) error {
 	jsonBytes, err := json.Marshal(obj)
 	if err != nil {
 		return err
 	}
 
 	if p.dryRun {
-		log.Println(fmt.Sprintf("POST to %s:", p.apiURL(url)))
+		log.Printf("POST to %s:\n", p.apiURL(url))
 		log.Println(string(jsonBytes))
 		return nil
 	}
@@ -276,7 +276,7 @@ func (p *publisher) postRequest(url string, obj interface{}, desc string) error 
 
 	if res.Body != nil {
 		defer res.Body.Close()
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return err
 		}
@@ -286,7 +286,7 @@ func (p *publisher) postRequest(url string, obj interface{}, desc string) error 
 		} else {
 			log.Printf("Action: %s \t Failed - Status: %v", desc, res.Status)
 			log.Printf("Resp: %s", body)
-			log.Fatalf("Quiting")
+			log.Fatalf("Quitting")
 		}
 	}
 

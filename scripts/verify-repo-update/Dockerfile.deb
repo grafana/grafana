@@ -1,11 +1,10 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ARG REPO_CONFIG=grafana.list.oss
 ARG PACKAGE=grafana
 
 RUN apt update && \
     apt install -y curl                \
-                   apt-transport-https \
                    ca-certificates     \
                    gnupg               && \
     curl https://packages.grafana.com/gpg.key | apt-key add -

@@ -1,64 +1,92 @@
-// Store
-import store from 'app/core/store';
-
-// Models
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { TimeRange, AppEvents } from '@grafana/data';
-
-// Utils
 import { isString as _isString } from 'lodash';
-import { rangeUtil } from '@grafana/data';
-import { dateMath } from '@grafana/data';
+
+import { TimeRange, AppEvents, rangeUtil, dateMath, PanelModel as IPanelModel, dateTimeAsMoment } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
-
-// Services
-import { getTemplateSrv } from '@grafana/runtime';
-
-// Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
-import { CoreEvents } from 'app/types';
-
+import store from 'app/core/store';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { UnlinkModal } from 'app/features/dashboard-scene/scene/UnlinkModal';
+import { AddLibraryPanelModal } from 'app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal';
+import { cleanUpPanelState } from 'app/features/panel/state/actions';
+import { dispatch } from 'app/store/store';
+
+import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
   if (ask !== false) {
-    const text2 = panel.alert ? 'Panel includes an alert rule, removing panel will also remove alert rule' : undefined;
     const confirmText = panel.alert ? 'YES' : undefined;
 
-    appEvents.emit(CoreEvents.showConfirmModal, {
-      title: 'Remove Panel',
-      text: 'Are you sure you want to remove this panel?',
-      text2: text2,
-      icon: 'trash-alt',
-      confirmText: confirmText,
-      yesText: 'Remove',
-      onConfirm: () => removePanel(dashboard, panel, false),
-    });
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Remove panel',
+        text: 'Are you sure you want to remove this panel?',
+        icon: 'trash-alt',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => removePanel(dashboard, panel, false),
+      })
+    );
     return;
   }
+
   dashboard.removePanel(panel);
+  dispatch(cleanUpPanelState(panel.key));
 };
 
 export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => {
   dashboard.duplicatePanel(panel);
 };
 
-export const copyPanel = (panel: PanelModel) => {
-  store.set(LS_PANEL_COPY_KEY, JSON.stringify(panel.getSaveModel()));
-  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Open Add Panel to paste']);
+export const copyPanel = (panel: IPanelModel) => {
+  let saveModel = panel;
+  if (panel instanceof PanelModel) {
+    saveModel = panel.getSaveModel();
+  }
+
+  store.set(LS_PANEL_COPY_KEY, JSON.stringify(saveModel));
+  appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
 };
 
 export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
-  appEvents.emit(CoreEvents.showModalReact, {
-    component: ShareModal,
-    props: {
-      dashboard: dashboard,
-      panel: panel,
-    },
-  });
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: ShareModal,
+      props: {
+        dashboard: dashboard,
+        panel: panel,
+      },
+    })
+  );
+};
+
+export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) => {
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: AddLibraryPanelModal,
+      props: {
+        panel,
+        initialFolderUid: dashboard.meta.folderUid,
+        isOpen: true,
+      },
+    })
+  );
+};
+
+export const unlinkLibraryPanel = (panel: PanelModel) => {
+  appEvents.publish(
+    new ShowModalReactEvent({
+      component: UnlinkModal,
+      props: {
+        onConfirm: () => panel.unlinkLibraryPanel(),
+        isOpen: true,
+      },
+    })
+  );
 };
 
 export const refreshPanel = (panel: PanelModel) => {
@@ -66,10 +94,11 @@ export const refreshPanel = (panel: PanelModel) => {
 };
 
 export const toggleLegend = (panel: PanelModel) => {
-  console.warn('Toggle legend is not implemented yet');
-  // We need to set panel.legend defaults first
-  // panel.legend.show = !panel.legend.show;
-  refreshPanel(panel);
+  const newOptions = { ...panel.options };
+  newOptions.legend.showLegend === true
+    ? (newOptions.legend.showLegend = false)
+    : (newOptions.legend.showLegend = true);
+  panel.updateOptions(newOptions);
 };
 
 export interface TimeOverrideResult {
@@ -92,11 +121,13 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
     }
 
     if (_isString(timeRange.raw.from)) {
-      const timeFromDate = dateMath.parse(timeFromInfo.from)!;
+      const fromTimezone = dateTimeAsMoment(timeRange.from).tz();
+      const toTimezone = dateTimeAsMoment(timeRange.to).tz();
+      const timeFromDate = dateMath.parse(timeFromInfo.from, undefined, fromTimezone)!;
       newTimeData.timeInfo = timeFromInfo.display;
       newTimeData.timeRange = {
         from: timeFromDate,
-        to: dateMath.parse(timeFromInfo.to)!,
+        to: dateMath.parse(timeFromInfo.to, undefined, toTimezone)!,
         raw: {
           from: timeFromInfo.from,
           to: timeFromInfo.to,
@@ -146,4 +177,16 @@ export function calculateInnerPanelHeight(panel: PanelModel, containerHeight: nu
   const chromePadding = panel.plugin && panel.plugin.noPadding ? 0 : config.theme.panelPadding * 2;
   const headerHeight = panel.hasTitle() ? config.theme.panelHeaderHeight : 0;
   return containerHeight - headerHeight - chromePadding - PANEL_BORDER;
+}
+
+export function calculateNewPanelGridPos(dashboard: DashboardModel): PanelModel['gridPos'] {
+  // Move all panels down by the height of the "add panel" widget.
+  // This is to work around an issue with react-grid-layout that can mess up the layout
+  // in certain configurations. (See https://github.com/react-grid-layout/react-grid-layout/issues/1787)
+  const addPanelWidgetHeight = 8;
+  for (const panel of dashboard.panelIterator()) {
+    panel.gridPos.y += addPanelWidgetHeight;
+  }
+
+  return { x: 0, y: 0, w: 12, h: addPanelWidgetHeight };
 }

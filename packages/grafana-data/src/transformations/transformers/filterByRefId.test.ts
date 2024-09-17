@@ -1,8 +1,9 @@
-import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { filterFramesByRefIdTransformer } from './filterByRefId';
 import { transformDataFrame } from '../transformDataFrame';
+
+import { filterFramesByRefIdTransformer } from './filterByRefId';
+import { DataTransformerID } from './ids';
 
 export const allSeries = [
   toDataFrame({
@@ -30,7 +31,7 @@ describe('filterByRefId transformer', () => {
       options: {},
     };
 
-    await expect(transformDataFrame([cfg], allSeries)).toEmitValuesWith(received => {
+    await expect(transformDataFrame([cfg], allSeries)).toEmitValuesWith((received) => {
       const filtered = received[0];
       expect(filtered.length).toBe(3);
     });
@@ -45,9 +46,9 @@ describe('filterByRefId transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], allSeries)).toEmitValuesWith(received => {
+      await expect(transformDataFrame([cfg], allSeries)).toEmitValuesWith((received) => {
         const filtered = received[0];
-        expect(filtered.map(f => f.refId)).toEqual(['A', 'B']);
+        expect(filtered.map((f) => f.refId)).toEqual(['A', 'B']);
       });
     });
   });

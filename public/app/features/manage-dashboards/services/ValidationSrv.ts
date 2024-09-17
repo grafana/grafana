@@ -1,61 +1,52 @@
-import coreModule from 'app/core/core_module';
-import { backendSrv } from 'app/core/services/backend_srv';
+import { getGrafanaSearcher } from 'app/features/search/service';
 
-const hitTypes = {
-  FOLDER: 'dash-folder',
-  DASHBOARD: 'dash-db',
-};
+class ValidationError extends Error {
+  type: string;
+
+  constructor(type: string, message: string) {
+    super(message);
+    this.type = type;
+  }
+}
 
 export class ValidationSrv {
   rootName = 'general';
 
-  validateNewDashboardName(folderId: any, name: string) {
-    return this.validate(folderId, name, 'A dashboard or a folder with the same name already exists');
+  validateNewDashboardName(folderUID: string, name: string) {
+    return this.validate(folderUID, name, 'A dashboard or a folder with the same name already exists');
   }
 
-  validateNewFolderName(name: string) {
-    return this.validate(0, name, 'A folder or dashboard in the general folder with the same name already exists');
+  validateNewFolderName(name?: string) {
+    return this.validate(
+      this.rootName,
+      name,
+      'A folder or dashboard in the general folder with the same name already exists'
+    );
   }
 
-  private async validate(folderId: any, name: string, existingErrorMessage: string) {
+  private async validate(folderUID: string, name: string | undefined, existingErrorMessage: string) {
     name = (name || '').trim();
     const nameLowerCased = name.toLowerCase();
 
     if (name.length === 0) {
-      throw {
-        type: 'REQUIRED',
-        message: 'Name is required',
-      };
+      throw new ValidationError('REQUIRED', 'Name is required');
     }
 
-    if (folderId === 0 && nameLowerCased === this.rootName) {
-      throw {
-        type: 'EXISTING',
-        message: 'This is a reserved name and cannot be used for a folder.',
-      };
+    if (nameLowerCased === this.rootName) {
+      throw new ValidationError('EXISTING', 'This is a reserved name and cannot be used for a folder.');
     }
 
-    const promises = [];
-    promises.push(backendSrv.search({ type: hitTypes.FOLDER, folderIds: [folderId], query: name }));
-    promises.push(backendSrv.search({ type: hitTypes.DASHBOARD, folderIds: [folderId], query: name }));
+    const searcher = getGrafanaSearcher();
 
-    const res = await Promise.all(promises);
-    let hits: any[] = [];
+    const dashboardResults = await searcher.search({
+      kind: ['dashboard'],
+      query: name,
+      location: folderUID || 'general',
+    });
 
-    if (res.length > 0 && res[0].length > 0) {
-      hits = res[0];
-    }
-
-    if (res.length > 1 && res[1].length > 0) {
-      hits = hits.concat(res[1]);
-    }
-
-    for (const hit of hits) {
-      if (nameLowerCased === hit.title.toLowerCase()) {
-        throw {
-          type: 'EXISTING',
-          message: existingErrorMessage,
-        };
+    for (const result of dashboardResults.view) {
+      if (nameLowerCased === result.name.toLowerCase()) {
+        throw new ValidationError('EXISTING', existingErrorMessage);
       }
     }
 
@@ -63,8 +54,4 @@ export class ValidationSrv {
   }
 }
 
-const validationSrv = new ValidationSrv();
-
-export default validationSrv;
-
-coreModule.service('validationSrv', ValidationSrv);
+export const validationSrv = new ValidationSrv();

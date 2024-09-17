@@ -1,10 +1,11 @@
+import { stringToJsRegex } from '../../text/string';
 import { DataFrame } from '../../types/dataFrame';
-import { FrameMatcherID } from './ids';
 import { FrameMatcherInfo } from '../../types/transformations';
-import { stringToJsRegex } from '../../text';
+
+import { FrameMatcherID } from './ids';
 
 // General Field matcher
-const refIdMacher: FrameMatcherInfo<string> = {
+const refIdMatcher: FrameMatcherInfo<string> = {
   id: FrameMatcherID.byRefId,
   name: 'Query refId',
   description: 'match the refId',
@@ -23,5 +24,5 @@ const refIdMacher: FrameMatcherInfo<string> = {
 };
 
 export function getRefIdMatchers(): FrameMatcherInfo[] {
-  return [refIdMacher];
+  return [refIdMatcher];
 }

@@ -138,7 +138,7 @@ func (l *lexer) lineNumber() int {
 
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
-func (l *lexer) errorf(format string, args ...interface{}) stateFn {
+func (l *lexer) errorf(format string, args ...any) stateFn {
 	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...)}
 	return nil
 }
@@ -276,7 +276,7 @@ func lexSymbol(l *lexer) stateFn {
 func lexFunc(l *lexer) stateFn {
 	for {
 		switch r := l.next(); {
-		case unicode.IsLetter(r):
+		case unicode.IsLetter(r) || r == '_':
 			// absorb
 		default:
 			l.backup()
@@ -288,9 +288,29 @@ func lexFunc(l *lexer) stateFn {
 
 func lexVar(l *lexer) stateFn {
 	hasChar := false
+	if l.peek() == '{' {
+		_ = l.next()
+		for {
+			switch r := l.next(); {
+			case r == '}':
+				if !hasChar {
+					return l.errorf("incomplete variable")
+				}
+				l.emit(itemVar)
+				return lexItem
+			case r == eof:
+				return l.errorf("unterminated variable missing closing }")
+			case isVarchar(r) || isSpace(r):
+				hasChar = true
+			default:
+				return l.errorf("unsupported variable character")
+			}
+		}
+	}
+
 	for {
 		switch r := l.next(); {
-		case unicode.IsLetter(r):
+		case isVarchar(r):
 			hasChar = true
 			// absorb
 		default:
@@ -321,9 +341,6 @@ func isSpace(r rune) bool {
 	return unicode.IsSpace(r)
 }
 
-// isVarchar should maybe be used in place of unicode is letter above,
-// but do not want to modify it at this time, so adding lint exception.
-// nolint:unused,deadcode
 func isVarchar(r rune) bool {
 	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }

@@ -1,0 +1,12 @@
+{{HiddenSubject .Subject "Welcome to Grafana, please complete your sign up!"}}
+
+Complete the signup
+
+Copy and paste the email verification code:
+{{.Code}}
+in the sign up form or use the link below.
+
+{{.SignUpUrl}}
+
+
+Sent by Grafana v{{.BuildVersion}} (c) {{now | date "2006"}} Grafana Labs

@@ -1,5 +1,6 @@
+import { IntervalVariableModel, VariableRefresh } from '@grafana/data';
+
 import { OptionsVariableBuilder } from './optionsVariableBuilder';
-import { IntervalVariableModel, VariableRefresh } from 'app/features/variables/types';
 
 export class IntervalVariableBuilder extends OptionsVariableBuilder<IntervalVariableModel> {
   withRefresh(refresh: VariableRefresh) {

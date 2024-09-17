@@ -1,10 +1,23 @@
-import includes from 'lodash/includes';
-import isDate from 'lodash/isDate';
-import { DateTime, dateTime, dateTimeForTimeZone, ISO_8601, isDateTime, DurationUnit } from './moment_wrapper';
-import { TimeZone } from '../types/index';
+import { includes, isDate } from 'lodash';
 
-const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+import { TimeZone } from '../types/time';
 
+import {
+  DateTime,
+  dateTime,
+  dateTimeAsMoment,
+  dateTimeForTimeZone,
+  DurationUnit,
+  isDateTime,
+  ISO_8601,
+} from './moment_wrapper';
+
+const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'];
+
+/**
+ * Determine if a string contains a relative date time.
+ * @param text
+ */
 export function isMathString(text: string | DateTime | Date): boolean {
   if (!text) {
     return false;
@@ -27,7 +40,8 @@ export function isMathString(text: string | DateTime | Date): boolean {
 export function parse(
   text?: string | DateTime | Date | null,
   roundUp?: boolean,
-  timezone?: TimeZone
+  timezone?: TimeZone,
+  fiscalYearStartMonth?: number
 ): DateTime | undefined {
   if (!text) {
     return undefined;
@@ -37,16 +51,18 @@ export function parse(
     if (isDateTime(text)) {
       return text;
     }
+
     if (isDate(text)) {
       return dateTime(text);
     }
+
     // We got some non string which is not a moment nor Date. TS should be able to check for that but not always.
     return undefined;
   } else {
-    let time;
+    let time: DateTime;
     let mathString = '';
-    let index;
-    let parseString;
+    let index = -1;
+    let parseString = '';
 
     if (text.substring(0, 3) === 'now') {
       time = dateTimeForTimeZone(timezone);
@@ -68,7 +84,7 @@ export function parse(
       return time;
     }
 
-    return parseDateMath(mathString, time, roundUp);
+    return parseDateMath(mathString, time, roundUp, fiscalYearStartMonth);
   }
 }
 
@@ -96,10 +112,14 @@ export function isValid(text: string | DateTime): boolean {
  * @param time
  * @param roundUp If true it will round the time to endOf time unit, otherwise to startOf time unit.
  */
-// TODO: Had to revert Andrejs `time: moment.Moment` to `time: any`
-export function parseDateMath(mathString: string, time: any, roundUp?: boolean): DateTime | undefined {
+export function parseDateMath(
+  mathString: string,
+  time: DateTime,
+  roundUp?: boolean,
+  fiscalYearStartMonth = 0
+): DateTime | undefined {
   const strippedMathString = mathString.replace(/\s/g, '');
-  const dateTime = time;
+  const result = dateTime(time);
   let i = 0;
   const len = strippedMathString.length;
 
@@ -107,7 +127,8 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
     const c = strippedMathString.charAt(i++);
     let type;
     let num;
-    let unit;
+    let unitString: string;
+    let isFiscal = false;
 
     if (c === '/') {
       type = 0;
@@ -122,7 +143,7 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
     if (isNaN(parseInt(strippedMathString.charAt(i), 10))) {
       num = 1;
     } else if (strippedMathString.length === 2) {
-      num = strippedMathString.charAt(i);
+      num = parseInt(strippedMathString.charAt(i), 10);
     } else {
       const numFrom = i;
       while (!isNaN(parseInt(strippedMathString.charAt(i), 10))) {
@@ -140,23 +161,57 @@ export function parseDateMath(mathString: string, time: any, roundUp?: boolean):
         return undefined;
       }
     }
-    unit = strippedMathString.charAt(i++);
+
+    unitString = strippedMathString.charAt(i++);
+
+    if (unitString === 'f') {
+      unitString = strippedMathString.charAt(i++);
+      isFiscal = true;
+    }
+
+    const unit = unitString as DurationUnit;
 
     if (!includes(units, unit)) {
       return undefined;
     } else {
       if (type === 0) {
-        if (roundUp) {
-          dateTime.endOf(unit);
+        if (isFiscal) {
+          roundToFiscal(fiscalYearStartMonth, result, unit, roundUp);
         } else {
-          dateTime.startOf(unit);
+          if (roundUp) {
+            result.endOf(unit);
+          } else {
+            result.startOf(unit);
+          }
         }
       } else if (type === 1) {
-        dateTime.add(num, unit);
+        result.add(num, unit);
       } else if (type === 2) {
-        dateTime.subtract(num, unit);
+        result.subtract(num, unit);
       }
     }
   }
-  return dateTime;
+  return result;
+}
+
+export function roundToFiscal(fyStartMonth: number, dateTime: DateTime, unit: string, roundUp: boolean | undefined) {
+  switch (unit) {
+    case 'y':
+      if (roundUp) {
+        roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(11, 'M').endOf('M');
+      } else {
+        dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 12, 'M').startOf('M');
+      }
+      return dateTime;
+    case 'Q':
+      if (roundUp) {
+        roundToFiscal(fyStartMonth, dateTime, unit, false)?.add(2, 'M').endOf('M');
+      } else {
+        // why + 12? to ensure this number is always a positive offset from fyStartMonth
+        dateTime.subtract((dateTimeAsMoment(dateTime).month() - fyStartMonth + 12) % 3, 'M').startOf('M');
+      }
+      return dateTime;
+    default:
+      return undefined;
+  }
 }

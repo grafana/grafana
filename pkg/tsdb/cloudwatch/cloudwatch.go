@@ -2,490 +2,406 @@ package cloudwatch
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
-	"regexp"
-	"strings"
+	"net/http"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
-	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/patrickmn/go-cache"
 )
 
-type datasourceInfo struct {
-	Profile       string
-	Region        string
-	AuthType      authType
-	AssumeRoleARN string
-	ExternalID    string
-	Namespace     string
+const (
+	tagValueCacheExpiration = time.Hour * 24
 
-	AccessKey string
-	SecretKey string
+	// headerFromExpression is used by datasources to identify expression queries
+	headerFromExpression = "X-Grafana-From-Expr"
+
+	// headerFromAlert is used by datasources to identify alert queries
+	headerFromAlert = "FromAlert"
+)
+
+type DataQueryJson struct {
+	dataquery.CloudWatchAnnotationQuery
+	Type string `json:"type,omitempty"`
 }
 
-const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
-const defaultRegion = "default"
+type DataSource struct {
+	Settings      models.CloudWatchSettings
+	HTTPClient    *http.Client
+	sessions      SessionCache
+	tagValueCache *cache.Cache
+	ProxyOpts     *proxy.Options
+}
 
-// Constants also defined in datasource/cloudwatch/datasource.ts
-const logIdentifierInternal = "__log__grafana_internal__"
-const logStreamIdentifierInternal = "__logstream__grafana_internal__"
+const (
+	defaultRegion = "default"
+	logsQueryMode = "Logs"
+	// QueryTypes
+	annotationQuery = "annotationQuery"
+	logAction       = "logAction"
+	timeSeriesQuery = "timeSeriesQuery"
+)
 
-var plog = log.New("tsdb.cloudwatch")
-var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+func ProvideService(httpClientProvider *httpclient.Provider) *CloudWatchService {
+	logger := backend.NewLoggerWith("logger", "tsdb.cloudwatch")
+	logger.Debug("Initializing")
 
-func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "CloudWatchService",
-		InitPriority: registry.Low,
-		Instance:     &CloudWatchService{},
-	})
+	executor := newExecutor(
+		datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)),
+		logger,
+	)
+
+	return &CloudWatchService{
+		Executor: executor,
+	}
 }
 
 type CloudWatchService struct {
-	LogsService *LogsService `inject:""`
+	Executor *cloudWatchExecutor
 }
 
-func (s *CloudWatchService) Init() error {
-	plog.Debug("initing")
-
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return newExecutor(s.LogsService), nil
-	})
-
-	return nil
+type SessionCache interface {
+	GetSessionWithAuthSettings(c awsds.GetSessionConfig, as awsds.AuthSettings) (*session.Session, error)
 }
 
-func newExecutor(logsService *LogsService) *cloudWatchExecutor {
-	return &cloudWatchExecutor{
-		logsService: logsService,
+func newExecutor(im instancemgmt.InstanceManager, logger log.Logger) *cloudWatchExecutor {
+	e := &cloudWatchExecutor{
+		im:     im,
+		logger: logger,
+	}
+
+	e.resourceHandler = httpadapter.New(e.newResourceMux())
+	return e
+}
+
+func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		instanceSettings, err := models.LoadCloudWatchSettings(ctx, settings)
+		if err != nil {
+			return nil, fmt.Errorf("error reading settings: %w", err)
+		}
+
+		opts, err := settings.HTTPClientOptions(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		httpClient, err := httpClientProvider.New(opts)
+		if err != nil {
+			return nil, fmt.Errorf("error creating http client: %w", err)
+		}
+
+		return DataSource{
+			Settings:      instanceSettings,
+			HTTPClient:    httpClient,
+			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+			sessions:      awsds.NewSessionCache(),
+			// this is used to build a custom dialer when secure socks proxy is enabled
+			ProxyOpts: opts.ProxyOptions,
+		}, nil
 	}
 }
 
-// cloudWatchExecutor executes CloudWatch requests.
+// cloudWatchExecutor executes CloudWatch requests
 type cloudWatchExecutor struct {
-	*models.DataSource
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 
-	ec2Client  ec2iface.EC2API
-	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-
-	logsService *LogsService
+	resourceHandler backend.CallResourceHandler
 }
 
-func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
-	dsInfo := e.getDSInfo(region)
-
-	bldr := strings.Builder{}
-	for i, s := range []string{
-		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region,
-	} {
-		if i != 0 {
-			bldr.WriteString(":")
-		}
-		bldr.WriteString(strings.ReplaceAll(s, ":", `\:`))
+// instrumentContext adds plugin key-values to the context; later, logger.FromContext(ctx) will provide a logger
+// that adds these values to its output.
+// TODO: move this into the sdk (see https://github.com/grafana/grafana/issues/82033)
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
+	if pCtx.DataSourceInstanceSettings != nil {
+		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
+		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
 	}
-	cacheKey := bldr.String()
-
-	sessCacheLock.RLock()
-	if env, ok := sessCache[cacheKey]; ok {
-		if env.expiration.After(time.Now().UTC()) {
-			sessCacheLock.RUnlock()
-			return env.session, nil
-		}
+	if pCtx.User != nil {
+		p = append(p, "uname", pCtx.User.Login)
 	}
-	sessCacheLock.RUnlock()
+	return log.WithContextualAttributes(ctx, p)
+}
 
-	cfgs := []*aws.Config{
-		{
-			CredentialsChainVerboseErrors: aws.Bool(true),
-		},
-	}
-
-	var regionCfg *aws.Config
-	if dsInfo.Region == defaultRegion {
-		plog.Warn("Region is set to \"default\", which is unsupported")
-		dsInfo.Region = ""
-	}
-	if dsInfo.Region != "" {
-		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
-		cfgs = append(cfgs, regionCfg)
-	}
-
-	switch dsInfo.AuthType {
-	case authTypeSharedCreds:
-		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
-			"region", dsInfo.Region)
-		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
-		})
-	case authTypeKeys:
-		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.Region)
-		cfgs = append(cfgs, &aws.Config{
-			Credentials: credentials.NewStaticCredentials(dsInfo.AccessKey, dsInfo.SecretKey, ""),
-		})
-	case authTypeDefault:
-		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
-	default:
-		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.AuthType))
-	}
-	sess, err := newSession(cfgs...)
-	if err != nil {
-		return nil, err
-	}
-
-	duration := stscreds.DefaultDuration
-	expiration := time.Now().Add(duration)
-	if dsInfo.AssumeRoleARN != "" {
-		// We should assume a role in AWS
-		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
-
-		cfgs := []*aws.Config{
-			{
-				CredentialsChainVerboseErrors: aws.Bool(true),
-			},
-			{
-				Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
-					// Not sure if this is necessary, overlaps with p.Duration and is undocumented
-					p.Expiry.SetExpiration(expiration, 0)
-					p.Duration = duration
-					if dsInfo.ExternalID != "" {
-						p.ExternalID = aws.String(dsInfo.ExternalID)
-					}
-				}),
-			},
-		}
-		if regionCfg != nil {
-			cfgs = append(cfgs, regionCfg)
-		}
-		sess, err = newSession(cfgs...)
+func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
+	r := region
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if region == defaultRegion {
 		if err != nil {
-			return nil, err
+			return models.RequestContext{}, err
 		}
+		r = instance.Settings.Region
 	}
 
-	plog.Debug("Successfully created AWS session")
-
-	sessCacheLock.Lock()
-	sessCache[cacheKey] = envelope{
-		session:    sess,
-		expiration: expiration,
-	}
-	sessCacheLock.Unlock()
-
-	return sess, nil
-}
-
-func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
-	sess, err := e.newSession(region)
+	ec2Client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
 	if err != nil {
-		return nil, err
+		return models.RequestContext{}, err
 	}
-	return newCWClient(sess), nil
-}
 
-func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	sess, err := e.newSession(region)
+	sess, err := instance.newSession(r)
 	if err != nil {
-		return nil, err
+		return models.RequestContext{}, err
 	}
 
-	logsClient := newCWLogsClient(sess)
-
-	return logsClient, nil
+	return models.RequestContext{
+		OAMAPIProvider:        NewOAMAPI(sess),
+		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), instance.Settings.GrafanaSettings.ListMetricsPageLimit),
+		LogsAPIProvider:       NewLogsAPI(sess),
+		EC2APIProvider:        ec2Client,
+		Settings:              instance.Settings,
+		Logger:                e.logger.FromContext(ctx),
+	}, nil
 }
 
-func (e *cloudWatchExecutor) getEC2Client(region string) (ec2iface.EC2API, error) {
-	if e.ec2Client != nil {
-		return e.ec2Client, nil
-	}
-
-	sess, err := e.newSession(region)
+// getRequestContextOnlySettings is useful for resource endpoints that are called before auth has been configured such as external-id that need access to settings but nothing else
+func (e *cloudWatchExecutor) getRequestContextOnlySettings(ctx context.Context, pluginCtx backend.PluginContext, _ string) (models.RequestContext, error) {
+	instance, err := e.getInstance(ctx, pluginCtx)
 	if err != nil {
-		return nil, err
+		return models.RequestContext{}, err
 	}
-	e.ec2Client = newEC2Client(sess)
 
-	return e.ec2Client, nil
+	return models.RequestContext{
+		OAMAPIProvider:        nil,
+		MetricsClientProvider: nil,
+		LogsAPIProvider:       nil,
+		EC2APIProvider:        nil,
+		Settings:              instance.Settings,
+		Logger:                e.logger.FromContext(ctx),
+	}, nil
 }
 
-func (e *cloudWatchExecutor) getRGTAClient(region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
-	error) {
-	if e.rgtaClient != nil {
-		return e.rgtaClient, nil
-	}
-
-	sess, err := e.newSession(region)
-	if err != nil {
-		return nil, err
-	}
-	e.rgtaClient = newRGTAClient(sess)
-
-	return e.rgtaClient, nil
+func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctx = instrumentContext(ctx, string(backend.EndpointCallResource), req.PluginContext)
+	return e.resourceHandler.CallResource(ctx, req, sender)
 }
 
-func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	queryContext *tsdb.TsdbQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
-	const maxAttempts = 8
-	const pollPeriod = 1000 * time.Millisecond
-
-	queryParams := queryContext.Queries[0].Model
-	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
+func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	ctx = instrumentContext(ctx, string(backend.EndpointQueryData), req.PluginContext)
+	q := req.Queries[0]
+	var model DataQueryJson
+	err := json.Unmarshal(q.JSON, &model)
 	if err != nil {
 		return nil, err
 	}
 
-	requestParams := simplejson.NewFromAny(map[string]interface{}{
-		"region":  queryParams.Get("region").MustString(""),
-		"queryId": *startQueryOutput.QueryId,
-	})
-
-	ticker := time.NewTicker(pollPeriod)
-	defer ticker.Stop()
-
-	attemptCount := 1
-	for range ticker.C {
-		res, err := e.executeGetQueryResults(ctx, logsClient, requestParams)
-		if err != nil {
-			return nil, err
-		}
-		if isTerminated(*res.Status) {
-			return res, err
-		}
-		if attemptCount >= maxAttempts {
-			return res, fmt.Errorf("fetching of query results exceeded max number of attempts")
-		}
-
-		attemptCount++
+	_, fromAlert := req.Headers[headerFromAlert]
+	fromExpression := req.GetHTTPHeader(headerFromExpression) != ""
+	// Public dashboard queries execute like alert queries, i.e. they execute on the backend, therefore, we need to handle them synchronously.
+	// Since `model.Type` is set during execution on the frontend by the query runner and isn't saved with the query, we are checking here is
+	// missing the `model.Type` property and if it is a log query in order to determine if it is a public dashboard query.
+	queryMode := ""
+	if model.QueryMode != nil {
+		queryMode = string(*model.QueryMode)
+	}
+	fromPublicDashboard := model.Type == "" && queryMode == logsQueryMode
+	isSyncLogQuery := ((fromAlert || fromExpression) && queryMode == logsQueryMode) || fromPublicDashboard
+	if isSyncLogQuery {
+		return executeSyncLogQuery(ctx, e, req)
 	}
 
-	return nil, nil
-}
-
-// Query executes a CloudWatch query.
-func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	e.DataSource = dsInfo
-
-	/*
-		Unlike many other data sources,	with Cloudwatch Logs query requests don't receive the results as the response to the query, but rather
-		an ID is first returned. Following this, a client is expected to send requests along with the ID until the status of the query is complete,
-		receiving (possibly partial) results each time. For queries made via dashboards and Explore, the logic of making these repeated queries is handled on
-		the frontend, but because alerts are executed on the backend the logic needs to be reimplemented here.
-	*/
-	queryParams := queryContext.Queries[0].Model
-	_, fromAlert := queryContext.Headers["FromAlert"]
-	isLogAlertQuery := fromAlert && queryParams.Get("queryMode").MustString("") == "Logs"
-
-	if isLogAlertQuery {
-		return e.executeLogAlertQuery(ctx, queryContext)
-	}
-
-	queryType := queryParams.Get("type").MustString("")
-
-	var err error
-	var result *tsdb.Response
-	switch queryType {
-	case "metricFindQuery":
-		result, err = e.executeMetricFindQuery(ctx, queryContext)
-	case "annotationQuery":
-		result, err = e.executeAnnotationQuery(ctx, queryContext)
-	case "logAction":
-		result, err = e.executeLogActions(ctx, queryContext)
-	case "liveLogAction":
-		result, err = e.executeLiveLogQuery(ctx, queryContext)
-	case "timeSeriesQuery":
+	var result *backend.QueryDataResponse
+	switch model.Type {
+	case annotationQuery:
+		result, err = e.executeAnnotationQuery(ctx, req.PluginContext, model, q)
+	case logAction:
+		result, err = e.executeLogActions(ctx, req)
+	case timeSeriesQuery:
 		fallthrough
 	default:
-		result, err = e.executeTimeSeriesQuery(ctx, queryContext)
+		result, err = e.executeTimeSeriesQuery(ctx, req)
 	}
 
 	return result, err
 }
 
-func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	queryParams := queryContext.Queries[0].Model
-	queryParams.Set("subtype", "StartQuery")
-	queryParams.Set("queryString", queryParams.Get("expression").MustString(""))
+func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ctx = instrumentContext(ctx, string(backend.EndpointCheckHealth), req.PluginContext)
+	status := backend.HealthStatusOk
+	metricsTest := "Successfully queried the CloudWatch metrics API."
+	logsTest := "Successfully queried the CloudWatch logs API."
 
-	region := queryParams.Get("region").MustString(defaultRegion)
+	err := e.checkHealthMetrics(ctx, req.PluginContext)
+	if err != nil {
+		status = backend.HealthStatusError
+		metricsTest = fmt.Sprintf("CloudWatch metrics query failed: %s", err.Error())
+	}
+
+	err = e.checkHealthLogs(ctx, req.PluginContext)
+	if err != nil {
+		status = backend.HealthStatusError
+		logsTest = fmt.Sprintf("CloudWatch logs query failed: %s", err.Error())
+	}
+
+	return &backend.CheckHealthResult{
+		Status:  status,
+		Message: fmt.Sprintf("1. %s\n2. %s", metricsTest, logsTest),
+	}, nil
+}
+
+func (e *cloudWatchExecutor) checkHealthMetrics(ctx context.Context, pluginCtx backend.PluginContext) error {
+	namespace := "AWS/Billing"
+	metric := "EstimatedCharges"
+	params := &cloudwatch.ListMetricsInput{
+		Namespace:  &namespace,
+		MetricName: &metric,
+	}
+
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if err != nil {
+		return err
+	}
+
+	session, err := instance.newSession(defaultRegion)
+	if err != nil {
+		return err
+	}
+
+	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), instance.Settings.GrafanaSettings.ListMetricsPageLimit)
+	_, err = metricClient.ListMetricsWithPageLimit(ctx, params)
+	return err
+}
+
+func (e *cloudWatchExecutor) checkHealthLogs(ctx context.Context, pluginCtx backend.PluginContext) error {
+	session, err := e.newSessionFromContext(ctx, pluginCtx, defaultRegion)
+	if err != nil {
+		return err
+	}
+	logsClient := NewLogsAPI(session)
+	_, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(1)})
+	return err
+}
+
+func (ds *DataSource) newSession(region string) (*session.Session, error) {
 	if region == defaultRegion {
-		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
-		queryParams.Set("region", region)
-	}
-
-	logsClient, err := e.getCWLogsClient(region)
-	if err != nil {
-		return nil, err
-	}
-
-	result, err := e.executeStartQuery(ctx, logsClient, queryParams, queryContext.TimeRange)
-	if err != nil {
-		return nil, err
-	}
-
-	queryParams.Set("queryId", *result.QueryId)
-
-	// Get query results
-	getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, queryContext)
-	if err != nil {
-		return nil, err
-	}
-
-	dataframe, err := logsResultsToDataframes(getQueryResultsOutput)
-	if err != nil {
-		return nil, err
-	}
-
-	statsGroups := queryParams.Get("statsGroups").MustStringArray()
-	if len(statsGroups) > 0 && len(dataframe.Fields) > 0 {
-		groupedFrames, err := groupResults(dataframe, statsGroups)
-		if err != nil {
-			return nil, err
+		if len(ds.Settings.Region) == 0 {
+			return nil, models.ErrMissingRegion
 		}
-
-		response := &tsdb.Response{
-			Results: make(map[string]*tsdb.QueryResult),
-		}
-
-		response.Results["A"] = &tsdb.QueryResult{
-			RefId:      "A",
-			Dataframes: tsdb.NewDecodedDataFrames(groupedFrames),
-		}
-
-		return response, nil
+		region = ds.Settings.Region
 	}
-
-	response := &tsdb.Response{
-		Results: map[string]*tsdb.QueryResult{
-			"A": {
-				RefId:      "A",
-				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe}),
-			},
+	sess, err := ds.sessions.GetSessionWithAuthSettings(awsds.GetSessionConfig{
+		// https://github.com/grafana/grafana/issues/46365
+		// HTTPClient: instance.HTTPClient,
+		Settings: awsds.AWSDatasourceSettings{
+			Profile:       ds.Settings.Profile,
+			Region:        region,
+			AuthType:      ds.Settings.AuthType,
+			AssumeRoleARN: ds.Settings.AssumeRoleARN,
+			ExternalID:    ds.Settings.ExternalID,
+			Endpoint:      ds.Settings.Endpoint,
+			DefaultRegion: ds.Settings.Region,
+			AccessKey:     ds.Settings.AccessKey,
+			SecretKey:     ds.Settings.SecretKey,
 		},
+		UserAgentName: aws.String("Cloudwatch")},
+		ds.Settings.GrafanaSettings)
+	if err != nil {
+		return nil, err
 	}
-	return response, nil
+
+	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
+	if ds.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && ds.Settings.SecureSocksProxyEnabled {
+		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
+		// also, 'sess' is cached and reused, so the first time it might have the transport not set, the following uses it will
+		if sess.Config.HTTPClient.Transport == nil {
+			// following go standard library logic (https://pkg.go.dev/net/http#Client), if no Transport is provided,
+			// then we use http.DefaultTransport
+			defTransport, ok := http.DefaultTransport.(*http.Transport)
+			if !ok {
+				// this should not happen but validating just in case
+				return nil, errors.New("default http client transport is not of type http.Transport")
+			}
+			sess.Config.HTTPClient.Transport = defTransport.Clone()
+		}
+		err = proxy.New(ds.ProxyOpts).ConfigureSecureSocksHTTPProxy(sess.Config.HTTPClient.Transport.(*http.Transport))
+		if err != nil {
+			return nil, fmt.Errorf("error configuring Secure Socks proxy for Transport: %w", err)
+		}
+	} else if sess.Config.HTTPClient != nil {
+		// Workaround for https://github.com/grafana/grafana/issues/91356 - PDC transport set above
+		// stays on the cached session after PDC is disabled
+		sess.Config.HTTPClient.Transport = nil
+	}
+	return sess, nil
 }
 
-type authType int
-
-const (
-	authTypeDefault authType = iota
-	authTypeSharedCreds
-	authTypeKeys
-)
-
-func (at authType) String() string {
-	switch at {
-	case authTypeDefault:
-		return "default"
-	case authTypeSharedCreds:
-		return "sharedCreds"
-	case authTypeKeys:
-		return "keys"
-	default:
-		panic(fmt.Sprintf("Unrecognized auth type %d", at))
+func (e *cloudWatchExecutor) newSessionFromContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (*session.Session, error) {
+	instance, err := e.getInstance(ctx, pluginCtx)
+	if err != nil {
+		return nil, err
 	}
+
+	return instance.newSession(region)
 }
 
-func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
-	if region == defaultRegion {
-		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
+func (e *cloudWatchExecutor) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*DataSource, error) {
+	i, err := e.im.Get(ctx, pluginCtx)
+	if err != nil {
+		return nil, err
 	}
 
-	atStr := e.DataSource.JsonData.Get("authType").MustString()
-	assumeRoleARN := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
-	externalID := e.DataSource.JsonData.Get("externalId").MustString()
-	decrypted := e.DataSource.DecryptedValues()
-	accessKey := decrypted["accessKey"]
-	secretKey := decrypted["secretKey"]
+	instance := i.(DataSource)
+	return &instance, nil
+}
 
-	at := authTypeDefault
-	switch atStr {
-	case "credentials":
-		at = authTypeSharedCreds
-	case "keys":
-		at = authTypeKeys
-	case "default":
-		at = authTypeDefault
-	case "arn":
-		at = authTypeDefault
-		plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
-	default:
-		plog.Warn("Unrecognized AWS authentication type", "type", atStr)
+func (e *cloudWatchExecutor) getCWClient(ctx context.Context, pluginCtx backend.PluginContext, region string) (cloudwatchiface.CloudWatchAPI, error) {
+	sess, err := e.newSessionFromContext(ctx, pluginCtx, region)
+	if err != nil {
+		return nil, err
+	}
+	return NewCWClient(sess), nil
+}
+
+func (e *cloudWatchExecutor) getCWLogsClient(ctx context.Context, pluginCtx backend.PluginContext, region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
+	sess, err := e.newSessionFromContext(ctx, pluginCtx, region)
+	if err != nil {
+		return nil, err
 	}
 
-	profile := e.DataSource.JsonData.Get("profile").MustString()
-	if profile == "" {
-		profile = e.DataSource.Database // legacy support
+	logsClient := NewCWLogsClient(sess)
+
+	return logsClient, nil
+}
+
+func (e *cloudWatchExecutor) getEC2Client(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.EC2APIProvider, error) {
+	sess, err := e.newSessionFromContext(ctx, pluginCtx, region)
+	if err != nil {
+		return nil, err
 	}
 
-	return &datasourceInfo{
-		Region:        region,
-		Profile:       profile,
-		AuthType:      at,
-		AssumeRoleARN: assumeRoleARN,
-		ExternalID:    externalID,
-		AccessKey:     accessKey,
-		SecretKey:     secretKey,
+	return NewEC2Client(sess), nil
+}
+
+func (e *cloudWatchExecutor) getRGTAClient(ctx context.Context, pluginCtx backend.PluginContext, region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,
+	error) {
+	sess, err := e.newSessionFromContext(ctx, pluginCtx, region)
+	if err != nil {
+		return nil, err
 	}
+
+	return newRGTAClient(sess), nil
 }
 
 func isTerminated(queryStatus string) bool {
 	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
-}
-
-// CloudWatch client factory.
-//
-// Stubbable by tests.
-var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
-	client := cloudwatch.New(sess)
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client
-}
-
-// CloudWatch logs client factory.
-//
-// Stubbable by tests.
-var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
-	client := cloudwatchlogs.New(sess)
-	client.Handlers.Send.PushFront(func(r *request.Request) {
-		r.HTTPRequest.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-	})
-
-	return client
-}
-
-// EC2 client factory.
-//
-// Stubbable by tests.
-var newEC2Client = func(provider client.ConfigProvider) ec2iface.EC2API {
-	return ec2.New(provider)
-}
-
-// RGTA client factory.
-//
-// Stubbable by tests.
-var newRGTAClient = func(provider client.ConfigProvider) resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI {
-	return resourcegroupstaggingapi.New(provider)
 }

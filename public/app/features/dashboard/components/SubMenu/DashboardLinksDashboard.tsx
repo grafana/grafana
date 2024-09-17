@@ -1,56 +1,81 @@
-import React, { useRef, useState } from 'react';
-import { Icon, Tooltip } from '@grafana/ui';
-import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { getLinkSrv } from '../../../panel/panellinks/link_srv';
-import { DashboardLink } from '../../state/DashboardModel';
-import { DashboardSearchHit } from 'app/features/search/types';
-import { selectors } from '@grafana/e2e-selectors';
+import { css, cx } from '@emotion/css';
+import { forwardRef } from 'react';
 import { useAsync } from 'react-use';
+
+import { GrafanaTheme2, ScopedVars } from '@grafana/data';
+import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
+import { selectors } from '@grafana/e2e-selectors';
+import { DashboardLink } from '@grafana/schema';
+import { CustomScrollbar, Dropdown, Icon, Button, Menu, useStyles2 } from '@grafana/ui';
+import { ButtonLinkProps, LinkButton } from '@grafana/ui/src/components/Button';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DashboardSearchItem } from 'app/features/search/types';
+
+import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 
 interface Props {
   link: DashboardLink;
   linkInfo: { title: string; href: string };
-  dashboardId: any;
+  dashboardUID: string;
+  scopedVars?: ScopedVars;
 }
 
-export const DashboardLinksDashboard: React.FC<Props> = props => {
-  const { link, linkInfo } = props;
-  const listRef = useRef<HTMLUListElement>(null);
-  const [opened, setOpened] = useState(0);
-  const resolvedLinks = useResolvedLinks(props, opened);
+interface DashboardLinksMenuProps {
+  link: DashboardLink;
+  dashboardUID: string;
+}
+
+function DashboardLinksMenu({ dashboardUID, link }: DashboardLinksMenuProps) {
+  const styles = useStyles2(getStyles);
+  const resolvedLinks = useResolvedLinks({ dashboardUID, link });
+
+  if (!resolvedLinks || resolveLinks.length === 0) {
+    return null;
+  }
+
+  return (
+    <Menu>
+      <div className={styles.dropdown}>
+        <CustomScrollbar>
+          {resolvedLinks.map((resolvedLink, index) => {
+            return (
+              <Menu.Item
+                url={resolvedLink.url}
+                target={link.targetBlank ? '_blank' : undefined}
+                key={`dashlinks-dropdown-item-${resolvedLink.uid}-${index}`}
+                label={resolvedLink.title}
+                testId={selectors.components.DashboardLinks.link}
+                aria-label={`${resolvedLink.title} dashboard`}
+              />
+            );
+          })}
+        </CustomScrollbar>
+      </div>
+    </Menu>
+  );
+}
+
+export const DashboardLinksDashboard = (props: Props) => {
+  const { link, linkInfo, dashboardUID } = props;
+  const resolvedLinks = useResolvedLinks(props);
+  const styles = useStyles2(getStyles);
 
   if (link.asDropdown) {
     return (
-      <LinkElement link={link} key="dashlinks-dropdown" aria-label={selectors.components.DashboardLinks.dropDown}>
-        <>
-          <a
-            onClick={() => setOpened(Date.now())}
-            className="gf-form-label gf-form-label--dashlink"
-            data-placement="bottom"
-            data-toggle="dropdown"
-          >
-            <Icon name="bars" style={{ marginRight: '4px' }} />
-            <span>{linkInfo.title}</span>
-          </a>
-          <ul className={`dropdown-menu ${getDropdownLocationCssClass(listRef.current)}`} role="menu" ref={listRef}>
-            {resolvedLinks.length > 0 &&
-              resolvedLinks.map((resolvedLink, index) => {
-                return (
-                  <li key={`dashlinks-dropdown-item-${resolvedLink.id}-${index}`}>
-                    <a
-                      href={resolvedLink.url}
-                      target={link.targetBlank ? '_blank' : '_self'}
-                      aria-label={selectors.components.DashboardLinks.link}
-                    >
-                      {resolvedLink.title}
-                    </a>
-                  </li>
-                );
-              })}
-          </ul>
-        </>
-      </LinkElement>
+      <Dropdown overlay={<DashboardLinksMenu link={link} dashboardUID={dashboardUID} />}>
+        <DashboardLinkButton
+          data-placement="bottom"
+          data-toggle="dropdown"
+          aria-controls="dropdown-list"
+          aria-haspopup="menu"
+          fill="outline"
+          variant="secondary"
+          data-testid={selectors.components.DashboardLinks.dropDown}
+        >
+          <Icon aria-hidden name="bars" className={styles.iconMargin} />
+          <span>{linkInfo.title}</span>
+        </DashboardLinkButton>
+      </Dropdown>
     );
   }
 
@@ -59,74 +84,53 @@ export const DashboardLinksDashboard: React.FC<Props> = props => {
       {resolvedLinks.length > 0 &&
         resolvedLinks.map((resolvedLink, index) => {
           return (
-            <LinkElement
-              link={link}
-              key={`dashlinks-list-item-${resolvedLink.id}-${index}`}
-              aria-label={selectors.components.DashboardLinks.container}
+            <DashboardLinkButton
+              key={`dashlinks-list-item-${resolvedLink.uid}-${index}`}
+              icon="apps"
+              variant="secondary"
+              fill="outline"
+              href={resolvedLink.url}
+              target={link.targetBlank ? '_blank' : undefined}
+              rel="noreferrer"
+              data-testid={selectors.components.DashboardLinks.link}
             >
-              <a
-                className="gf-form-label gf-form-label--dashlink"
-                href={resolvedLink.url}
-                target={link.targetBlank ? '_blank' : '_self'}
-                aria-label={selectors.components.DashboardLinks.link}
-              >
-                <Icon name="apps" style={{ marginRight: '4px' }} />
-                <span>{resolvedLink.title}</span>
-              </a>
-            </LinkElement>
+              {resolvedLink.title}
+            </DashboardLinkButton>
           );
         })}
     </>
   );
 };
 
-interface LinkElementProps {
-  link: DashboardLink;
-  'aria-label': string;
-  key: string;
-  children: JSX.Element;
-}
-
-const LinkElement: React.FC<LinkElementProps> = props => {
-  const { link, children, ...rest } = props;
-
-  return (
-    <div {...rest} className="gf-form">
-      {link.tooltip && <Tooltip content={link.tooltip}>{children}</Tooltip>}
-      {!link.tooltip && <>{children}</>}
-    </div>
-  );
-};
-
-const useResolvedLinks = ({ link, dashboardId }: Props, opened: number): ResolvedLinkDTO[] => {
+const useResolvedLinks = ({ link, dashboardUID }: Pick<Props, 'link' | 'dashboardUID'>): ResolvedLinkDTO[] => {
   const { tags } = link;
-  const result = useAsync(() => searchForTags(tags), [tags, opened]);
+  const result = useAsync(() => searchForTags(tags), [tags]);
   if (!result.value) {
     return [];
   }
-  return resolveLinks(dashboardId, link, result.value);
+  return resolveLinks(dashboardUID, link, result.value);
 };
 
 interface ResolvedLinkDTO {
-  id: any;
+  uid: string;
   url: string;
   title: string;
 }
 
 export async function searchForTags(
-  tags: any[],
+  tags: string[],
   dependencies: { getBackendSrv: typeof getBackendSrv } = { getBackendSrv }
-): Promise<DashboardSearchHit[]> {
+): Promise<DashboardSearchItem[]> {
   const limit = 100;
-  const searchHits: DashboardSearchHit[] = await dependencies.getBackendSrv().search({ tag: tags, limit });
+  const searchHits: DashboardSearchItem[] = await dependencies.getBackendSrv().search({ tag: tags, limit });
 
   return searchHits;
 }
 
 export function resolveLinks(
-  dashboardId: any,
+  dashboardUID: string,
   link: DashboardLink,
-  searchHits: DashboardSearchHit[],
+  searchHits: DashboardSearchItem[],
   dependencies: { getLinkSrv: typeof getLinkSrv; sanitize: typeof sanitize; sanitizeUrl: typeof sanitizeUrl } = {
     getLinkSrv,
     sanitize,
@@ -134,32 +138,50 @@ export function resolveLinks(
   }
 ): ResolvedLinkDTO[] {
   return searchHits
-    .filter(searchHit => searchHit.id !== dashboardId)
-    .map(searchHit => {
-      const id = searchHit.id;
+    .filter((searchHit) => searchHit.uid !== dashboardUID)
+    .map((searchHit) => {
+      const uid = searchHit.uid;
       const title = dependencies.sanitize(searchHit.title);
       const resolvedLink = dependencies.getLinkSrv().getLinkUrl({ ...link, url: searchHit.url });
       const url = dependencies.sanitizeUrl(resolvedLink);
 
-      return { id, title, url };
+      return { uid, title, url };
     });
 }
 
-function getDropdownLocationCssClass(element: HTMLElement | null) {
-  if (!element) {
-    return 'invisible';
-  }
-
-  const wrapperPos = element.parentElement!.getBoundingClientRect();
-  const pos = element.getBoundingClientRect();
-
-  if (pos.width === 0) {
-    return 'invisible';
-  }
-
-  if (wrapperPos.left + pos.width + 10 > window.innerWidth) {
-    return 'pull-left';
-  } else {
-    return 'pull-right';
-  }
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    iconMargin: css({
+      marginRight: theme.spacing(0.5),
+    }),
+    dropdown: css({
+      maxWidth: 'max(30vw, 300px)',
+      maxHeight: '70vh',
+      overflowY: 'auto',
+    }),
+    button: css({
+      color: theme.colors.text.primary,
+    }),
+    dashButton: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
+    }),
+  };
 }
+
+export const DashboardLinkButton = forwardRef<unknown, ButtonLinkProps>(({ className, ...otherProps }, ref) => {
+  const styles = useStyles2(getStyles);
+  const Component = otherProps.href ? LinkButton : Button;
+  return (
+    <Component
+      {...otherProps}
+      variant="secondary"
+      fill="outline"
+      className={cx(className, styles.dashButton)}
+      ref={ref as any}
+    />
+  );
+});
+
+DashboardLinkButton.displayName = 'DashboardLinkButton';

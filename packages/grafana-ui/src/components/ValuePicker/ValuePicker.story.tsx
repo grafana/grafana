@@ -1,47 +1,60 @@
-import React from 'react';
-import { boolean, select, text } from '@storybook/addon-knobs';
-import { ButtonVariant, ValuePicker } from '@grafana/ui';
+import { Meta, StoryFn } from '@storybook/react';
+
+import { ValuePicker } from '@grafana/ui';
+
+import { getAvailableIcons } from '../../types';
 import { generateOptions } from '../Select/mockOptions';
-import { getIconKnob } from '../../utils/storybook/knobs';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { ComponentSize } from '../../types/size';
+
 import mdx from './ValuePicker.mdx';
 
-export default {
+const meta: Meta<typeof ValuePicker> = {
   title: 'Pickers and Editors/ValuePicker',
   component: ValuePicker,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: {
+      exclude: ['onChange', 'options'],
+    },
+  },
+  argTypes: {
+    variant: {
+      options: ['primary', 'secondary', 'destructive', 'link'],
+      control: {
+        type: 'select',
+      },
+    },
+    icon: {
+      control: {
+        type: 'select',
+        options: getAvailableIcons(),
+      },
+    },
+    size: {
+      options: ['sm', 'md', 'lg'],
+      control: {
+        type: 'select',
+      },
+    },
   },
 };
-const VISUAL_GROUP = 'Visual options';
-const variants = ['primary', 'secondary', 'destructive', 'link'];
-const sizes = ['sm', 'md', 'lg'];
 const options = generateOptions();
 
-export const simple = () => {
-  const label = text('Label', 'Pick an option', VISUAL_GROUP);
-  const variant = select('Variant', variants, 'primary', VISUAL_GROUP);
-  const size = select('Size', sizes, 'md', VISUAL_GROUP);
-  const isFullWidth = boolean('Is full width', false, VISUAL_GROUP);
-  const icon = getIconKnob();
-  const menuPlacement = select('Menu placement', ['auto', 'bottom', 'top'], 'auto', VISUAL_GROUP);
-
+export const Simple: StoryFn<typeof ValuePicker> = (args) => {
   return (
     <div style={{ width: '200px' }}>
-      <ValuePicker
-        options={options}
-        label={label}
-        onChange={v => console.log(v)}
-        variant={variant as ButtonVariant}
-        icon={icon}
-        isFullWidth={isFullWidth}
-        size={size as ComponentSize}
-        menuPlacement={menuPlacement}
-      />
+      <ValuePicker {...args} options={options} onChange={(v) => console.log(v)} />
     </div>
   );
 };
+Simple.args = {
+  label: 'Pick an option',
+  variant: 'primary',
+  size: 'md',
+  isFullWidth: false,
+  icon: 'plus',
+  menuPlacement: 'auto',
+};
+
+export default meta;

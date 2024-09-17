@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
-	redis "gopkg.in/redis.v5"
 )
 
 func Test_parseRedisConnStr(t *testing.T) {

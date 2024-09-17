@@ -78,8 +78,8 @@ The current team members are:
 - Diana Sarlinska ([Grafana Labs](https://grafana.com/))
 - Dominik Prokop ([Grafana Labs](https://grafana.com/))
 - Emil Tullstedt ([Grafana Labs](https://grafana.com/))
-- Fredrik Enestad ([Soundtrack Your Brand](https://www.soundtrackyourbrand.com/))
-- Hugo Häggmark ([Grafana Labs](https://grafana.com/))
+- Erik Sundell ([Grafana Labs](https://grafana.com/))
+- Fredrik Enestad ([Embark Studios](https://www.embark-studios.com/))
 - Ivana Huckova ([Grafana Labs](https://grafana.com/))
 - Jeroen Op 't Eynde ([Grafana Labs](https://grafana.com/))
 - Jessica Müller ([Grafana Labs](https://grafana.com/))
@@ -102,6 +102,8 @@ The current team members are:
 - Tobias Skarhed ([Grafana Labs](https://grafana.com/))
 - Torkel Ödegaard ([Grafana Labs](https://grafana.com/))
 - Utkarsh Bhatnagar ([Tinder](https://www.tinder.com/))
+- Will Browne ([Grafana Labs](https://grafana.com/))
+- Zoltán Bedi ([Grafana Labs](https://grafana.com/))
 
 ### Maintainers
 
@@ -171,7 +173,7 @@ Supermajority votes must be called explicitly in a separate thread on the approp
 
 Votes may take the form of a single proposal, with the option to vote yes or no, or the form of multiple alternatives.
 
-A vote on a single proposal is considered successful if at least two thirds of those eligible to vote vote in favor.
+A vote on a single proposal is considered successful if at least two thirds of those eligible to vote in favor.
 
 If there are multiple alternatives, members may vote for one or more alternatives, or vote “no” to object to all alternatives. A vote on multiple alternatives is considered decided in favor of one alternative if it has received the most votes in favor, and a vote from at least two thirds of those eligible to vote. Should no alternative reach this quorum, another vote on a reduced number of options may be called separately.
 
@@ -198,8 +200,8 @@ The ex-member is
 
 If needed, we reserve the right to publicly announce removal.
 
-[coc]: https://github.com/grafana/grafana/blob/master/CODE_OF_CONDUCT.md
+[coc]: https://github.com/grafana/grafana/blob/main/CODE_OF_CONDUCT.md
 [devs]: https://groups.google.com/forum/#!forum/grafana-developers
-[maintainers]: https://github.com/grafana/grafana/blob/master/MAINTAINERS.md
+[maintainers]: https://github.com/grafana/grafana/blob/main/MAINTAINERS.md
 [rough]: https://tools.ietf.org/html/rfc7282
 [team]: https://groups.google.com/forum/#!forum/grafana-team

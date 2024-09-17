@@ -1,0 +1,117 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] 
+//  Name: 
+//  Dimensions: 8 Fields by 1 Rows
+//  +-------------------------------+------------------+-----------------------+-----------------------+--------------------+--------------------+----------------------------+----------------------------+
+//  | Name: Time                    | Name: ax         | Name: string_array[0] | Name: string_array[1] | Name: int_array[0] | Name: int_array[1] | Name: map_with_floats.key1 | Name: map_with_floats.key2 |
+//  | Labels:                       | Labels:          | Labels:               | Labels:               | Labels:            | Labels:            | Labels:                    | Labels:                    |
+//  | Type: []time.Time             | Type: []*float64 | Type: []*string       | Type: []*string       | Type: []*float64   | Type: []*float64   | Type: []*float64           | Type: []*float64           |
+//  +-------------------------------+------------------+-----------------------+-----------------------+--------------------+--------------------+----------------------------+----------------------------+
+//  | 2021-01-01 12:12:12 +0000 UTC | 1                | 1                     | 2                     | 1                  | 2                  | 2                          | 3                          |
+//  +-------------------------------+------------------+-----------------------+-----------------------+--------------------+--------------------+----------------------------+----------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "ax",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "string_array[0]",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "string_array[1]",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "int_array[0]",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "int_array[1]",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "map_with_floats.key1",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          },
+          {
+            "name": "map_with_floats.key2",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1609503132000
+          ],
+          [
+            1
+          ],
+          [
+            "1"
+          ],
+          [
+            "2"
+          ],
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            2
+          ],
+          [
+            3
+          ]
+        ]
+      }
+    }
+  ]
+}

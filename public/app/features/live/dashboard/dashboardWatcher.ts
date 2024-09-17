@@ -1,52 +1,57 @@
-import { getGrafanaLiveSrv, getLegacyAngularInjector } from '@grafana/runtime';
-import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
-import { appEvents } from 'app/core/core';
+import { Unsubscribable } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   AppEvents,
-  LiveChannel,
-  LiveChannelScope,
-  LiveChannelEvent,
-  LiveChannelConfig,
-  LiveChannelConnectionState,
-  isLiveChannelStatusEvent,
   isLiveChannelMessageEvent,
+  isLiveChannelStatusEvent,
+  LiveChannelAddress,
+  LiveChannelConnectionState,
+  LiveChannelEvent,
+  LiveChannelScope,
 } from '@grafana/data';
-import { CoreEvents } from 'app/types';
+import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
+import { appEvents, contextSrv } from 'app/core/core';
+
+import { ShowModalReactEvent } from '../../../types/events';
+import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
+
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
-import { CoreGrafanaLiveFeature } from '../scopes';
-import { sessionId } from '../live';
+
+// sessionId is not a security-sensitive value.
+// It is used for filtering out dashboard edit events from the same browsing session
+const sessionId = uuidv4();
 
 class DashboardWatcher {
-  channel?: LiveChannel<DashboardEvent>;
-
+  channel?: LiveChannelAddress; // path to the channel
   uid?: string;
   ignoreSave?: boolean;
   editing = false;
   lastEditing?: DashboardEvent;
+  subscription?: Unsubscribable;
+  hasSeenNotice?: boolean;
 
   setEditingState(state: boolean) {
     const changed = (this.editing = state);
     this.editing = state;
+    this.hasSeenNotice = false;
 
-    if (changed) {
+    if (changed && contextSrv.isEditor) {
       this.sendEditingState();
     }
   }
 
   private sendEditingState() {
-    if (!this.channel?.publish) {
-      return;
+    const { channel, uid } = this;
+    if (channel && uid) {
+      getGrafanaLiveSrv().publish(channel, {
+        sessionId,
+        uid,
+        action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
+        timestamp: Date.now(),
+      });
     }
-
-    const msg: DashboardEvent = {
-      sessionId,
-      uid: this.uid!,
-      action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
-      message: (window as any).grafanaBootData?.user?.name,
-      timestamp: Date.now(),
-    };
-    this.channel!.publish!(msg);
   }
 
   watch(uid: string) {
@@ -57,23 +62,24 @@ class DashboardWatcher {
 
     // Check for changes
     if (uid !== this.uid) {
-      this.leave();
-      this.channel = live.getChannel({
+      this.channel = {
         scope: LiveChannelScope.Grafana,
         namespace: 'dashboard',
-        path: uid,
-      });
-      this.channel.getStream().subscribe(this.observer);
+        path: `uid/${uid}`,
+      };
+      this.leave();
+      if (uid) {
+        this.subscription = live.getStream<DashboardEvent>(this.channel).subscribe(this.observer);
+      }
       this.uid = uid;
     }
-
-    console.log('Watch', uid);
   }
 
   leave() {
-    if (this.channel) {
-      this.channel.disconnect();
+    if (this.subscription) {
+      this.subscription.unsubscribe();
     }
+    this.subscription = undefined;
     this.uid = undefined;
   }
 
@@ -113,29 +119,31 @@ class DashboardWatcher {
             }
 
             const dash = getDashboardSrv().getCurrent();
-            if (dash.uid !== event.message.uid) {
+            if (dash?.uid !== event.message.uid) {
               console.log('dashboard event for different dashboard?', event, dash);
               return;
             }
 
-            const changeTracker = getLegacyAngularInjector().get<any>('unsavedChangesSrv').tracker;
-            const showPopup = this.editing || changeTracker.hasChanges();
+            const showPopup = this.editing || dash.hasUnsavedChanges();
 
             if (action === DashboardEventAction.Saved) {
               if (showPopup) {
-                appEvents.emit(CoreEvents.showModalReact, {
-                  component: DashboardChangedModal,
-                  props: { event },
-                });
+                appEvents.publish(
+                  new ShowModalReactEvent({
+                    component: DashboardChangedModal,
+                    props: { event },
+                  })
+                );
               } else {
                 appEvents.emit(AppEvents.alertSuccess, ['Dashboard updated']);
                 this.reloadPage();
               }
             } else if (showPopup) {
-              if (action === DashboardEventAction.EditingStarted) {
+              if (action === DashboardEventAction.EditingStarted && !this.hasSeenNotice) {
                 const editingEvent = event.message;
                 const recent = this.getRecentEditingEvent();
                 if (!recent || recent.message !== editingEvent.message) {
+                  this.hasSeenNotice = true;
                   appEvents.emit(AppEvents.alertWarning, [
                     'Another session is editing this dashboard',
                     editingEvent.message,
@@ -148,41 +156,12 @@ class DashboardWatcher {
           }
         }
       }
-      console.log('DashboardEvent EVENT', event);
     },
   };
 
   reloadPage() {
-    const $route = getLegacyAngularInjector().get<any>('$route');
-    if ($route) {
-      $route.reload();
-    } else {
-      location.reload();
-    }
+    locationService.reload();
   }
 }
 
 export const dashboardWatcher = new DashboardWatcher();
-
-export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
-  const dashboardConfig: LiveChannelConfig = {
-    path: '${uid}',
-    description: 'Dashboard change events',
-    hasPresence: true,
-    canPublish: () => true,
-  };
-
-  return {
-    name: 'dashboard',
-    support: {
-      getChannelConfig: (path: string) => {
-        return {
-          ...dashboardConfig,
-          path, // set the real path
-        };
-      },
-      getSupportedPaths: () => [dashboardConfig],
-    },
-    description: 'Dashboard listener',
-  };
-}

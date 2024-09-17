@@ -21,4 +21,4 @@ PLUGINS_DIR=/var/lib/grafana/plugins
 PROVISIONING_CFG_DIR=/etc/grafana/provisioning
 
 # Only used on systemd systems
-PID_FILE_DIR=/var/run/grafana
+PID_FILE_DIR=/run/grafana

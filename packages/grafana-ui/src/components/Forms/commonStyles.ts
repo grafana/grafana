@@ -1,74 +1,93 @@
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { StyleProps } from '../Button';
-import { focusCss } from '../../themes/mixins';
+import { css, cx } from '@emotion/css';
 
-export const getFocusStyle = (theme: GrafanaTheme) => css`
-  &:focus {
-    ${focusCss(theme)}
-  }
-`;
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const sharedInputStyle = (theme: GrafanaTheme, invalid = false) => {
-  const colors = theme.colors;
-  const borderColor = invalid ? theme.palette.redBase : colors.formInputBorder;
+import { getFocusStyles } from '../../themes/mixins';
+import { ComponentSize } from '../../types/size';
 
-  return css`
-    background-color: ${colors.formInputBg};
-    line-height: ${theme.typography.lineHeight.md};
-    font-size: ${theme.typography.size.md};
-    color: ${colors.formInputText};
-    border: 1px solid ${borderColor};
-    padding: 0 ${theme.spacing.sm} 0 ${theme.spacing.sm};
+export const getFocusStyle = (theme: GrafanaTheme2) =>
+  css({
+    '&:focus': getFocusStyles(theme),
+  });
 
-    &:-webkit-autofill,
-    &:-webkit-autofill:hover {
-      /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${colors.formInputBg}!important;
-      -webkit-text-fill-color: ${colors.formInputText} !important;
-    }
+export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
+  const borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
+  const borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
+  const background = theme.components.input.background;
+  const textColor = theme.components.input.text;
 
-    &:-webkit-autofill:focus {
-      /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
-      box-shadow: 0 0 0 2px ${theme.colors.bodyBg}, 0 0 0px 4px ${theme.colors.formFocusOutline},
-        inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${colors.formInputBg}!important;
-      -webkit-text-fill-color: ${colors.formInputText} !important;
-    }
+  // Cannot use our normal borders for this color for some reason due the alpha values in them.
+  // Need to colors without alpha channel
+  const autoFillBorder = theme.isDark ? '#2e2f35' : '#bab4ca';
 
-    &:hover {
-      border-color: ${borderColor};
-    }
+  return cx(
+    inputPadding(theme),
+    css({
+      background,
+      lineHeight: theme.typography.body.lineHeight,
+      fontSize: theme.typography.size.md,
+      color: textColor,
+      border: `1px solid ${borderColor}`,
 
-    &:focus {
-      outline: none;
-    }
+      '&:-webkit-autofill, &:-webkit-autofill:hover': {
+        /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
+        boxShadow: `inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important`,
+        WebkitTextFillColor: `${textColor} !important`,
+        borderColor: autoFillBorder,
+      },
 
-    &:disabled {
-      background-color: ${colors.formInputBgDisabled};
-      color: ${colors.formInputDisabledText};
-    }
+      '&:-webkit-autofill:focus': {
+        /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
+        boxShadow: `0 0 0 2px ${theme.colors.background.primary}, 0 0 0px 4px ${theme.colors.primary.main}, inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important`,
+        WebkitTextFillColor: `${textColor} !important`,
+      },
 
-    &::placeholder {
-      color: ${colors.formInputPlaceholderText};
-      opacity: 1;
-    }
-  `;
+      '&:hover': {
+        borderColor: borderColorHover,
+      },
+
+      '&:focus': {
+        outline: 'none',
+      },
+
+      '&:disabled': {
+        backgroundColor: theme.colors.action.disabledBackground,
+        color: theme.colors.action.disabledText,
+        border: `1px solid ${theme.colors.action.disabledBackground}`,
+
+        '&:hover': {
+          borderColor,
+        },
+      },
+
+      '&::placeholder': {
+        color: theme.colors.text.disabled,
+        opacity: 1,
+      },
+    })
+  );
+};
+
+export const inputPadding = (theme: GrafanaTheme2) => {
+  return css({
+    padding: theme.spacing(0, 1, 0, 1),
+  });
 };
 
 export const inputSizes = () => {
   return {
-    sm: css`
-      width: ${inputSizesPixels('sm')};
-    `,
-    md: css`
-      width: ${inputSizesPixels('md')};
-    `,
-    lg: css`
-      width: ${inputSizesPixels('lg')};
-    `,
-    auto: css`
-      width: ${inputSizesPixels('auto')};
-    `,
+    sm: css({
+      width: inputSizesPixels('sm'),
+    }),
+    md: css({
+      width: inputSizesPixels('md'),
+    }),
+    lg: css({
+      width: inputSizesPixels('lg'),
+    }),
+    auto: css({
+      width: inputSizesPixels('auto'),
+    }),
   };
 };
 
@@ -86,30 +105,27 @@ export const inputSizesPixels = (size: string) => {
   }
 };
 
-export const getPropertiesForButtonSize = (props: StyleProps) => {
-  const { hasText, hasIcon, size } = props;
-  const { spacing, typography, height } = props.theme;
-
+export function getPropertiesForButtonSize(size: ComponentSize, theme: GrafanaTheme2) {
   switch (size) {
     case 'sm':
       return {
-        padding: `0 ${spacing.sm}`,
-        fontSize: typography.size.sm,
-        height: height.sm,
+        padding: 1,
+        fontSize: theme.typography.size.sm,
+        height: theme.components.height.sm,
       };
 
     case 'lg':
       return {
-        padding: `0 ${hasText ? spacing.lg : spacing.md} 0 ${hasIcon ? spacing.md : spacing.lg}`,
-        fontSize: typography.size.lg,
-        height: height.lg,
+        padding: 3,
+        fontSize: theme.typography.size.lg,
+        height: theme.components.height.lg,
       };
     case 'md':
     default:
       return {
-        padding: `0 ${hasText ? spacing.md : spacing.sm} 0 ${hasIcon ? spacing.sm : spacing.md}`,
-        fontSize: typography.size.md,
-        height: height.md,
+        padding: 2,
+        fontSize: theme.typography.size.md,
+        height: theme.components.height.md,
       };
   }
-};
+}

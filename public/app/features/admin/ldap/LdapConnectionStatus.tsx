@@ -1,47 +1,65 @@
-import React, { FC } from 'react';
-import { Alert, Icon } from '@grafana/ui';
+import { useMemo } from 'react';
+
+import { Alert, CellProps, Column, Icon, InteractiveTable, Stack, Text, Tooltip } from '@grafana/ui';
 import { AppNotificationSeverity, LdapConnectionInfo, LdapServerInfo } from 'app/types';
 
 interface Props {
   ldapConnectionInfo: LdapConnectionInfo;
 }
 
-export const LdapConnectionStatus: FC<Props> = ({ ldapConnectionInfo }) => {
+interface ServerInfo {
+  host: string;
+  port: number;
+  available: boolean;
+}
+
+export const LdapConnectionStatus = ({ ldapConnectionInfo }: Props) => {
+  const columns = useMemo<Array<Column<ServerInfo>>>(
+    () => [
+      {
+        id: 'host',
+        header: 'Host',
+        disableGrow: true,
+      },
+      {
+        id: 'port',
+        header: 'Port',
+        disableGrow: true,
+      },
+      {
+        id: 'available',
+        cell: (serverInfo: CellProps<ServerInfo>) => {
+          return serverInfo.cell.value ? (
+            <Stack justifyContent="end">
+              <Tooltip content="Connection is available">
+                <Icon name="check" />
+              </Tooltip>
+            </Stack>
+          ) : (
+            <Stack justifyContent="end">
+              <Tooltip content="Connection is not available">
+                <Icon name="exclamation-triangle" />
+              </Tooltip>
+            </Stack>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  const data = useMemo<ServerInfo[]>(() => ldapConnectionInfo, [ldapConnectionInfo]);
+
   return (
-    <>
-      <h3 className="page-heading">LDAP Connection</h3>
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <table className="filter-table form-inline">
-            <thead>
-              <tr>
-                <th>Host</th>
-                <th colSpan={2}>Port</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ldapConnectionInfo &&
-                ldapConnectionInfo.map((serverInfo, index) => (
-                  <tr key={index}>
-                    <td>{serverInfo.host}</td>
-                    <td>{serverInfo.port}</td>
-                    <td>
-                      {serverInfo.available ? (
-                        <Icon name="check" className="pull-right" />
-                      ) : (
-                        <Icon name="exclamation-triangle" className="pull-right" />
-                      )}
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="gf-form-group">
-          <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
-        </div>
-      </div>
-    </>
+    <section>
+      <Stack direction="column" gap={2}>
+        <Text color="primary" element="h3">
+          LDAP Connection
+        </Text>
+        <InteractiveTable data={data} columns={columns} getRowId={(serverInfo) => serverInfo.host + serverInfo.port} />
+        <LdapErrorBox ldapConnectionInfo={ldapConnectionInfo} />
+      </Stack>
+    </section>
   );
 };
 
@@ -49,14 +67,14 @@ interface LdapConnectionErrorProps {
   ldapConnectionInfo: LdapConnectionInfo;
 }
 
-export const LdapErrorBox: FC<LdapConnectionErrorProps> = ({ ldapConnectionInfo }) => {
-  const hasError = ldapConnectionInfo.some(info => info.error);
+export const LdapErrorBox = ({ ldapConnectionInfo }: LdapConnectionErrorProps) => {
+  const hasError = ldapConnectionInfo.some((info) => info.error);
   if (!hasError) {
     return null;
   }
 
   const connectionErrors: LdapServerInfo[] = [];
-  ldapConnectionInfo.forEach(info => {
+  ldapConnectionInfo.forEach((info) => {
     if (info.error) {
       connectionErrors.push(info);
     }

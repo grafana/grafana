@@ -8,13 +8,17 @@ export const UIEndpoint = class UIEndpoint {
 
   login(username, pwd) {
     const payload = { user: username, password: pwd };
-    return this.httpClient.formPost('/login', payload);
+    return this.httpClient.post('/login', JSON.stringify(payload));
   }
 };
 
 export const DatasourcesEndpoint = class DatasourcesEndpoint {
   constructor(httpClient) {
     this.httpClient = httpClient;
+  }
+
+  getAll() {
+    return this.httpClient.get('/datasources');
   }
 
   getById(id) {
@@ -177,10 +181,33 @@ export class BasicAuthClient extends BaseClient {
   }
 }
 
-export const createClient = url => {
+export class BearerAuthClient extends BaseClient {
+  constructor(url, subUrl, token) {
+    super(url, subUrl);
+    this.token = token;
+  }
+
+  withUrl(subUrl) {
+    let c = new BearerAuthClient(this.url, subUrl, this.token);
+    c.onBeforeRequest = this.onBeforeRequest;
+    return c;
+  }
+
+  beforeRequest(params) {
+    params = params || {};
+    params.headers = params.headers || {};
+    params.headers['Authorization'] = `Bearer ${this.token}`;
+  }
+}
+
+export const createClient = (url) => {
   return new GrafanaClient(new BaseClient(url, ''));
 };
 
 export const createBasicAuthClient = (url, username, password) => {
   return new GrafanaClient(new BasicAuthClient(url, '', username, password));
+};
+
+export const createBearerAuthClient = (url, token) => {
+  return new GrafanaClient(new BearerAuthClient(url, '', token));
 };

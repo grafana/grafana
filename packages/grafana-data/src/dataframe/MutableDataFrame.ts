@@ -1,25 +1,32 @@
-import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
+import { isString } from 'lodash';
+
 import { QueryResultMeta } from '../types/data';
-import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
-import isString from 'lodash/isString';
+import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
 import { makeFieldParser } from '../utils/fieldParser';
-import { MutableVector, Vector } from '../types/vector';
-import { ArrayVector } from '../vector/ArrayVector';
 import { FunctionalVector } from '../vector/FunctionalVector';
 
-export type MutableField<T = any> = Field<T, MutableVector<T>>;
+import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 
-type MutableVectorCreator = (buffer?: any[]) => MutableVector;
+/** @deprecated */
+export type MutableField<T = any> = Field<T>;
 
-export const MISSING_VALUE: any = null;
+/** @deprecated */
+type MutableVectorCreator = (buffer?: unknown[]) => unknown[];
 
-export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame, MutableVector<T> {
+export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
+
+/**
+ * MutableDataFrame is a complex wrapper around the DataFrame interface
+ *
+ * @deprecated use standard DataFrame, or create one with PartialDataFrame
+ */
+export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
   fields: MutableField[] = [];
 
-  private first: Vector = new ArrayVector();
+  private first: any[] = [];
   private creator: MutableVectorCreator;
 
   constructor(source?: DataFrame | DataFrameDTO, creator?: MutableVectorCreator) {
@@ -29,7 +36,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     this.creator = creator
       ? creator
       : (buffer?: any[]) => {
-          return new ArrayVector(buffer);
+          return buffer ?? [];
         };
 
     // Copy values from
@@ -65,22 +72,18 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     return this.first.length;
   }
 
-  addFieldFor(value: any, name?: string): MutableField {
+  addFieldFor(value: unknown, name?: string): Field {
     return this.addField({
       name: name || '', // Will be filled in
       type: guessFieldTypeFromValue(value),
     });
   }
 
-  addField(f: Field | FieldDTO, startLength?: number): MutableField {
+  addField(f: Field | FieldDTO, startLength?: number): Field {
     let buffer: any[] | undefined = undefined;
 
     if (f.values) {
-      if (Array.isArray(f.values)) {
-        buffer = f.values as any[];
-      } else {
-        buffer = (f.values as Vector).toArray();
-      }
+      buffer = f.values;
     }
 
     let type = f.type;
@@ -102,7 +105,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       name = `Field ${this.fields.length + 1}`;
     }
 
-    const field: MutableField = {
+    const field: Field = {
       ...f,
       name,
       type,
@@ -123,7 +126,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     // Make sure the field starts with a given length
     if (startLength) {
       while (field.values.length < startLength) {
-        field.values.add(MISSING_VALUE);
+        field.values.push(MISSING_VALUE);
       }
     } else {
       this.validate();
@@ -141,24 +144,36 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     // Add empty elements until everything matches
     for (const field of this.fields) {
       while (field.values.length !== length) {
-        field.values.add(MISSING_VALUE);
+        field.values.push(MISSING_VALUE);
       }
     }
   }
 
+  private parsers: Map<Field, (v: string) => any> | undefined = undefined;
+
   /**
-   * Reverse all values
+   * @deprecated unclear if this is actually used
    */
-  reverse() {
-    for (const f of this.fields) {
-      f.values.reverse();
+  setParser(field: Field, parser: (v: string) => any) {
+    if (!this.parsers) {
+      this.parsers = new Map<Field, (v: string) => any>();
     }
+    this.parsers.set(field, parser);
+    return parser;
+  }
+
+  private parseValue(field: Field, v: string) {
+    let p = this.parsers?.get(field);
+    if (!p) {
+      p = this.setParser(field, makeFieldParser(v, field));
+    }
+    return p(v);
   }
 
   /**
    * This will add each value to the corresponding column
    */
-  appendRow(row: any[]) {
+  appendRow(row: unknown[]) {
     // Add any extra columns
     for (let i = this.fields.length; i < row.length; i++) {
       this.addField({
@@ -181,47 +196,56 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
       const f = this.fields[i];
       let v = row[i];
       if (f.type !== FieldType.string && isString(v)) {
-        if (!f.parse) {
-          f.parse = makeFieldParser(v, f);
-        }
-        v = f.parse(v);
+        v = this.parseValue(f, v);
       }
-      f.values.add(v);
+      f.values.push(v);
     }
   }
 
+  /** support standard array push syntax */
+  push(...vals: T[]): number {
+    for (const v of vals) {
+      this.add(v);
+    }
+    return this.length;
+  }
+
+  reverse() {
+    for (const field of this.fields) {
+      field.values.reverse();
+    }
+    return this;
+  }
+
   /**
-   * Add all properties of the value as fields on the frame
+   * Add values from an object to corresponding fields. Similar to appendRow but does not create new fields.
    */
-  add(value: T) {
+  add(value: T): void {
     // Will add one value for every field
     const obj = value as any;
     for (const field of this.fields) {
       let val = obj[field.name];
 
       if (field.type !== FieldType.string && isString(val)) {
-        if (!field.parse) {
-          field.parse = makeFieldParser(val, field);
-        }
-        val = field.parse(val);
+        val = this.parseValue(field, val);
       }
 
       if (val === undefined) {
         val = MISSING_VALUE;
       }
 
-      field.values.add(val);
+      field.values.push(val);
     }
   }
 
   set(index: number, value: T) {
     if (index > this.length) {
-      throw new Error('Unable ot set value beyond current length');
+      throw new Error('Unable to set value beyond current length');
     }
 
-    const obj = (value as any) || {};
+    const obj = (value as Record<string, unknown>) || {};
     for (const field of this.fields) {
-      field.values.set(index, obj[field.name]);
+      field.values[index] = obj[field.name];
     }
   }
 
@@ -229,9 +253,9 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
    * Get an object with a property for each field in the DataFrame
    */
   get(idx: number): T {
-    const v: any = {};
+    const v: Record<string, unknown> = {};
     for (const field of this.fields) {
-      v[field.name] = field.values.get(idx);
+      v[field.name] = field.values[idx];
     }
     return v as T;
   }

@@ -13,95 +13,121 @@ const grafanaPlugin = async () =>
 const influxdbPlugin = async () =>
   await import(/* webpackChunkName: "influxdbPlugin" */ 'app/plugins/datasource/influxdb/module');
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
-const jaegerPlugin = async () =>
-  await import(/* webpackChunkName: "jaegerPlugin" */ 'app/plugins/datasource/jaeger/module');
-const zipkinPlugin = async () =>
-  await import(/* webpackChunkName: "zipkinPlugin" */ 'app/plugins/datasource/zipkin/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
-const mysqlPlugin = async () =>
-  await import(/* webpackChunkName: "mysqlPlugin" */ 'app/plugins/datasource/mysql/module');
-const postgresPlugin = async () =>
-  await import(/* webpackChunkName: "postgresPlugin" */ 'app/plugins/datasource/postgres/module');
 const prometheusPlugin = async () =>
   await import(/* webpackChunkName: "prometheusPlugin" */ 'app/plugins/datasource/prometheus/module');
-const mssqlPlugin = async () =>
-  await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
-const testDataDSPlugin = async () =>
-  await import(/* webpackChunkName: "testDataDSPlugin" */ 'app/plugins/datasource/testdata/module');
-const cloudMonitoringPlugin = async () =>
-  await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
-const azureMonitorPlugin = async () =>
-  await import(
-    /* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module'
-  );
-const tempoPlugin = async () =>
-  await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
+const alertmanagerPlugin = async () =>
+  await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
-import * as textPanel from 'app/plugins/panel/text/module';
-import * as graph2Panel from 'app/plugins/panel/graph2/module';
-import * as graph3Panel from 'app/plugins/panel/graph3/module';
-import * as graphPanel from 'app/plugins/panel/graph/module';
-import * as dashListPanel from 'app/plugins/panel/dashlist/module';
-import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
-import * as alertListPanel from 'app/plugins/panel/alertlist/module';
-import * as annoListPanel from 'app/plugins/panel/annolist/module';
-import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
-import * as tablePanel from 'app/plugins/panel/table/module';
-import * as oldTablePanel from 'app/plugins/panel/table-old/module';
-import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
-import * as singlestatPanel2 from 'app/plugins/panel/stat/module';
-import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
-import * as gaugePanel from 'app/plugins/panel/gauge/module';
-import * as pieChartPanel from 'app/plugins/panel/piechart/module';
-import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
-import * as logsPanel from 'app/plugins/panel/logs/module';
-import * as newsPanel from 'app/plugins/panel/news/module';
-import * as livePanel from 'app/plugins/panel/live/module';
-import * as welcomeBanner from 'app/plugins/panel/welcome/module';
+import { config } from '@grafana/runtime';
 
-const builtInPlugins: any = {
-  'app/plugins/datasource/graphite/module': graphitePlugin,
-  'app/plugins/datasource/cloudwatch/module': cloudwatchPlugin,
-  'app/plugins/datasource/dashboard/module': dashboardDSPlugin,
-  'app/plugins/datasource/elasticsearch/module': elasticsearchPlugin,
-  'app/plugins/datasource/opentsdb/module': opentsdbPlugin,
-  'app/plugins/datasource/grafana/module': grafanaPlugin,
-  'app/plugins/datasource/influxdb/module': influxdbPlugin,
-  'app/plugins/datasource/loki/module': lokiPlugin,
-  'app/plugins/datasource/jaeger/module': jaegerPlugin,
-  'app/plugins/datasource/zipkin/module': zipkinPlugin,
-  'app/plugins/datasource/mixed/module': mixedPlugin,
-  'app/plugins/datasource/mysql/module': mysqlPlugin,
-  'app/plugins/datasource/postgres/module': postgresPlugin,
-  'app/plugins/datasource/mssql/module': mssqlPlugin,
-  'app/plugins/datasource/prometheus/module': prometheusPlugin,
-  'app/plugins/datasource/testdata/module': testDataDSPlugin,
-  'app/plugins/datasource/cloud-monitoring/module': cloudMonitoringPlugin,
-  'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
-  'app/plugins/datasource/tempo/module': tempoPlugin,
+// Async loaded panels
+const alertListPanel = async () =>
+  await import(/* webpackChunkName: "alertListPanel" */ 'app/plugins/panel/alertlist/module');
+const annoListPanel = async () =>
+  await import(/* webpackChunkName: "annoListPanel" */ 'app/plugins/panel/annolist/module');
+const barChartPanel = async () =>
+  await import(/* webpackChunkName: "barChartPanel" */ 'app/plugins/panel/barchart/module');
+const barGaugePanel = async () =>
+  await import(/* webpackChunkName: "barGaugePanel" */ 'app/plugins/panel/bargauge/module');
+const candlestickPanel = async () =>
+  await import(/* webpackChunkName: "candlestickPanel" */ 'app/plugins/panel/candlestick/module');
+const dashListPanel = async () =>
+  await import(/* webpackChunkName: "dashListPanel" */ 'app/plugins/panel/dashlist/module');
+const dataGridPanel = async () =>
+  await import(/* webpackChunkName: "dataGridPanel" */ 'app/plugins/panel/datagrid/module');
+const debugPanel = async () => await import(/* webpackChunkName: "debugPanel" */ 'app/plugins/panel/debug/module');
+const flamegraphPanel = async () =>
+  await import(/* webpackChunkName: "flamegraphPanel" */ 'app/plugins/panel/flamegraph/module');
+const gaugePanel = async () => await import(/* webpackChunkName: "gaugePanel" */ 'app/plugins/panel/gauge/module');
+const gettingStartedPanel = async () =>
+  await import(/* webpackChunkName: "gettingStartedPanel" */ 'app/plugins/panel/gettingstarted/module');
+const histogramPanel = async () =>
+  await import(/* webpackChunkName: "histogramPanel" */ 'app/plugins/panel/histogram/module');
+const livePanel = async () => await import(/* webpackChunkName: "livePanel" */ 'app/plugins/panel/live/module');
+const logsPanel = async () => await import(/* webpackChunkName: "logsPanel" */ 'app/plugins/panel/logs/module');
+const newsPanel = async () => await import(/* webpackChunkName: "newsPanel" */ 'app/plugins/panel/news/module');
+const pieChartPanel = async () =>
+  await import(/* webpackChunkName: "pieChartPanel" */ 'app/plugins/panel/piechart/module');
+const statPanel = async () => await import(/* webpackChunkName: "statPanel" */ 'app/plugins/panel/stat/module');
+const stateTimelinePanel = async () =>
+  await import(/* webpackChunkName: "stateTimelinePanel" */ 'app/plugins/panel/state-timeline/module');
+const statusHistoryPanel = async () =>
+  await import(/* webpackChunkName: "statusHistoryPanel" */ 'app/plugins/panel/status-history/module');
+const tablePanel = async () => await import(/* webpackChunkName: "tablePanel" */ 'app/plugins/panel/table/module');
+const textPanel = async () => await import(/* webpackChunkName: "textPanel" */ 'app/plugins/panel/text/module');
+const timeseriesPanel = async () =>
+  await import(/* webpackChunkName: "timeseriesPanel" */ 'app/plugins/panel/timeseries/module');
+const tracesPanel = async () => await import(/* webpackChunkName: "tracesPanel" */ 'app/plugins/panel/traces/module');
+const trendPanel = async () => await import(/* webpackChunkName: "trendPanel" */ 'app/plugins/panel/trend/module');
+const welcomeBanner = async () =>
+  await import(/* webpackChunkName: "welcomeBanner" */ 'app/plugins/panel/welcome/module');
 
-  'app/plugins/panel/text/module': textPanel,
-  'app/plugins/panel/graph2/module': graph2Panel,
-  'app/plugins/panel/graph3/module': graph3Panel,
-  'app/plugins/panel/graph/module': graphPanel,
-  'app/plugins/panel/dashlist/module': dashListPanel,
-  'app/plugins/panel/pluginlist/module': pluginsListPanel,
-  'app/plugins/panel/alertlist/module': alertListPanel,
-  'app/plugins/panel/annolist/module': annoListPanel,
-  'app/plugins/panel/heatmap/module': heatmapPanel,
-  'app/plugins/panel/table/module': tablePanel,
-  'app/plugins/panel/table-old/module': oldTablePanel,
-  'app/plugins/panel/news/module': newsPanel,
-  'app/plugins/panel/live/module': livePanel,
-  'app/plugins/panel/singlestat/module': singlestatPanel,
-  'app/plugins/panel/stat/module': singlestatPanel2,
-  'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
-  'app/plugins/panel/gauge/module': gaugePanel,
-  'app/plugins/panel/piechart/module': pieChartPanel,
-  'app/plugins/panel/bargauge/module': barGaugePanel,
-  'app/plugins/panel/logs/module': logsPanel,
-  'app/plugins/panel/welcome/module': welcomeBanner,
+const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
+const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
+const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');
+const xychartPanel = async () => {
+  if (config.featureToggles.autoMigrateXYChartPanel) {
+    return await import(/* webpackChunkName: "xychart2" */ 'app/plugins/panel/xychart/v2/module');
+  } else {
+    return await import(/* webpackChunkName: "xychart" */ 'app/plugins/panel/xychart/module');
+  }
+};
+const heatmapPanel = async () =>
+  await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
+const tableOldPanel = async () =>
+  await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
+
+const nodeGraph = async () =>
+  await import(/* webpackChunkName: "nodeGraphPanel" */ 'app/plugins/panel/nodeGraph/module');
+
+const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
+  // datasources
+  'core:plugin/graphite': graphitePlugin,
+  'core:plugin/cloudwatch': cloudwatchPlugin,
+  'core:plugin/dashboard': dashboardDSPlugin,
+  'core:plugin/elasticsearch': elasticsearchPlugin,
+  'core:plugin/opentsdb': opentsdbPlugin,
+  'core:plugin/grafana': grafanaPlugin,
+  'core:plugin/influxdb': influxdbPlugin,
+  'core:plugin/loki': lokiPlugin,
+  'core:plugin/mixed': mixedPlugin,
+  'core:plugin/prometheus': prometheusPlugin,
+  'core:plugin/alertmanager': alertmanagerPlugin,
+  // panels
+  'core:plugin/text': textPanel,
+  'core:plugin/timeseries': timeseriesPanel,
+  'core:plugin/trend': trendPanel,
+  'core:plugin/state-timeline': stateTimelinePanel,
+  'core:plugin/status-history': statusHistoryPanel,
+  'core:plugin/candlestick': candlestickPanel,
+  'core:plugin/graph': graphPanel,
+  'core:plugin/xychart': xychartPanel,
+  'core:plugin/geomap': geomapPanel,
+  'core:plugin/canvas': canvasPanel,
+  'core:plugin/dashlist': dashListPanel,
+  'core:plugin/alertlist': alertListPanel,
+  'core:plugin/annolist': annoListPanel,
+  'core:plugin/heatmap': heatmapPanel,
+  'core:plugin/table': tablePanel,
+  'core:plugin/table-old': tableOldPanel,
+  'core:plugin/news': newsPanel,
+  'core:plugin/live': livePanel,
+  'core:plugin/stat': statPanel,
+  'core:plugin/datagrid': dataGridPanel,
+  'core:plugin/debug': debugPanel,
+  'core:plugin/flamegraph': flamegraphPanel,
+  'core:plugin/gettingstarted': gettingStartedPanel,
+  'core:plugin/gauge': gaugePanel,
+  'core:plugin/piechart': pieChartPanel,
+  'core:plugin/bargauge': barGaugePanel,
+  'core:plugin/barchart': barChartPanel,
+  'core:plugin/logs': logsPanel,
+  'core:plugin/traces': tracesPanel,
+  'core:plugin/welcome': welcomeBanner,
+  'core:plugin/nodeGraph': nodeGraph,
+  'core:plugin/histogram': histogramPanel,
 };
 
 export default builtInPlugins;

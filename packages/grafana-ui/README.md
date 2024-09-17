@@ -1,12 +1,12 @@
 # Grafana UI components library
 
-> **@grafana/ui is currently in BETA**.
-
 @grafana/ui is a collection of components used by [Grafana](https://github.com/grafana/grafana)
 
 Our goal is to deliver Grafana's common UI elements for plugins developers and contributors.
 
-See [package source](https://github.com/grafana/grafana/tree/master/packages/grafana-ui) for more details.
+Browse the [Storybook catalog of the components](http://developers.grafana.com/).
+
+See [package source](https://github.com/grafana/grafana/tree/main/packages/grafana-ui) for more details.
 
 ## Installation
 

@@ -1,33 +1,65 @@
-import React, { FC } from 'react';
-import { cx, css, keyframes } from 'emotion';
-import { useStyles } from '@grafana/ui';
+import { cx, css, keyframes } from '@emotion/css';
+import { useEffect, useState } from 'react';
+import * as React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
+
 import { Branding } from '../Branding/Branding';
-import { GrafanaTheme } from '@grafana/data';
+import { BrandingSettings } from '../Branding/types';
 import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
   enterAnimation?: boolean;
 }
-export const InnerBox: FC<InnerBoxProps> = ({ children, enterAnimation = true }) => {
-  const loginStyles = useStyles(getLoginStyles);
+export const InnerBox = ({ children, enterAnimation = true }: React.PropsWithChildren<InnerBoxProps>) => {
+  const loginStyles = useStyles2(getLoginStyles);
   return <div className={cx(loginStyles.loginInnerBox, enterAnimation && loginStyles.enterAnimation)}>{children}</div>;
 };
 
-export const LoginLayout: FC = ({ children }) => {
-  const loginStyles = useStyles(getLoginStyles);
+export interface LoginLayoutProps {
+  /** Custom branding settings that can be used e.g. for previewing the Login page changes */
+  branding?: BrandingSettings;
+  isChangingPassword?: boolean;
+}
+
+export const LoginLayout = ({ children, branding, isChangingPassword }: React.PropsWithChildren<LoginLayoutProps>) => {
+  const loginStyles = useStyles2(getLoginStyles);
+  const [startAnim, setStartAnim] = useState(false);
+  const subTitle = branding?.loginSubtitle ?? Branding.GetLoginSubTitle();
+  const loginTitle = branding?.loginTitle ?? Branding.LoginTitle;
+  const loginBoxBackground = branding?.loginBoxBackground || Branding.LoginBoxBackground();
+  const loginLogo = branding?.loginLogo;
+  const hideEdition = branding?.hideEdition ?? Branding.HideEdition;
+
+  useEffect(() => setStartAnim(true), []);
+
   return (
-    <Branding.LoginBackground className={loginStyles.container}>
-      <div className={cx(loginStyles.loginContent, Branding.LoginBoxBackground())}>
-        <div className={loginStyles.loginLogoWrapper}>
-          <Branding.LoginLogo className={loginStyles.loginLogo} />
-          <div className={loginStyles.titleWrapper}>
-            <h1 className={loginStyles.mainTitle}>{Branding.LoginTitle}</h1>
-            <h3 className={loginStyles.subTitle}>{Branding.GetLoginSubTitle()}</h3>
+    <Branding.LoginBackground
+      className={cx(loginStyles.container, startAnim && loginStyles.loginAnim, branding?.loginBackground, {
+        [loginStyles.containerBodyScrolling]: config.featureToggles.bodyScrolling,
+      })}
+    >
+      <div className={loginStyles.loginMain}>
+        <div className={cx(loginStyles.loginContent, loginBoxBackground, 'login-content-box')}>
+          <div className={loginStyles.loginLogoWrapper}>
+            <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
+            <div className={loginStyles.titleWrapper}>
+              {isChangingPassword ? (
+                <h1 className={loginStyles.mainTitle}>Update your password</h1>
+              ) : (
+                <>
+                  <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
+                  {subTitle && <h3 className={loginStyles.subTitle}>{subTitle}</h3>}
+                </>
+              )}
+            </div>
           </div>
+          <div className={loginStyles.loginOuterBox}>{children}</div>
         </div>
-        <div className={loginStyles.loginOuterBox}>{children}</div>
       </div>
-      <Footer />
+      {branding?.hideFooter ? <></> : <Footer hideEdition={hideEdition} customLinks={branding?.footerLinks} />}
     </Branding.LoginBackground>
   );
 };
@@ -43,83 +75,119 @@ to{
   transform: translate(0px, 0px);
 }`;
 
-export const getLoginStyles = (theme: GrafanaTheme) => {
-  const bgColor = theme.isDark ? theme.palette.black : theme.palette.white;
+export const getLoginStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      min-height: 100vh;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-color: ${bgColor};
-      min-width: 100%;
-      margin-left: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    `,
-    submitButton: css`
-      justify-content: center;
-      width: 100%;
-    `,
-    loginLogo: css`
-      width: 100%;
-      max-width: 100px;
-      margin-bottom: 15px;
-    `,
-    loginLogoWrapper: css`
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      padding: ${theme.spacing.lg};
-    `,
-    titleWrapper: css`
-      text-align: center;
-    `,
-    mainTitle: css`
-      font-size: 32px;
-    `,
-    subTitle: css`
-      font-size: ${theme.typography.size.md};
-      color: ${theme.colors.textSemiWeak};
-    `,
-    loginContent: css`
-      max-width: 550px;
-      width: 100%;
-      display: flex;
-      align-items: stretch;
-      flex-direction: column;
-      position: relative;
-      justify-content: center;
-      z-index: 1;
-      min-height: 320px;
-      border-radius: 3px;
-      padding: 20px 0;
-    `,
-    loginOuterBox: css`
-      display: flex;
-      overflow-y: hidden;
-      align-items: center;
-      justify-content: center;
-    `,
-    loginInnerBox: css`
-      padding: ${theme.spacing.xl};
-      @media (max-width: 320px) {
-        padding: ${theme.spacing.lg};
-      }
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      flex-grow: 1;
-      max-width: 415px;
-      width: 100%;
-      transform: translate(0px, 0px);
-      transition: 0.25s ease;
-    `,
-    enterAnimation: css`
-      animation: ${flyInAnimation} ease-out 0.2s;
-    `,
+    loginMain: css({
+      flexGrow: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: '100%',
+    }),
+    container: css({
+      minHeight: '100%',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      minWidth: '100%',
+      marginLeft: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    containerBodyScrolling: css({
+      flex: 1,
+    }),
+    loginAnim: css({
+      ['&:before']: {
+        opacity: 1,
+      },
+
+      ['.login-content-box']: {
+        opacity: 1,
+      },
+    }),
+    submitButton: css({
+      justifyContent: 'center',
+      width: '100%',
+    }),
+    loginLogo: css({
+      width: '100%',
+      maxWidth: 60,
+      marginBottom: theme.spacing(2),
+
+      [theme.breakpoints.up('sm')]: {
+        maxWidth: 100,
+      },
+    }),
+    loginLogoWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      padding: theme.spacing(3),
+    }),
+    titleWrapper: css({
+      textAlign: 'center',
+    }),
+    mainTitle: css({
+      fontSize: 22,
+
+      [theme.breakpoints.up('sm')]: {
+        fontSize: 32,
+      },
+    }),
+    subTitle: css({
+      fontSize: theme.typography.size.md,
+      color: theme.colors.text.secondary,
+    }),
+    loginContent: css({
+      maxWidth: 478,
+      width: `calc(100% - 2rem)`,
+      display: 'flex',
+      alignItems: 'stretch',
+      flexDirection: 'column',
+      position: 'relative',
+      justifyContent: 'flex-start',
+      zIndex: 1,
+      minHeight: 320,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(2, 0),
+      opacity: 0,
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.5s ease-in-out',
+      },
+
+      [theme.breakpoints.up('sm')]: {
+        minHeight: theme.spacing(40),
+        justifyContent: 'center',
+      },
+    }),
+    loginOuterBox: css({
+      display: 'flex',
+      overflowY: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    loginInnerBox: css({
+      padding: theme.spacing(0, 2, 2, 2),
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexGrow: 1,
+      maxWidth: 415,
+      width: '100%',
+      transform: 'translate(0px, 0px)',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: '0.25s ease',
+      },
+    }),
+    enterAnimation: css({
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${flyInAnimation} ease-out 0.2s`,
+      },
+    }),
   };
 };

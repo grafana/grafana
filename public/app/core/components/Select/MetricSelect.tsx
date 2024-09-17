@@ -1,10 +1,9 @@
-import React, { useMemo, useCallback, FC } from 'react';
-import _ from 'lodash';
+import { flatten } from 'lodash';
+import { useCallback, useMemo } from 'react';
 
-import { LegacyForms } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
+import { Select } from '@grafana/ui';
 import { Variable } from 'app/types/templates';
-const { Select } = LegacyForms;
 
 export interface Props {
   onChange: (value: string | undefined) => void;
@@ -16,7 +15,7 @@ export interface Props {
   variables?: Variable[];
 }
 
-export const MetricSelect: FC<Props> = props => {
+export const MetricSelect = (props: Props) => {
   const { value, placeholder, className, isSearchable, onChange } = props;
   const options = useSelectOptions(props);
   const selected = useSelectedOption(options, value);
@@ -33,7 +32,7 @@ export const MetricSelect: FC<Props> = props => {
       isSearchable={isSearchable}
       maxMenuHeight={500}
       placeholder={placeholder}
-      noOptionsMessage={() => 'No options found'}
+      noOptionsMessage="No options found"
       value={selected}
     />
   );
@@ -60,7 +59,7 @@ const useSelectOptions = ({ variables = [], options }: Props): Array<SelectableV
 
 const useSelectedOption = (options: Array<SelectableValue<string>>, value: string): SelectableValue<string> => {
   return useMemo(() => {
-    const allOptions = options.every(o => o.options) ? _.flatten(options.map(o => o.options)) : options;
-    return allOptions.find(option => option.value === value);
+    const allOptions = options.every((o) => o.options) ? flatten(options.map((o) => o.options)) : options;
+    return allOptions.find((option) => option.value === value);
   }, [options, value]);
 };

@@ -1,49 +1,78 @@
-import { FolderDTO } from 'app/types';
-import { NavModelItem, NavModel } from '@grafana/data';
+import { NavModel, NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
+import { contextSrv } from 'app/core/services/context_srv';
+import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
+import { AccessControlAction, FolderDTO } from 'app/types';
 
-export function buildNavModel(folder: FolderDTO): NavModelItem {
-  return {
+export const FOLDER_ID = 'manage-folder';
+
+export const getDashboardsTabID = (folderUID: string) => `folder-dashboards-${folderUID}`;
+export const getLibraryPanelsTabID = (folderUID: string) => `folder-library-panels-${folderUID}`;
+export const getAlertingTabID = (folderUID: string) => `folder-alerting-${folderUID}`;
+export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${folderUID}`;
+export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
+
+export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavModelItem {
+  const model: NavModelItem = {
     icon: 'folder',
-    id: 'manage-folder',
-    subTitle: 'Manage folder dashboards & permissions',
-    url: '',
+    id: FOLDER_ID,
+    subTitle: getNavSubTitle('manage-folder'),
+    url: folder.url,
     text: folder.title,
-    breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
     children: [
       {
         active: false,
         icon: 'apps',
-        id: `folder-dashboards-${folder.uid}`,
-        text: 'Dashboards',
+        id: getDashboardsTabID(folder.uid),
+        text: t('browse-dashboards.manage-folder-nav.dashboards', 'Dashboards'),
         url: folder.url,
-      },
-      {
-        active: false,
-        icon: 'lock',
-        id: `folder-permissions-${folder.uid}`,
-        text: 'Permissions',
-        url: `${folder.url}/permissions`,
-      },
-      {
-        active: false,
-        icon: 'cog',
-        id: `folder-settings-${folder.uid}`,
-        text: 'Settings',
-        url: `${folder.url}/settings`,
       },
     ],
   };
+
+  if (parents && parents.length > 0) {
+    const parent = parents[parents.length - 1];
+    const remainingParents = parents.slice(0, parents.length - 1);
+    model.parentItem = buildNavModel(parent, remainingParents);
+  }
+
+  model.children!.push({
+    active: false,
+    icon: 'library-panel',
+    id: getLibraryPanelsTabID(folder.uid),
+    text: t('browse-dashboards.manage-folder-nav.panels', 'Panels'),
+    url: `${folder.url}/library-panels`,
+  });
+
+  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
+    model.children!.push({
+      active: false,
+      icon: 'bell',
+      id: getAlertingTabID(folder.uid),
+      text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
+      url: `${folder.url}/alerting`,
+    });
+  }
+
+  return model;
 }
 
 export function getLoadingNav(tabIndex: number): NavModel {
   const main = buildNavModel({
+    created: '',
+    createdBy: '',
+    hasAcl: false,
+    updated: '',
+    updatedBy: '',
     id: 1,
     uid: 'loading',
     title: 'Loading',
     url: 'url',
-    canSave: false,
-    canEdit: false,
-    canAdmin: false,
+    canSave: true,
+    canEdit: true,
+    canAdmin: true,
+    canDelete: true,
     version: 0,
   });
 

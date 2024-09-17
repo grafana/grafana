@@ -1,8 +1,10 @@
-import { DataTransformerID } from './ids';
-import { DataTransformerInfo } from '../../types/transformations';
-import { DataFrame, Field } from '../../types/dataFrame';
-import { getFieldDisplayName } from '../../field/fieldState';
 import { map } from 'rxjs/operators';
+
+import { getFieldDisplayName } from '../../field/fieldState';
+import { DataFrame, Field } from '../../types/dataFrame';
+import { DataTransformerInfo } from '../../types/transformations';
+
+import { DataTransformerID } from './ids';
 
 export interface RenameFieldsTransformerOptions {
   renameByName: Record<string, string>;
@@ -17,19 +19,19 @@ export const renameFieldsTransformer: DataTransformerInfo<RenameFieldsTransforme
   },
 
   /**
-   * Return a modified copy of the series.  If the transform is not or should not
+   * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: options => source =>
+  operator: (options) => (source) =>
     source.pipe(
-      map(data => {
+      map((data) => {
         const renamer = createRenamer(options.renameByName);
 
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
 
-        return data.map(frame => ({
+        return data.map((frame) => ({
           ...frame,
           fields: renamer(frame),
         }));
@@ -37,29 +39,31 @@ export const renameFieldsTransformer: DataTransformerInfo<RenameFieldsTransforme
     ),
 };
 
-const createRenamer = (renameByName: Record<string, string>) => (frame: DataFrame): Field[] => {
-  if (!renameByName || Object.keys(renameByName).length === 0) {
-    return frame.fields;
-  }
-
-  return frame.fields.map(field => {
-    const displayName = getFieldDisplayName(field, frame);
-    const renameTo = renameByName[displayName];
-
-    if (typeof renameTo !== 'string' || renameTo.length === 0) {
-      return field;
+const createRenamer =
+  (renameByName: Record<string, string>) =>
+  (frame: DataFrame): Field[] => {
+    if (!renameByName || Object.keys(renameByName).length === 0) {
+      return frame.fields;
     }
 
-    return {
-      ...field,
-      config: {
-        ...field.config,
-        displayName: renameTo,
-      },
-      state: {
-        ...field.state,
-        displayName: renameTo,
-      },
-    };
-  });
-};
+    return frame.fields.map((field) => {
+      const displayName = getFieldDisplayName(field, frame);
+      const renameTo = renameByName[displayName];
+
+      if (typeof renameTo !== 'string' || renameTo.length === 0) {
+        return field;
+      }
+
+      return {
+        ...field,
+        config: {
+          ...field.config,
+          displayName: renameTo,
+        },
+        state: {
+          ...field.state,
+          displayName: renameTo,
+        },
+      };
+    });
+  };

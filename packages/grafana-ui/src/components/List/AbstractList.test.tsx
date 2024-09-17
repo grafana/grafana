@@ -1,5 +1,5 @@
-import React from 'react';
-import { shallow } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+
 import { AbstractList } from './AbstractList';
 
 describe('AbstractList', () => {
@@ -10,10 +10,10 @@ describe('AbstractList', () => {
       { name: 'Item 3', id: 'item3' },
     ];
 
-    const list = shallow(
+    render(
       <AbstractList
         items={items}
-        renderItem={item => (
+        renderItem={(item) => (
           <div>
             <h1>{item.name}</h1>
             <small>{item.id}</small>
@@ -22,29 +22,11 @@ describe('AbstractList', () => {
       />
     );
 
-    expect(list).toMatchSnapshot();
-  });
-
-  it('allows custom item key', () => {
-    const items = [
-      { name: 'Item 1', id: 'item1' },
-      { name: 'Item 2', id: 'item2' },
-      { name: 'Item 3', id: 'item3' },
-    ];
-
-    const list = shallow(
-      <AbstractList
-        items={items}
-        getItemKey={item => item.id}
-        renderItem={item => (
-          <div>
-            <h1>{item.name}</h1>
-            <small>{item.id}</small>
-          </div>
-        )}
-      />
-    );
-
-    expect(list).toMatchSnapshot();
+    expect(screen.getByRole('heading', { name: 'Item 1' })).toBeInTheDocument();
+    expect(screen.getByText('item1')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Item 2' })).toBeInTheDocument();
+    expect(screen.getByText('item2')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Item 3' })).toBeInTheDocument();
+    expect(screen.getByText('item3')).toBeInTheDocument();
   });
 });

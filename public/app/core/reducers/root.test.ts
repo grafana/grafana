@@ -1,54 +1,21 @@
-import { createRootReducer, recursiveCleanState } from './root';
-import { describe, expect } from '../../../test/lib/common';
 import { reducerTester } from '../../../test/core/redux/reducerTester';
-import { StoreState } from '../../types/store';
-import { Team } from '../../types';
-import { cleanUpAction } from '../actions/cleanUp';
 import { initialTeamsState, teamsLoaded } from '../../features/teams/state/reducers';
+import { Team } from '../../types';
+import { StoreState } from '../../types/store';
+import { cleanUpAction } from '../actions/cleanUp';
+
+import { createRootReducer } from './root';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...jest.requireActual('@grafana/runtime'),
   config: {
+    ...jest.requireActual('@grafana/runtime').config,
     bootData: {
       navTree: [],
       user: {},
     },
   },
 }));
-
-describe('recursiveCleanState', () => {
-  describe('when called with an existing state selector', () => {
-    it('then it should clear that state slice in state', () => {
-      const state = {
-        teams: { teams: [{ id: 1 }, { id: 2 }] },
-      };
-      // Choosing a deeper state selector here just to test recursive behaviour
-      // This should be same state slice that matches the state slice of a reducer like state.teams
-      const stateSelector = state.teams.teams[0];
-
-      recursiveCleanState(state, stateSelector);
-
-      expect(state.teams.teams[0]).not.toBeDefined();
-      expect(state.teams.teams[1]).toBeDefined();
-    });
-  });
-
-  describe('when called with a non existing state selector', () => {
-    it('then it should not clear that state slice in state', () => {
-      const state = {
-        teams: { teams: [{ id: 1 }, { id: 2 }] },
-      };
-      // Choosing a deeper state selector here just to test recursive behaviour
-      // This should be same state slice that matches the state slice of a reducer like state.teams
-      const stateSelector = state.teams.teams[2];
-
-      recursiveCleanState(state, stateSelector);
-
-      expect(state.teams.teams[0]).toBeDefined();
-      expect(state.teams.teams[1]).toBeDefined();
-    });
-  });
-});
 
 describe('rootReducer', () => {
   const rootReducer = createRootReducer();
@@ -62,11 +29,15 @@ describe('rootReducer', () => {
 
       reducerTester<StoreState>()
         .givenReducer(rootReducer, state)
-        .whenActionIsDispatched(teamsLoaded(teams))
-        .thenStatePredicateShouldEqual(resultingState => {
+        .whenActionIsDispatched(teamsLoaded({ teams: teams, page: 1, noTeams: false, perPage: 30, totalCount: 1 }))
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.teams).toEqual({
             hasFetched: true,
-            searchQuery: '',
+            noTeams: false,
+            perPage: 30,
+            totalPages: 1,
+            query: '',
+            page: 1,
             teams,
           });
           return true;
@@ -80,15 +51,21 @@ describe('rootReducer', () => {
       const state: StoreState = {
         teams: {
           hasFetched: true,
-          searchQuery: '',
+          query: '',
+          page: 1,
+          noTeams: false,
+          totalPages: 1,
+          perPage: 30,
           teams,
         },
       } as StoreState;
 
       reducerTester<StoreState>()
         .givenReducer(rootReducer, state, false, true)
-        .whenActionIsDispatched(cleanUpAction({ stateSelector: (storeState: StoreState) => storeState.teams }))
-        .thenStatePredicateShouldEqual(resultingState => {
+        .whenActionIsDispatched(
+          cleanUpAction({ cleanupAction: (storeState) => (storeState.teams = initialTeamsState) })
+        )
+        .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.teams).toEqual({ ...initialTeamsState });
           return true;
         });

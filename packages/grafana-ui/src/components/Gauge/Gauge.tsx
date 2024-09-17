@@ -1,32 +1,39 @@
-import React, { PureComponent } from 'react';
 import $ from 'jquery';
+import { PureComponent } from 'react';
+import * as React from 'react';
+
 import {
   DisplayValue,
   formattedValueToString,
   FieldConfig,
   ThresholdsMode,
-  getActiveThreshold,
-  Threshold,
-  getColorForTheme,
-  FieldColorModeId,
-  FALLBACK_COLOR,
+  GAUGE_DEFAULT_MAXIMUM,
+  GAUGE_DEFAULT_MINIMUM,
+  GrafanaTheme2,
 } from '@grafana/data';
-import { Themeable } from '../../types';
-import { calculateFontSize } from '../../utils/measureText';
+import { VizTextDisplayOptions, VizOrientation } from '@grafana/schema';
 
-export interface Props extends Themeable {
+import { calculateFontSize } from '../../utils/measureText';
+import { clearButtonStyles } from '../Button';
+
+import { calculateGaugeAutoProps, DEFAULT_THRESHOLDS, getFormattedThresholds } from './utils';
+
+export interface Props {
   height: number;
   field: FieldConfig;
   showThresholdMarkers: boolean;
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
+  text?: VizTextDisplayOptions;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
+  theme: GrafanaTheme2;
+  orientation?: VizOrientation;
 }
 
 export class Gauge extends PureComponent<Props> {
-  canvasElement: any;
+  canvasElement: HTMLDivElement | null = null;
 
   static defaultProps: Partial<Props> = {
     showThresholdMarkers: true,
@@ -34,13 +41,7 @@ export class Gauge extends PureComponent<Props> {
     field: {
       min: 0,
       max: 100,
-      thresholds: {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: 'green' },
-          { value: 80, color: 'red' },
-        ],
-      },
+      thresholds: DEFAULT_THRESHOLDS,
     },
   };
 
@@ -52,68 +53,32 @@ export class Gauge extends PureComponent<Props> {
     this.draw();
   }
 
-  getFormattedThresholds(decimals: number): Threshold[] {
-    const { field, theme, value } = this.props;
-
-    if (field.color?.mode !== FieldColorModeId.Thresholds) {
-      return [{ value: field.min ?? 0, color: value.color ?? FALLBACK_COLOR }];
-    }
-
-    const thresholds = field.thresholds ?? Gauge.defaultProps.field?.thresholds!;
-    const isPercent = thresholds.mode === ThresholdsMode.Percentage;
-    const steps = thresholds.steps;
-    let min = field.min!;
-    let max = field.max!;
-
-    if (isPercent) {
-      min = 0;
-      max = 100;
-    }
-
-    const first = getActiveThreshold(min, steps);
-    const last = getActiveThreshold(max, steps);
-    const formatted: Threshold[] = [];
-    formatted.push({ value: +min.toFixed(decimals), color: getColorForTheme(first.color, theme) });
-    let skip = true;
-    for (let i = 0; i < steps.length; i++) {
-      const step = steps[i];
-      if (skip) {
-        if (first === step) {
-          skip = false;
-        }
-        continue;
-      }
-      const prev = steps[i - 1];
-      formatted.push({ value: step.value, color: getColorForTheme(prev!.color, theme) });
-      if (step === last) {
-        break;
-      }
-    }
-    formatted.push({ value: +max.toFixed(decimals), color: getColorForTheme(last.color, theme) });
-    return formatted;
-  }
-
   draw() {
-    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
+    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value, orientation } = this.props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
-    const dimension = Math.min(width, autoProps.gaugeHeight);
-    const backgroundColor = theme.colors.bg2;
+    // If the gauge is in vertical layout, we need to set the width of the gauge to the height of the gauge
+    const calculatedGaugeWidth = orientation === VizOrientation.Vertical ? autoProps.gaugeHeight : width;
+    const dimension = Math.min(calculatedGaugeWidth, autoProps.gaugeHeight);
+    const backgroundColor = theme.colors.background.secondary;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const text = formattedValueToString(value);
     // This not 100% accurate as I am unsure of flot's calculations here
-    const valueWidthBase = Math.min(width, dimension * 1.3) * 0.9;
+    const valueWidthBase = Math.min(calculatedGaugeWidth, dimension * 1.3) * 0.9;
     // remove gauge & marker width (on left and right side)
     // and 10px is some padding that flot adds to the outer canvas
-    const valueWidth = valueWidthBase - ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0)) * 2 + 10);
-    const fontSize = calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7);
-    const thresholdLabelFontSize = fontSize / 2.5;
+    const valueWidth =
+      valueWidthBase -
+      ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0) + (showThresholdLabels ? 10 : 0)) * 2 + 10);
+    const fontSize = this.props.text?.valueSize ?? calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7);
+    const thresholdLabelFontSize = Math.max(fontSize / 2.5, 12);
 
-    let min = field.min!;
-    let max = field.max!;
+    let min = field.min ?? GAUGE_DEFAULT_MINIMUM;
+    let max = field.max ?? GAUGE_DEFAULT_MAXIMUM;
     let numeric = value.numeric;
+
     if (field.thresholds?.mode === ThresholdsMode.Percentage) {
       min = 0;
       max = 100;
@@ -125,17 +90,19 @@ export class Gauge extends PureComponent<Props> {
     }
 
     const decimals = field.decimals === undefined ? 2 : field.decimals!;
+
     if (showThresholdMarkers) {
       min = +min.toFixed(decimals);
       max = +max.toFixed(decimals);
     }
 
-    const options: any = {
+    const options = {
       series: {
         gauges: {
           gauge: {
             min,
             max,
+            neutralValue: field.custom?.neutral,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },
@@ -146,7 +113,7 @@ export class Gauge extends PureComponent<Props> {
           layout: { margin: 0, thresholdWidth: 0, vMargin: 0 },
           cell: { border: { width: 0 } },
           threshold: {
-            values: this.getFormattedThresholds(decimals),
+            values: getFormattedThresholds(decimals, field, value, theme),
             label: {
               show: showThresholdLabels,
               margin: thresholdMarkersWidth + 1,
@@ -160,7 +127,7 @@ export class Gauge extends PureComponent<Props> {
             formatter: () => {
               return text;
             },
-            font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
+            font: { size: fontSize, family: theme.typography.fontFamily },
           },
           show: true,
         },
@@ -173,33 +140,47 @@ export class Gauge extends PureComponent<Props> {
     };
 
     try {
-      $.plot(this.canvasElement, [plotSeries], options);
+      if (this.canvasElement) {
+        $.plot(this.canvasElement, [plotSeries], options);
+      }
     } catch (err) {
       console.error('Gauge rendering error', err, options, value);
     }
   }
 
   renderVisualization = () => {
-    const { width, value, height, onClick } = this.props;
-    const autoProps = calculateGaugeAutoProps(width, height, value.title);
+    const { width, value, height, onClick, text, theme, orientation } = this.props;
+    const autoProps = calculateGaugeAutoProps(width, height, value.title, orientation);
+
+    // If the gauge is in vertical layout, we need to set the width of the gauge to the height of the gauge
+    const gaugeWidth = orientation === VizOrientation.Vertical ? `${autoProps.gaugeHeight}px` : '100%';
+
+    const gaugeElement = (
+      <div
+        style={{ height: `${autoProps.gaugeHeight}px`, width: gaugeWidth }}
+        ref={(element) => (this.canvasElement = element)}
+      />
+    );
 
     return (
       <>
-        <div
-          style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
-          ref={element => (this.canvasElement = element)}
-          onClick={onClick}
-        />
+        {onClick ? (
+          <button className={clearButtonStyles(theme)} type="button" onClick={onClick}>
+            {gaugeElement}
+          </button>
+        ) : (
+          gaugeElement
+        )}
         {autoProps.showLabel && (
           <div
             style={{
               textAlign: 'center',
-              fontSize: autoProps.titleFontSize,
+              fontSize: text?.titleSize ?? autoProps.titleFontSize,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               position: 'relative',
-              width: '100%',
+              width: gaugeWidth,
               top: '-4px',
               cursor: 'default',
             }}
@@ -228,24 +209,4 @@ export class Gauge extends PureComponent<Props> {
       </div>
     );
   }
-}
-
-interface GaugeAutoProps {
-  titleFontSize: number;
-  gaugeHeight: number;
-  showLabel: boolean;
-}
-
-function calculateGaugeAutoProps(width: number, height: number, title: string | undefined): GaugeAutoProps {
-  const showLabel = title !== null && title !== undefined;
-  const titleFontSize = Math.min((width * 0.15) / 1.5, 20); // 20% of height * line-height, max 40px
-  const titleHeight = titleFontSize * 1.5;
-  const availableHeight = showLabel ? height - titleHeight : height;
-  const gaugeHeight = Math.min(availableHeight, width);
-
-  return {
-    showLabel,
-    gaugeHeight,
-    titleFontSize,
-  };
 }

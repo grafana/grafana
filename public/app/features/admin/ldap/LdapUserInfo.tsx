@@ -1,39 +1,29 @@
-import React, { FC } from 'react';
+import { Box, Stack, Text } from '@grafana/ui';
+import { LdapUser } from 'app/types';
+
+import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserMappingInfo } from './LdapUserMappingInfo';
 import { LdapUserPermissions } from './LdapUserPermissions';
-import { LdapUserGroups } from './LdapUserGroups';
 import { LdapUserTeams } from './LdapUserTeams';
-import { LdapUser } from 'app/types';
 
 interface Props {
   ldapUser: LdapUser;
-  showAttributeMapping?: boolean;
 }
 
-export const LdapUserInfo: FC<Props> = ({ ldapUser, showAttributeMapping }) => {
+export const LdapUserInfo = ({ ldapUser }: Props) => {
   return (
-    <>
-      <LdapUserMappingInfo info={ldapUser.info} showAttributeMapping={showAttributeMapping} />
+    <Stack direction="column" gap={4}>
+      <LdapUserMappingInfo info={ldapUser.info} />
       <LdapUserPermissions permissions={ldapUser.permissions} />
-      {ldapUser.roles && ldapUser.roles.length > 0 && (
-        <LdapUserGroups groups={ldapUser.roles} showAttributeMapping={showAttributeMapping} />
-      )}
+      {ldapUser.roles && ldapUser.roles.length > 0 && <LdapUserGroups groups={ldapUser.roles} />}
 
       {ldapUser.teams && ldapUser.teams.length > 0 ? (
-        <LdapUserTeams teams={ldapUser.teams} showAttributeMapping={showAttributeMapping} />
+        <LdapUserTeams teams={ldapUser.teams} />
       ) : (
-        <div className="gf-form-group">
-          <div className="gf-form">
-            <table className="filter-table form-inline">
-              <tbody>
-                <tr>
-                  <td>No teams found via LDAP</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Box>
+          <Text>No teams found via LDAP</Text>
+        </Box>
       )}
-    </>
+    </Stack>
   );
 };

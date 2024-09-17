@@ -1,109 +1,83 @@
 # Styling Grafana
 
-[Emotion](https://emotion.sh/docs/introduction) is our default-to-be approach to styling React components. It provides a way for styles to be a consequence of properties and state of a component.
+[Emotion](https://emotion.sh/docs/introduction) is Grafana's default-to-be approach to styling React components. It provides a way for styles to be a consequence of properties and state of a component.
 
 ## Usage
 
+For styling components, use [Emotion's `css` function](https://emotion.sh/docs/@emotion/css#css).
+
 ### Basic styling
 
-For styling components, use [Emotion's `css` function](https://emotion.sh/docs/emotion#css).
+To access the Emotion theme in your styles, use the `useStyles` hook. This hook provides basic memoization and access to the theme object.
+
+> **Note:** Please remember to put `getStyles` function at the end of the file!
 
 ```tsx
-import React from 'react';
-import { css } from 'emotion';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+import { css } from '@emotion/css';
 
-const ComponentA = () => (
-  <div
-    className={css`
-      background: red;
-    `}
-  >
-    As red as you can get
-  </div>
-);
-```
+const Foo = (props: FooProps) => {
+  const styles = useStyles2(getStyles);
 
-### Styling with theme
-
-To access the theme in your styles, use the `useStyles` hook. It provides basic memoization and access to the theme object.
-
-```tsx
-import React, { FC } from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
-import { css } from 'emotion';
-
-const getComponentStyles = (theme: GrafanaTheme) => css`
-  padding: ${theme.spacing.md};
-`;
-
-const Foo: FC<FooProps> = () => {
-  const styles = useStyles(getComponentsStyles);
-
-  // Use styles with className
+  // Use styles with classNames
+  return <div className={styles}>...</div>;
 };
+
+const getStyles = (theme: GrafanaTheme2) =>
+  css({
+    padding: theme.spacing(1, 2), // will result in 8px 16px padding
+  });
 ```
 
-### Styling complex components
+### Style complex components
 
-In more complex cases, especially when you need to style multiple DOM elements in one component, or when using styles that depend on properties and/or state, you should create a helper function that returns an object of styles. This function should also be wrapped in the `stylesFactory` helper function, which will provide basic memoization.
+In more complex cases, you can have the `getStyles` function return an object with many class names and use [Emotion's `cx` function](https://emotion.sh/docs/@emotion/css#cx) to compose them.
 
-Let's say you need to style a component that has a different background depending on the theme:
+This feature can be especially useful in certain use cases:
+
+- when you need to style multiple DOM elements in one component
+- when using styles that depend on properties
+- when using styles that depend on state
+
+Let's say you need to style a component that has a different background depending on the `isActive` property. For example:
 
 ```tsx
-import React from 'react';
-import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { selectThemeVariant, stylesFactory, useTheme } from '@grafana/ui';
+import { css, cx } from '@emotion/css';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  const backgroundColor = selectThemeVariant({ light: theme.colors.red, dark: theme.colors.blue }, theme.type);
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
-  return {
-    wrapper: css`
-      background: ${backgroundColor};
-    `,
-    icon: css`
-      font-size: ${theme.typography.size.sm};
-    `,
-  };
-});
+interface ComponentAProps {
+  isActive: boolean;
+}
 
-const ComponentA = () => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+const ComponentA = ({ isActive }: ComponentAProps) => {
+  const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, isActive && styles.active)}>
       As red as you can get
       <i className={styles.icon} />
     </div>
   );
 };
-```
 
-For more information about themes at Grafana please see the [themes guide](./themes.md).
-
-### Composing class names
-
-For class composition, use [Emotion's `cx` function](https://emotion.sh/docs/emotion#cx).
-
-```tsx
-import React from 'react';
-import { css, cx } from 'emotion';
-
-interface Props {
-  className?: string;
-}
-
-const ComponentA: React.FC<Props> = ({ className }) => {
-  const finalClassName = cx(
-    className,
-    css`
-      background: red;
-    `
-  );
-
-  return <div className={finalClassName}>As red as you can ge</div>;
+// Mind, that you can pass multiple arguments, theme included
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css({
+      background: theme.colors.background.secondary,
+    }),
+    active: css({
+      background: theme.colors.primary.main,
+      text: theme.colors.primary.contrastText,
+    }),
+    icon: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+  };
 };
 ```
+
+For more information about themes at Grafana, refer to the [themes guide](./themes.md).

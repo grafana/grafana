@@ -1,30 +1,42 @@
-import React from 'react';
-import { RangeSlider } from '@grafana/ui';
-import { select, number, boolean } from '@storybook/addon-knobs';
+import { Meta, StoryFn } from '@storybook/react';
 
-export default {
+import { RangeSlider } from '@grafana/ui';
+
+const meta: Meta<typeof RangeSlider> = {
   title: 'Forms/Slider/Range',
   component: RangeSlider,
+  parameters: {
+    controls: {
+      exclude: ['tooltipAlwaysVisible'],
+    },
+  },
+  argTypes: {
+    orientation: { control: { type: 'select', options: ['horizontal', 'vertical'] } },
+    step: { control: { type: 'number', min: 1 } },
+  },
+  args: {
+    min: 0,
+    max: 100,
+    orientation: 'horizontal',
+    reverse: false,
+    step: undefined,
+  },
 };
 
-const getKnobs = () => {
-  return {
-    min: number('min', 0),
-    max: number('max', 100),
-    step: boolean('enable step', false),
-    orientation: select('orientation', ['horizontal', 'vertical'], 'horizontal'),
-    reverse: boolean('reverse', false),
-  };
-};
-
-const SliderWrapper = () => {
-  const { min, max, orientation, reverse, step } = getKnobs();
-  const stepValue = step ? 10 : undefined;
+export const Basic: StoryFn<typeof RangeSlider> = (args) => {
   return (
     <div style={{ width: '200px', height: '200px' }}>
-      <RangeSlider min={min} max={max} step={stepValue} orientation={orientation} value={[10, 20]} reverse={reverse} />
+      <RangeSlider {...args} value={[10, 62]} />
     </div>
   );
 };
 
-export const basic = () => <SliderWrapper />;
+export const Vertical: StoryFn<typeof RangeSlider> = (args) => {
+  return (
+    <div style={{ width: '200px', height: '200px' }}>
+      <RangeSlider {...args} value={[10, 62]} orientation="vertical" />
+    </div>
+  );
+};
+
+export default meta;

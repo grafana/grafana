@@ -1,9 +1,16 @@
-import React from 'react';
-import debounce from 'lodash/debounce';
-import { DataFrame, CSVConfig, readCSV } from '@grafana/data';
-import { Icon } from '../Icon/Icon';
+import { css } from '@emotion/css';
+import { debounce } from 'lodash';
+import { PureComponent } from 'react';
+import * as React from 'react';
 
-interface Props {
+import { DataFrame, CSVConfig, readCSV, GrafanaTheme2 } from '@grafana/data';
+
+import { stylesFactory, withTheme2 } from '../../themes';
+import { Themeable2 } from '../../types/theme';
+import { Icon } from '../Icon/Icon';
+import { TextArea } from '../TextArea/TextArea';
+
+interface Props extends Themeable2 {
   config?: CSVConfig;
   text: string;
   width: string | number;
@@ -19,7 +26,7 @@ interface State {
 /**
  * Expects the container div to have size set and will fill it 100%
  */
-export class TableInputCSV extends React.PureComponent<Props, State> {
+export class UnThemedTableInputCSV extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -30,7 +37,7 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
     };
   }
 
-  readCSV: any = debounce(() => {
+  readCSV = debounce(() => {
     const { config } = this.props;
     const { text } = this.state;
 
@@ -54,24 +61,25 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
     }
   }
 
-  onTextChange = (event: any) => {
+  onTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     this.setState({ text: event.target.value });
   };
 
   render() {
-    const { width, height } = this.props;
+    const { width, height, theme } = this.props;
     const { data } = this.state;
+    const styles = getStyles(theme);
     return (
-      <div className="gf-table-input-csv">
-        <textarea
+      <div className={styles.tableInputCsv}>
+        <TextArea
           style={{ width, height }}
           placeholder="Enter CSV here..."
           value={this.state.text}
           onChange={this.onTextChange}
-          className="gf-form-input"
+          className={styles.textarea}
         />
         {data && (
-          <footer>
+          <footer className={styles.footer}>
             {data.map((frame, index) => {
               return (
                 <span key={index}>
@@ -87,4 +95,26 @@ export class TableInputCSV extends React.PureComponent<Props, State> {
   }
 }
 
-export default TableInputCSV;
+export const TableInputCSV = withTheme2(UnThemedTableInputCSV);
+TableInputCSV.displayName = 'TableInputCSV';
+
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+  return {
+    tableInputCsv: css({
+      position: 'relative',
+    }),
+    textarea: css({
+      height: '100%',
+      width: '100%',
+    }),
+    footer: css({
+      position: 'absolute',
+      bottom: '15px',
+      right: '15px',
+      border: '1px solid #222',
+      background: theme.colors.success.main,
+      padding: `1px ${theme.spacing(0.5)}`,
+      fontSize: '80%',
+    }),
+  };
+});

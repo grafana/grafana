@@ -1,10 +1,11 @@
 import { ComponentType } from 'react';
-import { LoadingState } from '@grafana/data';
 
-import { initialVariableModelState, SystemVariable, VariableHide } from '../types';
+import { LoadingState, SystemVariable, VariableHide } from '@grafana/data';
+
 import { VariableAdapter } from '../adapters';
-import { VariablePickerProps } from '../pickers/types';
 import { VariableEditorProps } from '../editor/types';
+import { VariablePickerProps } from '../pickers/types';
+import { initialVariableModelState } from '../types';
 
 export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<any>> => {
   return {
@@ -19,9 +20,9 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
       current: { value: { toString: () => '' } },
       state: LoadingState.Done,
     },
-    reducer: (state: any, action: any) => state,
-    picker: (null as unknown) as ComponentType<VariablePickerProps>,
-    editor: (null as unknown) as ComponentType<VariableEditorProps>,
+    reducer: (state: any) => state,
+    picker: null as unknown as ComponentType<VariablePickerProps<SystemVariable<any>>>,
+    editor: null as unknown as ComponentType<VariableEditorProps<SystemVariable<any>>>,
     dependsOn: () => {
       return false;
     },
@@ -31,13 +32,13 @@ export const createSystemVariableAdapter = (): VariableAdapter<SystemVariable<an
     setValueFromUrl: async (variable, urlValue) => {
       return;
     },
-    updateOptions: async variable => {
+    updateOptions: async (variable) => {
       return;
     },
-    getSaveModel: variable => {
+    getSaveModel: (variable) => {
       return {};
     },
-    getValueForUrl: variable => {
+    getValueForUrl: (variable) => {
       return '';
     },
   };

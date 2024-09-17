@@ -1,6 +1,7 @@
-import { DataFrame, TIME_SERIES_VALUE_FIELD_NAME, FieldType } from '../types';
-import { getFieldDisplayName } from './fieldState';
-import { toDataFrame } from '../dataframe';
+import { toDataFrame } from '../dataframe/processDataFrame';
+import { DataFrame, TIME_SERIES_TIME_FIELD_NAME, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
+
+import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 
 interface TitleScenario {
   frames: DataFrame[];
@@ -13,6 +14,104 @@ function checkScenario(scenario: TitleScenario): string {
   const field = frame.fields[scenario.fieldIndex ?? 0];
   return getFieldDisplayName(field, frame, scenario.frames);
 }
+
+describe('getFieldDisplayName', () => {
+  it('Should add suffix for comparison frames', () => {
+    const frame = toDataFrame({
+      meta: {
+        timeCompare: {
+          diffMs: -86400000,
+          isTimeShiftQuery: true,
+        },
+      },
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        {
+          name: 'Value 1',
+          values: [1, 2, 3],
+          type: FieldType.number,
+          config: {
+            displayName: 'ServerA',
+          },
+        },
+        {
+          name: 'Value 2',
+          values: [1, 2, 3],
+          type: FieldType.number,
+          config: {
+            displayNameFromDS: 'ServerB',
+          },
+        },
+        {
+          name: 'Value 3',
+          values: [1, 2, 3],
+          type: FieldType.number,
+        },
+      ],
+    });
+
+    expect(getFieldDisplayName(frame.fields[1], frame)).toBe('ServerA (comparison)');
+    expect(getFieldDisplayName(frame.fields[2], frame)).toBe('ServerB (comparison)');
+    expect(getFieldDisplayName(frame.fields[3], frame)).toBe('Value 3 (comparison)');
+  });
+});
+
+describe('getFrameDisplayName', () => {
+  it('Should return frame name if set', () => {
+    const frame = toDataFrame({
+      name: 'Series A',
+      fields: [{ name: 'Field 1' }],
+    });
+    expect(getFrameDisplayName(frame)).toBe('Series A');
+  });
+
+  it('Should return field name', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Field 1' }],
+    });
+    expect(getFrameDisplayName(frame)).toBe('Field 1');
+  });
+
+  it('Should return all field names', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Field A' }, { name: 'Field B' }],
+    });
+    expect(getFrameDisplayName(frame)).toBe('Field A, Field B');
+  });
+
+  it('Should return labels if single field with labels', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'value', labels: { server: 'A' } }],
+    });
+
+    expect(getFrameDisplayName(frame)).toBe('value A');
+  });
+
+  it('Should return field names when labels object exist but has no keys', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'value', labels: {} }],
+    });
+    expect(getFrameDisplayName(frame)).toBe('value');
+  });
+
+  it('Should return value field name if single value field', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        {
+          name: TIME_SERIES_VALUE_FIELD_NAME,
+          values: [1, 2, 3],
+          type: FieldType.number,
+          config: {
+            displayName: 'ServerA',
+          },
+        },
+      ],
+    });
+
+    expect(getFrameDisplayName(frame, 1)).toBe('ServerA');
+  });
+});
 
 describe('Check field state calculations (displayName and id)', () => {
   it('should use field name if no frame name', () => {

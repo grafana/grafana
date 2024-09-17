@@ -1,34 +1,38 @@
-import React, { FC } from 'react';
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import { Icon, useStyles2 } from '@grafana/ui';
+
 import { Card } from '../types';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
-import { cardContent, cardStyle, iconStyle } from './sharedStyles';
+
+import { cardContent, cardStyle } from './sharedStyles';
 
 interface Props {
   card: Card;
 }
 
-export const DocsCard: FC<Props> = ({ card }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme, card.done);
+export const DocsCard = ({ card }: Props) => {
+  const styles = useStyles2(getStyles, card.done);
 
   return (
     <div className={styles.card}>
       <div className={cardContent}>
-        <a href={`${card.href}?utm_source=grafana_gettingstarted`}>
+        <a
+          href={`${card.href}?utm_source=grafana_gettingstarted`}
+          className={styles.url}
+          onClick={() => reportInteraction('grafana_getting_started_docs', { title: card.title, link: card.href })}
+        >
           <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
           <h4 className={styles.title}>{card.title}</h4>
-          <div>
-            <Icon className={iconStyle(theme, card.done)} name={card.icon} size="xxl" />
-          </div>
         </a>
       </div>
       <a
         href={`${card.learnHref}?utm_source=grafana_gettingstarted`}
-        className={styles.url}
+        className={styles.learnUrl}
         target="_blank"
         rel="noreferrer"
+        onClick={() => reportInteraction('grafana_getting_started_docs', { title: card.title, link: card.learnHref })}
       >
         Learn how in the docs <Icon name="external-link-alt" />
       </a>
@@ -36,31 +40,34 @@ export const DocsCard: FC<Props> = ({ card }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
+const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
   return {
     card: css`
       ${cardStyle(theme, complete)}
 
       min-width: 230px;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.down('md')} {
         min-width: 192px;
       }
     `,
     heading: css`
       text-transform: uppercase;
-      color: ${complete ? theme.palette.blue95 : '#FFB357'};
-      margin-bottom: ${theme.spacing.md};
+      color: ${complete ? theme.v1.palette.blue95 : '#FFB357'};
+      margin-bottom: ${theme.spacing(2)};
     `,
     title: css`
-      margin-bottom: 48px;
+      margin-bottom: ${theme.spacing(2)};
     `,
     url: css`
-      border-top: 1px solid ${theme.colors.border1};
+      display: inline-block;
+    `,
+    learnUrl: css`
+      border-top: 1px solid ${theme.colors.border.weak};
       position: absolute;
       bottom: 0;
       padding: 8px 16px;
       width: 100%;
     `,
   };
-});
+};

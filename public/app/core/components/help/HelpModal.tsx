@@ -1,101 +1,258 @@
-import React from 'react';
-import { appEvents } from 'app/core/core';
-import { Icon } from '@grafana/ui';
+import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
-export class HelpModal extends React.PureComponent {
-  static tabIndex = 0;
-  static shortcuts = {
-    Global: [
-      { keys: ['g', 'h'], description: 'Go to Home Dashboard' },
-      { keys: ['g', 'p'], description: 'Go to Profile' },
-      { keys: ['s', 'o'], description: 'Open search' },
-      { keys: ['esc'], description: 'Exit edit/setting views' },
-    ],
-    Dashboard: [
-      { keys: ['mod+s'], description: 'Save dashboard' },
-      { keys: ['d', 'r'], description: 'Refresh all panels' },
-      { keys: ['d', 's'], description: 'Dashboard settings' },
-      { keys: ['d', 'v'], description: 'Toggle in-active / view mode' },
-      { keys: ['d', 'k'], description: 'Toggle kiosk mode (hides top nav)' },
-      { keys: ['d', 'E'], description: 'Expand all rows' },
-      { keys: ['d', 'C'], description: 'Collapse all rows' },
-      { keys: ['d', 'a'], description: 'Toggle auto fit panels (experimental feature)' },
-      { keys: ['mod+o'], description: 'Toggle shared graph crosshair' },
-      { keys: ['d', 'l'], description: 'Toggle all panel legends' },
-    ],
-    'Focused Panel': [
-      { keys: ['e'], description: 'Toggle panel edit view' },
-      { keys: ['v'], description: 'Toggle panel fullscreen view' },
-      { keys: ['p', 's'], description: 'Open Panel Share Modal' },
-      { keys: ['p', 'd'], description: 'Duplicate Panel' },
-      { keys: ['p', 'r'], description: 'Remove Panel' },
-      { keys: ['p', 'l'], description: 'Toggle panel legend' },
-    ],
-    'Time Range': [
-      { keys: ['t', 'z'], description: 'Zoom out time range' },
-      {
-        keys: ['t', '←'],
-        description: 'Move time range back',
-      },
-      {
-        keys: ['t', '→'],
-        description: 'Move time range forward',
-      },
-    ],
-  };
+import { GrafanaTheme2 } from '@grafana/data';
+import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
+import { getModKey } from 'app/core/utils/browser';
 
-  dismiss() {
-    appEvents.emit('hide-modal');
-  }
+const getShortcuts = (modKey: string) => {
+  return [
+    {
+      category: t('help-modal.shortcuts-category.global', 'Global'),
+      shortcuts: [
+        {
+          keys: ['g', 'h'],
+          description: t('help-modal.shortcuts-description.go-to-home-dashboard', 'Go to Home Dashboard'),
+        },
+        {
+          keys: ['g', 'd'],
+          description: t('help-modal.shortcuts-description.go-to-dashboards', 'Go to Dashboards'),
+        },
+        { keys: ['g', 'e'], description: t('help-modal.shortcuts-description.go-to-explore', 'Go to Explore') },
+        { keys: ['g', 'p'], description: t('help-modal.shortcuts-description.go-to-profile', 'Go to Profile') },
+        { keys: [`${modKey} + k`], description: t('help-modal.shortcuts-description.open-search', 'Open search') },
+        {
+          keys: ['esc'],
+          description: t('help-modal.shortcuts-description.exit-edit/setting-views', 'Exit edit/setting views'),
+        },
+        {
+          keys: ['?'],
+          description: t('help-modal.shortcuts-description.show-all-shortcuts', 'Show all keyboard shortcuts'),
+        },
+        { keys: ['c', 't'], description: t('help-modal.shortcuts-description.change-theme', 'Change theme') },
+      ],
+    },
+    {
+      category: t('help-modal.shortcuts-category.time-range', 'Time range'),
+      shortcuts: [
+        {
+          keys: ['t', 'z'],
+          description: t('help-modal.shortcuts-description.zoom-out-time-range', 'Zoom out time range'),
+        },
+        {
+          keys: ['t', '←'],
+          description: t('help-modal.shortcuts-description.move-time-range-back', 'Move time range back'),
+        },
+        {
+          keys: ['t', '→'],
+          description: t('help-modal.shortcuts-description.move-time-range-forward', 'Move time range forward'),
+        },
+        {
+          keys: ['t', 'a'],
+          description: t(
+            'help-modal.shortcuts-description.make-time-range-permanent',
+            'Make time range absolute/permanent'
+          ),
+        },
+        {
+          keys: ['t', 'c'],
+          description: t('help-modal.shortcuts-description.copy-time-range', 'Copy time range'),
+        },
+        {
+          keys: ['t', 'v'],
+          description: t('help-modal.shortcuts-description.paste-time-range', 'Paste time range'),
+        },
+      ],
+    },
+    {
+      category: t('help-modal.shortcuts-category.dashboard', 'Dashboard'),
+      shortcuts: [
+        {
+          keys: [`${modKey} + s`],
+          description: t('help-modal.shortcuts-description.save-dashboard', 'Save dashboard'),
+        },
+        {
+          keys: ['d', 'r'],
+          description: t('help-modal.shortcuts-description.refresh-all-panels', 'Refresh all panels'),
+        },
+        {
+          keys: ['d', 's'],
+          description: t('help-modal.shortcuts-description.dashboard-settings', 'Dashboard settings'),
+        },
+        {
+          keys: ['d', 'v'],
+          description: t('help-modal.shortcuts-description.toggle-active-mode', 'Toggle in-active / view mode'),
+        },
+        {
+          keys: ['d', 'k'],
+          description: t('help-modal.shortcuts-description.toggle-kiosk', 'Toggle kiosk mode (hides top nav)'),
+        },
+        {
+          keys: ['d', '⇧ + e'],
+          description: t('help-modal.shortcuts-description.expand-all-rows', 'Expand all rows'),
+        },
+        {
+          keys: ['d', '⇧ + c'],
+          description: t('help-modal.shortcuts-description.collapse-all-rows', 'Collapse all rows'),
+        },
+        {
+          keys: ['d', 'a'],
+          description: t(
+            'help-modal.shortcuts-description.toggle-auto-fit',
+            'Toggle auto fit panels (experimental feature)'
+          ),
+        },
+        {
+          keys: [`${modKey} + o`],
+          description: t('help-modal.shortcuts-description.toggle-graph-crosshair', 'Toggle shared graph crosshair'),
+        },
+        {
+          keys: ['d', 'l'],
+          description: t('help-modal.shortcuts-description.toggle-all-panel-legends', 'Toggle all panel legends'),
+        },
+        {
+          keys: ['d', 'x'],
+          description: t('help-modal.shortcuts-description.toggle-exemplars', 'Toggle exemplars in all panel'),
+        },
+      ],
+    },
+    {
+      category: t('help-modal.shortcuts-category.focused-panel', 'Focused panel'),
+      shortcuts: [
+        {
+          keys: ['e'],
+          description: t('help-modal.shortcuts-description.toggle-panel-edit', 'Toggle panel edit view'),
+        },
+        {
+          keys: ['v'],
+          description: t('help-modal.shortcuts-description.toggle-panel-fullscreen', 'Toggle panel fullscreen view'),
+        },
+        {
+          keys: ['p', 's'],
+          description: t('help-modal.shortcuts-description.open-shared-modal', 'Open Panel Share Modal'),
+        },
+        { keys: ['p', 'd'], description: t('help-modal.shortcuts-description.duplicate-panel', 'Duplicate Panel') },
+        { keys: ['p', 'r'], description: t('help-modal.shortcuts-description.remove-panel', 'Remove Panel') },
+        {
+          keys: ['p', 'l'],
+          description: t('help-modal.shortcuts-description.toggle-panel-legend', 'Toggle panel legend'),
+        },
+      ],
+    },
+  ];
+};
 
-  render() {
-    return (
-      <div className="modal-body">
-        <div className="modal-header">
-          <h2 className="modal-header-title">
-            <Icon name="keyboard" size="lg" />
-            <span className="p-l-1">Shortcuts</span>
-          </h2>
-          <a className="modal-header-close" onClick={this.dismiss}>
-            <Icon name="times" style={{ margin: '3px 0 0 0' }} />
-          </a>
-        </div>
+export interface HelpModalProps {
+  onDismiss: () => void;
+}
 
-        <div className="modal-content help-modal">
-          <p className="small" style={{ position: 'absolute', top: '13px', right: '44px' }}>
-            <span className="shortcut-table-key">mod</span> =
-            <span className="muted"> CTRL on windows or linux and CMD key on Mac</span>
-          </p>
+export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
+  const styles = useStyles2(getStyles);
 
-          {Object.entries(HelpModal.shortcuts).map(([category, shortcuts], i) => (
-            <div className="shortcut-category" key={i}>
-              <table className="shortcut-table">
-                <tbody>
-                  <tr>
-                    <th className="shortcut-table-category-header" colSpan={2}>
-                      {category}
-                    </th>
+  const modKey = useMemo(() => getModKey(), []);
+  const shortcuts = useMemo(() => getShortcuts(modKey), [modKey]);
+  return (
+    <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
+      <Grid columns={{ xs: 1, sm: 2 }} gap={3} tabIndex={0}>
+        {Object.values(shortcuts).map(({ category, shortcuts }) => (
+          <section key={category}>
+            <table className={styles.table}>
+              <caption>
+                <Text element="p" variant="h5">
+                  {category}
+                </Text>
+              </caption>
+              <thead className="sr-only">
+                <tr>
+                  <th>Keys</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shortcuts.map(({ keys, description }) => (
+                  <tr key={keys.join()}>
+                    <td className={styles.keys}>
+                      {keys.map((key) => (
+                        <Key key={key}>{key}</Key>
+                      ))}
+                    </td>
+                    <td>
+                      <Text variant="bodySmall" element="p">
+                        {description}
+                      </Text>
+                    </td>
                   </tr>
-                  {shortcuts.map((shortcut, j) => (
-                    <tr key={`${i}-${j}`}>
-                      <td className="shortcut-table-keys">
-                        {shortcut.keys.map((key, k) => (
-                          <span className="shortcut-table-key" key={`${i}-${j}-${k}`}>
-                            {key}
-                          </span>
-                        ))}
-                      </td>
-                      <td className="shortcut-table-description">{shortcut.description}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ))}
+      </Grid>
+    </Modal>
+  );
+};
 
-          <div className="clearfix" />
-        </div>
-      </div>
-    );
+interface KeyProps {
+  children: string;
+}
+
+const Key = ({ children }: KeyProps) => {
+  const styles = useStyles2(getStyles);
+  const displayText = useMemo(() => replaceCustomKeyNames(children), [children]);
+  const displayElement = <span dangerouslySetInnerHTML={{ __html: displayText }}></span>;
+  return (
+    <kbd className={styles.shortcutTableKey}>
+      <Text variant="code">{displayElement}</Text>
+    </kbd>
+  );
+};
+
+function replaceCustomKeyNames(key: string) {
+  let displayName;
+  let srName;
+
+  if (key.includes('ctrl')) {
+    displayName = 'ctrl';
+    srName = 'Control';
+  } else if (key.includes('esc')) {
+    displayName = 'esc';
+    srName = 'Escape';
+  } else {
+    return key;
   }
+
+  return key.replace(
+    displayName,
+    `<span class="sr-only">${srName}</span><span aria-hidden="true" role="none">${displayName}</span>`
+  );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    table: css({
+      borderCollapse: 'separate',
+      borderSpacing: theme.spacing(2),
+      '& caption': {
+        captionSide: 'top',
+      },
+    }),
+    keys: css({
+      textAlign: 'end',
+      whiteSpace: 'nowrap',
+      minWidth: 83, // To match column widths with the widest
+    }),
+    shortcutTableKey: css({
+      display: 'inline-block',
+      textAlign: 'center',
+      marginRight: theme.spacing(0.5),
+      padding: '3px 5px',
+      lineHeight: '10px',
+      verticalAlign: 'middle',
+      border: `solid 1px ${theme.colors.border.medium}`,
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.primary,
+      backgroundColor: theme.colors.background.secondary,
+    }),
+  };
 }
