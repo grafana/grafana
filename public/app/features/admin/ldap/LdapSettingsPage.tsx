@@ -328,9 +328,7 @@ export const LdapSettingsPage = () => {
                       <MultiSelect
                         {...field}
                         allowCustomValue
-                        onChange={(v) => {
-                          onChange(v.filter((v) => typeof v.value === 'string').map(({ value }) => String(value)));
-                        }}
+                        onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                       />
                     )}
                   ></Controller>
