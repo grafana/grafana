@@ -207,7 +207,7 @@ Follow these steps to create a custom notification template that consolidates al
    {{ template "Table" . }}
    ```
 
-   This will generate a neatly formatted table in the email, grouping information for all affected servers into a single notification.
+   This generates a neatly formatted table in the email, grouping information for all affected servers into a single notification.
 
 ## Template the title of a Slack message
 
