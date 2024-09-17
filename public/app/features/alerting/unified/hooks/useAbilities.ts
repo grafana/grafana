@@ -218,7 +218,12 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       AccessControlAction.AlertingNotificationsExternalWrite
     ),
     // -- contact points --
-    [AlertmanagerAction.CreateContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
+    [AlertmanagerAction.CreateContactPoint]: toAbility(
+      hasConfigurationAPI,
+      notificationsPermissions.create,
+      // TODO: Move this into the permissions config and generalise that code to allow for an array of permissions
+      isGrafanaFlavoredAlertmanager ? AccessControlAction.AlertingReceiversCreate : null
+    ),
     [AlertmanagerAction.ViewContactPoint]: toAbility(AlwaysSupported, notificationsPermissions.read),
     [AlertmanagerAction.UpdateContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
     [AlertmanagerAction.DeleteContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
@@ -317,4 +322,7 @@ function useCanSilence(rule: CombinedRule): [boolean, boolean] {
 }
 
 // just a convenient function
-const toAbility = (supported: boolean, action: AccessControlAction): Ability => [supported, ctx.hasPermission(action)];
+const toAbility = (supported: boolean, ...actions: Array<AccessControlAction | null>): Ability => [
+  supported,
+  actions.some((action) => action && ctx.hasPermission(action)),
+];
