@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Dispatch, SetStateAction, useEffect, useId, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
@@ -49,7 +49,7 @@ export const LdapDrawerComponent = ({
   const [encryptionProvider, setEncryptionProvider] = useState(EncryptionProvider.Base64);
 
   const styles = useStyles2(getStyles);
-  const { getValues, register, setValue, watch } = useFormContext<LdapPayload>();
+  const { control, getValues, register, setValue, watch } = useFormContext<LdapPayload>();
 
   const nameId = useId();
   const surnameId = useId();
@@ -335,19 +335,17 @@ export const LdapDrawerComponent = ({
                     'Root CA certificate content'
                   )}
                 >
-                  <MultiSelect
-                    id="root-ca-cert"
-                    allowCustomValue
-                    onChange={(v) => {
-                      setValue(
-                        `${serverConfig}.root_ca_cert_value`,
-                        v.filter(({ v }) => typeof v === 'string')?.map(({ v }) => v)
-                      );
-                    }}
-                    value={watch(`${serverConfig}.root_ca_cert_value`)?.map((v) => ({
-                      label: renderMultiSelectLabel(v),
-                      value: v,
-                    }))}
+                  <Controller
+                    name={`${serverConfig}.root_ca_cert_value`}
+                    control={control}
+                    render={({ field: { onChange, value, ...field } }) => (
+                      <MultiSelect
+                        {...field}
+                        allowCustomValue
+                        onChange={(v) => onChange(v.map(({ value }) => String(value)))}
+                        value={value?.map((v) => ({ label: renderMultiSelectLabel(v), value: v }))}
+                      />
+                    )}
                   />
                 </Field>
                 <Field

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -19,6 +19,7 @@ import {
   Text,
   TextLink,
   Dropdown,
+  MultiSelect,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
@@ -43,6 +44,8 @@ const pageNav: NavModelItem = {
   icon: 'shield',
   id: 'LDAP',
 };
+
+const serverConfig = 'settings.config.servers.0';
 
 const emptySettings: LdapPayload = {
   id: '',
@@ -104,7 +107,7 @@ export const LdapSettingsPage = () => {
   });
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
-  const { getValues, handleSubmit, register, reset, watch } = methods;
+  const { control, getValues, handleSubmit, register, reset, watch } = methods;
 
   const styles = useStyles2(getStyles);
 
@@ -207,7 +210,7 @@ export const LdapSettingsPage = () => {
   const saveForm = () => {
     putPayload(getValues());
   };
-  const discardForm = async () => {
+  const deleteLDAPConfig = async () => {
     try {
       setIsLoading(true);
       await getBackendSrv().delete('/api/v1/sso-settings/ldap');
@@ -273,7 +276,7 @@ export const LdapSettingsPage = () => {
                     id="host"
                     placeholder={t('ldap-settings-page.host.placeholder', 'example: 127.0.0.1')}
                     type="text"
-                    {...register('settings.config.servers.0.host', { required: true })}
+                    {...register(`${serverConfig}.host`, { required: true })}
                   />
                 </Field>
                 <Field
@@ -287,14 +290,14 @@ export const LdapSettingsPage = () => {
                     id="bind-dn"
                     placeholder={t('ldap-settings-page.bind-dn.placeholder', 'example: cn=admin,dc=grafana,dc=org')}
                     type="text"
-                    {...register('settings.config.servers.0.bind_dn')}
+                    {...register(`${serverConfig}.bind_dn`)}
                   />
                 </Field>
                 <Field label={t('ldap-settings-page.bind-password.label', 'Bind password')}>
                   <Input
                     id="bind-password"
                     type="text"
-                    {...register('settings.config.servers.0.bind_password', { required: false })}
+                    {...register(`${serverConfig}.bind_password`, { required: false })}
                   />
                 </Field>
                 <Field
@@ -308,22 +311,27 @@ export const LdapSettingsPage = () => {
                     id="search_filter"
                     placeholder={t('ldap-settings-page.search_filter.placeholder', 'example: cn=%s')}
                     type="text"
-                    {...register('settings.config.servers.0.search_filter', { required: true })}
+                    {...register(`${serverConfig}.search_filter`, { required: true })}
                   />
                 </Field>
                 <Field
                   label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS *')}
                   description={t(
                     'ldap-settings-page.search-base-dns.description',
-                    'An array of base dns to search through; separate by commas or spaces.'
+                    'An array of base dns to search through.'
                   )}
                 >
-                  <Input
-                    id="search-base-dns"
-                    placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: "dc=grafana.dc=org"')}
-                    type="text"
-                    {...register('settings.config.servers.0.search_base_dns', { required: true })}
-                  />
+                  <Controller
+                    name={`${serverConfig}.search_base_dns`}
+                    control={control}
+                    render={({ field: { onChange, ...field } }) => (
+                      <MultiSelect
+                        {...field}
+                        allowCustomValue
+                        onChange={(v) => onChange(v.map(({ value }) => String(value)))}
+                      />
+                    )}
+                  ></Controller>
                 </Field>
                 <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
                   <Stack alignItems={'center'} direction={'row'} gap={2} justifyContent={'space-between'}>
@@ -356,7 +364,7 @@ export const LdapSettingsPage = () => {
                     <Dropdown
                       overlay={
                         <Menu>
-                          <Menu.Item label="Reset to default values" icon="history-alt" onClick={discardForm} />
+                          <Menu.Item label="Reset to default values" icon="history-alt" onClick={deleteLDAPConfig} />
                         </Menu>
                       }
                       placement="bottom-start"
