@@ -336,7 +336,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 
 		createdRules := gen.With(
 			gen.WithUniqueGroupIndex(), gen.WithUniqueID(),
-			gen.WithEditorSettingsSimplifiedQueryEditor(true),
+			gen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
 		).GenerateManyRef(3)
 		require.Len(t, createdRules, 3)
 		ruleStore.PutRule(context.Background(), createdRules...)
@@ -355,7 +355,7 @@ func TestRouteGetRuleByUID(t *testing.T) {
 		require.Equal(t, expectedRule.UID, result.GrafanaManagedAlert.UID)
 		require.Equal(t, expectedRule.RuleGroup, result.GrafanaManagedAlert.RuleGroup)
 		require.Equal(t, expectedRule.Title, result.GrafanaManagedAlert.Title)
-		require.True(t, result.GrafanaManagedAlert.EditorSettings.SimplifiedQueryEditor)
+		require.True(t, result.GrafanaManagedAlert.EditorSettings.SimplifiedQueryAndExpressionsSection)
 	})
 
 	t.Run("error when fetching rule with non-existent UID", func(t *testing.T) {

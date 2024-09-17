@@ -435,7 +435,7 @@ const (
 
 // swagger:model
 type AlertRuleEditorSettings struct {
-	SimplifiedQueryEditor bool `json:"simplified_query_editor" yaml:"simplified_query_editor"`
+	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section" yaml:"simplified_query_and_expressions_section"`
 }
 
 // swagger:model

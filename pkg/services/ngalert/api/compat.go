@@ -418,7 +418,7 @@ func MuteTimingIntervalToMuteTimeIntervalHclExport(m definitions.MuteTimeInterva
 // AlertRuleEditorSettingsFromEditorSettings converts models.EditorSettings to definitions.AlertRuleEditorSettings
 func AlertRuleEditorSettingsFromEditorSettings(es models.EditorSettings) *definitions.AlertRuleEditorSettings {
 	return &definitions.AlertRuleEditorSettings{
-		SimplifiedQueryEditor: es.SimplifiedQueryEditor,
+		SimplifiedQueryAndExpressionsSection: es.SimplifiedQueryAndExpressionsSection,
 	}
 }
 

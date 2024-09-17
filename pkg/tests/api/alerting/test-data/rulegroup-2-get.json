@@ -43,7 +43,7 @@
         "exec_err_state": "Error",
         "is_paused": false,
         "editor_settings": {
-          "simplified_query_editor": false
+          "simplified_query_and_expressions_section": false
         }
       }
     }

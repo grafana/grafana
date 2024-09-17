@@ -197,9 +197,9 @@ func (a *AlertRuleMutators) WithUniqueID() AlertRuleMutator {
 	}
 }
 
-func (a *AlertRuleMutators) WithEditorSettingsSimplifiedQueryEditor(mode bool) AlertRuleMutator {
+func (a *AlertRuleMutators) WithEditorSettingsSimplifiedQueryAndExpressionsSection(mode bool) AlertRuleMutator {
 	return func(rule *AlertRule) {
-		rule.EditorSettings.SimplifiedQueryEditor = mode
+		rule.EditorSettings.SimplifiedQueryAndExpressionsSection = mode
 	}
 }
 

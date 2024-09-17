@@ -850,7 +850,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 				},
 			},
 			EditorSettings: &apimodels.AlertRuleEditorSettings{
-				SimplifiedQueryEditor: false,
+				SimplifiedQueryAndExpressionsSection: false,
 			},
 		},
 	}
@@ -867,12 +867,12 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 
 	createdRuleGroup := apiClient.GetRulesGroup(t, folderName, rules.Name).GettableRuleGroupConfig
 	require.Len(t, createdRuleGroup.Rules, 1)
-	require.Equal(t, alertRule.GrafanaManagedAlert.EditorSettings.SimplifiedQueryEditor, createdRuleGroup.Rules[0].GrafanaManagedAlert.EditorSettings.SimplifiedQueryEditor)
+	require.Equal(t, alertRule.GrafanaManagedAlert.EditorSettings.SimplifiedQueryAndExpressionsSection, createdRuleGroup.Rules[0].GrafanaManagedAlert.EditorSettings.SimplifiedQueryAndExpressionsSection)
 
 	t.Run("set simplified query editor in editor settings", func(t *testing.T) {
 		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
 		rulesWithUID.Rules[0].GrafanaManagedAlert.EditorSettings = &apimodels.AlertRuleEditorSettings{
-			SimplifiedQueryEditor: false,
+			SimplifiedQueryAndExpressionsSection: false,
 		}
 
 		_, status, body := apiClient.PostRulesGroupWithStatus(t, folderName, &rulesWithUID)
@@ -881,7 +881,7 @@ func TestIntegrationAlertRuleEditorSettings(t *testing.T) {
 
 		updatedRuleGroup := apiClient.GetRulesGroup(t, folderName, rules.Name).GettableRuleGroupConfig
 		require.Len(t, updatedRuleGroup.Rules, 1)
-		require.False(t, false, updatedRuleGroup.Rules[0].GrafanaManagedAlert.EditorSettings.SimplifiedQueryEditor)
+		require.False(t, false, updatedRuleGroup.Rules[0].GrafanaManagedAlert.EditorSettings.SimplifiedQueryAndExpressionsSection)
 	})
 }
 
@@ -1110,7 +1110,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"no_data_state": "NoData",
 				"exec_err_state": "Alerting",
 				"editor_settings": {
-					"simplified_query_editor": false
+					"simplified_query_and_expressions_section": false
 				}
 			}
 		}, {
@@ -1146,7 +1146,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"no_data_state": "Alerting",
 				"exec_err_state": "Alerting",
 				"editor_settings": {
-					"simplified_query_editor": false
+					"simplified_query_and_expressions_section": false
 				}
 			}
 		}]
@@ -1194,7 +1194,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"no_data_state": "NoData",
 				"exec_err_state": "Alerting",
 				"editor_settings": {
-					"simplified_query_editor": false
+					"simplified_query_and_expressions_section": false
 				}
 			}
 		}]

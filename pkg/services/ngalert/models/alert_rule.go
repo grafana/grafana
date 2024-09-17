@@ -273,7 +273,7 @@ type AlertRule struct {
 }
 
 type EditorSettings struct {
-	SimplifiedQueryEditor bool `json:"simplified_query_editor"`
+	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.

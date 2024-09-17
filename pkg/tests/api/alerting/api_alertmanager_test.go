@@ -792,7 +792,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								"no_data_state": "NoData",
 								"exec_err_state": "Alerting",
 								"editor_settings": {
-									"simplified_query_editor": false
+									"simplified_query_and_expressions_section": false
 								}
 							}
 						}
@@ -1273,7 +1273,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting",
 					   	  "editor_settings": {
-					   	  	"simplified_query_editor": false
+					   	  	"simplified_query_and_expressions_section": false
 					   	  }
 					   }
 					},
@@ -1312,7 +1312,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "no_data_state":"Alerting",
 						  "exec_err_state":"Alerting",
 					   	  "editor_settings": {
-					   	  	"simplified_query_editor": false
+					   	  	"simplified_query_and_expressions_section": false
 					   	  }
 					   }
 					}
@@ -1623,7 +1623,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "no_data_state":"Alerting",
 		                  "exec_err_state":"Alerting",
 					   	  "editor_settings": {
-					   	  	"simplified_query_editor": false
+					   	  	"simplified_query_and_expressions_section": false
 					   	  }
 		               }
 		            }
@@ -1735,7 +1735,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "no_data_state":"Alerting",
 					  "exec_err_state":"Alerting",
 					  "editor_settings": {
-					    "simplified_query_editor": false
+					    "simplified_query_and_expressions_section": false
 					   }
 				       }
 				    }
@@ -1826,7 +1826,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "no_data_state":"Alerting",
 					  "exec_err_state":"Alerting",
 					  "editor_settings": {
-					    "simplified_query_editor": false
+					    "simplified_query_and_expressions_section": false
 					   }
 				       }
 				    }
@@ -2356,7 +2356,7 @@ func TestIntegrationQuota(t *testing.T) {
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting",
 						  "editor_settings": {
-							"simplified_query_editor": false
+							"simplified_query_and_expressions_section": false
 						  }
 					      }
 					    }
