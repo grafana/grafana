@@ -19,7 +19,7 @@ func (rev *ConfigRevision) DeleteReceiver(uid string) {
 
 func (rev *ConfigRevision) CreateReceiver(receiver *models.Receiver) (*definitions.PostableApiReceiver, error) {
 	// Check if the receiver already exists.
-	_, err := rev.GetReceiver(NameToUid(receiver.Name))
+	_, err := rev.GetReceiver(NameToUid(receiver.Name)) // get UID from name because the new receiver does not have UID yet.
 	if err == nil {
 		return nil, ErrReceiverExists.Errorf("")
 	}
