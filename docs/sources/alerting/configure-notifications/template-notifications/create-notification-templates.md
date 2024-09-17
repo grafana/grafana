@@ -53,7 +53,7 @@ To create a notification template that contains more than one template:
 
 ## Preview notification templates
 
-Preview how your notification templates will look before using them in your contact points, helping you understand the result of the template you are creating as well as enabling you to fix any errors before saving it.
+Preview how your notification templates should look before using them in your contact points, helping you understand the result of the template you are creating as well as enabling you to fix any errors before saving it.
 
 **Note:** This feature is only for Grafana Alertmanager.
 
@@ -81,7 +81,7 @@ To preview your notification templates:
 
    c. Click **Add alert data**.
 
-   d. Click **Refresh preview** to see what your template content will look like and the corresponding payload data.
+   d. Click **Refresh preview** to see what your template content should look like and the corresponding payload data.
 
    If there are any errors in your template, they are displayed in the Preview and you can correct them before saving.
 
