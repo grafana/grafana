@@ -26,7 +26,7 @@ jobs:
         id: check
         shell: bash
         run: |
-          if [ -n "${{ (secrets.GRAFANA_MISC_STATS_API_KEY != '') || '' }}" ]; then
+          if [ "${{ github.repository }}" == "grafana/grafana" ] && [ -n "${{ secrets.GRAFANA_MISC_STATS_API_KEY }}" ]; then
             echo "has-secrets=1" >> "$GITHUB_OUTPUT"
           fi
 
