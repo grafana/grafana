@@ -102,8 +102,8 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
           </Stack>
         </div>
         {/* separate recent metircs + bookmarks code into separate components, then can conditionally render based on if there's a length */}
-        <Stack gap={5}>
-          {/* <div className={styles.column}>
+        {/* <Stack gap={5}> */}
+        {/* <div className={styles.column}>
             <Text variant="h4">Recent metrics explorations</Text>
             <div className={styles.trailList}>
               {getTrailStore().recent.map((trail, index) => {
@@ -119,8 +119,8 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
             </div>
           </div>
           <div className={styles.verticalLine} /> */}
-          {/* <DataTrailsBookmarks /> */}
-          {/* <div className={styles.column}>
+        {/* <DataTrailsBookmarks /> */}
+        {/* <div className={styles.column}>
             <Text variant="h4">Bookmarks</Text>
             <div className={styles.trailList}>
               {getTrailStore().bookmarks.map((bookmark, index) => {
@@ -135,7 +135,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               })}
             </div>
           </div> */}
-        </Stack>
+        {/* </Stack> */}
       </div>
     );
   };
@@ -147,16 +147,22 @@ function getAppFor(model: SceneObject) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    container: css({
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'column',
+      gap: theme.spacing(3),
+      height: '100%',
+      boxSizing: 'border-box', // Ensure padding doesn't cause overflow
+    }),
     homepageBox: css({
       backgroundColor: theme.colors.background.secondary,
-      // display: 'flex', // do i need to display: flex on children?
       width: '725px',
       height: '294px',
       padding: '40px 32px',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
       gap: '24px',
+      boxSizing: 'border-box', // Ensure padding doesn't cause overflow
       flexShrink: 0,
     }),
     rocket: css({
@@ -164,15 +170,6 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     startButton: css({
       fontWeight: theme.typography.fontWeightLight,
-    }),
-    container: css({
-      alignItems: 'center',
-      flexGrow: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(3),
-      justifyContent: 'center',
-      minHeight: '100vh',
     }),
     column: css({
       display: 'flex',
@@ -194,7 +191,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
     }),
     gap24: css({
-      marginTop: theme.spacing(2), // Add a 24px gap, there is already a 8px gap from the button
+      marginTop: theme.spacing(2), // Adds a 24px gap since there is already a 8px gap from the button
     }),
   };
 }
