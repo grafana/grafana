@@ -178,7 +178,10 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return s.Get(ctx, out.UID, nil)
+	// #TODO can we directly convert instead of doing a Get? the result of the Create
+	// has more data than the one of Get so there is more we can include in the k8s resource
+	// this way
+	return convertToK8sResource(out, s.namespacer), nil
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
