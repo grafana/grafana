@@ -37,6 +37,7 @@ export const RuleEditorSection = ({
             {switchMode && (
               <Text variant="bodySmall">
                 <InlineSwitch
+                  id="query-and-expressions-advanced-options"
                   value={switchMode.isModeAdvanced}
                   onChange={(event) => {
                     switchMode.setAdvancedMode(event.currentTarget.checked);
