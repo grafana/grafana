@@ -183,10 +183,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
   useEffect(() => {
-    if (!isAdvancedMode) {
+    if (!isAdvancedMode && isGrafanaAlertingType) {
       setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
     }
-  }, [isAdvancedMode, expressionQueries]);
+  }, [isAdvancedMode, expressionQueries, isGrafanaAlertingType]);
 
   const dispatchReduxAction = useDispatch();
   useEffect(() => {
