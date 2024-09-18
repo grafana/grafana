@@ -83,6 +83,15 @@ func TestIntegrationTestDatasource(t *testing.T) {
 						"create"
 					  ]
 					},
+          			{
+            			"responseKind": {
+              				"group": "",
+              				"kind": "QueryDataRequest",
+              				"version": ""
+            			},
+            			"subresource": "query-convert",
+            			"verbs": []
+			        },
 					{
 					  "responseKind": {
 						"group": "",

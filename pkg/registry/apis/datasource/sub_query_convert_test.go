@@ -15,8 +15,8 @@ import (
 )
 
 func TestSubQueryConvertConnect(t *testing.T) {
-	originReq := `{"from":"","to":"","queries":[{"refId":"A","rawSql":"SELECT * FROM table"}]}`
-	converted := `{"refId":"A","SQL":"SELECT * FROM table"}`
+	originReq := `{"from":"","to":"","queries":[{"refId":"A","datasource":{"type":"","uid":"dsuid"},"rawSql":"SELECT * FROM table"}]}`
+	converted := `{"refId":"A","datasource":{"type":"","uid":"dsuid"},"SQL":"SELECT * FROM table"}`
 	convertedReq := `{"from":"","to":"","queries":[` + converted + `]}`
 
 	sqr := subQueryConvertREST{
@@ -65,7 +65,7 @@ func (m mockConvertClient) CheckHealth(ctx context.Context, req *backend.CheckHe
 }
 
 func (m mockConvertClient) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	require.Equal(m.t, m.expectedInput, req.Objects[0])
+	require.Equal(m.t, string(m.expectedInput.Raw), string(req.Objects[0].Raw))
 	return &backend.ConversionResponse{
 		Objects: []backend.RawObject{m.convertObject},
 	}, nil
