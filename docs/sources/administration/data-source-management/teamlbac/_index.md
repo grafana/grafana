@@ -24,7 +24,7 @@ To use LBAC rules you must enable the `teamHttpHeaders` feature toggle because t
 {{< /admonition >}}
 
 You can configure user access based upon team memberships using LogQL.
-LBAC for datasources controls access to logs depending on the rules set for each team.
+LBAC for data sources controls access to logs depending on the rules set for each team.
 
 This feature addresses two common challenges faced by Grafana users:
 
@@ -33,7 +33,7 @@ This feature addresses two common challenges faced by Grafana users:
 1. Using the same dashboard across multiple teams.
    LBAC for data sources lets Grafana Teams use the same dashboard with different access control rules.
 
-To set up LBAC for data sources for a Loki data source, refer to [Configure LBAC for datasources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
+To set up LBAC for data sources for a Loki data source, refer to [Configure LBAC for data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
 
 ## Limitations
 
@@ -60,11 +60,11 @@ You should create another Loki data source configured without LBAC for data sour
 
 ## LBAC rules
 
-Grafana adds LBAC for datasources rules to the HTTP request via the Loki data source.
+Grafana adds LBAC for data sources rules to the HTTP request via the Loki data source.
 
 If you configure multiple rules for a team, each rule is evaluated separately.
 Query results include lines that match any of the rules.
 
-Only users with data source `Admin` permissions can edit LBAC for datasources rules in the **Data source permissions** tab because changing LBAC rules requires the same access level as editing data source permissions.
+Only users with data source `Admin` permissions can edit LBAC for data sources rules in the **Data source permissions** tab because changing LBAC rules requires the same access level as editing data source permissions.
 
-To set up LBAC for datasources for a Loki data source, refer to [Configure LBAC for datasources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
+To set up LBAC for data sources for a Loki data source, refer to [Configure LBAC for data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
