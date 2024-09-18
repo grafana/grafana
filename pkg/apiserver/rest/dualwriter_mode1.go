@@ -57,29 +57,37 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 
 	createdCopy := created.DeepCopyObject()
 
-	go func(createdCopy runtime.Object) {
-		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
-		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage create timeout"))
-		defer cancel()
-
-		if err := enrichLegacyObject(original, createdCopy); err != nil {
-			cancel()
-		}
-
-		startStorage := time.Now()
-		storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
-		d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
-		if err != nil {
-			cancel()
-		}
-		areEqual := Compare(storageObj, createdCopy)
-		d.recordOutcome(mode1Str, getName(createdCopy), areEqual, method)
-		if !areEqual {
-			log.Info("object from legacy and storage are not equal")
-		}
-	}(createdCopy)
+	//nolint:errcheck
+	go d.createOnUnifiedStorage(ctx, original, createValidation, createdCopy, options)
 
 	return created, err
+}
+
+func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, original runtime.Object, createValidation rest.ValidateObjectFunc, createdCopy runtime.Object, options *metav1.CreateOptions) error {
+	var method = "create"
+	log := d.Log.WithValues("method", method)
+
+	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage create timeout"))
+	defer cancel()
+
+	if err := enrichLegacyObject(original, createdCopy); err != nil {
+		cancel()
+	}
+
+	startStorage := time.Now()
+	storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
+	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
+	if errObjectSt != nil {
+		cancel()
+	}
+	areEqual := Compare(storageObj, createdCopy)
+	d.recordOutcome(mode1Str, getName(createdCopy), areEqual, method)
+	if !areEqual {
+		log.Info("object from legacy and storage are not equal")
+	}
+
+	return errObjectSt
 }
 
 // Get overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
@@ -130,6 +138,7 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 	}
 	d.recordLegacyDuration(errLegacy != nil, mode1Str, d.resource, method, startLegacy)
 
+	//nolint:errcheck
 	go d.listFromUnifiedStorage(ctx, options, res)
 
 	return res, errLegacy

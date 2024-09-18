@@ -90,6 +90,64 @@ func TestMode1_Create(t *testing.T) {
 	}
 }
 
+func TestMode1_CreateOnUnifiedStorage(t *testing.T) {
+	ctxCanceled, cancel := context.WithCancel(context.TODO())
+	cancel()
+
+	type testCase struct {
+		name           string
+		input          runtime.Object
+		ctx            *context.Context
+		setupLegacyFn  func(m *mock.Mock)
+		setupStorageFn func(m *mock.Mock)
+	}
+	tests :=
+		[]testCase{
+			{
+				name:  "Create on unified storage",
+				input: exampleObj,
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObjNoRV, nil)
+				},
+			},
+			{
+				name:  "Create on unified storage works even if parent context is canceled",
+				input: exampleObj,
+				ctx:   &ctxCanceled,
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObjNoRV, nil)
+				},
+			},
+		}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
+
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
+
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m)
+			}
+
+			ctx := context.TODO()
+			if tt.ctx != nil {
+				ctx = *tt.ctx
+			}
+
+			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			err := dw.(*DualWriterMode1).createOnUnifiedStorage(ctx, tt.input, func(context.Context, runtime.Object) error { return nil }, tt.input, &metav1.CreateOptions{})
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestMode1_Get(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn  func(m *mock.Mock, name string)
