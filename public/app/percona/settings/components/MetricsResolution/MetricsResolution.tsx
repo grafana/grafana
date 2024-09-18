@@ -3,7 +3,6 @@ import React, { FC, useEffect, useState } from 'react';
 import { Form } from 'react-final-form';
 
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { MetricsResolutions } from 'app/percona/settings/Settings.types';
@@ -11,6 +10,7 @@ import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoa
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
 import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
+import { TabbedPage, TabbedPageContents } from 'app/percona/shared/components/TabbedPage';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
@@ -99,8 +99,8 @@ export const MetricsResolution: FC = () => {
   };
 
   return (
-    <Page navId="settings-metrics-resolution">
-      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <TabbedPage navId="settings-metrics-resolution" vertical>
+      <TabbedPageContents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={styles.resolutionsWrapper}>
             <Form
@@ -163,8 +163,8 @@ export const MetricsResolution: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </TabbedPageContents>
+    </TabbedPage>
   );
 };
 

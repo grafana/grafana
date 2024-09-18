@@ -3,11 +3,11 @@ import React, { FC, useCallback, useState } from 'react';
 import { Field, Form } from 'react-final-form';
 
 import { Button, Spinner, TextArea, useStyles2 } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
+import { TabbedPage, TabbedPageContents } from 'app/percona/shared/components/TabbedPage';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
@@ -45,8 +45,8 @@ export const SSHKey: FC = () => {
   }, []);
 
   return (
-    <Page navId="settings-ssh">
-      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <TabbedPage navId="settings-ssh" vertical>
+      <TabbedPageContents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={cx(settingsStyles.wrapper, styles.sshKeyWrapper)}>
             <Form
@@ -77,8 +77,8 @@ export const SSHKey: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </TabbedPageContents>
+    </TabbedPage>
   );
 };
 

@@ -5,13 +5,13 @@ import { Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
 import { Badge, Button, HorizontalGroup, Icon, Link, Modal, TagList, useStyles2 } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
 import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
 import { DetailsRow } from 'app/percona/shared/components/Elements/DetailsRow/DetailsRow';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { Action } from 'app/percona/shared/components/Elements/MultipleActions';
 import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { FormElement } from 'app/percona/shared/components/Form';
+import { TabbedPage, TabbedPageContents } from 'app/percona/shared/components/TabbedPage';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { RemoveNodeParams } from 'app/percona/shared/core/reducers/nodes';
@@ -299,8 +299,8 @@ export const NodesTab = () => {
   }, []);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
+    <TabbedPage navModel={navModel} isLoading={isLoading}>
+      <TabbedPageContents>
         <FeatureLoader>
           <div className={styles.actionPanel}>
             <Button
@@ -366,8 +366,8 @@ export const NodesTab = () => {
             showFilter
           />
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </TabbedPageContents>
+    </TabbedPage>
   );
 };
 

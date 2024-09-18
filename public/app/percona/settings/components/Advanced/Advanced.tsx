@@ -3,13 +3,13 @@ import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
 
 import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
 import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
+import { TabbedPage, TabbedPageContents } from 'app/percona/shared/components/TabbedPage';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
@@ -160,8 +160,8 @@ export const Advanced: FC = () => {
   const { Form } = withTypes<AdvancedFormProps>();
 
   return (
-    <Page navId="settings-advanced">
-      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <TabbedPage navId="settings-advanced" vertical>
+      <TabbedPageContents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           <div className={styles.advancedWrapper}>
             <Form
@@ -349,8 +349,8 @@ export const Advanced: FC = () => {
             />
           </div>
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </TabbedPageContents>
+    </TabbedPage>
   );
 };
 

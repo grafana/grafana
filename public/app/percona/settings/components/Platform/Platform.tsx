@@ -4,9 +4,9 @@ import React, { FC, useEffect, useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { Page } from 'app/core/components/Page/Page';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
+import { TabbedPage, TabbedPageContents } from 'app/percona/shared/components/TabbedPage';
 import { fetchServerInfoAction, fetchSettingsAction, updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaServer, getPerconaSettings } from 'app/percona/shared/core/selectors';
 import { logger } from 'app/percona/shared/helpers/logger';
@@ -82,8 +82,8 @@ export const Platform: FC = () => {
   };
 
   return (
-    <Page navId="settings-percona-platform">
-      <Page.Contents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
+    <TabbedPage navId="settings-percona-platform" vertical>
+      <TabbedPageContents dataTestId="settings-tab-content" className={settingsStyles.pageContent}>
         <FeatureLoader>
           {result?.isConnectedToPortal ? (
             <Connected />
@@ -91,8 +91,8 @@ export const Platform: FC = () => {
             <Connect initialValues={initialValues} onConnect={handleConnect} connecting={connecting} />
           )}
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </TabbedPageContents>
+    </TabbedPage>
   );
 };
 

@@ -5,9 +5,9 @@ import { useLocalStorage } from 'react-use';
 
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, InlineSwitch, Tooltip, useStyles2 } from '@grafana/ui';
-import { Page } from 'app/core/components/Page/Page';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { ReadMoreLink } from 'app/percona/shared/components/Elements/TechnicalPreview/TechnicalPreview';
+import { TabbedPage, TabbedPageContents } from 'app/percona/shared/components/TabbedPage';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import { fetchActiveServiceTypesAction, fetchServicesAction } from 'app/percona/shared/core/reducers/services';
@@ -95,8 +95,8 @@ export const Services = () => {
   }, [onModalClose, loadData]);
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents isLoading={isLoading}>
+    <TabbedPage navModel={navModel} isLoading={isLoading}>
+      <TabbedPageContents>
         <FeatureLoader>
           <HorizontalGroup height={40} justify="flex-end" align="flex-start">
             <HorizontalGroup align="center">
@@ -160,8 +160,8 @@ export const Services = () => {
             />
           )}
         </FeatureLoader>
-      </Page.Contents>
-    </Page>
+      </TabbedPageContents>
+    </TabbedPage>
   );
 };
 
