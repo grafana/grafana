@@ -13,10 +13,16 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
 const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 
+const emptyRulerConfig: RulerRulesConfigDTO = {};
+
 export function useAlertRuleSuggestions(rulesSourceName: string) {
   const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery({ rulesSourceName });
 
-  const [fetchRulerRules, { data: rulerRules = {}, isLoading: isRulerRulesLoading }] = useLazyRulerRulesQuery();
+  // emptyRulerConfig is used to prevent from triggering  labels' useMemo all the time
+  // rulerRules = {} creates a new object and triggers useMemo to recalculate labels
+  const [fetchRulerRules, { data: rulerRules = emptyRulerConfig, isLoading: isRulerRulesLoading }] =
+    useLazyRulerRulesQuery();
+
   const { data: promNamespaces = [], isLoading: isPrometheusRulesLoading } = usePrometheusRuleNamespacesQuery(
     { ruleSourceName: rulesSourceName },
     { skip: !prometheusRulesPrimary }
@@ -46,13 +52,7 @@ export function useAlertRuleSuggestions(rulesSourceName: string) {
     }
 
     if (prometheusRulesPrimary) {
-      performance.mark('promNamespacesToLabels:start');
-      const result = promNamespacesToLabels(promNamespaces);
-      performance.mark('promNamespacesToLabels:end');
-      console.log(
-        performance.measure('promNamespacesToLabels', 'promNamespacesToLabels:start', 'promNamespacesToLabels:end')
-      );
-      return result;
+      return promNamespacesToLabels(promNamespaces);
     }
 
     return rulerRulesToLabels(rulerRules);

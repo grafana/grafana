@@ -193,7 +193,7 @@ function useColumns(
       {
         id: 'state',
         label: 'State',
-        renderCell: ({ data: rule }) => <RuleStateCell rule={rule} isLoadingRuler={isRulerLoading} />,
+        renderCell: ({ data: rule }) => <RuleStateCell rule={rule} />,
         size: '165px',
       },
       {
@@ -302,14 +302,14 @@ function useColumns(
   }, [showSummaryColumn, showGroupColumn, showNextEvaluationColumn, isRulerLoading]);
 }
 
-function RuleStateCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadingRuler: boolean }) {
-  const { isDeleting, isCreating, isPaused } = useRuleStatus(rule, isLoadingRuler);
+function RuleStateCell({ rule }: { rule: CombinedRule }) {
+  const { isDeleting, isCreating, isPaused } = useRuleStatus(rule);
   return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
 }
 
 function RuleActionsCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadingRuler: boolean }) {
   const styles = useStyles2(getStyles);
-  const { isDeleting, isCreating } = useRuleStatus(rule, isLoadingRuler);
+  const { isDeleting, isCreating } = useRuleStatus(rule);
 
   if (isLoadingRuler) {
     return <Skeleton containerClassName={styles.skeletonWrapper} />;
@@ -325,14 +325,18 @@ function RuleActionsCell({ rule, isLoadingRuler }: { rule: CombinedRule; isLoadi
   );
 }
 
-function useRuleStatus(rule: CombinedRule, isLoadingRuler: boolean) {
+function useRuleStatus(rule: CombinedRule) {
   const { hasRuler, rulerRulesLoaded } = useHasRuler(rule.namespace.rulesSource);
   const { promRule, rulerRule } = rule;
 
-  const rulerLoaded = prometheusRulesPrimary ? !isLoadingRuler : rulerRulesLoaded;
+  // If prometheusRulesPrimary is enabled, we don't fetch all rules rules
+  // so there is no way to detect statuses
+  if (prometheusRulesPrimary) {
+    return { isDeleting: false, isCreating: false, isPaused: false };
+  }
 
-  const isDeleting = Boolean(hasRuler && rulerLoaded && promRule && !rulerRule);
-  const isCreating = Boolean(hasRuler && rulerLoaded && rulerRule && !promRule);
+  const isDeleting = Boolean(hasRuler && rulerRulesLoaded && promRule && !rulerRule);
+  const isCreating = Boolean(hasRuler && rulerRulesLoaded && rulerRule && !promRule);
   const isPaused = isGrafanaRulerRule(rulerRule) && isGrafanaRulerRulePaused(rulerRule);
 
   return { isDeleting, isCreating, isPaused };
