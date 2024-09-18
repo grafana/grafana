@@ -57,7 +57,7 @@ func (d *DualWriterMode3) Create(ctx context.Context, obj runtime.Object, create
 	d.recordStorageDuration(false, mode3Str, d.resource, method, startStorage)
 
 	go func() {
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("legacy create timeout"))
+		ctx, cancel := context.WithTimeoutCause(context.Background(), time.Second*10, errors.New("legacy create timeout"))
 		defer cancel()
 
 		startLegacy := time.Now()
@@ -116,7 +116,7 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 
 	go func() {
 		startLegacy := time.Now()
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("legacy delete timeout"))
+		ctx, cancel := context.WithTimeoutCause(context.Background(), time.Second*10, errors.New("legacy delete timeout"))
 		defer cancel()
 		_, _, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
 		d.recordLegacyDuration(err != nil, mode3Str, d.resource, method, startLegacy)
@@ -141,8 +141,7 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 	d.recordStorageDuration(false, mode3Str, d.resource, method, startStorage)
 
 	go func() {
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("legacy update timeout"))
-
+		ctx, cancel := context.WithTimeoutCause(context.Background(), time.Second*10, errors.New("legacy update timeout"))
 		startLegacy := time.Now()
 		defer cancel()
 		_, _, errObjectSt := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
@@ -169,7 +168,7 @@ func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation
 
 	go func() {
 		startLegacy := time.Now()
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("legacy deletecollection timeout"))
+		ctx, cancel := context.WithTimeoutCause(context.Background(), time.Second*10, errors.New("legacy deletecollection timeout"))
 		defer cancel()
 		_, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 		d.recordStorageDuration(err != nil, mode3Str, d.resource, method, startLegacy)
