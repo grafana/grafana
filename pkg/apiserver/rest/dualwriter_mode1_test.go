@@ -211,6 +211,65 @@ func TestMode1_Get(t *testing.T) {
 	}
 }
 
+func TestMode1_GetFromUnifiedStorage(t *testing.T) {
+	ctxCanceled, cancel := context.WithCancel(context.TODO())
+	cancel()
+
+	type testCase struct {
+		setupLegacyFn  func(m *mock.Mock, name string)
+		setupStorageFn func(m *mock.Mock, name string)
+		ctx            *context.Context
+		name           string
+		input          string
+		wantErr        bool
+	}
+	tests :=
+		[]testCase{
+			{
+				name:  "Get from unified storage",
+				input: "foo",
+				setupStorageFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				},
+			},
+			{
+				name:  "Get from unified storage works even if parent context is canceled",
+				input: "foo",
+				ctx:   &ctxCanceled,
+				setupStorageFn: func(m *mock.Mock, name string) {
+					m.On("Get", mock.Anything, name, mock.Anything).Return(exampleObj, nil)
+				},
+			},
+		}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
+
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
+
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
+
+			ctx := context.TODO()
+			if tt.ctx != nil {
+				ctx = *tt.ctx
+			}
+
+			dw := NewDualWriter(Mode1, ls, us, p, kind)
+			err := dw.(*DualWriterMode1).getFromUnifiedStorage(ctx, exampleObj, tt.input, &metav1.GetOptions{})
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestMode1_List(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn  func(m *mock.Mock)

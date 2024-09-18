@@ -103,26 +103,34 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 	}
 	d.recordLegacyDuration(errLegacy != nil, mode1Str, d.resource, method, startLegacy)
 
-	go func(res runtime.Object) {
-		startStorage := time.Now()
-		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
-		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage get timeout"))
-		defer cancel()
-		storageObj, err := d.Storage.Get(ctx, name, options)
-		d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
-		if err != nil {
-			log.Error(err, "unable to get object in storage")
-			cancel()
-		}
-
-		areEqual := Compare(storageObj, res)
-		d.recordOutcome(mode1Str, name, areEqual, method)
-		if !areEqual {
-			log.WithValues("name", name).Info("object from legacy and storage are not equal")
-		}
-	}(res)
+	//nolint:errcheck
+	go d.getFromUnifiedStorage(ctx, res, name, options)
 
 	return res, errLegacy
+}
+
+func (d *DualWriterMode1) getFromUnifiedStorage(ctx context.Context, res runtime.Object, name string, options *metav1.GetOptions) error {
+	var method = "get"
+	log := d.Log.WithValues("method", method, "name", name)
+
+	startStorage := time.Now()
+	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage get timeout"))
+	defer cancel()
+	storageObj, err := d.Storage.Get(ctx, name, options)
+	d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
+	if err != nil {
+		log.Error(err, "unable to get object in storage")
+		cancel()
+	}
+
+	areEqual := Compare(storageObj, res)
+	d.recordOutcome(mode1Str, name, areEqual, method)
+	if !areEqual {
+		log.WithValues("name", name).Info("object from legacy and storage are not equal")
+	}
+
+	return err
 }
 
 // List overrides the behavior of the generic DualWriter and reads only from LegacyStorage.
