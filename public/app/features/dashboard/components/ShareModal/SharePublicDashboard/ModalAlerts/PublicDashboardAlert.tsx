@@ -3,7 +3,8 @@ import { Alert, Button, Stack } from '@grafana/ui';
 
 import { Trans } from '../../../../../../core/internationalization';
 
-const PUBLIC_DASHBOARD_URL = 'https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/';
+const PUBLIC_DASHBOARD_URL =
+  'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/shared-dashboards';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally;
 
