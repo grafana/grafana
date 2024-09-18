@@ -11,24 +11,23 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/query"
 )
 
 // NewTracingMiddleware returns a new middleware that creates a new span on every method call.
-func NewTracingMiddleware(tracer tracing.Tracer) plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func NewTracingMiddleware(tracer tracing.Tracer) backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &TracingMiddleware{
-			tracer: tracer,
-			next:   next,
+			tracer:      tracer,
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type TracingMiddleware struct {
+	backend.BaseHandler
 	tracer tracing.Tracer
-	next   plugins.Client
 }
 
 // setSpanAttributeFromHTTPHeader takes a ReqContext and a span, and adds the specified HTTP header as a span attribute
@@ -84,7 +83,7 @@ func (m *TracingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	resp, err := m.next.QueryData(ctx, req)
+	resp, err := m.BaseHandler.QueryData(ctx, req)
 	return resp, err
 }
 
@@ -92,7 +91,7 @@ func (m *TracingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	err = m.next.CallResource(ctx, req, sender)
+	err = m.BaseHandler.CallResource(ctx, req, sender)
 	return err
 }
 
@@ -100,7 +99,7 @@ func (m *TracingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckH
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	resp, err := m.next.CheckHealth(ctx, req)
+	resp, err := m.BaseHandler.CheckHealth(ctx, req)
 	return resp, err
 }
 
@@ -108,7 +107,7 @@ func (m *TracingMiddleware) CollectMetrics(ctx context.Context, req *backend.Col
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	resp, err := m.next.CollectMetrics(ctx, req)
+	resp, err := m.BaseHandler.CollectMetrics(ctx, req)
 	return resp, err
 }
 
@@ -116,7 +115,7 @@ func (m *TracingMiddleware) SubscribeStream(ctx context.Context, req *backend.Su
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	resp, err := m.next.SubscribeStream(ctx, req)
+	resp, err := m.BaseHandler.SubscribeStream(ctx, req)
 	return resp, err
 }
 
@@ -124,7 +123,7 @@ func (m *TracingMiddleware) PublishStream(ctx context.Context, req *backend.Publ
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	resp, err := m.next.PublishStream(ctx, req)
+	resp, err := m.BaseHandler.PublishStream(ctx, req)
 	return resp, err
 }
 
@@ -132,7 +131,7 @@ func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStrea
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	err = m.next.RunStream(ctx, req, sender)
+	err = m.BaseHandler.RunStream(ctx, req, sender)
 	return err
 }
 
@@ -141,7 +140,7 @@ func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	resp, err := m.next.ValidateAdmission(ctx, req)
+	resp, err := m.BaseHandler.ValidateAdmission(ctx, req)
 	return resp, err
 }
 
@@ -150,7 +149,7 @@ func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.Ad
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	resp, err := m.next.MutateAdmission(ctx, req)
+	resp, err := m.BaseHandler.MutateAdmission(ctx, req)
 	return resp, err
 }
 
@@ -159,6 +158,6 @@ func (m *TracingMiddleware) ConvertObjects(ctx context.Context, req *backend.Con
 	var err error
 	ctx, end := m.traceWrap(ctx, req.PluginContext)
 	defer func() { end(err) }()
-	resp, err := m.next.ConvertObjects(ctx, req)
+	resp, err := m.BaseHandler.ConvertObjects(ctx, req)
 	return resp, err
 }

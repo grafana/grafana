@@ -88,13 +88,7 @@ type FoundPlugin struct {
 
 // Client is used to communicate with backend plugin implementations.
 type Client interface {
-	backend.QueryDataHandler
-	backend.CheckHealthHandler
-	backend.StreamHandler
-	backend.AdmissionHandler
-	backend.ConversionHandler
-	backend.CallResourceHandler
-	backend.CollectMetricsHandler
+	backend.Handler
 }
 
 // BackendFactoryProvider provides a backend factory for a provided plugin.

@@ -161,7 +161,7 @@ func (d *Decorator) ConvertObjects(ctx context.Context, req *backend.ConversionR
 		return nil, errNilRequest
 	}
 
-	ctx = backend.WithEndpoint(ctx, backend.EndpointConvertObject)
+	ctx = backend.WithEndpoint(ctx, backend.EndpointConvertObjects)
 	ctx = backend.WithPluginContext(ctx, req.PluginContext)
 	ctx = backend.WithUser(ctx, req.PluginContext.User)
 

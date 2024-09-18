@@ -6,30 +6,27 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginrequestmeta"
 )
 
-// NewStatusSourceMiddleware returns a new plugins.ClientMiddleware that sets the status source in the
+// NewStatusSourceMiddleware returns a new backend.HandlerMiddleware that sets the status source in the
 // plugin request meta stored in the context.Context, according to the query data responses returned by QueryError.
 // If at least one query data response has a "downstream" status source and there isn't one with a "plugin" status source,
 // the plugin request meta in the context is set to "downstream".
-func NewStatusSourceMiddleware() plugins.ClientMiddleware {
-	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
+func NewStatusSourceMiddleware() backend.HandlerMiddleware {
+	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &StatusSourceMiddleware{
-			baseMiddleware: baseMiddleware{
-				next: next,
-			},
+			BaseHandler: backend.NewBaseHandler(next),
 		}
 	})
 }
 
 type StatusSourceMiddleware struct {
-	baseMiddleware
+	backend.BaseHandler
 }
 
 func (m *StatusSourceMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	resp, err := m.next.QueryData(ctx, req)
+	resp, err := m.BaseHandler.QueryData(ctx, req)
 	if resp == nil || len(resp.Responses) == 0 {
 		return resp, err
 	}

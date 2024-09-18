@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -23,9 +23,9 @@ func TestHTTPClientMiddleware(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("And requests are for a datasource", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{}),
-				clienttest.WithMiddlewares(NewHTTPClientMiddleware()),
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{}),
+				handlertest.WithMiddlewares(NewHTTPClientMiddleware()),
 			)
 
 			pluginCtx := backend.PluginContext{
@@ -33,7 +33,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should not forward headers when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "val"},
 				})
@@ -53,7 +53,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not forward headers when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{otherHeader: {"val"}},
 				}, nopCallResourceSender)
@@ -73,7 +73,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not forward headers when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{otherHeader: "val"},
 				})
@@ -94,9 +94,9 @@ func TestHTTPClientMiddleware(t *testing.T) {
 		})
 
 		t.Run("And requests are for an app", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{}),
-				clienttest.WithMiddlewares(NewHTTPClientMiddleware()),
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{}),
+				handlertest.WithMiddlewares(NewHTTPClientMiddleware()),
 			)
 
 			pluginCtx := backend.PluginContext{
@@ -104,7 +104,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should not forward headers when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})
@@ -124,7 +124,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not forward headers when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string][]string{},
 				}, nopCallResourceSender)
@@ -144,7 +144,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not forward headers when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       map[string]string{},
 				})
@@ -184,9 +184,9 @@ func TestHTTPClientMiddleware(t *testing.T) {
 		}
 
 		t.Run("And requests are for a datasource", func(t *testing.T) {
-			cdt := clienttest.NewClientDecoratorTest(t,
-				clienttest.WithReqContext(req, &user.SignedInUser{}),
-				clienttest.WithMiddlewares(NewHTTPClientMiddleware()),
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{}),
+				handlertest.WithMiddlewares(NewHTTPClientMiddleware()),
 			)
 
 			pluginCtx := backend.PluginContext{
@@ -194,7 +194,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			}
 
 			t.Run("Should forward headers when calling QueryData", func(t *testing.T) {
-				_, err = cdt.Decorator.QueryData(req.Context(), &backend.QueryDataRequest{
+				_, err = cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 					PluginContext: pluginCtx,
 					Headers:       headers,
 				})
@@ -222,7 +222,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should forward headers when calling CallResource", func(t *testing.T) {
-				err = cdt.Decorator.CallResource(req.Context(), &backend.CallResourceRequest{
+				err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 					PluginContext: pluginCtx,
 					Headers:       crHeaders,
 				}, nopCallResourceSender)
@@ -250,7 +250,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should forward headers when calling CheckHealth", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       headers,
 				})
@@ -278,7 +278,7 @@ func TestHTTPClientMiddleware(t *testing.T) {
 			})
 
 			t.Run("Should not overwrite an existing header", func(t *testing.T) {
-				_, err = cdt.Decorator.CheckHealth(req.Context(), &backend.CheckHealthRequest{
+				_, err = cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{
 					PluginContext: pluginCtx,
 					Headers:       headers,
 				})
