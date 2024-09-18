@@ -37,7 +37,7 @@ func NewResourceClient(channel *grpc.ClientConn) ResourceClient {
 	}
 }
 
-func NewLocalResourceClient(server ResourceStoreServer) ResourceStoreClient {
+func NewLocalResourceClient(server ResourceStoreServer) ResourceClient {
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 
@@ -56,7 +56,13 @@ func NewLocalResourceClient(server ResourceStoreServer) ResourceStoreClient {
 		authnlib.WithDisableAccessTokenOption(),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
 	)
-	return NewResourceStoreClient(grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor))
+
+	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return &resourceClient{
+		ResourceStoreClient: NewResourceStoreClient(cc),
+		ResourceIndexClient: NewResourceIndexClient(cc),
+		DiagnosticsClient:   NewDiagnosticsClient(cc),
+	}
 }
 
 func idTokenExtractor(ctx context.Context) (string, error) {
