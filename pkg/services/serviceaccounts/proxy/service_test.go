@@ -20,7 +20,6 @@ var (
 )
 
 func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
-	testOrgId := int64(1)
 	testServiceAccountId := int64(1)
 	testServiceAccountTokenId := int64(1)
 	serviceMock := &tests.FakeServiceAccountService{}
@@ -55,7 +54,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
-				_, err := svc.CreateServiceAccount(context.Background(), testOrgId, &tc.form)
+				_, err := svc.CreateServiceAccount(context.Background(), autoAssignOrgID, &tc.form)
 				assert.Equal(t, err, tc.expectedError, tc.description)
 			})
 		}
@@ -86,7 +85,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
-				err := svc.DeleteServiceAccount(context.Background(), testOrgId, testServiceAccountId)
+				err := svc.DeleteServiceAccount(context.Background(), autoAssignOrgID, testServiceAccountId)
 				assert.Equal(t, err, tc.expectedError, tc.description)
 			})
 		}
@@ -117,7 +116,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
-				err := svc.DeleteServiceAccountToken(context.Background(), testOrgId, testServiceAccountId, testServiceAccountTokenId)
+				err := svc.DeleteServiceAccountToken(context.Background(), autoAssignOrgID, testServiceAccountId, testServiceAccountTokenId)
 				assert.Equal(t, err, tc.expectedError, tc.description)
 			})
 		}
@@ -148,7 +147,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.description, func(t *testing.T) {
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
-				sa, err := svc.RetrieveServiceAccount(context.Background(), testOrgId, testServiceAccountId)
+				sa, err := svc.RetrieveServiceAccount(context.Background(), autoAssignOrgID, testServiceAccountId)
 				assert.NoError(t, err, tc.description)
 				assert.Equal(t, tc.expectedIsExternal, sa.IsExternal, tc.description)
 			})
@@ -227,7 +226,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			t.Run(tc.description, func(t *testing.T) {
 				tc := tc
 				serviceMock.ExpectedServiceAccountProfile = tc.expectedServiceAccount
-				_, err := svc.UpdateServiceAccount(context.Background(), testOrgId, testServiceAccountId, &tc.form)
+				_, err := svc.UpdateServiceAccount(context.Background(), autoAssignOrgID, testServiceAccountId, &tc.form)
 				assert.Equal(t, tc.expectedError, err, tc.description)
 			})
 		}
@@ -243,7 +242,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			{
 				description: "should allow to create a service account token",
 				cmd: sa.AddServiceAccountTokenCommand{
-					OrgId: testOrgId,
+					OrgId: autoAssignOrgID,
 				},
 				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
 					Login: "my-service-account",
@@ -253,7 +252,7 @@ func TestProvideServiceAccount_crudServiceAccount(t *testing.T) {
 			{
 				description: "should not allow to create a service account token",
 				cmd: sa.AddServiceAccountTokenCommand{
-					OrgId: testOrgId,
+					OrgId: autoAssignOrgID,
 				},
 				expectedServiceAccount: &sa.ServiceAccountProfileDTO{
 					Login: sa.ExtSvcLoginPrefix(autoAssignOrgID) + "my-service-account",

@@ -219,7 +219,7 @@ func IsExternalServiceAccount(login string) bool {
 		return false
 	}
 
-	if parts[0] != ServiceAccountPrefix || parts[2] != ExtSvcPrefix {
+	if parts[0]+"-" != ServiceAccountPrefix || parts[2]+"-" != ExtSvcPrefix {
 		return false
 	}
 
