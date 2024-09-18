@@ -349,6 +349,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
+	// Generate UID from name.
+	createdReceiver.UID = legacy_storage.NameToUid(createdReceiver.Name)
+
 	created, err := revision.CreateReceiver(&createdReceiver)
 	if err != nil {
 		return nil, err
