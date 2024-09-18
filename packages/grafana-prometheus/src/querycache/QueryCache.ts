@@ -177,7 +177,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
       let outFrames: DataFrame[] = [];
 
-      // each query
       respByTarget.forEach((respFrames, targIdent) => {
         let cachedFrames = (targIdent ? this.cache.get(targIdent)?.frames : null) ?? [];
 
@@ -218,7 +217,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
         // trim all frames to in-view range, evict those that end up with 0 length
         let nonEmptyCachedFrames: DataFrame[] = [];
 
-        // series within a query
         cachedFrames.forEach((frame) => {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           let table: Table = frame.fields.map((field) => field.values) as Table;
