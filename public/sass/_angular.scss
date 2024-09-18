@@ -4,6 +4,7 @@
 @use 'sass:map';
 @use 'sass:color';
 @use 'sass:list';
+@use 'sass:math';
 
 // Media of at least the minimum breakpoint width. No query for the smallest breakpoint.
 // Makes the @content apply to the given breakpoint and wider.
@@ -27,6 +28,24 @@
 
 @mixin font-family-monospace() {
   font-family: $font-family-monospace;
+}
+
+@mixin make-col($size, $columns: $grid-columns) {
+  position: relative;
+  min-height: 1px;
+  padding-right: calc($grid-gutter-width / 2);
+  padding-left: calc($grid-gutter-width / 2);
+
+  @if $enable-flex {
+    flex: 0 0 math.percentage(calc($size / $columns));
+    // Add a `max-width` to ensure content within each column does not blow out
+    // the width of the column. Applies to IE10+ and Firefox. Chrome and Safari
+    // do not appear to require this.
+    max-width: math.percentage(calc($size / $columns));
+  } @else {
+    float: left;
+    width: math.percentage(calc($size / $columns));
+  }
 }
 
 .edit-tab-content {
@@ -2605,4 +2624,14 @@ input[type='checkbox'].cr1:checked + label {
 
 .max-width {
   width: 100%;
+}
+
+@each $breakpoint in map-keys($grid-breakpoints) {
+  @include media-breakpoint-up($breakpoint, $grid-breakpoints) {
+    @for $i from 1 through $grid-columns {
+      .col-#{$breakpoint}-#{$i} {
+        @include make-col($i, $grid-columns);
+      }
+    }
+  }
 }

@@ -242,12 +242,12 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
 
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: T) => LinkModel<T>;
-  getAnchorInfo: (link: any) => {
+  getAnchorInfo: (link: DashboardLink) => {
     href: string;
     title: string;
     tooltip: string;
   };
-  getLinkUrl: (link: any) => string;
+  getLinkUrl: (link: DashboardLink) => string;
 }
 
 export class LinkSrv implements LinkService {
@@ -268,7 +268,7 @@ export class LinkSrv implements LinkService {
     return getConfig().disableSanitizeHtml ? url : textUtil.sanitizeUrl(url);
   }
 
-  getAnchorInfo(link: any) {
+  getAnchorInfo(link: DashboardLink) {
     const templateSrv = getTemplateSrv();
     return {
       href: this.getLinkUrl(link),

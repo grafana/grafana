@@ -10,6 +10,17 @@ labels:
 menuTitle: RBAC permissions, actions, and scopes
 title: Grafana RBAC permissions, actions, and scopes
 weight: 80
+refs:
+  rbac-grafana-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-grafana-provisioning/
+  rbac-fixed-roles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/#fixed-roles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/#fixed-roles
 ---
 
 # RBAC permissions, actions, and scopes
@@ -20,7 +31,7 @@ Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/g
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resources on which they can perform those actions.
 
-To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/#fixed-roles).
+To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
 
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
@@ -54,13 +65,13 @@ The following list contains role-based access control actions.
 | `alert.provisioning.secrets:read`     | None                                                                                                                | Same as `alert.provisioning:read` plus ability to export resources with decrypted secrets.                                                                                                                                |
 | `alert.provisioning:write`            | None                                                                                                                | Update all Grafana alert rules, notification policies, etc via provisioning API. Permissions to folders and datasource are not required.                                                                                  |
 | `alert.provisioning.provenance:write` | None                                                                                                                | Set provisioning status for alerting resources. Cannot be used alone. Requires user to have permissions to access resources                                                                                               |
-| `annotations:create`                  | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li></ul>                                                      | Create annotations.                                                                                                                                                                                                       |
-| `annotations:delete`                  | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li></ul>                                                      | Delete annotations.                                                                                                                                                                                                       |
-| `annotations:read`                    | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li></ul>                                                      | Read annotations and annotation tags.                                                                                                                                                                                     |
-| `annotations:write`                   | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li></ul>                                                      | Update annotations.                                                                                                                                                                                                       |
-| `apikeys:create`                      | None                                                                                                                | Create API keys.                                                                                                                                                                                                          |
+| `annotations:create`                  | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                      | Create annotations.                                                                                                                                                                                                       |
+| `annotations:delete`                  | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                      | Delete annotations.                                                                                                                                                                                                       |
+| `annotations:read`                    | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                      | Read annotations and annotation tags.                                                                                                                                                                                     |
+| `annotations:write`                   | <ul><li>`annotations:*`</li><li>`annotations:type:*`</li><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                      | Update annotations.                                                                                                                                                                                                       |
 | `apikeys:read`                        | <ul><li>`apikeys:*`</li><li>`apikeys:id:*`</li></ul>                                                                | Read API keys.                                                                                                                                                                                                            |
 | `apikeys:delete`                      | <ul><li>`apikeys:*`</li><li>`apikeys:id:*`</li></ul>                                                                | Delete API keys.                                                                                                                                                                                                          |
+| `banners:write`              | None                                                                                                                | Create [announcement banners](/docs/grafana-cloud/whats-new/2024-09-10-announcement-banner/).                                                                                                                                                                              |
 | `dashboards:create`                   | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                                                               | Create dashboards in one or more folders and their subfolders.                                                                                                                                                            |
 | `dashboards:delete`                   | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul>             | Delete one or more dashboards.                                                                                                                                                                                            |
 | `dashboards.insights:read`            | None                                                                                                                | Read dashboard insights data and see presence indicators.                                                                                                                                                                 |
@@ -171,38 +182,6 @@ The following list contains role-based access control actions.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-### Grafana OnCall action definitions (beta)
-
-The following list contains role-based access control actions used by Grafana OnCall application plugin.
-
-| Action                                           | Applicable scopes | Description                                       |
-| ------------------------------------------------ | ----------------- | ------------------------------------------------- |
-| `grafana-oncall-app.alert-groups:read`           | None              | Read OnCall alert groups.                         |
-| `grafana-oncall-app.alert-groups:write`          | None              | Create, edit and delete OnCall alert groups.      |
-| `grafana-oncall-app.integrations:read`           | None              | Read OnCall integrations.                         |
-| `grafana-oncall-app.integrations:write`          | None              | Create, edit and delete OnCall integrations.      |
-| `grafana-oncall-app.integrations:test`           | None              | Test OnCall integrations.                         |
-| `grafana-oncall-app.escalation-chains:read`      | None              | Read OnCall escalation chains.                    |
-| `grafana-oncall-app.escalation-chains:write`     | None              | Create, edit and delete OnCall escalation chains. |
-| `grafana-oncall-app.schedules:read`              | None              | Read OnCall schedules.                            |
-| `grafana-oncall-app.schedules:write`             | None              | Create, edit and delete OnCall schedules.         |
-| `grafana-oncall-app.schedules:export`            | None              | Export OnCall schedules.                          |
-| `grafana-oncall-app.chatops:read`                | None              | Read OnCall ChatOps.                              |
-| `grafana-oncall-app.chatops:write`               | None              | Edit OnCall ChatOps.                              |
-| `grafana-oncall-app.chatops:update-settings`     | None              | Edit OnCall ChatOps settings.                     |
-| `grafana-oncall-app.maintenance:read`            | None              | Read OnCall maintenance.                          |
-| `grafana-oncall-app.maintenance:write`           | None              | Edit OnCall maintenance.                          |
-| `grafana-oncall-app.api-keys:read`               | None              | Read OnCall API keys.                             |
-| `grafana-oncall-app.api-keys:write`              | None              | Create, edit and delete OnCall API keys.          |
-| `grafana-oncall-app.notifications:read`          | None              | Receive OnCall notifications.                     |
-| `grafana-oncall-app.notification-settings:read`  | None              | Read OnCall notification settings.                |
-| `grafana-oncall-app.notification-settings:write` | None              | Edit OnCall notification settings.                |
-| `grafana-oncall-app.user-settings:read`          | None              | Read user's own OnCall user settings.             |
-| `grafana-oncall-app.user-settings:write`         | None              | Edit user's own OnCall user settings.             |
-| `grafana-oncall-app.user-settings:admin`         | None              | Read and edit all users' OnCall user settings.    |
-| `grafana-oncall-app.other-settings:read`         | None              | Read OnCall settings.                             |
-| `grafana-oncall-app.other-settings:write`        | None              | Edit OnCall settings.                             |
-
 ### Grafana Adaptive Metrics action definitions
 
 The following list contains role-based access control actions used by Grafana Adaptive Metrics.
@@ -238,7 +217,7 @@ The following list contains role-based access control scopes.
 | <ul><li>`permissions:type:delegate`</li><ul>                         | The scope is only applicable for roles associated with the Access Control itself and indicates that you can delegate your permissions only, or a subset of it, by creating a new role or making an assignment.                                     |
 | <ul><li>`permissions:type:escalate`</li><ul>                         | The scope is required to trigger the reset of basic roles permissions. It indicates that users might acquire additional permissions they did not previously have.                                                                                  |
 | <ul><li>`plugins:*`</li><li>`plugins:id:*`</li></ul>                 | Restrict an action to a set of plugins. For example, `plugins:id:grafana-oncall-app` matches Grafana OnCall plugin, and `plugins:*` matches all plugins.                                                                                           |
-| <ul><li>`provisioners:*`</li><ul>                                    | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner]({{< relref "./rbac-grafana-provisioning/" >}}).           |
+| <ul><li>`provisioners:*`</li><ul>                                    | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner](ref:rbac-grafana-provisioning).           |
 | <ul><li>`reports:*`</li><li>`reports:id:*`</li></ul>                 | Restrict an action to a set of reports. For example, `reports:*` matches any report and `reports:id:1` matches the report whose ID is `1`.                                                                                                         |
 | <ul><li>`roles:*`</li><li>`roles:uid:*`</li></ul>                    | Restrict an action to a set of roles. For example, `roles:*` matches any role and `roles:uid:randomuid` matches only the role whose UID is `randomuid`.                                                                                            |
 | <ul><li>`services:accesscontrol`</li><ul>                            | Restrict an action to target only the role-based access control service. You can use this in conjunction with the `status:accesscontrol` actions.                                                                                                  |

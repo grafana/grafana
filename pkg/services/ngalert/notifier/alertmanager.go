@@ -91,7 +91,8 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 
 func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, stateStore stateStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
-	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
+	m *metrics.Alertmanager, withAutogen bool,
+) (*alertmanager, error) {
 	nflog, err := stateStore.GetNotificationLog(ctx)
 	if err != nil {
 		return nil, err
@@ -283,7 +284,7 @@ type AggregateMatchersUsage struct {
 	ObjectMatchers int
 }
 
-func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
+func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig, cfgSize int) {
 	var amu AggregateMatchersUsage
 	am.aggregateRouteMatchers(cfg.AlertmanagerConfig.Route, &amu)
 	am.aggregateInhibitMatchers(cfg.AlertmanagerConfig.InhibitRules, &amu)
@@ -295,6 +296,10 @@ func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
 	am.ConfigMetrics.ConfigHash.
 		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
 		Set(hashAsMetricValue(am.Base.ConfigHash()))
+
+	am.ConfigMetrics.ConfigSizeBytes.
+		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		Set(float64(cfgSize))
 }
 
 func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
@@ -352,7 +357,7 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 		return false, err
 	}
 
-	am.updateConfigMetrics(cfg)
+	am.updateConfigMetrics(cfg, len(rawConfig))
 	return true, nil
 }
 
