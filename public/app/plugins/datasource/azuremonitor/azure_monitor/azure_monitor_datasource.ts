@@ -231,14 +231,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return (await Promise.all(promises)).flat();
   }
 
-  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean) {
+  getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean, region?: string) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
       // Only use the first query, as the metric namespaces should be the same for all queries
       this.replaceSingleTemplateVariables(query),
       globalRegion,
-      this.templateSrv
+      this.templateSrv,
+      region
     );
     return this.getResource(url)
       .then((result: AzureAPIResponse<Namespace>) => {

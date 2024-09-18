@@ -312,9 +312,33 @@ describe('AzureMonitor resourcePickerData', () => {
           },
         ],
       };
-      const { resourcePickerData, postResource } = createResourcePickerData([mockSubscriptionsResponse, mockResponse]);
+      const { resourcePickerData, postResource, mockDatasource } = createResourcePickerData([
+        mockSubscriptionsResponse,
+        mockResponse,
+      ]);
       const formattedResults = await resourcePickerData.search('vmname', 'metrics');
-      expect(postResource).toBeCalledTimes(2);
+      expect(postResource).toHaveBeenCalledTimes(2);
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        {
+          resourceUri: '/subscriptions/1',
+        },
+        false,
+        'westeurope'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        {
+          resourceUri: '/subscriptions/1',
+        },
+        false,
+        'eastus'
+      );
+      expect(mockDatasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+        {
+          resourceUri: '/subscriptions/1',
+        },
+        false,
+        'japaneast'
+      );
       const secondCall = postResource.mock.calls[1];
       const [_, postBody] = secondCall;
       expect(postBody.query).not.toContain('union resourcecontainers');

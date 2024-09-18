@@ -51,7 +51,8 @@ export default class UrlBuilder {
     apiVersion: string,
     query: GetMetricNamespacesQuery,
     globalRegion: boolean,
-    templateSrv: TemplateSrv
+    templateSrv: TemplateSrv,
+    region?: string
   ) {
     let resourceUri: string;
 
@@ -68,7 +69,7 @@ export default class UrlBuilder {
     }
 
     return `${baseUrl}${resourceUri}/providers/microsoft.insights/metricNamespaces?api-version=${apiVersion}${
-      globalRegion ? '&region=global' : ''
+      region ? `&region=${region}` : globalRegion ? '&region=global' : ''
     }`;
   }
 
