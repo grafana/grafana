@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -49,6 +48,52 @@ func (r *subQueryConvertREST) NewConnectOptions() (runtime.Object, bool, string)
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
+func ConvertQueryDataRequest(ctx context.Context, dqr data.QueryDataRequest, pluginCtx backend.PluginContext, fn backend.ConvertObjectsFunc) (*query.QueryDataRequest, error) {
+	_, _, err := data.ToDataSourceQueries(dqr)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
+	ctx = contextualMiddlewares(ctx)
+	raw, err := json.Marshal(dqr)
+	if err != nil {
+		return nil, fmt.Errorf("marshal: %w", err)
+	}
+	convertRequest := &backend.ConversionRequest{
+		PluginContext: pluginCtx,
+		Objects: []backend.RawObject{
+			{
+				Raw:         raw,
+				ContentType: "application/json",
+			},
+		},
+	}
+
+	convertResponse, err := fn(ctx, convertRequest)
+	if err != nil {
+		if convertResponse != nil && convertResponse.Result != nil {
+			return nil, fmt.Errorf("conversion failed. Err: %w. Result: %s", err, convertResponse.Result.Message)
+		}
+		return nil, err
+	}
+
+	r := &query.QueryDataRequest{}
+	for _, obj := range convertResponse.Objects {
+		if obj.ContentType != "application/json" {
+			return nil, fmt.Errorf("unexpected content type: %s", obj.ContentType)
+		}
+		q := &data.DataQuery{}
+		err = json.Unmarshal(obj.Raw, q)
+		if err != nil {
+			return nil, fmt.Errorf("unmarshal: %w", err)
+		}
+		r.Queries = append(r.Queries, *q)
+	}
+
+	return r, nil
+}
+
 func (r *subQueryConvertREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
@@ -62,58 +107,10 @@ func (r *subQueryConvertREST) Connect(ctx context.Context, name string, opts run
 			return
 		}
 
-		_, dsRef, err := data.ToDataSourceQueries(dqr)
+		r, err := ConvertQueryDataRequest(ctx, dqr, pluginCtx, r.builder.client.ConvertObjects)
 		if err != nil {
 			responder.Error(err)
 			return
-		}
-		if dsRef != nil && dsRef.UID != name {
-			responder.Error(fmt.Errorf("expected query body datasource and request to match"))
-			return
-		}
-
-		ctx = backend.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
-		ctx = contextualMiddlewares(ctx)
-		pluginCtx, err := r.builder.getPluginContext(ctx, name)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-		raw, err := json.Marshal(dqr)
-		if err != nil {
-			responder.Error(fmt.Errorf("marshal: %w", err))
-			return
-		}
-		convertRequest := &backend.ConversionRequest{
-			PluginContext: pluginCtx,
-			Objects: []backend.RawObject{
-				{
-					Raw:         raw,
-					ContentType: "application/json",
-				},
-			},
-		}
-
-		convertResponse, err := r.builder.client.ConvertObjects(ctx, convertRequest)
-		if err != nil {
-			// TODO: Use convertResponse.Result to return an error?
-			responder.Error(err)
-			return
-		}
-
-		r := &query.QueryDataRequest{}
-		for _, obj := range convertResponse.Objects {
-			if obj.ContentType != "application/json" {
-				responder.Error(fmt.Errorf("unsupported content type %s", obj.ContentType))
-				return
-			}
-			q := &v0alpha1.DataQuery{}
-			err = json.Unmarshal(obj.Raw, q)
-			if err != nil {
-				responder.Error(fmt.Errorf("unmarshal: %w", err))
-				return
-			}
-			r.Queries = append(r.Queries, *q)
 		}
 		responder.Object(http.StatusOK, r)
 	}), nil

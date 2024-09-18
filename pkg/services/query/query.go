@@ -2,7 +2,6 @@ package query
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,17 +9,21 @@ import (
 	"slices"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"golang.org/x/sync/errgroup"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -65,7 +68,7 @@ func ProvideService(
 type Service interface {
 	Run(ctx context.Context) error
 	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
-	QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.ConvertQueryRequest) (*dtos.ConvertQueryRequest, error)
+	QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, dqr data.QueryDataRequest) (*query.QueryDataRequest, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -108,52 +111,23 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
 }
 
-func (s *ServiceImpl) QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.ConvertQueryRequest) (*dtos.ConvertQueryRequest, error) {
-	ds, err := s.getDataSourceFromQuery(ctx, user, skipDSCache, reqDTO.Queries[0], map[string]*datasources.DataSource{})
+func (s *ServiceImpl) QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, dqr data.QueryDataRequest) (*query.QueryDataRequest, error) {
+	if len(dqr.Queries) == 0 {
+		return nil, errors.New("no queries found")
+	}
+
+	uid := dqr.Queries[0].Datasource.UID
+	ds, err := s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipDSCache)
 	if err != nil {
 		return nil, err
 	}
-	if ds == nil {
-		return nil, ErrInvalidDatasourceID
-	}
+
 	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 	if err != nil {
 		return nil, err
 	}
-	raw, err := json.Marshal(reqDTO)
-	if err != nil {
-		return nil, err
-	}
-	convertRequest := &backend.ConversionRequest{
-		PluginContext: pCtx,
-		Objects: []backend.RawObject{
-			{
-				Raw:         raw,
-				ContentType: "application/json",
-			},
-		},
-	}
 
-	convertResponse, err := s.pluginClient.ConvertObjects(ctx, convertRequest)
-	if err != nil {
-		// TODO: Use convertResponse.Result to return an error?
-		return nil, err
-	}
-	queries := []*simplejson.Json{}
-	for _, obj := range convertResponse.Objects {
-		if obj.ContentType != "application/json" {
-			return nil, fmt.Errorf("unsupported content type %s", obj.ContentType)
-		}
-		q, err := simplejson.NewJson(obj.Raw)
-		if err != nil {
-			return nil, err
-		}
-		queries = append(queries, q)
-	}
-
-	return &dtos.ConvertQueryRequest{
-		Queries: queries,
-	}, nil
+	return datasource.ConvertQueryDataRequest(ctx, dqr, pCtx, s.pluginClient.ConvertObjects)
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers

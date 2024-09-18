@@ -81,11 +81,6 @@ type MetricRequest struct {
 	Debug bool `json:"debug"`
 }
 
-type ConvertQueryRequest struct {
-	// Same as MetricRequest
-	Queries []*simplejson.Json `json:"queries"`
-}
-
 func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
 	dsTypes := make(map[string]bool)
 	for _, query := range mr.Queries {
