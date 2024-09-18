@@ -436,12 +436,12 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
-		nil,
+		ng.resourcePermissions,
 	)
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store)
+	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.resourcePermissions)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,

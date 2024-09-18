@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -163,8 +164,10 @@ var provisionerUser = func(orgID int64) identity.Requester {
 		org.RoleAdmin,
 		[]accesscontrol.Permission{
 			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
-			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets, Scope: dashboards.ScopeFoldersAll},
-			{Action: accesscontrol.ActionAlertingProvisioningWrite, Scope: dashboards.ScopeFoldersAll},
+			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets},
+			{Action: accesscontrol.ActionAlertingProvisioningWrite},
+			{Action: accesscontrol.ActionAlertingReceiversPermissionsRead, Scope: alertingac.ScopeReceiversAll},
+			{Action: accesscontrol.ActionAlertingReceiversPermissionsWrite, Scope: alertingac.ScopeReceiversAll},
 		},
 	)
 }
