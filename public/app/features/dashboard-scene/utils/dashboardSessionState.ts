@@ -59,9 +59,13 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
       )
     );
 
+    const nonEmptyUrlStates = Object.fromEntries(
+      Object.entries(urlStates).filter(([key, value]) => !(Array.isArray(value) && value.length === 0))
+    );
+
     // If there's anything to preserve, save it to local storage
-    if (Object.keys(urlStates).length > 0) {
-      window.sessionStorage.setItem(PRESERVED_SCENE_STATE_KEY, urlUtil.renderUrl('', urlStates));
+    if (Object.keys(nonEmptyUrlStates).length > 0) {
+      window.sessionStorage.setItem(PRESERVED_SCENE_STATE_KEY, urlUtil.renderUrl('', nonEmptyUrlStates));
     } else {
       window.sessionStorage.removeItem(PRESERVED_SCENE_STATE_KEY);
     }
