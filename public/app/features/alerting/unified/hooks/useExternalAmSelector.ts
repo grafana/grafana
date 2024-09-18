@@ -1,24 +1,36 @@
 import { DataSourceSettings } from '@grafana/data';
-import { AlertManagerDataSourceJsonData, ExternalAlertmanagers } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertManagerDataSourceJsonData,
+  ExternalAlertmanagersConnectionStatus,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { dataSourcesApi } from '../api/dataSourcesApi';
 import { isAlertmanagerDataSource } from '../utils/datasource';
 
-type ConnectionStatus = 'active' | 'pending' | 'dropped' | 'inconclusive' | 'uninterested' | 'unknown';
+export type ConnectionStatus = 'active' | 'pending' | 'dropped' | 'inconclusive' | 'uninterested' | 'unknown';
 
 export interface ExternalAlertmanagerDataSourceWithStatus {
   dataSourceSettings: DataSourceSettings<AlertManagerDataSourceJsonData>;
   status: ConnectionStatus;
 }
 
+interface UseExternalDataSourceAlertmanagersProps {
+  refetchOnMountOrArgChange?: boolean;
+}
+
 /**
  * Returns all configured Alertmanager data sources and their connection status with the internal ruler
  */
-export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSourceWithStatus[] {
+export function useExternalDataSourceAlertmanagers({
+  refetchOnMountOrArgChange = false,
+}: UseExternalDataSourceAlertmanagersProps = {}): ExternalAlertmanagerDataSourceWithStatus[] {
   // firstly we'll fetch the settings for all datasources and filter for "alertmanager" type
   const { alertmanagerDataSources } = dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
     refetchOnReconnect: true,
+    // we will refetch the list of data sources every time the component is rendered so we always show fresh data after a user
+    // may have made changes to a data source and came back to the list
+    refetchOnMountOrArgChange,
     selectFromResult: (result) => {
       const alertmanagerDataSources = result.currentData?.filter(isAlertmanagerDataSource) ?? [];
       return { ...result, alertmanagerDataSources };
@@ -26,10 +38,9 @@ export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSo
   });
 
   // we'll also fetch the configuration for which Alertmanagers we are forwarding Grafana-managed alerts too
-  // @TODO use polling when we have one or more alertmanagers in pending state
   const { currentData: externalAlertmanagers } = alertmanagerApi.endpoints.getExternalAlertmanagers.useQuery(
     undefined,
-    { refetchOnReconnect: true }
+    { refetchOnReconnect: true, refetchOnMountOrArgChange }
   );
 
   if (!alertmanagerDataSources) {
@@ -50,7 +61,7 @@ export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSo
 
 // using the information from /api/v1/ngalert/alertmanagers we should derive the connection status of a single data source
 function determineAlertmanagerConnectionStatus(
-  externalAlertmanagers: ExternalAlertmanagers,
+  externalAlertmanagers: ExternalAlertmanagersConnectionStatus,
   dataSourceSettings: DataSourceSettings<AlertManagerDataSourceJsonData>
 ): ConnectionStatus {
   const isInterestedInAlerts = dataSourceSettings.jsonData.handleGrafanaManagedAlerts;
@@ -108,7 +119,10 @@ function isAlertmanagerMatchByURL(dataSourceUrl: string, alertmanagerUrl: string
 }
 
 // Grafana prepends the http protocol if there isn't one, but it doesn't store that in the datasource settings
-function normalizeDataSourceURL(url: string) {
+export function normalizeDataSourceURL(url: string) {
   const hasProtocol = new RegExp('^[^:]*://').test(url);
-  return hasProtocol ? url : `http://${url}`;
+  const urlWithProtocol = hasProtocol ? url : `http://${url}`;
+
+  // replace trailing slashes
+  return urlWithProtocol.replace(/\/+$/, '');
 }

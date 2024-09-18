@@ -331,7 +331,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		HooksService: &hooks.HooksService{},
 		License:      &licensing.OSSLicensingService{},
 		authnService: &authntest.FakeService{
-			ExpectedIdentity: &authn.Identity{ID: "user:42", SessionToken: &usertoken.UserToken{}},
+			ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID("user:42"), SessionToken: &usertoken.UserToken{}},
 		},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		Features:         featuremgmt.WithFeatures(),
@@ -491,6 +491,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		oAuthInfos: oAuthInfos,
 	}
 	hs := &HTTPServer{
+		authnService:     &authntest.FakeService{},
 		Cfg:              cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
 		License:          &licensing.OSSLicensingService{},
@@ -600,8 +601,8 @@ func TestAuthProxyLoginWithEnableLoginTokenAndEnabledOauthAutoLogin(t *testing.T
 		return response.Empty(http.StatusOK)
 	})
 
-	sc.cfg.AuthProxyEnabled = true
-	sc.cfg.AuthProxyEnableLoginToken = true
+	sc.cfg.AuthProxy.Enabled = true
+	sc.cfg.AuthProxy.EnableLoginToken = true
 
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
@@ -640,8 +641,8 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		return response.Empty(http.StatusOK)
 	})
 
-	sc.cfg.AuthProxyEnabled = true
-	sc.cfg.AuthProxyEnableLoginToken = enableLoginToken
+	sc.cfg.AuthProxy.Enabled = true
+	sc.cfg.AuthProxy.EnableLoginToken = enableLoginToken
 
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
@@ -657,6 +658,7 @@ func TestLogoutSaml(t *testing.T) {
 	license.On("FeatureEnabled", "saml").Return(true)
 
 	hs := &HTTPServer{
+		authnService:     &authntest.FakeService{},
 		Cfg:              sc.cfg,
 		SettingsProvider: &setting.OSSImpl{Cfg: sc.cfg},
 		License:          license,
@@ -670,7 +672,8 @@ func TestLogoutSaml(t *testing.T) {
 	assert.Equal(t, true, hs.samlSingleLogoutEnabled())
 	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.SignedInUser = &user.SignedInUser{
-			UserID: 1,
+			UserID:          1,
+			AuthenticatedBy: loginservice.SAMLAuthModule,
 		}
 		hs.Logout(c)
 		return response.Empty(http.StatusOK)

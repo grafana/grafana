@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/migrations/variableMigration.ts
 import { promQueryModeller } from '../querybuilder/PromQueryModeller';
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { PromVariableQuery, PromVariableQueryType as QueryType } from '../types';

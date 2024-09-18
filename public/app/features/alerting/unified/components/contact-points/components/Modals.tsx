@@ -2,6 +2,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { Button, Modal, ModalProps } from '@grafana/ui';
 
+import { stringifyErrorLike } from '../../../utils/misc';
+
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
 
 /**
@@ -83,7 +85,9 @@ const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => (
   >
     <p>Failed to update your configuration:</p>
     <p>
-      <code>{String(error)}</code>
+      <pre>
+        <code>{stringifyErrorLike(error)}</code>
+      </pre>
     </p>
   </Modal>
 );

@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { createStateContext } from 'react-use';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -16,6 +15,7 @@ import {
   ConfirmModal,
   Badge,
 } from '@grafana/ui';
+import { updateNavIndex } from 'app/core/actions';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import config from 'app/core/config';
@@ -23,7 +23,8 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { t, Trans } from 'app/core/internationalization';
-import { setStarred } from 'app/core/reducers/navBarTree';
+import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
+import { removeNavIndex } from 'app/core/reducers/navModel';
 import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -31,7 +32,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-import { KioskMode } from 'app/types';
+import { KioskMode, StoreState } from 'app/types';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
 import {
@@ -45,30 +46,17 @@ import { DashNavTimeControls } from './DashNavTimeControls';
 import { ShareButton } from './ShareButton';
 
 const mapDispatchToProps = {
+  removeNavIndex,
   setStarred,
   updateTimeZoneForSession,
+  updateNavIndex,
 };
 
-const [useDashNavModelContext, DashNavModalContextProvider] = createStateContext<{ component: React.ReactNode }>({
-  component: null,
+const mapStateToProps = (state: StoreState) => ({
+  navIndex: state.navIndex,
 });
 
-export function useDashNavModalController() {
-  const [_, setContextState] = useDashNavModelContext();
-
-  return {
-    showModal: (component: React.ReactNode) => setContextState({ component }),
-    hideModal: () => setContextState({ component: null }),
-  };
-}
-
-function DashNavModalRoot() {
-  const [contextState] = useDashNavModelContext();
-
-  return <>{contextState.component}</>;
-}
-
-const connector = connect(null, mapDispatchToProps);
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 const selectors = e2eSelectors.pages.Dashboard.DashNav;
 
@@ -141,10 +129,26 @@ export const DashNav = React.memo<Props>((props) => {
   const onStarDashboard = () => {
     DashboardInteractions.toolbarFavoritesClick();
     const dashboardSrv = getDashboardSrv();
-    const { dashboard, setStarred } = props;
+    const { dashboard, navIndex, removeNavIndex, setStarred, updateNavIndex } = props;
 
     dashboardSrv.starDashboard(dashboard.uid, Boolean(dashboard.meta.isStarred)).then((newState) => {
       setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
+      const starredNavItem = navIndex['starred'];
+      if (newState) {
+        starredNavItem.children?.push({
+          id: ID_PREFIX + dashboard.uid,
+          text: dashboard.title,
+          url: dashboard.meta.url ?? '',
+          parentItem: starredNavItem,
+        });
+      } else {
+        removeNavIndex(ID_PREFIX + dashboard.uid);
+        const indexToRemove = starredNavItem.children?.findIndex((element) => element.id === ID_PREFIX + dashboard.uid);
+        if (indexToRemove) {
+          starredNavItem.children?.splice(indexToRemove, 1);
+        }
+      }
+      updateNavIndex(starredNavItem);
       dashboard.meta.isStarred = newState;
       forceUpdate();
     });
@@ -177,7 +181,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const isPlaylistRunning = () => {
-    return playlistSrv.isPlaying;
+    return playlistSrv.state.isPlaying;
   };
 
   const renderLeftActions = () => {
@@ -361,12 +365,11 @@ export const DashNav = React.memo<Props>((props) => {
   return (
     <AppChromeUpdate
       actions={
-        <DashNavModalContextProvider>
+        <>
           {renderLeftActions()}
           <NavToolbarSeparator leftActionsSeparator />
           <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
-          <DashNavModalRoot />
-        </DashNavModalContextProvider>
+        </>
       }
     />
   );

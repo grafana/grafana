@@ -34,7 +34,7 @@ func NewStore(db db.DB, skipDeleteExpired bool) *DashboardSnapshotStore {
 	if skipDeleteExpired {
 		log.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
 	}
-	return &DashboardSnapshotStore{store: db, skipDeleteExpired: skipDeleteExpired}
+	return &DashboardSnapshotStore{store: db, skipDeleteExpired: skipDeleteExpired, log: log}
 }
 
 // DeleteExpiredSnapshots removes snapshots with old expiry dates.
@@ -137,8 +137,8 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 
 		namespace, id := query.SignedInUser.GetNamespacedID()
 		var userID int64
-		switch namespace {
-		case identity.NamespaceServiceAccount, identity.NamespaceUser:
+
+		if namespace == identity.NamespaceServiceAccount || namespace == identity.NamespaceUser {
 			var err error
 			userID, err = identity.IntIdentifier(namespace, id)
 			if err != nil {

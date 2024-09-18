@@ -4,6 +4,7 @@ import copy from 'rollup-plugin-copy';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
 import { externals } from 'rollup-plugin-node-externals';
+import svg from 'rollup-plugin-svg-import';
 
 const icons = require('../../public/app/core/icons/cached.json');
 
@@ -18,6 +19,7 @@ export default [
     input: 'src/index.ts',
     plugins: [
       externals({ deps: true, packagePath: './package.json' }),
+      svg({ stringify: true }),
       resolve(),
       copy({
         targets: [{ src: iconSrcPaths, dest: './dist/public/' }],

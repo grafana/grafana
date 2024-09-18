@@ -34,7 +34,7 @@ func (tapi *TeamAPI) createTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	t, err := tapi.teamService.CreateTeam(cmd.Name, cmd.Email, c.SignedInUser.GetOrgID())
+	t, err := tapi.teamService.CreateTeam(c.Req.Context(), cmd.Name, cmd.Email, c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(http.StatusConflict, "Team name taken", err)
@@ -127,6 +127,12 @@ func (tapi *TeamAPI) deleteTeamByID(c *contextmodel.ReqContext) response.Respons
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to delete Team", err)
 	}
+
+	// Clear associated team assignments, managed role and permissions
+	if err := tapi.ac.DeleteTeamPermissions(c.Req.Context(), orgID, teamID); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to delete Team permissions", err)
+	}
+
 	return response.Success("Team deleted")
 }
 

@@ -37,8 +37,8 @@ export const DashNavButton = ({ icon, iconType, iconSize, tooltip, onClick, chil
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  noBorderContainer: css`
-    padding: 0 ${theme.spacing(0.5)};
-    display: flex;
-  `,
+  noBorderContainer: css({
+    padding: `0 ${theme.spacing(0.5)}`,
+    display: 'flex',
+  }),
 });

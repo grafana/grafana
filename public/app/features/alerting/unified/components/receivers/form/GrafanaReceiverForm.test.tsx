@@ -36,7 +36,6 @@ const ui = {
 
 describe('GrafanaReceiverForm', () => {
   beforeEach(() => {
-    server.resetHandlers();
     clearPluginSettingsCache();
   });
 

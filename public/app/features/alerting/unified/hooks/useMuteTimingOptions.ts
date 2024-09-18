@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
+import { mergeTimeIntervals } from '../components/mute-timings/util';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { timeIntervalToString } from '../utils/alertmanager';
 
@@ -13,8 +14,9 @@ export function useMuteTimingOptions(): Array<SelectableValue<string>> {
   const config = currentData?.alertmanager_config;
 
   return useMemo(() => {
+    const time_intervals = config ? mergeTimeIntervals(config) : [];
     const muteTimingsOptions: Array<SelectableValue<string>> =
-      config?.mute_time_intervals?.map((value) => ({
+      time_intervals?.map((value) => ({
         value: value.name,
         label: value.name,
         description: value.time_intervals.map((interval) => timeIntervalToString(interval)).join(', AND '),

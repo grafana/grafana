@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.test.tsx
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
@@ -141,7 +142,7 @@ describe('PromQueryEditorSelector', () => {
   it('changes to builder mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
     await switchToMode(QueryEditorMode.Builder);
-    expect(onChange).toBeCalledWith({
+    expect(onChange).toHaveBeenCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
       range: true,
@@ -167,7 +168,7 @@ describe('PromQueryEditorSelector', () => {
   it('changes to code mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Builder);
     await switchToMode(QueryEditorMode.Code);
-    expect(onChange).toBeCalledWith({
+    expect(onChange).toHaveBeenCalledWith({
       refId: 'A',
       expr: defaultQuery.expr,
       range: true,

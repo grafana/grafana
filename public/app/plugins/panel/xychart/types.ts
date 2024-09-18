@@ -7,15 +7,6 @@ import { VizLegendItem } from '@grafana/ui';
  */
 export type DimensionValues<T> = (frame: DataFrame, from?: number) => T | T[];
 
-export interface ScatterHoverEvent {
-  scatterIndex: number;
-  xIndex: number;
-  pageX: number;
-  pageY: number;
-}
-
-export type ScatterHoverCallback = (evt?: ScatterHoverEvent) => void;
-
 // Using field where we will need formatting/scale/axis info
 // Use raw or DimensionValues when the values can be used directly
 export interface ScatterSeries {
@@ -49,15 +40,4 @@ export interface ScatterSeries {
       mode: FieldColorMode;
     };
   };
-}
-
-export interface ExtraFacets {
-  colorFacetFieldName: string;
-  sizeFacetFieldName: string;
-  colorFacetValue: number;
-  sizeFacetValue: number;
-}
-
-export interface DataFilterBySeries {
-  frame: number;
 }

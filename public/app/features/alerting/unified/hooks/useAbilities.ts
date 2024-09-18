@@ -1,15 +1,17 @@
 import { useMemo } from 'react';
 
-import { contextSrv, contextSrv as ctx } from 'app/core/services/context_srv';
+import { contextSrv as ctx } from 'app/core/services/context_srv';
+import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule } from 'app/types/unified-alerting';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
-import { isFederatedRuleGroup, isGrafanaRulerRule } from '../utils/rules';
+import { isAdmin } from '../utils/misc';
+import { isFederatedRuleGroup, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
 
 import { useIsRuleEditable } from './useIsRuleEditable';
 
@@ -51,6 +53,7 @@ export enum AlertmanagerAction {
   CreateSilence = 'create-silence',
   ViewSilence = 'view-silence',
   UpdateSilence = 'update-silence',
+  PreviewSilencedInstances = 'preview-silenced-alerts',
 
   // mute timings
   ViewMuteTiming = 'view-mute-timing',
@@ -69,6 +72,7 @@ export enum AlertRuleAction {
   Explore = 'explore-alert-rule',
   Silence = 'silence-alert-rule',
   ModifyExport = 'modify-export-rule',
+  Pause = 'pause-alert-rule',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
@@ -80,6 +84,7 @@ export enum AlertingAction {
   UpdateAlertRule = 'update-alert-rule',
   DeleteAlertRule = 'delete-alert-rule',
   ExportGrafanaManagedRules = 'export-grafana-managed-rules',
+  ReadConfigurationStatus = 'read-configuration-status',
 
   // external (any compatible alerting data source)
   CreateExternalAlertRule = 'create-external-alert-rule',
@@ -107,6 +112,11 @@ export const useAlertingAbilities = (): Abilities<AlertingAction> => {
     [AlertingAction.UpdateAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleUpdate),
     [AlertingAction.DeleteAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleDelete),
     [AlertingAction.ExportGrafanaManagedRules]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleRead),
+    [AlertingAction.ReadConfigurationStatus]: [
+      AlwaysSupported,
+      ctx.hasPermission(AccessControlAction.AlertingInstanceRead) ||
+        ctx.hasPermission(AccessControlAction.AlertingNotificationsRead),
+    ],
 
     // external
     [AlertingAction.CreateExternalAlertRule]: toAbility(AlwaysSupported, AccessControlAction.AlertingRuleExternalWrite),
@@ -147,9 +157,10 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
   const isFederated = isFederatedRuleGroup(rule.group);
   const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
+  const isPluginProvided = isPluginProvidedRule(rule);
 
-  // if a rule is either provisioned or a federated rule, we don't allow it to be removed or edited
-  const immutableRule = isProvisioned || isFederated;
+  // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
+  const immutableRule = isProvisioned || isFederated || isPluginProvided;
 
   const {
     isEditable,
@@ -163,17 +174,21 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const MaybeSupported = loading ? NotSupported : isRulerAvailable;
   const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
 
+  // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
+  const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+
   const rulesPermissions = getRulesPermissions(rulesSourceName);
-  const canSilence = useCanSilence(rulesSource);
+  const canSilence = useCanSilence(rule);
 
   const abilities: Abilities<AlertRuleAction> = {
-    [AlertRuleAction.Duplicate]: toAbility(MaybeSupported, rulesPermissions.create),
+    [AlertRuleAction.Duplicate]: toAbility(duplicateSupported, rulesPermissions.create),
     [AlertRuleAction.View]: toAbility(AlwaysSupported, rulesPermissions.read),
     [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
     [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
     [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
     [AlertRuleAction.Silence]: canSilence,
     [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
+    [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
   };
 
   return abilities;
@@ -190,9 +205,6 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
   // There are different permissions based on wether the built-in alertmanager is selected (grafana) or an external one.
   const notificationsPermissions = getNotificationsPermissions(selectedAlertmanager!);
   const instancePermissions = getInstancesPermissions(selectedAlertmanager!);
-
-  //we need to know user role to determine if they can view autogenerated policy tree
-  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
   // list out all of the abilities, and if the user has permissions to perform them
   const abilities: Abilities<AlertmanagerAction> = {
@@ -230,12 +242,13 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       isGrafanaFlavoredAlertmanager,
       notificationsPermissions.provisioning.readSecrets
     ),
-    [AlertmanagerAction.ViewAutogeneratedPolicyTree]: [isGrafanaFlavoredAlertmanager, isAdmin],
+    [AlertmanagerAction.ViewAutogeneratedPolicyTree]: [isGrafanaFlavoredAlertmanager, isAdmin()],
     // -- silences --
     // for now, all supported Alertmanager flavors have API endpoints for managing silences
     [AlertmanagerAction.CreateSilence]: toAbility(AlwaysSupported, instancePermissions.create),
     [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
     [AlertmanagerAction.UpdateSilence]: toAbility(AlwaysSupported, instancePermissions.update),
+    [AlertmanagerAction.PreviewSilencedInstances]: toAbility(AlwaysSupported, instancePermissions.read),
     // -- mute timtings --
     [AlertmanagerAction.CreateMuteTiming]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
     [AlertmanagerAction.ViewMuteTiming]: toAbility(AlwaysSupported, notificationsPermissions.read),
@@ -268,17 +281,21 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
  * 1. the user has no permissions to create silences
  * 2. the admin has configured to only send instances to external AMs
  */
-function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
+function useCanSilence(rule: CombinedRule): [boolean, boolean] {
+  const rulesSource = rule.namespace.rulesSource;
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
 
-  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
-  const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
-    skip: !isGrafanaManagedRule,
-  });
+  const { currentData: amConfigStatus, isLoading } =
+    alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {
+      skip: !isGrafanaManagedRule,
+    });
+
+  const folderUID = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.namespace_uid : undefined;
+  const { loading: folderIsLoading, folder } = useFolder(folderUID);
 
   // we don't support silencing when the rule is not a Grafana managed rule
   // we simply don't know what Alertmanager the ruler is sending alerts to
-  if (!isGrafanaManagedRule || isLoading) {
+  if (!isGrafanaManagedRule || isLoading || folderIsLoading || !folder) {
     return [false, false];
   }
 
@@ -286,7 +303,16 @@ function useCanSilence(rulesSource: RulesSource): [boolean, boolean] {
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
   const silenceSupported = !interactsOnlyWithExternalAMs || interactsWithAll;
 
-  return toAbility(silenceSupported, AccessControlAction.AlertingInstanceCreate);
+  const { accessControl = {} } = folder;
+
+  // User is permitted to silence if they either have the "global" permissions of "AlertingInstanceCreate",
+  // or the folder specific access control of "AlertingSilenceCreate"
+  const allowedToSilence = Boolean(
+    ctx.hasPermission(AccessControlAction.AlertingInstanceCreate) ||
+      accessControl[AccessControlAction.AlertingSilenceCreate]
+  );
+
+  return [silenceSupported, allowedToSilence];
 }
 
 // just a convenient function

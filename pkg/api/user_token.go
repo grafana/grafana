@@ -149,14 +149,14 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 	_, err := hs.userService.GetByID(ctx, &userQuery)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, "User not found", err)
+			return response.Error(http.StatusNotFound, "User not found", err)
 		}
-		return response.Error(500, "Could not read user from database", err)
+		return response.Error(http.StatusInternalServerError, "Could not read user from database", err)
 	}
 
 	err = hs.AuthTokenService.RevokeAllUserTokens(ctx, userID)
 	if err != nil {
-		return response.Error(500, "Failed to logout user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to logout user", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -181,7 +181,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *contextmodel.ReqContext, user
 
 	tokens, err := hs.AuthTokenService.GetUserTokens(c.Req.Context(), userID)
 	if err != nil {
-		return response.Error(500, "Failed to get user auth tokens", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user auth tokens", err)
 	}
 
 	result := []*dtos.UserToken{}
@@ -241,29 +241,29 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *contextmodel.ReqContext, us
 	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, "User not found", err)
+			return response.Error(http.StatusNotFound, "User not found", err)
 		}
-		return response.Error(500, "Failed to get user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
 	token, err := hs.AuthTokenService.GetUserToken(c.Req.Context(), userID, cmd.AuthTokenId)
 	if err != nil {
 		if errors.Is(err, auth.ErrUserTokenNotFound) {
-			return response.Error(404, "User auth token not found", err)
+			return response.Error(http.StatusNotFound, "User auth token not found", err)
 		}
-		return response.Error(500, "Failed to get user auth token", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user auth token", err)
 	}
 
 	if c.UserToken != nil && c.UserToken.Id == token.Id {
-		return response.Error(400, "Cannot revoke active user auth token", nil)
+		return response.Error(http.StatusBadRequest, "Cannot revoke active user auth token", nil)
 	}
 
 	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), token, false)
 	if err != nil {
 		if errors.Is(err, auth.ErrUserTokenNotFound) {
-			return response.Error(404, "User auth token not found", err)
+			return response.Error(http.StatusNotFound, "User auth token not found", err)
 		}
-		return response.Error(500, "Failed to revoke user auth token", err)
+		return response.Error(http.StatusInternalServerError, "Failed to revoke user auth token", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -86,9 +87,10 @@ func TestIntegrationPluginManager(t *testing.T) {
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService(cfg)
-	my := mysql.ProvideService(cfg, hcp)
+	my := mysql.ProvideService()
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
+	db := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
+	sv2 := searchV2.ProvideService(cfg, db, nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
 	pyroscope := pyroscope.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)
@@ -98,7 +100,6 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, testCtx.PluginStore)
-	verifyBundledPlugins(t, ctx, testCtx.PluginStore)
 	verifyPluginStaticRoutes(t, ctx, testCtx.PluginStore, testCtx.PluginStore)
 	verifyBackendProcesses(t, testCtx.PluginRegistry.Plugins(ctx))
 	verifyPluginQuery(t, ctx, testCtx.PluginClient)
@@ -133,7 +134,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 	t.Helper()
 
 	expPanels := map[string]struct{}{
-		"alertGroups":    {},
 		"alertlist":      {},
 		"annolist":       {},
 		"barchart":       {},
@@ -186,7 +186,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"grafana":                          {},
 		"alertmanager":                     {},
 		"dashboard":                        {},
-		"input":                            {},
 		"jaeger":                           {},
 		"mixed":                            {},
 		"zipkin":                           {},
@@ -228,41 +227,13 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 	require.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
 }
 
-func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *pluginstore.Service) {
-	t.Helper()
-
-	dsPlugins := make(map[string]struct{})
-	for _, p := range ps.Plugins(ctx, plugins.TypeDataSource) {
-		dsPlugins[p.ID] = struct{}{}
-	}
-
-	inputPlugin, exists := ps.Plugin(ctx, "input")
-	require.True(t, exists)
-	require.NotEqual(t, pluginstore.Plugin{}, inputPlugin)
-	require.NotNil(t, dsPlugins["input"])
-
-	pluginRoutes := make(map[string]*plugins.StaticRoute)
-	for _, r := range ps.Routes(ctx) {
-		pluginRoutes[r.PluginID] = r
-	}
-
-	for _, pluginID := range []string{"input"} {
-		require.Contains(t, pluginRoutes, pluginID)
-		require.Equal(t, pluginRoutes[pluginID].Directory, inputPlugin.Base())
-	}
-}
-
 func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.StaticRouteResolver, ps *pluginstore.Service) {
 	routes := make(map[string]*plugins.StaticRoute)
 	for _, route := range rr.Routes(ctx) {
 		routes[route.PluginID] = route
 	}
 
-	require.Len(t, routes, 2)
-
-	inputPlugin, _ := ps.Plugin(ctx, "input")
-	require.NotNil(t, routes["input"])
-	require.Equal(t, routes["input"].Directory, inputPlugin.Base())
+	require.Len(t, routes, 1)
 
 	testAppPlugin, _ := ps.Plugin(ctx, "test-app")
 	require.Contains(t, routes, "test-app")

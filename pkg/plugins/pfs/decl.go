@@ -1,30 +1,26 @@
 package pfs
 
 import (
+	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/ast"
-	"github.com/grafana/kindsys"
-	"github.com/grafana/thema"
-
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
 type PluginDecl struct {
-	SchemaInterface *kindsys.SchemaInterface
-	Lineage         thema.Lineage
+	SchemaInterface SchemaInterface
+	CueFile         cue.Value
 	Imports         []*ast.ImportSpec
 	PluginPath      string
-	PluginMeta      plugindef.PluginDef
-	KindDecl        kindsys.Def[kindsys.ComposableProperties]
+	PluginMeta      Metadata
 }
 
-func EmptyPluginDecl(path string, meta plugindef.PluginDef) *PluginDecl {
-	return &PluginDecl{
-		PluginPath: path,
-		PluginMeta: meta,
-		Imports:    make([]*ast.ImportSpec, 0),
-	}
+type SchemaInterface struct {
+	Name    string
+	IsGroup bool
 }
 
-func (decl *PluginDecl) HasSchema() bool {
-	return decl.Lineage != nil && decl.SchemaInterface != nil
+type Metadata struct {
+	Id      string
+	Name    string
+	Backend *bool
+	Version *string
 }

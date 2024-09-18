@@ -33,9 +33,6 @@ export const formatUtcOffset = (timestamp: number, timeZone: TimeZone): string =
     format: 'Z',
   });
 
-  if (offset === '+00:00') {
-    return 'UTC';
-  }
   return `UTC${offset}`;
 };
 

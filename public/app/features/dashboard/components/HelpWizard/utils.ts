@@ -43,7 +43,7 @@ export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
     panelType: saveModel.type,
     datasource: '??',
   };
-  const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
+  const grafanaVersion = config.buildInfo.versionString;
 
   let md = `| Key | Value |
 |--|--|
@@ -75,7 +75,7 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
 
   const dsref = panel.datasource;
   const frames = randomizeData(getPanelDataFrames(data), rand);
-  const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
+  const grafanaVersion = config.buildInfo.versionString;
   const queries = saveModel?.targets ?? [];
   const html = `<table width="100%">
     <tr>

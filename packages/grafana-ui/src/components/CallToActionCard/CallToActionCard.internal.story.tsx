@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { Story, Meta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
 import { Button } from '../Button/Button';
@@ -25,7 +25,7 @@ interface StoryProps extends Partial<CallToActionCardProps> {
   buttonText: string;
 }
 
-export const Basic: Story<StoryProps> = (args) => {
+export const Basic: StoryFn<StoryProps> = (args) => {
   const ctaElements: { [key: string]: JSX.Element } = {
     custom: <h1>{args.H1Text}</h1>,
     button: (

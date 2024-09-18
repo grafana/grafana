@@ -1,5 +1,5 @@
+import { getNextRefId } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { getNextRefIdChar } from 'app/core/utils/query';
 
 /**
  * Makes sure all the queries have unique (and valid) refIds
@@ -19,7 +19,7 @@ export function withUniqueRefIds(queries: DataQuery[]): DataQuery[] {
       return query;
     }
 
-    const refId = getNextRefIdChar(queries);
+    const refId = getNextRefId(queries);
     refIds.add(refId);
 
     const newQuery = {

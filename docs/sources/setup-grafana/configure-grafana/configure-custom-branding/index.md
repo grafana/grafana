@@ -35,8 +35,6 @@ With custom branding, you have the ability to modify the following elements:
 
 > You will have to host your logo and other images used by the custom branding feature separately. Make sure Grafana can access the URL where the assets are stored.
 
-{{< figure src="/static/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="Custom branding example" >}}
-
 The configuration file in Grafana Enterprise contains the following options. For more information about configuring Grafana, refer to [Configure Grafana]({{< relref "../../configure-grafana" >}}).
 
 ```ini

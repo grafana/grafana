@@ -7,6 +7,7 @@ import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import {
@@ -14,7 +15,9 @@ import {
   DescendantCount,
   DescendantCountDTO,
   FolderDTO,
+  FolderListItemDTO,
   ImportDashboardResponseDTO,
+  PermissionLevelString,
   SaveDashboardResponseDTO,
 } from 'app/types';
 
@@ -69,11 +72,26 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
   return backendSrvBaseQuery;
 }
 
+export interface ListFolderQueryArgs {
+  page: number;
+  parentUid: string | undefined;
+  limit: number;
+  permission?: PermissionLevelString;
+}
+
 export const browseDashboardsAPI = createApi({
   tagTypes: ['getFolder'],
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
+    listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
+      providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
+      query: ({ parentUid, limit, page, permission }) => ({
+        url: '/folders',
+        params: { parentUid, limit, page, permission },
+      }),
+    }),
+
     // get folder info (e.g. title, parents) but *not* children
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
@@ -227,7 +245,7 @@ export const browseDashboardsAPI = createApi({
         // Move all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUID}`);
+          const fullDash: DashboardDTO = await getDashboardAPI().getDashboardDTO(dashboardUID);
 
           const options = {
             dashboard: fullDash.dashboard,
@@ -360,4 +378,5 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
 } = browseDashboardsAPI;
+
 export { skipToken } from '@reduxjs/toolkit/query/react';

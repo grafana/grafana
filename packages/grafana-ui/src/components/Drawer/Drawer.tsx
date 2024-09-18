@@ -15,6 +15,8 @@ import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
+import 'rc-drawer/assets/index.css';
+
 export interface Props {
   children: ReactNode;
   /** Title shown at the top of the drawer */
@@ -256,7 +258,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     drawerContent: css({
       backgroundColor: `${theme.colors.background.primary} !important`,
       display: 'flex',
-      overflow: 'unset',
+      overflow: 'unset !important',
       flexDirection: 'column',
     }),
     drawerMotion: css({

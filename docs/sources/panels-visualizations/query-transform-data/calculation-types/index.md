@@ -1,9 +1,9 @@
 ---
 aliases:
-  - ../../panels/calculation-types/ # /docs/grafana/<GRAFANA VERSION>/panels/calculation-types/
-  - ../../panels/calculations-list/ # /docs/grafana/<GRAFANA VERSION>/panels/calculations-list/
-  - ../../panels/reference-calculation-types/ # /docs/grafana/<GRAFANA VERSION>/panels/reference-calculation-types/
-  - ../calculation-types/ # /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types/
+  - ../../panels/calculation-types/ # /docs/grafana/<GRAFANA_VERSION>/panels/calculation-types/
+  - ../../panels/calculations-list/ # /docs/grafana/<GRAFANA_VERSION>/panels/calculations-list/
+  - ../../panels/reference-calculation-types/ # /docs/grafana/<GRAFANA_VERSION>/panels/reference-calculation-types/
+  - ../calculation-types/ # /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/calculation-types/
 labels:
   products:
     - cloud

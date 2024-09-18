@@ -22,35 +22,39 @@ const (
 )
 
 type RuleService struct {
-	ac accesscontrol.AccessControl
+	genericService
 }
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
-		ac: ac,
+		genericService{ac: ac},
 	}
 }
 
-// HasAccess returns true if the identity.Requester has all permissions specified by the evaluator. Returns error if access control backend could not evaluate permissions
-func (r *RuleService) HasAccess(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	return r.ac.Evaluate(ctx, user, evaluator)
+type Namespaced interface {
+	GetNamespaceUID() string
 }
 
-// HasAccessOrError returns nil if the identity.Requester has enough permissions to pass the accesscontrol.Evaluator. Otherwise, returns authorization error that contains action that was performed
-func (r *RuleService) HasAccessOrError(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator, action func() string) error {
-	has, err := r.HasAccess(ctx, user, evaluator)
-	if err != nil {
-		return err
-	}
-	if !has {
-		return NewAuthorizationErrorWithPermissions(action(), evaluator)
-	}
-	return nil
+// getReadFolderAccessEvaluator constructs accesscontrol.Evaluator that checks all permissions required to read rules in  specific folder
+func getReadFolderAccessEvaluator(folderUID string) accesscontrol.Evaluator {
+	return accesscontrol.EvalAll(
+		accesscontrol.EvalPermission(ruleRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
+		accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID)),
+	)
 }
 
-// getRulesReadEvaluator constructs accesscontrol.Evaluator that checks all permission required to read all provided rules
+// getRulesReadEvaluator constructs accesscontrol.Evaluator that checks all permissions required to access provided rules
 func (r *RuleService) getRulesReadEvaluator(rules ...*models.AlertRule) accesscontrol.Evaluator {
-	return r.getRulesQueryEvaluator(rules...)
+	added := make(map[string]struct{}, 1)
+	evals := make([]accesscontrol.Evaluator, 0, 1)
+	for _, rule := range rules {
+		if _, ok := added[rule.NamespaceUID]; ok {
+			continue
+		}
+		added[rule.NamespaceUID] = struct{}{}
+		evals = append(evals, getReadFolderAccessEvaluator(rule.NamespaceUID))
+	}
+	return accesscontrol.EvalAll(evals...)
 }
 
 // getRulesQueryEvaluator constructs accesscontrol.Evaluator that checks all permissions to query data sources used by the provided rules
@@ -88,13 +92,27 @@ func (r *RuleService) AuthorizeDatasourceAccessForRule(ctx context.Context, user
 	})
 }
 
-// HasAccessToRuleGroup returns false if
+// AuthorizeDatasourceAccessForRuleGroup checks that user has access to all data sources declared by the rules in the group
+func (r *RuleService) AuthorizeDatasourceAccessForRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
+	ds := r.getRulesQueryEvaluator(rules...)
+	return r.HasAccessOrError(ctx, user, ds, func() string {
+		return fmt.Sprintf("access data sources for the rule group '%s'", rules[0].RuleGroup)
+	})
+}
+
+// HasAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
+// - ("folders:read") read folders which contain the rules
+// - ("alert.rules:read") read alert rules in the folders
+// Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
 func (r *RuleService) HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error) {
 	eval := r.getRulesReadEvaluator(rules...)
 	return r.HasAccess(ctx, user, eval)
 }
 
-// AuthorizeAccessToRuleGroup checks all rules against AuthorizeDatasourceAccessForRule and exits on the first negative result
+// AuthorizeAccessToRuleGroup checks that the identity.Requester has permissions to all rules, which means that it has permissions to:
+// - ("folders:read") read folders which contain the rules
+// - ("alert.rules:read") read alert rules in the folders
+// Returns error if at least one permission is missing or if something went wrong during the permission evaluation
 func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error {
 	eval := r.getRulesReadEvaluator(rules...)
 	return r.HasAccessOrError(ctx, user, eval, func() string {
@@ -107,14 +125,36 @@ func (r *RuleService) AuthorizeAccessToRuleGroup(ctx context.Context, user ident
 	})
 }
 
+// HasAccessInFolder checks that the identity.Requester has permissions to read alert rules in the given folder,
+// which requires the following permissions:
+// - ("folders:read") read the folder
+// - ("alert.rules:read") read alert rules in the folder
+// Returns false if the requester does not have enough permissions, and error if something went wrong during the permission evaluation.
+func (r *RuleService) HasAccessInFolder(ctx context.Context, user identity.Requester, rule Namespaced) (bool, error) {
+	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
+	return r.HasAccess(ctx, user, eval)
+}
+
+// AuthorizeAccessInFolder checks that the identity.Requester has permissions to read alert rules in the given folder,
+// which requires the following permissions:
+// - ("folders:read") read the folder
+// - ("alert.rules:read") read alert rules in the folder
+// Returns error if at least one permission is missing or if something went wrong during the permission evaluation
+func (r *RuleService) AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, rule Namespaced) error {
+	eval := accesscontrol.EvalAll(getReadFolderAccessEvaluator(rule.GetNamespaceUID()))
+	return r.HasAccessOrError(ctx, user, eval, func() string {
+		return fmt.Sprintf("access rules in folder '%s'", rule.GetNamespaceUID())
+	})
+}
+
 // AuthorizeRuleChanges analyzes changes in the rule group, and checks whether the changes are authorized.
 // NOTE: if there are rules for deletion, and the user does not have access to data sources that a rule uses, the rule is removed from the list.
 // If the user is not authorized to perform the changes the function returns ErrAuthorization with a description of what action is not authorized.
 func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
 	namespaceScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(change.GroupKey.NamespaceUID)
 
-	rules, ok := change.AffectedGroups[change.GroupKey]
-	if ok { // not ok can be when user creates a new rule group or moves existing alerts to a new group
+	rules, existingGroup := change.AffectedGroups[change.GroupKey]
+	if existingGroup { // not existingGroup can be when user creates a new rule group or moves existing alerts to a new group
 		if err := r.AuthorizeAccessToRuleGroup(ctx, user, rules); err != nil { // if user is not authorized to do operation in the group that is being changed
 			return err
 		}
@@ -153,6 +193,12 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 				return err
 			}
 		}
+		if !existingGroup {
+			// create a new group, check that user has "read" access to that new group. Otherwise, it will not be able to read it back.
+			if err := r.AuthorizeAccessToRuleGroup(ctx, user, change.New); err != nil { // if user is not authorized to do operation in the group that is being changed
+				return err
+			}
+		}
 	}
 
 	for _, rule := range change.Update {
@@ -186,20 +232,6 @@ func (r *RuleService) AuthorizeRuleChanges(ctx context.Context, user identity.Re
 				return err
 			}
 			updateAuthorized = true
-		}
-
-		if rule.Existing.NamespaceUID != rule.New.NamespaceUID || rule.Existing.RuleGroup != rule.New.RuleGroup {
-			key := rule.Existing.GetGroupKey()
-			rules, ok = change.AffectedGroups[key]
-			if !ok {
-				// add a safeguard in the case of inconsistency. If user hit this then there is a bug in the calculating of changes struct
-				return fmt.Errorf("failed to authorize moving an alert rule %s between groups because unable to check access to group %s from which the rule is moved", rule.Existing.UID, rule.Existing.RuleGroup)
-			}
-			if err := r.HasAccessOrError(ctx, user, r.getRulesQueryEvaluator(rules...), func() string {
-				return fmt.Sprintf("move rule %s between two different groups because user does not have access to the source group %s", rule.Existing.UID, rule.Existing.RuleGroup)
-			}); err != nil {
-				return err
-			}
 		}
 	}
 	return nil

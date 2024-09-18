@@ -6,10 +6,11 @@ export type MuteTimingFields = {
 };
 
 export type MuteTimingIntervalFields = {
-  times: TimeRange[];
-  weekdays: string;
-  days_of_month: string;
-  months: string;
-  years: string;
+  times?: TimeRange[];
+  weekdays?: string;
+  days_of_month?: string;
+  months?: string;
+  years?: string;
   location?: string;
+  disable: boolean;
 };

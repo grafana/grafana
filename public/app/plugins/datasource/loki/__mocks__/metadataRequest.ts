@@ -15,7 +15,12 @@ export function createMetadataRequest(
       const labelsMatch = url.match(lokiLabelsAndValuesEndpointRegex);
       const seriesMatch = url.match(lokiSeriesEndpointRegex);
       if (labelsMatch) {
-        return labelsAndValues[labelsMatch[1]] || [];
+        if (series && params && params['query']) {
+          const labelAndValue = series[params['query'] as string];
+          return labelAndValue.map((s) => s[labelsMatch[1]]) || [];
+        } else {
+          return labelsAndValues[labelsMatch[1]] || [];
+        }
       } else if (seriesMatch && series && params) {
         return series[params['match[]']] || [];
       } else {

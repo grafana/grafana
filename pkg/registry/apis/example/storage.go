@@ -12,7 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/apiserver/registry/generic"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

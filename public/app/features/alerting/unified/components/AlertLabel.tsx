@@ -25,15 +25,15 @@ export const AlertLabel = ({ labelKey, value, operator = '=', onRemoveLabel }: P
 };
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    padding: ${theme.spacing(0.5, 1)};
-    border-radius: ${theme.shape.radius.default};
-    border: solid 1px ${theme.colors.border.medium};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    background-color: ${theme.colors.background.secondary};
-    font-weight: ${theme.typography.fontWeightBold};
-    color: ${theme.colors.text.primary};
-    display: inline-block;
-    line-height: 1.2;
-  `,
+  wrapper: css({
+    padding: theme.spacing(0.5, 1),
+    borderRadius: theme.shape.radius.default,
+    border: `solid 1px ${theme.colors.border.medium}`,
+    fontSize: theme.typography.bodySmall.fontSize,
+    backgroundColor: theme.colors.background.secondary,
+    fontWeight: theme.typography.fontWeightBold,
+    color: theme.colors.text.primary,
+    display: 'inline-block',
+    lineHeight: '1.2',
+  }),
 });

@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/core/utils/CancelablePromise.ts
 // https://github.com/facebook/react/issues/5465
 
 export interface CancelablePromise<T> {

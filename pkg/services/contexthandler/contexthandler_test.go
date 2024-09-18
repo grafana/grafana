@@ -44,7 +44,7 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should set identity on successful authentication", func(t *testing.T) {
-		identity := &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), OrgID: 1}
+		identity := &authn.Identity{ID: authn.NewNamespaceID(authn.NamespaceUser, 1), OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
@@ -114,9 +114,9 @@ func TestContextHandler(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.JWTAuth.Enabled = true
 		cfg.JWTAuth.HeaderName = "jwt-header"
-		cfg.AuthProxyEnabled = true
-		cfg.AuthProxyHeaderName = "proxy-header"
-		cfg.AuthProxyHeaders = map[string]string{
+		cfg.AuthProxy.Enabled = true
+		cfg.AuthProxy.HeaderName = "proxy-header"
+		cfg.AuthProxy.Headers = map[string]string{
 			"name": "proxy-header-name",
 		}
 
@@ -150,7 +150,7 @@ func TestContextHandler(t *testing.T) {
 				cfg,
 				tracing.InitializeTracerForTest(),
 				featuremgmt.WithFeatures(),
-				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: id}},
+				&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: authn.MustParseNamespaceID(id)}},
 			)
 
 			server := webtest.NewServer(t, routing.NewRouteRegister())

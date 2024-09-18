@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
@@ -13,6 +14,10 @@ type Decorator struct {
 	client      plugins.Client
 	middlewares []plugins.ClientMiddleware
 }
+
+var (
+	_ = plugins.Client(&Decorator{})
+)
 
 // NewDecorator creates a new plugins.client decorator.
 func NewDecorator(client plugins.Client, middlewares ...plugins.ClientMiddleware) (*Decorator, error) {
@@ -98,6 +103,33 @@ func (d *Decorator) RunStream(ctx context.Context, req *backend.RunStreamRequest
 	return client.RunStream(ctx, req, sender)
 }
 
+func (d *Decorator) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.ValidateAdmission(ctx, req)
+}
+
+func (d *Decorator) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.MutateAdmission(ctx, req)
+}
+
+func (d *Decorator) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	client := clientFromMiddlewares(d.middlewares, d.client)
+	return client.ConvertObject(ctx, req)
+}
+
 func clientFromMiddlewares(middlewares []plugins.ClientMiddleware, finalClient plugins.Client) plugins.Client {
 	if len(middlewares) == 0 {
 		return finalClient
@@ -123,5 +155,3 @@ func reverseMiddlewares(middlewares []plugins.ClientMiddleware) []plugins.Client
 
 	return reversed
 }
-
-var _ plugins.Client = &Decorator{}

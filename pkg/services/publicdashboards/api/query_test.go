@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -39,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -120,9 +120,6 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				assert.Equal(t, false, dashResp.Meta.CanEdit)
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
 				assert.Equal(t, false, dashResp.Meta.CanSave)
-
-				// publicDashboardUID should be always empty
-				assert.Equal(t, "", dashResp.Meta.PublicDashboardUID)
 			} else if test.FixedErrorResponse != "" {
 				require.Equal(t, test.ExpectedHttpResponse, response.Code)
 				require.JSONEq(t, "{\"message\":\"Invalid access token\", \"messageId\":\"publicdashboards.invalidAccessToken\", \"statusCode\":400, \"traceID\":\"\"}", response.Body.String())
@@ -257,7 +254,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db := db.InitTestDB(t)
+	db, cfg := db.InitTestDBWithCfg(t)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db, guardian.ProvideGuardian())
 	qds := buildQueryDataService(t, cacheService, nil, db)
@@ -299,7 +296,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	}
 
 	// create dashboard
-	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db), quotatest.New(false, nil))
+	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db), quotatest.New(false, nil))
 	require.NoError(t, err)
 	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
 	require.NoError(t, err)
@@ -317,21 +314,22 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	annotationsService := annotationstest.NewFakeAnnotationsRepo()
 
 	// create public dashboard
-	store := publicdashboardsStore.ProvideStore(db, db.Cfg, featuremgmt.WithFeatures())
-	cfg := setting.NewCfg()
+	store := publicdashboardsStore.ProvideStore(db, cfg, featuremgmt.WithFeatures())
 	cfg.PublicDashboardsEnabled = true
 	ac := acmock.New()
 	ws := publicdashboardsService.ProvideServiceWrapper(store)
 	folderStore := folderimpl.ProvideDashboardFolderStore(db)
 	dashPermissionService := acmock.NewMockedPermissionsService()
 	dashService, err := service.ProvideDashboardServiceImpl(
-		cfg, dashboardStoreService, folderStore, nil,
+		cfg, dashboardStoreService, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 		foldertest.NewFakeService(), nil,
 	)
 	require.NoError(t, err)
 
-	pds := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws, dashService)
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", FeaturePublicDashboardsEmailSharing).Return(false)
+	pds := publicdashboardsService.ProvideService(cfg, featuremgmt.WithFeatures(), store, qds, annotationsService, ac, ws, dashService, license)
 	pubdash, err := pds.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 

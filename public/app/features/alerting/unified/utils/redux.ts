@@ -8,6 +8,8 @@ import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { logInfo, LogMessages } from '../Analytics';
 
+import { isErrorLike } from './misc';
+
 export interface AsyncRequestState<T> {
   result?: T;
   loading: boolean;
@@ -173,9 +175,8 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
     }
   }
   // message in e object, return message
-  const errorMessage = (e as Error)?.message;
-  if (errorMessage) {
-    return errorMessage;
+  if (isErrorLike(e)) {
+    return e.message;
   }
   // for some reason (upstream this code), sometimes we get an object without the message field neither in the e.data and nor in e.message
   // in this case we want to avoid String(e) printing [object][object]

@@ -43,7 +43,8 @@
     }
   ],
   "info": {
-    "description": "",
+    "description": "Add external Alertmanagers (supports Prometheus and Mimir implementations) so you can use the Grafana Alerting UI to manage silences, contact points, and notification policies.",
+    "keywords": ["alerts", "alerting", "prometheus", "alertmanager", "mimir", "cortex"],
     "author": {
       "name": "Prometheus alertmanager",
       "url": "https://grafana.com"

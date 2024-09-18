@@ -1,9 +1,10 @@
+import { action } from '@storybook/addon-actions';
 import { StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { ComponentSize } from '../../types';
 import { Card } from '../Card/Card';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
 import mdx from './Button.mdx';
@@ -26,6 +27,9 @@ export default {
     tooltip: {
       control: 'text',
     },
+    disabled: {
+      control: 'boolean',
+    },
     className: {
       table: {
         disable: true,
@@ -36,12 +40,12 @@ export default {
 
 export const Examples: StoryFn<typeof Button> = () => {
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       {allButtonFills.map((buttonFill) => (
-        <VerticalGroup key={buttonFill}>
-          <HorizontalGroup spacing="lg">
+        <Stack direction="column" key={buttonFill}>
+          <Stack gap={3}>
             {allButtonVariants.map((variant) => (
-              <VerticalGroup spacing="lg" key={`${buttonFill}-${variant}`}>
+              <Stack direction="column" gap={3} alignItems="flex-start" key={`${buttonFill}-${variant}`}>
                 {sizes.map((size) => (
                   <Button variant={variant} fill={buttonFill} size={size} key={size}>
                     {variant} {size}
@@ -50,13 +54,13 @@ export const Examples: StoryFn<typeof Button> = () => {
                 <Button variant={variant} fill={buttonFill} disabled>
                   {variant} disabled
                 </Button>
-              </VerticalGroup>
+              </Stack>
             ))}
-          </HorizontalGroup>
+          </Stack>
           <div style={{ padding: '20px 0', width: '100%' }} />
-        </VerticalGroup>
+        </Stack>
       ))}
-      <HorizontalGroup spacing="lg">
+      <Stack alignItems="center" gap={3}>
         <div>With icon and text</div>
         <Button icon="cloud" size="sm">
           Configure
@@ -65,20 +69,20 @@ export const Examples: StoryFn<typeof Button> = () => {
         <Button icon="cloud" size="lg">
           Configure
         </Button>
-      </HorizontalGroup>
+      </Stack>
       <div />
       <div />
       <Button icon="plus" fullWidth>
         Button with fullWidth
       </Button>
       <div />
-      <HorizontalGroup spacing="lg">
+      <Stack alignItems="center" gap={3}>
         <div>Inside ButtonGroup</div>
         <ButtonGroup>
           <Button icon="sync">Run query</Button>
           <Button icon="angle-down" />
         </ButtonGroup>
-      </HorizontalGroup>
+      </Stack>
       <Card>
         <Card.Heading>Button inside card</Card.Heading>
         <Card.Actions>
@@ -92,11 +96,13 @@ export const Examples: StoryFn<typeof Button> = () => {
           </Button>
         </Card.Actions>
       </Card>
-    </VerticalGroup>
+    </Stack>
   );
 };
 
-export const Basic: StoryFn<typeof Button> = (args: ButtonProps) => <Button {...args} />;
+export const Basic: StoryFn<typeof Button> = (args: ButtonProps) => (
+  <Button onClick={action('clicked button')} {...args} />
+);
 
 Basic.args = {
   children: 'Example button',

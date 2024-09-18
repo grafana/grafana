@@ -17,6 +17,10 @@ You can install Grafana using the RPM repository, or by downloading a binary `.t
 
 If you install via RPM or the `.tar.gz` file, then you must manually update Grafana for each new version.
 
+The following video demonstrates how to install Grafana on SUSE or openSUSE as outlined in this document:
+
+{{< youtube id="2MWsu0xy5Xc" >}}
+
 ## Install Grafana from the RPM repository
 
 If you install from the RPM repository, then Grafana is automatically updated every time you run `sudo zypper update`.

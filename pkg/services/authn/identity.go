@@ -2,13 +2,10 @@ package authn
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -16,44 +13,32 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-// NamespacedID builds a namespaced ID from a namespace and an ID.
-func NamespacedID(namespace string, id int64) string {
-	return fmt.Sprintf("%s:%d", namespace, id)
-}
+const GlobalOrgID = int64(0)
 
-const (
-	NamespaceUser           = identity.NamespaceUser
-	NamespaceAPIKey         = identity.NamespaceAPIKey
-	NamespaceServiceAccount = identity.NamespaceServiceAccount
-	NamespaceAnonymous      = identity.NamespaceAnonymous
-	NamespaceRenderService  = identity.NamespaceRenderService
-)
+type Requester = identity.Requester
 
-const (
-	AnonymousNamespaceID = NamespaceAnonymous + ":0"
-	GlobalOrgID          = int64(0)
-)
-
-var _ identity.Requester = (*Identity)(nil)
+var _ Requester = (*Identity)(nil)
 
 type Identity struct {
+	// ID is the unique identifier for the entity in the Grafana database.
+	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
+	ID NamespaceID
+	// UID is a unique identifier stored for the entity in Grafana database. Not all entities support uid so it can be empty.
+	UID NamespaceID
 	// OrgID is the active organization for the entity.
 	OrgID int64
 	// OrgName is the name of the active organization.
 	OrgName string
 	// OrgRoles is the list of organizations the entity is a member of and their roles.
 	OrgRoles map[int64]org.RoleType
-	// ID is the unique identifier for the entity in the Grafana database.
-	// It is in the format <namespace>:<id> where namespace is one of the
-	// Namespace* constants. For example, "user:1" or "api-key:1".
-	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
-	ID string
 	// Login is the shorthand identifier of the entity. Should be unique.
 	Login string
 	// Name is the display name of the entity. It is not guaranteed to be unique.
 	Name string
 	// Email is the email address of the entity. Should be unique.
 	Email string
+	// EmailVerified is true if entity has verified their email with grafana.
+	EmailVerified bool
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
 	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
@@ -87,6 +72,22 @@ type Identity struct {
 	IDToken string
 }
 
+func (i *Identity) GetID() NamespaceID {
+	return i.ID
+}
+
+func (i *Identity) GetNamespacedID() (namespace identity.Namespace, identifier string) {
+	return i.ID.Namespace(), i.ID.ID()
+}
+
+func (i *Identity) GetUID() NamespaceID {
+	return i.UID
+}
+
+func (i *Identity) GetAuthID() string {
+	return i.AuthID
+}
+
 func (i *Identity) GetAuthenticatedBy() string {
 	return i.AuthenticatedBy
 }
@@ -110,6 +111,10 @@ func (i *Identity) GetEmail() string {
 	return i.Email
 }
 
+func (i *Identity) IsEmailVerified() bool {
+	return i.EmailVerified
+}
+
 func (i *Identity) GetIDToken() string {
 	return i.IDToken
 }
@@ -122,17 +127,6 @@ func (i *Identity) GetLogin() string {
 	return i.Login
 }
 
-func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
-	split := strings.Split(i.ID, ":")
-
-	if len(split) != 2 {
-		return "", ""
-	}
-
-	return split[0], split[1]
-}
-
-// GetOrgID implements identity.Requester.
 func (i *Identity) GetOrgID() int64 {
 	return i.OrgID
 }
@@ -141,13 +135,13 @@ func (i *Identity) GetOrgName() string {
 	return i.OrgName
 }
 
-func (i *Identity) GetOrgRole() roletype.RoleType {
+func (i *Identity) GetOrgRole() org.RoleType {
 	if i.OrgRoles == nil {
-		return roletype.RoleNone
+		return org.RoleNone
 	}
 
 	if i.OrgRoles[i.GetOrgID()] == "" {
-		return roletype.RoleNone
+		return org.RoleNone
 	}
 
 	return i.OrgRoles[i.GetOrgID()]
@@ -182,7 +176,7 @@ func (i *Identity) GetTeams() []int64 {
 	return i.Teams
 }
 
-func (i *Identity) HasRole(role roletype.RoleType) bool {
+func (i *Identity) HasRole(role org.RoleType) bool {
 	if i.GetIsGrafanaAdmin() {
 		return true
 	}
@@ -195,14 +189,21 @@ func (i *Identity) HasUniqueId() bool {
 	return namespace == NamespaceUser || namespace == NamespaceServiceAccount || namespace == NamespaceAPIKey
 }
 
+func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
+	for _, p := range providers {
+		if i.AuthenticatedBy == p {
+			return true
+		}
+	}
+	return false
+}
+
 func (i *Identity) IsNil() bool {
 	return i == nil
 }
 
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
-	namespace, id := i.GetNamespacedID()
-
 	u := &user.SignedInUser{
 		OrgID:           i.OrgID,
 		OrgName:         i.OrgName,
@@ -210,44 +211,39 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Login:           i.Login,
 		Name:            i.Name,
 		Email:           i.Email,
+		AuthID:          i.AuthID,
 		AuthenticatedBy: i.AuthenticatedBy,
 		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
-		IsAnonymous:     namespace == NamespaceAnonymous,
+		IsAnonymous:     i.ID.IsNamespace(NamespaceAnonymous),
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
 		LastSeenAt:      i.LastSeenAt,
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
 		IDToken:         i.IDToken,
+		NamespacedID:    i.ID,
 	}
 
-	if namespace == NamespaceAPIKey {
-		u.ApiKeyID = intIdentifier(id)
+	if i.ID.IsNamespace(NamespaceAPIKey) {
+		id, _ := i.ID.ParseInt()
+		u.ApiKeyID = id
 	} else {
-		u.UserID = intIdentifier(id)
-		u.IsServiceAccount = namespace == NamespaceServiceAccount
+		id, _ := i.ID.UserID()
+		u.UserID = id
+		u.UserUID = i.UID.ID()
+		u.IsServiceAccount = i.ID.IsNamespace(NamespaceServiceAccount)
 	}
 
 	return u
 }
 
-func intIdentifier(identifier string) int64 {
-	id, err := strconv.ParseInt(identifier, 10, 64)
-	if err != nil {
-		// FIXME (kalleep): Improve error handling
-		return -1
-	}
-
-	return id
-}
-
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
-	_, id := i.GetNamespacedID()
+	id, _ := i.ID.UserID()
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
-		UserId:         intIdentifier(id),
+		UserId:         id,
 		Email:          i.Email,
 		Login:          i.Login,
 		Name:           i.Name,
@@ -255,27 +251,5 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 		OrgRoles:       i.OrgRoles,
 		IsGrafanaAdmin: i.IsGrafanaAdmin,
 		IsDisabled:     i.IsDisabled,
-	}
-}
-
-// IdentityFromSignedInUser creates an identity from a SignedInUser.
-func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams, authenticatedBy string) *Identity {
-	return &Identity{
-		ID:              id,
-		OrgID:           usr.OrgID,
-		OrgName:         usr.OrgName,
-		OrgRoles:        map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
-		Login:           usr.Login,
-		Name:            usr.Name,
-		Email:           usr.Email,
-		AuthenticatedBy: authenticatedBy,
-		IsGrafanaAdmin:  &usr.IsGrafanaAdmin,
-		IsDisabled:      usr.IsDisabled,
-		HelpFlags1:      usr.HelpFlags1,
-		LastSeenAt:      usr.LastSeenAt,
-		Teams:           usr.Teams,
-		ClientParams:    params,
-		Permissions:     usr.Permissions,
-		IDToken:         usr.IDToken,
 	}
 }

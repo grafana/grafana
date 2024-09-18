@@ -135,3 +135,30 @@ func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStrea
 	err = m.next.RunStream(ctx, req, sender)
 	return err
 }
+
+// ValidateAdmission implements backend.AdmissionHandler.
+func (m *TracingMiddleware) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, endpointValidateAdmission)
+	defer func() { end(err) }()
+	resp, err := m.next.ValidateAdmission(ctx, req)
+	return resp, err
+}
+
+// MutateAdmission implements backend.AdmissionHandler.
+func (m *TracingMiddleware) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, endpointMutateAdmission)
+	defer func() { end(err) }()
+	resp, err := m.next.MutateAdmission(ctx, req)
+	return resp, err
+}
+
+// ConvertObject implements backend.AdmissionHandler.
+func (m *TracingMiddleware) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, endpointConvertObject)
+	defer func() { end(err) }()
+	resp, err := m.next.ConvertObject(ctx, req)
+	return resp, err
+}

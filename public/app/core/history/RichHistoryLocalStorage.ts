@@ -37,10 +37,16 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     const allQueries = getRichHistoryDTOs().map(fromDTO);
     const queries = filters.starred ? allQueries.filter((q) => q.starred === true) : allQueries;
 
-    const richHistory = filterAndSortQueries(queries, filters.sortOrder, filters.datasourceFilters, filters.search, [
-      filters.from,
-      filters.to,
-    ]);
+    const timeFilter: [number, number] | undefined =
+      filters.from && filters.to ? [filters.from, filters.to] : undefined;
+
+    const richHistory = filterAndSortQueries(
+      queries,
+      filters.sortOrder,
+      filters.datasourceFilters,
+      filters.search,
+      timeFilter
+    );
     return { richHistory, total: richHistory.length };
   }
 
@@ -118,8 +124,11 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   }
 
   async getSettings() {
+    // get the new key without a default. If undefined, use the legacy key, or false as the default
+    const activeDatasource: boolean | undefined = store.getObject(RICH_HISTORY_SETTING_KEYS.activeDatasourcesOnly);
     return {
-      activeDatasourceOnly: store.getObject(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, false),
+      activeDatasourcesOnly:
+        activeDatasource ?? store.getObject(RICH_HISTORY_SETTING_KEYS.legacyActiveDatasourceOnly, false),
       retentionPeriod: store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7),
       starredTabAsFirstTab: store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false),
       lastUsedDatasourceFilters: store
@@ -129,7 +138,7 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
   }
 
   async updateSettings(settings: RichHistorySettings) {
-    store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourceOnly, settings.activeDatasourceOnly);
+    store.set(RICH_HISTORY_SETTING_KEYS.activeDatasourcesOnly, settings.activeDatasourcesOnly);
     store.set(RICH_HISTORY_SETTING_KEYS.retentionPeriod, settings.retentionPeriod);
     store.set(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, settings.starredTabAsFirstTab);
     store.setObject(
@@ -164,7 +173,10 @@ function updateRichHistory(
  */
 function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalStorageDTO[] {
   const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
-  const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
+  // We don't care about timezones that much here when creating the time stamp for deletion. First, not sure if we
+  // should be deleting entries based on timezone change that may serve only for querying and also the timezone
+  // difference would not change that much what is or isn't deleted compared to the default 2 weeks retention.
+  const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, { isLastTs: false });
 
   /* Keep only queries, that are within the selected retention period or that are starred.
    * If no queries, initialize with empty array
@@ -176,7 +188,7 @@ function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalSto
  * Ensures the entry can be added. Throws an error if current limit has been hit.
  * Returns queries that should be saved back giving space for one extra query.
  */
-function checkLimits(queriesToKeep: RichHistoryLocalStorageDTO[]): {
+export function checkLimits(queriesToKeep: RichHistoryLocalStorageDTO[]): {
   queriesToKeep: RichHistoryLocalStorageDTO[];
   limitExceeded: boolean;
 } {

@@ -30,7 +30,7 @@ func newWalker(rootDir string) *walker {
 // can detect infinite loops while following symlinks.
 // It solves the issue where your WalkFunc needs a path relative to the symbolic link
 // (resolving links within walkfunc loses the path to the symbolic link for each traversal).
-func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, followDistFolder bool, walkFn WalkFunc) error {
+func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, walkFn WalkFunc) error {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, foll
 		}
 	}
 
-	return newWalker(path).walk(path, info, resolvedPath, symlinkPathsFollowed, followDistFolder, walkFn)
+	return newWalker(path).walk(path, info, resolvedPath, symlinkPathsFollowed, walkFn)
 }
 
 // walk walks the path. It is a helper/sibling function to Walk.
@@ -53,7 +53,7 @@ func Walk(path string, followSymlinks bool, detectSymlinkInfiniteLoop bool, foll
 //
 // If resolvedPath is "", then we are not following symbolic links.
 // If symlinkPathsFollowed is not nil, then we need to detect infinite loop.
-func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollowed map[string]bool, followDistFolder bool, walkFn WalkFunc) error {
+func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollowed map[string]bool, walkFn WalkFunc) error {
 	if info == nil {
 		return errors.New("walk: Nil FileInfo passed")
 	}
@@ -91,7 +91,7 @@ func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlin
 		if err != nil {
 			return err
 		}
-		return w.walk(path, info2, path2, symlinkPathsFollowed, followDistFolder, walkFn)
+		return w.walk(path, info2, path2, symlinkPathsFollowed, walkFn)
 	} else if info.IsDir() {
 		list, err := os.ReadDir(path)
 		if err != nil {
@@ -112,23 +112,19 @@ func (w *walker) walk(path string, info os.FileInfo, resolvedPath string, symlin
 			subFiles = append(subFiles, subFile{path: path2, resolvedPath: resolvedPath2, fileInfo: fileInfo})
 		}
 
-		if followDistFolder && w.containsDistFolder(subFiles) {
+		if w.containsDistFolder(subFiles) {
 			err := w.walk(
 				filepath.Join(path, "dist"),
 				info,
 				filepath.Join(resolvedPath, "dist"),
 				symlinkPathsFollowed,
-				followDistFolder,
 				walkFn)
 			if err != nil {
 				return err
 			}
 		} else {
 			for _, p := range subFiles {
-				if p.isDistDir() && !followDistFolder {
-					continue
-				}
-				err = w.walk(p.path, p.fileInfo, p.resolvedPath, symlinkPathsFollowed, followDistFolder, walkFn)
+				err = w.walk(p.path, p.fileInfo, p.resolvedPath, symlinkPathsFollowed, walkFn)
 				if err != nil {
 					return err
 				}
@@ -152,10 +148,6 @@ func (w *walker) containsDistFolder(subFiles []subFile) bool {
 type subFile struct {
 	path, resolvedPath string
 	fileInfo           os.FileInfo
-}
-
-func (s subFile) isDistDir() bool {
-	return s.fileInfo.IsDir() && s.fileInfo.Name() == "dist"
 }
 
 // CleanRelativePath returns the shortest path name equivalent to path

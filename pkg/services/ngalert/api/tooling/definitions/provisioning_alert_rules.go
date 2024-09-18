@@ -17,6 +17,13 @@ import (
 //
 // Export all alert rules in provisioning file format.
 //
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
+//
 //     Responses:
 //       200: AlertingFileExport
 //       404: description: Not found.
@@ -36,7 +43,9 @@ import (
 //     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
 //     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -158,6 +167,8 @@ type ProvisionedAlertRule struct {
 	IsPaused bool `json:"isPaused"`
 	// example: {"receiver":"email","group_by":["alertname","grafana_folder","cluster"],"group_wait":"30s","group_interval":"1m","repeat_interval":"4d","mute_time_intervals":["Weekends","Holidays"]}
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings"`
+	//example: {"metric":"grafana_alerts_ratio", "from":"A"}
+	Record *Record `json:"record"`
 }
 
 // swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
@@ -168,6 +179,15 @@ type ProvisionedAlertRule struct {
 //       200: AlertRuleGroup
 //       404: description: Not found.
 
+// swagger:route DELETE /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteDeleteAlertRuleGroup
+//
+// Delete rule group
+//
+//     Responses:
+//       204: description: The alert rule group was deleted successfully.
+//       403: ForbiddenError
+//       404: NotFound
+
 // swagger:route GET /v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export provisioning stable RouteGetAlertRuleGroupExport
 //
 // Export an alert rule group in provisioning file format.
@@ -175,7 +195,9 @@ type ProvisionedAlertRule struct {
 //     Produces:
 //     - application/json
 //     - application/yaml
+//     - application/terraform+hcl
 //     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -183,7 +205,7 @@ type ProvisionedAlertRule struct {
 
 // swagger:route PUT /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
-// Update the interval of a rule group.
+// Create or update alert rule group.
 //
 //     Consumes:
 //     - application/json
@@ -192,13 +214,13 @@ type ProvisionedAlertRule struct {
 //       200: AlertRuleGroup
 //       400: ValidationError
 
-// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport RouteDeleteAlertRuleGroup
 type FolderUIDPathParam struct {
 	// in:path
 	FolderUID string `json:"FolderUID"`
 }
 
-// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport RouteDeleteAlertRuleGroup
 type RuleGroupPathParam struct {
 	// in:path
 	Group string `json:"Group"`
@@ -240,7 +262,7 @@ type AlertRuleExport struct {
 	Title        string              `json:"title" yaml:"title" hcl:"name"`
 	Condition    string              `json:"condition" yaml:"condition" hcl:"condition"`
 	Data         []AlertQueryExport  `json:"data" yaml:"data" hcl:"data,block"`
-	DashboardUID *string             `json:"dasboardUid,omitempty" yaml:"dashboardUid,omitempty"`
+	DashboardUID *string             `json:"dashboardUid,omitempty" yaml:"dashboardUid,omitempty"`
 	PanelID      *int64              `json:"panelId,omitempty" yaml:"panelId,omitempty"`
 	NoDataState  NoDataState         `json:"noDataState" yaml:"noDataState" hcl:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"execErrState" yaml:"execErrState" hcl:"exec_err_state"`
@@ -253,6 +275,7 @@ type AlertRuleExport struct {
 	Labels               *map[string]string                   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
 	IsPaused             bool                                 `json:"isPaused" yaml:"isPaused" hcl:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
+	Record               *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
@@ -272,11 +295,18 @@ type RelativeTimeRangeExport struct {
 
 // AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.
 type AlertRuleNotificationSettingsExport struct {
-	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"receiver"`
+	// Field name mismatches with Terraform provider schema are noted where applicable.
 
+	Receiver          string   `yaml:"receiver,omitempty" json:"receiver,omitempty" hcl:"contact_point"` // TF -> `contact_point`
 	GroupBy           []string `yaml:"group_by,omitempty" json:"group_by,omitempty" hcl:"group_by"`
 	GroupWait         *string  `yaml:"group_wait,omitempty" json:"group_wait,omitempty" hcl:"group_wait,optional"`
 	GroupInterval     *string  `yaml:"group_interval,omitempty" json:"group_interval,omitempty" hcl:"group_interval,optional"`
 	RepeatInterval    *string  `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty" hcl:"repeat_interval,optional"`
-	MuteTimeIntervals []string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_time_intervals"`
+	MuteTimeIntervals []string `yaml:"mute_time_intervals,omitempty" json:"mute_time_intervals,omitempty" hcl:"mute_timings"` // TF -> `mute_timings`
+}
+
+// Record is the provisioned export of models.Record.
+type AlertRuleRecordExport struct {
+	Metric string `json:"metric" yaml:"metric" hcl:"metric"`
+	From   string `json:"from" yaml:"from" hcl:"from"`
 }

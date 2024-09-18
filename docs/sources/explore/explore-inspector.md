@@ -1,97 +1,87 @@
 ---
+description: Learn more about the Query inspector in Grafana Explore.
 labels:
   products:
     - cloud
     - enterprise
     - oss
-title: Inspector in Explore
-weight: 400
+keywords:
+  - Explore
+title: Query inspector in Explore
+weight: 40
 ---
 
-# Inspector in Explore
+# Query inspector in Explore
 
-The inspector helps you understand and troubleshoot your queries. You can inspect the raw data, export that data to a comma-separated values (CSV) file, export log results in TXT format, and view query requests.
+The Query inspector in Grafana Explore gives you detailed statistics regarding your query, which helps you understand and troubleshoot issues with your queries. Query inspector also lets you inspect raw data, export data to a comma-separated values (CSV) file, export log results in TXT format, and view query requests.
 
-## Inspector UI
+## Query inspector UI
 
-The inspector has following tabs:
+To open Query inspector:
 
-- **Stats tab -** Shows how long your query takes and how much it returns.
-- **Query tab -** Shows you the requests to the server sent when Grafana queries the data source.
-- **JSON tab -** Allows you to view and copy the data JSON and data frame structure JSON.
-- **Data tab -** Shows the raw data returned by the query.
-- **Error tab -** Shows the error. Only visible when query returns error.
-
-## Inspector tasks
-
-You can perform a variety of tasks in the Explore inspector.
-
-### Open the Inspector
-
+1. Go to the Explore page.
 1. Run the query you would like to inspect.
-1. Click the **Inspector** button.
+1. Click **Query inspector**.
 
-The inspector pane opens on the bottom of the screen.
+The Query inspector pane opens on the bottom of the Explore page, where you see the following tabs:
 
-### Inspect raw query results
+- **Stats tab -** Shows statistics regarding the query, including the amount of time it takes to run the query, data processing time and the amount of data returned.
+- **Query tab -** Provides raw request and response data and time when Grafana queries the data source.
+- **JSON tab -** Allows you to view and copy the JSON data and the JSON data frame structure.
+- **Data tab -** Shows the raw data returned by the query. You can download the information to a CSV file.
+- **Error tab -** Shows any errors. _Only visible if the query returns an error._
 
-You can view raw query results, that is the data returned by the query in a table.
+## Query inspector Stats tab
 
-In the **Inspector** tab, click the **Data** tab.
+You can inspect query performance in the **Stats tab**, which displays statistics that tell you how long your query takes, how many queries you send, the number of rows returned and trace IDs. This information can help you troubleshoot your queries, especially if any of the numbers are unexpectedly high or low.
 
-For multiple queries or for queries multiple nodes, there are additional options.
+1. Open the inspector.
+1. Click the **Stats tab**.
 
-- **Show data frame:** Select the result set data you want to view.
-- **Series joined by time:** View the raw data from all of your queries at once, one result set per column. You can click a column heading to sort the data.
+Statistics display in read-only format.
 
-### Download raw query results as CSV
+## Query inspector Query tab
 
-Grafana generates a CSV file in your default browser download location. You can open it in the viewer of your choice.
+View raw request and response in the Query tab.
 
-1. In the **Inspector** tab, get raw query results by following the instructions [described in Inspect raw query results](#inspect-raw-query-results).
-1. Refine query settings until you can see the raw data that you want to export.
-1. Click **Download CSV**.
+1. Open the Query inspector and click the **Query tab**.
+1. Click **Refresh**.
 
-In order to download a CSV file specifically formatted for Excel, expand **Data options** and then enable the **Download for Excel** toggle before you click the **Download CSV** option.
+Grafana sends the query to the server and displays the result. You can drill down on specific portions of the query, expand or collapse all of it. Click **Copy to clipboard** to copy the data to use in other applications.
+
+## Query inspector JSON tab
+
+View data results as JSON and as data frame JSON models in the **JSON tab**.
+
+1. Open the Query inspector and click the **JSON tab**.
+1. Choose one of the following options from the **Select source** dropdown menu:
+   - **Panel data -** Displays a JSON object representing the data retrieved by the visualization from Explore.
+   - **DataFrame JSON (from query) -** Displays the raw data result set without transformations and field configuration applied.
+
+## Query inspector Data tab
+
+View, inspect and download raw query results in the **Data tab**.
+
+1. Open the Query inspector and click the **Data** tab.
+1. Click **Data options** to to view options under **Show data frame**.
+1. Select a data results set from the dropdown menu.
+1. For multiple queries or for queries multiple nodes, you can select **Series joined by time** from the dropdown to view the raw data from all of your queries at once, one result set per column. You can click any column heading to sort the data.
+1. Toggle **Formatted data** to match the format in the panel.
+1. Toggle **Download for Excel** to download a CSV file specifically formatted for Excel.
+1. To download the results to a CSV file click **Download CSV** in the upper right of the Query inspector pane.
 
 ### Download log results as TXT
 
-Grafana generates a TXT file in your default browser download location. You can open it in the viewer of your choice.
+Based on the type of data source (Loki, for example), or when logs are present in the results set, Grafana generates a TXT file of log raw data results in your default browser download location. You can open it in the viewer of your choice.
 
-1. Open the inspector.
-1. Inspect the log query results as described above.
+1. Click **Query inspector**.
+1. Click the **Data tab** to view log query results.
 1. Click **Download logs**.
 
 ### Download trace results
 
-Based on the data source type, Grafana generates a JSON file for the trace results in one of the supported formats: Jaeger, Zipkin, or OTLP formats.
+Based on the data source type (Tempo, for example), Grafana generates a JSON file for trace results in one of these supported formats: Jaeger, Zipkin, or OTLP.
 
-1. Open the inspector.
-1. Inspect the trace query results [as described above](#inspect-raw-query-results).
+1. Click **Query inspector**.
+1. Click the **Data tab** to view traces results.
 1. Click **Download traces**.
-
-### Inspect query performance
-
-The Stats tab displays statistics that tell you how long your query takes, how many queries you send, and the number of rows returned. This information can help you troubleshoot your queries, especially if any of the numbers are unexpectedly high or low.
-
-1. Open the inspector.
-1. Navigate to the **Stats** tab.
-
-Statistics are displayed in read-only format.
-
-### View JSON model
-
-You can explore and export data as well as data frame JSON models.
-
-1. In the Inspector panel, click the **JSON** tab.
-1. From the Select source dropdown, choose one of the following options:
-   - **Data -** Displays a JSON object representing the data that was returned to Explore.
-   - **DataFrame structure -** Displays the raw result set.
-1. You can expand or collapse portions of the JSON to view separate sections. You can also click the **Copy to clipboard** option to copy JSON body and paste it into another application.
-
-### View raw request and response to data source
-
-1. Open the panel inspector and then click the **Query** tab.
-1. Click **Refresh**.
-
-Grafana sends the query to the server and displays the result. You can drill down on specific portions of the query, expand or collapse all of it, or copy the data to the clipboard to use in other applications.

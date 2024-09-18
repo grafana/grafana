@@ -25,6 +25,37 @@ Node graphs can visualize directed graphs or networks. They use a directed force
 
 ![Node graph visualization](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
 
+## Configure a node graph visualization
+
+The following video provides beginner steps for creating node panel visualizations. You'll learn the data requirements and caveats, special customizations, and much more:
+
+{{< youtube id="VrvsMkRwoKw" >}}
+
+{{< docs/play title="Node graph panel" url="https://play.grafana.org/d/bdodfbi3d57uoe/" >}}
+
+## Panel options
+
+{{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Nodes options
+
+The **Nodes** options section provides configurations for node behaviors.
+
+- **Main stat unit** - Choose which unit the main stat displays in the graph's nodes.
+- **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's nodes.
+- **Arc sections** - Configure which fields define the size of the colored circle around the node and select a color for each. You can add multiple fields.
+
+{{< admonition type="note" >}}
+Defining arc sections overrides the automatic detection of `arc__*` and `color` fields described in the **Optional fields** section of [Nodes data frame structure](#nodes-data-frame-structure).
+{{< /admonition >}}
+
+## Edges options
+
+The **Edges** options section provides configurations for node edges behaviors.
+
+- **Main stat unit** - Choose which unit the main stat displays in the graph's edges.
+- **Secondary stat unit** - Choose which unit the secondary stat displays in the graph's edges.
+
 ## Data requirements
 
 A node graph requires a specific shape of the data to be able to display its nodes and edges. This means not every data source or query can be visualized with this graph. If you want to use this as a data source developer see the section about data API.
@@ -104,13 +135,21 @@ Required fields:
 
 Optional fields:
 
-| Field name    | Type          | Description                                                                                                                                                                                         |
-| ------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| mainstat      | string/number | First stat shown in the overlay when hovering over the edge. It can be a string showing the value as is or it can be a number. If it is a number, any unit associated with that field is also shown |
-| secondarystat | string/number | Same as mainStat, but shown right under it.                                                                                                                                                         |
-| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                    |
-| thickness     | number        | The thickness of the edge. Default: `1`                                                                                                                                                             |
-| highlighted   | boolean       | Sets whether the edge should be highlighted. Useful, for example, to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                               |
+| Field name      | Type          | Description                                                                                                                                                                                                                                                               |
+| --------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| mainstat        | string/number | First stat shown in the overlay when hovering over the edge. It can be a string showing the value as is or it can be a number. If it is a number, any unit associated with that field is also shown                                                                       |
+| secondarystat   | string/number | Same as mainStat, but shown right under it.                                                                                                                                                                                                                               |
+| detail\_\_\*    | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the edge. Use `config.displayName` for more human readable label.                                                                                                          |
+| thickness       | number        | The thickness of the edge. Default: `1`                                                                                                                                                                                                                                   |
+| highlighted     | boolean       | Sets whether the edge should be highlighted. Useful, for example, to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                     |
+| color           | string        | Sets the default color of the edge. It can be an acceptable HTML color string. Default: `#999`                                                                                                                                                                            |
+| strokeDasharray | string        | Sets the pattern of dashes and gaps used to render the edge. If unset, a solid line is used as edge. For more information and examples, refer to the [`stroke-dasharray` MDN documentation](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-dasharray). |
+
+{{< admonition type="caution" >}}
+Starting with 10.5, `highlighted` is deprecated.
+It will be removed in a future release.
+Use `color` to indicate a highlighted edge state instead.
+{{< /admonition >}}
 
 ### Nodes data frame structure
 

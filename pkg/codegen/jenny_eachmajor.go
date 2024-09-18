@@ -5,86 +5,83 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/kindsys"
+	"github.com/grafana/cuetsy/ts"
+	"github.com/grafana/cuetsy/ts/ast"
 )
 
 // LatestMajorsOrXJenny returns a jenny that repeats the input for the latest in each major version.
-//
-// TODO remove forceGroup option, it's a temporary hack to accommodate core kinds
-func LatestMajorsOrXJenny(parentdir string, forceGroup bool, inner codejen.OneToOne[SchemaForGen]) OneToMany {
-	if inner == nil {
-		panic("inner jenny must not be nil")
-	}
-
+func LatestMajorsOrXJenny(parentdir string) OneToMany {
 	return &lmox{
-		parentdir:  parentdir,
-		inner:      inner,
-		forceGroup: forceGroup,
+		parentdir: parentdir,
+		inner:     TSTypesJenny{ApplyFuncs: []ApplyFunc{renameSpecNode}},
 	}
 }
 
 type lmox struct {
-	parentdir  string
-	inner      codejen.OneToOne[SchemaForGen]
-	forceGroup bool
+	parentdir string
+	inner     codejen.OneToOne[SchemaForGen]
 }
 
 func (j *lmox) JennyName() string {
 	return "LatestMajorsOrXJenny"
 }
 
-func (j *lmox) Generate(kind kindsys.Kind) (codejen.Files, error) {
-	// TODO remove this once codejen catches nils https://github.com/grafana/codejen/issues/5
-	if kind == nil {
+func (j *lmox) Generate(sfg SchemaForGen) (codejen.Files, error) {
+	sfg.IsGroup = true
+	f, err := j.inner.Generate(sfg)
+	if err != nil {
+		return nil, fmt.Errorf("%s jenny failed for %s: %w", j.inner.JennyName(), sfg.Name, err)
+	}
+	if f == nil || !f.Exists() {
 		return nil, nil
 	}
 
-	comm := kind.Props().Common()
-	sfg := SchemaForGen{
-		Name:    comm.Name,
-		IsGroup: comm.LineageIsGroup,
-	}
+	f.RelativePath = filepath.Join(j.parentdir, sfg.OutputName, "x", f.RelativePath)
+	f.From = append(f.From, j)
+	return codejen.Files{*f}, nil
+}
 
-	if j.forceGroup {
-		sfg.IsGroup = true
-	}
-
-	do := func(sfg SchemaForGen, infix string) (codejen.Files, error) {
-		f, err := j.inner.Generate(sfg)
-		if err != nil {
-			return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), kind.Props().Common().Name, err)
-		}
-		if f == nil || !f.Exists() {
-			return nil, nil
+// renameSpecNode rename spec node from the TS file result
+func renameSpecNode(sfg SchemaForGen, tf *ast.File) {
+	specidx, specdefidx := -1, -1
+	for idx, def := range tf.Nodes {
+		// Peer through export keywords
+		if ex, is := def.(ast.ExportKeyword); is {
+			def = ex.Decl
 		}
 
-		f.RelativePath = filepath.Join(j.parentdir, comm.MachineName, infix, f.RelativePath)
-		f.From = append(f.From, j)
-		return codejen.Files{*f}, nil
-	}
-
-	if comm.Maturity.Less(kindsys.MaturityStable) {
-		sfg.Schema = kind.Lineage().Latest()
-		return do(sfg, "x")
-	}
-
-	var fl codejen.Files
-	major := -1
-	for sch := kind.Lineage().First(); sch != nil; sch = sch.Successor() {
-		if int(sch.Version()[0]) == major {
-			continue
+		switch x := def.(type) {
+		case ast.TypeDecl:
+			if x.Name.Name == "spec" {
+				specidx = idx
+				x.Name.Name = sfg.Name
+				tf.Nodes[idx] = x
+			}
+		case ast.VarDecl:
+			// Before:
+			//   export const defaultspec: Partial<spec> = {
+			// After:
+			// /  export const defaultPlaylist: Partial<Playlist> = {
+			if x.Names.Idents[0].Name == "defaultspec" {
+				specdefidx = idx
+				x.Names.Idents[0].Name = "default" + sfg.Name
+				tt := x.Type.(ast.TypeTransformExpr)
+				tt.Expr = ts.Ident(sfg.Name)
+				x.Type = tt
+				tf.Nodes[idx] = x
+			}
 		}
-		major = int(sch.Version()[0])
+	}
 
-		sfg.Schema = sch.LatestInMajor()
-		files, err := do(sfg, fmt.Sprintf("v%v", sch.Version()[0]))
-		if err != nil {
-			return nil, err
+	if specidx != -1 {
+		decl := tf.Nodes[specidx]
+		tf.Nodes = append(append(tf.Nodes[:specidx], tf.Nodes[specidx+1:]...), decl)
+	}
+	if specdefidx != -1 {
+		if specdefidx > specidx {
+			specdefidx--
 		}
-		fl = append(fl, files...)
+		decl := tf.Nodes[specdefidx]
+		tf.Nodes = append(append(tf.Nodes[:specdefidx], tf.Nodes[specdefidx+1:]...), decl)
 	}
-	if fl.Validate() != nil {
-		return nil, fl.Validate()
-	}
-	return fl, nil
 }

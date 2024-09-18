@@ -21,10 +21,11 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -86,6 +87,11 @@ func (b *SnapshotsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 	return resourceInfo.GroupVersion()
 }
 
+func (b *SnapshotsAPIBuilder) GetDesiredDualWriterMode(dualWrite bool, modeMap map[string]grafanarest.DualWriterMode) grafanarest.DualWriterMode {
+	// Add required configuration support in order to enable other modes. For an example, see pkg/registry/apis/playlist/register.go
+	return grafanarest.Mode0
+}
+
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&dashboardsnapshot.DashboardSnapshot{},
@@ -122,7 +128,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
-	dualWrite bool,
+	_ grafanarest.DualWriterMode,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboardsnapshot.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
@@ -269,6 +275,13 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 							fmt.Sprintf("user orgId does not match namespace (%d != %d)", info.OrgID, user.OrgID), nil)
 						return
 					}
+
+					cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
+					if err := web.Bind(wrap.Req, &cmd); err != nil {
+						wrap.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+						return
+					}
+
 					opts, err := b.options(info.Value)
 					if err != nil {
 						wrap.JsonApiErr(http.StatusBadRequest, "error getting options", err)
@@ -276,7 +289,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 					}
 
 					// Use the existing snapshot service
-					dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, b.service)
+					dashboardsnapshots.CreateDashboardSnapshot(wrap, opts.Spec, cmd, b.service)
 				},
 			},
 			{

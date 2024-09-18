@@ -15,11 +15,11 @@ import {
   MovingAverage as SchemaMovingAverage,
   BucketAggregation,
   Logs as SchemaLogs,
-  Elasticsearch,
+  ElasticsearchDataQuery,
 } from './dataquery.gen';
 
 export * from './dataquery.gen';
-export { Elasticsearch as ElasticsearchQuery } from './dataquery.gen';
+export { ElasticsearchDataQuery as ElasticsearchQuery } from './dataquery.gen';
 
 // We want to extend the settings of the Logs query with additional properties that
 // are not part of the schema. This is a workaround, because exporting LogsSettings
@@ -56,7 +56,6 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
   // we used to have a field named `esVersion` in the past,
   // please do not use that name in the future.
-  xpack?: boolean;
   interval?: Interval;
   timeInterval: string;
   maxConcurrentShardRequests?: number;
@@ -127,7 +126,7 @@ export type DataLinkConfig = {
 };
 
 export interface ElasticsearchAnnotationQuery {
-  target: Elasticsearch;
+  target: ElasticsearchDataQuery;
   timeField?: string;
   titleField?: string;
   timeEndField?: string;
@@ -140,3 +139,68 @@ export interface ElasticsearchAnnotationQuery {
 }
 
 export type RangeMap = Record<string, { from: number; to: number; format: string }>;
+
+export type ElasticsearchResponse = ElasticsearchResponseWithHits | ElasticsearchResponseWithAggregations;
+
+export type ElasticsearchResponseWithHits = {
+  responses: Array<{
+    hits: {
+      hits: ElasticsearchHits;
+    };
+  }>;
+};
+export type ElasticsearchHits = Array<Record<string, string | number | Record<string | number, string | number>>>;
+
+export type ElasticsearchResponseWithAggregations = {
+  responses: Array<{
+    aggregations: {
+      [key: string]: {
+        buckets: Array<{
+          key_as_string?: string;
+          key: string;
+          doc_count: number;
+          [key: string]: string | number | undefined;
+        }>;
+      };
+    };
+  }>;
+};
+
+export const isElasticsearchResponseWithHits = (res: unknown): res is ElasticsearchResponseWithHits => {
+  return (
+    res &&
+    typeof res === 'object' &&
+    'responses' in res &&
+    Array.isArray(res['responses']) &&
+    res['responses'].find((response: unknown) => {
+      return (
+        typeof response === 'object' &&
+        response !== null &&
+        'hits' in response &&
+        typeof response['hits'] === 'object' &&
+        response['hits'] !== null &&
+        'hits' in response['hits'] &&
+        Array.isArray(response['hits']['hits'])
+      );
+    })
+  );
+};
+
+export const isElasticsearchResponseWithAggregations = (res: unknown): res is ElasticsearchResponseWithAggregations => {
+  return (
+    res &&
+    typeof res === 'object' &&
+    'responses' in res &&
+    Array.isArray(res['responses']) &&
+    res['responses'].find((response: unknown) => {
+      return (
+        typeof response === 'object' &&
+        response !== null &&
+        'aggregations' in response &&
+        typeof response['aggregations'] === 'object' &&
+        response['aggregations'] !== null &&
+        Object.keys(response['aggregations']).length > 0
+      );
+    })
+  );
+};

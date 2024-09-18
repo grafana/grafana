@@ -1,9 +1,10 @@
-import { config, SystemJS } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { resolveWithCache } from './cache';
-import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, AMD_MODULE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
+import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
+import { SystemJS } from './systemjs';
 import { SystemJSWithLoaderHooks } from './types';
 import { isHostedOnCDN } from './utils';
 
@@ -18,10 +19,6 @@ export async function decorateSystemJSFetch(
   if (JS_CONTENT_TYPE_REGEX.test(contentType)) {
     const source = await res.text();
     let transformedSrc = source;
-
-    if (AMD_MODULE_REGEX.test(transformedSrc)) {
-      transformedSrc = preventAMDLoaderCollision(source);
-    }
 
     // JS files on the CDN need their asset paths transformed in the source
     if (isHostedOnCDN(res.url)) {
@@ -40,27 +37,31 @@ export function decorateSystemJSResolve(
   id: string,
   parentUrl?: string
 ) {
-  const isFileSystemModule = id.endsWith('module.js') && !isHostedOnCDN(id);
-
   try {
     const url = originalResolve.apply(this, [id, parentUrl]);
     const cleanedUrl = getBackWardsCompatibleUrl(url);
+    const isFileSystemModule =
+      (cleanedUrl.endsWith('.js') || cleanedUrl.endsWith('.css')) && !isHostedOnCDN(cleanedUrl);
     // Add a cache query param for filesystem module.js requests
     // CDN hosted plugins contain the version in the path so skip
     return isFileSystemModule ? resolveWithCache(cleanedUrl) : cleanedUrl;
   } catch (err) {
-    // Provide fallback for old plugins that use `loadPluginCss` to load theme styles
-    // Only affect plugins on the filesystem.
+    // Provide fallback for plugins that use `loadPluginCss` to load theme styles
+    // Regex only targets plugins on the filesystem.
     if (LOAD_PLUGIN_CSS_REGEX.test(id)) {
-      return `${config.appSubUrl ?? ''}/public/${id}`;
+      const prefixId = `${config.appSubUrl ?? ''}/public/${id}`;
+      const url = originalResolve.apply(this, [prefixId, parentUrl]);
+      return resolveWithCache(url);
     }
-    console.log(`SystemJS: failed to resolve '${id}'`);
+    console.warn(`SystemJS: failed to resolve '${id}'`);
     return id;
   }
 }
 
 export function decorateSystemJsOnload(err: unknown, id: string) {
-  if (id.endsWith('.css') && !err) {
+  // IF the url is relative resolve to current origin, absolute urls passed in will ignore base.
+  const url = new URL(id, window.location.origin);
+  if (url.pathname.endsWith('.css') && !err) {
     const module = SystemJS.get(id);
     const styles = module?.default;
     if (styles) {
@@ -83,12 +84,4 @@ function getBackWardsCompatibleUrl(url: string) {
   const hasValidFileExtension = systemJSFileExtensions.some((extensionName) => url.endsWith(extensionName));
 
   return hasValidFileExtension ? url : url + '.js';
-}
-
-// This transform prevents a conflict between systemjs and requirejs which Monaco Editor
-// depends on. See packages/grafana-runtime/src/utils/plugin.ts for more.
-function preventAMDLoaderCollision(source: string) {
-  return `(function(define) {
-  ${source}
-})(window.__grafana_amd_define);`;
 }

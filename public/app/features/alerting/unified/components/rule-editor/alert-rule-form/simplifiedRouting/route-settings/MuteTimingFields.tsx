@@ -1,8 +1,8 @@
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
-import { Field, InputControl, MultiSelect, useStyles2 } from '@grafana/ui';
+import { Field, MultiSelect, useStyles2 } from '@grafana/ui';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
@@ -29,7 +29,7 @@ export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
       description="Select a mute timing to define when not to send notifications for this alert rule"
       invalid={!!errors.contactPoints?.[alertManager]?.muteTimeIntervals}
     >
-      <InputControl
+      <Controller
         render={({ field: { onChange, ref, ...field } }) => (
           <MultiSelect
             aria-label="Mute timings"

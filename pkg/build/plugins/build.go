@@ -10,8 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/errutil"
+	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/grafana/grafana/pkg/build/syncutil"
-	"github.com/grafana/grafana/pkg/infra/fs"
 )
 
 type PluginSigningMode = int
@@ -45,7 +45,7 @@ func Build(ctx context.Context, grafanaDir string, p syncutil.WorkerPool, g *err
 			}
 
 			dstPath := filepath.Join("plugins-bundled", "dist", fi.Name())
-			if err := fs.CopyRecursive(filepath.Join(dpath, "dist"), dstPath); err != nil {
+			if err := fsutil.CopyRecursive(filepath.Join(dpath, "dist"), dstPath); err != nil {
 				return err
 			}
 			if !verMode.PluginSignature.Sign {

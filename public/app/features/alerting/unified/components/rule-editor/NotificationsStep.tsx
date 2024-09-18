@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -9,10 +9,11 @@ import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import LabelsField from './LabelsField';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/SimplifiedRouting';
+import { LabelsEditorModal } from './labels/LabelsEditorModal';
+import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
 type NotificationsStepProps = {
@@ -25,22 +26,35 @@ enum RoutingOptions {
 }
 
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const { watch } = useFormContext<RuleFormValues>();
+  const { watch, getValues, setValue } = useFormContext<RuleFormValues>();
   const styles = useStyles2(getStyles);
 
   const [type] = watch(['type', 'labels', 'queries', 'condition', 'folder', 'name', 'manualRouting']);
+  const [showLabelsEditor, setShowLabelsEditor] = useState(false);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && simplifiedRoutingToggleEnabled;
 
+  function onCloseLabelsEditor(
+    labelsToUpdate?: Array<{
+      key: string;
+      value: string;
+    }>
+  ) {
+    if (labelsToUpdate) {
+      setValue('labels', labelsToUpdate);
+    }
+    setShowLabelsEditor(false);
+  }
+
   return (
     <RuleEditorSection
       stepNo={4}
       title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure labels and notifications'}
       description={
-        <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Stack direction="row" gap={0.5} alignItems="center">
           {type === RuleFormType.cloudRecording ? (
             <Text variant="bodySmall" color="secondary">
               Add labels to help you better manage your recording rules
@@ -56,7 +70,13 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       }
       fullWidth
     >
-      <LabelsField dataSourceName={dataSourceName} />
+      <LabelsFieldInForm onEditClick={() => setShowLabelsEditor(true)} />
+      <LabelsEditorModal
+        isOpen={showLabelsEditor}
+        onClose={onCloseLabelsEditor}
+        dataSourceName={dataSourceName}
+        initialLabels={getValues('labels')}
+      />
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
           <Text element="h5">Notifications</Text>
@@ -102,7 +122,7 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
   };
 
   return (
-    <Stack direction="column">
+    <Stack direction="column" gap={2}>
       <Stack direction="column">
         <RadioButtonGroup
           options={routingOptions}
@@ -223,35 +243,25 @@ interface NotificationsStepDescriptionProps {
 }
 
 export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
-  const styles = useStyles2(getStyles);
   return (
-    <div className={styles.notificationsOptionDescription}>
+    <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">
         {manualRouting
           ? 'Notifications for firing alerts are routed to a selected contact point.'
           : 'Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.'}
       </Text>
       {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}
-    </div>
+    </Stack>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   routingOptions: css({
-    marginTop: theme.spacing(2),
     width: 'fit-content',
   }),
   configureNotifications: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(1),
     marginTop: theme.spacing(2),
-  }),
-  notificationsOptionDescription: css({
-    marginTop: theme.spacing(1),
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: theme.spacing(0.5),
   }),
 });

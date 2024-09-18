@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -39,12 +38,12 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	return c.client.AuthenticatePassword(ctx, r, username, password)
 }
 
+func (c *Basic) IsEnabled() bool {
+	return true
+}
+
 func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
 	if r.HTTPRequest == nil {
-		return false
-	}
-	// The OAuth2 introspection endpoint uses basic auth but is handled by the oauthserver package.
-	if strings.EqualFold(r.HTTPRequest.RequestURI, "/oauth2/introspect") {
 		return false
 	}
 	return looksLikeBasicAuthRequest(r)

@@ -1,8 +1,6 @@
-import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, Text, Box } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
@@ -23,15 +21,12 @@ import { getFiltersFromUrlParams } from './utils/misc';
 import { initialAsyncRequestState } from './utils/redux';
 
 const AlertGroups = () => {
-  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
-
   const { selectedAlertmanager } = useAlertmanager();
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
   const { groupBy = [] } = getFiltersFromUrlParams(queryParams);
-  const styles = useStyles2(getStyles);
 
-  const { currentData: amConfigStatus } = useGetAlertmanagerChoiceStatusQuery();
+  const { currentData: amConfigStatus } = alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery();
 
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
   const { loading, error, result: results = [] } = alertGroups[selectedAlertmanager || ''] ?? initialAsyncRequestState;
@@ -79,7 +74,11 @@ const AlertGroups = () => {
             <React.Fragment key={`${JSON.stringify(group.labels)}-group-${index}`}>
               {((index === 1 && Object.keys(filteredAlertGroups[0].labels).length === 0) ||
                 (index === 0 && Object.keys(group.labels).length > 0)) && (
-                <p className={styles.groupingBanner}>Grouped by: {Object.keys(group.labels).join(', ')}</p>
+                <Box paddingY={2}>
+                  <Text element="h2" variant="body">
+                    Grouped by: {Object.keys(group.labels).join(', ')}
+                  </Text>
+                </Box>
               )}
               <AlertGroup alertManagerSourceName={selectedAlertmanager || ''} group={group} />
             </React.Fragment>
@@ -95,11 +94,5 @@ const AlertGroupsPage = () => (
     <AlertGroups />
   </AlertmanagerPageWrapper>
 );
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  groupingBanner: css`
-    margin: ${theme.spacing(2, 0)};
-  `,
-});
 
 export default AlertGroupsPage;

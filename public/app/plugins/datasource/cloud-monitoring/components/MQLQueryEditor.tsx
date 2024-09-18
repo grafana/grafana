@@ -2,6 +2,8 @@ import React from 'react';
 
 import { TextArea } from '@grafana/ui';
 
+import { selectors } from '../e2e/selectors';
+
 export interface Props {
   onChange: (query: string) => void;
   onRunQuery: () => void;
@@ -17,7 +19,7 @@ export function MQLQueryEditor({ query, onChange, onRunQuery }: React.PropsWithC
   };
 
   return (
-    <>
+    <span data-testid={selectors.components.queryEditor.mqlMetricsQueryEditor.container.input}>
       <TextArea
         name="Query"
         className="slate-query-field"
@@ -28,6 +30,6 @@ export function MQLQueryEditor({ query, onChange, onRunQuery }: React.PropsWithC
         onChange={(e) => onChange(e.currentTarget.value)}
         onKeyDown={onKeyDown}
       />
-    </>
+    </span>
   );
 }

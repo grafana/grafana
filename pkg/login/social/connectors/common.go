@@ -18,6 +18,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type ExtraFieldType int
+
+const (
+	String ExtraFieldType = iota
+	Bool
+)
+
+type ExtraKeyInfo struct {
+	Type         ExtraFieldType
+	DefaultValue any
+}
+
 const (
 	// consider moving this to OAuthInfo
 	teamIdsKey = "team_ids"
@@ -35,15 +47,17 @@ type httpGetResponse struct {
 }
 
 func (s *SocialBase) IsEmailAllowed(email string) bool {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
-	return isEmailAllowed(email, info.AllowedDomains)
+	return isEmailAllowed(email, s.info.AllowedDomains)
 }
 
 func (s *SocialBase) IsSignupAllowed() bool {
-	info := s.GetOAuthInfo()
+	s.reloadMutex.RLock()
+	defer s.reloadMutex.RUnlock()
 
-	return info.AllowSignup
+	return s.info.AllowSignup
 }
 
 func isEmailAllowed(email string, allowedDomains []string) bool {
@@ -183,7 +197,7 @@ func CreateOAuthInfoFromKeyValues(settingsKV map[string]any) (*social.OAuthInfo,
 }
 
 func appendUniqueScope(config *oauth2.Config, scope string) {
-	if !slices.Contains(config.Scopes, social.OfflineAccessScope) {
-		config.Scopes = append(config.Scopes, social.OfflineAccessScope)
+	if !slices.Contains(config.Scopes, scope) {
+		config.Scopes = append(config.Scopes, scope)
 	}
 }

@@ -23,6 +23,7 @@ export interface InfluxOptions extends DataSourceJsonData {
 
   // With SQL
   metadata?: Array<Record<string, string>>;
+  insecureGrpc?: boolean;
 }
 
 /**
@@ -58,6 +59,11 @@ export interface InfluxQueryTag {
 }
 
 export type ResultFormat = 'time_series' | 'table' | 'logs';
+
+export interface InfluxVariableQuery extends DataQuery {
+  query: string;
+  maxDataPoints?: number;
+}
 
 export interface InfluxQuery extends DataQuery {
   policy?: string;

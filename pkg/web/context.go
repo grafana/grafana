@@ -205,3 +205,9 @@ func (ctx *Context) GetCookie(name string) string {
 	val, _ := url.QueryUnescape(cookie.Value)
 	return val
 }
+
+// QueryFloat64 returns query result in float64 type.
+func (ctx *Context) QueryFloat64(name string) float64 {
+	n, _ := strconv.ParseFloat(ctx.Query(name), 64)
+	return n
+}

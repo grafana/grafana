@@ -58,6 +58,6 @@ describe('The FileListItem component', () => {
 
     fireEvent.click(screen.getByRole('button', { name: REMOVE_FILE }));
 
-    expect(removeFile).toBeCalledWith(customFile);
+    expect(removeFile).toHaveBeenCalledWith(customFile);
   });
 });

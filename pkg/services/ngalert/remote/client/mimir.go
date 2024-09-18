@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
@@ -23,15 +24,18 @@ type MimirClient interface {
 	DeleteGrafanaAlertmanagerState(ctx context.Context) error
 
 	GetGrafanaAlertmanagerConfig(ctx context.Context) (*UserGrafanaConfig, error)
-	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration, hash string, id, updatedAt int64, isDefault bool) error
+	CreateGrafanaAlertmanagerConfig(ctx context.Context, configuration *apimodels.PostableUserConfig, hash string, createdAt int64, isDefault bool) error
 	DeleteGrafanaAlertmanagerConfig(ctx context.Context) error
+
+	ShouldPromoteConfig() bool
 }
 
 type Mimir struct {
-	client   client.Requester
-	endpoint *url.URL
-	logger   log.Logger
-	metrics  *metrics.RemoteAlertmanager
+	client        client.Requester
+	endpoint      *url.URL
+	logger        log.Logger
+	metrics       *metrics.RemoteAlertmanager
+	promoteConfig bool
 }
 
 type Config struct {
@@ -39,7 +43,8 @@ type Config struct {
 	TenantID string
 	Password string
 
-	Logger log.Logger
+	Logger        log.Logger
+	PromoteConfig bool
 }
 
 // successResponse represents a successful response from the Mimir API.
@@ -75,10 +80,11 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager) (*Mimir, error) {
 	}
 
 	return &Mimir{
-		endpoint: cfg.URL,
-		client:   client.NewTimedClient(c, metrics.RequestLatency),
-		logger:   cfg.Logger,
-		metrics:  metrics,
+		endpoint:      cfg.URL,
+		client:        client.NewTimedClient(c, metrics.RequestLatency),
+		logger:        cfg.Logger,
+		metrics:       metrics,
+		promoteConfig: cfg.PromoteConfig,
 	}, nil
 }
 

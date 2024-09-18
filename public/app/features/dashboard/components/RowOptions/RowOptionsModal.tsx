@@ -24,8 +24,8 @@ export const RowOptionsModal = ({ repeat, title, onDismiss, onUpdate, warning }:
 };
 
 const getStyles = () => ({
-  modal: css`
-    label: RowOptionsModal;
-    width: 500px;
-  `,
+  modal: css({
+    label: 'RowOptionsModal',
+    width: '500px',
+  }),
 });

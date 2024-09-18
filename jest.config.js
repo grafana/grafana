@@ -15,6 +15,11 @@ const esModules = [
   'leven',
   'nanoid',
   'monaco-promql',
+  '@kusto/monaco-kusto',
+  'monaco-editor',
+  '@msagl',
+  'lodash-es',
+  'vscode-languageserver-types',
 ].join('|');
 
 module.exports = {
@@ -27,7 +32,7 @@ module.exports = {
     `/node_modules/(?!(${esModules}|yaml))`, // exclude es modules and yaml to prevent TS complaining
   ],
   moduleDirectories: ['public', 'node_modules'],
-  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
+  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
@@ -41,7 +46,9 @@ module.exports = {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
-    'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
+    // resolve directly as monaco and kusto don't have main property in package.json which jest needs
+    '^monaco-editor$': 'monaco-editor/esm/vs/editor/editor.api.js',
+    '@kusto/monaco-kusto': '@kusto/monaco-kusto/release/esm/monaco.contribution.js',
     // near-membrane-dom won't work in a nodejs environment.
     '@locker/near-membrane-dom': '<rootDir>/public/test/mocks/nearMembraneDom.ts',
     '^@grafana/schema/dist/esm/(.*)$': '<rootDir>/packages/grafana-schema/src/$1',
@@ -50,4 +57,5 @@ module.exports = {
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],
+  watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],
 };

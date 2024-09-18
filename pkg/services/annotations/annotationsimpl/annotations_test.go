@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,7 +50,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 
 	repo := ProvideService(sql, cfg, features, tagService)
 
-	dashboard1 := testutil.CreateDashboard(t, sql, features, dashboards.SaveDashboardCommand{
+	dashboard1 := testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
 		UserID:   1,
 		OrgID:    1,
 		IsFolder: false,
@@ -59,7 +59,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		}),
 	})
 
-	_ = testutil.CreateDashboard(t, sql, features, dashboards.SaveDashboardCommand{
+	_ = testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
 		UserID:   1,
 		OrgID:    1,
 		IsFolder: false,
@@ -208,15 +208,15 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	allDashboards := make([]dashInfo, 0, folder.MaxNestedFolderDepth+1)
 	annotationsTexts := make([]string, 0, folder.MaxNestedFolderDepth+1)
 
-	setupFolderStructure := func() *sqlstore.SQLStore {
-		sql := db.InitTestDB(t)
+	setupFolderStructure := func() db.DB {
+		sql, cfg := db.InitTestDBWithCfg(t)
 
 		// enable nested folders so that the folder table is populated for all the tests
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
 		tagService := tagimpl.ProvideService(sql)
 
-		dashStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, features, tagService, quotatest.New(false, nil))
+		dashStore, err := dashboardstore.ProvideDashboardStore(sql, cfg, features, tagService, quotatest.New(false, nil))
 		require.NoError(t, err)
 
 		origNewGuardian := guardian.New
@@ -225,10 +225,9 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		ac := acimpl.ProvideAccessControl(sql.Cfg)
-		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sql.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, nil)
+		ac := acimpl.ProvideAccessControl(features)
+		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features, supportbundlestest.NewFakeBundleService(), nil)
 
-		cfg := setting.NewCfg()
 		cfg.AnnotationMaximumTagsLength = 60
 
 		store := NewXormStore(cfg, log.New("annotation.test"), sql, tagService)
@@ -252,7 +251,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 				t.Fail()
 			}
 
-			dashboard := testutil.CreateDashboard(t, sql, features, dashboards.SaveDashboardCommand{
+			dashboard := testutil.CreateDashboard(t, sql, cfg, features, dashboards.SaveDashboardCommand{
 				UserID:   usr.UserID,
 				OrgID:    orgID,
 				IsFolder: false,

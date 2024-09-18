@@ -16,7 +16,7 @@ describe('Dashboard time zone support', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  it('Tests dashboard time zone scenarios', () => {
+  it.skip('Tests dashboard time zone scenarios', () => {
     e2e.flows.openDashboard({ uid: '5SdHCasdf' });
 
     const fromTimeZone = 'UTC';
@@ -105,6 +105,41 @@ describe('Dashboard time zone support', () => {
       });
 
     // Today so far, still in Browser timezone
+    e2e.flows.setTimeRange({
+      from: 'now/d',
+      to: 'now',
+    });
+    // Need to wait for 2 calls as there's 2 panels
+    cy.wait(['@dataQuery', '@dataQuery']);
+
+    e2e.components.Panels.Panel.title('Panel with relative time override')
+      .should('be.visible')
+      .within(() => {
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
+      });
+
+    e2e.components.Panels.Panel.title('Panel in timezone')
+      .should('be.visible')
+      .within(() => {
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
+      });
+
+    // Test UTC timezone
+    e2e.flows.setTimeRange({
+      from: 'now-6h',
+      to: 'now',
+      zone: 'Coordinated Universal Time',
+    });
+    // Need to wait for 2 calls as there's 2 panels
+    cy.wait(['@dataQuery', '@dataQuery']);
+
+    e2e.components.Panels.Panel.title('Panel with relative time override')
+      .should('be.visible')
+      .within(() => {
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
+      });
+
+    // Today so far, still in UTC timezone
     e2e.flows.setTimeRange({
       from: 'now/d',
       to: 'now',

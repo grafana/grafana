@@ -1,53 +1,96 @@
 ---
 aliases:
-  - -docs/grafana/latest/alerting/manage-notifications/view-alert-groups/
-  - ../alert-groups/
-  - ../alert-groups/filter-alerts/
-  - ../alert-groups/view-alert-grouping/
-  - ../unified-alerting/alert-groups/
+  - ../../alerting/alert-groups/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-groups/
+  - ../../alerting/alert-groups/filter-alerts/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-groups/filter-alerts/
+  - ../../alerting/alert-groups/view-alert-grouping/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alert-groups/view-alert-grouping/
+  - ../../alerting/unified-alerting/alert-groups/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/alert-groups/
+  - ../../alerting/manage-notifications/view-notification-errors/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/view-notification-errors/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-alert-groups/
-description: Alert groups
+description: The Groups view lists grouped alerts that are actively triggering notifications.
 keywords:
   - grafana
   - alerting
   - alerts
+  - errors
+  - notifications
   - groups
 labels:
   products:
     - cloud
     - enterprise
     - oss
-title: View and filter by alert groups
+title: View the status of notifications
 weight: 800
+refs:
+  alertmanager:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
+  grouping:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
 ---
 
-# View and filter by alert groups
+# View the status of notifications
 
-Alert groups show grouped alerts from an Alertmanager instance. By default, alert rules are grouped by the label keys for the default policy in notification policies. Grouping common alert rules into a single alert group prevents duplicate alert rules from being fired.
+The Groups view page lists grouped alerts that are actively triggering notifications.
 
-You can view alert groups and also filter for alert rules that match specific criteria.
+By default, Grafana Alerting groups similar firing alerts (or alert instances) to prevent notification overload. For details on how notification grouping works, refer to [Group alert notifications](ref:grouping).
 
-## View alert groups
+In the Groups view, you can see alert groups, check the state of their notifications, and also filter for alert instances that match specific criteria. This view is useful for debugging and verifying your grouping settings of notification policies.
+
+## View alert groups and notification state
 
 To view alert groups, complete the following steps.
 
-1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-1. Click **Groups** to view the list of existing groups.
-1. From the **Alertmanager** dropdown, select an external Alertmanager as your data source. By default, the `Grafana` Alertmanager is selected.
-1. From **Custom group by** dropdown, select a combination of labels to view a grouping other than the default. This is useful for debugging and verifying your grouping of notification policies.
+1. Click **Alerts & IRM** -> **Alerting**.
+1. Click **Groups** to view the list of groups firing notifications.
+
+   By default, alert groups are grouped by the notification policies grouping.
+
+   Each group displays its label set, contact point, and the number of alert instances (or alerts).
+
+   Then, click on a group to access its alert instances. You can find alert instances by their label set and view their notification state.
+
+### Notification states
+
+The notification state of an alert instance can be in one of the following states:
+
+- **Unprocessed**: The alert is received but its notification has not been processed yet.
+- **Suppressed**: The alert has been silenced.
+- **Active**: The alert notification has been handled. The alert is still firing and continues to be managed.
+
+### Filter alerts
+
+You can filter by label, state, or Alertmanager:
+
+- **By label**: In **Search**, enter an existing label to view alerts matching the label. For example, `environment=production,region=~US|EU,severity!=warning`.
+
+- **By state**: In **States**, select from Active, Suppressed, or Unprocessed states to view alerts matching your selected state. All other alerts are hidden.
+
+- **By Alertmanager**: In the **Alertmanager** dropdown, select an [external Alertmanager](ref:alertmanager) to view only alert groups for that specific Alertmanager. By default, the `Grafana` Alertmanager is selected.
+
+### Custom group
+
+From **Custom group by** dropdown, select a combination of labels to view a grouping other than the default. This helps validate the [grouping settings of your notification policies](ref:grouping).
 
 If an alert does not contain labels specified either in the grouping of the default policy or the custom grouping, then the alert is added to a catch all group with a header of `No grouping`.
 
-## Filter alerts
+## View notification errors
 
-You can filter by label or state.
+{{% admonition type="note" %}}
 
-### Search by label
+Notification errors are only available with [pre-configured Grafana Alertmanagers](ref:alertmanager).
 
-In **Search**, enter an existing label to view alerts matching the label.
+{{% /admonition %}}
 
-For example, `environment=production,region=~US|EU,severity!=warning`.
+Notification errors provide information about why they failed to be sent or were not received.
 
-### Filter by state
+To view notification errors, navigate to **Alerts & IRM** -> **Alerting** -> **Contact points**.
 
-In **States**, select from Active, Suppressed, or Unprocessed states to view alerts matching your selected state. All other alerts are hidden.
+Each contact point displays a message about the status of their latest notification deliveries.
+
+If a contact point is failing, a red message indicates that there are errors delivering notifications. Hover over the error message to see the notification error details.

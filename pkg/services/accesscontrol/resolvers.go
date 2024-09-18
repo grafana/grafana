@@ -15,6 +15,10 @@ type ScopeAttributeResolver interface {
 	Resolve(ctx context.Context, orgID int64, scope string) ([]string, error)
 }
 
+type ActionResolver interface {
+	ExpandActionSets(permissions []Permission) []Permission
+}
+
 // ScopeAttributeResolverFunc is an adapter to allow functions to implement ScopeAttributeResolver interface
 type ScopeAttributeResolverFunc func(ctx context.Context, orgID int64, scope string) ([]string, error)
 

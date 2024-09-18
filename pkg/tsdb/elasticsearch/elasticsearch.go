@@ -32,8 +32,10 @@ var eslog = log.New("tsdb.elasticsearch")
 const (
 	// headerFromExpression is used by data sources to identify expression queries
 	headerFromExpression = "X-Grafana-From-Expr"
-	// headerFromAlert is used by datasources to identify alert queries
+	// headerFromAlert is used by data sources to identify alert queries
 	headerFromAlert = "FromAlert"
+	// this is the default value for the maxConcurrentShardRequests setting - it should be in sync with the default value in the datasource config settings
+	defaultMaxConcurrentShardRequests = int64(5)
 )
 
 type Service struct {
@@ -71,7 +73,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *es.Da
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, req.Queries[0].TimeRange, logger, tracer)
+	client, err := es.NewClient(ctx, dsInfo, logger, tracer)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
@@ -138,28 +140,28 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			index = settings.Database
 		}
 
-		var maxConcurrentShardRequests float64
+		var maxConcurrentShardRequests int64
 
 		switch v := jsonData["maxConcurrentShardRequests"].(type) {
+		// unmarshalling from JSON will return float64 for numbers, so we need to handle that and convert to int64
 		case float64:
-			maxConcurrentShardRequests = v
+			maxConcurrentShardRequests = int64(v)
 		case string:
-			maxConcurrentShardRequests, err = strconv.ParseFloat(v, 64)
+			maxConcurrentShardRequests, err = strconv.ParseInt(v, 10, 64)
 			if err != nil {
-				maxConcurrentShardRequests = 256
+				maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
 			}
 		default:
-			maxConcurrentShardRequests = 256
+			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
+		}
+
+		if maxConcurrentShardRequests <= 0 {
+			maxConcurrentShardRequests = defaultMaxConcurrentShardRequests
 		}
 
 		includeFrozen, ok := jsonData["includeFrozen"].(bool)
 		if !ok {
 			includeFrozen = false
-		}
-
-		xpack, ok := jsonData["xpack"].(bool)
-		if !ok {
-			xpack = false
 		}
 
 		configuredFields := es.ConfiguredFields{
@@ -173,11 +175,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			URL:                        settings.URL,
 			HTTPClient:                 httpCli,
 			Database:                   index,
-			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
+			MaxConcurrentShardRequests: maxConcurrentShardRequests,
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			IncludeFrozen:              includeFrozen,
-			XPack:                      xpack,
 		}
 		return model, nil
 	}
@@ -217,9 +218,9 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		logger.Error("Failed to create request url", "error", err, "url", ds.URL, "path", req.Path)
 	}
 
-	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
+	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl, bytes.NewBuffer(req.Body))
 	if err != nil {
-		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
+		logger.Error("Failed to create request", "error", err, "url", esUrl)
 		return err
 	}
 
@@ -271,12 +272,19 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	})
 }
 
-func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (*url.URL, error) {
+func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (string, error) {
 	esUrl, err := url.Parse(ds.URL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
+		return "", fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
 	}
 
 	esUrl.Path = path.Join(esUrl.Path, req.Path)
-	return esUrl, nil
+	esUrlString := esUrl.String()
+	// If the request path is empty and the URL does not end with a slash, add a slash to the URL.
+	// This ensures that for version checks executed to the root URL, the URL ends with a slash.
+	// This is helpful, for example, for load balancers that expect URLs to match the pattern /.*.
+	if req.Path == "" && esUrlString[len(esUrlString)-1:] != "/" {
+		return esUrl.String() + "/", nil
+	}
+	return esUrlString, nil
 }

@@ -1,8 +1,11 @@
-import { ArgTypes, Preview } from '@storybook/blocks';
-import { Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from './Select';
-import { generateOptions } from './mockOptions';
+import { ArgTypes } from '@storybook/blocks';
+import { Select, AsyncSelect } from './Select';
 
-# Select variants
+# Select
+
+Select is the base for every component on this page. The approaches mentioned here are also applicable to `AsyncSelect`, `MultiSelect`, `AsyncMultiSelect`.
+
+## Select variants
 
 Select is an input with the ability to search and create new values. It should be used when you have a list of options. If the data has a tree structure, consider using `Cascader` instead.
 Select has some features:
@@ -11,10 +14,6 @@ Select has some features:
 - Select multiple values
 - Select from async data
 - Create custom values that aren't in the list
-
-## Select
-
-Select is the base for every component on this page. The approaches mentioned here are also applicable to `AsyncSelect`, `MultiSelect`, `AsyncMultiSelect`.
 
 ### Options format
 
@@ -61,6 +60,57 @@ const SelectComponent = () => {
 };
 ```
 
+### Resetting selected value from outside the component
+
+If you want to reset the selected value from outside the component, e.g. if there are two Select components that should be in sync, you can set the dependent Select value to `null` in the `onChange` handler of the first Select component.
+
+```tsx
+import React, { useState } from 'react';
+import { Select } from '@grafana/ui';
+
+const SelectComponent = () => {
+  const [person, setPerson] = useState<string | undefined>('');
+  const [team, setTeam] = useState<string | undefined | null>('');
+
+  return (
+    <form>
+      <Select
+        onChange={({ value }) => {
+          setPerson(value);
+          setTeam(null); // Setting the team to null will reset the selected value in the team Select
+        }}
+        options={[
+          {
+            value: 'option1',
+            label: 'Option 1',
+          },
+          {
+            value: 'option2',
+            label: 'Option 2',
+          },
+        ]}
+        value={person}
+        backspaceRemovesValue
+      />
+      <Select
+        onChange={({ value }) => setTeam(value)}
+        options={[
+          {
+            value: 'team1',
+            label: 'Team 1',
+          },
+          {
+            value: 'team',
+            label: 'Team 2',
+          },
+        ]}
+        value={team}
+      />
+    </form>
+  );
+};
+```
+
 ## AsyncSelect
 
 Like regular Select, but handles fetching options asynchronously. Use the `loadOptions` prop for the async function that loads the options. If `defaultOptions` is set to `true`, `loadOptions` will be called when the component is mounted.
@@ -83,7 +133,6 @@ const basicSelectAsync = () => {
     />
   );
 };
-
 ```
 
 Where the async function could look like this:
@@ -126,7 +175,7 @@ const multiSelect = () => {
 
 Like MultiSelect but handles data asynchronously with the `loadOptions` prop.
 
-# Testing
+## Testing
 
 Using React Testing Library, you can select the `<Select />` using its matching label, such as the label assigned with the `inputId` prop. Use the `react-select-event` package to select values from the options.
 
@@ -156,6 +205,6 @@ it('should call onChange', () => {
 });
 ```
 
-# Props
+## Props
 
 <ArgTypes of={Select} />

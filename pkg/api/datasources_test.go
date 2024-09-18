@@ -115,7 +115,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
 
@@ -147,10 +147,10 @@ func TestAddDataSource_InvalidJSONData(t *testing.T) {
 	sc := setupScenarioContext(t, "/api/datasources")
 
 	hs.Cfg = setting.NewCfg()
-	hs.Cfg.AuthProxyEnabled = true
-	hs.Cfg.AuthProxyHeaderName = "X-AUTH-PROXY-HEADER"
+	hs.Cfg.AuthProxy.Enabled = true
+	hs.Cfg.AuthProxy.HeaderName = "X-AUTH-PROXY-HEADER"
 	jsonData := simplejson.New()
-	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxyHeaderName)
+	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxy.HeaderName)
 
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
@@ -201,10 +201,10 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	hs.Cfg.AuthProxyEnabled = true
-	hs.Cfg.AuthProxyHeaderName = "X-AUTH-PROXY-HEADER"
+	hs.Cfg.AuthProxy.Enabled = true
+	hs.Cfg.AuthProxy.HeaderName = "X-AUTH-PROXY-HEADER"
 	jsonData := simplejson.New()
-	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxyHeaderName)
+	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxy.HeaderName)
 
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
@@ -297,7 +297,7 @@ func TestUpdateDataSourceTeamHTTPHeaders_InvalidJSONData(t *testing.T) {
 				},
 			}
 			sc := setupScenarioContext(t, fmt.Sprintf("/api/datasources/%s", tenantID))
-			hs.Cfg.AuthProxyEnabled = true
+			hs.Cfg.AuthProxy.Enabled = true
 
 			jsonData := simplejson.New()
 			jsonData.Set("teamHttpHeaders", tc.data)
@@ -332,7 +332,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 			expectedDatasource: &datasources.DataSource{},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 	}
 
@@ -365,7 +365,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 			},
 		},
 		Cfg:                  setting.NewCfg(),
-		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		AccessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		accesscontrolService: actest.FakeService{},
 		Live:                 newTestLive(t, nil),
 	}
@@ -541,10 +541,6 @@ func (m *dataSourcesServiceMock) GetDataSources(ctx context.Context, query *data
 
 func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	return m.expectedDatasources, m.expectedError
-}
-
-func (m *dataSourcesServiceMock) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
-	return nil, m.expectedError
 }
 
 func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {

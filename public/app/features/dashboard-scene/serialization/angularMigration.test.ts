@@ -33,4 +33,24 @@ describe('getAngularPanelMigrationHandler', () => {
       expect(mutatedModel.fieldConfig).toEqual({ defaults: { unit: 'bytes' }, overrides: [] });
     });
   });
+
+  describe('Given a react panel with old angular properties', () => {
+    it('Should pass panel model with old angular properties', () => {
+      const reactPlugin = getPanelPlugin({ id: 'dashlist' });
+
+      const oldModel = new PanelModel({
+        angularProp: 'old name',
+        type: 'dashlist',
+      });
+
+      const mutatedModel: any = {
+        type: 'dashlist',
+        options: {},
+      };
+
+      getAngularPanelMigrationHandler(oldModel)(mutatedModel, reactPlugin);
+
+      expect(mutatedModel.angularProp).toEqual('old name');
+    });
+  });
 });

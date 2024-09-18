@@ -26,6 +26,8 @@ composableKinds: PanelCfg: lineage: {
 			HeatmapColorMode: "opacity" | "scheme" @cuetsy(kind="enum")
 			// Controls the color scale of the heatmap
 			HeatmapColorScale: "linear" | "exponential" @cuetsy(kind="enum")
+			// Controls which axis to allow selection on
+			HeatmapSelectionMode: "x" | "y" | "xy" @cuetsy(kind="enum")
 			// Controls various color options
 			HeatmapColorOptions: {
 				// Sets the color mode
@@ -155,6 +157,8 @@ composableKinds: PanelCfg: lineage: {
 				exemplars: ExemplarConfig | *{
 					color: "rgba(255,0,255,0.7)"
 				}
+				// Controls which axis to allow selection on
+				selectionMode?: HeatmapSelectionMode & (*"x" | _)
 			} @cuetsy(kind="interface")
 			FieldConfig: {
 				ui.HideableFieldConfig

@@ -65,7 +65,7 @@ func sanitizeJWT(jwtToken string) string {
 	return strings.ReplaceAll(jwtToken, string(base64.StdPadding), "")
 }
 
-func (s *AuthService) Verify(ctx context.Context, strToken string) (JWTClaims, error) {
+func (s *AuthService) Verify(ctx context.Context, strToken string) (map[string]any, error) {
 	s.log.Debug("Parsing JSON Web Token")
 
 	strToken = sanitizeJWT(strToken)
@@ -84,7 +84,7 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (JWTClaims, e
 
 	s.log.Debug("Trying to verify JSON Web Token using a key")
 
-	var claims JWTClaims
+	var claims map[string]any
 	for _, key := range keys {
 		if err = token.Claims(key, &claims); err == nil {
 			break

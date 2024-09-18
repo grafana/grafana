@@ -13,10 +13,6 @@ export type PlotConfig = Pick<
   'mode' | 'series' | 'scales' | 'axes' | 'cursor' | 'bands' | 'hooks' | 'select' | 'tzDate' | 'padding'
 >;
 
-export interface PlotPluginProps {
-  id: string;
-}
-
 export type FacetValues = any[];
 export type FacetSeries = FacetValues[];
 export type FacetedData = [_: null, ...series: FacetSeries];

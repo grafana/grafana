@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
-import { SceneVariables, sceneUtils } from '@grafana/scenes';
-import { VariableHide, VariableModel, VariableRefresh, VariableSort } from '@grafana/schema';
+import { MultiValueVariable, SceneVariables, sceneUtils } from '@grafana/scenes';
+import { VariableHide, VariableModel, VariableOption, VariableRefresh, VariableSort } from '@grafana/schema';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
@@ -16,6 +16,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
       type: variable.state.type,
     };
     if (sceneUtils.isQueryVariable(variable)) {
+      let options: VariableOption[] = [];
+      // Not sure if we actually have to still support this option given
+      // that it's not exposed in the UI
+      if (variable.state.refresh === VariableRefresh.never) {
+        options = variableValueOptionsToVariableOptions(variable.state);
+      }
       variables.push({
         ...commonProperties,
         current: {
@@ -24,7 +30,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
           // @ts-expect-error
           text: variable.state.text,
         },
-        options: [],
+        options,
         query: variable.state.query,
         definition: variable.state.definition,
         datasource: variable.state.datasource,
@@ -45,7 +51,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
           // @ts-expect-error
           value: variable.state.value,
         },
-        options: [],
+        options: variableValueOptionsToVariableOptions(variable.state),
         query: variable.state.query,
         multi: variable.state.isMulti,
         allValue: variable.state.allValue,
@@ -91,18 +97,26 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         },
         query: intervals,
         refresh: variable.state.refresh,
+        options: variable.state.intervals.map((interval) => ({
+          value: interval,
+          text: interval,
+          selected: interval === variable.state.value,
+        })),
         // @ts-expect-error ?? how to fix this without adding the ts-expect-error
         auto: variable.state.autoEnabled,
         auto_min: variable.state.autoMinInterval,
         auto_count: variable.state.autoStepCount,
       });
     } else if (sceneUtils.isTextBoxVariable(variable)) {
+      const current = {
+        text: variable.state.value,
+        value: variable.state.value,
+      };
+
       variables.push({
         ...commonProperties,
-        current: {
-          text: variable.state.value,
-          value: variable.state.value,
-        },
+        current,
+        options: [{ ...current, selected: true }],
         query: variable.state.value,
       });
     } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
@@ -124,12 +138,13 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
     } else if (sceneUtils.isAdHocVariable(variable)) {
       variables.push({
         ...commonProperties,
-        name: variable.state.name!,
+        name: variable.state.name,
         type: 'adhoc',
         datasource: variable.state.datasource,
         // @ts-expect-error
         baseFilters: variable.state.baseFilters,
         filters: variable.state.filters,
+        defaultKeys: variable.state.defaultKeys,
       });
     } else {
       throw new Error('Unsupported variable type');
@@ -160,4 +175,12 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
   }
 
   return variables;
+}
+
+function variableValueOptionsToVariableOptions(varState: MultiValueVariable['state']): VariableOption[] {
+  return varState.options.map((o) => ({
+    value: String(o.value),
+    text: o.label,
+    selected: Array.isArray(varState.value) ? varState.value.includes(o.value) : varState.value === o.value,
+  }));
 }

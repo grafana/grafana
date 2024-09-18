@@ -235,7 +235,7 @@ export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZo
   }
 
   return (
-    <span className={styles.container}>
+    <span className={styles.container} aria-live="polite" aria-atomic="true">
       <span>{formattedRange(value, timeZone)}</span>
       <span className={styles.utc}>{rangeUtil.describeTimeRangeAbbreviation(value, timeZone)}</span>
     </span>

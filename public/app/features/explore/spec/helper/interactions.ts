@@ -1,9 +1,9 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { getAllByRoleInQueryHistoryTab, withinExplore } from './setup';
+import { getAllByRoleInQueryHistoryTab, withinExplore, withinQueryHistory } from './setup';
 
 export const changeDatasource = async (name: string) => {
   const datasourcePicker = (await screen.findByTestId(selectors.components.DataSourcePicker.container)).children[0];
@@ -25,56 +25,89 @@ export const runQuery = async (exploreId = 'left') => {
   await userEvent.click(button);
 };
 
-export const openQueryHistory = async (exploreId = 'left') => {
-  const selector = withinExplore(exploreId);
-  const button = selector.getByRole('button', { name: 'Query history' });
+export const openQueryHistory = async () => {
+  const explore = withinExplore('left');
+  const button = explore.getByRole('button', { name: 'Query history' });
   await userEvent.click(button);
-  expect(await selector.findByPlaceholderText('Search queries')).toBeInTheDocument();
+  expect(await screen.findByPlaceholderText('Search queries')).toBeInTheDocument();
 };
 
-export const closeQueryHistory = async (exploreId = 'left') => {
-  const closeButton = withinExplore(exploreId).getByRole('button', { name: 'Close query history' });
+export const openQueryLibrary = async () => {
+  const explore = withinExplore('left');
+  const button = explore.getByRole('button', { name: 'Query library' });
+  await userEvent.click(button);
+  await waitFor(async () => {
+    screen.getByRole('tab', {
+      name: /tab query library/i,
+    });
+  });
+};
+
+export const switchToQueryHistory = async () => {
+  const tab = screen.getByRole('tab', {
+    name: /tab query history/i,
+  });
+  await userEvent.click(tab);
+};
+
+export const addQueryHistoryToQueryLibrary = async () => {
+  const button = withinQueryHistory().getByRole('button', { name: /add to library/i });
+  await userEvent.click(button);
+};
+
+export const submitAddToQueryLibrary = async ({ description }: { description: string }) => {
+  const input = within(screen.getByRole('dialog')).getByLabelText('Description');
+  await userEvent.type(input, description);
+  const saveButton = screen.getByRole('button', {
+    name: /save/i,
+  });
+  await userEvent.click(saveButton);
+};
+
+export const closeQueryHistory = async () => {
+  const selector = withinQueryHistory();
+  const closeButton = selector.getByRole('button', { name: 'Close query history' });
   await userEvent.click(closeButton);
 };
 
-export const switchToQueryHistoryTab = async (name: 'Settings' | 'Query History', exploreId = 'left') => {
-  await userEvent.click(withinExplore(exploreId).getByRole('tab', { name: `Tab ${name}` }));
+export const switchToQueryHistoryTab = async (name: 'Settings' | 'Query History') => {
+  await userEvent.click(withinQueryHistory().getByRole('tab', { name: `Tab ${name}` }));
 };
 
-export const selectStarredTabFirst = async (exploreId = 'left') => {
-  const checkbox = withinExplore(exploreId).getByRole('checkbox', {
+export const selectStarredTabFirst = async () => {
+  const checkbox = withinQueryHistory().getByRole('checkbox', {
     name: /Change the default active tab from “Query history” to “Starred”/,
   });
   await userEvent.click(checkbox);
 };
 
-export const selectOnlyActiveDataSource = async (exploreId = 'left') => {
-  const checkbox = withinExplore(exploreId).getByLabelText(/Only show queries for data source currently active.*/);
+export const selectOnlyActiveDataSource = async () => {
+  const checkbox = withinQueryHistory().getByLabelText(/Only show queries for data source currently active.*/);
   await userEvent.click(checkbox);
 };
 
-export const starQueryHistory = async (queryIndex: number, exploreId = 'left') => {
-  await invokeAction(queryIndex, 'Star query', exploreId);
+export const starQueryHistory = async (queryIndex: number) => {
+  await invokeAction(queryIndex, 'Star query');
 };
 
-export const commentQueryHistory = async (queryIndex: number, comment: string, exploreId = 'left') => {
-  await invokeAction(queryIndex, 'Add comment', exploreId);
-  const input = withinExplore(exploreId).getByPlaceholderText('An optional description of what the query does.');
+export const commentQueryHistory = async (queryIndex: number, comment: string) => {
+  await invokeAction(queryIndex, 'Add comment');
+  const input = withinQueryHistory().getByPlaceholderText('An optional description of what the query does.');
   await userEvent.clear(input);
   await userEvent.type(input, comment);
-  await invokeAction(queryIndex, 'Save comment', exploreId);
+  await invokeAction(queryIndex, 'Save comment');
 };
 
-export const deleteQueryHistory = async (queryIndex: number, exploreId = 'left') => {
-  await invokeAction(queryIndex, 'Delete query', exploreId);
+export const deleteQueryHistory = async (queryIndex: number) => {
+  await invokeAction(queryIndex, 'Delete query');
 };
 
-export const loadMoreQueryHistory = async (exploreId = 'left') => {
-  const button = withinExplore(exploreId).getByRole('button', { name: 'Load more' });
+export const loadMoreQueryHistory = async () => {
+  const button = withinQueryHistory().getByRole('button', { name: 'Load more' });
   await userEvent.click(button);
 };
 
-const invokeAction = async (queryIndex: number, actionAccessibleName: string | RegExp, exploreId: string) => {
-  const buttons = getAllByRoleInQueryHistoryTab(exploreId, 'button', actionAccessibleName);
+const invokeAction = async (queryIndex: number, actionAccessibleName: string | RegExp) => {
+  const buttons = getAllByRoleInQueryHistoryTab('button', actionAccessibleName);
   await userEvent.click(buttons[queryIndex]);
 };

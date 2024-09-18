@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GraphContextMenuHeader } from '..';
 import { StoryExample } from '../../utils/storybook/StoryExample';
-import { VerticalGroup } from '../Layout/Layout';
+import { Stack } from '../Layout/Stack/Stack';
 
 import { Menu } from './Menu';
 import mdx from './Menu.mdx';
@@ -30,7 +30,7 @@ const meta: Meta<typeof Menu> = {
 
 export function Examples() {
   return (
-    <VerticalGroup>
+    <Stack direction="column">
       <StoryExample name="Plain">
         <Menu>
           <Menu.Item label="Google" />
@@ -167,7 +167,7 @@ export function Examples() {
           />
         </Menu>
       </StoryExample>
-    </VerticalGroup>
+    </Stack>
   );
 }
 

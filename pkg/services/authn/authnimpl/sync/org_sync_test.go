@@ -2,9 +2,11 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
@@ -72,7 +75,7 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				id: &authn.Identity{
-					ID:             "user:1",
+					ID:             authn.MustParseNamespaceID("user:1"),
 					Login:          "test",
 					Name:           "test",
 					Email:          "test",
@@ -81,15 +84,14 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncOrgRoles: true,
 						LookUpParams: login.UserLookupParams{
-							UserID: nil,
-							Email:  ptrString("test"),
-							Login:  nil,
+							Email: ptrString("test"),
+							Login: nil,
 						},
 					},
 				},
 			},
 			wantID: &authn.Identity{
-				ID:             "user:1",
+				ID:             authn.MustParseNamespaceID("user:1"),
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
@@ -99,9 +101,8 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncOrgRoles: true,
 					LookUpParams: login.UserLookupParams{
-						UserID: nil,
-						Email:  ptrString("test"),
-						Login:  nil,
+						Email: ptrString("test"),
+						Login: nil,
 					},
 				},
 			},
@@ -121,6 +122,101 @@ func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 			}
 
 			assert.EqualValues(t, tt.wantID, tt.args.id)
+		})
+	}
+}
+
+func TestOrgSync_SetDefaultOrgHook(t *testing.T) {
+	testCases := []struct {
+		name              string
+		defaultOrgSetting int64
+		identity          *authn.Identity
+		setupMock         func(*usertest.MockService, *orgtest.FakeOrgService)
+		inputErr          error
+	}{
+		{
+			name:              "should set default org",
+			defaultOrgSetting: 2,
+			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
+				userService.On("Update", mock.Anything, mock.MatchedBy(func(cmd *user.UpdateUserCommand) bool {
+					return cmd.UserID == 1 && *cmd.OrgID == 2
+				})).Return(nil)
+			},
+		},
+		{
+			name:              "should skip setting the default org when default org is not set",
+			defaultOrgSetting: -1,
+			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+		},
+		{
+			name:              "should skip setting the default org when identity is nil",
+			defaultOrgSetting: -1,
+			identity:          nil,
+		},
+		{
+			name:              "should skip setting the default org when input err is not nil",
+			defaultOrgSetting: 2,
+			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			inputErr:          fmt.Errorf("error"),
+		},
+		{
+			name:              "should skip setting the default org when identity is not a user",
+			defaultOrgSetting: 2,
+			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("service-account:1")},
+		},
+		{
+			name:              "should skip setting the default org when user id is not valid",
+			defaultOrgSetting: 2,
+			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:invalid")},
+		},
+		{
+			name:              "should skip setting the default org when user is not allowed to use the configured default org",
+			defaultOrgSetting: 3,
+			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+		},
+		{
+			name:              "should skip setting the default org when validateUsingOrg returns error",
+			defaultOrgSetting: 2,
+			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
+				orgService.ExpectedError = fmt.Errorf("error")
+			},
+		},
+		{
+			name:              "should skip the hook when the user org update was unsuccessful",
+			defaultOrgSetting: 2,
+			identity:          &authn.Identity{ID: authn.MustParseNamespaceID("user:1")},
+			setupMock: func(userService *usertest.MockService, orgService *orgtest.FakeOrgService) {
+				userService.On("Update", mock.Anything, mock.Anything).Return(fmt.Errorf("error"))
+			},
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.LoginDefaultOrgId = tt.defaultOrgSetting
+
+			userService := &usertest.MockService{}
+			defer userService.AssertExpectations(t)
+
+			orgService := &orgtest.FakeOrgService{
+				ExpectedUserOrgDTO: []*org.UserOrgDTO{{OrgID: 2}},
+			}
+
+			if tt.setupMock != nil {
+				tt.setupMock(userService, orgService)
+			}
+
+			s := &OrgSync{
+				userService:   userService,
+				orgService:    orgService,
+				accessControl: actest.FakeService{},
+				log:           log.NewNopLogger(),
+				cfg:           cfg,
+			}
+
+			s.SetDefaultOrgHook(context.Background(), tt.identity, nil, tt.inputErr)
 		})
 	}
 }

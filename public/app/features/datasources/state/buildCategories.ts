@@ -209,6 +209,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'PagerDuty',
       imgUrl: 'public/img/plugins/pagerduty.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-azurecosmosdb-datasource',
+      description: 'Azure CosmosDB datasource',
+      name: 'Azure CosmosDB',
+      imgUrl: 'public/img/plugins/azure-cosmosdb.svg',
+    }),
   ];
 }
 

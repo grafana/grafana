@@ -1,160 +1,16 @@
 import React from 'react';
 
 import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Button, Stack, TagsInput } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
-import {
-  ALL_FOLDER,
-  GENERAL_FOLDER,
-  ReadonlyFolderPicker,
-} from 'app/core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { PermissionLevelString } from 'app/types';
 
 import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
 
-import { AlertList } from './AlertList';
-import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
 import { GroupBy } from './GroupByWithLoading';
 import { UnifiedAlertListPanel } from './UnifiedAlertList';
-import { AlertListSuggestionsSupplier } from './suggestions';
-import { AlertListOptions, GroupMode, ShowOption, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
-
-function showIfCurrentState(options: AlertListOptions) {
-  return options.showOptions === ShowOption.Current;
-}
-
-const alertList = new PanelPlugin<AlertListOptions>(AlertList)
-  .setPanelOptions((builder) => {
-    builder
-      .addSelect({
-        name: 'Show',
-        path: 'showOptions',
-        settings: {
-          options: [
-            { label: 'Current state', value: ShowOption.Current },
-            { label: 'Recent state changes', value: ShowOption.RecentChanges },
-          ],
-        },
-        defaultValue: ShowOption.Current,
-        category: ['Options'],
-      })
-      .addNumberInput({
-        name: 'Max items',
-        path: 'maxItems',
-        defaultValue: 10,
-        category: ['Options'],
-      })
-      .addSelect({
-        name: 'Sort order',
-        path: 'sortOrder',
-        settings: {
-          options: [
-            { label: 'Alphabetical (asc)', value: SortOrder.AlphaAsc },
-            { label: 'Alphabetical (desc)', value: SortOrder.AlphaDesc },
-            { label: 'Importance', value: SortOrder.Importance },
-            { label: 'Time (asc)', value: SortOrder.TimeAsc },
-            { label: 'Time (desc)', value: SortOrder.TimeDesc },
-          ],
-        },
-        defaultValue: SortOrder.AlphaAsc,
-        category: ['Options'],
-      })
-      .addBooleanSwitch({
-        path: 'dashboardAlerts',
-        name: 'Alerts from this dashboard',
-        defaultValue: false,
-        category: ['Options'],
-      })
-      .addTextInput({
-        path: 'alertName',
-        name: 'Alert name',
-        defaultValue: '',
-        category: ['Filter'],
-        showIf: showIfCurrentState,
-      })
-      .addTextInput({
-        path: 'dashboardTitle',
-        name: 'Dashboard title',
-        defaultValue: '',
-        category: ['Filter'],
-        showIf: showIfCurrentState,
-      })
-      .addCustomEditor({
-        path: 'folderId',
-        name: 'Folder',
-        id: 'folderId',
-        defaultValue: null,
-        editor: function RenderFolderPicker({ value, onChange }) {
-          return (
-            <ReadonlyFolderPicker
-              initialFolderId={value}
-              onChange={(folder) => onChange(folder?.id)}
-              extraFolders={[ALL_FOLDER, GENERAL_FOLDER]}
-            />
-          );
-        },
-        category: ['Filter'],
-        showIf: showIfCurrentState,
-      })
-      .addCustomEditor({
-        id: 'tags',
-        path: 'tags',
-        name: 'Tags',
-        description: '',
-        defaultValue: [],
-        editor(props) {
-          return <TagsInput tags={props.value} onChange={props.onChange} />;
-        },
-        category: ['Filter'],
-        showIf: showIfCurrentState,
-      })
-      .addBooleanSwitch({
-        path: 'stateFilter.ok',
-        name: 'Ok',
-        defaultValue: false,
-        category: ['State filter'],
-        showIf: showIfCurrentState,
-      })
-      .addBooleanSwitch({
-        path: 'stateFilter.paused',
-        name: 'Paused',
-        defaultValue: false,
-        category: ['State filter'],
-        showIf: showIfCurrentState,
-      })
-      .addBooleanSwitch({
-        path: 'stateFilter.no_data',
-        name: 'No data',
-        defaultValue: false,
-        category: ['State filter'],
-        showIf: showIfCurrentState,
-      })
-      .addBooleanSwitch({
-        path: 'stateFilter.execution_error',
-        name: 'Execution error',
-        defaultValue: false,
-        category: ['State filter'],
-        showIf: showIfCurrentState,
-      })
-      .addBooleanSwitch({
-        path: 'stateFilter.alerting',
-        name: 'Alerting',
-        defaultValue: false,
-        category: ['State filter'],
-        showIf: showIfCurrentState,
-      })
-      .addBooleanSwitch({
-        path: 'stateFilter.pending',
-        name: 'Pending',
-        defaultValue: false,
-        category: ['State filter'],
-        showIf: showIfCurrentState,
-      });
-  })
-  .setMigrationHandler(alertListPanelMigrationHandler)
-  .setSuggestionsSupplier(new AlertListSuggestionsSupplier());
+import { UnifiedAlertListOptions, ViewMode, GroupMode, SortOrder } from './types';
 
 const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertListPanel).setPanelOptions((builder) => {
   builder
@@ -326,4 +182,4 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     });
 });
 
-export const plugin = config.unifiedAlertingEnabled ? unifiedAlertList : alertList;
+export const plugin = unifiedAlertList;

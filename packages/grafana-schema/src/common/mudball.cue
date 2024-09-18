@@ -190,6 +190,9 @@ BigValueJustifyMode: "auto" | "center" @cuetsy(kind="enum")
 // TODO docs
 BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(kind="enum",memberNames="Auto|Value|ValueAndName|Name|None")
 
+// TODO docs
+PercentChangeColorMode: "standard" | "inverted" | "same_as_value" @cuetsy(kind="enum",memberNames="Standard|Inverted|SameAsValue")
+
 // TODO -- should not be table specific!
 // TODO docs
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
@@ -224,6 +227,7 @@ GraphFieldConfig: {
 	gradientMode?:    GraphGradientMode
 	thresholdsStyle?: GraphThresholdsStyleConfig
 	transform?:       GraphTransform
+	insertNulls?:     bool | number
 } @cuetsy(kind="interface")
 
 // TODO docs

@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 var (
@@ -20,7 +20,6 @@ var (
 )
 
 type connectionAccess struct {
-	pluginID       string
 	resourceInfo   common.ResourceInfo
 	tableConverter rest.TableConvertor
 	datasources    PluginDatasourceProvider
@@ -53,9 +52,9 @@ func (s *connectionAccess) ConvertToTable(ctx context.Context, object runtime.Ob
 }
 
 func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return s.datasources.Get(ctx, s.pluginID, name)
+	return s.datasources.Get(ctx, name)
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.datasources.List(ctx, s.pluginID)
+	return s.datasources.List(ctx)
 }

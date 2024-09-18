@@ -73,6 +73,8 @@ export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavInde
 // Since the configuration subtitle includes the organization name, we include this action to update the org name if it changes.
 export const updateConfigurationSubtitle = createAction<string>('navIndex/updateConfigurationSubtitle');
 
+export const removeNavIndex = createAction<string>('navIndex/removeNavIndex');
+
 export const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelItem => ({
   ...item,
   parentItem: {
@@ -130,6 +132,8 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
       'org-settings': getItemWithNewSubTitle(state['org-settings'], subTitle),
       apikeys: getItemWithNewSubTitle(state.apikeys, subTitle),
     };
+  } else if (removeNavIndex.match(action)) {
+    delete state[action.payload];
   }
 
   return state;

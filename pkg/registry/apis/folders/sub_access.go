@@ -19,6 +19,7 @@ type subAccessREST struct {
 }
 
 var _ = rest.Connecter(&subAccessREST{})
+var _ = rest.StorageMetadata(&subAccessREST{})
 
 func (r *subAccessREST) New() runtime.Object {
 	return &v0alpha1.FolderAccessInfo{}
@@ -29,6 +30,14 @@ func (r *subAccessREST) Destroy() {
 
 func (r *subAccessREST) ConnectMethods() []string {
 	return []string{"GET"}
+}
+
+func (r *subAccessREST) ProducesMIMETypes(verb string) []string {
+	return nil
+}
+
+func (r *subAccessREST) ProducesObject(verb string) interface{} {
+	return &v0alpha1.FolderAccessInfo{}
 }
 
 func (r *subAccessREST) NewConnectOptions() (runtime.Object, bool, string) {

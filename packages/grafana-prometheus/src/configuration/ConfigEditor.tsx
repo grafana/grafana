@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/configuration/ConfigEditor.tsx
 import { css } from '@emotion/css';
 import React from 'react';
 
@@ -86,54 +87,54 @@ export const validateInput = (
 
 export function overhaulStyles(theme: GrafanaTheme2) {
   return {
-    additionalSettings: css`
-      margin-bottom: 25px;
-    `,
-    secondaryGrey: css`
-      color: ${theme.colors.secondary.text};
-      opacity: 65%;
-    `,
-    inlineError: css`
-      margin: 0px 0px 4px 245px;
-    `,
-    switchField: css`
-      align-items: center;
-    `,
-    sectionHeaderPadding: css`
-      padding-top: 32px;
-    `,
-    sectionBottomPadding: css`
-      padding-bottom: 28px;
-    `,
-    subsectionText: css`
-      font-size: 12px;
-    `,
-    hrBottomSpace: css`
-      margin-bottom: 56px;
-    `,
-    hrTopSpace: css`
-      margin-top: 50px;
-    `,
-    textUnderline: css`
-      text-decoration: underline;
-    `,
-    versionMargin: css`
-      margin-bottom: 12px;
-    `,
-    advancedHTTPSettingsMargin: css`
-      margin: 24px 0 8px 0;
-    `,
-    advancedSettings: css`
-      padding-top: 32px;
-    `,
-    alertingTop: css`
-      margin-top: 40px !important;
-    `,
-    overhaulPageHeading: css`
-      font-weight: 400;
-    `,
-    container: css`
-      maxwidth: 578;
-    `,
+    additionalSettings: css({
+      marginBottom: '25px',
+    }),
+    secondaryGrey: css({
+      color: theme.colors.secondary.text,
+      opacity: '65%',
+    }),
+    inlineError: css({
+      margin: '0px 0px 4px 245px',
+    }),
+    switchField: css({
+      alignItems: 'center',
+    }),
+    sectionHeaderPadding: css({
+      paddingTop: '32px',
+    }),
+    sectionBottomPadding: css({
+      paddingBottom: '28px',
+    }),
+    subsectionText: css({
+      fontSize: '12px',
+    }),
+    hrBottomSpace: css({
+      marginBottom: '56px',
+    }),
+    hrTopSpace: css({
+      marginTop: '50px',
+    }),
+    textUnderline: css({
+      textDecoration: 'underline',
+    }),
+    versionMargin: css({
+      marginBottom: '12px',
+    }),
+    advancedHTTPSettingsMargin: css({
+      margin: '24px 0 8px 0',
+    }),
+    advancedSettings: css({
+      paddingTop: '32px',
+    }),
+    alertingTop: css({
+      marginTop: '40px !important',
+    }),
+    overhaulPageHeading: css({
+      fontWeight: 400,
+    }),
+    container: css({
+      maxwidth: 578,
+    }),
   };
 }

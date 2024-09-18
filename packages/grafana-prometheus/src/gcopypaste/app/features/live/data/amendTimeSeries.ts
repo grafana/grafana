@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/features/live/data/amendTimeSeries.ts
 import { closestIdx } from '@grafana/data';
 
 export type Table = [times: number[], ...values: any[][]];

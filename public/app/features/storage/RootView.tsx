@@ -3,19 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import {
-  Alert,
-  Button,
-  Card,
-  FilterInput,
-  HorizontalGroup,
-  Icon,
-  IconName,
-  TagList,
-  useStyles2,
-  VerticalGroup,
-  InlineField,
-} from '@grafana/ui';
+import { Alert, Button, Card, FilterInput, Icon, IconName, TagList, useStyles2, Stack, InlineField } from '@grafana/ui';
 
 import { getGrafanaStorage } from './storage';
 import { StorageInfo, StorageView } from './types';
@@ -62,7 +50,7 @@ export function RootView({ root, onPathChange }: Props) {
 
   const renderRoots = (pfix: string, roots: StorageInfo[]) => {
     return (
-      <VerticalGroup>
+      <Stack direction="column">
         {roots.map((s) => {
           const ok = s.ready;
           return (
@@ -75,9 +63,9 @@ export function RootView({ root, onPathChange }: Props) {
               {s.notice?.map((notice) => <Alert key={notice.text} severity={notice.severity} title={notice.text} />)}
 
               <Card.Tags className={styles.clickable}>
-                <HorizontalGroup>
+                <Stack>
                   <TagList tags={getTags(s)} />
-                </HorizontalGroup>
+                </Stack>
               </Card.Tags>
               <Card.Figure className={styles.clickable}>
                 <Icon name={getIconName(s.config.type)} size="xxxl" className={styles.secondaryTextColor} />
@@ -85,7 +73,7 @@ export function RootView({ root, onPathChange }: Props) {
             </Card>
           );
         })}
-      </VerticalGroup>
+      </Stack>
     );
   };
 

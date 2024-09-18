@@ -57,10 +57,22 @@ type ClientParams struct {
 	LookUpParams login.UserLookupParams
 	// SyncPermissions ensure that permissions are loaded from DB and added to the identity
 	SyncPermissions bool
+	// FetchPermissionsParams are the arguments used to fetch permissions from the DB
+	FetchPermissionsParams FetchPermissionsParams
+	// AllowGlobalOrg would allow a client to authenticate in global scope AKA org 0
+	AllowGlobalOrg bool
+}
+
+type FetchPermissionsParams struct {
+	// ActionsLookup will restrict the permissions to only these actions
+	ActionsLookup []string
+	// Roles permissions will be directly added to the identity permissions
+	Roles []string
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
 type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
+type PreLogoutHookFn func(ctx context.Context, requester identity.Requester, sessionToken *usertoken.UserToken) error
 
 type Service interface {
 	// Authenticate authenticates a request
@@ -77,8 +89,26 @@ type Service interface {
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
 	// Logout revokes session token and does additional clean up if client used to authenticate supports it
 	Logout(ctx context.Context, user identity.Requester, sessionToken *usertoken.UserToken) (*Redirect, error)
+	// RegisterPreLogoutHook registers a hook that is called before a logout request.
+	RegisterPreLogoutHook(hook PreLogoutHookFn, priority uint)
+	// ResolveIdentity resolves an identity from org and namespace id.
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
+
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
+
+	// IsClientEnabled returns true if the client is enabled.
+	//
+	// The client lookup follows the same formats used by the `authn` package
+	// constants.
+	//
+	// For OAuth clients, use the `authn.ClientWithPrefix(name)` to get the provider
+	// name. Append the prefix `auth.client.{providerName}`.
+	//
+	// Example:
+	// - "saml" = "auth.client.saml"
+	// - "github" = "auth.client.github"
+	IsClientEnabled(client string) bool
 }
 
 type IdentitySynchronizer interface {
@@ -90,10 +120,12 @@ type Client interface {
 	Name() string
 	// Authenticate performs the authentication for the request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
+	// IsEnabled returns the enabled status of the client
+	IsEnabled() bool
 }
 
 // ContextAwareClient is an optional interface that auth client can implement.
-// Clients that implements this interface will be tried during request authentication
+// Clients that implements this interface will be tried during request authentication.
 type ContextAwareClient interface {
 	Client
 	// Test should return true if client can be used to authenticate request
@@ -112,7 +144,7 @@ type HookClient interface {
 
 // RedirectClient is an optional interface that auth clients can implement.
 // Clients that implements this interface can be used to generate redirect urls
-// for authentication flows, e.g. oauth clients
+// for authentication flows, e.g. oauth clients.
 type RedirectClient interface {
 	Client
 	RedirectURL(ctx context.Context, r *Request) (*Redirect, error)
@@ -123,7 +155,7 @@ type RedirectClient interface {
 // that should happen during logout and supports client specific redirect URL.
 type LogoutClient interface {
 	Client
-	Logout(ctx context.Context, user identity.Requester, info *login.UserAuth) (*Redirect, bool)
+	Logout(ctx context.Context, user Requester) (*Redirect, bool)
 }
 
 type PasswordClient interface {
@@ -135,10 +167,18 @@ type ProxyClient interface {
 }
 
 // UsageStatClient is an optional interface that auth clients can implement.
-// Clients that implements this interface can specify a usage stat collection hook
+// Clients that implements this interface can specify a usage stat collection hook.
 type UsageStatClient interface {
 	Client
 	UsageStatFn(ctx context.Context) (map[string]any, error)
+}
+
+// IdentityResolverClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can resolve an full identity from an orgID and namespaceID.
+type IdentityResolverClient interface {
+	Client
+	Namespace() string
+	ResolveIdentity(ctx context.Context, orgID int64, namespaceID NamespaceID) (*Identity, error)
 }
 
 type Request struct {

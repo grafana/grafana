@@ -96,20 +96,6 @@
    "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
    "type": "object"
   },
-  "AlertPair": {
-   "properties": {
-    "alertRule": {
-     "$ref": "#/definitions/AlertRuleUpgrade"
-    },
-    "error": {
-     "type": "string"
-    },
-    "legacyAlert": {
-     "$ref": "#/definitions/LegacyAlert"
-    }
-   },
-   "type": "object"
-  },
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
@@ -188,7 +174,7 @@
     "condition": {
      "type": "string"
     },
-    "dasboardUid": {
+    "dashboardUid": {
      "type": "string"
     },
     "data": {
@@ -225,9 +211,15 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettingsExport"
+    },
     "panelId": {
      "format": "int64",
      "type": "integer"
+    },
+    "record": {
+     "$ref": "#/definitions/AlertRuleRecordExport"
     },
     "title": {
      "type": "string"
@@ -294,21 +286,100 @@
    },
    "type": "object"
   },
-  "AlertRuleUpgrade": {
+  "AlertRuleNotificationSettings": {
    "properties": {
-    "sendsTo": {
+    "group_by": {
+     "default": [
+      "alertname",
+      "grafana_folder"
+     ],
+     "description": "Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for\ncluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels\nuse the special value '...' as the sole label name.\nThis effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what\nyou want, unless you have a very low alert volume or your upstream notification system performs its own grouping.\nMust include 'alertname' and 'grafana_folder' if not using '...'.",
+     "example": [
+      "alertname",
+      "grafana_folder",
+      "cluster"
+     ],
      "items": {
       "type": "string"
      },
      "type": "array"
     },
-    "title": {
+    "group_interval": {
+     "description": "Override how long to wait before sending a notification about new alerts that are added to a group of alerts for\nwhich an initial notification has already been sent. (Usually ~5m or more.)",
+     "example": "5m",
      "type": "string"
     },
-    "uid": {
+    "group_wait": {
+     "description": "Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an\ninhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.)",
+     "example": "30s",
+     "type": "string"
+    },
+    "mute_time_intervals": {
+     "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+     "example": [
+      "maintenance"
+     ],
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "receiver": {
+     "description": "Name of the receiver to send notifications to.",
+     "example": "grafana-default-email",
+     "type": "string"
+    },
+    "repeat_interval": {
+     "description": "Override how long to wait before sending a notification again if it has already been sent successfully for an\nalert. (Usually ~3h or more).\nNote that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.\nNotifications will be resent after either repeat_interval or the data retention period have passed, whichever\noccurs first. `repeat_interval` should not be less than `group_interval`.",
+     "example": "4h",
      "type": "string"
     }
    },
+   "required": [
+    "receiver"
+   ],
+   "type": "object"
+  },
+  "AlertRuleNotificationSettingsExport": {
+   "properties": {
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    }
+   },
+   "title": "AlertRuleNotificationSettingsExport is the provisioned export of models.NotificationSettings.",
+   "type": "object"
+  },
+  "AlertRuleRecordExport": {
+   "properties": {
+    "from": {
+     "type": "string"
+    },
+    "metric": {
+     "type": "string"
+    }
+   },
+   "title": "Record is the provisioned export of models.Record.",
    "type": "object"
   },
   "AlertingFileExport": {
@@ -407,7 +478,7 @@
      "type": "object"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -574,6 +645,7 @@
      "type": "array"
     },
     "mute_time_intervals": {
+     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
@@ -587,23 +659,15 @@
       "type": "string"
      },
      "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
     }
    },
    "title": "Config is the top-level configuration for Alertmanager's config files.",
-   "type": "object"
-  },
-  "ContactPair": {
-   "properties": {
-    "contactPoint": {
-     "$ref": "#/definitions/ContactPointUpgrade"
-    },
-    "error": {
-     "type": "string"
-    },
-    "legacyChannel": {
-     "$ref": "#/definitions/LegacyChannel"
-    }
-   },
    "type": "object"
   },
   "ContactPointExport": {
@@ -625,20 +689,6 @@
    "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
    "type": "object"
   },
-  "ContactPointUpgrade": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "routeMatchers": {
-     "$ref": "#/definitions/ObjectMatchers"
-    },
-    "type": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "ContactPoints": {
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
@@ -650,48 +700,6 @@
    "format": "uint8",
    "title": "CounterResetHint contains the known information about a counter reset,",
    "type": "integer"
-  },
-  "DashboardUpgrade": {
-   "properties": {
-    "dashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "dashboardName": {
-     "type": "string"
-    },
-    "dashboardUid": {
-     "type": "string"
-    },
-    "error": {
-     "type": "string"
-    },
-    "folderName": {
-     "type": "string"
-    },
-    "folderUid": {
-     "type": "string"
-    },
-    "migratedAlerts": {
-     "items": {
-      "$ref": "#/definitions/AlertPair"
-     },
-     "type": "array"
-    },
-    "newFolderName": {
-     "type": "string"
-    },
-    "newFolderUid": {
-     "type": "string"
-    },
-    "provisioned": {
-     "type": "boolean"
-    },
-    "warning": {
-     "type": "string"
-    }
-   },
-   "type": "object"
   },
   "DataLink": {
    "description": "DataLink define what",
@@ -752,6 +760,9 @@
     },
     "webhook_url": {
      "$ref": "#/definitions/SecretURL"
+    },
+    "webhook_url_file": {
+     "type": "string"
     }
    },
    "title": "DiscordConfig configures notifications via Discord.",
@@ -971,7 +982,9 @@
    },
    "type": "object"
   },
-  "EvalQueriesResponse": {},
+  "EvalQueriesResponse": {
+   "type": "object"
+  },
   "ExplorePanelsState": {
    "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
   },
@@ -1271,7 +1284,7 @@
    "type": "object"
   },
   "FrameType": {
-   "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
+   "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.\n+enum",
    "type": "string"
   },
   "FrameTypeVersion": {
@@ -1327,6 +1340,7 @@
      "type": "object"
     },
     "mute_time_intervals": {
+     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
@@ -1345,6 +1359,12 @@
     "templates": {
      "items": {
       "type": "string"
+     },
+     "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
      },
      "type": "array"
     }
@@ -1560,12 +1580,18 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "orgId": {
      "format": "int64",
      "type": "integer"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
+    },
+    "record": {
+     "$ref": "#/definitions/Record"
     },
     "rule_group": {
      "type": "string"
@@ -1968,41 +1994,6 @@
    },
    "type": "array"
   },
-  "LegacyAlert": {
-   "properties": {
-    "dashboardId": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "name": {
-     "type": "string"
-    },
-    "panelId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "LegacyChannel": {
-   "properties": {
-    "id": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "name": {
-     "type": "string"
-    },
-    "type": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "LinkTransformationConfig": {
    "properties": {
     "expression": {
@@ -2028,6 +2019,9 @@
     "send_resolved": {
      "type": "boolean"
     },
+    "summary": {
+     "type": "string"
+    },
     "text": {
      "type": "string"
     },
@@ -2036,6 +2030,9 @@
     },
     "webhook_url": {
      "$ref": "#/definitions/SecretURL"
+    },
+    "webhook_url_file": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2388,50 +2385,6 @@
    },
    "type": "object"
   },
-  "OrgMigrationState": {
-   "properties": {
-    "migratedChannels": {
-     "items": {
-      "$ref": "#/definitions/ContactPair"
-     },
-     "type": "array"
-    },
-    "migratedDashboards": {
-     "items": {
-      "$ref": "#/definitions/DashboardUpgrade"
-     },
-     "type": "array"
-    },
-    "orgId": {
-     "format": "int64",
-     "type": "integer"
-    }
-   },
-   "type": "object"
-  },
-  "OrgMigrationSummary": {
-   "properties": {
-    "hasErrors": {
-     "type": "boolean"
-    },
-    "newAlerts": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "newChannels": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "newDashboards": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "removed": {
-     "type": "boolean"
-    }
-   },
-   "type": "object"
-  },
   "PagerdutyConfig": {
    "properties": {
     "class": {
@@ -2502,7 +2455,6 @@
    "type": "object"
   },
   "PagerdutyImage": {
-   "description": "PagerdutyImage is an image",
    "properties": {
     "alt": {
      "type": "string"
@@ -2514,10 +2466,10 @@
      "type": "string"
     }
    },
+   "title": "PagerdutyImage is an image.",
    "type": "object"
   },
   "PagerdutyLink": {
-   "description": "PagerdutyLink is a link",
    "properties": {
     "href": {
      "type": "string"
@@ -2526,30 +2478,14 @@
      "type": "string"
     }
    },
+   "title": "PagerdutyLink is a link.",
    "type": "object"
   },
   "PermissionDenied": {
    "type": "object"
   },
-  "Point": {
-   "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
-   "properties": {
-    "H": {
-     "$ref": "#/definitions/FloatHistogram"
-    },
-    "T": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "V": {
-     "format": "double",
-     "type": "number"
-    }
-   },
-   "title": "Point represents a single data point for a given timestamp.",
-   "type": "object"
-  },
   "PostableApiAlertingConfig": {
+   "description": "nolint:revive",
    "properties": {
     "global": {
      "$ref": "#/definitions/GlobalConfig"
@@ -2561,6 +2497,7 @@
      "type": "array"
     },
     "mute_time_intervals": {
+     "description": "MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.",
      "items": {
       "$ref": "#/definitions/MuteTimeInterval"
      },
@@ -2581,11 +2518,18 @@
       "type": "string"
      },
      "type": "array"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
     }
    },
    "type": "object"
   },
   "PostableApiReceiver": {
+   "description": "nolint:revive",
    "properties": {
     "discord_configs": {
      "items": {
@@ -2803,6 +2747,12 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
+    "record": {
+     "$ref": "#/definitions/Record"
+    },
     "title": {
      "type": "string"
     },
@@ -2852,6 +2802,9 @@
       "$ref": "#/definitions/TimeIntervalItem"
      },
      "type": "array"
+    },
+    "version": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2979,12 +2932,18 @@
      ],
      "type": "string"
     },
+    "notification_settings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "orgID": {
      "format": "int64",
      "type": "integer"
     },
     "provenance": {
      "$ref": "#/definitions/Provenance"
+    },
+    "record": {
+     "$ref": "#/definitions/Record"
     },
     "ruleGroup": {
      "example": "eval_group_1",
@@ -3317,6 +3276,25 @@
    "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
    "type": "object"
   },
+  "Record": {
+   "properties": {
+    "from": {
+     "description": "Which expression node should be used as the input for the recorded metric.",
+     "example": "A",
+     "type": "string"
+    },
+    "metric": {
+     "description": "Name of the recorded metric.",
+     "example": "grafana_alerts_ratio",
+     "type": "string"
+    }
+   },
+   "required": [
+    "metric",
+    "from"
+   ],
+   "type": "object"
+  },
   "RelativeTimeRange": {
    "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
    "properties": {
@@ -3498,7 +3476,7 @@
      "type": "string"
     },
     "type": {
-     "$ref": "#/definitions/RuleType"
+     "type": "string"
     }
    },
    "required": [
@@ -3616,10 +3594,6 @@
    ],
    "type": "object"
   },
-  "RuleType": {
-   "title": "RuleType models the type of a rule.",
-   "type": "string"
-  },
   "SNSConfig": {
    "properties": {
     "api_url": {
@@ -3659,7 +3633,12 @@
    "type": "object"
   },
   "Sample": {
+   "description": "Sample is a single sample belonging to a metric. It represents either a float\nsample or a histogram sample. If H is nil, it is a float sample. Otherwise,\nit is a histogram sample.",
    "properties": {
+    "F": {
+     "format": "double",
+     "type": "number"
+    },
     "H": {
      "$ref": "#/definitions/FloatHistogram"
     },
@@ -3669,13 +3648,8 @@
     "T": {
      "format": "int64",
      "type": "integer"
-    },
-    "V": {
-     "format": "double",
-     "type": "number"
     }
    },
-   "title": "Sample is a single sample belonging to a metric.",
    "type": "object"
   },
   "Secret": {
@@ -3703,6 +3677,20 @@
     },
     "SecretKey": {
      "$ref": "#/definitions/Secret"
+    }
+   },
+   "type": "object"
+  },
+  "SilenceMetadata": {
+   "properties": {
+    "folder_uid": {
+     "type": "string"
+    },
+    "rule_title": {
+     "type": "string"
+    },
+    "rule_uid": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -4168,42 +4156,18 @@
    "type": "string"
   },
   "TimeInterval": {
-   "description": "TimeInterval describes intervals of time. ContainsTime will tell you if a golang time is contained\nwithin the interval.",
    "properties": {
-    "days_of_month": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "location": {
+    "name": {
      "type": "string"
     },
-    "months": {
+    "time_intervals": {
      "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "times": {
-     "items": {
-      "$ref": "#/definitions/TimeRange"
-     },
-     "type": "array"
-    },
-    "weekdays": {
-     "items": {
-      "type": "string"
-     },
-     "type": "array"
-    },
-    "years": {
-     "items": {
-      "type": "string"
+      "$ref": "#/definitions/TimeInterval"
      },
      "type": "array"
     }
    },
+   "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
   "TimeIntervalItem": {
@@ -4270,7 +4234,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -4306,7 +4269,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "UpdateRuleGroupResponse": {
@@ -4336,7 +4299,7 @@
    "type": "object"
   },
   "Userinfo": {
-   "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
+   "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a [URL]. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
    "type": "object"
   },
   "ValidationError": {
@@ -4359,7 +4322,7 @@
    "type": "array"
   },
   "Vector": {
-   "description": "Vector is basically only an alias for model.Samples, but the\ncontract is that in a Vector, all Samples have the same timestamp.",
+   "description": "Vector is basically only an alias for []Sample, but the contract is that\nin a Vector, all Samples have the same timestamp.",
    "items": {
     "$ref": "#/definitions/Sample"
    },
@@ -4512,6 +4475,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4537,7 +4501,8 @@
   "alertGroups": {
    "description": "AlertGroups alert groups",
    "items": {
-    "$ref": "#/definitions/alertGroup"
+    "$ref": "#/definitions/alertGroup",
+    "type": "object"
    },
    "type": "array"
   },
@@ -4697,11 +4662,81 @@
   },
   "gettableAlerts": {
    "items": {
-    "$ref": "#/definitions/gettableAlert"
+    "$ref": "#/definitions/gettableAlert",
+    "type": "object"
+   },
+   "type": "array"
+  },
+  "gettableGrafanaSilence": {
+   "properties": {
+    "accessControl": {
+     "additionalProperties": {
+      "type": "boolean"
+     },
+     "example": {
+      "create": false,
+      "read": true,
+      "write": false
+     },
+     "type": "object"
+    },
+    "comment": {
+     "description": "comment",
+     "type": "string"
+    },
+    "createdBy": {
+     "description": "created by",
+     "type": "string"
+    },
+    "endsAt": {
+     "description": "ends at",
+     "format": "date-time",
+     "type": "string"
+    },
+    "id": {
+     "description": "id",
+     "type": "string"
+    },
+    "matchers": {
+     "$ref": "#/definitions/matchers"
+    },
+    "metadata": {
+     "$ref": "#/definitions/SilenceMetadata"
+    },
+    "startsAt": {
+     "description": "starts at",
+     "format": "date-time",
+     "type": "string"
+    },
+    "status": {
+     "$ref": "#/definitions/silenceStatus"
+    },
+    "updatedAt": {
+     "description": "updated at",
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "required": [
+    "comment",
+    "createdBy",
+    "endsAt",
+    "matchers",
+    "startsAt",
+    "id",
+    "status",
+    "updatedAt"
+   ],
+   "type": "object"
+  },
+  "gettableGrafanaSilences": {
+   "items": {
+    "$ref": "#/definitions/gettableGrafanaSilence"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4750,8 +4785,10 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
-    "$ref": "#/definitions/gettableSilence"
+    "$ref": "#/definitions/gettableSilence",
+    "type": "object"
    },
    "type": "array"
   },
@@ -4900,6 +4937,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4937,6 +4975,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -5221,9 +5260,9 @@
     ],
     "responses": {
      "200": {
-      "description": "gettableSilence",
+      "description": "gettableGrafanaSilence",
       "schema": {
-       "$ref": "#/definitions/gettableSilence"
+       "$ref": "#/definitions/gettableGrafanaSilence"
       }
      },
      "400": {
@@ -5250,13 +5289,25 @@
       },
       "name": "filter",
       "type": "array"
+     },
+     {
+      "description": "Return rule metadata with silence.",
+      "in": "query",
+      "name": "ruleMetadata",
+      "type": "boolean"
+     },
+     {
+      "description": "Return access control metadata with silence.",
+      "in": "query",
+      "name": "accesscontrol",
+      "type": "boolean"
      }
     ],
     "responses": {
      "200": {
-      "description": "gettableSilences",
+      "description": "gettableGrafanaSilences",
       "schema": {
-       "$ref": "#/definitions/gettableSilences"
+       "$ref": "#/definitions/gettableGrafanaSilences"
       }
      },
      "400": {
@@ -5877,6 +5928,18 @@
       "type": "array"
      },
      {
+      "description": "Return rule metadata with silence.",
+      "in": "query",
+      "name": "ruleMetadata",
+      "type": "boolean"
+     },
+     {
+      "description": "Return access control metadata with silence.",
+      "in": "query",
+      "name": "accesscontrol",
+      "type": "boolean"
+     },
+     {
       "description": "DatasoureUID should be the datasource UID identifier",
       "in": "path",
       "name": "DatasourceUID",
@@ -6238,10 +6301,6 @@
   },
   "/ruler/grafana/api/v1/export/rules": {
    "get": {
-    "consumes": [
-     "application/json",
-     "application/yaml"
-    ],
     "description": "List rules in provisioning format",
     "operationId": "RouteGetRulesForExport",
     "parameters": [
@@ -6254,7 +6313,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -6281,11 +6345,55 @@
       "type": "string"
      }
     ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
+    ],
     "responses": {
      "200": {
       "description": "AlertingFileExport",
       "schema": {
        "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/ruler/grafana/api/v1/rule/{RuleUID}": {
+   "get": {
+    "description": "Get rule by UID",
+    "operationId": "RouteGetRuleByUID",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "RuleUID",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "GettableExtendedRuleNode",
+      "schema": {
+       "$ref": "#/definitions/GettableExtendedRuleNode"
       }
      },
      "403": {
@@ -6451,8 +6559,7 @@
   "/ruler/grafana/api/v1/rules/{Namespace}/export": {
    "post": {
     "consumes": [
-     "application/json",
-     "application/yaml"
+     "application/json"
     ],
     "description": "Converts submitted rule group to provisioning format",
     "operationId": "RoutePostRulesGroupForExport",
@@ -6480,11 +6587,23 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7113,6 +7232,12 @@
      "200": {
       "$ref": "#/responses/GetReceiverResponse"
      },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     },
      "404": {
       "description": "NotFound",
       "schema": {
@@ -7249,7 +7374,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7275,6 +7405,13 @@
       "name": "ruleUid",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7406,7 +7543,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7422,7 +7564,9 @@
     "produces": [
      "application/json",
      "application/yaml",
-     "text/yaml"
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7517,7 +7661,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7535,6 +7684,13 @@
       "name": "name",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7628,6 +7784,44 @@
    }
   },
   "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+   "delete": {
+    "description": "Delete rule group",
+    "operationId": "RouteDeleteAlertRuleGroup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": " The alert rule group was deleted successfully."
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "tags": [
+     "provisioning"
+    ]
+   },
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
     "parameters": [
@@ -7705,7 +7899,7 @@
       }
      }
     },
-    "summary": "Update the interval of a rule group.",
+    "summary": "Create or update alert rule group.",
     "tags": [
      "provisioning"
     ]
@@ -7724,7 +7918,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7745,7 +7944,9 @@
     "produces": [
      "application/json",
      "application/yaml",
-     "text/yaml"
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7832,11 +8033,23 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -7867,6 +8080,17 @@
       "in": "path",
       "name": "name",
       "required": true,
+      "type": "string"
+     },
+     {
+      "description": "Version of mute timing to use for optimistic concurrency. Leave empty to disable validation",
+      "in": "query",
+      "name": "version",
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
       "type": "string"
      }
     ],
@@ -7951,6 +8175,12 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
+      }
      }
     },
     "summary": "Replace an existing mute timing.",
@@ -7972,7 +8202,12 @@
      },
      {
       "default": "yaml",
-      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "description": "Format of the downloaded file. Supported yaml, json or hcl. Accept header can also be used, but the query parameter will take precedence.",
+      "enum": [
+       "yaml",
+       "json",
+       "hcl"
+      ],
       "in": "query",
       "name": "format",
       "type": "string"
@@ -7984,6 +8219,13 @@
       "required": true,
       "type": "string"
      }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
     ],
     "responses": {
      "200": {
@@ -8082,6 +8324,13 @@
   "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "application/terraform+hcl",
+     "text/yaml",
+     "text/hcl"
+    ],
     "responses": {
      "200": {
       "description": "AlertingFileExport",
@@ -8349,221 +8598,6 @@
     "summary": "Query state history.",
     "tags": [
      "history"
-    ]
-   }
-  },
-  "/v1/upgrade/channels": {
-   "post": {
-    "operationId": "RoutePostUpgradeAllChannels",
-    "parameters": [
-     {
-      "default": false,
-      "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
-      "in": "query",
-      "name": "SkipExisting",
-      "type": "boolean"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade all legacy notification channels for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/channels/{ChannelID}": {
-   "post": {
-    "operationId": "RoutePostUpgradeChannel",
-    "parameters": [
-     {
-      "description": "Channel ID of legacy notification channel.",
-      "in": "path",
-      "name": "ChannelID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade a single legacy notification channel for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/dashboards": {
-   "post": {
-    "operationId": "RoutePostUpgradeAllDashboards",
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade all legacy dashboard alerts for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/dashboards/{DashboardID}": {
-   "post": {
-    "operationId": "RoutePostUpgradeDashboard",
-    "parameters": [
-     {
-      "default": false,
-      "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
-      "in": "query",
-      "name": "SkipExisting",
-      "type": "boolean"
-     },
-     {
-      "description": "Dashboard ID of dashboard alert.",
-      "in": "path",
-      "name": "DashboardID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade all legacy dashboard alerts on a dashboard for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/dashboards/{DashboardID}/panels/{PanelID}": {
-   "post": {
-    "operationId": "RoutePostUpgradeAlert",
-    "parameters": [
-     {
-      "description": "Dashboard ID of dashboard alert.",
-      "in": "path",
-      "name": "DashboardID",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "description": "Panel ID of dashboard alert.",
-      "in": "path",
-      "name": "PanelID",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade single legacy dashboard alert for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   }
-  },
-  "/v1/upgrade/org": {
-   "delete": {
-    "operationId": "RouteDeleteOrgUpgrade",
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     }
-    },
-    "summary": "Delete existing alerting upgrade for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   },
-   "get": {
-    "operationId": "RouteGetOrgUpgrade",
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationState",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationState"
-      }
-     }
-    },
-    "summary": "Get existing alerting upgrade for the current organization.",
-    "tags": [
-     "upgrade"
-    ]
-   },
-   "post": {
-    "operationId": "RoutePostUpgradeOrg",
-    "parameters": [
-     {
-      "default": false,
-      "description": "If true, legacy alert and notification channel upgrades from previous runs will be skipped. Otherwise, they will be replaced.",
-      "in": "query",
-      "name": "SkipExisting",
-      "type": "boolean"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "200": {
-      "description": "OrgMigrationSummary",
-      "schema": {
-       "$ref": "#/definitions/OrgMigrationSummary"
-      }
-     }
-    },
-    "summary": "Upgrade all legacy alerts for the current organization.",
-    "tags": [
-     "upgrade"
     ]
    }
   }

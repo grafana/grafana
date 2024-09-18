@@ -12,10 +12,7 @@ import (
 	"github.com/grafana/cuetsy"
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
-	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/kindsys"
-	"github.com/grafana/thema"
-	"github.com/grafana/thema/encoding/typescript"
+	"github.com/grafana/grafana/pkg/codegen/generators"
 )
 
 // TSVeneerIndexJenny generates an index.gen.ts file with references to all
@@ -41,19 +38,18 @@ func (gen *genTSVeneerIndex) JennyName() string {
 	return "TSVeneerIndexJenny"
 }
 
-func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
+func (gen *genTSVeneerIndex) Generate(sfg ...SchemaForGen) (*codejen.File, error) {
 	tsf := new(ast.File)
-	for _, def := range kinds {
-		sch := def.Lineage().Latest()
-		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
+	for _, def := range sfg {
+		f, err := generators.GenerateTypesTS(def.CueFile, &generators.TSConfig{
 			CuetsyConfig: &cuetsy.Config{
-				ImportMapper: cuectx.MapCUEImportToTS,
+				ImportMapper: MapCUEImportToTS,
 			},
-			RootName: def.Props().Common().Name,
-			Group:    def.Props().Common().LineageIsGroup,
+			RootName: def.Name,
+			IsGroup:  def.IsGroup,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", def.Props().Common().Name, err)
+			return nil, fmt.Errorf("%s: %w", def.Name, err)
 		}
 		// The obvious approach would be calling renameSpecNode() here, same as in the ts resource jenny,
 		// to rename the "spec" field to the name of the kind. But that was causing extra
@@ -64,7 +60,7 @@ func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, err
 
 		elems, err := gen.extractTSIndexVeneerElements(def, f)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", def.Props().Common().Name, err)
+			return nil, fmt.Errorf("%s: %w", def.Name, err)
 		}
 		tsf.Nodes = append(tsf.Nodes, elems...)
 	}
@@ -72,12 +68,9 @@ func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, err
 	return codejen.NewFile(filepath.Join(gen.dir, "index.gen.ts"), []byte(tsf.String()), gen), nil
 }
 
-func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *ast.File) ([]ast.Decl, error) {
-	lin := def.Lineage()
-	comm := def.Props().Common()
-
+func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def SchemaForGen, tf *ast.File) ([]ast.Decl, error) {
 	// Check the root, then walk the tree
-	rootv := lin.Latest().Underlying().LookupPath(schPath)
+	rootv := def.CueFile.LookupPath(cue.ParsePath("lineage.schemas[0].schema"))
 
 	var raw, custom, rawD, customD ast.Idents
 
@@ -103,7 +96,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 			}
 
 			// Search the generated TS AST for the type and default def nodes
-			pair := findDeclNode(name, comm.Name, tf)
+			pair := findDeclNode(name, def.Name, tf)
 			if pair.T == nil {
 				// No generated type for this item, skip it
 				return false
@@ -150,29 +143,32 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 		return nil, terr
 	}
 
-	vpath := fmt.Sprintf("v%v", thema.Lineage.Latest(lin).Version())
-	if def.Props().Common().Maturity.Less(kindsys.MaturityStable) {
-		vpath = "x"
-	}
+	vpath := "x"
+	machineName := strings.ToLower(def.Name)
 
 	ret := make([]ast.Decl, 0)
 	if len(raw) > 0 {
 		ret = append(ret, ast.ExportSet{
-			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated types from %s kind.", comm.Name), 80, false)},
+			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated types from %s kind.", def.Name), 80, false)},
 			TypeOnly:    true,
 			Exports:     raw,
-			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
+			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s_types.gen", machineName, vpath, machineName)},
 		})
 	}
 	if len(rawD) > 0 {
 		ret = append(ret, ast.ExportSet{
-			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated enums and default consts from %s kind.", lin.Name()), 80, false)},
+			CommentList: []ast.Comment{ts.CommentFromString(fmt.Sprintf("Raw generated enums and default consts from %s kind.", machineName), 80, false)},
 			TypeOnly:    false,
 			Exports:     rawD,
-			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s_types.gen", comm.MachineName, vpath, comm.MachineName)},
+			From:        ast.Str{Value: fmt.Sprintf("./raw/%s/%s/%s_types.gen", machineName, vpath, machineName)},
 		})
 	}
-	vtfile := fmt.Sprintf("./veneer/%s.types", lin.Name())
+	vtfile := fmt.Sprintf("./veneer/%s.types", machineName)
+	version, err := getVersion(def.CueFile)
+	if err != nil {
+		return nil, err
+	}
+
 	customstr := fmt.Sprintf(`// The following exported declarations correspond to types in the %s@%s kind's
 // schema with attribute @grafana(TSVeneer="type").
 //
@@ -182,7 +178,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 // and exports all the symbols in the list.
 //
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls`,
-		lin.Name(), thema.Lineage.Latest(lin).Version(), filepath.ToSlash(filepath.Join(gen.dir, vtfile)))
+		machineName, strings.ReplaceAll(version, "-", "."), filepath.ToSlash(filepath.Join(gen.dir, vtfile)))
 
 	customComments := []ast.Comment{{Text: customstr}}
 	if len(custom) > 0 {

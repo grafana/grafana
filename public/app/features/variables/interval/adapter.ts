@@ -1,10 +1,11 @@
 import { cloneDeep } from 'lodash';
 
+import { IntervalVariableModel } from '@grafana/data';
+
 import { dispatch } from '../../../store/store';
 import { VariableAdapter } from '../adapters';
 import { optionPickerFactory } from '../pickers';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
-import { IntervalVariableModel } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
 import { IntervalVariableEditor } from './IntervalVariableEditor';

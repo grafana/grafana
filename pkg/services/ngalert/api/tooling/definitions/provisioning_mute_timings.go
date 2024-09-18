@@ -15,6 +15,13 @@ import (
 //
 // Export all mute timings in provisioning format.
 //
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
+//
 //     Responses:
 //       200: AlertingFileExport
 //       403: PermissionDenied
@@ -30,6 +37,13 @@ import (
 // swagger:route GET /v1/provisioning/mute-timings/{name}/export provisioning stable RouteExportMuteTiming
 //
 // Export a mute timing in provisioning format.
+//
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - application/terraform+hcl
+//     - text/yaml
+//     - text/hcl
 //
 //     Responses:
 //       200: AlertingFileExport
@@ -56,6 +70,7 @@ import (
 //     Responses:
 //       202: MuteTimeInterval
 //       400: ValidationError
+//       409: GenericPublicError
 
 // swagger:route DELETE /v1/provisioning/mute-timings/{name} provisioning stable RouteDeleteMuteTiming
 //
@@ -70,11 +85,22 @@ import (
 // swagger:model
 type MuteTimings []MuteTimeInterval
 
-// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable RouteDeleteMuteTiming RouteExportMuteTiming
+// swagger:parameters RouteGetTemplate RouteGetMuteTiming RoutePutMuteTiming stable  RouteExportMuteTiming
 type RouteGetMuteTimingParam struct {
 	// Mute timing name
 	// in:path
 	Name string `json:"name"`
+}
+
+// swagger:parameters stable RouteDeleteMuteTiming
+type RouteDeleteMuteTimingParam struct {
+	// Mute timing name
+	// in:path
+	Name string `json:"name"`
+
+	// Version of mute timing to use for optimistic concurrency. Leave empty to disable validation
+	// in:query
+	Version string `json:"version"`
 }
 
 // swagger:parameters RoutePostMuteTiming RoutePutMuteTiming
@@ -83,7 +109,7 @@ type MuteTimingPayload struct {
 	Body MuteTimeInterval
 }
 
-// swagger:parameters RoutePostMuteTiming RoutePutMuteTiming
+// swagger:parameters RoutePostMuteTiming RoutePutMuteTiming RouteDeleteMuteTiming
 type MuteTimingHeaders struct {
 	// in:header
 	XDisableProvenance string `json:"X-Disable-Provenance"`
@@ -92,6 +118,7 @@ type MuteTimingHeaders struct {
 // swagger:model
 type MuteTimeInterval struct {
 	config.MuteTimeInterval `json:",inline" yaml:",inline"`
+	Version                 string     `json:"version,omitempty"`
 	Provenance              Provenance `json:"provenance,omitempty"`
 }
 

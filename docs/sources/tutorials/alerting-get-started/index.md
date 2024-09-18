@@ -23,23 +23,28 @@ In this guide, we'll walk you through the process of setting up your first alert
 
 In this tutorial you will:
 
-- Set up an Alert
-- Send an alert notification to a public webhook.
+- Create a contact point.
+- Set up an alert rule.
+- Receive firing and resolved alert notifications in a public webhook.
 
 ## Before you begin
 
-Ensure you have the following applications installed.
+### Grafana Cloud users
+
+As a Grafana Cloud user, you don't have to install anything. Continue to [Create a contact point](#create-a-contact-point).
+
+### Grafana OSS users
+
+In order to run a Grafana stack locally, ensure you have the following applications installed.
 
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
-## Set up a sample application
+#### Set up the Grafana Stack (OSS users)
 
-The sample application generates real data and exposes metrics, which are stored in Prometheus. In Grafana Alerting, you can then build an alert rule based on the data generated.
+To demonstrate the observation of data using the Grafana stack, download the files to your local machine.
 
-Download the files to your local machine.
-
-1. Clone the [tutorial environment repository](https://github.com/grafana/tutorial-environment).
+1. Clone the [tutorial environment repository](https://www.github.com/grafana/tutorial-environment).
 
    ```
    git clone https://github.com/grafana/tutorial-environment.git
@@ -51,15 +56,7 @@ Download the files to your local machine.
    cd tutorial-environment
    ```
 
-1. Make sure Docker is running:
-
-   ```
-   docker --version
-   ```
-
-   This command will display the installed Docker version if the installation was successful.
-
-1. Start the sample application:
+1. Run the Grafana stack:
 
    ```
    docker compose up -d
@@ -71,143 +68,130 @@ Download the files to your local machine.
    If you already have Grafana, Loki, or Prometheus running on your system, you might see errors, because the Docker image is trying to use ports that your local installations are already using. If this is the case, stop the services, then run the command again.
    {{< /admonition >}}
 
-1. Ensure all services are up-and-running:
-
-   ```
-   docker compose ps
-   ```
-
-   In the State column, it should say Up for all services.
-
-The Grafana News app should be live on [localhost:8081](http://localhost:8081/).
-
-### Generate data
-
-To enhance the hands-on aspect of this tutorial, you can actively participate in the Grafana News application to simulate web traffic and interactions. This enables you to observe data within Grafana and set up alerts accordingly.
-
-### Grafana News
-
-Grafana News is an application created to demonstrate the observation of data using the Grafana stack. It achieves this by generating web traffic through activities such as posting links and voting for your preferred ones.
-
-To add a link:
-
-1. Enter a **Title**
-1. Enter a **URL**
-1. Click **Submit** to add the link.
-   The link will appear listed under the Grafana News heading.
-1. To vote for a link, click the triangle icon next to the name of the link.
-
-## Create a contact point for Grafana Managed Alerts
+## Create a contact point
 
 Besides being an open-source observability tool, Grafana has its own built-in alerting service. This means that you can receive notifications whenever there is an event of interest in your data, and even see these events graphed in your visualizations.
 
-In this step, we'll set up a new contact point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
+In this step, we'll set up a new [contact point](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/integrations/webhook-notifier/). This contact point will use the _webhooks_ integration. In order to make this work, we also need an endpoint for our webhook integration to receive the alert. We will use [Webhook.site](https://webhook.site/) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
 
-1. In your browser, navigate to [localhost:3000](http://localhost:3000), where Grafana is running.
-   You should get logged in automatically.
-1. In another window, go to [requestbin.com](https://requestbin.com).
-1. Under the **Create Request Bin** button, click the link to create a **public bin** instead.
-1. From Request Bin, **copy the endpoint URL**.
+1. In your browser, **sign in** to your Grafana Cloud account.
 
-Your Request Bin is now waiting for the first request.
+   {{< admonition type="note" >}}
+   **OSS users**: To log in, navigate to localhost:3000, where Grafana is running locally.
+   {{< /admonition >}}
 
-Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our Request Bin.
+1. In another tab, go to [Webhook.site](https://webhook.site/).
+1. **Copy Your unique URL**.
+
+Your webhook endpoint is now waiting for the first request.
+
+Next, let's configure a contact point in Grafana's Alerting UI to send notifications to our webhook endpoint.
 
 1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
 1. Click **+ Add contact point**.
-1. In **Name**, write **RequestBin**.
+1. In **Name**, write **Webhook**.
 1. In **Integration**, choose **Webhook**.
-1. In **URL**, paste the endpoint to your request bin.
-1. Click **Test**, and then click **Send test notification** to send a test alert to your request bin.
-1. Navigate back to the Request Bin you created earlier. On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
+1. In **URL**, paste the endpoint to your webhook endpoint.
+1. Click **Test**, and then click **Send test notification** to send a test alert to your webhook endpoint.
+1. Navigate back to [Webhook.site](https://webhook.site/). On the left side, there's now a `POST /` entry. Click it to see what information Grafana sent.
+
+   {{< figure src="/media/docs/alerting/alerting-webhook-detail.png" max-width="1200px" caption="A POST entry in Webhook.site" >}}
+
 1. Return to Grafana and click **Save contact point**.
 
-We have created a dummy webhook endpoint and created a new Alerting Contact Point in Grafana. Now, we can create an alert rule and link it to this new channel.
+We have created a dummy Webhook endpoint and created a new Alerting contact point in Grafana. Now, we can create an alert rule and link it to this new integration.
 
 ## Create an alert
 
-Next, we'll establish an alert within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
+Next, we'll establish an [alert rule](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/) within Grafana Alerting to notify us whenever our sample app experiences a specific volume of requests.
 
 In Grafana, **navigate to Alerting** > **Alert rules**. Click on **New alert rule**.
 
-1. Enter alert rule name
-   Make it short and descriptive as this will appear in your alert notification. For instance, **server-requests-duration**
+### Enter alert rule name
 
-## Define query and alert condition
+Make it short and descriptive as this will appear in your alert notification. For instance, **database-metrics**
+
+### Define query and alert condition
 
 In this section, we define queries, expressions (used to manipulate the data), and the condition that must be met for the alert to be triggered.
 
 1. Select the **Prometheus** data source from the drop-down menu.
-
-   {{< admonition type="note" >}}
-   To visualize this data in Grafana, we need time-series metrics that we can collect and store. We can do that with [Prometheus](https://grafana.com/docs/grafana/latest/getting-started/get-started-grafana-prometheus/), which pulls metrics from our sample app.
-   {{< /admonition >}}
-
 1. In the Query editor, switch to **Code** mode by clicking the button at the right.
 1. Enter the following query:
 
    ```promql
-   sum(rate(tns_request_duration_seconds_count[1m])) by(method)
+   vector(1)
    ```
 
-   This [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) query calculates the sum of the per-second average rates of increase of the `tns_request_duration_seconds_count` metric over the last 1 minute, grouped by the HTTP method used in the requests. This can be useful for analyzing the request duration trends for different HTTP methods.
+   In Prometheus, `vector(1)` is a special type of PromQL query that generates a constant vector. This is useful in testing and query manipulation, where you might need a constant value for calculations or comparisons. This query will allow you to create an alert rule that will be always firing.
 
-1. Keep expressions “B” and “C” as they are. These expressions (**Reduce** and **Threshold**, respectively) come by default when creating a new rule.
+1. Remove the ‘B’ **Reduce expression** (click the bin icon). The Reduce expression comes by default, and in this case, it is not needed since the queried data is already reduced. Note that the Threshold expression is now your **Alert condition**.
 
-   The Reduce expression “B”, selects the last value of our query “A”, while the Threshold expression “C” will check if the last value from expression “B” is above a specific value. In addition, the Threshold expression is the alert condition by default. Enter `0.2` as threshold value. You can read more about queries and conditions [here](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/#expression-queries).
+1. In the ‘C’ **Threshold expression**:
 
-1. Click Preview to run the queries.
+   - Change the **Input** to **'A'** to select the data source.
+   - Enter `0` as the threshold value. This is the value above which the alert rule should trigger.
 
-   You should see the request duration for different HTTP methods.
+1. Click **Preview** to run the queries.
 
-   {{<admonition type="note">}}
-   If it returns “No data,” or an error, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
-   {{</admonition>}}
+   It should return a single sample with the value 1 at the current timestamp. And, since `1` is above `0`, the alert condition has been met, and the alert rule state is `Firing`.
 
-## Set evaluation behavior
+   {{< figure src="/media/docs/alerting/alerting-always-firing-alert.png" max-width="1200px" caption="A preview of a firing alert" >}}
 
-An evaluation group defines an evaluation interval - how often a rule is checked. Alert rules within the same evaluation group are evaluated sequentially
+### Set evaluation behavior
 
-1. In **Folder**, click **+ New folder** and enter a name. For example: _grafana-news_. This folder will contain our alerts.
+An [evaluation group](https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/) defines when an alert rule fires, and it’s based on two settings:
+
+- **Evaluation group**: how frequently the alert rule is evaluated.
+- **Evaluation interval**: how long the condition must be met to start firing. This allows your data time to stabilize before triggering an alert, helping to reduce the frequency of unnecessary notifications.
+
+To set up the evaluation:
+
+1. In **Folder**, click **+ New folder** and enter a name. For example: _metric-alerts_. This folder will contain our alerts.
 1. In the **Evaluation group**, repeat the above step to create a new evaluation group. We will name it _1m-evaluation_.
 1. Choose an **Evaluation interval** (how often the alert will be evaluated).
    For example, every `1m` (1 minute).
-1. Set the **pending period** (the “for” period).
-   This is the time that a condition has to be met until the alert enters into **Firing** state and a notification is sent. For example, `0s` (zero seconds) so the alert rule fires the moment the condition is met.
+1. Set the pending period to, `0s` (zero seconds), so the alert rule fires the moment the condition is met.
 
-## Configure labels and notifications
+### Configure labels and notifications
 
-Add labels to ease searching or route notifications to a policy.
+Choose the contact point where you want to receive your alert notifications.
 
-1. Add a label.Add `app` as the label key, and `grafana-news` as the value.
-1. Add a notification recipient. Under **Contact point**, select **RequestBin** from the drop-down menu.
-1. Add an annotation (optional).
-
-   To provide more context on the alert, you can link a dashboard and panel to our Alert. To do this, click **Link Dashboard and panel** button.
-
-   Linking an alert rule to a panel adds an annotation to the panel when the status of your alert rulechanges. If you don’t have a panel already, and since this is optional, you can skip this step for now and link it after you have finished configuring the alert rule.
-
+1. Under **Contact point**, select **Webhook** from the drop-down menu.
 1. Click **Save rule and exit** at the top right corner.
 
-## Trigger an alert
+## Trigger and resolve an alert
 
-We have now configured an alert rule and a contact point. Now let’s see if we can trigger an alert by generating some traffic on our sample application.
+Now that the alert rule has been configured, you should receive alert [notifications](http://grafana.com/docs/grafana/next/alerting/fundamentals/alert-rule-evaluation/state-and-health/#notifications) in the contact point whenever alerts trigger and get resolved.
 
-1. Browse to [localhost:8081](http://localhost:8081/).
-1. Add a new title and URL.
-1. Repeatedly click the vote button or refresh the page to generate a traffic spike.
+### Trigger an alert
 
-Once the query `sum(rate(tns_request_duration_seconds_count[1m])) by(method)` returns a value greater than `0.2`, Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
+Since the alert rule that you have created has been configured to always fire, once the evaluation interval has concluded, you should receive an alert notification in the Webhook endpoint.
+
+{{< figure src="/media/docs/alerting/alerting-webhook-firing-alert.png" max-width="1200px" caption="Firing alert notification details" >}}
+
+The alert notification details show that the alert rule state is Firing , and it includes the value that made the rule trigger by exceeding the threshold of the alert rule condition. The notification also includes links to see the alert rule details, and another link to add a [Silence](http://grafana.com/docs/grafana/next/alerting/configure-notifications/create-silence/) to it.
+
+### Resolve an alert
+
+To see how a resolved alert notification looks like, you can modify the current alert rule threshold.
+
+To edit the Alert rule:
+
+1. **Navigate to Alerting** > **Alert rules**.
+1. Click on the metric-alerts folder to display the alert that you created earlier
+1. Click the **edit** button on the right hand side of the screen
+1. Increment the Threshold expression to 1.
+1. Click **Save rule and exit**.
+
+By incrementing the threshold, the condition is no longer met, and after the evaluation interval has concluded (1 minute approx.), you should receive an alert notification with status **“Resolved”**.
 
 ## Summary
 
-In this tutorial, you have learned how to set up an alert, send alert notifications to a public webhook, and generate some sample data to observe your alert in action. By following these steps, you've gained a foundational understanding of how to leverage Grafana's alerting capabilities to monitor and respond to events of interest in your data. Happy monitoring!
+In this tutorial, you have learned how to set up a contact point, create an alert, and send alert notifications to a public Webhook. By following these steps, you’ve gained a foundational understanding of how to leverage Grafana Alerting capabilities to monitor and respond to events of interest in your data.
 
-## Learn more
+Feel free to experiment with different [contact points](https://grafana.com/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/) to customize your alert notifications and discover the configuration that best suits your needs.
 
-Check out the links below to continue your learning journey with Grafana's LGTM stack.
+If you run into any problems, you are welcome to post questions in our [Grafana Community forum](https://community.grafana.com/).
 
-- [Prometheus](/docs/grafana/<GRAFANA_VERSION>/features/datasources/prometheus/)
-- [Alerting Overview](/docs/grafana/<GRAFANA_VERSION>/alerting/)
-- [Alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/create-alerts/)
-- [Contact Points](/docs/grafana/<GRAFANA_VERSION>/alerting/notifications/)
+Happy monitoring!

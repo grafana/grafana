@@ -24,7 +24,7 @@ export function NewsContainer({ className }: NewsContainerProps) {
         <Drawer
           title={
             <div className={styles.title}>
-              <Text element="h3">{t('news.title', 'Latest from the blog')}</Text>
+              <Text element="h2">{t('news.title', 'Latest from the blog')}</Text>
               {/* @PERCONA - point to percona blog */}
               <a
                 href="https://www.percona.com/blog/"

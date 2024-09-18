@@ -90,6 +90,7 @@ type Client interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.StreamHandler
+	backend.AdmissionHandler
 	backend.CallResourceHandler
 	backend.CollectMetricsHandler
 }
@@ -110,6 +111,7 @@ type StaticRouteResolver interface {
 
 type ErrorResolver interface {
 	PluginErrors(ctx context.Context) []*Error
+	PluginError(ctx context.Context, pluginID string) *Error
 }
 
 type PluginLoaderAuthorizer interface {

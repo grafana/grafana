@@ -2,22 +2,23 @@ import React, { MouseEvent, memo } from 'react';
 
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
-import { EdgeDatum, NodeDatum } from './types';
+import { EdgeDatumLayout, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
-export const highlightedEdgeColor = '#a00';
+export const defaultHighlightedEdgeColor = '#a00';
 export const defaultEdgeColor = '#999';
 
 interface Props {
-  edge: EdgeDatum;
+  edge: EdgeDatumLayout;
   hovering: boolean;
-  onClick: (event: MouseEvent<SVGElement>, link: EdgeDatum) => void;
+  svgIdNamespace: string;
+  onClick: (event: MouseEvent<SVGElement>, link: EdgeDatumLayout) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
 }
 
 export const Edge = memo(function Edge(props: Props) {
-  const { edge, onClick, onMouseEnter, onMouseLeave, hovering } = props;
+  const { edge, onClick, onMouseEnter, onMouseLeave, hovering, svgIdNamespace } = props;
 
   // Not great typing but after we do layout these properties are full objects not just references
   const { source, target, sourceNodeRadius, targetNodeRadius } = edge as {
@@ -41,12 +42,18 @@ export const Edge = memo(function Edge(props: Props) {
     arrowHeadHeight
   );
 
-  const markerId = `triangle-${edge.id}`;
-  const coloredMarkerId = `triangle-colored-${edge.id}`;
+  const edgeColor = edge.color || defaultEdgeColor;
+
+  // @deprecated -- until 'highlighted' is removed we'll prioritize 'color'
+  // in case both are provided
+  const highlightedEdgeColor = edge.color || defaultHighlightedEdgeColor;
+
+  const markerId = `triangle-${svgIdNamespace}-${edge.id}`;
+  const coloredMarkerId = `triangle-colored-${svgIdNamespace}-${edge.id}`;
 
   return (
     <>
-      <EdgeArrowMarker id={markerId} headHeight={arrowHeadHeight} />
+      <EdgeArrowMarker id={markerId} fill={edgeColor} headHeight={arrowHeadHeight} />
       <EdgeArrowMarker id={coloredMarkerId} fill={highlightedEdgeColor} headHeight={arrowHeadHeight} />
       <g
         onClick={(event) => onClick(event, edge)}
@@ -55,11 +62,12 @@ export const Edge = memo(function Edge(props: Props) {
       >
         <line
           strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + edge.thickness}
-          stroke={edge.highlighted ? highlightedEdgeColor : defaultEdgeColor}
+          stroke={edge.highlighted ? highlightedEdgeColor : edgeColor}
           x1={line.x1}
           y1={line.y1}
           x2={line.x2}
           y2={line.y2}
+          strokeDasharray={edge.strokeDasharray}
           markerEnd={`url(#${edge.highlighted ? coloredMarkerId : markerId})`}
         />
         <line

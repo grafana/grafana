@@ -1,14 +1,19 @@
 import { of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
-import { DataSourceApi, getDefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
+import {
+  DataSourceApi,
+  getDefaultTimeRange,
+  LoadingState,
+  QueryVariableModel,
+  VariableSupportType,
+} from '@grafana/data';
 
 import { queryBuilder } from '../shared/testing/builders';
 import { getPreloadedState } from '../state/helpers';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { initialTransactionState } from '../state/transactionReducer';
 import { KeyedVariableIdentifier } from '../state/types';
-import { QueryVariableModel } from '../types';
 import { toKeyedVariableIdentifier } from '../utils';
 
 import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
@@ -65,6 +70,7 @@ function getTestContext(variable?: QueryVariableModel) {
     runRequest: jest.fn().mockReturnValue(of({ series: [], state: LoadingState.Done })),
   };
   const queryRunners = {
+    isQueryRunnerAvailableForDatasource: jest.fn().mockReturnValue(true),
     getRunnerForDatasource: jest.fn().mockReturnValue(queryRunner),
   } as unknown as QueryRunners;
   const getVariable = jest.fn().mockReturnValue(variable);
@@ -142,15 +148,12 @@ describe('VariableQueryRunner', () => {
   });
 
   describe('error cases', () => {
-    describe('queryRunners.getRunnerForDatasource throws', () => {
+    describe('queryRunners.isQueryRunnerAvailableForDatasource throws', () => {
       it('then it should work as expected', (done) => {
         const { identifier, runner, datasource, getState, getVariable, queryRunners, queryRunner, dispatch } =
           getTestContext();
 
-        queryRunners.getRunnerForDatasource = jest.fn().mockImplementation(() => {
-          throw new Error('getRunnerForDatasource error');
-        });
-
+        queryRunners.isQueryRunnerAvailableForDatasource = jest.fn().mockReturnValue(false);
         expectOnResults({
           identifier,
           runner,
@@ -158,13 +161,17 @@ describe('VariableQueryRunner', () => {
             // verify that the observable works as expected
             expect(results).toEqual([
               { state: LoadingState.Loading, identifier },
-              { state: LoadingState.Error, identifier, error: new Error('getRunnerForDatasource error') },
+              {
+                state: LoadingState.Error,
+                identifier,
+                error: new Error('Query Runner is not available for datasource.'),
+              },
             ]);
 
             // verify that mocks have been called as expected
             expect(getState).toHaveBeenCalledTimes(2);
             expect(getVariable).toHaveBeenCalledTimes(1);
-            expect(queryRunners.getRunnerForDatasource).toHaveBeenCalledTimes(1);
+            expect(queryRunners.isQueryRunnerAvailableForDatasource).toHaveBeenCalledTimes(1);
             expect(queryRunner.getTarget).not.toHaveBeenCalled();
             expect(queryRunner.runRequest).not.toHaveBeenCalled();
             expect(datasource.metricFindQuery).not.toHaveBeenCalled();

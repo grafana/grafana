@@ -5,7 +5,7 @@ import tinycolor from 'tinycolor2';
 
 import { useTheme2 } from '@grafana/ui';
 
-export const DiffViewer = ({ oldValue, newValue }: ReactDiffViewerProps) => {
+export const DiffViewer = ({ oldValue, newValue, ...diffProps }: ReactDiffViewerProps) => {
   const theme = useTheme2();
 
   const styles = {
@@ -67,6 +67,7 @@ export const DiffViewer = ({ oldValue, newValue }: ReactDiffViewerProps) => {
         splitView={false}
         compareMethod={DiffMethod.CSS}
         useDarkTheme={theme.isDark}
+        {...diffProps}
       />
     </div>
   );

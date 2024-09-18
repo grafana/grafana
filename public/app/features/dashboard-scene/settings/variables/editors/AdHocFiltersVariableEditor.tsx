@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
@@ -15,7 +15,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const datasourceRef = variable.useState().datasource ?? undefined;
+  const { datasource: datasourceRef, defaultKeys } = variable.useState();
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -36,5 +36,19 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     });
   };
 
-  return <AdHocVariableForm datasource={datasourceRef} infoText={message} onDataSourceChange={onDataSourceChange} />;
+  const onDefaultKeysChange = (defaultKeys?: MetricFindValue[]) => {
+    variable.setState({
+      defaultKeys,
+    });
+  };
+
+  return (
+    <AdHocVariableForm
+      datasource={datasourceRef ?? undefined}
+      infoText={message}
+      onDataSourceChange={onDataSourceChange}
+      defaultKeys={defaultKeys}
+      onDefaultKeysChange={onDefaultKeysChange}
+    />
+  );
 }

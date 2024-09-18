@@ -8,7 +8,7 @@ import (
 )
 
 func TestService(t *testing.T) {
-	svc := ProvideService(&config.Cfg{
+	svc := ProvideService(&config.PluginManagementCfg{
 		PluginsCDNURLTemplate: "https://cdn.example.com",
 		PluginSettings: map[string]map[string]string{
 			"one": {"cdn": "true"},
@@ -40,7 +40,7 @@ func TestService(t *testing.T) {
 			},
 		} {
 			t.Run(c.name, func(t *testing.T) {
-				u, err := ProvideService(&config.Cfg{PluginsCDNURLTemplate: c.cfgURL}).BaseURL()
+				u, err := ProvideService(&config.PluginManagementCfg{PluginsCDNURLTemplate: c.cfgURL}).BaseURL()
 				require.NoError(t, err)
 				require.Equal(t, c.expBaseURL, u)
 			})

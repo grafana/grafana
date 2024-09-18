@@ -65,16 +65,15 @@ export const LokiQueryBuilder = React.memo<Props>(
         return await datasource.languageProvider.fetchLabels({ timeRange });
       }
 
-      const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-      const series = await datasource.languageProvider.fetchSeriesLabels(expr, { timeRange });
+      const streamSelector = lokiQueryModeller.renderLabels(labelsToConsider);
+      const possibleLabelNames = await datasource.languageProvider.fetchLabels({
+        streamSelector,
+        timeRange,
+      });
       const labelsNamesToConsider = labelsToConsider.map((l) => l.label);
 
-      const labelNames = Object.keys(series)
-        // Filter out label names that are already selected
-        .filter((name) => !labelsNamesToConsider.includes(name))
-        .sort();
-
-      return labelNames;
+      // Filter out label names that are already selected
+      return possibleLabelNames.filter((label) => !labelsNamesToConsider.includes(label)).sort();
     };
 
     const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
@@ -91,9 +90,11 @@ export const LokiQueryBuilder = React.memo<Props>(
       if (labelsToConsider.length === 0 || !hasEqualityOperation) {
         values = await datasource.languageProvider.fetchLabelValues(forLabel.label, { timeRange });
       } else {
-        const expr = lokiQueryModeller.renderLabels(labelsToConsider);
-        const result = await datasource.languageProvider.fetchSeriesLabels(expr, { timeRange });
-        values = result[datasource.interpolateString(forLabel.label)];
+        const streamSelector = lokiQueryModeller.renderLabels(labelsToConsider);
+        values = await datasource.languageProvider.fetchLabelValues(forLabel.label, {
+          streamSelector,
+          timeRange,
+        });
       }
 
       return values ? values.map((v) => escapeLabelValueInSelector(v, forLabel.op)) : []; // Escape values in return

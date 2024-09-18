@@ -4,7 +4,7 @@ import { AutoQueryDef, AutoQueryInfo } from '../../types';
 import { generateQueries, getGeneralBaseQuery } from './queries';
 
 describe('generateQueries', () => {
-  const agg = 'mockagg';
+  const agg = 'sum';
   const unit = 'mockunit';
 
   type QueryInfoKey = keyof AutoQueryInfo;
@@ -34,7 +34,8 @@ describe('generateQueries', () => {
     const expectedBaseQuery = getGeneralBaseQuery(rate);
     const detectedBaseQuery = query.expr.substring(firstParen + 1, firstParen + 1 + expectedBaseQuery.length);
 
-    const description = rate ? 'mockagg of rates per second' : 'mockagg';
+    const inParentheses = rate ? 'overall per-second rate' : 'overall';
+    const description = `\${metric} (${inParentheses})`;
 
     describe(`since rate is ${rate}`, () => {
       test(`base query must be "${expectedBaseQuery}"`, () => expect(detectedBaseQuery).toBe(expectedBaseQuery));
@@ -47,16 +48,11 @@ describe('generateQueries', () => {
           expect(queryDef.title).not.toContain(description));
       }
 
-      if (key === 'preview') {
-        test(`preview query uses "${description}" as legend`, () => expect(query.legendFormat).toBe(description));
-      } else if (key === 'breakdown') {
+      if (key === 'breakdown') {
         test(`breakdown query uses "{{\${groupby}}}" as legend`, () =>
           expect(query.legendFormat).toBe('{{${groupby}}}'));
       } else {
-        test(`${key} query doesn't only use "${description}" in legend`, () =>
-          expect(query.legendFormat).not.toBe(description));
-        test(`${key} query does contain "${description}" in legend`, () =>
-          expect(query.legendFormat).toContain(description));
+        test(`preview query uses "${description}" as legend`, () => expect(query.legendFormat).toBe(description));
       }
     });
   }

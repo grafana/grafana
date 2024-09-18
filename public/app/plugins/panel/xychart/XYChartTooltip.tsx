@@ -1,14 +1,14 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, LinkModel } from '@grafana/data';
+import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
-import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
-import { getTitleFromHref } from 'app/features/explore/utils/links';
+import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 
+import { getDataLinks } from '../status-history/utils';
 import { getStyles } from '../timeseries/TimeSeriesTooltip';
 
 import { Options } from './panelcfg.gen';
@@ -53,7 +53,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     colorThing = colorThing[rowIndex];
   }
 
-  const headerItem: LabelValue = {
+  const headerItem: VizTooltipItem = {
     label,
     value: '',
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -61,7 +61,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     colorIndicator: ColorIndicator.marker_md,
   };
 
-  const contentItems: LabelValue[] = [
+  const contentItems: VizTooltipItem[] = [
     {
       label: getFieldDisplayName(xField, frame),
       value: fmt(xField, xField.values[rowIndex]),
@@ -83,27 +83,19 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     });
   }
 
-  const getLinks = (): Array<LinkModel<Field>> => {
-    let links: Array<LinkModel<Field>> = [];
-    if (yField.getLinks) {
-      const v = yField.values[rowIndex];
-      const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
-      links = yField.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).map((linkModel) => {
-        if (!linkModel.title) {
-          linkModel.title = getTitleFromHref(linkModel.href);
-        }
+  let footer: ReactNode;
 
-        return linkModel;
-      });
-    }
-    return links;
-  };
+  if (isPinned && seriesIdx != null) {
+    const links = getDataLinks(yField, rowIndex);
+
+    footer = <VizTooltipFooter dataLinks={links} />;
+  }
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={headerItem} isPinned={isPinned} />
-      <VizTooltipContent contentLabelValue={contentItems} isPinned={isPinned} />
-      {isPinned && <VizTooltipFooter dataLinks={getLinks()} />}
+      <VizTooltipHeader item={headerItem} isPinned={isPinned} />
+      <VizTooltipContent items={contentItems} isPinned={isPinned} />
+      {footer}
     </div>
   );
 };

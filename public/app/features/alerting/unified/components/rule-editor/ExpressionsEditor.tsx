@@ -69,10 +69,10 @@ export const ExpressionsEditor = ({
   );
 };
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    gap: ${theme.spacing(2)};
-    align-content: stretch;
-    flex-wrap: wrap;
-  `,
+  wrapper: css({
+    display: 'flex',
+    gap: theme.spacing(2),
+    alignContent: 'stretch',
+    flexWrap: 'wrap',
+  }),
 });

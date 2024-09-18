@@ -73,7 +73,7 @@ const getUrlForPartial = (location: Location, searchParamsToUpdate: UrlQueryMap)
   const searchParams = urlUtil.parseKeyValue(
     location.search.startsWith('?') ? location.search.substring(1) : location.search
   );
-  for (const key of Object.keys(searchParamsToUpdate)) {
+  for (const key in searchParamsToUpdate) {
     // removing params with null | undefined
     if (searchParamsToUpdate[key] === null || searchParamsToUpdate[key] === undefined) {
       delete searchParams[key];

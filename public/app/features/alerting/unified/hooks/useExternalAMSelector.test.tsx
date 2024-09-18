@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
@@ -11,7 +10,7 @@ import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmana
 
 import { mockAlertmanagersResponse } from '../mocks/alertmanagerApi';
 
-import { useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
+import { normalizeDataSourceURL, useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
 
 const server = setupServer();
 
@@ -194,6 +193,38 @@ describe('useExternalDataSourceAlertmanagers', () => {
       expect(result.current).toHaveLength(1);
       expect(result.current[0].status).toBe('active');
     });
+  });
+});
+
+describe('normalizeDataSourceURL', () => {
+  it('should add "http://" protocol if missing', () => {
+    const url = 'example.com';
+    const normalizedURL = normalizeDataSourceURL(url);
+    expect(normalizedURL).toBe('http://example.com');
+  });
+
+  it('should not modify the URL if it already has a protocol', () => {
+    const url = 'https://example.com';
+    const normalizedURL = normalizeDataSourceURL(url);
+    expect(normalizedURL).toBe(url);
+  });
+
+  it('should remove trailing slashes from the URL', () => {
+    const url = 'http://example.com/';
+    const normalizedURL = normalizeDataSourceURL(url);
+    expect(normalizedURL).toBe('http://example.com');
+  });
+
+  it('should remove multiple trailing slashes from the URL', () => {
+    const url = 'http://example.com///';
+    const normalizedURL = normalizeDataSourceURL(url);
+    expect(normalizedURL).toBe('http://example.com');
+  });
+
+  it('should keep paths from the URL', () => {
+    const url = 'http://example.com/foo//';
+    const normalizedURL = normalizeDataSourceURL(url);
+    expect(normalizedURL).toBe('http://example.com/foo');
   });
 });
 

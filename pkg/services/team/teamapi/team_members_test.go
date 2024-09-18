@@ -1,7 +1,9 @@
 package teamapi
 
 import (
+	"context"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -13,11 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -31,8 +37,9 @@ func SetupAPITestServer(t *testing.T, opts ...func(a *TeamAPI)) *webtest.Server 
 	a := ProvideTeamAPI(router,
 		teamtest.NewFakeService(),
 		actest.FakeService{},
-		acimpl.ProvideAccessControl(cfg),
+		acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 		&actest.FakePermissionsService{},
+		&usertest.FakeUserService{},
 		&licensing.OSSLicensingService{},
 		cfg,
 		preftest.NewPreferenceServiceFake(),
@@ -151,6 +158,126 @@ func TestDeleteTeamMembersAPIEndpoint(t *testing.T) {
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
+}
+
+func Test_getTeamMembershipUpdates(t *testing.T) {
+	type testCase struct {
+		description     string
+		input           team.SetTeamMembershipsCommand
+		currentMembers  []*team.TeamMemberDTO
+		expectedUpdates []accesscontrol.SetResourcePermissionCommand
+		expectErr       bool
+	}
+
+	testCases := []testCase{
+		{
+			description: "should correctly list members and admins for a team with no current members or admins",
+			input: team.SetTeamMembershipsCommand{
+				Members: []string{"user1", "user2"},
+				Admins:  []string{"user3"},
+			},
+			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: team.MemberPermissionName},
+				{UserID: 2, Permission: team.MemberPermissionName},
+				{UserID: 3, Permission: team.AdminPermissionName},
+			},
+		},
+		{
+			description: "should correctly diff the member updates for a team with existing members and admins",
+			input: team.SetTeamMembershipsCommand{
+				Members: []string{"user1", "user2"},
+				Admins:  []string{"user3"},
+			},
+			currentMembers: []*team.TeamMemberDTO{
+				{Email: "user1", Permission: 0},
+				{Email: "user3", Permission: dashboardaccess.PERMISSION_ADMIN},
+			},
+			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 2, Permission: team.MemberPermissionName},
+			},
+		},
+		{
+			description: "should correctly update membership type for the existing members and admins",
+			input: team.SetTeamMembershipsCommand{
+				Members: []string{"user1", "user2"},
+				Admins:  []string{"user3"},
+			},
+			currentMembers: []*team.TeamMemberDTO{
+				{Email: "user1", Permission: 0},
+				{Email: "user2", Permission: dashboardaccess.PERMISSION_ADMIN},
+				{Email: "user3", Permission: 0},
+			},
+			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 2, Permission: team.MemberPermissionName},
+				{UserID: 3, Permission: team.AdminPermissionName},
+			},
+		},
+		{
+			description: "should correctly remove current members and admins that are not in the new list",
+			input: team.SetTeamMembershipsCommand{
+				Members: []string{"user1"},
+				Admins:  []string{"user3"},
+			},
+			currentMembers: []*team.TeamMemberDTO{
+				{Email: "user1", UserID: 1, Permission: 0},
+				{Email: "user2", UserID: 2, Permission: 0},
+				{Email: "user3", UserID: 3, Permission: dashboardaccess.PERMISSION_ADMIN},
+				{Email: "user4", UserID: 4, Permission: dashboardaccess.PERMISSION_ADMIN},
+			},
+			expectedUpdates: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 2, Permission: ""},
+				{UserID: 4, Permission: ""},
+			},
+		},
+		{
+			description: "should error if a non-existent user is provided",
+			input: team.SetTeamMembershipsCommand{
+				Members: []string{"non-existent-user", "user2"},
+			},
+			expectErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			userService := &usertest.FakeUserService{
+				GetByEmailFn: func(ctx context.Context, query *user.GetUserByEmailQuery) (*user.User, error) {
+					id, err := strconv.Atoi(strings.TrimPrefix(query.Email, "user"))
+					if err != nil {
+						return nil, err
+					}
+					user := &user.User{
+						ID:    int64(id),
+						Email: query.Email,
+					}
+					return user, nil
+				},
+			}
+			teamSvc := teamtest.NewFakeService()
+			teamSvc.ExpectedMembers = tc.currentMembers
+			tapi := ProvideTeamAPI(routing.NewRouteRegister(),
+				teamSvc,
+				actest.FakeService{},
+				acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+				&actest.FakePermissionsService{},
+				userService,
+				&licensing.OSSLicensingService{},
+				cfg,
+				preftest.NewPreferenceServiceFake(),
+				dashboards.NewFakeDashboardService(t),
+			)
+
+			user := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {"users:id:*"}}}}
+			updates, err := tapi.getTeamMembershipUpdates(context.Background(), 1, 1, tc.input, user)
+			if tc.expectErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.ElementsMatch(t, tc.expectedUpdates, updates)
+		})
+	}
 }
 
 func authedUserWithPermissions(userID, orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {

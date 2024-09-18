@@ -16,8 +16,10 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 
 import { activePanelSubject, InstanceState } from '../../CanvasPanel';
 import { addStandardCanvasEditorOptions } from '../../module';
+import { Options } from '../../panelcfg.gen';
 import { InlineEditTabs } from '../../types';
 import { getElementTypes, onAddItem } from '../../utils';
+import { getConnectionEditor } from '../connectionEditor';
 import { getElementEditor } from '../element/elementEditor';
 import { getLayerEditor } from '../layer/layerEditor';
 
@@ -33,13 +35,24 @@ export function InlineEditBody() {
   const pane = useMemo(() => {
     const p = activePanel?.panel;
     const state: InstanceState = instanceState;
-    if (!state || !p) {
+    if (!(state && state.scene) || !p) {
       return new OptionsPaneCategoryDescriptor({ id: 'root', title: 'root' });
     }
 
-    const supplier = (builder: PanelOptionsEditorBuilder<any>) => {
+    const supplier = (builder: PanelOptionsEditorBuilder<Options>) => {
       if (activeTab === InlineEditTabs.ElementManagement) {
         builder.addNestedOptions(getLayerEditor(instanceState));
+      }
+
+      const selectedConnection = state.selectedConnection;
+      if (selectedConnection && activeTab === InlineEditTabs.SelectedElement) {
+        builder.addNestedOptions(
+          getConnectionEditor({
+            category: [`Selected connection`],
+            connection: selectedConnection,
+            scene: state.scene,
+          })
+        );
       }
 
       const selection = state.selected;
@@ -82,7 +95,10 @@ export function InlineEditBody() {
   const rootLayer: FrameState | undefined = instanceState?.layer;
 
   const noElementSelected =
-    instanceState && activeTab === InlineEditTabs.SelectedElement && instanceState.selected.length === 0;
+    instanceState &&
+    activeTab === InlineEditTabs.SelectedElement &&
+    instanceState.selected.length === 0 &&
+    instanceState.selectedConnection === undefined;
 
   return (
     <>
@@ -115,7 +131,7 @@ interface EditorProps<T> {
   data?: DataFrame[];
 }
 
-function getOptionsPaneCategoryDescriptor<T = any>(
+function getOptionsPaneCategoryDescriptor<T extends object>(
   props: EditorProps<T>,
   supplier: PanelOptionsSupplier<T>
 ): OptionsPaneCategoryDescriptor {
@@ -141,7 +157,7 @@ function getOptionsPaneCategoryDescriptor<T = any>(
   const access: NestedValueAccess = {
     getValue: (path) => lodashGet(props.options, path),
     onChange: (path, value) => {
-      props.onChange(setOptionImmutably(props.options as any, path, value));
+      props.onChange(setOptionImmutably<T>(props.options, path, value));
     },
   };
 

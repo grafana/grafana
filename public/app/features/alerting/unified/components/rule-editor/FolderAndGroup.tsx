@@ -1,81 +1,77 @@
 import { css } from '@emotion/css';
 import { debounce, take, uniqueId } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import React, { useCallback, useMemo, useState } from 'react';
+import { FormProvider, useForm, useFormContext, Controller } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import {
-  AsyncSelect,
-  Box,
-  Button,
-  Field,
-  Input,
-  InputControl,
-  Label,
-  Modal,
-  Stack,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { AsyncSelect, Box, Button, Field, Input, Label, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder } from 'app/features/manage-dashboards/state/actions';
-import { AccessControlAction, useDispatch } from 'app/types';
-import { CombinedRuleGroup } from 'app/types/unified-alerting';
-import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { AccessControlAction } from 'app/types';
+import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchRulerRulesAction } from '../../state/actions';
+import { alertRuleApi } from '../../api/alertRuleApi';
+import { grafanaRulerConfig } from '../../hooks/useCombinedRule';
 import { RuleFormValues } from '../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { MINUTE } from '../../utils/rule-form';
+import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { ProvisioningBadge } from '../Provisioning';
 import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
+import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
 
 export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups: boolean) => {
-  const dispatch = useDispatch();
-
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
   // for our folders
-  useEffect(() => {
-    dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
-  }, [dispatch]);
+  const { isLoading: isLoadingRulerNamespace, currentData: rulerNamespace } =
+    alertRuleApi.endpoints.rulerNamespace.useQuery(
+      {
+        namespace: folderUid,
+        rulerConfig: grafanaRulerConfig,
+      },
+      {
+        skip: !folderUid,
+        refetchOnMountOrArgChange: true,
+      }
+    );
 
-  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
+  // There should be only one entry in the rulerNamespace object
+  // However it uses folder name as key, so to avoid fetching folder name, we use Object.values
+  const groupOptions = useMemo(() => {
+    if (!rulerNamespace) {
+      // still waiting for namespace information to be fetched
+      return [];
+    }
 
-  const grafanaFolders = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const folderGroups = grafanaFolders.find((f) => f.uid === folderUid)?.groups ?? [];
+    const folderGroups = Object.values(rulerNamespace).flat() ?? [];
 
-  const groupOptions = folderGroups
-    .map<SelectableValue<string>>((group) => {
-      const isProvisioned = isProvisionedGroup(group);
-      return {
-        label: group.name,
-        value: group.name,
-        description: group.interval ?? MINUTE,
-        // we include provisioned folders, but disable the option to select them
-        isDisabled: !enableProvisionedGroups ? isProvisioned : false,
-        isProvisioned: isProvisioned,
-      };
-    })
+    return folderGroups
+      .map<SelectableValue<string>>((group) => {
+        const isProvisioned = isProvisionedGroup(group);
+        return {
+          label: group.name,
+          value: group.name,
+          description: group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
+          // we include provisioned folders, but disable the option to select them
+          isDisabled: !enableProvisionedGroups ? isProvisioned : false,
+          isProvisioned: isProvisioned,
+        };
+      })
 
-    .sort(sortByLabel);
+      .sort(sortByLabel);
+  }, [rulerNamespace, enableProvisionedGroups]);
 
-  return { groupOptions, loading: groupfoldersForGrafana?.loading };
+  return { groupOptions, loading: isLoadingRulerNamespace };
 };
 
-const isProvisionedGroup = (group: CombinedRuleGroup) => {
-  return group.rules.some(
-    (rule) => isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance) === true
-  );
+const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
+  return group.rules.some((rule) => isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance) === true);
 };
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
@@ -160,7 +156,7 @@ export function FolderAndGroup({
             <Stack direction="row" alignItems="center">
               {(!isCreatingFolder && (
                 <>
-                  <InputControl
+                  <Controller
                     render={({ field: { ref, ...field } }) => (
                       <div style={{ width: 420 }}>
                         <RuleFolderPicker
@@ -191,6 +187,7 @@ export function FolderAndGroup({
                     fill="outline"
                     variant="secondary"
                     disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                    data-testid={selectors.components.AlertRules.newFolderButton}
                   >
                     New folder
                   </Button>
@@ -211,14 +208,14 @@ export function FolderAndGroup({
       <Stack alignItems="center">
         <div style={{ width: 420 }}>
           <Field
-            label="Evaluation group"
+            label="Evaluation group and interval"
             data-testid="group-picker"
-            description="Rules within the same group are evaluated concurrently over the same time interval."
+            description="Define how often the alert rule is evaluated."
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}
           >
-            <InputControl
+            <Controller
               render={({ field: { ref, ...field }, fieldState }) => (
                 <AsyncSelect
                   disabled={!folder || loading}
@@ -269,6 +266,7 @@ export function FolderAndGroup({
             fill="outline"
             variant="secondary"
             disabled={!folder}
+            data-testid={selectors.components.AlertRules.newEvaluationGroupButton}
           >
             New evaluation group
           </Button>
@@ -320,6 +318,7 @@ function FolderCreationModal({
           invalid={error}
         >
           <Input
+            data-testid={selectors.components.AlertRules.newFolderNameField}
             autoFocus={true}
             id="folderName"
             placeholder="Enter a name"
@@ -333,7 +332,11 @@ function FolderCreationModal({
           <Button variant="secondary" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={!title || error}>
+          <Button
+            type="submit"
+            disabled={!title || error}
+            data-testid={selectors.components.AlertRules.newFolderNameCreateButton}
+          >
             Create
           </Button>
         </Modal.ButtonRow>
@@ -369,12 +372,17 @@ function EvaluationGroupCreationModal({
   };
 
   const formAPI = useForm({
-    defaultValues: { group: '', evaluateEvery: '' },
+    defaultValues: { group: '', evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL },
     mode: 'onChange',
     shouldFocusError: true,
   });
 
-  const { register, handleSubmit, formState, getValues } = formAPI;
+  const { register, handleSubmit, formState, setValue, getValues, watch: watchGroupFormValues } = formAPI;
+  const evaluationInterval = watchGroupFormValues('evaluateEvery');
+
+  const setEvaluationInterval = (interval: string) => {
+    setValue('evaluateEvery', interval, { shouldValidate: true });
+  };
 
   return (
     <Modal
@@ -389,11 +397,16 @@ function EvaluationGroupCreationModal({
       <FormProvider {...formAPI}>
         <form onSubmit={handleSubmit(() => onSubmit())}>
           <Field
-            label={<Label htmlFor={'group'}>Evaluation group name</Label>}
+            label={
+              <Label htmlFor={'group'} description="A group evaluates all its rules over the same evaluation interval.">
+                Evaluation group
+              </Label>
+            }
             error={formState.errors.group?.message}
-            invalid={!!formState.errors.group}
+            invalid={Boolean(formState.errors.group)}
           >
             <Input
+              data-testid={selectors.components.AlertRules.newEvaluationGroupName}
               className={styles.formInput}
               autoFocus={true}
               id={'group'}
@@ -404,28 +417,35 @@ function EvaluationGroupCreationModal({
 
           <Field
             error={formState.errors.evaluateEvery?.message}
-            invalid={!!formState.errors.evaluateEvery}
+            invalid={Boolean(formState.errors.evaluateEvery) ? true : undefined}
             label={
-              <Label
-                htmlFor={evaluateEveryId}
-                description="How often is the rule evaluated. Applies to every rule within the group."
-              >
+              <Label htmlFor={evaluateEveryId} description="How often all rules in the group are evaluated.">
                 Evaluation interval
               </Label>
             }
           >
-            <Input
-              className={styles.formInput}
-              id={evaluateEveryId}
-              placeholder="e.g. 5m"
-              {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
-            />
+            <Stack direction="column">
+              <Input
+                data-testid={selectors.components.AlertRules.newEvaluationGroupInterval}
+                className={styles.formInput}
+                id={evaluateEveryId}
+                placeholder={DEFAULT_GROUP_EVALUATION_INTERVAL}
+                {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
+              />
+              <Stack direction="row" alignItems="flex-end">
+                <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setEvaluationInterval} />
+              </Stack>
+            </Stack>
           </Field>
           <Modal.ButtonRow>
             <Button variant="secondary" type="button" onClick={onCancel}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!formState.isValid}>
+            <Button
+              type="submit"
+              disabled={!formState.isValid}
+              data-testid={selectors.components.AlertRules.newEvaluationGroupCreate}
+            >
               Create
             </Button>
           </Modal.ButtonRow>
@@ -436,21 +456,21 @@ function EvaluationGroupCreationModal({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: flex;
-    flex-direction: column;
-    align-items: baseline;
-    max-width: ${theme.breakpoints.values.lg}px;
-    justify-content: space-between;
-  `,
-  formInput: css`
-    flex-grow: 1;
-  `,
-  modal: css`
-    width: ${theme.breakpoints.values.sm}px;
-  `,
-  modalTitle: css`
-    color: ${theme.colors.text.secondary};
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  container: css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'baseline',
+    maxWidth: `${theme.breakpoints.values.lg}px`,
+    justifyContent: 'space-between',
+  }),
+  formInput: css({
+    flexGrow: 1,
+  }),
+  modal: css({
+    width: `${theme.breakpoints.values.sm}px`,
+  }),
+  modalTitle: css({
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(2),
+  }),
 });

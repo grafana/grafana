@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -22,9 +22,10 @@ type AccessREST struct {
 }
 
 var _ = rest.Connecter(&AccessREST{})
+var _ = rest.StorageMetadata(&AccessREST{})
 
 func (r *AccessREST) New() runtime.Object {
-	return &v0alpha1.DashboardAccessInfo{}
+	return &dashboard.DashboardAccessInfo{}
 }
 
 func (r *AccessREST) Destroy() {
@@ -35,7 +36,15 @@ func (r *AccessREST) ConnectMethods() []string {
 }
 
 func (r *AccessREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return &v0alpha1.VersionsQueryOptions{}, false, ""
+	return &dashboard.VersionsQueryOptions{}, false, ""
+}
+
+func (r *AccessREST) ProducesMIMETypes(verb string) []string {
+	return nil
+}
+
+func (r *AccessREST) ProducesObject(verb string) interface{} {
+	return &dashboard.DashboardAccessInfo{}
 }
 
 func (r *AccessREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -66,14 +75,14 @@ func (r *AccessREST) Connect(ctx context.Context, name string, opts runtime.Obje
 		return nil, fmt.Errorf("not allowed to view")
 	}
 
-	access := &v0alpha1.DashboardAccessInfo{}
+	access := &dashboard.DashboardAccessInfo{}
 	access.CanEdit, _ = guardian.CanEdit()
 	access.CanSave, _ = guardian.CanSave()
 	access.CanAdmin, _ = guardian.CanAdmin()
 	access.CanDelete, _ = guardian.CanDelete()
 	access.CanStar = user.IsRealUser() && !user.IsAnonymous
 
-	access.AnnotationsPermissions = &v0alpha1.AnnotationPermission{}
+	access.AnnotationsPermissions = &dashboard.AnnotationPermission{}
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
@@ -82,7 +91,7 @@ func (r *AccessREST) Connect(ctx context.Context, name string, opts runtime.Obje
 	}), nil
 }
 
-func (r *AccessREST) getAnnotationPermissionsByScope(ctx context.Context, user identity.Requester, actions *v0alpha1.AnnotationActions, scope string) {
+func (r *AccessREST) getAnnotationPermissionsByScope(ctx context.Context, user identity.Requester, actions *dashboard.AnnotationActions, scope string) {
 	var err error
 
 	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)

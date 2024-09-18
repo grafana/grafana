@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type actionType string
@@ -28,11 +27,35 @@ const (
 	GitopsChannel = "grafana/dashboard/gitops"
 )
 
+type userDisplayDTO struct {
+	ID        int64  `json:"id,omitempty"`
+	UID       string `json:"uid,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Login     string `json:"login,omitempty"`
+	AvatarURL string `json:"avatarUrl"`
+}
+
+// Static function to parse a requester into a userDisplayDTO
+func newUserDisplayDTOFromRequester(requester identity.Requester) *userDisplayDTO {
+	uid := ""
+	if requester.GetUID().IsNamespace(identity.NamespaceUser, identity.NamespaceServiceAccount) {
+		uid = requester.GetUID().ID()
+	}
+
+	userID, _ := requester.GetID().UserID()
+	return &userDisplayDTO{
+		ID:    userID,
+		UID:   uid,
+		Login: requester.GetLogin(),
+		Name:  requester.GetDisplayName(),
+	}
+}
+
 // DashboardEvent events related to dashboards
 type dashboardEvent struct {
 	UID       string                `json:"uid"`
 	Action    actionType            `json:"action"` // saved, editing, deleted
-	User      *user.UserDisplayDTO  `json:"user,omitempty"`
+	User      *userDisplayDTO       `json:"user,omitempty"`
 	SessionID string                `json:"sessionId,omitempty"`
 	Message   string                `json:"message,omitempty"`
 	Dashboard *dashboards.Dashboard `json:"dashboard,omitempty"`
@@ -142,10 +165,7 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, requester identity.Req
 		}
 
 		// Tell everyone who is editing
-		event.User, err = user.NewUserDisplayDTOFromRequester(requester)
-		if err != nil {
-			return model.PublishReply{}, backend.PublishStreamStatusNotFound, err
-		}
+		event.User = newUserDisplayDTOFromRequester(requester)
 
 		msg, err := json.Marshal(event)
 		if err != nil {
@@ -177,7 +197,7 @@ func (h *DashboardHandler) publish(orgID int64, event dashboardEvent) error {
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardSaved(orgID int64, user *user.UserDisplayDTO, message string, dashboard *dashboards.Dashboard, err error) error {
+func (h *DashboardHandler) DashboardSaved(orgID int64, requester identity.Requester, message string, dashboard *dashboards.Dashboard, err error) error {
 	if err != nil && !h.HasGitOpsObserver(orgID) {
 		return nil // only broadcast if it was OK
 	}
@@ -185,7 +205,7 @@ func (h *DashboardHandler) DashboardSaved(orgID int64, user *user.UserDisplayDTO
 	msg := dashboardEvent{
 		UID:       dashboard.UID,
 		Action:    ActionSaved,
-		User:      user,
+		User:      newUserDisplayDTOFromRequester(requester),
 		Message:   message,
 		Dashboard: dashboard,
 	}
@@ -198,11 +218,11 @@ func (h *DashboardHandler) DashboardSaved(orgID int64, user *user.UserDisplayDTO
 }
 
 // DashboardDeleted will broadcast to all connected dashboards
-func (h *DashboardHandler) DashboardDeleted(orgID int64, user *user.UserDisplayDTO, uid string) error {
+func (h *DashboardHandler) DashboardDeleted(orgID int64, requester identity.Requester, uid string) error {
 	return h.publish(orgID, dashboardEvent{
 		UID:    uid,
 		Action: ActionDeleted,
-		User:   user,
+		User:   newUserDisplayDTOFromRequester(requester),
 	})
 }
 

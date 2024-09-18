@@ -2,17 +2,13 @@ import { PanelModel } from '@grafana/data';
 import { SceneDataTransformer, VizPanel } from '@grafana/scenes';
 import { DataSourceRef, DataTransformerConfig } from '@grafana/schema';
 
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-
 import { getPanelIdForVizPanel, getQueryRunnerFor } from './utils';
 
 export class PanelModelCompatibilityWrapper implements PanelModel {
   constructor(private _vizPanel: VizPanel) {}
 
   public get id() {
-    const id = getPanelIdForVizPanel(
-      this._vizPanel.parent instanceof LibraryVizPanel ? this._vizPanel.parent : this._vizPanel
-    );
+    const id = getPanelIdForVizPanel(this._vizPanel);
 
     if (isNaN(id)) {
       console.error('VizPanel key could not be translated to a legacy numeric panel id', this._vizPanel);

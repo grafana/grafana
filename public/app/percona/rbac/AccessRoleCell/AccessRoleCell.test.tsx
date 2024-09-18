@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React, { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 import selectEvent from 'react-select-event';
@@ -11,6 +12,8 @@ import AccessRolesEnabledCheck from '../AccessRolesEnabledCheck/AccessRolesEnabl
 import { stubRoles, stubUsers, stubUserSingleRole, stubUsersMap, subUserMultipleRoles } from '../__mocks__/stubs';
 
 import AccessRoleCell from './AccessRoleCell';
+
+jest.mock('app/percona/shared/services/roles/Roles.service');
 
 const wrapWithProvider = (element: ReactElement, enableAccessControl = true) => (
   <Provider
@@ -38,7 +41,7 @@ const wrapWithProvider = (element: ReactElement, enableAccessControl = true) => 
 );
 
 describe('AccessRoleCell', () => {
-  it('shows cell when access roles are enabled', () => {
+  it('shows cell when access roles are enabled', async () => {
     render(wrapWithProvider(<AccessRoleCell user={stubUserSingleRole} />));
 
     const select = screen.queryByLabelText('Access Roles');
@@ -78,7 +81,11 @@ describe('AccessRoleCell', () => {
 
     const roleSelect = screen.getByLabelText('Access Roles');
 
-    await selectEvent.select(roleSelect, ['Role #1', 'Role #2'], { container: document.body });
+    await userEvent.click(roleSelect);
+
+    await act(async () => {
+      await selectEvent.select(roleSelect, ['Role #1', 'Role #2'], { container: document.body });
+    });
 
     expect(assignRoleActionSpy).toHaveBeenCalledWith({
       userId: 2,
@@ -90,9 +97,11 @@ describe('AccessRoleCell', () => {
     const assignRoleActionSpy = jest.spyOn(RolesReducer, 'assignRoleAction');
     render(wrapWithProvider(<AccessRoleCell user={subUserMultipleRoles} />));
 
-    const removeButton = screen.getAllByLabelText('Remove')[0];
+    const removeButtons = screen.getAllByLabelText('Remove');
 
-    await waitFor(() => removeButton.click());
+    expect(removeButtons).toHaveLength(2);
+
+    await waitFor(() => removeButtons[0].click());
 
     expect(assignRoleActionSpy).toHaveBeenCalledWith({
       userId: 3,

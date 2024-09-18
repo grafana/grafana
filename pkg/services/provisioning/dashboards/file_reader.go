@@ -337,12 +337,19 @@ func (fr *FileReader) getOrCreateFolder(ctx context.Context, cfg *config, servic
 		return 0, "", ErrFolderNameMissing
 	}
 
+	// TODO use folder service instead
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 	cmd := &dashboards.GetDashboardQuery{
-		Title:    &folderName,
 		FolderID: util.Pointer(int64(0)), // nolint:staticcheck
 		OrgID:    cfg.OrgID,
 	}
+
+	if cfg.FolderUID != "" {
+		cmd.UID = cfg.FolderUID
+	} else {
+		cmd.Title = &folderName
+	}
+
 	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
 
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {

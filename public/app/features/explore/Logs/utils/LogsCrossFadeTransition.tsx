@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
-import React from 'react';
+import React, { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 const transitionDuration = 500;
@@ -39,7 +39,7 @@ const getStyles = memoizeOne(() => {
 });
 
 type Props = {
-  children: React.ReactNode;
+  children: React.ReactElement;
   visible: boolean;
 };
 
@@ -49,6 +49,7 @@ type Props = {
  */
 export function LogsCrossFadeTransition(props: Props) {
   const { visible, children } = props;
+  const transitionRef = useRef(null);
   const styles = getStyles();
   return (
     <CSSTransition
@@ -62,8 +63,9 @@ export function LogsCrossFadeTransition(props: Props) {
         exit: styles.logsExit,
         exitActive: styles.logsExitActive,
       }}
+      nodeRef={transitionRef}
     >
-      {children}
+      <div ref={transitionRef}>{children}</div>
     </CSSTransition>
   );
 }

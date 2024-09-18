@@ -22,4 +22,4 @@ The above commands use some utils scripts under [_\<repo-root>/e2e_](../../e2e) 
 
 ## Test suites
 
-All the integration tests are located at _\<repo-root>/e2e/suite\<x>/specs_. The page objects and reusable flows are in the [_\<repo-root>/packages/grafana-e2e_](../../packages/grafana-e2e) package.
+All the integration tests are located at _\<repo-root>/e2e/suite\<x>/specs_.

@@ -23,6 +23,10 @@ jest.mock('react-virtualized-auto-sizer', () => {
     });
 });
 
+jest.mock('../hooks/useExplorePageTitle', () => ({
+  useExplorePageTitle: jest.fn(),
+}));
+
 describe('Explore: handle running/not running query', () => {
   afterEach(() => {
     tearDown();

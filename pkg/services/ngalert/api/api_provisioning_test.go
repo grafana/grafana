@@ -19,20 +19,33 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -271,6 +284,39 @@ func TestProvisioningApi(t *testing.T) {
 				require.NotEmpty(t, response.Body())
 				require.Contains(t, string(response.Body()), "invalid alert rule")
 			})
+
+			t.Run("POST returns 400 when folderUID not set", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+				rule.FolderUID = ""
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+				require.Contains(t, string(response.Body()), "folderUID must be set")
+			})
+
+			t.Run("POST returns 400 if folder does not exist", func(t *testing.T) {
+				testEnv := createTestEnv(t, testConfig)
+				// Create a fake folder service that will return an error when trying to get a folder.
+				folderService := foldertest.NewFakeService()
+				folderService.ExpectedError = dashboards.ErrFolderNotFound
+				testEnv.folderService = folderService
+				sut := createProvisioningSrvSutFromEnv(t, &testEnv)
+
+				rc := createTestRequestCtx()
+				rule := createTestAlertRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "invalid alert rule")
+				require.Contains(t, string(response.Body()), "folder does not exist")
+			})
 		})
 
 		t.Run("exist in non-default orgs", func(t *testing.T) {
@@ -280,6 +326,14 @@ func TestProvisioningApi(t *testing.T) {
 				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"true"}}
 				rc.OrgID = 3
 				rule := createTestAlertRule("rule", 1)
+
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          "folder-uid",
+					Title:        "Folder Title",
+					OrgID:        rc.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rc.OrgID},
+				})
+				require.NoError(t, err)
 
 				response := sut.RoutePostAlertRule(&rc, rule)
 
@@ -294,7 +348,17 @@ func TestProvisioningApi(t *testing.T) {
 				uid := util.GenerateShortUID()
 				rule := createTestAlertRule("rule", 1)
 				rule.UID = uid
-				insertRuleInOrg(t, sut, rule, 3)
+
+				orgID := int64(3)
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          "folder-uid",
+					Title:        "Folder Title",
+					OrgID:        orgID,
+					SignedInUser: &user.SignedInUser{OrgID: orgID},
+				})
+				require.NoError(t, err)
+
+				insertRuleInOrg(t, sut, rule, orgID)
 				rc := createTestRequestCtx()
 				rc.Req.Header = map[string][]string{"X-Disable-Provenance": {"hello"}}
 				rc.OrgID = 3
@@ -342,25 +406,134 @@ func TestProvisioningApi(t *testing.T) {
 		})
 	})
 
-	t.Run("alert rule groups", func(t *testing.T) {
-		t.Run("are present, GET returns 200", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
-			rc := createTestRequestCtx()
-			insertRule(t, sut, createTestAlertRule("rule", 1))
+	t.Run("recording rules", func(t *testing.T) {
+		t.Run("are enabled", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			env.features = featuremgmt.WithFeatures(featuremgmt.FlagGrafanaManagedRecordingRules)
 
-			response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "my-cool-group")
+			t.Run("POST returns 201", func(t *testing.T) {
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+				rule := createTestRecordingRule("rule", 1)
 
-			require.Equal(t, 200, response.Status())
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 201, response.Status())
+			})
+
+			t.Run("PUT returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				uid := util.GenerateShortUID()
+				rule := createTestAlertRule("rule", 3)
+				rule.UID = uid
+
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          rule.FolderUID,
+					Title:        "Folder Title",
+					OrgID:        rule.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
+				})
+				require.NoError(t, err)
+
+				insertRuleInOrg(t, sut, rule, 3)
+
+				// make rule a recording rule
+				rule.Record = &definitions.Record{
+					Metric: "test_metric",
+					From:   "A",
+				}
+
+				rc := createTestRequestCtx()
+				rc.SignedInUser.OrgID = 3
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 200, response.Status())
+			})
 		})
 
-		t.Run("are missing, GET returns 404", func(t *testing.T) {
+		t.Run("are not enabled", func(t *testing.T) {
+			t.Run("POST returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				rule := createTestRecordingRule("rule", 1)
+
+				response := sut.RoutePostAlertRule(&rc, rule)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
+			})
+
+			t.Run("PUT returns 400", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				uid := util.GenerateShortUID()
+				rule := createTestAlertRule("rule", 3)
+				rule.UID = uid
+
+				_, err := sut.folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+					UID:          rule.FolderUID,
+					Title:        "Folder Title",
+					OrgID:        rule.OrgID,
+					SignedInUser: &user.SignedInUser{OrgID: rule.OrgID},
+				})
+				require.NoError(t, err)
+
+				insertRuleInOrg(t, sut, rule, 3)
+
+				// make rule a recording rule
+				rule.Record = &definitions.Record{
+					Metric: "test_metric",
+					From:   "A",
+				}
+
+				rc := createTestRequestCtx()
+				rc.SignedInUser.OrgID = 3
+
+				response := sut.RoutePutAlertRule(&rc, rule, rule.UID)
+
+				require.Equal(t, 400, response.Status())
+				require.NotEmpty(t, response.Body())
+				require.Contains(t, string(response.Body()), "recording rules cannot be created on this instance")
+			})
+		})
+	})
+
+	t.Run("alert rule groups", func(t *testing.T) {
+		t.Run("are present", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
 			insertRule(t, sut, createTestAlertRule("rule", 1))
 
-			response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "does not exist")
+			t.Run("GET returns 200", func(t *testing.T) {
+				response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "my-cool-group")
 
-			require.Equal(t, 404, response.Status())
+				require.Equal(t, 200, response.Status())
+			})
+
+			t.Run("DELETE returns 204", func(t *testing.T) {
+				response := sut.RouteDeleteAlertRuleGroup(&rc, "folder-uid", "my-cool-group")
+
+				require.Equal(t, 204, response.Status())
+			})
+		})
+
+		t.Run("are missing", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+			insertRule(t, sut, createTestAlertRule("rule", 1))
+
+			t.Run("GET returns 404", func(t *testing.T) {
+				response := sut.RouteGetAlertRuleGroup(&rc, "folder-uid", "does not exist")
+
+				require.Equal(t, 404, response.Status())
+			})
+
+			t.Run("DELETE returns 404", func(t *testing.T) {
+				response := sut.RouteDeleteAlertRuleGroup(&rc, "folder-uid", "does not exist")
+
+				require.Equal(t, 404, response.Status())
+			})
 		})
 
 		t.Run("are invalid at group level", func(t *testing.T) {
@@ -642,12 +815,12 @@ func TestProvisioningApi(t *testing.T) {
     is_paused      = false
 
     notification_settings {
-      receiver            = "Test-Receiver"
-      group_by            = ["alertname", "grafana_folder", "test"]
-      group_wait          = "1s"
-      group_interval      = "5s"
-      repeat_interval     = "5m"
-      mute_time_intervals = ["test-mute"]
+      contact_point   = "Test-Receiver"
+      group_by        = ["alertname", "grafana_folder", "test"]
+      group_wait      = "1s"
+      group_interval  = "5s"
+      repeat_interval = "5m"
+      mute_timings    = ["test-mute"]
     }
   }
 }
@@ -1555,12 +1728,16 @@ type testEnvironment struct {
 	secrets          secrets.Service
 	log              log.Logger
 	store            store.DBstore
+	folderService    folder.Service
 	dashboardService dashboards.DashboardService
 	configs          provisioning.AMConfigStore
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
 	ac               *recordingAccessControlFake
+	user             *user.SignedInUser
+	rulesAuthz       *fakes.FakeRuleService
+	features         featuremgmt.FeatureToggles
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1585,13 +1762,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	sqlStore := db.InitTestDB(t)
-	store := store.DBstore{
-		SQLStore: sqlStore,
-		Cfg: setting.UnifiedAlertingSettings{
-			BaseInterval: time.Second * 10,
-		},
-	}
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
+
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 	xact := &provisioning.NopTransactionManager{}
@@ -1614,17 +1786,68 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	require.NoError(t, err)
+
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	folderService := folderimpl.ProvideService(actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil)
+	store := store.DBstore{
+		Logger:   log,
+		SQLStore: sqlStore,
+		Cfg: setting.UnifiedAlertingSettings{
+			BaseInterval: time.Second * 10,
+		},
+		FolderService: folderService,
+	}
+	user := &user.SignedInUser{
+		OrgID: 1,
+		/*
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+			},
+		*/
+	}
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+
+	parent, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        1,
+		UID:          "folder-uid",
+		Title:        "Folder Title",
+		SignedInUser: user,
+	})
+	require.NoError(t, err)
+
+	_, err = folderService.Create(context.Background(), &folder.CreateFolderCommand{
+		OrgID:        1,
+		UID:          "folder-uid2",
+		Title:        "Folder Title2",
+		ParentUID:    parent.UID,
+		SignedInUser: user,
+	})
+	require.NoError(t, err)
+
+	ruleAuthz := &fakes.FakeRuleService{}
+
+	features := featuremgmt.WithFeatures()
 
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
 		configs:          configs,
 		store:            store,
+		folderService:    folderService,
 		dashboardService: dashboardService,
 		xact:             xact,
 		prov:             prov,
 		quotas:           quotas,
 		ac:               ac,
+		user:             user,
+		rulesAuthz:       ruleAuthz,
+		features:         features,
 	}
 }
 
@@ -1645,7 +1868,9 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
-		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.dashboardService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}),
+		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),
+		folderSvc:           env.folderService,
+		featureManager:      env.features,
 	}
 }
 
@@ -1660,6 +1885,9 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		},
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}},
+			},
 		},
 		Logger: &logtest.Fake{},
 	}
@@ -1843,6 +2071,32 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 	}
 }
 
+func createTestRecordingRule(title string, orgID int64) definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{
+		UID:       title,
+		OrgID:     orgID,
+		Title:     title,
+		Condition: "A",
+		Data: []definitions.AlertQuery{
+			{
+				RefID: "A",
+				Model: json.RawMessage(testModel),
+				RelativeTimeRange: definitions.RelativeTimeRange{
+					From: definitions.Duration(60),
+					To:   definitions.Duration(0),
+				},
+			},
+		},
+		RuleGroup: "my-cool-group",
+		FolderUID: "folder-uid",
+		For:       model.Duration(60),
+		Record: &definitions.Record{
+			Metric: "test_record",
+			From:   "A",
+		},
+	}
+}
+
 func insertRule(t *testing.T, srv ProvisioningSrv, rule definitions.ProvisionedAlertRule) {
 	insertRuleInOrg(t, srv, rule, 1)
 }
@@ -1916,7 +2170,6 @@ var testConfig = `
 				"uid": "email-uid",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 				}

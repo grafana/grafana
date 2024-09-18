@@ -23,6 +23,17 @@ labels:
 menuTitle: Template variables
 title: Azure Monitor template variables
 weight: 400
+refs:
+  variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+  add-template-variables:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/
 ---
 
 # Azure Monitor template variables
@@ -31,7 +42,7 @@ Instead of hard-coding details such as resource group or resource name values in
 This helps you create more interactive, dynamic, and reusable dashboards.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating][variables] and [Add and manage variables][add-template-variables] documentation.
+For an introduction to templating and template variables, refer to the [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables) documentation.
 
 ## Use query variables
 
@@ -81,11 +92,3 @@ It is possible to select multiple values for **Resource Groups** and **Resource 
 - Are of the same type (namespace).
 
 Also, note that if a template variable pointing to multiple resource groups or names is used in another template variable as a parameter (e.g. to retrieve metric names), only the first value will be used. This means that the combination of the first resource group and name selected should be valid.
-
-{{% docs/reference %}}
-[add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
-[add-template-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
-
-[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-{{% /docs/reference %}}

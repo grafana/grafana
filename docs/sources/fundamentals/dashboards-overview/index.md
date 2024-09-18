@@ -15,6 +15,12 @@ labels:
 menuTitle: Dashboard overview
 title: Grafana dashboards overview
 weight: 390
+refs:
+  transform-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
 ---
 
 # Grafana dashboards overview
@@ -57,7 +63,7 @@ The following image shows the Query Editor associated with the Prometheus data s
 
 ## Transformations
 
-When the data format in a visualization doesn’t meet your requirements, you can apply a [transformation][transform-data] that manipulates the data returned by a query.
+When the data format in a visualization doesn’t meet your requirements, you can apply a [transformation](ref:transform-data) that manipulates the data returned by a query.
 You might not need to transform data when you're first starting out, but they're powerful and worth mentioning.
 
 Transforming data is useful in the following kinds of situations:
@@ -93,9 +99,3 @@ Building a Grafana dashboard is a process that starts with determining your dash
 And with the data source identified and the plugin installed, you can write your query, transform the data, and format the visualization to meet your needs.
 
 This component architecture is part of what makes Grafana so powerful and general. Given the data source plugin and data frame abstraction, any data source you can access can work with the same general approach.
-
-{{% docs/reference %}}
-
-[transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data"
-[transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data"
-{{% /docs/reference %}}

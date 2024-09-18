@@ -49,6 +49,34 @@
           "uid": "e1d5f519-dabd-47c6-9ad7-83d181ce1cee"
         },
         "title": "green pie"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 9
+        },
+        "id": 3,
+        "panels": [
+          {
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 0
+            },
+            "id": 42,
+            "libraryPanel": {
+              "name": "blue pie",
+              "uid": "l3d2s634-fdgf-75u4-3fg3-67j966ii7jur"
+            },
+            "title": "blue pie"
+          }
+        ],
+        "title": "collapsed row",
+        "type": "row"
       }
     ],
     "refresh": "",

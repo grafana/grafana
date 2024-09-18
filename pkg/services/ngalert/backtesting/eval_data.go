@@ -16,8 +16,8 @@ import (
 type dataEvaluator struct {
 	refID              string
 	data               []mathexp.Series
-	downsampleFunction string
-	upsampleFunction   string
+	downsampleFunction mathexp.ReducerID
+	upsampleFunction   mathexp.Upsampler
 }
 
 func newDataEvaluator(refID string, frame *data.Frame) (*dataEvaluator, error) {
@@ -32,8 +32,8 @@ func newDataEvaluator(refID string, frame *data.Frame) (*dataEvaluator, error) {
 	return &dataEvaluator{
 		refID:              refID,
 		data:               series,
-		downsampleFunction: "last",
-		upsampleFunction:   "pad",
+		downsampleFunction: mathexp.ReducerLast,
+		upsampleFunction:   mathexp.UpsamplerPad,
 	}, nil
 }
 

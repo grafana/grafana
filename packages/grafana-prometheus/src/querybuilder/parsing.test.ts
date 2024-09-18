@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/parsing.test.ts
 import { buildVisualQueryFromString } from './parsing';
 import { PromOperationId, PromVisualQuery } from './types';
 
@@ -11,6 +12,7 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
   it('parses simple binary comparison', () => {
     expect(buildVisualQueryFromString('{app="aggregator"} == 11')).toEqual({
       query: {
@@ -55,6 +57,7 @@ describe('buildVisualQueryFromString', () => {
       errors: [],
     });
   });
+
   it('parses simple query', () => {
     expect(buildVisualQueryFromString('counters_logins{app="frontend"}')).toEqual(
       noErrors({
@@ -86,6 +89,7 @@ describe('buildVisualQueryFromString', () => {
         ],
       });
     });
+
     it('throws error when visual query parse with aggregation is ambiguous (scalar)', () => {
       expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
         errors: [
@@ -97,6 +101,7 @@ describe('buildVisualQueryFromString', () => {
         ],
       });
     });
+
     it('throws error when visual query parse with functionCall is ambiguous', () => {
       expect(
         buildVisualQueryFromString(
@@ -112,6 +117,7 @@ describe('buildVisualQueryFromString', () => {
         ],
       });
     });
+
     it('does not throw error when visual query parse is unambiguous', () => {
       expect(
         buildVisualQueryFromString('topk(5, node_arp_entries) / node_arp_entries{cluster="dev-eu-west-2"}')
@@ -119,12 +125,14 @@ describe('buildVisualQueryFromString', () => {
         errors: [],
       });
     });
+
     it('does not throw error when visual query parse is unambiguous (scalar)', () => {
       // Note this topk query with scalars is not valid in prometheus, but it does not currently throw an error during parse
       expect(buildVisualQueryFromString('topk(5, 1) / 2')).toMatchObject({
         errors: [],
       });
     });
+
     it('does not throw error when visual query parse is unambiguous, function call', () => {
       // Note this topk query with scalars is not valid in prometheus, but it does not currently throw an error during parse
       expect(
@@ -290,6 +298,28 @@ describe('buildVisualQueryFromString', () => {
     });
   });
 
+  it('parses a native histogram function correctly', () => {
+    expect(
+      buildVisualQueryFromString('histogram_count(rate(counters_logins{app="backend"}[$__rate_interval]))')
+    ).toEqual({
+      errors: [],
+      query: {
+        metric: 'counters_logins',
+        labels: [{ label: 'app', op: '=', value: 'backend' }],
+        operations: [
+          {
+            id: 'rate',
+            params: ['$__rate_interval'],
+          },
+          {
+            id: 'histogram_count',
+            params: [],
+          },
+        ],
+      },
+    });
+  });
+
   it('parses function with multiple arguments', () => {
     expect(
       buildVisualQueryFromString(
@@ -433,6 +463,12 @@ describe('buildVisualQueryFromString', () => {
           from: 21,
           to: 27,
           parentType: 'VectorSelector',
+        },
+        {
+          text: ')',
+          from: 38,
+          to: 39,
+          parentType: 'PromQL',
         },
       ],
       query: {
@@ -687,7 +723,7 @@ describe('buildVisualQueryFromString', () => {
       errors: [
         {
           from: 6,
-          parentType: 'Expr',
+          parentType: 'BinaryExpr',
           text: '(bar + baz)',
           to: 17,
         },

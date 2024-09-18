@@ -326,6 +326,53 @@ func TestAlertQueryMarshalling(t *testing.T) {
 	}
 }
 
+func TestAlertQuery_PreSave(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		blob        string
+		errContains string
+	}{
+		{
+			desc: "no error when input is correct",
+			blob: `{
+				"refId": "B",
+				"relativeTimeRange": {
+					"from": 2000,
+					"to": 1000
+				},
+				"model": {}
+			}`,
+		},
+		{
+			desc: "expected error when range is incorrect",
+			blob: `{
+				"refId": "B",
+				"relativeTimeRange": {
+					"from": 1000,
+					"to": 1000
+				},
+				"model": {}
+			}`,
+			errContains: "Invalid alert rule query B: invalid relative time range [From: 16m40s, To: 16m40s]",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			var aq AlertQuery
+			err := json.Unmarshal([]byte(tc.blob), &aq)
+			require.NoError(t, err)
+
+			err = aq.PreSave()
+			if tc.errContains == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.errContains)
+			}
+		})
+	}
+}
+
 func TestAlertQuery_GetQuery(t *testing.T) {
 	tc := []struct {
 		name       string

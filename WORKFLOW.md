@@ -14,7 +14,7 @@ Team members and their access to repositories is maintained through [GitHub team
 
 Examples of proposed changes are overarching architecture, component design, and specific code or graphical elements. Proposed changes SHOULD cover the big picture and intention, but individual parts SHOULD be split into the smallest possible changes. Changes SHOULD be based on and target the main branch. Depending on size of the proposed change, each change SHOULD be discussed, in increasing order of change size and complexity:
 
-- Directly in a RR (Pull Request) - this MAY be done, but SHOULD not be the common case.
+- Directly in a PR (Pull Request) - this MAY be done, but SHOULD not be the common case.
 - Issue
 - Developer mailing list
 - Design document, shared via Google Docs, accessible to at least all team members.
@@ -44,7 +44,7 @@ Once a PR is approved as per above, any team member MAY merge the PR.
 ## Backporting a PR
 
 Critical bug fixes needed for a previous minor release should be backported to the respective release branches after coordinating with the delivery team.
-Please see the [contibution guide](./contribute/merge-pull-request.md#should-the-pull-request-be-backported) for further details.
+Please see the [contribution guide](./contribute/merge-pull-request.md#should-the-pull-request-be-backported) for further details.
 
 # Release workflow
 

@@ -106,11 +106,7 @@ func (ss *xormStore) GetTempUsersQuery(ctx context.Context, query *tempuser.GetT
 		}
 
 		if query.Email != "" {
-			if ss.cfg.CaseInsensitiveLogin {
-				rawSQL += ` AND LOWER(tu.email)=LOWER(?)`
-			} else {
-				rawSQL += ` AND tu.email=?`
-			}
+			rawSQL += ` AND LOWER(tu.email)=LOWER(?)`
 			params = append(params, query.Email)
 		}
 
@@ -133,18 +129,19 @@ func (ss *xormStore) GetTempUserByCode(ctx context.Context, query *tempuser.GetT
 	                tu.id             as id,
 	                tu.org_id         as org_id,
 	                tu.email          as email,
-									tu.name           as name,
-									tu.role           as role,
-									tu.code           as code,
-									tu.status         as status,
-									tu.email_sent     as email_sent,
-									tu.email_sent_on  as email_sent_on,
-									tu.created				as created,
-									u.login						as invited_by_login,
-									u.name						as invited_by_name,
-									u.email						as invited_by_email
+					tu.name           as name,
+					tu.role           as role,
+					tu.code           as code,
+					tu.status         as status,
+					tu.email_sent     as email_sent,
+					tu.email_sent_on  as email_sent_on,
+					tu.created		  as created,
+					tu.invited_by_user_id  as invited_by_id,
+					u.login			  as invited_by_login,
+					u.name		      as invited_by_name,
+					u.email			  as invited_by_email
 	                FROM ` + ss.db.GetDialect().Quote("temp_user") + ` as tu
-									LEFT OUTER JOIN ` + ss.db.GetDialect().Quote("user") + ` as u on u.id = tu.invited_by_user_id
+						LEFT OUTER JOIN ` + ss.db.GetDialect().Quote("user") + ` as u on u.id = tu.invited_by_user_id
 	                WHERE tu.code=?`
 
 		var tempUser tempuser.TempUserDTO

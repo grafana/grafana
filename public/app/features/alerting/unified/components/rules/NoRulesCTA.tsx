@@ -62,13 +62,13 @@ export const NoRulesSplash = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  newRuleCard: css`
-    width: calc(50% - ${theme.spacing(1)});
+  newRuleCard: css({
+    width: `calc(50% - ${theme.spacing(1)})`,
 
-    > div {
-      height: 100%;
-    }
-  `,
+    '> div': {
+      height: '100%',
+    },
+  }),
   fullWidth: css`
     width: 100%;
   `,

@@ -12,6 +12,7 @@ import (
 
 type OptionsProvider interface {
 	AddFlags(fs *pflag.FlagSet)
+	ApplyTo(config *genericapiserver.RecommendedConfig) error
 	ValidateOptions() []error
 }
 
@@ -27,13 +28,10 @@ type Options struct {
 
 func NewOptions(codec runtime.Codec) *Options {
 	return &Options{
-		RecommendedOptions: genericoptions.NewRecommendedOptions(
-			defaultEtcdPathPrefix,
-			codec,
-		),
-		AggregatorOptions: NewAggregatorServerOptions(),
-		StorageOptions:    NewStorageOptions(),
-		ExtraOptions:      NewExtraOptions(),
+		RecommendedOptions: NewRecommendedOptions(codec),
+		AggregatorOptions:  NewAggregatorServerOptions(),
+		StorageOptions:     NewStorageOptions(),
+		ExtraOptions:       NewExtraOptions(),
 	}
 }
 
@@ -116,6 +114,13 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		serverConfig.SecureServing = nil
 	}
 	return nil
+}
+
+func NewRecommendedOptions(codec runtime.Codec) *genericoptions.RecommendedOptions {
+	return genericoptions.NewRecommendedOptions(
+		defaultEtcdPathPrefix,
+		codec,
+	)
 }
 
 type fakeListener struct {

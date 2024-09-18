@@ -152,6 +152,7 @@ Content-Type: application/json
   "server":{
     "cert_file":"",
     "cert_key":"",
+    "certs_watch_interval": "0s",
     "domain":"mygraf.com",
     "enable_gzip":"false",
     "enforce_domain":"false",
@@ -473,45 +474,6 @@ Content-Type: application/json
 {"message": "User deleted"}
 ```
 
-## Pause all alerts
-
-`POST /api/admin/pause-all-alerts`
-
-{{% admonition type="note" %}}
-This API is relevant for the [legacy dashboard alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/) only. For default alerting, use silences to stop alerts from being delivered.
-{{% /admonition %}}
-
-Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
-
-**Example Request**:
-
-```http
-POST /api/admin/pause-all-alerts HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-
-{
-  "paused": true
-}
-```
-
-JSON Body schema:
-
-- **paused** – If true then all alerts are to be paused, false unpauses all alerts.
-
-**Example Response**:
-
-```http
-HTTP/1.1 200
-Content-Type: application/json
-
-{
-  "state":   "Paused",
-  "message": "alert paused",
-  "alertsAffected": 1
-}
-```
-
 ## Auth tokens for User
 
 `GET /api/admin/users/:id/auth-tokens`
@@ -654,8 +616,6 @@ Content-Type: application/json
 
 `POST /api/admin/provisioning/plugins/reload`
 
-`POST /api/admin/provisioning/notifications/reload`
-
 `POST /api/admin/provisioning/access-control/reload`
 
 `POST /api/admin/provisioning/alerting/reload`
@@ -676,7 +636,6 @@ See note in the [introduction]({{< ref "#admin-api" >}}) for an explanation.
 | provisioning:reload | provisioners:dashboards    | dashboards       |
 | provisioning:reload | provisioners:datasources   | datasources      |
 | provisioning:reload | provisioners:plugins       | plugins          |
-| provisioning:reload | provisioners:notifications | notifications    |
 | provisioning:reload | provisioners:alerting      | alerting         |
 
 **Example Request**:

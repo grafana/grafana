@@ -101,4 +101,44 @@ describe('Array DataFrame', () => {
       }
     `);
   });
+
+  test('Handles first null value', () => {
+    const f = arrayToDataFrame([null, { id: 'abc' }]);
+    expect(f).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "config": {},
+            "name": "id",
+            "type": "string",
+            "values": [
+              null,
+              "abc",
+            ],
+          },
+        ],
+        "length": 2,
+      }
+    `);
+  });
+
+  test('Handles first undefined value', () => {
+    const f = arrayToDataFrame([undefined, { id: 'abc' }]);
+    expect(f).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "config": {},
+            "name": "id",
+            "type": "string",
+            "values": [
+              undefined,
+              "abc",
+            ],
+          },
+        ],
+        "length": 2,
+      }
+    `);
+  });
 });

@@ -8,9 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-func TestDashboardSnapshots(t *testing.T) {
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func TestIntegrationDashboardSnapshots(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -31,14 +36,14 @@ func TestDashboardSnapshots(t *testing.T) {
 			  "freshness": "Current",
 			  "resources": [
 				{
-				  "resource": "dashboardsnapshot",
+				  "resource": "dashboardsnapshots",
 				  "responseKind": {
 					"group": "",
 					"kind": "DashboardSnapshot",
 					"version": ""
 				  },
 				  "scope": "Namespaced",
-				  "singularResource": "dashsnap",
+				  "singularResource": "dashboardsnapshot",
 				  "subresources": [
 					{
 					  "responseKind": {

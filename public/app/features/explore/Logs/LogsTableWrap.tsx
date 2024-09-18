@@ -567,7 +567,9 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
     }),
     rzHandle: css({
       background: theme.colors.secondary.main,
-      transition: '0.3s background ease-in-out',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: '0.3s background ease-in-out',
+      },
       position: 'relative',
       height: '50% !important',
       width: `${theme.spacing(1)} !important`,

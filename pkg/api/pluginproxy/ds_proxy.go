@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -304,8 +305,14 @@ func (proxy *DataSourceProxy) validateRequest() error {
 			continue
 		}
 
-		if route.ReqRole.IsValid() {
-			if !proxy.ctx.HasUserRole(route.ReqRole) {
+		if proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagDatasourceProxyDisableRBAC) {
+			// TODO(aarongodin): following logic can be removed with FlagDatasourceProxyDisableRBAC as it is covered by
+			// proxy.hasAccessToRoute(..)
+			if route.ReqRole.IsValid() && !proxy.ctx.HasUserRole(route.ReqRole) {
+				return errors.New("plugin proxy route access denied")
+			}
+		} else {
+			if !proxy.hasAccessToRoute(route) {
 				return errors.New("plugin proxy route access denied")
 			}
 		}
@@ -328,6 +335,26 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	return nil
+}
+
+func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
+	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+	useRBAC := proxy.features.IsEnabled(proxy.ctx.Req.Context(), featuremgmt.FlagAccessControlOnCall) && route.ReqAction != ""
+	if useRBAC {
+		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.UID, route.ReqAction)
+		hasAccess := routeEval.Evaluate(proxy.ctx.GetPermissions())
+		if !hasAccess {
+			ctxLogger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "path", route.Path, "method", route.Method)
+		}
+		return hasAccess
+	}
+	if route.ReqRole.IsValid() {
+		if hasUserRole := proxy.ctx.HasUserRole(route.ReqRole); !hasUserRole {
+			ctxLogger.Debug("plugin route is covered by org role, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "role", route.ReqRole, "path", route.Path, "method", route.Method)
+			return false
+		}
+	}
+	return true
 }
 
 func (proxy *DataSourceProxy) logRequest() {

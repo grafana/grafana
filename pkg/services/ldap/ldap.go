@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -99,7 +100,7 @@ func (server *Server) Dial() error {
 	var certPool *x509.CertPool
 	if server.Config.RootCACert != "" {
 		certPool = x509.NewCertPool()
-		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
+		for _, caCertFile := range util.SplitString(server.Config.RootCACert) {
 			// nolint:gosec
 			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
 			pem, err := os.ReadFile(caCertFile)

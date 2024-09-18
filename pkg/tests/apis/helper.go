@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -24,6 +25,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -54,6 +56,7 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	t.Helper()
 	dir, path := testinfra.CreateGrafDir(t, opts)
 	_, env := testinfra.StartGrafanaEnv(t, dir, path)
+
 	c := &K8sTestHelper{
 		env:        *env,
 		t:          t,
@@ -63,14 +66,26 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	c.Org1 = c.createTestUsers("Org1")
 	c.OrgB = c.createTestUsers("OrgB")
 
-	// Read the API groups
-	rsp := DoRequest(c, RequestParams{
-		User: c.Org1.Viewer,
-		Path: "/apis",
-		// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
-	}, &metav1.APIGroupList{})
-	c.groups = rsp.Result.Groups
+	c.loadAPIGroups()
+
 	return c
+}
+
+func (c *K8sTestHelper) loadAPIGroups() {
+	for {
+		rsp := DoRequest(c, RequestParams{
+			User: c.Org1.Viewer,
+			Path: "/apis",
+			// Accept: "application/json;g=apidiscovery.k8s.io;v=v2beta1;as=APIGroupDiscoveryList,application/json",
+		}, &metav1.APIGroupList{})
+
+		if rsp.Response.StatusCode == http.StatusOK {
+			c.groups = rsp.Result.Groups
+			return
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
 }
 
 func (c *K8sTestHelper) Shutdown() {
@@ -138,6 +153,7 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured) string {
 	delete(anno, "grafana.app/originTimestamp")
 	delete(anno, "grafana.app/createdBy")
 	delete(anno, "grafana.app/updatedBy")
+	delete(anno, "grafana.app/action")
 
 	deep.SetAnnotations(anno)
 	copy := deep.Object
@@ -360,13 +376,13 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 
 	store := c.env.SQLStore
 	defer func() {
-		store.Cfg.AutoAssignOrg = false
-		store.Cfg.AutoAssignOrgId = 1 // the default
+		c.env.Cfg.AutoAssignOrg = false
+		c.env.Cfg.AutoAssignOrgId = 1 // the default
 	}()
 
-	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	quotaService := quotaimpl.ProvideService(store, c.env.Cfg)
 
-	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
 
 	orgId := int64(1)
@@ -374,15 +390,16 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 		orgId, err = orgService.GetOrCreate(context.Background(), orgName)
 		require.NoError(c.t, err)
 	}
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = int(orgId)
+	c.env.Cfg.AutoAssignOrg = true
+	c.env.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc, err := teamimpl.ProvideService(store, store.Cfg)
+	teamSvc, err := teamimpl.ProvideService(store, c.env.Cfg, tracing.InitializeTracerForTest())
 	require.NoError(c.t, err)
 
 	cache := localcache.ProvideService()
-	userSvc, err := userimpl.ProvideService(store,
-		orgService, store.Cfg, teamSvc, cache, quotaService,
+	userSvc, err := userimpl.ProvideService(
+		store, orgService, c.env.Cfg, teamSvc,
+		cache, tracing.InitializeTracerForTest(), quotaService,
 		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 

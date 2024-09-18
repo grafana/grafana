@@ -1,6 +1,11 @@
 import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
 
-import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType, LokiQueryDirection } from './dataquery.gen';
+import {
+  LokiDataQuery as LokiQueryFromSchema,
+  LokiQueryType,
+  SupportingQueryType,
+  LokiQueryDirection,
+} from './dataquery.gen';
 
 export { LokiQueryDirection, LokiQueryType, SupportingQueryType };
 

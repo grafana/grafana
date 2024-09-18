@@ -141,18 +141,15 @@ describe('useMenuFocus', () => {
     expect(onKeyDown).toHaveBeenCalledTimes(2);
   });
 
-  it('focuses on first item when menu was opened with arrow', () => {
+  it('focuses on first item', () => {
     const ref = createRef<HTMLDivElement>();
 
     render(getMenuElement(ref));
 
     const isMenuOpen = true;
-    const openedWithArrow = true;
-    const setOpenedWithArrow = jest.fn();
-    renderHook(() => useMenuFocus({ localRef: ref, isMenuOpen, openedWithArrow, setOpenedWithArrow }));
+    renderHook(() => useMenuFocus({ localRef: ref, isMenuOpen }));
 
     expect(screen.getByText('Item 1').tabIndex).toBe(0);
-    expect(setOpenedWithArrow).toHaveBeenCalledWith(false);
   });
 
   it('clicks focused item when Enter key is pressed', () => {

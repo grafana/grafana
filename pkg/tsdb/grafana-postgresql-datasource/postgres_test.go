@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 
 	_ "github.com/lib/pq"
 )
@@ -56,6 +56,15 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 			database:    "database",
 			tlsSettings: tlsSettings{Mode: "verify-full"},
 			expConnStr:  "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+		},
+		{
+			desc:        "verify-ca automatically adds disable-sni",
+			host:        "host:1234",
+			user:        "user",
+			password:    "password",
+			database:    "database",
+			tlsSettings: tlsSettings{Mode: "verify-ca"},
+			expConnStr:  "user='user' password='password' host='host' dbname='database' port=1234 sslmode='verify-ca' sslsni=0",
 		},
 		{
 			desc:        "TCP/port host",
@@ -191,10 +200,6 @@ func TestIntegrationPostgres(t *testing.T) {
 		return sql
 	}
 
-	cfg := setting.NewCfg()
-	cfg.DataPath = t.TempDir()
-	cfg.DataProxyRowLimit = 10000
-
 	jsonData := sqleng.JsonData{
 		MaxOpenConns:        0,
 		MaxIdleConns:        2,
@@ -212,7 +217,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 	cnnstr := postgresTestDBConnString()
 
-	db, exe, err := newPostgres(context.Background(), cfg, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+	db, exe, err := newPostgres(context.Background(), "error", 10000, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 	require.NoError(t, err)
 
@@ -1266,9 +1271,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
 			dsInfo := sqleng.DataSourceInfo{}
-			conf := setting.NewCfg()
-			conf.DataProxyRowLimit = 1
-			_, handler, err := newPostgres(context.Background(), conf, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+			_, handler, err := newPostgres(context.Background(), "error", 1, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			require.NoError(t, err)
 

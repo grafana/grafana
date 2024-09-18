@@ -36,6 +36,7 @@ type Query struct {
 	Limit         int64
 	Page          int64
 	IsStarred     bool
+	IsDeleted     bool
 	Type          string
 	DashboardUIDs []string
 	DashboardIds  []int64
@@ -93,6 +94,7 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) (model.
 		Limit:         query.Limit,
 		Page:          query.Page,
 		Permission:    query.Permission,
+		IsDeleted:     query.IsDeleted,
 	}
 
 	if sortOpt, exists := s.sortOptions[query.Sort]; exists {

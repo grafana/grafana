@@ -18,7 +18,7 @@ export const ListNewButton = ({ children, ...restProps }: Props) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonWrapper: css`
-    padding: ${theme.spacing(3)} 0;
-  `,
+  buttonWrapper: css({
+    padding: `${theme.spacing(3)} 0`,
+  }),
 });

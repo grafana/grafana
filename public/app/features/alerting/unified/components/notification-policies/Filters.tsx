@@ -63,8 +63,8 @@ const NotificationPoliciesFilter = ({
               <Tooltip
                 content={
                   <div>
-                    Filter silences by matchers using a comma separated list of matchers, ie:
-                    <pre>{`severity=critical, instance=~cluster-us-.+`}</pre>
+                    Filter notification policies by using a comma separated list of matchers, e.g.:
+                    <pre>severity=critical, region=EMEA</pre>
                   </div>
                 }
               >

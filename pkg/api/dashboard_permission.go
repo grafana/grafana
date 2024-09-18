@@ -61,7 +61,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 
 	acl, err := hs.getDashboardACL(c.Req.Context(), c.SignedInUser, dash)
 	if err != nil {
-		return response.Error(500, "Failed to get dashboard permissions", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboard permissions", err)
 	}
 
 	filteredACLs := make([]*dashboards.DashboardACLInfoDTO, 0, len(acl))
@@ -124,7 +124,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
-		return response.Error(400, err.Error(), err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 
 	dashUID := web.Params(c.Req)[":uid"]

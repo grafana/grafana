@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 import { PanelEditor } from './PanelEditor';
@@ -39,47 +40,19 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     this.setState({ listMode });
   };
 
-  onCollapsePane = () => {
-    const editor = sceneGraph.getAncestor(this, PanelEditor);
-    editor.toggleOptionsPane();
-  };
-
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
-    const editor = sceneGraph.getAncestor(model, PanelEditor);
-    const { optionsCollapsed, vizManager } = editor.useState();
+    const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
     const { pluginId } = vizManager.state.panel.useState();
+    const { data } = sceneGraph.getData(vizManager.state.panel).useState();
     const styles = useStyles2(getStyles);
 
-    if (optionsCollapsed) {
-      return (
-        <div className={styles.pane}>
-          <div className={styles.top}>
-            <ToolbarButton
-              tooltip={'Open options pane'}
-              icon={'arrow-to-right'}
-              onClick={model.onCollapsePane}
-              variant="canvas"
-              className={styles.rotateIcon}
-              data-testid={selectors.components.PanelEditor.toggleVizOptions}
-              aria-label={'Open options pane'}
-            />
-          </div>
-        </div>
-      );
-    }
-
     return (
-      <div className={styles.pane}>
+      <>
         {!isVizPickerOpen && (
           <>
             <div className={styles.top}>
-              <VisualizationButton
-                pluginId={pluginId}
-                onOpen={model.onToggleVizPicker}
-                isOpen={isVizPickerOpen}
-                onTogglePane={model.onCollapsePane}
-              />
+              <VisualizationButton pluginId={pluginId} onOpen={model.onToggleVizPicker} />
               <FilterInput
                 className={styles.searchOptions}
                 value={searchQuery}
@@ -88,25 +61,20 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
               />
             </div>
             <div className={styles.listOfOptions}>
-              <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} />
+              <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} data={data} />
             </div>
           </>
         )}
-        {isVizPickerOpen && <PanelVizTypePicker vizManager={vizManager} onChange={model.onToggleVizPicker} />}
-      </div>
+        {isVizPickerOpen && (
+          <PanelVizTypePicker vizManager={vizManager} onChange={model.onToggleVizPicker} data={data} />
+        )}
+      </>
     );
   };
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    pane: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: '1',
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
-    }),
     top: css({
       display: 'flex',
       flexDirection: 'column',
@@ -137,13 +105,19 @@ function getStyles(theme: GrafanaTheme2) {
 interface VisualizationButtonProps {
   pluginId: string;
   onOpen: () => void;
-  isOpen?: boolean;
-  onTogglePane?: () => void;
 }
 
-export function VisualizationButton({ pluginId, onOpen, isOpen, onTogglePane }: VisualizationButtonProps) {
+export function VisualizationButton({ pluginId, onOpen }: VisualizationButtonProps) {
   const styles = useStyles2(getVizButtonStyles);
-  const pluginMeta = useMemo(() => getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0], [pluginId]);
+  let pluginMeta: PanelPluginMeta | undefined = useMemo(
+    () => getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0],
+    [pluginId]
+  );
+
+  if (!pluginMeta) {
+    const notFound = getPanelPluginNotFound(`Panel plugin not found (${pluginId})`, true);
+    pluginMeta = notFound.meta;
+  }
 
   return (
     <Stack gap={1}>
@@ -160,14 +134,6 @@ export function VisualizationButton({ pluginId, onOpen, isOpen, onTogglePane }: 
       >
         {pluginMeta.name}
       </ToolbarButton>
-      {/* <ToolbarButton
-        tooltip={'Close options pane'}
-        icon={'arrow-to-right'}
-        onClick={onTogglePane}
-        variant="canvas"
-        data-testid={selectors.components.PanelEditor.toggleVizOptions}
-        aria-label={'Close options pane'}
-      /> */}
     </Stack>
   );
 }

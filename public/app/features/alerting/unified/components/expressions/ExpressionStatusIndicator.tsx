@@ -32,14 +32,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   const clearButton = clearButtonStyles(theme);
 
   return {
-    actionLink: css`
-      ${clearButton};
-      color: ${theme.colors.text.link};
-      cursor: pointer;
+    actionLink: css(clearButton, {
+      color: theme.colors.text.link,
+      cursor: 'pointer',
 
-      &:hover {
-        text-decoration: underline;
-      }
-    `,
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    }),
   };
 };

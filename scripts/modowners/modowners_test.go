@@ -37,17 +37,17 @@ func TestCheck(t *testing.T) {
 		{"Test valid modfile", "go.mod", `
 		require (
 			cloud.google.com/go/storage v1.28.1 // @delivery
-			cuelang.org/go v0.5.0 // @as-code @backend-platform
+			cuelang.org/go v0.5.0 // @as-code @grafana/grafana-backend-group
 			github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect, @delivery
-			github.com/Masterminds/semver v1.5.0 // @delivery @backend-platform
+			github.com/Masterminds/semver v1.5.0 // @delivery @grafana/grafana-backend-group
 		)
 		`, []string{"go.mod"}, true, ""},
 		{"Test invalid modfile", "go.mod", `
 		require (
 			cloud.google.com/go/storage v1.28.1
-			cuelang.org/go v0.5.0 // @as-code @backend-platform
+			cuelang.org/go v0.5.0 // @as-code @grafana/grafana-backend-group
 			github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect, @delivery
-			github.com/Masterminds/semver v1.5.0 // @delivery @backend-platform
+			github.com/Masterminds/semver v1.5.0 // @delivery @grafana/grafana-backend-group
 		)
 		`, []string{"go.mod"}, false, "cloud.google.com/go/storage@v1.28.1\n"},
 	} {
@@ -72,9 +72,9 @@ func TestModules(t *testing.T) {
 	filesystem := fstest.MapFS{"go.mod": &fstest.MapFile{Data: []byte(`
 	require (
 		cloud.google.com/go/storage v1.28.1
-		cuelang.org/go v0.5.0 // @as-code @backend-platform
+		cuelang.org/go v0.5.0 // @as-code @grafana/grafana-backend-group
 		github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // indirect, @delivery
-		github.com/Masterminds/semver v1.5.0 // @delivery @backend-platform
+		github.com/Masterminds/semver v1.5.0 // @delivery @grafana/grafana-backend-group
 	)
 	`)}}
 

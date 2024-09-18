@@ -1,13 +1,13 @@
 {
   "rules": {
-    "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime", "@grafana/ui", "@grafana/data", "@grafana/e2e/*"] }]
+    "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime", "@grafana/ui", "@grafana/data"] }],
   },
   "overrides": [
     {
       "files": ["**/*.test.{ts,tsx}"],
       "rules": {
-        "no-restricted-imports": "off"
-      }
-    }
-  ]
+        "no-restricted-imports": "off",
+      },
+    },
+  ],
 }

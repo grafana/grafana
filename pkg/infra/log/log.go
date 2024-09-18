@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"sort"
@@ -111,15 +112,26 @@ func (lm *logManager) initialize(loggers []logWithFilters) {
 }
 
 func (lm *logManager) New(ctx ...any) *ConcreteLogger {
-	if len(ctx) == 0 {
+	// First key-value could be "logger" and a logger name, that would be handled differently
+	// to allow per-logger filtering. Otherwise a simple concrete logger is returned.
+	if len(ctx) < 2 {
 		return lm.ConcreteLogger
+	}
+	if ctx[0] != "logger" {
+		return newConcreteLogger(lm.ConcreteLogger, ctx...)
 	}
 
 	lm.mutex.Lock()
 	defer lm.mutex.Unlock()
 
-	loggerName, ok := ctx[1].(string)
-	if !ok {
+	// Logger name could be a string variable or an slog.Value()
+	loggerName := ""
+	switch v := ctx[1].(type) {
+	case string:
+		loggerName = v
+	case slog.Value:
+		loggerName = v.String()
+	default:
 		return lm.ConcreteLogger
 	}
 
@@ -200,25 +212,27 @@ func (cl *ConcreteLogger) log(msg string, logLevel level.Value, args ...any) err
 	return cl.Log(append([]any{level.Key(), logLevel, "msg", msg}, args...)...)
 }
 
-func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
+func FromContext(ctx context.Context) []any {
 	args := []any{}
-
 	for _, p := range ctxLogProviders {
 		if pArgs, exists := p(ctx); exists {
 			args = append(args, pArgs...)
 		}
 	}
+	return args
+}
 
+func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
+	args := FromContext(ctx)
 	if len(args) > 0 {
 		return cl.New(args...)
 	}
-
 	return cl
 }
 
 func (cl *ConcreteLogger) New(ctx ...any) *ConcreteLogger {
-	if len(ctx) == 0 {
-		root.New()
+	if len(cl.ctx) == 0 {
+		return root.New(ctx...)
 	}
 
 	return newConcreteLogger(gokitlog.With(&cl.SwapLogger), ctx...)
@@ -453,7 +467,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 		case "file":
 			fileName := sec.Key("file_name").MustString(filepath.Join(logsPath, "grafana.log"))
 			dpath := filepath.Dir(fileName)
-			if err := os.MkdirAll(dpath, os.ModePerm); err != nil {
+			if err := os.MkdirAll(dpath, 0o750); err != nil {
 				_ = level.Error(root).Log("Failed to create directory", "dpath", dpath, "err", err)
 				continue
 			}
@@ -495,6 +509,37 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
 	}
 	if len(configLoggers) > 0 {
 		root.initialize(configLoggers)
+	}
+
+	return nil
+}
+
+// SetupConsoleLogger setup Grafana console logger with provided level.
+func SetupConsoleLogger(level string) error {
+	iniFile := ini.Empty()
+	sLog, err := iniFile.NewSection("log")
+	if err != nil {
+		return err
+	}
+
+	_, err = sLog.NewKey("level", level)
+	if err != nil {
+		return err
+	}
+
+	sLogConsole, err := iniFile.NewSection("log.console")
+	if err != nil {
+		return err
+	}
+
+	_, err = sLogConsole.NewKey("format", "console")
+	if err != nil {
+		return err
+	}
+
+	err = ReadLoggingConfig([]string{"console"}, "", iniFile)
+	if err != nil {
+		return err
 	}
 
 	return nil

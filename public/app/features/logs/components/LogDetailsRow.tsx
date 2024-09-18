@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, useState } from 'react';
+import React, { PureComponent, useEffect, useState } from 'react';
 
 import {
   CoreApp,
@@ -290,7 +290,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   <AsyncIconButton
                     name="search-plus"
                     onClick={this.filterLabel}
-                    isActive={this.isFilterLabelActive}
+                    // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
+                    isActive={() => this.isFilterLabelActive()}
                     tooltipSuffix={refIdTooltip}
                   />
                   <IconButton
@@ -368,11 +369,9 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
   const [active, setActive] = useState(false);
   const tooltip = active ? 'Remove filter' : 'Filter for value';
 
-  /**
-   * We purposely want to run this on every render to allow the active state to be updated
-   * when log details remains open between updates.
-   */
-  isActive().then(setActive);
+  useEffect(() => {
+    isActive().then(setActive);
+  }, [isActive]);
 
   return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };

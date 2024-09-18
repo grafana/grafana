@@ -1,12 +1,12 @@
 import { get as lodashGet } from 'lodash';
 
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
+import { CanvasElementOptions } from 'app/features/canvas/element';
 import {
-  CanvasElementOptions,
-  canvasElementRegistry,
   DEFAULT_CANVAS_ELEMENT_CONFIG,
+  canvasElementRegistry,
   defaultElementItems,
-} from 'app/features/canvas';
+} from 'app/features/canvas/registry';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
@@ -71,6 +71,7 @@ export function getElementEditor(opts: CanvasEditorOptions): NestedPanelOptions<
 
       builder.addSelect({
         path: 'type',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
         name: undefined as any, // required, but hide space
         settings: {
           options: layerTypes,

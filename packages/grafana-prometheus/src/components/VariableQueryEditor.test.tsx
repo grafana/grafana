@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/VariableQueryEditor.test.tsx
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -195,7 +196,7 @@ describe('PromVariableQueryEditor', () => {
     });
   });
 
-  test('Calls onChange for label_names, label_values, metrics, query result and and classic query.', async () => {
+  test('Calls onChange for label_names, label_values, metrics, query result and classic query.', async () => {
     const onChange = jest.fn();
 
     props.query = {

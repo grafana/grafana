@@ -2,7 +2,7 @@ package dtos
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -28,6 +28,7 @@ type PluginSetting struct {
 	SignatureType   plugins.SignatureType   `json:"signatureType"`
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AngularDetected bool                    `json:"angularDetected"`
+	APIVersion      string                  `json:"apiVersion"`
 }
 
 type PluginListItem struct {
@@ -48,7 +49,8 @@ type PluginListItem struct {
 	SignatureOrg    string                  `json:"signatureOrg"`
 	AccessControl   accesscontrol.Metadata  `json:"accessControl,omitempty"`
 	AngularDetected bool                    `json:"angularDetected"`
-	IAM             *plugindef.IAM          `json:"iam,omitempty"`
+	IAM             *pfs.IAM                `json:"iam,omitempty"`
+	APIVersion      string                  `json:"apiVersion"`
 }
 
 type PluginList []PluginListItem

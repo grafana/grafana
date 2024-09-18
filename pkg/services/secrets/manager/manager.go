@@ -15,6 +15,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,6 +36,7 @@ var (
 )
 
 type SecretsService struct {
+	tracer     tracing.Tracer
 	store      secrets.Store
 	enc        encryption.Internal
 	cfg        *setting.Cfg
@@ -54,6 +56,7 @@ type SecretsService struct {
 }
 
 func ProvideSecretsService(
+	tracer tracing.Tracer,
 	store secrets.Store,
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
@@ -68,6 +71,7 @@ func ProvideSecretsService(
 	))
 
 	s := &SecretsService{
+		tracer:              tracer,
 		store:               store,
 		enc:                 enc,
 		cfg:                 cfg,
@@ -158,6 +162,9 @@ func (s *SecretsService) encryptedWithEnvelopeEncryption(payload []byte) bool {
 var b64 = base64.RawStdEncoding
 
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
+	ctx, span := s.tracer.Start(ctx, "secretsService.Encrypt")
+	defer span.End()
+
 	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
 	if s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
 		return s.enc.Encrypt(ctx, payload, s.cfg.SecretKey)
@@ -313,6 +320,9 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
+	ctx, span := s.tracer.Start(ctx, "secretsService.Decrypt")
+	defer span.End()
+
 	var err error
 	defer func() {
 		opsCounter.With(prometheus.Labels{

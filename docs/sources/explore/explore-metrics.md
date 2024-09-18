@@ -6,7 +6,8 @@ labels:
     - oss
 title: Explore Metrics
 aliases:
-description: This topic describes the Explore Metrics feature
+canonical: https://grafana.com/docs/grafana/latest/explore/explore-metrics/
+description: Explore Metrics lets you browse Prometheus-compatible metrics using an intuitive, queryless experience.
 weight: 200
 ---
 
@@ -14,18 +15,20 @@ weight: 200
 
 Grafana Explore Metrics is a query-less experience for browsing **Prometheus-compatible** metrics. Quickly find related metrics with just a few simple clicks, without needing to write PromQL queries to retrieve metrics.
 
-{{% admonition type="warning" %}}
-Explore Metrics is currently in [private preview](/docs/release-life-cycle/). Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+{{% admonition type="caution" %}}
+Explore Metrics is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{% /admonition %}}
 
 With Explore Metrics, you can:
 
-- easily slice and dice metrics based on their labels, so you can immediately see anomalies and identify issues
-- see the right visualization for your metric based on its type (gauge vs. counter, for example) without building it yourself
-- surface other metrics relevant to the current metric
-- “explore in a drawer” - expand a drawer over a dashboard with more content so you don’t lose your place
-- view a history of user steps when navigating through metrics and their filters
-- easily pivot to other related telemetry, including logs or traces
+- Easily slice and dice metrics based on their labels, so you can immediately see anomalies and identify issues
+- See the right visualization for your metric based on its type (gauge vs. counter, for example) without building it yourself
+- Surface other metrics relevant to the current metric
+- “Explore in a drawer” - expand a drawer over a dashboard with more content so you don’t lose your place
+- View a history of user steps when navigating through metrics and their filters
+<!-- - easily pivot to other related telemetry, including logs or traces -->
+
+{{< docs/play title="Explore Metrics" url="https://play.grafana.org/explore/metrics/trail?from=now-1h&to=now&var-ds=grafanacloud-demoinfra-prom&var-filters=&refresh=&metricPrefix=all" >}}
 
 You can access Explore Metrics either as a standalone experience or as part of Grafana dashboards.
 

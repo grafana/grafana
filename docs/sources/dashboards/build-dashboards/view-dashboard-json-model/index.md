@@ -16,6 +16,12 @@ labels:
 title: JSON model
 description: View your Grafana dashboard JSON object
 weight: 700
+refs:
+  annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
 ---
 
 # Dashboard JSON model
@@ -82,7 +88,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **time**          | time range for dashboard, i.e. last 6 hours, last 7 days, etc                                                     |
 | **timepicker**    | timepicker metadata, see [timepicker section](#timepicker) for details                                            |
 | **templating**    | templating metadata, see [templating section](#templating) for details                                            |
-| **annotations**   | annotations metadata, see [annotations][] for how to add them                                                     |
+| **annotations**   | annotations metadata, see [annotations](ref:annotations) for how to add them                                      |
 | **refresh**       | auto-refresh interval                                                                                             |
 | **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to said schema        |
 | **version**       | version of the dashboard (integer), incremented each time the dashboard is updated                                |
@@ -262,8 +268,3 @@ Usage of the above mentioned fields in the templating section is explained below
 | **refresh**     | configures when to refresh a variable                                                                   |
 | **regex**       | extracts part of a series name or metric node segment                                                   |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
-
-{{% docs/reference %}}
-[annotations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-[annotations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
-{{% /docs/reference %}}

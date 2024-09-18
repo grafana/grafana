@@ -79,7 +79,7 @@ export class DashboardLinksEditView extends SceneObjectBase<DashboardLinksEditVi
 function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<DashboardLinksEditView>) {
   const { editIndex } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, overlay } = dashboard.useState();
+  const { links } = dashboard.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const linkToEdit = editIndex !== undefined ? links[editIndex] : undefined;
 
@@ -107,7 +107,6 @@ function DashboardLinksEditViewRenderer({ model }: SceneComponentProps<Dashboard
         onDuplicate={model.onDuplicate}
         onOrderChange={model.onOrderChange}
       />
-      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }

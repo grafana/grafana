@@ -4,10 +4,12 @@ import { RegistryItem } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
+import { BackgroundConfig, Constraint, LineConfig, Placement } from 'app/plugins/panel/canvas/panelcfg.gen';
 
+import { LineStyleConfig } from '../../plugins/panel/canvas/editor/LineStyleEditor';
 import { DimensionContext } from '../dimensions';
 
-import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConfig } from './types';
+import { StandardEditorConfig } from './types';
 
 /**
  * This gets saved in panel json
@@ -16,6 +18,7 @@ import { BackgroundConfig, Constraint, LineConfig, Placement, StandardEditorConf
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CanvasElementOptions<TConfig = any> {
   name: string; // configured unique display name
   type: string;
@@ -42,6 +45,13 @@ export enum ConnectionPath {
   Straight = 'straight',
 }
 
+export enum ConnectionDirection {
+  Forward = 'forward',
+  Reverse = 'reverse',
+  Both = 'both',
+  None = 'none',
+}
+
 export interface CanvasConnection {
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;
@@ -49,10 +59,16 @@ export interface CanvasConnection {
   path: ConnectionPath;
   color?: ColorDimensionConfig;
   size?: ScaleDimensionConfig;
+  lineStyle?: LineStyleConfig;
+  vertices?: ConnectionCoordinates[];
+  radius?: ScaleDimensionConfig;
+  direction?: ConnectionDirection;
+  sourceOriginal?: ConnectionCoordinates;
+  targetOriginal?: ConnectionCoordinates;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
-export interface CanvasElementProps<TConfig = any, TData = any> {
+export interface CanvasElementProps<TConfig = unknown, TData = unknown> {
   // Saved config
   config: TConfig;
 
@@ -68,11 +84,12 @@ export interface CanvasElementProps<TConfig = any, TData = any> {
  *
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryItem {
   /** The default width/height to use when adding  */
   defaultSize?: Placement;
 
-  prepareData?: (ctx: DimensionContext, cfg: TConfig) => TData;
+  prepareData?: (dimensionContext: DimensionContext, elementOptions: CanvasElementOptions<TConfig>) => TData;
 
   /** Component used to draw */
   display: ComponentType<CanvasElementProps<TConfig, TData>>;
@@ -87,6 +104,12 @@ export interface CanvasElementItem<TConfig = any, TData = any> extends RegistryI
 
   /** Optional config to customize what standard element editor options are available for the item */
   standardEditorConfig?: StandardEditorConfig;
+
+  /** Custom connection anchor coordinates, like for svg elements such as triangle, cloud, etc */
+  customConnectionAnchors?: Array<{
+    x: number;
+    y: number;
+  }>;
 }
 
 export const defaultBgColor = '#D9D9D9';

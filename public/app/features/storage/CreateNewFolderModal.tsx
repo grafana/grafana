@@ -1,7 +1,8 @@
 import React from 'react';
 import { SubmitHandler, Validate } from 'react-hook-form';
 
-import { Button, Field, Form, Input, Modal } from '@grafana/ui';
+import { Button, Field, Input, Modal } from '@grafana/ui';
+import { Form } from 'app/core/components/Form/Form';
 
 type FormModel = { folderName: string };
 

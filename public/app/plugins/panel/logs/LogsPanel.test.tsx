@@ -87,7 +87,7 @@ describe('LogsPanel', () => {
         options: { showCommonLabels: true, sortOrder: LogsSortOrder.Descending },
       });
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
-      expect(container.firstChild?.childNodes[0].textContent).toMatch(/^Common labels:common_appcommon_job/);
+      expect(container.firstChild?.childNodes[0].textContent).toMatch(/^Common labels:app=common_appjob=common_job/);
     });
     it('shows common labels on bottom when ascending sort order', async () => {
       const { container } = setup({
@@ -95,7 +95,7 @@ describe('LogsPanel', () => {
         options: { showCommonLabels: true, sortOrder: LogsSortOrder.Ascending },
       });
       expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
-      expect(container.firstChild?.childNodes[0].textContent).toMatch(/Common labels:common_appcommon_job$/);
+      expect(container.firstChild?.childNodes[0].textContent).toMatch(/Common labels:app=common_appjob=common_job$/);
     });
     it('does not show common labels when showCommonLabels is set to false', async () => {
       setup({ data: { series: seriesWithCommonLabels }, options: { showCommonLabels: false } });

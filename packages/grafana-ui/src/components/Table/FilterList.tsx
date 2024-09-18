@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 
-import { ButtonSelect, Checkbox, FilterInput, HorizontalGroup, Label, VerticalGroup } from '..';
+import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '..';
 import { useStyles2, useTheme2 } from '../../themes';
 
 interface Props {
@@ -13,6 +13,10 @@ interface Props {
   onChange: (options: SelectableValue[]) => void;
   caseSensitive?: boolean;
   showOperators?: boolean;
+  searchFilter: string;
+  setSearchFilter: (value: string) => void;
+  operator: SelectableValue<string>;
+  setOperator: (item: SelectableValue<string>) => void;
 }
 
 const ITEM_HEIGHT = 28;
@@ -33,7 +37,7 @@ const operatorSelectableValues: { [key: string]: SelectableValue<string> } = {
   },
 };
 const OPERATORS = Object.values(operatorSelectableValues);
-const REGEX_OPERATOR = operatorSelectableValues['Contains'];
+export const REGEX_OPERATOR = operatorSelectableValues['Contains'];
 const XPR_OPERATOR = operatorSelectableValues['Expression'];
 
 const comparableValue = (value: string): string | number | Date | boolean => {
@@ -61,9 +65,17 @@ const comparableValue = (value: string): string | number | Date | boolean => {
   return value;
 };
 
-export const FilterList = ({ options, values, caseSensitive, showOperators, onChange }: Props) => {
-  const [operator, setOperator] = useState<SelectableValue<string>>(REGEX_OPERATOR);
-  const [searchFilter, setSearchFilter] = useState('');
+export const FilterList = ({
+  options,
+  values,
+  caseSensitive,
+  showOperators,
+  onChange,
+  searchFilter,
+  setSearchFilter,
+  operator,
+  setOperator,
+}: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>
@@ -157,11 +169,11 @@ export const FilterList = ({ options, values, caseSensitive, showOperators, onCh
   }, [onChange, values, items, selectedItems]);
 
   return (
-    <VerticalGroup spacing="md">
+    <Stack direction="column" gap={0.25}>
       {!showOperators && <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />}
       {showOperators && (
-        <HorizontalGroup>
-          <ButtonSelect<string>
+        <Stack direction="row" gap={0}>
+          <ButtonSelect
             variant="canvas"
             options={OPERATORS}
             onChange={setOperator}
@@ -169,7 +181,7 @@ export const FilterList = ({ options, values, caseSensitive, showOperators, onCh
             tooltip={operator.description}
           />
           <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
-        </HorizontalGroup>
+        </Stack>
       )}
       {!items.length && <Label>No values</Label>}
       {items.length && (
@@ -194,7 +206,7 @@ export const FilterList = ({ options, values, caseSensitive, showOperators, onCh
         </List>
       )}
       {items.length && (
-        <VerticalGroup spacing="xs">
+        <Stack direction="column" gap={0.25}>
           <div className={cx(styles.selectDivider)} />
           <div className={cx(styles.filterListRow)}>
             <Checkbox
@@ -205,9 +217,9 @@ export const FilterList = ({ options, values, caseSensitive, showOperators, onCh
               onChange={onSelectChanged}
             />
           </div>
-        </VerticalGroup>
+        </Stack>
       )}
-    </VerticalGroup>
+    </Stack>
   );
 };
 

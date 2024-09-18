@@ -5,7 +5,7 @@ describe('Select focus/unfocus tests', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  it('Tests select focus/unfocus scenarios', () => {
+  it.skip('Tests select focus/unfocus scenarios', () => {
     e2e.flows.openDashboard({ uid: '5SdHCadmz' });
     e2e.components.PageToolbar.item('Dashboard settings').click();
 

@@ -1,0 +1,1866 @@
+{
+  "_comment": "",
+  "access-control": {
+    "add-permission": {
+      "role-label": "Função",
+      "serviceaccount-label": "Conta de serviço",
+      "team-label": "Equipe",
+      "title": "Adicionar permissão para",
+      "user-label": "Usuário"
+    },
+    "add-permissions": {
+      "save": "Salvar"
+    },
+    "permission-list": {
+      "permission": "Permissão"
+    },
+    "permissions": {
+      "add-label": "Adicionar uma permissão",
+      "no-permissions": "Não há permissões",
+      "permissions-change-warning": "Isto irá alterar as permissões para este diretório e todos os seus descendentes. No total, isto afetará:",
+      "role": "Função",
+      "serviceaccount": "Conta de serviço",
+      "team": "Equipe",
+      "title": "Permissões",
+      "user": "Usuário"
+    }
+  },
+  "alert-rule-form": {
+    "evaluation-behaviour": {
+      "description": {
+        "text": ""
+      },
+      "info-help": {
+        "text": ""
+      },
+      "pending-period": ""
+    },
+    "evaluation-behaviour-description1": "",
+    "evaluation-behaviour-description2": "",
+    "evaluation-behaviour-description3": "",
+    "evaluation-behaviour-for": {
+      "error-parsing": "",
+      "validation": ""
+    },
+    "evaluation-behaviour-group": {
+      "text": ""
+    },
+    "pause": ""
+  },
+  "annotations": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  },
+  "api-keys": {
+    "empty-state": {
+      "message": ""
+    }
+  },
+  "bouncing-loader": {
+    "label": "Carregando"
+  },
+  "browse-dashboards": {
+    "action": {
+      "cancel-button": "Cancelar",
+      "cannot-move-folders": "",
+      "delete-button": "Excluir",
+      "delete-modal-invalid-text": "Uma ou mais pastas contêm painéis de biblioteca, ou regras de alerta. Exclua-as primeiro para prosseguir.",
+      "delete-modal-invalid-title": "Não é possível excluir pasta",
+      "delete-modal-text": "Esta ação apagará o seguinte conteúdo:",
+      "delete-modal-title": "Excluir",
+      "deleting": "Excluindo...",
+      "manage-permissions-button": "Gerenciar permissões",
+      "move-button": "Mover",
+      "move-modal-alert": "Mover este item pode alterar suas permissões.",
+      "move-modal-field-label": "Nome da pasta",
+      "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
+      "move-modal-title": "Mover",
+      "moving": "Movendo...",
+      "new-folder-name-required-phrase": "O nome da pasta é obrigatório."
+    },
+    "counts": {
+      "alertRule_one": "{{count}} regra de alerta",
+      "alertRule_other": "{{count}} regras de alerta",
+      "dashboard_one": "{{count}} painel de controle",
+      "dashboard_other": "{{count}} painéis de controle",
+      "folder_one": "{{count}} pasta",
+      "folder_other": "{{count}} pastas",
+      "libraryPanel_one": "{{count}} painel de biblioteca",
+      "libraryPanel_other": "{{count}} painéis de biblioteca",
+      "total_one": "{{count}} item",
+      "total_other": "{{count}} itens"
+    },
+    "dashboards-tree": {
+      "collapse-folder-button": "Recolher pasta {{title}}",
+      "expand-folder-button": "Expandir pasta {{title}}",
+      "name-column": "Nome",
+      "select-all-header-checkbox": "Selecionar tudo",
+      "select-checkbox": "Selecionar",
+      "tags-column": "Tags"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": "",
+      "title-folder": ""
+    },
+    "folder-actions-button": {
+      "delete": "Excluir",
+      "folder-actions": "Ações da pasta",
+      "manage-permissions": "Gerenciar permissões",
+      "move": "Mover"
+    },
+    "folder-picker": {
+      "accessible-label": "Selecionar pasta: {{ label }} atualmente selecionada",
+      "button-label": "Selecionar pasta",
+      "clear-selection": "Limpar seleção",
+      "empty-message": "Nenhuma pasta encontrada",
+      "error-title": "Erro ao carregar pastas",
+      "search-placeholder": "Buscar pastas",
+      "unknown-error": "Erro desconhecido"
+    },
+    "manage-folder-nav": {
+      "alert-rules": "Regras de alerta",
+      "dashboards": "Painéis de controle",
+      "panels": "Painéis"
+    },
+    "new-folder-form": {
+      "cancel-label": "Cancelar",
+      "create-label": "Criar",
+      "name-label": "Nome da pasta"
+    },
+    "no-results": {
+      "clear": "Limpar busca e filtros",
+      "text": ""
+    }
+  },
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copiado"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "Alterar tema...",
+      "dark-theme": "Escuro",
+      "light-theme": "Claro"
+    },
+    "empty-state": {
+      "message": ""
+    },
+    "search-box": {
+      "placeholder": "Buscar ou pular para..."
+    },
+    "section": {
+      "actions": "Ações",
+      "dashboard-search-results": "Painéis de controle",
+      "folder-search-results": "Pastas",
+      "pages": "Páginas",
+      "preferences": "Preferências",
+      "recent-dashboards": "Painéis de controle recentes"
+    }
+  },
+  "common": {
+    "locale": {
+      "default": "Padrão"
+    },
+    "save": "Salvar"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": "Fontes de dados",
+      "empty-message": ""
+    },
+    "search": {
+      "placeholder": "Buscar tudo"
+    }
+  },
+  "correlations": {
+    "add-new": "Adicionar novo",
+    "alert": {
+      "error-message": "Ocorreu um erro desconhecido ao obter dados de correlação. Tente novamente.",
+      "title": "Erro ao obter dados de correlação"
+    },
+    "basic-info-form": {
+      "description-description": "Descrição opcional com mais informações sobre o link",
+      "description-label": "Descrição",
+      "label-description": "Este nome será usado como rótulo para a correlação. Isto mostrará como texto do botão, um item de menu ou texto de foco em um link.",
+      "label-label": "Etiqueta",
+      "label-placeholder": "ex: Rastreamentos de tempo",
+      "label-required": "Este campo é obrigatório.",
+      "sub-text": "<0>Defina o texto que descreverá a correlação.</0>",
+      "title": "Definir rótulo de correlação (Passo 1 de 3)"
+    },
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
+    },
+    "list": {
+      "delete": "excluir correlação",
+      "label": "Etiqueta",
+      "loading": "carregando...",
+      "read-only": "Apenas leitura",
+      "source": "Fonte",
+      "target": "Alvo"
+    },
+    "navigation-form": {
+      "add-button": "Adicionar",
+      "back-button": "Voltar",
+      "next-button": "Avançar",
+      "save-button": "Salvar"
+    },
+    "page-content": "Para ativar as correlações, adicione-as nas configurações do Grafana:",
+    "page-heading": "Correlações desativadas",
+    "query-editor": {
+      "control-rules": "A fonte de dados de destino selecionada deve exportar um editor de consulta.",
+      "data-source-text": "Selecione uma fonte de dados alvo primeiro.",
+      "data-source-title": "Nenhuma fonte de dados selecionada",
+      "error-text": "A fonte de dados selecionada não pôde ser carregada.",
+      "error-title": "Erro ao carregar fonte de dados",
+      "loading": "Carregando editor de consultas...",
+      "query-description": "Defina a consulta executada quando o link é clicado. Você pode usar <2>variáveis</2> para acessar valores específicos do campo.",
+      "query-editor-title": "A fonte de dados não exporta um editor de consulta.",
+      "query-label": "Consulta"
+    },
+    "source-form": {
+      "control-required": "Este campo é obrigatório.",
+      "description": "Você usou as seguintes variáveis na consulta alvo: <1></1><2></2>Um ponto de dados precisa fornecer valores para todas as variáveis como campos ou saída de transformações para fazer com que o botão de correlação apareça na visualização. <4></4>Observação: nem toda variável precisa ser explicitamente definida abaixo. Uma transformação como <7>logfmt</7> criará variáveis para cada par chave/valor.",
+      "heading": "Variáveis usadas na consulta alvo",
+      "results-description": "O link será exibido ao lado do valor deste campo",
+      "results-label": "Campo de resultados",
+      "results-required": "Este campo é obrigatório.",
+      "source-description": "Os resultados da fonte de dados selecionada têm links exibidos no painel",
+      "source-label": "Fonte",
+      "sub-text": "<0>Defina qual fonte de dados exibirá a correlação e quais dados substituirão variáveis predefinidas. </0>",
+      "title": "Configurar a fonte de dados que vinculará a {{dataSourceName}} (Passo 3 de 3)"
+    },
+    "sub-title": "Defina como os dados que vivem em fontes de dados diferentes se relacionam entre si. Leia mais na <2>documentação<1></1></2>",
+    "target-form": {
+      "control-rules": "Este campo é obrigatório.",
+      "sub-text": "<0>Defina para qual fonte de dados a correlação será vinculada e qual consulta será executada quando a correlação for clicada.</0>",
+      "target-description": "Especifique qual fonte de dados é consultada quando o link é clicado",
+      "target-label": "Alvo",
+      "title": "Configurar o alvo para a correlação (Passo 2 de 3)"
+    },
+    "trans-details": {
+      "logfmt-description": "Analisa o campo fornecido com logfmt para obter variáveis",
+      "logfmt-label": "Logfmt",
+      "regex-description": "O campo será analisado com regex. Use grupos de captura nomeados para retornar várias variáveis, ou um único grupo de captura não nomeado para adicionar uma variável ao valor de mapa nomeado. Regex não é sensível a letras maiúsculas e minúsculas.",
+      "regex-expression": "Use grupos de captura para extrair uma porção do campo.",
+      "regex-label": "Expressão regular",
+      "regex-map-values": "Define o nome da variável se o grupo de captura não for nomeado."
+    },
+    "transform": {
+      "add-button": "Adicionar transformação",
+      "heading": "Transformações",
+      "no-transform": "Nenhuma transformação definida."
+    },
+    "transform-row": {
+      "expression-label": "Expressão",
+      "expression-required": "Defina uma expressão",
+      "expression-tooltip": "Necessário para expressão regular. A expressão que a transformação usará. O logfmt não usa mais especificações.",
+      "field-input": "campo",
+      "field-label": "Campo",
+      "field-tooltip": "Opcional. O campo para transformar. Se não especificado, a transformação será aplicada ao campo de resultados.",
+      "map-value-label": "Valor do mapa",
+      "map-value-tooltip": "Opcional. Define o nome da variável. Isso é válido atualmente apenas para expressões regulares com um grupo de captura único e não nomeado.",
+      "remove-button": "Remover",
+      "remove-tooltip": "Remover transformação",
+      "transform-required": "Selecione um tipo de transformação",
+      "type-label": "Tipo",
+      "type-tooltip": "O tipo de transformação que será aplicado a fonte de dados."
+    }
+  },
+  "dashboard": {
+    "add-menu": {
+      "import": "Importar da biblioteca",
+      "paste-panel": "Colar painel",
+      "row": "Linha",
+      "visualization": "Visualização",
+      "widget": "Widget"
+    },
+    "alert-rules-drawer": {
+      "redirect-link": "Lista no alerta do Grafana",
+      "subtitle": "Regras de alerta relacionadas a este painel de controle"
+    },
+    "empty": {
+      "add-library-panel-body": "Adicione visualizações que são compartilhadas com outros painéis de controle.",
+      "add-library-panel-button": "Adicionar painel de biblioteca",
+      "add-library-panel-header": "",
+      "add-visualization-body": "Selecione uma fonte de dados e consulte e visualize seus dados com gráficos, estatísticas e tabelas ou crie listas, markdowns e outros widgets.",
+      "add-visualization-button": "Adicionar visualização",
+      "add-visualization-header": "Comece seu novo painel de controle adicionando uma visualização",
+      "add-widget-body": "Criar listas, markdowns e outros widgets",
+      "add-widget-button": "Adicionar widget",
+      "add-widget-header": "Adicionar um widget",
+      "import-a-dashboard-body": "",
+      "import-a-dashboard-header": "Importar um painel de controle",
+      "import-dashboard-button": "Importar painel de controle"
+    },
+    "inspect": {
+      "data-tab": "Dados",
+      "error-tab": "Erro",
+      "json-tab": "JSON",
+      "meta-tab": "Metadados",
+      "query-tab": "Consulta",
+      "stats-tab": "Estatísticas",
+      "subtitle": "{{queryCount}} consultas com o tempo total de consulta de {{formatted}}",
+      "title": "Inspecionar: {{panelTitle}}"
+    },
+    "inspect-data": {
+      "data-options": "Opções de dados",
+      "dataframe-aria-label": "Selecionar quadro de dados",
+      "dataframe-label": "Mostrar quadro de dados",
+      "download-csv": "Baixar CSV",
+      "download-excel-description": "Adiciona cabeçalho ao CSV para usar com o Excel",
+      "download-excel-label": "Baixar para Excel",
+      "download-logs": "Baixar registros",
+      "download-service": "Baixar gráfico de serviço",
+      "download-traces": "Baixar rastreamentos",
+      "excel-header": "Cabeçalho do Excel",
+      "formatted": "Dados formatados",
+      "formatted-data-description": "Os dados da tabela estão formatados com opções definidas no campo e nas guias de substituição.",
+      "formatted-data-label": "Dados formatados",
+      "panel-transforms": "Transformações de painel",
+      "series-to-columns": "Séries acompanhadas pelo tempo",
+      "transformation": "Séries acompanhadas pelo tempo",
+      "transformations-description": "Os dados da tabela são exibidos com transformações definidas na guia Transformação do painel.",
+      "transformations-label": "Aplicar transformações de painel"
+    },
+    "inspect-json": {
+      "dataframe-description": "Dados brutos sem transformações e configuração de campo aplicada. ",
+      "dataframe-label": "DataFrame JSON (da consulta)",
+      "panel-data-description": "O modelo bruto passado para a visualização do painel",
+      "panel-data-label": "Dados do painel",
+      "panel-json-description": "O modelo salvo no JSON do painel de controle que configura como tudo funciona.",
+      "panel-json-label": "Painel JSON",
+      "select-source": "Selecionar fonte",
+      "unknown": "Objeto desconhecido: {{show}}"
+    },
+    "inspect-meta": {
+      "no-inspector": "Sem inspetor de metadados"
+    },
+    "inspect-stats": {
+      "data-title": "Estatísticas de fonte de dados",
+      "data-traceids": "IDs de rastreamento",
+      "processing-time": "Tempo de processamento de dados",
+      "queries": "Número de consultas",
+      "request-time": "Tempo total do pedido",
+      "rows": "Número total de linhas",
+      "table-title": "Estatísticas"
+    },
+    "toolbar": {
+      "add": "Adicionar",
+      "alert-rules": "Regras de alerta",
+      "mark-favorite": "Marcar como favorito",
+      "open-original": "Abrir painel de controle original",
+      "playlist-next": "Ir para o próximo painel de controle",
+      "playlist-previous": "Ir para o painel de controle anterior",
+      "playlist-stop": "Parar lista de reprodução",
+      "refresh": "Atualizar painel de controle",
+      "save": "Salvar painel de controle",
+      "settings": "Configurações do painel de controle",
+      "share": "Compartilhar painel de controle",
+      "share-button": "Compartilhar",
+      "unmark-favorite": "Desmarcar como favorito"
+    },
+    "validation": {
+      "invalid-dashboard-id": "Não foi possível encontrar um ID do Grafana.com válido",
+      "invalid-json": "JSON inválido",
+      "tags-expected-array": "matriz de tags esperada",
+      "tags-expected-strings": "matriz de strings de tags esperada"
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "Enviar arquivo JSON do painel de controle",
+      "secondary-text": "Arraste e solte aqui ou clique para procurar"
+    },
+    "form-actions": {
+      "cancel": "Cancelar",
+      "load": "Carregar"
+    },
+    "gcom-field": {
+      "label": "Encontre e importe painéis de controle para aplicações comuns em <1></1>",
+      "load-button": "Carregar",
+      "placeholder": "URL ou ID do painel de controle do Grafana.com",
+      "validation-required": "Um URL ou ID do painel de controle do Grafana é obrigatório"
+    },
+    "json-field": {
+      "label": "Importar via modelo JSON de painel de controle",
+      "validation-required": "Precisa de um modelo JSON de painel de controle"
+    }
+  },
+  "dashboard-links": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "title": ""
+    }
+  },
+  "dashboard-settings": {
+    "annotations": {
+      "title": "Anotações"
+    },
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "Atualização automática",
+      "description-label": "Descrição",
+      "editable-description": "Defina como somente leitura para desativar toda a edição. Recarregue o painel de controle para que as alterações tenham efeito",
+      "editable-label": "Editável",
+      "folder-label": "Pasta",
+      "panel-options-graph-tooltip-description": "Controla as dicas e o comportamento de destaque do mouse em diferentes painéis. Recarregue o painel de controle para que as alterações tenham efeito",
+      "panel-options-graph-tooltip-label": "Gráfico de dica",
+      "panel-options-label": "Opções do painel",
+      "tags-label": "Tags",
+      "title": "Geral",
+      "title-label": "Título"
+    },
+    "json-editor": {
+      "save-button": "Salvar alterações",
+      "subtitle": "O modelo JSON abaixo é a estrutura de dados que define o painel de controle. Isto inclui configurações do painel, layout, consultas e assim por diante.",
+      "title": "Modelo JSON"
+    },
+    "links": {
+      "title": "Links"
+    },
+    "permissions": {
+      "title": "Permissões"
+    },
+    "settings": {
+      "title": "Configurações"
+    },
+    "time-picker": {
+      "hide-time-picker": "Ocultar seletor de hora",
+      "now-delay-description": "Exclui dados recentes que podem estar incompletos.",
+      "now-delay-label": "Atraso agora",
+      "refresh-live-dashboards-description": "Redesenha painéis continuamente onde as referências de intervalo de tempo são \"agora\"",
+      "refresh-live-dashboards-label": "Atualizar painéis de controle ao vivo",
+      "time-options-label": "Opções de hora",
+      "time-zone-label": "Fuso horário",
+      "week-start-label": "Início da semana"
+    },
+    "variables": {
+      "title": "Variáveis"
+    },
+    "versions": {
+      "title": "Versões"
+    }
+  },
+  "data-source-list": {
+    "empty-state": {
+      "button-title": "",
+      "pro-tip": "",
+      "title": ""
+    }
+  },
+  "data-source-picker": {
+    "add-new-data-source": "Configurar uma nova fonte de dados",
+    "built-in-list": {
+      "description-dashboard": "Reutiliza resultados de consultas de outras visualizações",
+      "description-grafana": "Descubra visualizações usando dados de simulação",
+      "description-mixed": "Usar múltiplas fontes de dados"
+    },
+    "list": {
+      "no-data-source-message": "Nenhuma fonte de dados encontrada"
+    },
+    "modal": {
+      "configure-new-data-source": "Abrir uma nova guia e configurar a fonte de dados",
+      "input-placeholder": "Selecionar fonte de dados",
+      "title": "Selecionar fonte de dados"
+    },
+    "open-advanced-button": "Abrir seletor de código avançado de fonte de dados"
+  },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": "Adicionar nova fonte de dados"
+    },
+    "empty-state": {
+      "message": ""
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "Adicionar ao painel de controle",
+    "add-to-library-modal": {
+      "auto-star": "",
+      "data-source-name": "",
+      "data-source-type": "",
+      "description": "",
+      "info": "",
+      "query": "",
+      "title": "",
+      "visibility": ""
+    },
+    "rich-history": {
+      "close-tooltip": "Fechar histórico de consultas",
+      "datasource-a-z": "Fonte de dados A-Z",
+      "datasource-z-a": "Fonte de dados Z-A",
+      "newest-first": "Mais recentes primeiro",
+      "oldest-first": "Mais antigos primeiro",
+      "query-history": "Histórico de consultas",
+      "query-library": "",
+      "settings": "Configurações",
+      "starred": "Favorito"
+    },
+    "rich-history-card": {
+      "add-comment-form": "Adicionar formulário de comentários",
+      "add-comment-tooltip": "Adicionar comentário",
+      "add-to-library": "",
+      "cancel": "Cancelar",
+      "confirm-delete": "Excluir",
+      "copy-query-tooltip": "Copiar consulta para a área de transferência",
+      "copy-shortened-link-tooltip": "Copiar link encurtado para a área de transferência",
+      "datasource-icon-label": "Ícone da fonte de dados",
+      "datasource-name-label": "Nome da fonte de dados",
+      "datasource-not-exist": "A fonte de dados não existe mais",
+      "delete-query-confirmation-title": "Excluir",
+      "delete-query-title": "Excluir consulta",
+      "delete-query-tooltip": "Excluir consulta",
+      "delete-starred-query-confirmation-text": "Tem certeza de que deseja excluir permanentemente sua consulta favorita?",
+      "edit-comment-tooltip": "Editar comentário",
+      "optional-description": "Uma descrição opcional do que a consulta faz.",
+      "query-comment-label": "Comentário de consulta",
+      "query-template-added": "",
+      "query-text-label": "Texto da consulta",
+      "save-comment": "Salvar comentário",
+      "star-query-tooltip": "Favoritar consulta",
+      "unstar-query-tooltip": "Remover consulta dos favoritos",
+      "update-comment-form": "Atualizar formulário de comentários"
+    },
+    "rich-history-container": {
+      "loading": "Carregando..."
+    },
+    "rich-history-notification": {
+      "query-copied": "Consulta copiada para a área de transferência",
+      "query-deleted": "Consulta excluída"
+    },
+    "rich-history-queries-tab": {
+      "displaying-partial-queries": "Exibindo {{ count }} consultas",
+      "displaying-queries": "{{ count }} consultas",
+      "filter-aria-label": "Filtrar consultas de fonte(s) de dados",
+      "filter-history": "Histórico de filtros",
+      "filter-placeholder": "Filtrar consultas de fonte(s) de dados",
+      "history-local": "O histórico é local no seu navegador e não é compartilhado com outras pessoas.",
+      "loading": "Carregando...",
+      "loading-results": "Carregando resultados...",
+      "search-placeholder": "Buscar consultas",
+      "showing-queries": "Mostrando {{ shown }} de {{ total }} <0>Carregar mais</0>",
+      "sort-aria-label": "Ordenar consultas",
+      "sort-placeholder": "Ordenar consultas por"
+    },
+    "rich-history-settings-tab": {
+      "alert-info": "O Grafana manterá lançamentos para {{optionLabel}}. As entradas nos favoritos não serão excluídas.",
+      "change-default-tab": "Altere a guia ativa padrão de \"Histórico de consultas\" para \"Marcado como favorito\"",
+      "clear-history-info": "Exclui todo o seu histórico de consultas permanentemente.",
+      "clear-query-history": "Limpar histórico de consultas",
+      "clear-query-history-button": "Limpar histórico de consultas",
+      "delete-confirm": "Excluir",
+      "delete-confirm-text": "Tem certeza de que deseja excluir permanentemente seu histórico de consultas?",
+      "delete-title": "Excluir",
+      "history-time-span": "Histórico de tempo",
+      "history-time-span-description": "Selecione o período de tempo para o qual o Grafana salvará seu histórico de consultas. Até {{MAX_HISTORY_ITEMS}} entradas serão armazenadas.",
+      "only-show-active-datasource": "Mostrar somente consultas para fontes de dados atualmente ativas em Explorar",
+      "query-history-deleted": "Histórico de consultas excluído",
+      "retention-period": {
+        "1-week": "1 semana",
+        "2-days": "2 dias",
+        "2-weeks": "2 semanas",
+        "5-days": "5 dias"
+      }
+    },
+    "rich-history-starred-tab": {
+      "filter-queries-aria-label": "Filtrar consultas de fonte(s) de dados",
+      "filter-queries-placeholder": "Filtrar consultas de fonte(s) de dados",
+      "loading": "Carregando...",
+      "loading-results": "Carregando resultados...",
+      "local-history-message": "O histórico é local no seu navegador e não é compartilhado com outras pessoas.",
+      "search-queries-placeholder": "Buscar consultas",
+      "showing-queries": "Mostrando {{ shown }} de {{ total }} <0>Carregar mais</0>",
+      "sort-queries-aria-label": "Ordenar consultas",
+      "sort-queries-placeholder": "Ordenar consultas por"
+    },
+    "rich-history-utils": {
+      "a-week-ago": "há uma semana",
+      "days-ago": "Há {{num}} dias",
+      "default-from": "agora-1h",
+      "default-to": "agora",
+      "today": "hoje",
+      "two-weeks-ago": "há duas semanas",
+      "yesterday": "ontem"
+    },
+    "rich-history-utils-notification": {
+      "saving-failed": "Falha ao salvar histórico rico",
+      "update-failed": "A atualização do histórico rico falhou"
+    },
+    "run-query": {
+      "left-pane": "",
+      "right-pane": "",
+      "run-query-button": "",
+      "switch-datasource-button": ""
+    },
+    "secondary-actions": {
+      "query-add-button": "Adicionar consulta",
+      "query-add-button-aria-label": "Adicionar consulta",
+      "query-history-button": "Histórico de consultas",
+      "query-history-button-aria-label": "Histórico de consultas",
+      "query-inspector-button": "Inspetor da consulta",
+      "query-inspector-button-aria-label": "Inspetor da consulta"
+    },
+    "table": {
+      "no-data": "0 séries retornadas",
+      "title": "Tabela",
+      "title-with-name": "Tabela — {{name}}"
+    },
+    "toolbar": {
+      "aria-label": "Explorar barra de ferramentas",
+      "copy-link": "Copiar URL",
+      "copy-link-abs-time": "",
+      "copy-links-absolute-category": "Links de URL de sincronização de tempo (compartilhar com intervalo de tempo intacto)",
+      "copy-links-normal-category": "Links de URL normais",
+      "copy-shortened-link": "Copiar URL encurtado",
+      "copy-shortened-link-abs-time": "",
+      "copy-shortened-link-menu": "",
+      "refresh-picker-cancel": "Cancelar",
+      "refresh-picker-run": "Executar consulta",
+      "split-close": "",
+      "split-close-tooltip": "Fechar painel dividido",
+      "split-narrow": "Painel estreito",
+      "split-title": "Dividir",
+      "split-tooltip": "Dividir o painel",
+      "split-widen": "Painel amplo"
+    }
+  },
+  "folder-picker": {
+    "loading": "Carregando pastas..."
+  },
+  "grafana-ui": {
+    "drawer": {
+      "close": "Fechar"
+    },
+    "modal": {
+      "close-tooltip": "Fechar"
+    },
+    "segment-async": {
+      "error": "Falha ao carregar opções",
+      "loading": "Carregando opções...",
+      "no-options": "Nenhuma opção encontrada"
+    },
+    "select": {
+      "no-options-label": "Nenhuma opção encontrada",
+      "placeholder": "Escolher"
+    },
+    "spinner": {
+      "aria-label": ""
+    }
+  },
+  "graph": {
+    "container": {
+      "content": "Renderizar muitas séries em um único painel pode afetar o desempenho e dificultar a leitura dos dados. Considere refinar suas consultas.",
+      "show-all-series": "Mostrar tudo {{length}}",
+      "show-only-series": "Mostrando apenas {{MAX_NUMBER_OF_TIME_SERIES}} séries",
+      "title": "Gráfico"
+    }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "Painel de controle",
+      "focused-panel": "",
+      "global": "Global",
+      "time-range": ""
+    },
+    "shortcuts-description": {
+      "change-theme": "Alterar tema",
+      "collapse-all-rows": "Recolher todas as linhas",
+      "copy-time-range": "Copiar intervalo de tempo",
+      "dashboard-settings": "Configurações do painel de controle",
+      "duplicate-panel": "Duplicar painel",
+      "exit-edit/setting-views": "Sair/editar visualizações",
+      "expand-all-rows": "Expandir todas as linhas",
+      "go-to-dashboards": "Ir para Painéis de controle",
+      "go-to-explore": "Ir para Explorar",
+      "go-to-home-dashboard": "Ir para Painel de controle inicial",
+      "go-to-profile": "Ir para Perfil",
+      "make-time-range-permanent": "Tornar o intervalo de tempo absoluto/permanente",
+      "move-time-range-back": "Mover intervalo de tempo para trás",
+      "move-time-range-forward": "Avançar intervalo de tempo",
+      "open-search": "Abrir busca",
+      "open-shared-modal": "Abrir módulo de compartilhamento de painel",
+      "paste-time-range": "Colar intervalo de tempo",
+      "refresh-all-panels": "Atualizar todos os painéis",
+      "remove-panel": "Remover painel",
+      "save-dashboard": "Salvar painel de controle",
+      "show-all-shortcuts": "Mostrar todos os atalhos de teclado",
+      "toggle-active-mode": "Alternar modo em ativo/visualização",
+      "toggle-all-panel-legends": "Alternar todas as legendas de painel",
+      "toggle-auto-fit": "Alternar painéis de autoajuste (recurso experimental)",
+      "toggle-exemplars": "Alternar exemplares em todo o painel",
+      "toggle-graph-crosshair": "Alternar mira compartilhada nos gráficos",
+      "toggle-kiosk": "Alternar modo de quiosque (oculta a navegação superior)",
+      "toggle-panel-edit": "Alternar visualização de edição de painel",
+      "toggle-panel-fullscreen": "Alternar visualização de painel em tela cheia",
+      "toggle-panel-legend": "Alternar legenda de painel",
+      "zoom-out-time-range": "Diminuir o intervalo de tempo"
+    },
+    "title": "Atalhos"
+  },
+  "inspector": {
+    "query": {
+      "collapse-all": "Recolher tudo",
+      "copy-to-clipboard": "Copiar para a área de transferência",
+      "description": "O inspector de consulta permite que você veja a solicitação bruta e a resposta. Para coletar estes dados, o Grafana precisa emitir uma nova consulta. Clique no botão atualizar abaixo para acionar uma nova consulta.",
+      "expand-all": "Expandir tudo",
+      "no-data": "Nenhuma solicitação e resposta coletada ainda. Clique no botão atualizar",
+      "refresh": "Atualizar"
+    }
+  },
+  "library-panel": {
+    "add-modal": {
+      "cancel": "Cancelar",
+      "create": "Criar painel de biblioteca",
+      "error": "Já existe um painel de biblioteca com este nome",
+      "folder": "Salvar na pasta",
+      "folder-description": "As permissões do painel da biblioteca são derivadas das permissões das pastas",
+      "name": "Nome do painel de biblioteca"
+    },
+    "add-widget": {
+      "title": "Adicionar painel a partir da biblioteca de painéis"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    }
+  },
+  "library-panels": {
+    "empty-state": {
+      "message": ""
+    },
+    "modal": {
+      "button-cancel": "",
+      "button-view-panel1": "Visualizar painel em {{label}}...",
+      "button-view-panel2": "Visualizar painel no painel de controle...",
+      "panel-not-linked": "O painel não está vinculado a um painel de controle. Adicione o painel a um painel de controle e tente novamente.",
+      "select-no-options-message": "Nenhum painel de controle encontrado",
+      "select-placeholder": "Comece a digitar para buscar um painel de controle",
+      "title": "Visualizar painel no painel de controle",
+      "body_one": "Este painel está sendo usado em {{count}} painel de controle. Escolha em qual painel de controle você poderá visualizar:",
+      "body_other": "Este painel está sendo usado em {{count}} painéis de controle. Escolha em qual painel de controle você poderá visualizar:"
+    },
+    "save": {
+      "error": "Erro ao salvar painel de biblioteca: \"{{errorMsg}}\"",
+      "success": "Painel de biblioteca salvo"
+    }
+  },
+  "login": {
+    "error": {
+      "blocked": "Você excedeu o número de tentativas de login para este usuário. Tente novamente mais tarde.",
+      "invalid-user-or-password": "Usuário ou senha inválidos",
+      "title": "Falha ao fazer login",
+      "unknown": "Ocorreu um erro desconhecido"
+    },
+    "forgot-password": "Esqueceu sua senha?",
+    "form": {
+      "password-label": "Senha",
+      "password-placeholder": "",
+      "password-required": "A senha é obrigatória",
+      "submit-label": "Fazer login",
+      "submit-loading-label": "Fazendo login...",
+      "username-label": "E-mail ou nome de usuário",
+      "username-placeholder": "",
+      "username-required": "O e-mail ou nome de usuário é obrigatório"
+    },
+    "services": {
+      "sing-in-with-prefix": "Fazer login com {{serviceName}}"
+    },
+    "signup": {
+      "button-label": "Inscreva-se",
+      "new-to-question": "Novo no Grafana?"
+    }
+  },
+  "migrate-to-cloud": {
+    "can-i-move": {
+      "body": "Depois de conectar esta instalação a uma pilha na nuvem, você será capaz de enviar fontes de dados e painéis de controle.",
+      "link-title": "Aprenda sobre como migrar outras configurações",
+      "title": "Posso mover esta instalação para o Grafana Cloud?"
+    },
+    "connect-modal": {
+      "body-cloud-stack": "Você também precisará de uma pilha na nuvem. Se você se inscreveu, criaremos automaticamente sua primeira pilha. Se você tem uma conta, precisará selecionar ou criar uma pilha.",
+      "body-get-started": "Para começar, você precisará de uma conta do Grafana.com.",
+      "body-sign-up": "Inscreva-se para criar uma conta do Grafana.com",
+      "body-token": "Sua instalação autogerenciada do Grafana precisa de acesso especial para migrar conteúdo com segurança. Você precisará criar um token de migração para a pilha na nuvem escolhida.",
+      "body-token-field": "Token de migração",
+      "body-token-field-placeholder": "Cole o token aqui",
+      "body-token-instructions": "Entre na sua pilha de nuvem e navegue para Administração, Geral, Migrar para o Grafana Cloud. Crie um token de migração nesta tela e cole o token aqui.",
+      "body-view-stacks": "Visualizar minhas pilhas na nuvem",
+      "cancel": "Cancelar",
+      "connect": "Conectar-se a esta pilha",
+      "connecting": "Conectando-se a esta pilha...",
+      "title": "Conectar-se a uma pilha na nuvem",
+      "token-error-description": "",
+      "token-error-title": "",
+      "token-required-error": "O token de migração é obrigatório"
+    },
+    "cta": {
+      "button": "Migrar esta instância para a nuvem",
+      "header": "Deixe-nos gerenciar a sua pilha do Grafana"
+    },
+    "disconnect-modal": {
+      "body": "Isto removerá o token de migração desta instalação. Se você deseja carregar mais recursos no futuro, precisará inserir um novo token de migração.",
+      "cancel": "Cancelar",
+      "disconnect": "Desconectar",
+      "disconnecting": "Desconectando...",
+      "error": "Ocorreu um erro ao desconectar",
+      "title": "Desconectar da pilha na nuvem"
+    },
+    "get-started": {
+      "body": "O processo de migração deve ser iniciado a partir da sua instância autogerenciada do Grafana.",
+      "configure-pdc-link": "Configurar PDC para esta pilha",
+      "link-title": "Saiba mais sobre conexão privada de fonte de dados",
+      "step-1": "Faça login na sua instância autogerenciada e navegue para Administração, Geral, Migrar para o Grafana Cloud.",
+      "step-2": "Selecione \"Migrar esta instância para a nuvem\".",
+      "step-3": "Você receberá uma solicitação por um token de migração. Gere um nessa tela.",
+      "step-4": "Na sua instância autogerenciada, selecione \"Enviar tudo\" para enviar fontes de dados e painéis de controle para esta pilha na nuvem.",
+      "step-5": "Se algumas das suas fontes de dados não funcionarem em Internet pública, você precisará instalar o Private Source Connect no seu ambiente autogerenciado.",
+      "title": "Como começar"
+    },
+    "is-it-secure": {
+      "body": "O Grafana Labs está empenhado em manter os mais elevados padrões de privacidade e segurança de dados. Ao implementar tecnologias e procedimentos de segurança padrão do setor, ajudamos a proteger os dados de nossos clientes de acessos não autorizados, uso ou divulgação.",
+      "link-title": "Centro de Confiança do Grafana Labs",
+      "title": "É seguro?"
+    },
+    "migrate-to-this-stack": {
+      "body": "Algumas configurações da sua instância autogerenciada do Grafana podem ser copiadas automaticamente para esta pilha na nuvem.",
+      "link-title": "Visualizar o guia completo de migração",
+      "title": "Migrar configurações para esta pilha"
+    },
+    "migration-token": {
+      "body": "Sua instância autogerenciada do Grafana exigirá um token de autenticação especial para se conectar com segurança a esta pilha na nuvem.",
+      "delete-modal-body": "Se você já usou este token com uma instalação autogerenciada, essa instalação não poderá mais enviar conteúdos.",
+      "delete-modal-cancel": "Cancelar",
+      "delete-modal-confirm": "Excluir",
+      "delete-modal-deleting": "Excluindo...",
+      "delete-modal-title": "Excluir token de migração",
+      "error-body": "",
+      "error-title": "",
+      "generate-button": "Gerar um token de migração",
+      "generate-button-loading": "Gerando um token de migração...",
+      "modal-close": "Fechar",
+      "modal-copy-and-close": "Copiar para a área de transferência e fechar",
+      "modal-copy-button": "Copiar para a área de transferência",
+      "modal-field-description": "Copie o token agora, já que você não será capaz de vê-lo novamente. Perder um token requer criar um novo.",
+      "modal-field-label": "Token",
+      "modal-title": "Token de migração criado",
+      "status": "",
+      "title": "Token de migração"
+    },
+    "pdc": {
+      "body": "Expor suas fontes de dados à Internet pode suscitar questões de segurança. A fonte de dados privada de conexão (PDC) permite ao Grafana Cloud acessar seus recursos de dados existentes por meio de um túnel de rede seguro.",
+      "link-title": "Saiba mais sobre o PDC",
+      "title": "Nem todas as minhas fontes de dados estão na Internet pública"
+    },
+    "pricing": {
+      "body": "O Grafana Cloud tem um plano grátis generoso e um teste de uso ilimitado de 14 dias. Depois que o seu período de teste expirar, você receberá uma cobrança com base no uso acima dos limites do plano grátis.",
+      "link-title": "Preços do Grafana Cloud",
+      "title": "Quanto isto custa?"
+    },
+    "resource-status": {
+      "error-details-button": "Detalhes",
+      "failed": "Erro",
+      "migrated": "Enviado para a nuvem",
+      "migrating": "Enviando...",
+      "not-migrated": "Ainda não enviado",
+      "unknown": "Desconhecido"
+    },
+    "resource-table": {
+      "unknown-datasource-title": "",
+      "unknown-datasource-type": ""
+    },
+    "resource-type": {
+      "dashboard": "Painel de controle",
+      "datasource": "Fonte de dados",
+      "folder": "",
+      "unknown": "Desconhecido"
+    },
+    "summary": {
+      "disconnect": "",
+      "disconnect-error-description": "",
+      "disconnect-error-title": "",
+      "run-migration-error-description": "",
+      "run-migration-error-title": "",
+      "start-migration": "",
+      "target-stack-title": ""
+    },
+    "token-status": {
+      "active": "Token criado e ativo",
+      "no-active": "Nenhum token ativo"
+    },
+    "what-is-cloud": {
+      "body": "O Grafana Cloud é uma plataforma de observação hospedada na nuvem totalmente gerenciada ideal para ambientes nativos em nuvem. É tudo o que você adora sobre o Grafana sem a sobrecarga de manter, atualizar e apoiar uma instalação.",
+      "link-title": "Conheça os recursos da nuvem",
+      "title": "O que é o Grafana Cloud?"
+    },
+    "why-host": {
+      "body": "Além da conveniência da hospedagem gerenciada, o Grafana Cloud inclui muitos recursos exclusivos na nuvem, como SLOs, gestão de incidentes, aprendizado de máquina e eficientes integrações de observabilidade.",
+      "link-title": "Tem mais perguntas? Fale com um especialista",
+      "title": "Por que hospedar com o Grafana?"
+    }
+  },
+  "nav": {
+    "add-new-connections": {
+      "title": "Adicionar nova conexão"
+    },
+    "admin": {
+      "subtitle": "Gerencie configurações do servidor e acesso a recursos como organizações, usuários e licenças",
+      "title": "Administrador do servidor"
+    },
+    "alert-list-legacy": {
+      "title": "Regras de alerta"
+    },
+    "alerting": {
+      "subtitle": "Saiba mais sobre problemas no seu sistema logo depois que ocorrerem",
+      "title": "Alertas"
+    },
+    "alerting-admin": {
+      "subtitle": "",
+      "title": ""
+    },
+    "alerting-am-routes": {
+      "subtitle": "Determine como os alertas são encaminhados para pontos de contato",
+      "title": "Política de notificações"
+    },
+    "alerting-channels": {
+      "title": "Canais de notificações"
+    },
+    "alerting-groups": {
+      "subtitle": "Veja alertas agrupados de uma instância de Alertmanager",
+      "title": "Grupos"
+    },
+    "alerting-home": {
+      "title": "Página inicial"
+    },
+    "alerting-legacy": {
+      "title": "Alerta (legado)"
+    },
+    "alerting-list": {
+      "subtitle": "Regras que determinam se um alerta disparará",
+      "title": "Regras de alerta"
+    },
+    "alerting-receivers": {
+      "subtitle": "Escolha como notificar seus pontos de contato quando um alerta disparar",
+      "title": "Pontos de contato"
+    },
+    "alerting-silences": {
+      "subtitle": "Interrompe notificações de uma ou mais regras de alerta",
+      "title": "Silenciados"
+    },
+    "alerting-upgrade": {
+      "subtitle": "Evolua os seus alertas legados existentes e canais de notificação para os novos alertas do Grafana",
+      "title": "Alerta de atualização"
+    },
+    "alerts-and-incidents": {
+      "subtitle": "Aplicativos de gestão de alertas e incidentes",
+      "title": "Alertas e IRM"
+    },
+    "api-keys": {
+      "subtitle": "Gerencie e crie chaves de API que são usadas para interagir com as APIs HTTP do Grafana",
+      "title": "Chaves de API"
+    },
+    "application": {
+      "title": "Aplicativo"
+    },
+    "apps": {
+      "subtitle": "Plug-ins de aplicativos que ampliam a experiência do Grafana",
+      "title": "Aplicativos"
+    },
+    "authentication": {
+      "title": "Autenticação"
+    },
+    "collector": {
+      "title": "Coletor"
+    },
+    "config": {
+      "title": "Administração"
+    },
+    "config-access": {
+      "subtitle": "Configure o acesso para usuários individuais, equipes e contas de serviço",
+      "title": "Usuários e acesso"
+    },
+    "config-general": {
+      "subtitle": "Gerencie preferências e configurações padrão no Grafana",
+      "title": "Geral"
+    },
+    "config-plugins": {
+      "subtitle": "Instale plug-ins e defina as relações entre os dados",
+      "title": "Plug-ins e dados"
+    },
+    "connect-data": {
+      "title": "Dados de conexão"
+    },
+    "connections": {
+      "subtitle": "Procure e crie novas conexões",
+      "title": "Conexões"
+    },
+    "correlations": {
+      "subtitle": "Adicione e configure correlações",
+      "title": "Correlações"
+    },
+    "create": {
+      "title": "Criar"
+    },
+    "create-alert": {
+      "title": ""
+    },
+    "create-dashboard": {
+      "title": "Painel de controle"
+    },
+    "create-folder": {
+      "title": "Pasta"
+    },
+    "create-import": {
+      "title": "Importar painel de controle"
+    },
+    "dashboards": {
+      "subtitle": "Crie e gerencie painéis de controle para visualizar seus dados",
+      "title": "Painéis de controle"
+    },
+    "data-sources": {
+      "subtitle": "Visualize e gerencie suas conexões de fonte de dados conectadas",
+      "title": "Fontes de dados"
+    },
+    "datasources": {
+      "subtitle": "Adicione e configure fontes de dados",
+      "title": "Fontes de dados"
+    },
+    "detect": {
+      "title": "Detectar"
+    },
+    "explore": {
+      "title": "Explorar"
+    },
+    "frontend": {
+      "subtitle": "Ganhe dicas reais de monitoramento de usuários",
+      "title": "Front-end"
+    },
+    "frontend-app": {
+      "title": "Front-end"
+    },
+    "global-orgs": {
+      "subtitle": "Instâncias isoladas do Grafana em execução no mesmo servidor",
+      "title": "Organizações"
+    },
+    "global-users": {
+      "subtitle": "Gerencie usuários no Grafana",
+      "title": "Usuários"
+    },
+    "grafana-quaderno": {
+      "title": "Grafana Quaderno"
+    },
+    "help": {
+      "title": "Ajuda"
+    },
+    "help/community": "Comunidade",
+    "help/documentation": "Documentação",
+    "help/keyboard-shortcuts": "Atalhos do teclado",
+    "help/support": "Suporte",
+    "home": {
+      "title": "Página inicial"
+    },
+    "incidents": {
+      "title": "Incidentes"
+    },
+    "infrastructure": {
+      "subtitle": "Conheça a saúde da sua infraestrutura",
+      "title": "Infraestrutura"
+    },
+    "integrations": {
+      "title": "Integrações"
+    },
+    "k6": {
+      "title": "Desempenho"
+    },
+    "kubernetes": {
+      "title": "Kubernetes"
+    },
+    "library-panels": {
+      "subtitle": "Painéis reutilizáveis que podem ser adicionados a vários painéis de controle",
+      "title": "Painéis de biblioteca"
+    },
+    "machine-learning": {
+      "title": "Aprendizado de máquina"
+    },
+    "manage-folder": {
+      "subtitle": "Gerencie painéis de controle de pastas e permissões"
+    },
+    "migrate-to-cloud": {
+      "subtitle": "Copie a configuração da sua instalação autogerenciada para uma pilha na nuvem",
+      "title": "Migrar para o Grafana Cloud"
+    },
+    "monitoring": {
+      "subtitle": "",
+      "title": "Observação"
+    },
+    "new": {
+      "title": "Novo"
+    },
+    "new-dashboard": {
+      "title": "Novo painel de controle"
+    },
+    "new-folder": {
+      "title": "Nova pasta"
+    },
+    "observability": {
+      "title": "Observação"
+    },
+    "oncall": {
+      "title": "OnCall"
+    },
+    "org-settings": {
+      "subtitle": "Gerencie as preferências em uma organização",
+      "title": "Preferências padrão"
+    },
+    "playlists": {
+      "subtitle": "Grupos de painéis de controle exibidos em uma sequência",
+      "title": "Listas de reprodução"
+    },
+    "plugins": {
+      "subtitle": "Amplie a experiência do Grafana com plug-ins",
+      "title": "Plug-ins"
+    },
+    "private-data-source-connections": {
+      "subtitle": "Consulte dados que vivem em uma rede segura sem abrir a rede ao tráfego de entrada do Grafana Cloud. Saiba mais na nossa documentação.",
+      "title": "Conexão privada de dados"
+    },
+    "profile/notifications": {
+      "title": "Histórico de notificações"
+    },
+    "profile/password": {
+      "title": "Alterar senha"
+    },
+    "profile/settings": {
+      "title": "Perfil"
+    },
+    "profiles": {
+      "title": "Perfis"
+    },
+    "public": {
+      "title": "Painéis de controle públicos"
+    },
+    "recentlyDeleted": {
+      "subtitle": "",
+      "title": ""
+    },
+    "recorded-queries": {
+      "title": "Consultas gravadas"
+    },
+    "reporting": {
+      "title": "Reportar"
+    },
+    "scenes": {
+      "title": "Cenários"
+    },
+    "search": {
+      "placeholderCommandPalette": "Buscar ou pular para..."
+    },
+    "search-dashboards": {
+      "title": "Buscar painéis de controle"
+    },
+    "server-settings": {
+      "subtitle": "Veja as configurações definidas nas suas configurações do Grafana",
+      "title": "Configurações"
+    },
+    "service-accounts": {
+      "subtitle": "Use contas de serviço para executar cargas de trabalho automatizadas no Grafana",
+      "title": "Contas de serviço"
+    },
+    "sign-out": {
+      "title": "Finalizar sessão"
+    },
+    "slo": {
+      "title": "SLO"
+    },
+    "snapshots": {
+      "subtitle": "Representações interativas, publicamente disponíveis e pontuais dos painéis de controle",
+      "title": "Capturas"
+    },
+    "starred": {
+      "title": "Favorito"
+    },
+    "starred-empty": {
+      "title": "Seus painéis de controle favoritos aparecerão aqui"
+    },
+    "statistics-and-licensing": {
+      "title": "Estatísticas e licenciamento"
+    },
+    "storage": {
+      "subtitle": "Gerenciar armazenamento de arquivos",
+      "title": "Armazenamento"
+    },
+    "support-bundles": {
+      "subtitle": "Baixar pacotes de suporte",
+      "title": "Pacotes de suporte"
+    },
+    "synthetics": {
+      "title": "Sintéticos"
+    },
+    "teams": {
+      "subtitle": "Grupos de usuários que têm painel de controle comum e necessidades de permissão",
+      "title": "Equipes"
+    },
+    "testing-and-synthetics": {
+      "subtitle": "Otimize o desempenho com visões k6 e monitorização sintética",
+      "title": "Teste e sintética"
+    },
+    "upgrading": {
+      "title": "Estatísticas e licença"
+    },
+    "users": {
+      "subtitle": "Convide e atribua funções aos usuários",
+      "title": "Usuários"
+    }
+  },
+  "navigation": {
+    "kiosk": {
+      "tv-alert": "Pressione ESC para sair do modo de quiosque"
+    },
+    "megamenu": {
+      "close": "Fechar menu",
+      "dock": "Menu da dock",
+      "list-label": "Navegação",
+      "undock": "Desacoplar menu"
+    },
+    "toolbar": {
+      "close-menu": "Fechar menu",
+      "enable-kiosk": "Ativar modo de quiosque",
+      "open-menu": "Abrir menu",
+      "toggle-search-bar": "Alternar barra de busca superior"
+    }
+  },
+  "news": {
+    "drawer": {
+      "close": "Fechar menu"
+    },
+    "title": "Mais recentes do blog"
+  },
+  "notifications": {
+    "empty-state": {
+      "description": "",
+      "title": ""
+    },
+    "starred-dashboard": "Painel de controle marcado como favorito",
+    "unstarred-dashboard": "Painel de controle não marcado como favorito"
+  },
+  "panel": {
+    "header-menu": {
+      "copy": "Copiar",
+      "create-library-panel": "Criar painel de biblioteca",
+      "duplicate": "Duplicar",
+      "edit": "Editar",
+      "explore": "Explorar",
+      "get-help": "Obter ajuda",
+      "hide-legend": "Ocultar legenda",
+      "inspect": "Inspecionar",
+      "inspect-data": "Dados",
+      "inspect-json": "Painel JSON",
+      "more": "Mais...",
+      "new-alert-rule": "Nova regra de alerta",
+      "query": "Consulta",
+      "remove": "Remover",
+      "replace-library-panel": "",
+      "share": "Compartilhar",
+      "show-legend": "Mostrar legenda",
+      "unlink-library-panel": "Desvincular painel de biblioteca",
+      "view": "Visualizar"
+    }
+  },
+  "playlist-edit": {
+    "error-prefix": "Erro ao carregar lista de reprodução:",
+    "form": {
+      "add-tag-label": "Adicionar por tag",
+      "add-tag-placeholder": "Selecione uma tag",
+      "add-title-label": "Adicionar por título",
+      "cancel": "Cancelar",
+      "heading": "Adicionar painéis de controle",
+      "interval-label": "Intervalo",
+      "interval-placeholder": "5m",
+      "interval-required": "O intervalo é obrigatório",
+      "name-label": "Nome",
+      "name-placeholder": "Nome",
+      "name-required": "O nome é obrigatório",
+      "save": "Salvar",
+      "table-delete": "Excluir item da lista de reprodução",
+      "table-drag": "Arraste e solte para reordenar",
+      "table-empty": "A lista de reprodução está vazia. Adicione painéis de controle abaixo.",
+      "table-heading": "Painéis de controle"
+    },
+    "sub-title": "Uma lista de reprodução gira por uma lista de painéis de controle pré-selecionada. Uma lista de reprodução pode ser uma ótima maneira de construir uma consciência de situação, ou apenas exibir suas métricas para sua equipe ou visitantes.",
+    "title": "Editar lista de reprodução"
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "Excluir lista de reprodução",
+      "edit": "Editar lista de reprodução",
+      "start": "Começar lista de reprodução",
+      "tooltip": "Compartilhar lista de reprodução"
+    },
+    "create-button": {
+      "title": "Nova lista de reprodução"
+    },
+    "delete-modal": {
+      "body": "Tem certeza de que deseja excluir a lista de reprodução {{name}}?",
+      "confirm-text": "Excluir"
+    },
+    "empty": {
+      "button": "",
+      "pro-tip": "",
+      "title": "Não há listas de reprodução criadas ainda"
+    }
+  },
+  "playlists": {
+    "empty-state": {
+      "message": ""
+    }
+  },
+  "plugins": {
+    "empty-state": {
+      "message": ""
+    }
+  },
+  "profile": {
+    "change-password": {
+      "cancel-button": "Cancelar",
+      "cannot-change-password-message": "A senha não pode ser alterada aqui.",
+      "change-password-button": "Alterar senha",
+      "confirm-password-label": "Confirmar senha",
+      "confirm-password-required": "A confirmação da nova senha é obrigatória",
+      "ldap-auth-proxy-message": "Você não pode alterar a senha quando conectado com LDAP ou proxy de autenticação.",
+      "new-password-label": "Nova senha",
+      "new-password-required": "A nova senha é obrigatória",
+      "new-password-same-as-old": "A nova senha não pode ser igual à antiga.",
+      "old-password-label": "Senha antiga",
+      "old-password-required": "A senha antiga é obrigatória",
+      "passwords-must-match": "As senhas devem corresponder",
+      "strong-password-validation-register": "A senha não está de acordo com a política de senha forte"
+    }
+  },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "Antes de tornar público o painel de controle, reconheça o seguinte:",
+      "data-src-ack-desc": "A publicação atualmente só funciona com um subconjunto de fontes de dados*",
+      "data-src-ack-tooltip": "Saiba mais sobre os dados públicos",
+      "public-ack-desc": "Todo o seu painel de controle será público*",
+      "public-ack-tooltip": "Saiba mais sobre painéis de controle públicos",
+      "usage-ack-desc": "Tornar um painel de controle público fará com que as consultas sejam executadas cada vez que forem visualizadas, o que pode aumentar os custos*",
+      "usage-ack-desc-tooltip": "Saiba mais sobre consultas de cache"
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "Pode visualizar o painel de controle",
+      "copy-button": "Copiar",
+      "dashboard-url-field-label": "URL do painel de controle",
+      "email-share-type-option-label": "Apenas pessoas especificadas",
+      "pause-sharing-dashboard-label": "Pausar compartilhamento de painel de controle",
+      "public-share-type-option-label": "Qualquer pessoa com um link",
+      "revoke-public-URL-button": "Revogar URL público",
+      "revoke-public-URL-button-title": "Revogar URL público",
+      "settings-title": "Configurações"
+    },
+    "create-page": {
+      "generate-public-url-button": "Gerar URL público",
+      "unsupported-features-desc": "Atualmente, não oferecemos suporte a variáveis de modelo ou fontes de dados frontend",
+      "welcome-title": "Boas-vindas aos painéis de controle públicos!"
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "Tem certeza de que deseja revogar este URL? O painel de controle não será mais público.",
+      "revoke-orphaned-body-text": "O painel de controle público órfão já não será público.",
+      "revoke-title": "Revogar URL público"
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "E-mail inválido",
+      "input-required-email-text": "O e-mail é obrigatório",
+      "invite-button": "Convidar",
+      "invite-field-desc": "Convidar pessoas por e-mail",
+      "invite-field-label": "Convidar",
+      "resend-button": "Reenviar",
+      "resend-button-title": "Reenviar",
+      "revoke-button": "Revogar",
+      "revoke-button-title": "Revogar"
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "Entre em contato com seu administrador para obter permissão para painéis de controle {{mode}} públicos",
+      "no-upsert-perm-alert-title": "Você não tem permissão para um painel de controle {{ mode }} público",
+      "save-dashboard-changes-alert-title": "Salve as alterações do seu painel de controle antes de atualizar a configuração pública",
+      "unsupport-data-source-alert-readmore-link": "Leia mais sobre as fontes de dados suportadas",
+      "unsupported-data-source-alert-desc": "Há fontes de dados neste painel de controle que não são suportadas por painéis de controle públicos. Os painéis que usam essas fontes de dados podem não funcionar corretamente: {{unsupportedDataSources}}.",
+      "unsupported-data-source-alert-title": "Fontes de dados não suportadas",
+      "unsupported-template-variable-alert-desc": "Este painel de controle público pode não funcionar, pois ele usa variáveis de modelo",
+      "unsupported-template-variable-alert-title": "As variáveis de modelo não são suportadas"
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "Recolher configurações",
+      "expand-settings-tooltip": "Expandir configurações"
+    },
+    "settings-configuration": {
+      "default-time-range-label": "Intervalo de tempo padrão",
+      "default-time-range-label-desc": "O painel de controle público usa as configurações padrão do intervalo de tempo do painel de controle",
+      "show-annotations-label": "Mostrar anotações",
+      "show-annotations-label-desc": "Mostrar anotações no painel de controle público",
+      "time-range-picker-label": "Seletor de intervalo de tempo ativado",
+      "time-range-picker-label-desc": "Permitir que os espectadores alterem o intervalo de tempo"
+    },
+    "settings-summary": {
+      "annotations-hide-text": "Anotações = ocultar",
+      "annotations-show-text": "Anotações = mostrar",
+      "time-range-picker-disabled-text": "Seletor de intervalo de tempo = desativado",
+      "time-range-picker-enabled-text": "Seletor de intervalo de tempo = ativado",
+      "time-range-text": "Intervalo de tempo = "
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "Configurar painel de controle público",
+      "revoke-button-text": "Revogar URL público",
+      "revoke-button-tooltip": "Revogar URL do painel de controle público",
+      "view-button-tooltip": "Visualizar painel de controle público"
+    },
+    "dashboard-title": {
+      "orphaned-title": "<0>Painel de controle público órfão</0>",
+      "orphaned-tooltip": "O painel de controle vinculado já foi excluído"
+    },
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": "Pausar compartilhamento"
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "Carregando...",
+      "open-dashboard-list-text": "Abrir lista de painéis de controle",
+      "public-dashboard-link": "URL do painel de controle público",
+      "public-dashboard-setting": "Configurações do painel de controle público"
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "Excluir usuário",
+      "delete-user-cancel-button": "Cancelar",
+      "delete-user-revoke-access-button": "Revogar acesso",
+      "revoke-access-title": "Revogar acesso",
+      "revoke-user-access-modal-desc-line1": "Tem certeza de que deseja revogar o acesso por {{email}}?",
+      "revoke-user-access-modal-desc-line2": "Esta ação irá imediatamente revogar o acesso por {{email}} a todos os painéis de controle públicos."
+    },
+    "modal": {
+      "dashboard-modal-title": "Painéis de controle públicos"
+    },
+    "table-header": {
+      "activated-label": "Ativado",
+      "activated-tooltip": "O usuário mais recente foi um usuário ativo em um painel de controle",
+      "email-label": "E-mail",
+      "last-active-label": "Última atividade",
+      "origin-label": "Origem",
+      "role-label": "Função"
+    }
+  },
+  "query-operation": {
+    "header": {
+      "collapse-row": "Recolher linha de consulta",
+      "datasource-help": "Mostrar ajuda da fonte de dados",
+      "drag-and-drop": "Arraste e solte para reordenar",
+      "duplicate-query": "Duplicar consulta",
+      "expand-row": "Expandir linha de consulta",
+      "hide-response": "",
+      "remove-query": "Remover consulta",
+      "show-response": "",
+      "toggle-edit-mode": "Alternar modo de edição de texto"
+    },
+    "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
+  },
+  "recentlyDeleted": {
+    "filter": {
+      "placeholder": ""
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Atualização automática desativada. Escolha o intervalo de tempo de atualização",
+      "duration-selected": "Escolha o intervalo de tempo de atualização com o intervalo atual de {{durationAriaLabel}} selecionado"
+    },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
+    "live-option": {
+      "aria-label": "Ativar transmissão ao vivo",
+      "label": "Ao vivo"
+    },
+    "off-option": {
+      "aria-label": "Desativar atualização automática",
+      "label": "Desativar"
+    },
+    "tooltip": {
+      "interval-selected": "Definir intervalo de atualização automática",
+      "turned-off": "Atualização automática desativada"
+    }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": "Voltar para {{title}}"
+    },
+    "dismissable-button": "Fechar"
+  },
+  "scopes": {
+    "advancedSelector": {
+      "apply": "",
+      "cancel": "",
+      "title": ""
+    },
+    "basicSelector": {
+      "openAdvanced": "",
+      "placeholder": "",
+      "removeAll": ""
+    },
+    "root": {
+      "collapse": "",
+      "expand": ""
+    },
+    "suggestedDashboards": {
+      "loading": "",
+      "search": ""
+    },
+    "tree": {
+      "collapse": "",
+      "expand": "",
+      "search": ""
+    }
+  },
+  "search": {
+    "actions": {
+      "include-panels": "Incluir painéis",
+      "remove-datasource-filter": "Banco de dados: {{datasource}}",
+      "sort-placeholder": "Ordenar",
+      "starred": "Favorito",
+      "view-as-folders": "Visualizar por pastas",
+      "view-as-list": "Visualizar como lista"
+    },
+    "dashboard-actions": {
+      "import": "Importar",
+      "new": "Novo",
+      "new-dashboard": "Novo painel de controle",
+      "new-folder": "Nova pasta"
+    },
+    "results-table": {
+      "datasource-header": "Fonte de dados",
+      "location-header": "Localização",
+      "name-header": "Nome",
+      "tags-header": "Tags",
+      "type-dashboard": "Painel de controle",
+      "type-folder": "Pasta",
+      "type-header": "Tipo"
+    },
+    "search-input": {
+      "include-panels-placeholder": "Buscar painéis de controle, pastas e painéis",
+      "placeholder": "Buscar painéis de controle e pastas"
+    }
+  },
+  "service-accounts": {
+    "empty-state": {
+      "button-title": "",
+      "message": "",
+      "more-info": "",
+      "title": ""
+    }
+  },
+  "share-modal": {
+    "dashboard": {
+      "title": "Compartilhar"
+    },
+    "embed": {
+      "copy": "Copiar para a área de transferência",
+      "html": "HTML incorporado",
+      "html-description": "O código HTML abaixo pode ser colado e incluído em outra página da Web. A menos que o acesso anônimo esteja ativado, o usuário visualizando essa página precisa estar logado no Grafana para que o gráfico carregue.",
+      "info": "Gera HTML para incorporar um iframe com esse painel.",
+      "time-range": "Intervalo de tempo atual",
+      "time-range-description": "Transforma o intervalo de tempo relativo atual para um intervalo de tempo absoluto"
+    },
+    "export": {
+      "back-button": "Voltar para exportar configuração",
+      "cancel-button": "Cancelar",
+      "info-text": "Exportar este painel de controle.",
+      "save-button": "Salvar no arquivo",
+      "share-externally-label": "Exportar para compartilhamento externo",
+      "view-button": "Visualizar JSON"
+    },
+    "library": {
+      "info": "Criar painel de biblioteca."
+    },
+    "link": {
+      "copy-link-button": "Copiar",
+      "info-text": "Crie um link direto para este painel de controle ou painel, personalizado com as opções abaixo.",
+      "link-url": "URL do link",
+      "render-alert": "Plug-in renderizador de imagem não instalado",
+      "render-instructions": "",
+      "rendered-image": "Link direto de imagem renderizada",
+      "save-alert": "O painel de controle não está salvo",
+      "save-dashboard": "Para renderizar uma imagem do painel, você deve salvar o painel de controle primeiro.",
+      "shorten-url": "Encurtar URL",
+      "time-range-description": "Transforma o intervalo de tempo relativo atual para um intervalo de tempo absoluto",
+      "time-range-label": "Bloquear intervalo de tempo"
+    },
+    "panel": {
+      "title": "Compartilhar painel"
+    },
+    "snapshot": {
+      "cancel-button": "Cancelar",
+      "copy-link-button": "Copiar",
+      "delete-button": "Excluir captura.",
+      "deleted-message": "A captura foi excluída. Se você já a acessou uma vez, pode levar até uma hora antes de ser removida dos caches de navegador ou cache de CDN.",
+      "expire": "Expira",
+      "expire-day": "1 dia",
+      "expire-hour": "1 hora",
+      "expire-never": "Nunca",
+      "expire-week": "1 semana",
+      "info-text-1": "Uma captura é uma maneira instantânea de compartilhar um painel de controle interativo publicamente. Quando criadas, nós tiramos dados confidenciais como consultas (métrica, modelo e anotação) e links do painel, deixando apenas os dados métricos e nomes de séries visíveis incorporados no seu painel de controle.",
+      "info-text-2": "Tenha em mente que sua captura <1>pode ser visualizada por qualquer pessoa</1> que possui o link e pode acessar o URL. Compartilhe com sabedoria.",
+      "local-button": "Publicar captura",
+      "mistake-message": "Você cometeu um erro? ",
+      "name": "Nome da captura",
+      "timeout": "Tempo limite (segundos)",
+      "timeout-description": "Talvez você precise configurar o valor de tempo limite se demorar muito para coletar as métricas do painel de controle.",
+      "url-label": "URL da captura"
+    },
+    "tab-title": {
+      "embed": "Incorporado",
+      "export": "Exportar",
+      "library-panel": "Painel de biblioteca",
+      "link": "Link",
+      "panel-embed": "Incorporado",
+      "public-dashboard": "",
+      "public-dashboard-title": "Painel de controle público",
+      "snapshot": "Captura"
+    },
+    "theme-picker": {
+      "current": "Atual",
+      "dark": "Escuro",
+      "field-name": "Tema",
+      "light": "Claro"
+    },
+    "view-json": {
+      "copy-button": "Copiar para a área de transferência"
+    }
+  },
+  "share-playlist": {
+    "checkbox-description": "As alturas do painel serão ajustadas para caber no tamanho da tela",
+    "checkbox-label": "Ajuste automático",
+    "copy-link-button": "Copiar",
+    "link-url-label": "URL do link",
+    "mode": "Modo",
+    "mode-kiosk": "Quiosque",
+    "mode-normal": "Normal",
+    "mode-tv": "TV",
+    "title": "Compartilhar lista de reprodução"
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "Escuro",
+        "light-label": "Claro",
+        "system-label": "Preferências do sistema"
+      }
+    }
+  },
+  "shared-dashboard": {
+    "fields": {
+      "timezone-label": "Fuso horário"
+    }
+  },
+  "shared-preferences": {
+    "fields": {
+      "home-dashboard-label": "Painel de controle inicial",
+      "home-dashboard-placeholder": "Painel de controle padrão",
+      "locale-label": "Idioma",
+      "locale-placeholder": "Escolher idioma",
+      "theme-label": "Tema da interface",
+      "week-start-label": "Início da semana"
+    },
+    "theme": {
+      "default-label": "Padrão"
+    },
+    "title": "Preferências"
+  },
+  "silences": {
+    "empty-state": {
+      "button-title": "",
+      "title": ""
+    },
+    "table": {
+      "add-silence-button": "",
+      "edit-button": "",
+      "expired-silences": "",
+      "no-matching-silences": "",
+      "noConfig": "",
+      "recreate-button": "",
+      "unsilence-button": ""
+    }
+  },
+  "silences-table": {
+    "header": {
+      "alert-name": "",
+      "state": ""
+    }
+  },
+  "snapshot": {
+    "empty-state": {
+      "message": "",
+      "more-info": ""
+    },
+    "external-badge": "Externo",
+    "name-column-header": "Nome",
+    "url-column-header": "URL da captura",
+    "view-button": "Visualizar"
+  },
+  "tag-filter": {
+    "loading": "Carregando...",
+    "no-tags": "Nenhuma tag encontrada",
+    "placeholder": "Filtrar por tag"
+  },
+  "teams": {
+    "empty-state": {
+      "button-title": "",
+      "message": "",
+      "pro-tip": "",
+      "title": ""
+    }
+  },
+  "time-picker": {
+    "absolute": {
+      "recent-title": "Intervalos absolutos usados recentemente",
+      "title": "Intervalo de tempo absoluto"
+    },
+    "calendar": {
+      "apply-button": "Aplicar intervalo de tempo",
+      "cancel-button": "Cancelar",
+      "close": "Fechar calendário",
+      "select-time": "Selecionar um intervalo de tempo"
+    },
+    "content": {
+      "empty-recent-list-docs": "<0><0>Leia a documentação</0><1> para saber mais sobre como entrar em intervalos de tempo personalizados.</1></0>",
+      "empty-recent-list-info": "Parece que você não usou este seletor de tempo antes. Assim que você inserir alguns intervalos de tempo, os intervalos usados recentemente aparecerão aqui.",
+      "filter-placeholder": "Buscar intervalos rápidos"
+    },
+    "copy-paste": {
+      "copy-success-message": "Intervalo de tempo copiado para a área de transferência",
+      "default-error-message": "{{error}} não é um intervalo de tempo válido",
+      "default-error-title": "Intervalo de tempo inválido",
+      "tooltip-copy": "Copiar intervalo de tempo para a área de transferência",
+      "tooltip-paste": "Colar intervalo de tempo"
+    },
+    "footer": {
+      "change-settings-button": "Alterar configurações de hora",
+      "fiscal-year-option": "Ano fiscal",
+      "fiscal-year-start": "Mês inicial do ano fiscal",
+      "time-zone-option": "Fuso horário",
+      "time-zone-selection": "Seleção de fuso horário"
+    },
+    "range-content": {
+      "apply-button": "Aplicar intervalo de tempo",
+      "default-error": "Insira uma data passada ou \"agora\"",
+      "fiscal-year": "Ano fiscal",
+      "from-input": "De",
+      "open-input-calendar": "Abrir calendário",
+      "range-error": "\"De\" não pode ser após \"Para\"",
+      "to-input": "Para"
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "Mover intervalo de tempo para trás",
+      "current-time-selected": "Intervalo de tempo selecionado: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Avançar intervalo de tempo",
+      "to": "para",
+      "zoom-out-button": "Diminuir o intervalo de tempo",
+      "zoom-out-tooltip": "Redução de intervalo de tempo <1></1> CTRL+Z"
+    },
+    "time-range": {
+      "aria-role": "Intervalo de tempo selecionado",
+      "default-title": "Intervalos de tempo",
+      "example-title": "Exemplos de intervalos de tempo",
+      "specify": "Especifique o intervalo de tempo <1></1>"
+    },
+    "zone": {
+      "select-aria-label": "Seletor de fuso horário",
+      "select-search-input": "Tipo de busca (país, cidade, abreviação)"
+    }
+  },
+  "transformations": {
+    "empty": {
+      "add-transformation-body": "As transformações permitem que os dados sejam alterados de várias maneiras antes de sua visualização ser mostrada. <1></1>Isso inclui juntar dados, renomear campos, fazer cálculos, formatar dados para exibição e muito mais.",
+      "add-transformation-header": "Começar a transformar dados"
+    }
+  },
+  "user-orgs": {
+    "current-org-button": "Atual",
+    "name-column": "Nome",
+    "role-column": "Função",
+    "select-org-button": "Selecionar organização",
+    "title": "Organizações"
+  },
+  "user-profile": {
+    "fields": {
+      "email-error": "O e-mail é obrigatório",
+      "email-label": "E-mail",
+      "name-error": "O nome é obrigatório",
+      "name-label": "Nome",
+      "username-label": "Nome de usuário"
+    },
+    "tabs": {
+      "general": "Geral"
+    }
+  },
+  "user-session": {
+    "browser-column": "Navegador e SO",
+    "created-at-column": "Logado",
+    "ip-column": "Endereço de IP",
+    "revoke": "Revogar sessão de usuário",
+    "seen-at-column": "Última visualização"
+  },
+  "user-sessions": {
+    "loading": "Carregando sessões..."
+  },
+  "users": {
+    "empty-state": {
+      "message": ""
+    }
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": "Usuários do painel de controle público"
+    }
+  },
+  "variable": {
+    "adhoc": {
+      "placeholder": "Selecionar valor"
+    },
+    "dropdown": {
+      "placeholder": "Inserir valor da variável"
+    },
+    "picker": {
+      "link-all": "Tudo",
+      "option-all": "Tudo",
+      "option-selected-values": "Selecionado",
+      "option-tooltip": "Limpar seleções"
+    },
+    "textbox": {
+      "placeholder": "Inserir valor da variável"
+    }
+  },
+  "variables": {
+    "empty-state": {
+      "button-title": "",
+      "info-box-content": "",
+      "info-box-content-2": "",
+      "title": ""
+    }
+  }
+}

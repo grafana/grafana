@@ -78,14 +78,14 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tableWrapper: css`
-    margin-top: ${theme.spacing(3)};
-    ${theme.breakpoints.up('md')} {
-      margin-left: ${theme.spacing(4.5)};
-    }
-  `,
-  duration: css`
-    margin-left: ${theme.spacing(1)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
+  tableWrapper: css({
+    marginTop: theme.spacing(3),
+    [theme.breakpoints.up('md')]: {
+      marginLeft: theme.spacing(4.5),
+    },
+  }),
+  duration: css({
+    marginLeft: theme.spacing(1),
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });

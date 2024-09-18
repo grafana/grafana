@@ -1,4 +1,4 @@
-import { TestDataQueryType } from '../dataquery.gen';
+import { TestDataQueryType } from '../dataquery';
 
 export const scenarios = [
   {

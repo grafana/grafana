@@ -105,7 +105,7 @@
 - Notice to makers/users of custom data sources, there is a minor breaking change in 2.2 that
   require an update to custom data sources for them to work in 2.2. [Read this doc](https://github.com/grafana/grafana/tree/master/docs/sources/datasources/plugin_api.md) for more on the
   data source api change.
-- Data source api changes, [PLUGIN_CHANGES.md](https://github.com/grafana/grafana/blob/master/public/app/plugins/PLUGIN_CHANGES.md)
+- Data source api changes, [PLUGIN_CHANGES.md](https://github.com/grafana/grafana/blob/main/public/app/plugins/PLUGIN_CHANGES.md)
 - The duplicate query function used in data source editors is changed, and moveMetricQuery function was renamed
 
 **Tech (Note for devs)**

@@ -99,7 +99,7 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 	}
 
 	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgID}
-	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
+	signedInUser, err := a.UserService.GetSignedInUser(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err
 	}

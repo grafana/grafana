@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin, TooltipPlugin2 } from '@grafana/ui';
+import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin2 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
@@ -11,7 +11,7 @@ import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-import { isTooltipScrollable, prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
+import { prepareGraphableFields } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -26,8 +26,6 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
-  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
-
   const { dataLinkPostProcessor } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
@@ -109,57 +107,34 @@ export const TrendPanel = ({
       legend={options.legend}
       options={options}
       preparePlotFrame={preparePlotFrameTimeless}
+      replaceVariables={replaceVariables}
+      dataLinkPostProcessor={dataLinkPostProcessor}
     >
       {(uPlotConfig, alignedDataFrame) => {
-        if (alignedDataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
-          alignedDataFrame = regenerateLinksSupplier(
-            alignedDataFrame,
-            info.frames!,
-            replaceVariables,
-            timeZone,
-            dataLinkPostProcessor
-          );
-        }
-
         return (
           <>
             <KeyboardPlugin config={uPlotConfig} />
             {options.tooltip.mode !== TooltipDisplayMode.None && (
-              <>
-                {showNewVizTooltips ? (
-                  <TooltipPlugin2
-                    config={uPlotConfig}
-                    hoverMode={
-                      options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
-                    }
-                    render={(u, dataIdxs, seriesIdx, isPinned = false) => {
-                      return (
-                        <TimeSeriesTooltip
-                          frames={info.frames!}
-                          seriesFrame={alignedDataFrame}
-                          dataIdxs={dataIdxs}
-                          seriesIdx={seriesIdx}
-                          mode={options.tooltip.mode}
-                          sortOrder={options.tooltip.sort}
-                          isPinned={isPinned}
-                          scrollable={isTooltipScrollable(options.tooltip)}
-                        />
-                      );
-                    }}
-                    maxWidth={options.tooltip.maxWidth}
-                    maxHeight={options.tooltip.maxHeight}
-                  />
-                ) : (
-                  <TooltipPlugin
-                    frames={info.frames!}
-                    data={alignedDataFrame}
-                    config={uPlotConfig}
-                    mode={options.tooltip.mode}
-                    sortOrder={options.tooltip.sort}
-                    timeZone={timeZone}
-                  />
-                )}
-              </>
+              <TooltipPlugin2
+                config={uPlotConfig}
+                hoverMode={
+                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                }
+                render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                  return (
+                    <TimeSeriesTooltip
+                      series={alignedDataFrame}
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      mode={options.tooltip.mode}
+                      sortOrder={options.tooltip.sort}
+                      isPinned={isPinned}
+                      maxHeight={options.tooltip.maxHeight}
+                    />
+                  );
+                }}
+                maxWidth={options.tooltip.maxWidth}
+              />
             )}
           </>
         );

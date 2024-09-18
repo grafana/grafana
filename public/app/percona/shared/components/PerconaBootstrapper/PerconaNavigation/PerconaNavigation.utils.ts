@@ -79,7 +79,7 @@ export const buildInventoryAndSettings = (
       url: `${config.appSubUrl}/inventory`,
       subTitle: 'Configuration',
       children: [PMM_ADD_INSTANCE_PAGE, PMM_ADD_INSTANCE_CREATE_PAGE, inventoryLink, settingsLink, PMM_UPDATES_LINK],
-      sortWeight: -800,
+      sortWeight: -600,
       showDot: updateAvailable,
     };
     mainLinks.push(pmmcfgNode);

@@ -36,13 +36,14 @@ import {
   setEmbeddedDashboard,
   setAppEvents,
   setReturnToPreviousHook,
-  type GetPluginExtensions,
+  setPluginExtensionsHook,
+  setPluginComponentHook,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
 import { setPluginPage } from '@grafana/runtime/src/components/PluginPage';
 import { getScrollbarWidth } from '@grafana/ui';
-import config from 'app/core/config';
+import config, { updateConfig } from 'app/core/config';
 import { arrayMove } from 'app/core/utils/arrayMove';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -56,8 +57,8 @@ import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
+import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { ModalManager } from './core/services/ModalManager';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
@@ -80,11 +81,13 @@ import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { createPluginExtensionRegistry } from './features/plugins/extensions/createPluginExtensionRegistry';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
-import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
+import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
+import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
+import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { PluginPreloadResult, preloadPlugins } from './features/plugins/pluginPreloader';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -125,13 +128,18 @@ export class GrafanaApp {
       parent.postMessage('GrafanaAppInit', '*');
 
       const initI18nPromise = initializeI18n(config.bootData.user.language);
+      initI18nPromise.then(({ language }) => updateConfig({ language }));
 
       setBackendSrv(backendSrv);
       initEchoSrv();
       initIconCache();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
-      addClassIfNoOverlayScrollbar();
+
+      if (!config.featureToggles.betterPageScrolling) {
+        addClassIfNoOverlayScrollbar();
+      }
+
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
       setPanelRenderer(PanelRenderer);
@@ -170,7 +178,9 @@ export class GrafanaApp {
         createAdHocVariableAdapter(),
         createSystemVariableAdapter(),
       ]);
+
       monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
+      setMonacoEnv();
 
       setQueryRunnerFactory(() => new QueryRunner());
       setVariableQueryRunner(new VariableQueryRunner());
@@ -199,28 +209,27 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      // init modal manager
-      const modalManager = new ModalManager();
-      modalManager.init();
-
-      let preloadResults: PluginPreloadResult[] = [];
+      // Initialize plugin extensions
+      const extensionsRegistry = new ReactivePluginExtensionsRegistry();
+      extensionsRegistry.register({
+        pluginId: 'grafana',
+        extensionConfigs: getCoreExtensionConfigurations(),
+      });
 
       if (contextSrv.user.orgRole !== '') {
-        // Preload selected app plugins
-        preloadResults = await preloadPlugins(config.apps);
+        // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
+        // TODO: remove the following exception once the issue mentioned above is fixed.
+        const awaitedAppPluginIds = ['cloud-home-app'];
+        const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
+        const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
+
+        preloadPlugins(appPlugins, extensionsRegistry);
+        await preloadPlugins(awaitedAppPlugins, extensionsRegistry, 'frontend_awaited_plugins_preload');
       }
 
-      // Create extension registry out of preloaded plugins and core extensions
-      const extensionRegistry = createPluginExtensionRegistry([
-        { pluginId: 'grafana', extensionConfigs: getCoreExtensionConfigurations() },
-        ...preloadResults,
-      ]);
-
-      // Expose the getPluginExtension function via grafana-runtime
-      const pluginExtensionGetter: GetPluginExtensions = (options) =>
-        getPluginExtensions({ ...options, registry: extensionRegistry });
-
-      setPluginExtensionGetter(pluginExtensionGetter);
+      setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
+      setPluginExtensionsHook(createUsePluginExtensions(extensionsRegistry));
+      setPluginComponentHook(createUsePluginComponent(extensionsRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

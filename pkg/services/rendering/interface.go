@@ -42,18 +42,25 @@ func getRequestTimeout(opt TimeoutOpts) time.Duration {
 	return opt.Timeout * opt.RequestTimeoutMultiplier
 }
 
-type Opts struct {
+type CommonOpts struct {
 	TimeoutOpts
 	AuthOpts
+	Path            string
+	Timezone        string
+	ConcurrentLimit int
+	Headers         map[string][]string
+}
+
+type CSVOpts struct {
+	CommonOpts
+}
+
+type Opts struct {
+	CommonOpts
 	ErrorOpts
 	Width             int
 	Height            int
-	Path              string
-	Encoding          string
-	Timezone          string
-	ConcurrentLimit   int
 	DeviceScaleFactor float64
-	Headers           map[string][]string
 	Theme             models.Theme
 }
 
@@ -75,14 +82,9 @@ type SanitizeSVGResponse struct {
 	Sanitized []byte
 }
 
-type CSVOpts struct {
-	TimeoutOpts
-	AuthOpts
-	Path            string
-	Encoding        string
-	Timezone        string
-	ConcurrentLimit int
-	Headers         map[string][]string
+type Result struct {
+	FilePath string
+	FileName string
 }
 
 type RenderResult struct {
@@ -127,6 +129,7 @@ type Service interface {
 	RenderErrorImage(theme models.Theme, error error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
 	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
+	IsCapabilitySupported(ctx context.Context, capability CapabilityName) error
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)
 	SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error)
 }

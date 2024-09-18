@@ -84,11 +84,6 @@ func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToke
 	return s.LookupTokenProvider(context.Background(), unhashedToken)
 }
 
-func (s *FakeUserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-	userAgent string) (bool, *auth.UserToken, error) {
-	return s.TryRotateTokenProvider(context.Background(), token, clientIP, userAgent)
-}
-
 func (s *FakeUserAuthTokenService) RevokeToken(ctx context.Context, token *auth.UserToken, soft bool) error {
 	return s.RevokeTokenProvider(context.Background(), token, soft)
 }

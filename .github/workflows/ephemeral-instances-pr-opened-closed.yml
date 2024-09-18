@@ -29,11 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '>=1.20'
-
       - name: Generate a GitHub app installation token
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
@@ -49,15 +44,28 @@ jobs:
           ref: main
           path: ephemeral
 
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: ephemeral/go.mod
+
+      - name: Get latest grafana version number
+        run: |
+          # if package.json contains e.g. 11.0.0-pre, this writes 11.0.0 to version.txt
+          curl https://raw.githubusercontent.com/grafana/grafana/main/package.json | jq -r .version | grep -o  '^[0-9\.]*' > version.txt
+
       - name: Run action
         env:
           GITHUB_EVENT: ${{ toJson(github.event)}}
         run: |
-          GRAFANA_VERSION=10.1.0
+          # Create a prerelease version number using the latest version from the package.json in the grafana repo.
+          export GRAFANA_VERSION="$(cat version.txt)"
+          echo "${GRAFANA_VERSION}"
 
           cd $GITHUB_WORKSPACE/ephemeral/src
           go run . \
             -GITHUB_TOKEN="${{ steps.generate_token.outputs.token }}" \
+            -GITHUB_WORKFLOW_RUN_ID="${{ github.run_id }}" \
             -GITHUB_EVENT="$GITHUB_EVENT" \
             -GITHUB_TRIGGERING_ACTOR="${{ github.triggering_actor }}" \
             -GCOM_HOST="${{ secrets.EI_GCOM_HOST }}" \

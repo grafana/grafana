@@ -1,6 +1,4 @@
 ---
-aliases:
-  - ../../provision-alerting-resources/file-provisioning/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/
 description: Create and manage resources using file provisioning
 keywords:
@@ -16,11 +14,46 @@ labels:
 menuTitle: Use configuration files to provision
 title: Use configuration files to provision alerting resources
 weight: 100
+refs:
+  export_mute_timings:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-mute-timings
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-mute-timings
+  export_alert_rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-alert-rules
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-alert-rules
+  export_contact_points:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-contact-points
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-contact-points
+  provisioning_env_vars:
+    - pattern: /docs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#using-environment-variables
+  reload-provisioning-configurations:
+    - pattern: /docs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin/#reload-provisioning-configurations
+  export_policies:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-the-notification-policy-tree
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-the-notification-policy-tree
+  provisioning:
+    - pattern: /docs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
+  export_templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-templates
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-templates
 ---
 
 # Use configuration files to provision alerting resources
 
-Manage your alerting resources using configuration files that can be version controlled. When Grafana starts, it provisions the resources defined in your configuration files. [Provisioning][provisioning] can create, update, or delete existing resources in your Grafana instance.
+Manage your alerting resources using configuration files that can be version controlled. When Grafana starts, it provisions the resources defined in your configuration files. [Provisioning](ref:provisioning) can create, update, or delete existing resources in your Grafana instance.
 
 This guide outlines the steps and references to provision alerting resources using YAML files. For a practical demo, you can clone and try [this example using Grafana OSS and Docker Compose](https://github.com/grafana/provisioning-alerting-examples/tree/main/config-files).
 
@@ -42,7 +75,7 @@ Details on how to set up the files and which fields are required for each object
 Create or delete alert rules using provisioning files in your Grafana instance(s).
 
 1. Find the alert rule group in Grafana.
-1. [Export][export_alert_rules] and download a provisioning file for your alert rules.
+1. [Export](ref:export_alert_rules) and download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file and add it to the `provisioning/alerting` directory of the Grafana instance you want to import the alerting resources to.
 
    Example configuration files can be found below.
@@ -141,7 +174,7 @@ deleteRules:
 Create or delete contact points using provisioning files in your Grafana instance(s).
 
 1. Find the contact point in Grafana.
-1. [Export][export_contact_points] and download a provisioning file for your contact point.
+1. [Export](ref:export_contact_points) and download a provisioning file for your contact point.
 1. Copy the contents into a YAML or JSON configuration file and add it to the `provisioning/alerting` directory of the Grafana instance you want to import the alerting resources to.
 
    Example configuration files can be found below.
@@ -574,7 +607,7 @@ settings:
 Create or delete templates using provisioning files in your Grafana instance(s).
 
 1. Find the notification template in Grafana.
-1. [Export][export_templates] a template by copying the template content and title.
+1. [Export](ref:export_templates) a template by copying the template content and title.
 1. Copy the contents into a YAML or JSON configuration file and add it to the `provisioning/alerting` directory of the Grafana instance you want to import the alerting resources to.
 
    Example configuration files can be found below.
@@ -593,7 +626,7 @@ templates:
   - orgId: 1
     # <string, required> name of the template, must be unique
     name: my_first_template
-    # <string, required> content of the the template
+    # <string, required> content of the template
     template: |
       {{ define "my_first_template" }}
         Custom notification message
@@ -627,7 +660,7 @@ Since the policy tree is a single resource, provisioning it will overwrite a pol
 {{< /admonition >}}
 
 1. Find the notification policy tree in Grafana.
-1. [Export][export_policies] and download a provisioning file for your notification policy tree.
+1. [Export](ref:export_policies) and download a provisioning file for your notification policy tree.
 1. Copy the contents into a YAML or JSON configuration file and add it to the `provisioning/alerting` directory of the Grafana instance you want to import the alerting resources to.
 
    Example configuration files can be found below.
@@ -708,52 +741,12 @@ resetPolicies:
   - 1
 ```
 
-## Import templates
-
-Create or delete templates in your Grafana instance(s).
-
-1. Create a YAML or JSON configuration file.
-
-   Example configuration files can be found below.
-
-1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
-
-Here is an example of a configuration file for creating templates.
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of templates to import or update
-templates:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> name of the template, must be unique
-    name: my_first_template
-    # <string, required> content of the template
-    template: Alerting with a custom text template
-```
-
-Here is an example of a configuration file for deleting templates.
-
-```yaml
-# config file version
-apiVersion: 1
-
-# List of alert rule UIDs that should be deleted
-deleteTemplates:
-  # <int> organization ID, default = 1
-  - orgId: 1
-    # <string, required> name of the template, must be unique
-    name: my_first_template
-```
-
 ## Import mute timings
 
 Create or delete mute timings via provisioning files using provisioning files in your Grafana instance(s).
 
 1. Find the mute timing in Grafana.
-1. [Export][export_mute_timings] and download a provisioning file for your mute timing.
+1. [Export](ref:export_mute_timings) and download a provisioning file for your mute timing.
 1. Copy the contents into a YAML or JSON configuration file and add it to the `provisioning/alerting` directory of the Grafana instance you want to import the alerting resources to.
 
    Example configuration files can be found below.
@@ -814,7 +807,7 @@ contactPoints:
           addresses: $EMAIL
 ```
 
-In this example, provisioning replaces `$EMAIL` with the value of the `EMAIL` environment variable or an empty string if it is not present. For more information, refer to [Using environment variables in the Provision documentation][provisioning_env_vars].
+In this example, provisioning replaces `$EMAIL` with the value of the `EMAIL` environment variable or an empty string if it is not present. For more information, refer to [Using environment variables in the Provision documentation](ref:provisioning_env_vars).
 
 In alerting resources, most properties support template variable interpolation, with a few exceptions:
 
@@ -838,29 +831,5 @@ For example, when provisioning a `subject` property in a `contactPoints.receiver
 For more examples on the concept of this guide:
 
 - Try provisioning alerting resources in Grafana OSS with YAML files through a demo project using [Docker Compose](https://github.com/grafana/provisioning-alerting-examples/tree/main/config-files) or [Kubernetes deployments](https://github.com/grafana/provisioning-alerting-examples/tree/main/kubernetes).
-- Review the distinct options about how Grafana provisions resources in the [Provision Grafana documentation][provisioning].
+- Review the distinct options about how Grafana provisions resources in the [Provision Grafana documentation](ref:provisioning).
 - For Helm support, review the examples provisioning alerting resources in the [Grafana Helm Chart documentation](https://github.com/grafana/helm-charts/blob/main/charts/grafana/README.md).
-
-{{% docs/reference %}}
-
-[export_alert_rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-alert-rules"
-[export_alert_rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-alert-rules"
-
-[export_contact_points]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-contact-points"
-[export_contact_points]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-contact-points"
-
-[export_templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-templates"
-[export_templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-templates"
-
-[export_policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-the-notification-policy-tree"
-[export_policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-the-notification-policy-tree"
-
-[export_mute_timings]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-mute-timings"
-[export_mute_timings]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-mute-timings"
-
-[provisioning]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
-[provisioning_env_vars]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning#using-environment-variables"
-
-[reload-provisioning-configurations]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin#reload-provisioning-configurations"
-
-{{% /docs/reference %}}

@@ -3,17 +3,47 @@ package accesscontrol
 import (
 	"errors"
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
+)
+
+const (
+	invalidBuiltInRoleMessage       = `built-in role [{{ .Public.builtInRole }}] is not valid`
+	assignmentEntityNotFoundMessage = `{{ .Public.assignment }} not found`
 )
 
 var (
+	ErrInvalidBuiltinRole = errutil.BadRequest("accesscontrol.invalidBuiltInRole").
+				MustTemplate(invalidBuiltInRoleMessage, errutil.WithPublic(invalidBuiltInRoleMessage))
+	ErrNoneRoleAssignment       = errutil.BadRequest("accesscontrol.noneRoleAssignment", errutil.WithPublicMessage("none role cannot receive permissions"))
+	ErrAssignmentEntityNotFound = errutil.BadRequest("accesscontrol.assignmentEntityNotFound").
+					MustTemplate(assignmentEntityNotFoundMessage, errutil.WithPublic(assignmentEntityNotFoundMessage))
+
+	// Note: these are intended to be replaced by equivalent errutil implementations.
+	// Avoid creating new errors with errors.New and prefer errutil
+	ErrInvalidRequestBody     = errors.New("invalid request body")
 	ErrFixedRolePrefixMissing = errors.New("fixed role should be prefixed with '" + FixedRolePrefix + "'")
-	ErrInvalidBuiltinRole     = errors.New("built-in role is not valid")
-	ErrNoneRoleAssignment     = errors.New("none role cannot receive permissions")
 	ErrInvalidScope           = errors.New("invalid scope")
 	ErrResolverNotFound       = errors.New("no resolver found")
 	ErrPluginIDRequired       = errors.New("plugin ID is required")
 	ErrRoleNotFound           = errors.New("role not found")
 )
+
+func ErrInvalidBuiltinRoleData(builtInRole string) errutil.TemplateData {
+	return errutil.TemplateData{
+		Public: map[string]any{
+			"builtInRole": builtInRole,
+		},
+	}
+}
+
+func ErrAssignmentEntityNotFoundData(assignment string) errutil.TemplateData {
+	return errutil.TemplateData{
+		Public: map[string]any{
+			"assignment": assignment,
+		},
+	}
+}
 
 type ErrorInvalidRole struct{}
 

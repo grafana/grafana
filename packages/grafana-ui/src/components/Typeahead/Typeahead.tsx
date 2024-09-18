@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import React, { createRef, PureComponent } from 'react';
 import ReactDOM from 'react-dom';
 import { FixedSizeList } from 'react-window';
 
-import { ThemeContext } from '@grafana/data';
+import { GrafanaTheme2, ThemeContext } from '@grafana/data';
 
 import { CompletionItem, CompletionItemGroup, CompletionItemKind } from '../../types/completion';
 import { flattenGroupItems, calculateLongestLabel, calculateListSizes } from '../../utils/typeahead';
@@ -157,13 +158,14 @@ export class Typeahead extends PureComponent<Props, State> {
   render() {
     const { prefix, isOpen = false, origin } = this.props;
     const { allItems, listWidth, listHeight, itemHeight, hoveredItem, typeaheadIndex } = this.state;
+    const styles = getStyles(this.context);
 
     const showDocumentation = hoveredItem || typeaheadIndex;
     const documentationItem = allItems[hoveredItem ? hoveredItem : typeaheadIndex || 0];
 
     return (
       <Portal origin={origin} isOpen={isOpen} style={this.menuPosition}>
-        <ul role="menu" className="typeahead" data-testid="typeahead">
+        <ul role="menu" className={styles.typeahead} data-testid="typeahead">
           <FixedSizeList
             ref={this.listRef}
             itemCount={allItems.length}
@@ -218,7 +220,7 @@ class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
     const { index = 0, origin = 'query', style } = props;
     this.node = document.createElement('div');
     this.node.setAttribute('style', style);
-    this.node.classList.add(`slate-typeahead`, `slate-typeahead-${origin}-${index}`);
+    this.node.classList.add(`slate-typeahead-${origin}-${index}`);
     document.body.appendChild(this.node);
   }
 
@@ -238,3 +240,24 @@ class Portal extends PureComponent<React.PropsWithChildren<PortalProps>, {}> {
     return null;
   }
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  typeahead: css({
+    position: 'relative',
+    zIndex: theme.zIndex.typeahead,
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.components.panel.borderColor}`,
+    maxHeight: '66vh',
+    overflowY: 'scroll',
+    overflowX: 'hidden',
+    outline: 'none',
+    listStyle: 'none',
+    background: theme.components.panel.background,
+    color: theme.colors.text.primary,
+    boxShadow: theme.shadows.z2,
+
+    strong: {
+      color: theme.v1.palette.yellow,
+    },
+  }),
+});

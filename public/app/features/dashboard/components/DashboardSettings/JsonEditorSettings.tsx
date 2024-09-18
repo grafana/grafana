@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
-import LegacyAlertsDeprecationNotice from 'app/features/alerting/unified/integration/LegacyAlertsDeprecationNotice';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -31,7 +30,6 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
           The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
           settings, layout, queries, and so on.
         </Trans>
-        <LegacyAlertsDeprecationNotice dashboard={dashboardSaveModel} />
         <CodeEditor
           value={dashboardJson}
           language="json"

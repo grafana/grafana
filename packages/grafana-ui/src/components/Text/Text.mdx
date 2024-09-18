@@ -1,4 +1,4 @@
-import { Meta, Props, Preview, ArgsTable } from '@storybook/addon-docs/blocks';
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
 import { Text } from './Text';
 import { TextLink } from '../Link/TextLink.tsx';
 import { Basic } from './Text.story.tsx';
@@ -42,11 +42,13 @@ In this documentation you can find:
 - Heading should be organized in hierarchy.
 - When a heading needs to have the appearance of another heading rank but it will affect the page heading hierarchy, use `variant` prop to modify its style instead.
 - Use weight or italic for emphasis.
+- Use the `tabular` prop when numbers should have a fixed width, such as in tables.
 
 ### **Don'ts**
 
 - Do not use the `element` prop because of its appearance, use it to organize the structure of the page.
 - Do not use color for emphasis as colors are related to states such as `error`, `success`, `disabled` and so on.
+- Do not use the `code` variant for anything other than code snippets.
 
   <br />
   <br />
@@ -145,4 +147,4 @@ The Text component can be truncated. However, the Text component element rendere
 
 ## <a name="propstable"/>Props table
 
-<ArgsTable of={Text} />
+<ArgTypes of={Text} />

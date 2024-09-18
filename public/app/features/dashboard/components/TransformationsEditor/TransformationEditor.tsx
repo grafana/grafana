@@ -83,7 +83,7 @@ export const TransformationEditor = ({
   );
 
   return (
-    <div className={styles.editor} data-testid={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
+    <div data-testid={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
       {editor}
       {debugMode && (
         <Drawer title="Debug transformation" subtitle={uiConfig.name} onClose={toggleShowDebug}>
@@ -113,76 +113,75 @@ export const TransformationEditor = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    title: css`
-      display: flex;
-      padding: 4px 8px 4px 8px;
-      position: relative;
-      height: 35px;
-      border-radius: 4px 4px 0 0;
-      flex-wrap: nowrap;
-      justify-content: space-between;
-      align-items: center;
-    `,
-    name: css`
-      font-weight: ${theme.typography.fontWeightMedium};
-      color: ${theme.colors.primary.text};
-    `,
-    iconRow: css`
-      display: flex;
-    `,
-    icon: css`
-      background: transparent;
-      border: none;
-      box-shadow: none;
-      cursor: pointer;
-      color: ${theme.colors.text.secondary};
-      margin-left: ${theme.spacing(1)};
-      &:hover {
-        color: ${theme.colors.text};
-      }
-    `,
-    editor: css``,
-    debugWrapper: css`
-      display: flex;
-      flex-direction: row;
-    `,
-    debugSeparator: css`
-      width: 48px;
-      min-height: 300px;
-      display: flex;
-      align-items: center;
-      align-self: stretch;
-      justify-content: center;
-      margin: 0 ${theme.spacing(0.5)};
-      color: ${theme.colors.primary.text};
-    `,
-    debugTitle: css`
-      padding: ${theme.spacing(1)} ${theme.spacing(0.25)};
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text};
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      flex-grow: 0;
-      flex-shrink: 1;
-    `,
-
-    debug: css`
-      margin-top: ${theme.spacing(1)};
-      padding: 0 ${theme.spacing(1, 1, 1)};
-      border: 1px solid ${theme.colors.border.weak};
-      background: ${theme.isLight ? theme.v1.palette.white : theme.v1.palette.gray05};
-      border-radius: ${theme.shape.radius.default};
-      width: 100%;
-      min-height: 300px;
-      display: flex;
-      flex-direction: column;
-      align-self: stretch;
-    `,
-    debugJson: css`
-      flex-grow: 1;
-      height: 100%;
-      overflow: hidden;
-      padding: ${theme.spacing(0.5)};
-    `,
+    title: css({
+      display: 'flex',
+      padding: '4px 8px 4px 8px',
+      position: 'relative',
+      height: '35px',
+      // eslint-disable-next-line @grafana/no-border-radius-literal
+      borderRadius: '4px 4px 0 0',
+      flexWrap: 'nowrap',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }),
+    name: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.primary.text,
+    }),
+    iconRow: css({
+      display: 'flex',
+    }),
+    icon: css({
+      background: 'transparent',
+      border: 'none',
+      boxShadow: 'none',
+      cursor: 'pointer',
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(1),
+      '&:hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
+    debugWrapper: css({
+      display: 'flex',
+      flexDirection: 'row',
+    }),
+    debugSeparator: css({
+      width: '48px',
+      minHeight: '300px',
+      display: 'flex',
+      alignItems: 'center',
+      alignSelf: 'stretch',
+      justifyContent: 'center',
+      margin: `0 ${theme.spacing(0.5)}`,
+      color: theme.colors.primary.text,
+    }),
+    debugTitle: css({
+      padding: `${theme.spacing(1)} ${theme.spacing(0.25)}`,
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.primary,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      flexGrow: 0,
+      flexShrink: 1,
+    }),
+    debug: css({
+      marginTop: theme.spacing(1),
+      padding: `0 ${theme.spacing(1, 1, 1)}`,
+      border: `1px solid ${theme.colors.border.weak}`,
+      background: `${theme.isLight ? theme.v1.palette.white : theme.v1.palette.gray05}`,
+      borderRadius: theme.shape.radius.default,
+      width: '100%',
+      minHeight: '300px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignSelf: 'stretch',
+    }),
+    debugJson: css({
+      flexGrow: 1,
+      height: '100%',
+      overflow: 'hidden',
+      padding: theme.spacing(0.5),
+    }),
   };
 };

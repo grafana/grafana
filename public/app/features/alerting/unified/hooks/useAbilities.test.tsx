@@ -3,9 +3,13 @@ import { createBrowserHistory } from 'history';
 import React, { PropsWithChildren } from 'react';
 import { Router } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { render, screen } from 'test/test-utils';
 
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
+import { CombinedRule } from 'app/types/unified-alerting';
 
 import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../mocks';
 import { AlertmanagerProvider } from '../state/AlertmanagerContext';
@@ -13,6 +17,7 @@ import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import {
+  AlertRuleAction,
   AlertmanagerAction,
   useAlertmanagerAbilities,
   useAlertmanagerAbility,
@@ -136,6 +141,24 @@ describe('alertmanager abilities', () => {
   });
 });
 
+setupMswServer();
+
+/**
+ * Render the hook result in a component so we can more reliably check that the result has settled
+ * after API requests. Without this approach, the hook might return `[false, false]` whilst
+ * API requests are still loading
+ */
+const RenderActionPermissions = ({ rule, action }: { rule: CombinedRule; action: AlertRuleAction }) => {
+  const result = useAllAlertRuleAbilities(rule);
+  const [isSupported, isAllowed] = result[action];
+  return (
+    <>
+      {isSupported && 'supported'}
+      {isAllowed && 'allowed'}
+    </>
+  );
+};
+
 describe('AlertRule abilities', () => {
   it('should report that all actions are supported for a Grafana Managed alert rule', async () => {
     const rule = getGrafanaRule();
@@ -151,6 +174,28 @@ describe('AlertRule abilities', () => {
     });
 
     expect(abilities.result.current).toMatchSnapshot();
+  });
+
+  it('grants correct silence permissions for folder with silence create permission', async () => {
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+
+    const rule = getGrafanaRule();
+
+    render(<RenderActionPermissions rule={rule} action={AlertRuleAction.Silence} />);
+
+    expect(await screen.findByText(/supported/)).toBeInTheDocument();
+    expect(await screen.findByText(/allowed/)).toBeInTheDocument();
+  });
+
+  it('does not grant silence permissions for folder without silence create permission', async () => {
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: false });
+
+    const rule = getGrafanaRule();
+
+    render(<RenderActionPermissions rule={rule} action={AlertRuleAction.Silence} />);
+
+    expect(await screen.findByText(/supported/)).toBeInTheDocument();
+    expect(screen.queryByText(/allowed/)).not.toBeInTheDocument();
   });
 
   it('should report no permissions while we are loading data for cloud rule', async () => {

@@ -4,21 +4,17 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/mail"
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
-	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -35,10 +31,23 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Response {
-	userID, errResponse := getUserID(c)
-	if errResponse != nil {
-		return errResponse
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if namespace != identity.NamespaceUser {
+		return response.JSON(http.StatusOK, user.UserProfileDTO{
+			IsGrafanaAdmin: c.SignedInUser.GetIsGrafanaAdmin(),
+			OrgID:          c.SignedInUser.GetOrgID(),
+			UID:            c.SignedInUser.GetID().String(),
+			Name:           c.SignedInUser.NameOrFallback(),
+			Email:          c.SignedInUser.GetEmail(),
+			Login:          c.SignedInUser.GetLogin(),
+		})
 	}
+
+	userID, err := identity.IntIdentifier(namespace, identifier)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
+	}
+
 	return hs.getUserUserProfile(c, userID)
 }
 
@@ -66,9 +75,9 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 	userProfile, err := hs.userService.GetProfile(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to get user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
 	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
@@ -83,7 +92,7 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsGrafanaAdminExternallySynced = login.IsGrafanaAdminExternallySynced(hs.Cfg, oauthInfo, authInfo.AuthModule)
 	}
 
-	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "global.users:id:", strconv.FormatInt(userID, 10))
+	userProfile.AccessControl = hs.getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))
 	userProfile.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, userProfile.Email)
 
 	return response.JSON(http.StatusOK, userProfile)
@@ -104,9 +113,9 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response
 	usr, err := hs.userService.GetByLogin(c.Req.Context(), &query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
-		return response.Error(500, "Failed to get user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 	result := user.UserProfileDTO{
 		ID:             usr.ID,
@@ -147,11 +156,11 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 		return errResponse
 	}
 
-	if hs.Cfg.AuthProxyEnabled {
-		if hs.Cfg.AuthProxyHeaderProperty == "email" && cmd.Email != c.SignedInUser.GetEmail() {
+	if hs.Cfg.AuthProxy.Enabled {
+		if hs.Cfg.AuthProxy.HeaderProperty == "email" && cmd.Email != c.SignedInUser.GetEmail() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change email when auth proxy is using email property", nil)
 		}
-		if hs.Cfg.AuthProxyHeaderProperty == "username" && cmd.Login != c.SignedInUser.GetLogin() {
+		if hs.Cfg.AuthProxy.HeaderProperty == "username" && cmd.Login != c.SignedInUser.GetLogin() {
 			return response.Error(http.StatusBadRequest, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}
@@ -203,13 +212,11 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *contextmodel.ReqContext) response.R
 	}
 
 	if !hs.validateUsingOrg(c.Req.Context(), userID, orgID) {
-		return response.Error(401, "Not a valid organization", nil)
+		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
-
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to change active organization", err)
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
 	return response.Success("Active organization changed")
@@ -217,13 +224,8 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *contextmodel.ReqContext) response.R
 
 func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserCommand) response.Response {
 	// external user -> user data cannot be updated
-	isExternal, err := hs.isExternalUser(ctx, cmd.UserID)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to validate User", err)
-	}
-
-	if isExternal {
-		return response.Error(http.StatusForbidden, "User info cannot be updated for external Users", nil)
+	if response := hs.errOnExternalUser(ctx, cmd.UserID); response != nil {
+		return response
 	}
 
 	if len(cmd.Login) == 0 {
@@ -245,25 +247,22 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 		usr, err := hs.userService.GetByID(ctx, &query)
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
-				return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
+				return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), err)
 			}
 			return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 		}
 
 		if len(cmd.Email) != 0 && usr.Email != cmd.Email {
-			// Email is being updated
-			newEmail, err := ValidateAndNormalizeEmail(cmd.Email)
+			normalized, err := ValidateAndNormalizeEmail(cmd.Email)
 			if err != nil {
 				return response.Error(http.StatusBadRequest, "Invalid email address", err)
 			}
-
-			return hs.verifyEmailUpdate(ctx, newEmail, user.EmailUpdateAction, usr)
+			return hs.startEmailVerification(ctx, normalized, user.EmailUpdateAction, usr)
 		}
 		if len(cmd.Login) != 0 && usr.Login != cmd.Login {
-			// Username is being updated. If it's an email, go through the email verification flow
-			newEmailLogin, err := ValidateAndNormalizeEmail(cmd.Login)
-			if err == nil && newEmailLogin != usr.Email {
-				return hs.verifyEmailUpdate(ctx, newEmailLogin, user.LoginUpdateAction, usr)
+			normalized, err := ValidateAndNormalizeEmail(cmd.Login)
+			if err == nil && usr.Email != normalized {
+				return hs.startEmailVerification(ctx, cmd.Login, user.LoginUpdateAction, usr)
 			}
 		}
 	}
@@ -278,56 +277,40 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 	return response.Success("User updated")
 }
 
-func (hs *HTTPServer) verifyEmailUpdate(ctx context.Context, email string, field user.UpdateEmailActionType, usr *user.User) response.Response {
-	// Verify that email is not already being used
-	query := user.GetUserByLoginQuery{LoginOrEmail: email}
-	existingUsr, err := hs.userService.GetByLogin(ctx, &query)
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		return response.Error(http.StatusInternalServerError, "Failed to validate if email is already in use", err)
-	}
-	if existingUsr != nil {
-		return response.Error(http.StatusConflict, "Email is already being used", nil)
+func (hs *HTTPServer) StartEmailVerificaton(c *contextmodel.ReqContext) response.Response {
+	namespace, id := c.SignedInUser.GetNamespacedID()
+	if !identity.IsNamespace(namespace, identity.NamespaceUser) {
+		return response.Error(http.StatusBadRequest, "Only users can verify their email", nil)
 	}
 
-	// Invalidate any pending verifications for this user
-	expireCmd := tempuser.ExpirePreviousVerificationsCommand{InvitedByUserID: usr.ID}
-	err = hs.tempUserService.ExpirePreviousVerifications(ctx, &expireCmd)
+	if c.SignedInUser.IsEmailVerified() {
+		// email is already verified so we don't need to trigger the flow.
+		return response.Respond(http.StatusNotModified, nil)
+	}
+
+	userID, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Could not invalidate pending email verifications", err)
+		return response.Error(http.StatusInternalServerError, "Got invalid user id", err)
 	}
 
-	code, err := util.GetRandomString(20)
+	usr, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{
+		ID: userID,
+	})
+
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to generate random string", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to fetch user", err)
 	}
 
-	tempCmd := tempuser.CreateTempUserCommand{
-		OrgID:  -1,
+	return hs.startEmailVerification(c.Req.Context(), usr.Email, user.EmailUpdateAction, usr)
+}
+
+func (hs *HTTPServer) startEmailVerification(ctx context.Context, email string, field user.UpdateEmailActionType, usr *user.User) response.Response {
+	if err := hs.userVerifier.Start(ctx, user.StartVerifyEmailCommand{
+		User:   *usr,
 		Email:  email,
-		Code:   code,
-		Status: tempuser.TmpUserEmailUpdateStarted,
-		// used to fetch the User in the second step of the verification flow
-		InvitedByUserID: usr.ID,
-		// used to determine if the user was updating their email or username in the second step of the verification flow
-		Name: string(field),
-	}
-
-	tempUser, err := hs.tempUserService.CreateTempUser(ctx, &tempCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to create email change", err)
-	}
-
-	emailCmd := notifications.SendVerifyEmailCommand{Email: tempUser.Email, Code: tempUser.Code, User: usr}
-	err = hs.NotificationService.SendVerificationEmail(ctx, &emailCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to send verification email", err)
-	}
-
-	// Record email as sent
-	emailSentCmd := tempuser.UpdateTempUserWithEmailSentCommand{Code: tempUser.Code}
-	err = hs.tempUserService.UpdateTempUserWithEmailSent(ctx, &emailSentCmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to record verification email", err)
+		Action: field,
+	}); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to generate email verification", err)
 	}
 
 	return response.Success("Email sent for verification")
@@ -342,52 +325,16 @@ func (hs *HTTPServer) verifyEmailUpdate(ctx context.Context, email string, field
 // Responses:
 // 302: okResponse
 func (hs *HTTPServer) UpdateUserEmail(c *contextmodel.ReqContext) response.Response {
-	var err error
-
-	q := c.Req.URL.Query()
-	code, err := url.QueryUnescape(q.Get("code"))
+	code, err := url.QueryUnescape(c.Req.URL.Query().Get("code"))
 	if err != nil || code == "" {
 		return hs.RedirectResponseWithError(c, errors.New("bad request data"))
 	}
 
-	tempUser, err := hs.validateEmailCode(c.Req.Context(), code)
-	if err != nil {
+	if err := hs.userVerifier.Complete(c.Req.Context(), user.CompleteEmailVerifyCommand{Code: code}); err != nil {
 		return hs.RedirectResponseWithError(c, err)
-	}
-
-	cmd, err := hs.updateCmdFromEmailVerification(c.Req.Context(), tempUser)
-	if err != nil {
-		return hs.RedirectResponseWithError(c, err)
-	}
-
-	if err := hs.userService.Update(c.Req.Context(), cmd); err != nil {
-		if errors.Is(err, user.ErrCaseInsensitive) {
-			return hs.RedirectResponseWithError(c, errors.New("update would result in user login conflict"))
-		}
-		return hs.RedirectResponseWithError(c, errors.New("failed to update user"))
-	}
-
-	// Mark temp user as completed
-	updateTmpUserCmd := tempuser.UpdateTempUserStatusCommand{Code: code, Status: tempuser.TmpUserEmailUpdateCompleted}
-	if err := hs.tempUserService.UpdateTempUserStatus(c.Req.Context(), &updateTmpUserCmd); err != nil {
-		return hs.RedirectResponseWithError(c, errors.New("failed to update verification status"))
 	}
 
 	return response.Redirect(hs.Cfg.AppSubURL + "/profile")
-}
-
-func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, error) {
-	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
-	var err error
-	if _, err = hs.authInfoService.GetAuthInfo(ctx, &getAuthQuery); err == nil {
-		return true, nil
-	}
-
-	if errors.Is(err, user.ErrUserNotFound) {
-		return false, nil
-	}
-
-	return false, err
 }
 
 // swagger:route GET /user/orgs signed_in_user getSignedInUserOrgList
@@ -544,9 +491,7 @@ func (hs *HTTPServer) UserSetUsingOrg(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
-
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
@@ -578,8 +523,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 		return
 	}
 
-	cmd := user.SetUsingOrgCommand{UserID: userID, OrgID: orgID}
-	if err := hs.userService.SetUsingOrg(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
 		hs.NotFoundHandler(c)
 		return
 	}
@@ -603,8 +547,8 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContex
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Response {
-	cmd := user.ChangeUserPasswordCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
+	form := user.ChangeUserPasswordCommand{}
+	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
@@ -613,43 +557,12 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		return errResponse
 	}
 
-	userQuery := user.GetUserByIDQuery{ID: userID}
-
-	usr, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Could not read user from database", err)
+	if response := hs.errOnExternalUser(c.Req.Context(), userID); response != nil {
+		return response
 	}
 
-	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
-	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
-		if login.IsProviderEnabled(hs.Cfg, authInfo.AuthModule, oauthInfo) {
-			return response.Error(http.StatusBadRequest, "Cannot update external user password", err)
-		}
-	}
-
-	passwordHashed, err := util.EncodePassword(string(cmd.OldPassword), usr.Salt)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to encode password", err)
-	}
-	if user.Password(passwordHashed) != usr.Password {
-		return response.Error(http.StatusUnauthorized, "Invalid old password", nil)
-	}
-
-	if err := cmd.NewPassword.Validate(hs.Cfg); err != nil {
-		c.Logger.Warn("the new password doesn't meet the password policy criteria", "err", err)
-		return response.Err(err)
-	}
-
-	cmd.UserID = userID
-	encodedPassword, err := util.EncodePassword(string(cmd.NewPassword), usr.Salt)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to encode password", err)
-	}
-	cmd.NewPassword = user.Password(encodedPassword)
-
-	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to change user password", err)
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, Password: &form.NewPassword, OldPassword: &form.OldPassword}); err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to change user password", err)
 	}
 
 	return response.Success("User password changed")
@@ -688,16 +601,11 @@ func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response 
 	bitmask := &usr.HelpFlags1
 	bitmask.AddFlag(user.HelpFlags1(flag))
 
-	cmd := user.SetUserHelpFlagCommand{
-		UserID:     userID,
-		HelpFlags1: *bitmask,
-	}
-
-	if err := hs.userService.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, HelpFlags1: bitmask}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
 	}
 
-	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": *bitmask})
 }
 
 // swagger:route GET /user/helpflags/clear signed_in_user clearHelpFlags
@@ -715,16 +623,12 @@ func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Respon
 		return errResponse
 	}
 
-	cmd := user.SetUserHelpFlagCommand{
-		UserID:     userID,
-		HelpFlags1: user.HelpFlags1(0),
+	flags := user.HelpFlags1(0)
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, HelpFlags1: &flags}); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update help flag", err)
 	}
 
-	if err := hs.userService.SetUserHelpFlag(c.Req.Context(), &cmd); err != nil {
-		return response.Error(500, "Failed to update help flag", err)
-	}
-
-	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": flags})
 }
 
 func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
@@ -739,57 +643,6 @@ func getUserID(c *contextmodel.ReqContext) (int64, *response.NormalResponse) {
 	}
 
 	return userID, nil
-}
-
-func (hs *HTTPServer) updateCmdFromEmailVerification(ctx context.Context, tempUser *tempuser.TempUserDTO) (*user.UpdateUserCommand, error) {
-	userQuery := user.GetUserByLoginQuery{LoginOrEmail: tempUser.InvitedByLogin}
-	usr, err := hs.userService.GetByLogin(ctx, &userQuery)
-	if err != nil {
-		if errors.Is(err, user.ErrUserNotFound) {
-			return nil, user.ErrUserNotFound
-		}
-		return nil, errors.New("failed to get user")
-	}
-
-	cmd := &user.UpdateUserCommand{UserID: usr.ID, Email: tempUser.Email}
-
-	switch tempUser.Name {
-	case string(user.EmailUpdateAction):
-		// User updated the email field
-		if _, err := mail.ParseAddress(usr.Login); err == nil {
-			// If username was also an email, we update it to keep it in sync with the email field
-			cmd.Login = tempUser.Email
-		}
-	case string(user.LoginUpdateAction):
-		// User updated the username field with a new email
-		cmd.Login = tempUser.Email
-	default:
-		return nil, errors.New("trying to update email on unknown field")
-	}
-	return cmd, nil
-}
-
-func (hs *HTTPServer) validateEmailCode(ctx context.Context, code string) (*tempuser.TempUserDTO, error) {
-	tempUserQuery := tempuser.GetTempUserByCodeQuery{Code: code}
-	tempUser, err := hs.tempUserService.GetTempUserByCode(ctx, &tempUserQuery)
-	if err != nil {
-		if errors.Is(err, tempuser.ErrTempUserNotFound) {
-			return nil, errors.New("invalid email verification code")
-		}
-		return nil, errors.New("failed to read temp user")
-	}
-
-	if tempUser.Status != tempuser.TmpUserEmailUpdateStarted {
-		return nil, errors.New("invalid email verification code")
-	}
-	if !tempUser.EmailSent {
-		return nil, errors.New("verification email was not recorded as sent")
-	}
-	if tempUser.EmailSentOn.Add(hs.Cfg.VerificationEmailMaxLifetime).Before(time.Now()) {
-		return nil, errors.New("invalid email verification code")
-	}
-
-	return tempUser, nil
 }
 
 // swagger:parameters searchUsers

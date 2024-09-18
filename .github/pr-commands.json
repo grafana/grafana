@@ -118,7 +118,7 @@
   },
   {
     "type": "changedfiles",
-    "matches": [ "public/app/plugins/datasource/jaeger"],
+    "matches": [ "public/app/plugins/datasource/jaeger/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/Jaeger"
   },
@@ -145,6 +145,12 @@
     "matches": [ "public/app/plugins/datasource/opentsdb/**/*", "pkg/tsdb/opentsdb/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/OpenTSDB"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [ "public/app/plugins/datasource/parca/**/*"],
+    "action": "updateLabel",
+    "addLabel": "datasource/Parca"
   },
   {
     "type": "changedfiles",

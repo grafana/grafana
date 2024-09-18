@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -30,10 +31,11 @@ type Service struct {
 	accessControl  ac.AccessControl
 	bundleRegistry *bundleregistry.Service
 	cfg            *setting.Cfg
-	features       *featuremgmt.FeatureManager
+	features       featuremgmt.FeatureToggles
 	pluginSettings pluginsettings.Service
 	pluginStore    pluginstore.Store
 	store          bundleStore
+	tracer         tracing.Tracer
 
 	log                  log.Logger
 	encryptionPublicKeys []string
@@ -47,7 +49,7 @@ func ProvideService(
 	accesscontrolService ac.Service,
 	bundleRegistry *bundleregistry.Service,
 	cfg *setting.Cfg,
-	features *featuremgmt.FeatureManager,
+	features featuremgmt.FeatureToggles,
 	httpServer *grafanaApi.HTTPServer,
 	kvStore kvstore.KVStore,
 	pluginSettings pluginsettings.Service,
@@ -55,7 +57,8 @@ func ProvideService(
 	routeRegister routing.RouteRegister,
 	settings setting.Provider,
 	sql db.DB,
-	usageStats usagestats.Service) (*Service, error) {
+	usageStats usagestats.Service,
+	tracer tracing.Tracer) (*Service, error) {
 	section := cfg.SectionWithEnvOverrides("support_bundles")
 	s := &Service{
 		accessControl:        accessControl,
@@ -69,6 +72,7 @@ func ProvideService(
 		pluginStore:          pluginStore,
 		serverAdminOnly:      section.Key("server_admin_only").MustBool(true),
 		store:                newStore(kvStore),
+		tracer:               tracer,
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)

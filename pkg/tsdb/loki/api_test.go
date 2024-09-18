@@ -58,7 +58,7 @@ func TestApiLogVolume(t *testing.T) {
 		require.True(t, called)
 	})
 
-	t.Run("non-log-volume queries should not set log-volume http header", func(t *testing.T) {
+	t.Run("none queries should not set X-Query-Tags http header", func(t *testing.T) {
 		called := false
 		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
 			called = true
@@ -66,6 +66,18 @@ func TestApiLogVolume(t *testing.T) {
 		}, false)
 
 		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryNone, QueryType: QueryTypeRange}, ResponseOpts{})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+
+	t.Run("any defined supporting query should not set X-Query-Tags http header", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, "Source=foo", req.Header.Get("X-Query-Tags"))
+		}, false)
+
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryType("foo"), QueryType: QueryTypeRange}, ResponseOpts{})
 		require.NoError(t, err)
 		require.True(t, called)
 	})

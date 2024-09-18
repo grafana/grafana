@@ -16,6 +16,7 @@ import exploreReducers from 'app/features/explore/state/main';
 import foldersReducers from 'app/features/folders/state/reducers';
 import invitesReducers from 'app/features/invites/state/reducers';
 import importDashboardReducers from 'app/features/manage-dashboards/state/reducers';
+import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
 import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
@@ -28,6 +29,7 @@ import templatingReducers from 'app/features/variables/state/keyedVariablesReduc
 import perconaReducers from 'app/percona/shared/core/reducers';
 
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
+import { queryLibraryApi } from '../../features/query-library/api/factory';
 import { cleanUpAction } from '../actions/cleanUp';
 
 const rootReducers = {
@@ -56,6 +58,8 @@ const rootReducers = {
   [alertingApi.reducerPath]: alertingApi.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
+  [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
+  [queryLibraryApi.reducerPath]: queryLibraryApi.reducer,
 };
 
 const addedReducers = {
@@ -73,7 +77,7 @@ export const createRootReducer = () => {
     ...addedReducers,
   });
 
-  return (state: any, action: AnyAction) => {
+  return (state: Parameters<typeof appReducer>[0], action: AnyAction) => {
     if (action.type !== cleanUpAction.type) {
       return appReducer(state, action);
     }

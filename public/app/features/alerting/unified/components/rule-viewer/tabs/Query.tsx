@@ -1,12 +1,10 @@
-import { produce } from 'immer';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useObservable } from 'react-use';
 
-import { LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import { LoadingState, PanelData } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { Alert, Stack } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../../GrafanaRuleQueryViewer';
 import { useAlertQueriesStatus } from '../../../hooks/useAlertQueriesStatus';
@@ -19,8 +17,6 @@ interface Props {
 }
 
 const QueryResults = ({ rule }: Props) => {
-  const [evaluationTimeRanges, setEvaluationTimeRanges] = useState<Record<string, RelativeTimeRange>>({});
-
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
   const loadingData = isLoading(data);
@@ -31,27 +27,13 @@ const QueryResults = ({ rule }: Props) => {
 
   const onRunQueries = useCallback(() => {
     if (queries.length > 0 && allDataSourcesAvailable) {
-      const evalCustomizedQueries = queries.map<AlertQuery>((q) => ({
-        ...q,
-        relativeTimeRange: evaluationTimeRanges[q.refId] ?? q.relativeTimeRange,
-      }));
-
       let condition;
       if (rule && isGrafanaRulerRule(rule.rulerRule)) {
         condition = rule.rulerRule.grafana_alert.condition;
       }
-      runner.run(evalCustomizedQueries, condition ?? 'A');
+      runner.run(queries, condition ?? 'A');
     }
-  }, [queries, allDataSourcesAvailable, rule, runner, evaluationTimeRanges]);
-
-  useEffect(() => {
-    const alertQueries = alertRuleToQueries(rule);
-    const defaultEvalTimeRanges = Object.fromEntries(
-      alertQueries.map((q) => [q.refId, q.relativeTimeRange ?? { from: 0, to: 0 }])
-    );
-
-    setEvaluationTimeRanges(defaultEvalTimeRanges);
-  }, [rule]);
+  }, [queries, allDataSourcesAvailable, rule, runner]);
 
   useEffect(() => {
     if (allDataSourcesAvailable) {
@@ -63,16 +45,6 @@ const QueryResults = ({ rule }: Props) => {
     return () => runner.destroy();
   }, [runner]);
 
-  const onQueryTimeRangeChange = useCallback(
-    (refId: string, timeRange: RelativeTimeRange) => {
-      const newEvalTimeRanges = produce(evaluationTimeRanges, (draft) => {
-        draft[refId] = timeRange;
-      });
-      setEvaluationTimeRanges(newEvalTimeRanges);
-    },
-    [evaluationTimeRanges, setEvaluationTimeRanges]
-  );
-
   const isFederatedRule = isFederatedRuleGroup(rule.group);
 
   return (
@@ -83,32 +55,30 @@ const QueryResults = ({ rule }: Props) => {
         <>
           {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (
             <GrafanaRuleQueryViewer
+              rule={rule}
               condition={rule.rulerRule.grafana_alert.condition}
               queries={queries}
               evalDataByQuery={data}
-              evalTimeRanges={evaluationTimeRanges}
-              onTimeRangeChange={onQueryTimeRangeChange}
             />
           )}
 
           {!isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && data && Object.keys(data).length > 0 && (
-            <div>
+            <Stack direction="column" gap={1}>
               {queries.map((query) => {
                 return (
                   <QueryPreview
                     key={query.refId}
+                    rule={rule}
                     refId={query.refId}
                     model={query.model}
                     dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
                     queryData={data[query.refId]}
                     relativeTimeRange={query.relativeTimeRange}
-                    evalTimeRange={evaluationTimeRanges[query.refId]}
-                    onEvalTimeRangeChange={(timeRange) => onQueryTimeRangeChange(query.refId, timeRange)}
                     isAlertCondition={false}
                   />
                 );
               })}
-            </div>
+            </Stack>
           )}
           {!isFederatedRule && !allDataSourcesAvailable && (
             <Alert title="Query not available" severity="warning">

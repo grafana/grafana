@@ -80,6 +80,20 @@ func (mr *MockServiceMockRecorder) HasCapability(ctx, capability interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasCapability", reflect.TypeOf((*MockService)(nil).HasCapability), ctx, capability)
 }
 
+// IsCapabilitySupported mocks base method.
+func (m *MockService) IsCapabilitySupported(ctx context.Context, capability CapabilityName) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsCapabilitySupported", ctx, capability)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IsCapabilitySupported indicates an expected call of IsCapabilitySupported.
+func (mr *MockServiceMockRecorder) IsCapabilitySupported(ctx, capability interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsCapabilitySupported", reflect.TypeOf((*MockService)(nil).IsCapabilitySupported), ctx, capability)
+}
+
 // IsAvailable mocks base method.
 func (m *MockService) IsAvailable(ctx context.Context) bool {
 	m.ctrl.T.Helper()

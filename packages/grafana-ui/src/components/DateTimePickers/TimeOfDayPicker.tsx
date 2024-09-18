@@ -10,6 +10,8 @@ import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
 import { Icon } from '../Icon/Icon';
 
+import 'rc-time-picker/assets/index.css';
+
 export interface Props {
   onChange: (value: DateTime) => void;
   value?: DateTime;
@@ -101,6 +103,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       '.rc-time-picker-panel-select': {
         fontSize: '14px',
         backgroundColor: bgColor,
+        color: theme.colors.text.secondary,
         borderColor,
         li: {
           outlineWidth: '2px',
@@ -108,10 +111,12 @@ const getStyles = (theme: GrafanaTheme2) => {
             backgroundColor: 'inherit',
             border: `1px solid ${theme.v1.palette.orange}`,
             borderRadius,
+            color: theme.colors.text.primary,
           },
 
           '&:hover': {
             background: optionBgHover,
+            color: theme.colors.text.primary,
           },
 
           '&.rc-time-picker-panel-select-option-disabled': {
@@ -146,6 +151,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         backgroundColor: bgColor,
         borderRadius,
         borderColor,
+        color: theme.colors.text.primary,
         height: theme.spacing(4),
 
         '&:focus': getFocusStyles(theme),

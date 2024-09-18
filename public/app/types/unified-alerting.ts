@@ -1,6 +1,8 @@
 /* Prometheus internal models */
 
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
+import { PromOptions } from '@grafana/prometheus';
+import { LokiOptions } from 'app/plugins/datasource/loki/types';
 
 import {
   Annotations,
@@ -89,7 +91,7 @@ export interface RulesSourceResult {
   namespaces?: RuleNamespace[];
 }
 
-export type RulesSource = DataSourceInstanceSettings | 'grafana';
+export type RulesSource = DataSourceInstanceSettings<PromOptions | LokiOptions> | 'grafana';
 
 // combined prom and ruler result
 export interface CombinedRule {
@@ -137,9 +139,9 @@ export interface CombinedRuleNamespace {
 export interface RuleWithLocation<T = RulerRuleDTO> {
   ruleSourceName: string;
   namespace: string;
+  namespace_uid?: string; // Grafana folder UID
   group: RulerRuleGroupDTO;
   rule: T;
-  namespace_uid?: string;
 }
 
 export interface CombinedRuleWithLocation extends CombinedRule {

@@ -44,7 +44,7 @@ describe('ColorPickerPopover', () => {
       await userEvent.click(color);
 
       expect(onChangeSpy).toBeCalledTimes(1);
-      expect(onChangeSpy).toBeCalledWith(theme.visualization.getColorByName('red'));
+      expect(onChangeSpy).toHaveBeenCalledWith(theme.visualization.getColorByName('red'));
     });
 
     it('should pass color name to onChange prop when named colors enabled', async () => {
@@ -53,7 +53,7 @@ describe('ColorPickerPopover', () => {
       await userEvent.click(color);
 
       expect(onChangeSpy).toBeCalledTimes(2);
-      expect(onChangeSpy).toBeCalledWith(theme.visualization.getColorByName('red'));
+      expect(onChangeSpy).toHaveBeenCalledWith(theme.visualization.getColorByName('red'));
     });
   });
 });

@@ -127,5 +127,19 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
         validator: () => true,
       }),
     },
+    {
+      name: 'Is Substring',
+      id: ValueMatcherID.substring,
+      component: basicMatcherEditor<string | number | boolean>({
+        validator: () => true,
+      }),
+    },
+    {
+      name: 'Is not substring',
+      id: ValueMatcherID.notSubstring,
+      component: basicMatcherEditor<string | number | boolean>({
+        validator: () => true,
+      }),
+    },
   ];
 };

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Field, Input, Button, Legend, Container, useStyles2, HorizontalGroup, LinkButton } from '@grafana/ui';
+import { Field, Input, Button, Legend, Container, useStyles2, LinkButton, Stack } from '@grafana/ui';
 import config from 'app/core/config';
 
 interface EmailDTO {
@@ -63,12 +63,12 @@ export const ForgottenPassword = () => {
           {...register('userOrEmail', { required: 'Email or username is required' })}
         />
       </Field>
-      <HorizontalGroup>
+      <Stack>
         <Button type="submit">Send reset email</Button>
         <LinkButton fill="text" href={loginHref}>
           Back to login
         </LinkButton>
-      </HorizontalGroup>
+      </Stack>
 
       <p className={styles}>Did you forget your username or email? Contact your Grafana administrator.</p>
     </form>

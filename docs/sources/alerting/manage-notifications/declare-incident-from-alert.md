@@ -1,6 +1,6 @@
 ---
 aliases:
-  - alerting/alerting-rules/declare-incident-from-alert/
+  - ../../alerting/alerting-rules/declare-incident-from-alert/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/declare-incident-from-alert/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/declare-incident-from-alert/
 description: Declare an incident from a firing alert
 keywords:
@@ -53,4 +53,4 @@ To declare an incident from a firing alert, complete the following steps.
 
 View and track the incident in the Grafana Incident application.
 
-For more information, refer to [Grafana Incident documentation.](/docs/grafana-cloud/incident/configure-settings/)
+For more information, refer to [Grafana Incident documentation](/docs/grafana-cloud/incident/configure-settings/).

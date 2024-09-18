@@ -12,11 +12,11 @@ export const EmptyArea = ({ children }: React.PropsWithChildren<{}>) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      background-color: ${theme.colors.background.secondary};
-      color: ${theme.colors.text.secondary};
-      padding: ${theme.spacing(4)};
-      text-align: center;
-    `,
+    container: css({
+      backgroundColor: theme.colors.background.secondary,
+      color: theme.colors.text.secondary,
+      padding: theme.spacing(4),
+      textAlign: 'center',
+    }),
   };
 };

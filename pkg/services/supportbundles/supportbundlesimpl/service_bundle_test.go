@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -33,6 +34,7 @@ func TestService_bundleCreate(t *testing.T) {
 		log:            log.New("test"),
 		bundleRegistry: bundleregistry.ProvideService(),
 		store:          newStore(kvstore.NewFakeKVStore()),
+		tracer:         tracing.InitializeTracerForTest(),
 	}
 
 	cfg := setting.NewCfg()
@@ -66,6 +68,7 @@ func TestService_bundleEncryptDecrypt(t *testing.T) {
 		bundleRegistry:       bundleregistry.ProvideService(),
 		store:                newStore(kvstore.NewFakeKVStore()),
 		encryptionPublicKeys: []string{testAgePublicKey},
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 
 	cfg := setting.NewCfg()
@@ -98,6 +101,7 @@ func TestService_bundleEncryptDecryptMultipleRecipients(t *testing.T) {
 		bundleRegistry:       bundleregistry.ProvideService(),
 		store:                newStore(kvstore.NewFakeKVStore()),
 		encryptionPublicKeys: []string{testAgePublicKey, testAgePublicKey2},
+		tracer:               tracing.InitializeTracerForTest(),
 	}
 
 	cfg := setting.NewCfg()

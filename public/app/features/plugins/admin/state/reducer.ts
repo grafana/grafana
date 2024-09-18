@@ -105,7 +105,7 @@ const slice = createSlice({
           status: RequestStatus.Fulfilled,
         };
       })
-      .addMatcher(isRejectedRequest, (state, action) => {
+      .addMatcher(isRejectedRequest, (state, action: PayloadAction) => {
         state.requests[getOriginalActionType(action.type)] = {
           status: RequestStatus.Rejected,
           error: action.payload,

@@ -4,8 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Field, FieldSet, Icon, Input, useStyles2, Stack } from '@grafana/ui';
+import { Button, Field, FieldSet, Icon, InlineSwitch, Input, Stack, useStyles2 } from '@grafana/ui';
 
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } from '../../utils/mute-timings';
 
@@ -22,6 +23,7 @@ export const MuteTimingTimeInterval = () => {
   } = useFieldArray({
     name: 'time_intervals',
   });
+  const { isGrafanaAlertmanager } = useAlertmanager();
 
   return (
     <FieldSet label="Time intervals">
@@ -131,15 +133,30 @@ export const MuteTimingTimeInterval = () => {
                     data-testid="mute-timing-years"
                   />
                 </Field>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  fill="outline"
-                  icon="trash-alt"
-                  onClick={() => removeTimeInterval(timeIntervalIndex)}
-                >
-                  Remove time interval
-                </Button>
+                <Stack direction="row" gap={2}>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    fill="outline"
+                    icon="trash-alt"
+                    onClick={() => removeTimeInterval(timeIntervalIndex)}
+                  >
+                    Remove time interval
+                  </Button>
+                  {/*
+                    This switch is only available for Grafana Alertmanager, as for now, Grafana alert manager doesn't support this feature
+                    It hanldes empty list as undefined making impossible the use of an empty list for disabling time interval
+                  */}
+                  {!isGrafanaAlertmanager && (
+                    <InlineSwitch
+                      id={`time_intervals.${timeIntervalIndex}.disable`}
+                      label="Disable"
+                      showLabel
+                      transparent
+                      {...register(`time_intervals.${timeIntervalIndex}.disable`)}
+                    />
+                  )}
+                </Stack>
               </div>
             );
           })}
@@ -222,32 +239,32 @@ const DaysOfTheWeek = ({ defaultValue = '', onChange }: DaysOfTheWeekProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  input: css`
-    width: 400px;
-  `,
-  timeIntervalSection: css`
-    background-color: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(2)};
-  `,
-  removeTimeIntervalButton: css`
-    margin-top: ${theme.spacing(2)};
-  `,
-  dayOfTheWeek: css`
-    cursor: pointer;
-    user-select: none;
-    padding: ${theme.spacing(1)} ${theme.spacing(3)};
+  input: css({
+    width: '400px',
+  }),
+  timeIntervalSection: css({
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(2),
+  }),
+  removeTimeIntervalButton: css({
+    marginTop: theme.spacing(2),
+  }),
+  dayOfTheWeek: css({
+    cursor: 'pointer',
+    userSelect: 'none',
+    padding: `${theme.spacing(1)} ${theme.spacing(3)}`,
 
-    border: solid 1px ${theme.colors.border.medium};
-    background: none;
-    border-radius: ${theme.shape.radius.default};
+    border: `solid 1px ${theme.colors.border.medium}`,
+    background: 'none',
+    borderRadius: theme.shape.radius.default,
 
-    color: ${theme.colors.text.secondary};
+    color: theme.colors.text.secondary,
 
-    &.selected {
-      font-weight: ${theme.typography.fontWeightBold};
-      color: ${theme.colors.primary.text};
-      border-color: ${theme.colors.primary.border};
-      background: ${theme.colors.primary.transparent};
-    }
-  `,
+    '&.selected': {
+      fontWeight: theme.typography.fontWeightBold,
+      color: theme.colors.primary.text,
+      borderColor: theme.colors.primary.border,
+      background: theme.colors.primary.transparent,
+    },
+  }),
 });

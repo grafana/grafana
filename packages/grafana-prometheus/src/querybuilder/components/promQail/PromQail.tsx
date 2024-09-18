@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/querybuilder/components/promQail/PromQail.tsx
 import { css, cx } from '@emotion/css';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer, useRef, useState } from 'react';

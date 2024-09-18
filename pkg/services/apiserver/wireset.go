@@ -3,7 +3,7 @@ package apiserver
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/apiserver/builder"
 )
 
 var WireSet = wire.NewSet(

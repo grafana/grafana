@@ -13,22 +13,24 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-const defaultProps = {
-  isOpen: true,
-  onClose: jest.fn(),
-  onChange: jest.fn(),
-  onAddQuery: jest.fn(),
-  query: {
-    refId: 'A',
-    expr: '{label1="foo", label2="bar"} |= "baz" |~ "qux"',
-  },
-  queries: [
-    {
+function getDefaultProps() {
+  return {
+    isOpen: true,
+    onClose: jest.fn(),
+    onChange: jest.fn(),
+    onAddQuery: jest.fn(),
+    query: {
       refId: 'A',
-      expr: '{label1="foo", label2="bar"}',
+      expr: '{label1="foo", label2="bar"} |= "baz" |~ "qux"',
     },
-  ],
-};
+    queries: [
+      {
+        refId: 'A',
+        expr: '{label1="foo", label2="bar"}',
+      },
+    ],
+  };
+}
 
 const queryPatterns = {
   logQueryPatterns: lokiQueryModeller.getQueryPatterns().filter((pattern) => pattern.type === LokiQueryPatternType.Log),
@@ -39,17 +41,17 @@ const queryPatterns = {
 
 describe('QueryPatternsModal', () => {
   it('renders the modal', () => {
-    render(<QueryPatternsModal {...defaultProps} />);
+    render(<QueryPatternsModal {...getDefaultProps()} />);
     expect(screen.getByText('Kick start your query')).toBeInTheDocument();
   });
   it('renders collapsible elements with all query pattern types', () => {
-    render(<QueryPatternsModal {...defaultProps} />);
+    render(<QueryPatternsModal {...getDefaultProps()} />);
     Object.values(LokiQueryPatternType).forEach((pattern) => {
       expect(screen.getByText(new RegExp(`${pattern} query starters`, 'i'))).toBeInTheDocument();
     });
   });
   it('can open and close query patterns section', async () => {
-    render(<QueryPatternsModal {...defaultProps} />);
+    render(<QueryPatternsModal {...getDefaultProps()} />);
     await userEvent.click(screen.getByText('Log query starters'));
     expect(screen.getByText(queryPatterns.logQueryPatterns[0].name)).toBeInTheDocument();
 
@@ -58,7 +60,7 @@ describe('QueryPatternsModal', () => {
   });
 
   it('can open and close multiple query patterns section', async () => {
-    render(<QueryPatternsModal {...defaultProps} />);
+    render(<QueryPatternsModal {...getDefaultProps()} />);
     await userEvent.click(screen.getByText('Log query starters'));
     expect(screen.getByText(queryPatterns.logQueryPatterns[0].name)).toBeInTheDocument();
 
@@ -73,6 +75,7 @@ describe('QueryPatternsModal', () => {
   });
 
   it('uses pattern if there is no existing query', async () => {
+    const defaultProps = getDefaultProps();
     render(<QueryPatternsModal {...defaultProps} query={{ expr: '{job="grafana"}', refId: 'A' }} />);
     await userEvent.click(screen.getByText('Log query starters'));
     expect(screen.getByText(queryPatterns.logQueryPatterns[0].name)).toBeInTheDocument();
@@ -87,7 +90,7 @@ describe('QueryPatternsModal', () => {
   });
 
   it('gives warning when selecting pattern if there is already existing query', async () => {
-    render(<QueryPatternsModal {...defaultProps} />);
+    render(<QueryPatternsModal {...getDefaultProps()} />);
     await userEvent.click(screen.getByText('Log query starters'));
     expect(screen.getByText(queryPatterns.logQueryPatterns[0].name)).toBeInTheDocument();
     const firstUseQueryButton = screen.getAllByRole('button', { name: 'Use this query' })[0];
@@ -96,6 +99,7 @@ describe('QueryPatternsModal', () => {
   });
 
   it('can use create new query when selecting pattern if there is already existing query', async () => {
+    const defaultProps = getDefaultProps();
     render(<QueryPatternsModal {...defaultProps} />);
     await userEvent.click(screen.getByText('Log query starters'));
     expect(screen.getByText(queryPatterns.logQueryPatterns[0].name)).toBeInTheDocument();
@@ -113,12 +117,29 @@ describe('QueryPatternsModal', () => {
   });
 
   it('does not show create new query option if onAddQuery function is not provided ', async () => {
-    render(<QueryPatternsModal {...defaultProps} onAddQuery={undefined} />);
+    render(<QueryPatternsModal {...getDefaultProps()} onAddQuery={undefined} />);
     await userEvent.click(screen.getByText('Log query starters'));
     expect(screen.getByText(queryPatterns.logQueryPatterns[0].name)).toBeInTheDocument();
     const useQueryButton = screen.getAllByRole('button', { name: 'Use this query' })[0];
     await userEvent.click(useQueryButton);
     expect(screen.queryByRole('button', { name: 'Create new query' })).not.toBeInTheDocument();
     expect(screen.getByText(/your current query will be replaced/)).toBeInTheDocument();
+  });
+
+  it('applies a metric query on top of the existing log query', async () => {
+    const defaultProps = getDefaultProps();
+    render(<QueryPatternsModal {...defaultProps} />);
+    await userEvent.click(screen.getByText('Metric query starters'));
+    expect(screen.getByText(queryPatterns.metricQueryPatterns[0].name)).toBeInTheDocument();
+    const firstUseQueryButton = screen.getAllByRole('button', { name: 'Use this query' })[0];
+    await userEvent.click(firstUseQueryButton);
+    const createNewQueryButton = screen.getByRole('button', { name: 'Apply to query' });
+    await userEvent.click(createNewQueryButton);
+    await waitFor(() => {
+      expect(defaultProps.onChange).toHaveBeenCalledWith({
+        expr: 'sum(sum_over_time({label1="foo", label2="bar"} |= `baz` |~ `qux` | logfmt | __error__=`` | unwrap  | __error__=`` [$__auto]))',
+        refId: 'A',
+      });
+    });
   });
 });

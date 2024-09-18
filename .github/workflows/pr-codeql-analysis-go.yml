@@ -14,6 +14,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
 
     steps:
     - name: "Generate token"
@@ -35,7 +36,7 @@ jobs:
     - name: Set go version
       uses: actions/setup-go@v4
       with:
-        go-version: '1.21.8'
+        go-version-file: go.mod
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL

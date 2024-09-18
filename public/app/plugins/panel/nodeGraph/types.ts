@@ -35,12 +35,17 @@ export type EdgeDatum = LinkDatum & {
   dataFrameRowIndex: number;
   sourceNodeRadius: number;
   targetNodeRadius: number;
+  /**
+   * @deprecated -- for edges use color instead
+   */
   highlighted: boolean;
   thickness: number;
+  color?: string;
+  strokeDasharray?: string;
 };
 
 // After layout is run D3 will change the string IDs for actual references to the nodes.
-export type EdgeDatumLayout = EdgeDatum & {
+export type EdgeDatumLayout = Omit<EdgeDatum, 'source' | 'target'> & {
   source: NodeDatum;
   target: NodeDatum;
 };

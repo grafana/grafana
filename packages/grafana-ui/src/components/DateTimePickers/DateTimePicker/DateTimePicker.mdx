@@ -16,7 +16,7 @@ const [date, setDate] = useState<DateTime>(dateTime('2021-05-05 12:00:00'));
 return <DateTimePicker label="Date" date={date} onChange={setDate} />;
 ```
 
-### With disbled hours, minutes or seconds
+### With disabled hours, minutes or seconds
 
 ```tsx
 import React, { useState } from 'react';
@@ -35,6 +35,10 @@ return (
   />
 );
 ```
+
+### Clearable
+
+You can set the `clearable` prop to `true` to enable the clearing of selected values and allow the component to have an empty value instead of the current date/time.
 
 ### Props
 

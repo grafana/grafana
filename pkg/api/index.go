@@ -4,7 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -115,7 +113,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c),
-			AuthenticatedBy:            hs.getUserAuthenticatedBy(c, userID),
+			AuthenticatedBy:            c.GetAuthenticatedBy(),
 		},
 		Settings:                            settings,
 		ThemeType:                           theme.Type,
@@ -167,13 +165,14 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
 	data.NavTree.ApplyAdminIA()
+	data.NavTree.ApplyHelpVersion(data.Settings.BuildInfo.VersionString) // RunIndexDataHooks can modify the version string
 	data.NavTree.Sort()
 
 	return &data, nil
 }
 
 func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
-	namespace, id := c.SignedInUser.GetNamespacedID()
+	namespace, _ := c.SignedInUser.GetNamespacedID()
 
 	// Anonymous users do not have an email or auth info
 	if namespace != identity.NamespaceUser {
@@ -184,21 +183,10 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 		return dtos.AnalyticsSettings{}
 	}
 
-	userID, err := identity.IntIdentifier(namespace, id)
-	if err != nil {
-		hs.log.Error("Failed to parse user ID", "error", err)
-		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
-	}
-
 	identifier := c.SignedInUser.GetEmail() + "@" + hs.Cfg.AppURL
 
-	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		hs.log.Error("Failed to get auth info for analytics", "error", err)
-	}
-
-	if authInfo != nil && authInfo.AuthModule == login.GrafanaComAuthModule {
-		identifier = authInfo.AuthId
+	if authenticatedBy := c.SignedInUser.GetAuthenticatedBy(); authenticatedBy == login.GrafanaComAuthModule {
+		identifier = c.SignedInUser.GetAuthID()
 	}
 
 	return dtos.AnalyticsSettings{
@@ -221,32 +209,6 @@ func (hs *HTTPServer) getUserOrgCount(c *contextmodel.ReqContext, userID int64) 
 	return len(userOrgs)
 }
 
-// getUserAuthenticatedBy returns external authentication method used for user.
-// If user does not have an external authentication method an empty string is returned
-func (hs *HTTPServer) getUserAuthenticatedBy(c *contextmodel.ReqContext, userID int64) string {
-	if userID == 0 {
-		return ""
-	}
-
-	// Special case for image renderer. Frontend relies on this information
-	// to render dashboards in a bit different way.
-	if c.IsRenderCall {
-		return login.RenderModule
-	}
-
-	info, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID})
-	// we ignore errors where a user does not have external user auth
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		hs.log.FromContext(c.Req.Context()).Error("Failed to fetch auth info", "userId", c.SignedInUser.UserID, "error", err)
-	}
-
-	if err != nil {
-		return ""
-	}
-
-	return info.AuthModule
-}
-
 func hashUserIdentifier(identifier string, secret string) string {
 	if secret == "" {
 		return ""
@@ -261,7 +223,7 @@ func hashUserIdentifier(identifier string, secret string) string {
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
-		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
 	c.HTML(http.StatusOK, "index", data)
@@ -269,17 +231,17 @@ func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 
 func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
-		c.JsonApiErr(404, "Not found", nil)
+		c.JsonApiErr(http.StatusNotFound, "Not found", nil)
 		return
 	}
 
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
-		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
 
-	c.HTML(404, "index", data)
+	c.HTML(http.StatusNotFound, "index", data)
 }
 
 func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam string) *pref.ThemeDTO {

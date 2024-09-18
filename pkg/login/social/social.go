@@ -23,6 +23,7 @@ const (
 	// legacy/old settings for the provider
 	GrafanaNetProviderName = "grafananet"
 	OktaProviderName       = "okta"
+	SAMLProviderName       = "saml"
 )
 
 var (
@@ -73,6 +74,8 @@ type OAuthInfo struct {
 	Name                    string            `mapstructure:"name" toml:"name"`
 	RoleAttributePath       string            `mapstructure:"role_attribute_path" toml:"role_attribute_path"`
 	RoleAttributeStrict     bool              `mapstructure:"role_attribute_strict" toml:"role_attribute_strict"`
+	OrgAttributePath        string            `mapstructure:"org_attribute_path"`
+	OrgMapping              []string          `mapstructure:"org_mapping"`
 	Scopes                  []string          `mapstructure:"scopes" toml:"scopes"`
 	SignoutRedirectUrl      string            `mapstructure:"signout_redirect_url" toml:"signout_redirect_url"`
 	SkipOrgRoleSync         bool              `mapstructure:"skip_org_role_sync" toml:"skip_org_role_sync"`
@@ -103,11 +106,12 @@ type BasicUserInfo struct {
 	Email          string
 	Login          string
 	Role           org.RoleType
+	OrgRoles       map[int64]org.RoleType
 	IsGrafanaAdmin *bool // nil will avoid overriding user's set server admin setting
 	Groups         []string
 }
 
 func (b *BasicUserInfo) String() string {
-	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Role: %s, Groups: %v",
-		b.Id, b.Name, b.Email, b.Login, b.Role, b.Groups)
+	return fmt.Sprintf("Id: %s, Name: %s, Email: %s, Login: %s, Role: %s, Groups: %v, OrgRoles: %v",
+		b.Id, b.Name, b.Email, b.Login, b.Role, b.Groups, b.OrgRoles)
 }

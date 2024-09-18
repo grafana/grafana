@@ -30,6 +30,7 @@ export async function listFolders(
       limit: pageSize,
     });
   }
+  const subUrlPrefix = config.appSubUrl ?? '';
 
   return folders.map((item) => ({
     kind: 'folder',
@@ -37,7 +38,9 @@ export async function listFolders(
     title: item.title,
     parentTitle,
     parentUID,
-    url: isSharedWithMe(item.uid) ? undefined : `/dashboards/f/${item.uid}/`,
+
+    // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
+    url: isSharedWithMe(item.uid) ? undefined : `${subUrlPrefix}/dashboards/f/${item.uid}/`,
   }));
 }
 

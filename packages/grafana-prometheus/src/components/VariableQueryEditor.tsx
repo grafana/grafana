@@ -1,3 +1,4 @@
+// Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/VariableQueryEditor.tsx
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -368,7 +369,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
             labelWidth={20}
             tooltip={
               <div>
-                Enter enter a metric with labels, only a metric or only labels, i.e.
+                Enter a metric with labels, only a metric or only labels, i.e.
                 go_goroutines&#123;instance=&quot;localhost:9090&quot;&#125;, go_goroutines, or
                 &#123;instance=&quot;localhost:9090&quot;&#125;. Returns a list of time series associated with the
                 entered data.

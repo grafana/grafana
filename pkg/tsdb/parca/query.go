@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/grafana/grafana/pkg/tsdb/parca/kinds/dataquery"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -56,7 +57,8 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 			span.SetStatus(codes.Error, response.Error.Error())
 			return response
 		}
-		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, qm.ProfileTypeId)...)
+
+		response.Frames = append(response.Frames, seriesToDataFrame(seriesResp, utils.Depointerizer(qm.ProfileTypeId))...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
@@ -82,7 +84,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 			Mode: v1alpha1.QueryRequest_MODE_MERGE,
 			Options: &v1alpha1.QueryRequest_Merge{
 				Merge: &v1alpha1.MergeProfile{
-					Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
+					Query: fmt.Sprintf("%s%s", utils.Depointerizer(qm.ProfileTypeId), utils.Depointerizer(qm.LabelSelector)),
 					Start: &timestamppb.Timestamp{
 						Seconds: query.TimeRange.From.Unix(),
 					},
@@ -101,7 +103,7 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 func makeMetricRequest(qm queryModel, query backend.DataQuery) *connect.Request[v1alpha1.QueryRangeRequest] {
 	return &connect.Request[v1alpha1.QueryRangeRequest]{
 		Msg: &v1alpha1.QueryRangeRequest{
-			Query: fmt.Sprintf("%s%s", qm.ProfileTypeId, qm.LabelSelector),
+			Query: fmt.Sprintf("%s%s", utils.Depointerizer(qm.ProfileTypeId), utils.Depointerizer(qm.LabelSelector)),
 			Start: &timestamppb.Timestamp{
 				Seconds: query.TimeRange.From.Unix(),
 			},

@@ -186,3 +186,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	})
 	return p, true, err // true is instant delete
 }
+
+// CollectionDeleter
+func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return nil, fmt.Errorf("DeleteCollection for playlists not implemented")
+}

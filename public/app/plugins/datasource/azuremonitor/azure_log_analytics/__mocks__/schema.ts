@@ -370,6 +370,7 @@ export default class FakeSchemaData {
         },
       ],
       functions: [],
+      entityGroups: [],
       majorVersion: 0,
       minorVersion: 0,
     };

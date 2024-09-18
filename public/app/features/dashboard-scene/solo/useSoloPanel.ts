@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 
 import { VizPanel, SceneObject, SceneGridRow, getUrlSyncManager } from '@grafana/scenes';
 
+import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardRepeatsProcessedEvent } from '../scene/types';
 import { findVizPanelByKey, isPanelClone } from '../utils/utils';
@@ -17,7 +17,13 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
 
     const cleanUp = dashboard.activate();
 
-    const panel = findVizPanelByKey(dashboard, panelId);
+    let panel: VizPanel | null = null;
+    try {
+      panel = findVizPanelByKey(dashboard, panelId);
+    } catch (e) {
+      // do nothing, just the panel is not found or not a VizPanel
+    }
+
     if (panel) {
       activateParents(panel);
       setPanel(panel);
@@ -29,6 +35,8 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
           setError('Panel not found');
         }
       });
+    } else {
+      setError('Panel not found');
     }
 
     return cleanUp;
@@ -64,7 +72,7 @@ function findRepeatClone(dashboard: DashboardScene, panelId: string): Promise<Vi
 
 function activateAllRepeaters(layout: SceneObject) {
   layout.forEachChild((child) => {
-    if (child instanceof PanelRepeaterGridItem && !child.isActive) {
+    if (child instanceof DashboardGridItem && !child.isActive) {
       child.activate();
       return;
     }
@@ -77,7 +85,7 @@ function activateAllRepeaters(layout: SceneObject) {
         }
       }
 
-      // Activate any panel PanelRepeaterGridItem inside the row
+      // Activate any panel DashboardGridItem inside the row
       activateAllRepeaters(child);
     }
   });

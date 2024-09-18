@@ -2,6 +2,7 @@ import { DataFrame, DataFrameView, FieldType, getDisplayProcessor, SelectableVal
 import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { PermissionLevelString } from 'app/types';
 
 import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
@@ -21,6 +22,8 @@ interface APIQuery {
   folderUIDs?: string[];
   sort?: string;
   starred?: boolean;
+  permission?: PermissionLevelString;
+  deleted?: boolean;
 }
 
 // Internal object to hold folderId
@@ -85,7 +88,9 @@ export class SQLSearcher implements GrafanaSearcher {
         limit: limit,
         tag: query.tags,
         sort: query.sort,
+        permission: query.permission,
         page,
+        deleted: query.deleted,
       },
       query
     );

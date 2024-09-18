@@ -21,7 +21,7 @@ export const Matchers = ({ matchers }: MatchersProps) => {
 };
 
 const getStyles = () => ({
-  tags: css`
-    justify-content: flex-start;
-  `,
+  tags: css({
+    justifyContent: 'flex-start',
+  }),
 });

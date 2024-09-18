@@ -98,6 +98,8 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 	return dashboards.FromDashboard(&dashboard), nil
 }
 
+// GetFolders returns all folders for the given orgID and UIDs.
+// If no UIDs are provided then all folders for the org are returned.
 func (d *DashboardFolderStoreImpl) GetFolders(ctx context.Context, orgID int64, uids []string) (map[string]*folder.Folder, error) {
 	m := make(map[string]*folder.Folder, len(uids))
 	if len(uids) == 0 {

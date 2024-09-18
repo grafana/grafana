@@ -1,5 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+
+import { selectors } from '@grafana/e2e-selectors';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';
 
@@ -22,8 +24,13 @@ function renderComponent({ initialValue = '', onChange = jest.fn(), onRunQuery =
 
 describe('MonacoFieldWrapper', () => {
   test('Renders with no errors', async () => {
-    renderComponent();
+    await act(() => {
+      renderComponent();
+    });
 
-    expect(await screen.findByText('Loading...')).toBeInTheDocument();
+    await waitFor(async () => {
+      const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);
+      expect(monacoEditor).toBeInTheDocument();
+    });
   });
 });

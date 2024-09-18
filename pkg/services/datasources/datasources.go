@@ -21,6 +21,9 @@ type DataSourceService interface {
 	// GetAllDataSources gets all datasources.
 	GetAllDataSources(ctx context.Context, query *GetAllDataSourcesQuery) (res []*DataSource, err error)
 
+	// GetPrunableProvisionedDataSources gets all provisioned data sources that can be pruned.
+	GetPrunableProvisionedDataSources(ctx context.Context) (res []*DataSource, err error)
+
 	// GetDataSourcesByType gets datasources by type.
 	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) ([]*DataSource, error)
 
@@ -32,9 +35,6 @@ type DataSourceService interface {
 
 	// UpdateDataSource updates an existing datasource.
 	UpdateDataSource(ctx context.Context, cmd *UpdateDataSourceCommand) (*DataSource, error)
-
-	// GetDefaultDataSource gets the default datasource.
-	GetDefaultDataSource(ctx context.Context, query *GetDefaultDataSourceQuery) (*DataSource, error)
 
 	// GetHTTPTransport gets a datasource specific HTTP transport.
 	GetHTTPTransport(ctx context.Context, ds *DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error)

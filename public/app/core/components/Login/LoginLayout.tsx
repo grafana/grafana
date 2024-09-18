@@ -3,10 +3,10 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { LoginFooter } from 'app/percona/shared/components/LoginFooter';
 
 import { Branding } from '../Branding/Branding';
 import { BrandingSettings } from '../Branding/types';
-import LoginFooter from '../Footer/LoginFooter';
 
 interface InnerBoxProps {
   enterAnimation?: boolean;
@@ -148,7 +148,9 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(2, 0),
       opacity: 0,
-      transition: 'opacity 0.5s ease-in-out',
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: 'opacity 0.5s ease-in-out',
+      },
 
       [theme.breakpoints.up('sm')]: {
         minHeight: theme.spacing(40),
@@ -171,10 +173,14 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       maxWidth: 415,
       width: '100%',
       transform: 'translate(0px, 0px)',
-      transition: '0.25s ease',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: '0.25s ease',
+      },
     }),
     enterAnimation: css({
-      animation: `${flyInAnimation} ease-out 0.2s`,
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${flyInAnimation} ease-out 0.2s`,
+      },
     }),
   };
 };

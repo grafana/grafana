@@ -74,8 +74,8 @@ const AlertSuccessMessage = ({ title, exploreUrl, dataSourceId, onDashboardLinkC
 
 AlertSuccessMessage.displayName = 'AlertSuccessMessage';
 
-const alertVariants = new Set<AlertVariant>(['success', 'info', 'warning', 'error']);
-const isAlertVariant = (str: string): str is AlertVariant => alertVariants.has(str as AlertVariant);
+const alertVariants = new Set(['success', 'info', 'warning', 'error']);
+const isAlertVariant = (str: string): str is AlertVariant => alertVariants.has(str);
 const getAlertVariant = (status: string): AlertVariant => {
   if (status.toLowerCase() === 'ok') {
     return 'success';

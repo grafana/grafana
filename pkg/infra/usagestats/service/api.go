@@ -15,12 +15,15 @@ func (uss *UsageStats) registerAPIEndpoints() {
 	authorize := accesscontrol.Middleware(uss.accesscontrol)
 
 	uss.RouteRegister.Group(rootUrl, func(subrouter routing.RouteRegister) {
-		subrouter.Get("/usage-report-preview", authorize(accesscontrol.EvalPermission(ActionRead)), routing.Wrap(uss.getUsageReportPreview))
+		subrouter.Get("/usage-report-preview", authorize(accesscontrol.EvalPermission(accesscontrol.ActionUsageStatsRead)), routing.Wrap(uss.getUsageReportPreview))
 	})
 }
 
 func (uss *UsageStats) getUsageReportPreview(ctx *contextmodel.ReqContext) response.Response {
-	usageReport, err := uss.GetUsageReport(ctx.Req.Context())
+	ctxTracer, span := uss.tracer.Start(ctx.Req.Context(), "usageStats.getUsageReportPreview")
+	defer span.End()
+
+	usageReport, err := uss.GetUsageReport(ctxTracer)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get usage report", err)
 	}

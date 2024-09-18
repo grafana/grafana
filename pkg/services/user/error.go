@@ -18,7 +18,9 @@ var (
 )
 
 var (
+	ErrEmailConflict         = errutil.Conflict("user.email-conflict", errutil.WithPublicMessage("Email is already being used"))
 	ErrEmptyUsernameAndEmail = errutil.BadRequest(
 		"user.empty-username-and-email", errutil.WithPublicMessage("Need to specify either username or email"),
 	)
+	ErrPasswordMissmatch = errutil.BadRequest("user.password-missmatch", errutil.WithPublicMessage("Invalid old password"))
 )

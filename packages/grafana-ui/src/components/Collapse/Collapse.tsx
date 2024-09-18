@@ -71,7 +71,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'collapse__header',
     padding: theme.spacing(1, 2, 1, 2),
     display: 'flex',
-    transition: 'all 0.1s linear',
   }),
   headerCollapsed: css({
     label: 'collapse__header--collapsed',

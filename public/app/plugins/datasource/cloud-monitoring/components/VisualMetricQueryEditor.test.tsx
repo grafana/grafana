@@ -4,6 +4,7 @@ import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
 import { CustomVariableModel, getDefaultTimeRange } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
@@ -89,7 +90,7 @@ describe('VisualMetricQueryEditor', () => {
     await act(async () => {
       await select(service, 'Srv', { container: document.body });
     });
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ filters: ['metric.type', '=', mockMetricDescriptor.type] })
     );
   });
@@ -128,7 +129,7 @@ describe('VisualMetricQueryEditor', () => {
     await act(async () => {
       await select(metricName, 'metricName_test', { container: document.body });
     });
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ filters: ['metric.type', '=', mockMetricDescriptor.type] })
     );
   });
@@ -174,7 +175,7 @@ describe('VisualMetricQueryEditor', () => {
     );
     const service = await screen.findByLabelText('Service');
     openMenu(service);
-    expect(screen.getAllByLabelText('Select option').length).toEqual(2);
+    expect(screen.getAllByTestId(selectors.components.Select.option).length).toEqual(2);
   });
 
   it('resets query to default when service changes', async () => {
@@ -209,7 +210,7 @@ describe('VisualMetricQueryEditor', () => {
     await act(async () => {
       await select(service, 'Srv 2', { container: document.body });
     });
-    expect(onChange).toBeCalledWith(expect.objectContaining({ filters: ['metric.type', '=', 'type2'] }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ filters: ['metric.type', '=', 'type2'] }));
     expect(query).toEqual(defaultQuery);
     expect(screen.queryByText('metric.test_label')).not.toBeInTheDocument();
   });
@@ -261,7 +262,7 @@ describe('VisualMetricQueryEditor', () => {
     await act(async () => {
       await select(metric, 'metricName2', { container: document.body });
     });
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ filters: ['metric.test_label', '=', 'test', 'AND', 'metric.type', '=', 'type2'] })
     );
     expect(query).toEqual(defaultQuery);

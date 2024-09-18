@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
 import { addDays, subDays } from 'date-fns';
+import { uniqueId } from 'lodash';
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Card, Modal, RadioButtonGroup, useStyles2, Stack } from '@grafana/ui';
+import { Button, Card, Modal, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { KeyValueField } from '../../../api/templateApi';
 import AnnotationsStep from '../../rule-editor/AnnotationsStep';
-import LabelsField from '../../rule-editor/LabelsField';
+import LabelsField from '../../rule-editor/labels/LabelsField';
 
 interface Props {
   isOpen: boolean;
@@ -53,6 +54,8 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
         }, {}),
       startsAt: '2023-04-01T00:00:00Z',
       endsAt: status === 'firing' ? addDays(new Date(), 1).toISOString() : subDays(new Date(), 1).toISOString(),
+      status,
+      fingerprint: uniqueId('fingerprint_'),
     };
     setAlerts((alerts) => [...alerts, alert]);
     formMethods.reset();
@@ -142,31 +145,31 @@ export const GenerateAlertDataModal = ({ isOpen, onDismiss, onAccept }: Props) =
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  section: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  onAddButton: css`
-    flex: none;
-    width: fit-content;
-    padding-right: ${theme.spacing(1)};
-    margin-left: auto;
-  `,
-  flexWrapper: css`
-    display: flex;
-    flex-direction: row,
-    justify-content: space-between;
-  `,
-  onSubmitWrapper: css`
-    display: flex;
-    flex-direction: row;
-    align-items: baseline;
-    justify-content: flex-end;
-  `,
-  onSubmitButton: css`
-    margin-left: ${theme.spacing(2)};
-  `,
-  result: css`
-    width: 570px;
-    height: 363px;
-  `,
+  section: css({
+    marginBottom: theme.spacing(2),
+  }),
+  onAddButton: css({
+    flex: 'none',
+    width: 'fit-content',
+    paddingRight: theme.spacing(1),
+    marginLeft: 'auto',
+  }),
+  flexWrapper: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  }),
+  onSubmitWrapper: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'flex-end',
+  }),
+  onSubmitButton: css({
+    marginLeft: theme.spacing(2),
+  }),
+  result: css({
+    width: '570px',
+    height: '363px',
+  }),
 });

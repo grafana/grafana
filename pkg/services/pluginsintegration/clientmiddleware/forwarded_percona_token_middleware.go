@@ -19,13 +19,15 @@ const forwardedProxyFilterMiddlewareName = "forwarded-x-proxy-filter"
 func NewPerconaForwarderHTTPClientMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &PerconaForwarderHTTPClientMiddleware{
-			next: next,
+			baseMiddleware: baseMiddleware{
+				next: next,
+			},
 		}
 	})
 }
 
 type PerconaForwarderHTTPClientMiddleware struct {
-	next plugins.Client
+	baseMiddleware
 }
 
 func (m *PerconaForwarderHTTPClientMiddleware) applyHeaders(ctx context.Context, pReq *backend.QueryDataRequest) context.Context {

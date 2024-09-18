@@ -71,6 +71,13 @@ Users can now view anonymous usage statistics, including the count of devices an
 
 The number of anonymous devices is not limited by default. The configuration option `device_limit` allows you to enforce a limit on the number of anonymous devices. This enables you to have greater control over the usage within your Grafana instance and keep the usage within the limits of your environment. Once the limit is reached, any new devices that try to access Grafana will be denied access.
 
+To display anonymous users and devices for versions 10.2, 10.3, 10.4, you need to enable the feature toggle `displayAnonymousStats`
+
+```bash
+[feature_toggles]
+enable = displayAnonymousStats
+```
+
 #### Anonymous users
 
 {{< admonition type="note" >}}
@@ -111,6 +118,27 @@ To disable basic auth:
 [auth.basic]
 enabled = false
 ```
+
+### Strong password policy
+
+By default, the password policy for all basic auth users is set to a minimum of four characters. You can enable a stronger password policy with the `password_policy` configuration option.
+
+With the `password_policy` option enabled, new and updated passwords must meet the following criteria:
+
+- At least 12 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+- At least one special character
+
+```bash
+[auth.basic]
+password_policy = true
+```
+
+{{% admonition type="note" %}}
+Existing passwords that don't comply with the new password policy will not be impacted until the user updates their password.
+{{% /admonition %}}
 
 ### Disable login form
 

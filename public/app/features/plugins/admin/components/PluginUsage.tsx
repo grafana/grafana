@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 
-import { GrafanaTheme2, PluginMeta } from '@grafana/data';
+import { GrafanaTheme2, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -19,6 +19,13 @@ export function PluginUsage({ plugin }: Props) {
   const styles = useStyles2(getStyles);
 
   const searchQuery = useMemo<SearchQuery>(() => {
+    if (plugin.type === PluginType.datasource) {
+      return {
+        query: '*',
+        ds_type: plugin.id,
+        kind: ['dashboard'],
+      };
+    }
     return {
       query: '*',
       panel_type: plugin.id,

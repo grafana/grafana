@@ -51,7 +51,7 @@ function makeRenderColumn({ options }: { options?: Array<SelectableValue<string>
           menuShouldPortal
           onChange={({ value }) => value && onChangeItem(setGroupByField(value))}
         />
-        <AccessoryButton aria-label="Remove group by column" icon="times" variant="secondary" onClick={onDeleteItem} />
+        <AccessoryButton title="Remove group by column" icon="times" variant="secondary" onClick={onDeleteItem} />
       </InputGroup>
     );
   };

@@ -56,7 +56,7 @@ func notAuthorized(c *contextmodel.ReqContext) {
 
 func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
 	if c.IsApiRequest() {
-		c.JSON(401, map[string]any{
+		c.JSON(http.StatusUnauthorized, map[string]any{
 			"message": "Token revoked",
 			"error": map[string]any{
 				"id":                    "ERR_TOKEN_REVOKED",
@@ -127,7 +127,7 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, fea
 
 			if normalizeIncludePath(u.Path) == path {
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
-				if useRBAC && !hasAccess(ac.EvalPermission(i.Action)) {
+				if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, i.Action)) {
 					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)
 					permitted = false
 					break

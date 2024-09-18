@@ -1,4 +1,4 @@
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 import InfluxQueryModel from './influx_query_model';
 
@@ -602,6 +602,55 @@ describe('InfluxQuery', () => {
 
         expect(queryText).toBe('"key1" = \'value1\' AND "key2" != \'value2\'');
       });
+    });
+  });
+
+  describe('test query generated with templateVariable and non-regex operator', () => {
+    const testCases = [
+      ['=', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter'],
+      ['!=', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter'],
+      ['Is', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" = \'$tempVar\') AND $timeFilter'],
+      ['Is Not', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" != \'$tempVar\') AND $timeFilter'],
+      ['>', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" > $tempVar) AND $timeFilter'],
+      ['<', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" < $tempVar) AND $timeFilter'],
+    ];
+
+    it.each(testCases)('should not wrap with InfluxDB regex wrapper for "%s" operator', (operator, expectedQuery) => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe(expectedQuery);
+    });
+  });
+  describe('test query generated with templateVariable and regex operator', () => {
+    const testCases = [
+      ['=~', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" =~ /^$tempVar$/) AND $timeFilter'],
+      ['!~', 'SELECT mean("value") FROM "autogen"."cpu" WHERE ("value" !~ /^$tempVar$/) AND $timeFilter'],
+    ];
+
+    it.each(testCases)('should wrap with InfluxDB regex wrapper for "%s" operator', (operator, expectedQuery) => {
+      const query = new InfluxQueryModel(
+        {
+          refId: 'A',
+          measurement: 'cpu',
+          policy: 'autogen',
+          groupBy: [],
+          tags: [{ key: 'value', value: '/^$tempVar$/', operator }],
+        },
+        templateSrv,
+        {}
+      );
+      const queryText = query.render();
+      expect(queryText).toBe(expectedQuery);
     });
   });
 });

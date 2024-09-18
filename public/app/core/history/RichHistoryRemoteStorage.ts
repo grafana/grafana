@@ -85,7 +85,7 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   async getSettings(): Promise<RichHistorySettings> {
     const preferences = await this.preferenceService.load();
     return {
-      activeDatasourceOnly: false,
+      activeDatasourcesOnly: false,
       lastUsedDatasourceFilters: undefined,
       retentionPeriod: 14,
       starredTabAsFirstTab: preferences.queryHistory?.homeTab === 'starred',
@@ -132,11 +132,8 @@ function buildQueryParams(filters: RichHistorySearchFilters): string {
     params = params + `&sort=${filters.sortOrder === SortOrder.Ascending ? 'time-asc' : 'time-desc'}`;
   }
   if (!filters.starred) {
-    const relativeFrom = filters.from === 0 ? 'now' : `now-${filters.from}d`;
-    const relativeTo = filters.to === 0 ? 'now' : `now-${filters.to}d`;
-    // TODO: Unify: remote storage from/to params are swapped comparing to frontend and local storage filters
-    params = params + `&to=${relativeFrom}`;
-    params = params + `&from=${relativeTo}`;
+    params = params + `&to=${filters.to}`;
+    params = params + `&from=${filters.from}`;
   }
   params = params + `&limit=100`;
   params = params + `&page=${filters.page || 1}`;

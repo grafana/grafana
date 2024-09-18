@@ -122,10 +122,6 @@ export const LayerDragDropList = <T extends LayerElement>({
   );
 };
 
-LayerDragDropList.defaultProps = {
-  isGroup: () => false,
-};
-
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     marginBottom: theme.spacing(2),

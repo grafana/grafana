@@ -1,4 +1,4 @@
-import { DecoratorFn } from '@storybook/react';
+import { Decorator } from '@storybook/react';
 import React from 'react';
 import { useDarkMode } from 'storybook-dark-mode';
 
@@ -51,6 +51,6 @@ export const renderComponentWithTheme = (component: React.ComponentType<any>, pr
 };
 
 export const withTheme =
-  (handleSassThemeChange: SassThemeChangeHandler): DecoratorFn =>
+  (handleSassThemeChange: SassThemeChangeHandler): Decorator =>
   // eslint-disable-next-line react/display-name
   (story) => <ThemeableStory handleSassThemeChange={handleSassThemeChange}>{story()}</ThemeableStory>;

@@ -4,24 +4,24 @@
     "no-restricted-imports": [
       "error",
       {
-        "patterns": ["@grafana/runtime", "@grafana/data/*", "@grafana/ui", "@grafana/e2e", "@grafana/e2e-selectors/*"],
+        "patterns": ["@grafana/runtime", "@grafana/data/*", "@grafana/ui", "@grafana/e2e-selectors/*"],
         "paths": [
           {
             "name": "react-i18next",
             "importNames": ["Trans", "t"],
-            "message": "Please import from grafana-ui/src/utils/i18n instead"
-          }
-        ]
-      }
-    ]
+            "message": "Please import from grafana-ui/src/utils/i18n instead",
+          },
+        ],
+      },
+    ],
   },
   "overrides": [
     {
       "files": ["**/*.{test,story}.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": "off",
-        "react/prop-types": "off"
-      }
-    }
-  ]
+        "react/prop-types": "off",
+      },
+    },
+  ],
 }

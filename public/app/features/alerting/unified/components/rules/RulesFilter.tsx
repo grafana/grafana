@@ -5,11 +5,18 @@ import { useForm } from 'react-hook-form';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { logInfo, LogMessages } from '../../Analytics';
+import {
+  logInfo,
+  LogMessages,
+  trackRulesListViewChange,
+  trackRulesSearchComponentInteraction,
+  trackRulesSearchInputInteraction,
+} from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { useAlertingHomePageExtensions } from '../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';
 import { HoverCard } from '../HoverCard';
@@ -62,7 +69,8 @@ const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]
 
 const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => {
   const styles = useStyles2(getStyles);
-  const [queryParams, setQueryParams] = useQueryParams();
+  const [queryParams, updateQueryParams] = useURLSearchParams();
+  const { pluginsFilterEnabled } = usePluginsFilterStatus();
   const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
   // This key is used to force a rerender on the inputs when the filters are cleared
@@ -90,10 +98,12 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     });
 
     setFilterKey((key) => key + 1);
+    trackRulesSearchComponentInteraction('dataSourceNames');
   };
 
   const handleDashboardChange = (dashboardUid: string | undefined) => {
     updateFilters({ ...filterState, dashboardUid });
+    trackRulesSearchComponentInteraction('dashboardUid');
   };
 
   const clearDataSource = () => {
@@ -104,18 +114,17 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
     updateFilters({ ...filterState, ruleState: value });
-  };
-
-  const handleViewChange = (view: string) => {
-    setQueryParams({ view });
+    trackRulesSearchComponentInteraction('ruleState');
   };
 
   const handleRuleTypeChange = (ruleType: PromRuleType) => {
     updateFilters({ ...filterState, ruleType });
+    trackRulesSearchComponentInteraction('ruleType');
   };
 
   const handleRuleHealthChange = (ruleHealth: RuleHealth) => {
     updateFilters({ ...filterState, ruleHealth });
+    trackRulesSearchComponentInteraction('ruleHealth');
   };
 
   const handleClearFiltersClick = () => {
@@ -123,6 +132,11 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     onFilterCleared();
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
+  };
+
+  const handleViewChange = (view: string) => {
+    updateQueryParams({ view });
+    trackRulesListViewChange({ view });
   };
 
   const searchIcon = <Icon name={'search'} />;
@@ -134,7 +148,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
             className={styles.dsPickerContainer}
             label={
               <Label htmlFor="data-source-picker">
-                <Stack gap={0.5}>
+                <Stack gap={0.5} alignItems="center">
                   <span>Search by data sources</span>
                   <Tooltip
                     content={
@@ -150,7 +164,12 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                       </div>
                     }
                   >
-                    <Icon id="data-source-picker-inline-help" name="info-circle" size="sm" />
+                    <Icon
+                      id="data-source-picker-inline-help"
+                      name="info-circle"
+                      size="sm"
+                      title="Search by data sources help"
+                    />
                   </Tooltip>
                 </Stack>
               </Label>
@@ -203,6 +222,19 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onChange={handleRuleHealthChange}
             />
           </div>
+          {pluginsFilterEnabled && (
+            <div>
+              <Label>Plugin rules</Label>
+              <RadioButtonGroup<'hide'>
+                options={[
+                  { label: 'Show', value: undefined },
+                  { label: 'Hide', value: 'hide' },
+                ]}
+                value={filterState.plugins}
+                onChange={(value) => updateFilters({ ...filterState, plugins: value })}
+              />
+            </div>
+          )}
         </Stack>
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
@@ -211,15 +243,16 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               onSubmit={handleSubmit((data) => {
                 setSearchQuery(data.searchQuery);
                 searchQueryRef.current?.blur();
+                trackRulesSearchInputInteraction({ oldQuery: searchQuery, newQuery: data.searchQuery });
               })}
             >
               <Field
                 label={
                   <Label htmlFor="rulesSearchInput">
-                    <Stack gap={0.5}>
+                    <Stack gap={0.5} alignItems="center">
                       <span>Search</span>
                       <HoverCard content={<SearchQueryHelp />}>
-                        <Icon name="info-circle" size="sm" tabIndex={0} />
+                        <Icon name="info-circle" size="sm" tabIndex={0} title="Search help" />
                       </HoverCard>
                     </Stack>
                   </Label>
@@ -244,7 +277,7 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               <Label>View as</Label>
               <RadioButtonGroup
                 options={ViewOptions}
-                value={String(queryParams['view'] ?? ViewOptions[0].value)}
+                value={queryParams.get('view') ?? ViewOptions[0].value}
                 onChange={handleViewChange}
               />
             </div>
@@ -329,5 +362,10 @@ const helpStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'center',
   }),
 });
+
+function usePluginsFilterStatus() {
+  const { extensions } = useAlertingHomePageExtensions();
+  return { pluginsFilterEnabled: extensions.length > 0 };
+}
 
 export default RulesFilter;

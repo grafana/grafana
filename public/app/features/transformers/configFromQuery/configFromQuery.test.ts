@@ -85,6 +85,20 @@ describe('config from data', () => {
     expect(results[0].fields[1].config.max).toBe(1);
   });
 
+  it('With threshold', () => {
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [{ fieldName: 'Max', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'orange' } } }],
+    };
+
+    const results = extractConfigFromQuery(options, [config, seriesA]);
+    expect(results.length).toBe(1);
+    const thresholdConfig = results[0].fields[1].config.thresholds?.steps[1];
+    expect(thresholdConfig).toBeDefined();
+    expect(thresholdConfig?.color).toBe('orange');
+    expect(thresholdConfig?.value).toBe(50);
+  });
+
   it('With custom matcher and displayName mapping', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',
@@ -102,6 +116,7 @@ describe('value mapping from data', () => {
   const config = toDataFrame({
     fields: [
       { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      { name: 'threshold', type: FieldType.number, values: [4] },
       { name: 'text', type: FieldType.string, values: ['one', 'two', 'three'] },
       { name: 'color', type: FieldType.string, values: ['red', 'blue', 'green'] },
     ],

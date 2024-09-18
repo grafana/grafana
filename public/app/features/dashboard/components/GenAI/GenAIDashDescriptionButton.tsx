@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { DashboardModel } from '../../state';
+import { getDashboardSrv } from '../../services/DashboardSrv';
 
 import { GenAIButton } from './GenAIButton';
 import { EventTrackingSrc } from './tracking';
@@ -8,7 +8,6 @@ import { getDashboardPanelPrompt, Message, Role } from './utils';
 
 interface GenAIDashDescriptionButtonProps {
   onGenerate: (description: string) => void;
-  dashboard: DashboardModel;
 }
 
 const DASHBOARD_DESCRIPTION_CHAR_LIMIT = 300;
@@ -24,12 +23,10 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   `The description should be, at most, ${DASHBOARD_DESCRIPTION_CHAR_LIMIT} characters.\n` +
   'Respond with only the description of the dashboard.';
 
-export const GenAIDashDescriptionButton = ({ onGenerate, dashboard }: GenAIDashDescriptionButtonProps) => {
-  const messages = React.useMemo(() => getMessages(dashboard), [dashboard]);
-
+export const GenAIDashDescriptionButton = ({ onGenerate }: GenAIDashDescriptionButtonProps) => {
   return (
     <GenAIButton
-      messages={messages}
+      messages={getMessages}
       onGenerate={onGenerate}
       eventTrackingSrc={EventTrackingSrc.dashboardDescription}
       toggleTipTitle={'Improve your dashboard description'}
@@ -37,7 +34,8 @@ export const GenAIDashDescriptionButton = ({ onGenerate, dashboard }: GenAIDashD
   );
 };
 
-function getMessages(dashboard: DashboardModel): Message[] {
+function getMessages(): Message[] {
+  const dashboard = getDashboardSrv().getCurrent()!;
   const panelPrompt = getDashboardPanelPrompt(dashboard);
 
   return [
@@ -47,7 +45,7 @@ function getMessages(dashboard: DashboardModel): Message[] {
     },
     {
       content: `The title of the dashboard is "${dashboard.title}"\n` + `${panelPrompt}`,
-      role: Role.system,
+      role: Role.user,
     },
   ];
 }

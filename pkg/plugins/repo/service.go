@@ -21,8 +21,8 @@ type Manager struct {
 	log log.PrettyLogger
 }
 
-func ProvideService(cfg *config.Cfg) (*Manager, error) {
-	baseURL, err := url.JoinPath(cfg.GrafanaComURL, "/api/plugins")
+func ProvideService(cfg *config.PluginManagementCfg) (*Manager, error) {
+	baseURL, err := url.JoinPath(cfg.GrafanaComAPIURL, "/plugins")
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +108,7 @@ func (m *Manager) downloadURL(pluginID, version string) string {
 	return fmt.Sprintf("%s/%s/versions/%s/download", m.baseURL, pluginID, version)
 }
 
-// grafanaCompatiblePluginVersions will get version info from /api/plugins/repo/$pluginID based on
-// the provided compatibility information (sent via HTTP headers)
+// grafanaCompatiblePluginVersions will get version info from /api/plugins/$pluginID/versions
 func (m *Manager) grafanaCompatiblePluginVersions(pluginID string, compatOpts CompatOpts) ([]Version, error) {
 	u, err := url.Parse(m.baseURL)
 	if err != nil {

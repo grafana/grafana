@@ -154,7 +154,15 @@ function buildData({ dataLinkTitle = 'Grafana', field1Name = 'field_1', field2Na
         {
           name: field2Name,
           type: FieldType.number,
-          config: {},
+          config: {
+            links: [
+              {
+                title: dataLinkTitle,
+                targetBlank: true,
+                url: 'http://www.someWebsite.com',
+              },
+            ],
+          },
           values: [500, 300, 150, 250, 600, 500, 700, 400, 540, 630, 460, 250, 500, 400, 800, 930, 360],
           getLinks: (_config: ValueLinkConfig) => [
             {

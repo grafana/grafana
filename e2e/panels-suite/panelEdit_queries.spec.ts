@@ -62,16 +62,16 @@ describe('Panel edit tests - queries', () => {
       expect(resultIds.has('B:')).equals(true);
     });
 
-    // Disable row with refId A
-    e2e.components.QueryEditorRow.actionButton('Disable query').eq(1).should('be.visible').click();
+    // Hide response for row with refId A
+    e2e.components.QueryEditorRow.actionButton('Hide response').eq(1).should('be.visible').click();
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;
       expect(keys[length - 1].innerText).equals('B:');
     });
 
-    // Enable row with refId B
-    e2e.components.QueryEditorRow.actionButton('Disable query').eq(1).should('be.visible').click();
+    // Show response for row with refId A
+    e2e.components.QueryEditorRow.actionButton('Hide response').eq(1).should('be.visible').click();
 
     expectInspectorResultAndClose((keys) => {
       const length = keys.length;

@@ -155,26 +155,26 @@ function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormVal
 }
 
 export const yamlTabStyle = (theme: GrafanaTheme2) => ({
-  content: css`
-    flex-grow: 1;
-    height: 100%;
-    padding-bottom: 16px;
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  applyButton: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    flex-grow: 0;
-    margin-bottom: ${theme.spacing(2)};
-  `,
+  content: css({
+    flexGrow: 1,
+    height: '100%',
+    paddingBottom: '16px',
+    marginBottom: theme.spacing(2),
+  }),
+  applyButton: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexGrow: 0,
+    marginBottom: theme.spacing(2),
+  }),
 });
 
 export const drawerStyles = () => ({
-  subtitle: css`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  `,
+  subtitle: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  }),
 });

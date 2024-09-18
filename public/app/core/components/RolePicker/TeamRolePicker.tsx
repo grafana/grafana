@@ -53,7 +53,7 @@ export const TeamRolePicker = ({
         return pendingRoles;
       }
 
-      if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList)) {
+      if (contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList) && teamId > 0) {
         return await fetchTeamRoles(teamId);
       }
     } catch (e) {

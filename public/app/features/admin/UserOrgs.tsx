@@ -6,7 +6,6 @@ import {
   Button,
   ConfirmButton,
   Field,
-  HorizontalGroup,
   Icon,
   Modal,
   stylesFactory,
@@ -245,7 +244,6 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                 confirmVariant="destructive"
                 onCancel={this.onCancelClick}
                 onConfirm={this.onOrgRemove}
-                autoFocus
               >
                 Remove from organization
               </ConfirmButton>
@@ -387,14 +385,14 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
           />
         </Field>
         <Modal.ButtonRow>
-          <HorizontalGroup spacing="md" justify="center">
+          <Stack gap={2} justifyContent="center">
             <Button variant="secondary" fill="outline" onClick={this.onCancel}>
               Cancel
             </Button>
             <Button variant="primary" disabled={selectedOrg === null} onClick={this.onAddUserToOrg}>
               Add to organization
             </Button>
-          </HorizontalGroup>
+          </Stack>
         </Modal.ButtonRow>
       </Modal>
     );

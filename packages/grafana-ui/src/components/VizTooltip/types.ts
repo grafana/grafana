@@ -1,3 +1,5 @@
+import { LineStyle } from '@grafana/schema';
+
 export enum ColorIndicator {
   series = 'series',
   value = 'value',
@@ -17,13 +19,14 @@ export enum ColorPlacement {
   trailing = 'trailing',
 }
 
-export interface LabelValue {
+export interface VizTooltipItem {
   label: string;
   value: string;
   color?: string;
   colorIndicator?: ColorIndicator;
   colorPlacement?: ColorPlacement;
   isActive?: boolean;
+  lineStyle?: LineStyle;
 
   // internal/tmp for sorting
   numeric?: number;

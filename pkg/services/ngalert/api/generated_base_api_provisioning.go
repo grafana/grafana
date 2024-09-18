@@ -21,6 +21,7 @@ import (
 
 type ProvisioningApi interface {
 	RouteDeleteAlertRule(*contextmodel.ReqContext) response.Response
+	RouteDeleteAlertRuleGroup(*contextmodel.ReqContext) response.Response
 	RouteDeleteContactpoints(*contextmodel.ReqContext) response.Response
 	RouteDeleteMuteTiming(*contextmodel.ReqContext) response.Response
 	RouteDeleteTemplate(*contextmodel.ReqContext) response.Response
@@ -56,6 +57,12 @@ func (f *ProvisioningApiHandler) RouteDeleteAlertRule(ctx *contextmodel.ReqConte
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
 	return f.handleRouteDeleteAlertRule(ctx, uIDParam)
+}
+func (f *ProvisioningApiHandler) RouteDeleteAlertRuleGroup(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
+	groupParam := web.Params(ctx.Req)[":Group"]
+	return f.handleRouteDeleteAlertRuleGroup(ctx, folderUIDParam, groupParam)
 }
 func (f *ProvisioningApiHandler) RouteDeleteContactpoints(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -234,6 +241,18 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodDelete,
 				"/api/v1/provisioning/alert-rules/{UID}",
 				api.Hooks.Wrap(srv.RouteDeleteAlertRule),
+				m,
+			),
+		)
+		group.Delete(
+			toMacaronPath("/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodDelete, "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}"),
+			metrics.Instrument(
+				http.MethodDelete,
+				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
+				api.Hooks.Wrap(srv.RouteDeleteAlertRuleGroup),
 				m,
 			),
 		)

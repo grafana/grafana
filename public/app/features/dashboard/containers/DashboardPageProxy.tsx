@@ -18,7 +18,10 @@ export type DashboardPageProxyProps = GrafanaRouteComponentProps<
 // This proxy component is used for Dashboard -> Scenes migration.
 // It will render DashboardScenePage if the user is only allowed to view the dashboard.
 function DashboardPageProxy(props: DashboardPageProxyProps) {
-  if (config.featureToggles.dashboardScene || props.queryParams.scenes) {
+  const forceScenes = props.queryParams.scenes === true;
+  const forceOld = props.queryParams.scenes === false;
+
+  if (forceScenes || (config.featureToggles.dashboardScene && !forceOld)) {
     return <DashboardScenePage {...props} />;
   }
 
@@ -39,6 +42,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return stateManager.fetchDashboard({
       route: props.route.routeName as DashboardRoutes,
       uid: props.match.params.uid ?? '',
+      keepDashboardFromExploreInLocalStorage: true,
     });
   }, [props.match.params.uid, props.route.routeName]);
 
@@ -50,9 +54,13 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
     return null;
   }
 
+  if (dashboard?.value?.dashboard?.uid !== props.match.params.uid && dashboard.value?.meta?.isNew !== true) {
+    return null;
+  }
+
   if (
     dashboard.value &&
-    !(dashboard.value.meta.canEdit || dashboard.value.meta.canMakeEditable) &&
+    !(dashboard.value.meta?.canEdit || dashboard.value.meta?.canMakeEditable) &&
     isScenesSupportedRoute
   ) {
     return <DashboardScenePage {...props} />;

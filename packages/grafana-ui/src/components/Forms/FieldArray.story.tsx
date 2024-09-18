@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 import { FieldValues } from 'react-hook-form';
 
@@ -29,7 +29,7 @@ const meta: Meta = {
 
 export default meta;
 
-export const Simple: Story = (args) => {
+export const Simple: StoryFn = (args) => {
   const defaultValues: FieldValues = {
     people: [{ firstName: 'Janis', lastName: 'Joplin' }],
   };

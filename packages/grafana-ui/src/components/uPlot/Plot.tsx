@@ -4,6 +4,8 @@ import uPlot, { AlignedData, Options } from 'uplot';
 import { PlotProps } from './types';
 import { pluginLog } from './utils';
 
+import 'uplot/dist/uPlot.min.css';
+
 function sameDims(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.width === prevProps.width && nextProps.height === prevProps.height;
 }

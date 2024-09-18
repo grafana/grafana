@@ -22,7 +22,7 @@ When a plugin is marked for loading, grafana decides if it should load it in the
 - If a plugin is marked to load in a sandbox, first the source code is downloaded with `fetch`, then pre-processed to adjust sourceMaps and CDNs and finally evaluated inside a new near-membrane virtual environment.
 
 In either case, Grafana receives a pluginExport object that later uses to initialize plugins. For Grafana's core, this
-pluginExport is idential in functionality and properties regardless of the loading method.
+pluginExport is identical in functionality and properties regardless of the loading method.
 
 # Plugin execution
 
@@ -64,7 +64,7 @@ those plugins that use web workers. Performance is still under tests when this w
 Distortions is the mechanism to intercept calls from the child realm code to JS APIS and DOM APIs. e.g: `Array.map` or
 `document.getElement`.
 
-Distortions allow to replace the function that will execute inside the child realm wnen the function is invoked.
+Distortions allow to replace the function that will execute inside the child realm when the function is invoked.
 
 Distortions also allow to intercept the exchange of objects between the child realm and the incubator realm, we can, for
 example, inspect all DOM elements access and generally speaking all objects that go to the child realm.

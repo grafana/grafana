@@ -6,8 +6,8 @@ import {
   TraceLog,
   TraceSpanRow,
 } from '@grafana/data';
-import { transformTraceData } from 'app/features/explore/TraceView/components';
 
+import transformTraceData from './_importedDependencies/model/transform-trace-data';
 import { JaegerResponse, Span, TraceProcess, TraceResponse } from './types';
 
 export function createTraceFrame(data: TraceResponse): DataFrame {

@@ -513,7 +513,8 @@ func createTestLokiBackend(req client.Requester, met *metrics.Historian) *Remote
 		Encoder:        JsonEncoder{},
 		ExternalLabels: map[string]string{"externalLabelKey": "externalLabelValue"},
 	}
-	return NewRemoteLokiBackend(cfg, req, met)
+	lokiBackendLogger := log.New("ngalert.state.historian", "backend", "loki")
+	return NewRemoteLokiBackend(lokiBackendLogger, cfg, req, met)
 }
 
 func singleFromNormal(st *state.State) []state.StateTransition {

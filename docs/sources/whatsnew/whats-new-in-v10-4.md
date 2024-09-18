@@ -180,7 +180,7 @@ _Generally available in all editions of Grafana_
 
 Users looking to migrate to the new Grafana Alerting product can do so with confidence with the Grafana Alerting migration preview tool. The migration preview tool allows users to view, edit, and delete migrated rules prior cutting over, with the option to roll back to Legacy Alerting.
 
-[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/migrating-alerts/#upgrade-with-preview-recommended)
+[Documentation](https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts/#upgrade-with-preview-recommended)
 
 ### Rule evaluation spread over the entire evaluation interval
 

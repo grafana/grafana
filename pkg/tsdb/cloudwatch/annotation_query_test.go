@@ -30,7 +30,7 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 		client = fakeCWAnnotationsClient{describeAlarmsForMetricOutput: &cloudwatch.DescribeAlarmsForMetricOutput{}}
 		im := defaultTestInstanceManager()
 
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -62,7 +62,7 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 		client = fakeCWAnnotationsClient{describeAlarmsOutput: &cloudwatch.DescribeAlarmsOutput{}}
 		im := defaultTestInstanceManager()
 
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},

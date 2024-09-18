@@ -92,23 +92,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
       maxWidth: '400px',
       fontSize: theme.typography.size.sm,
-      // !important because these styles are also provided to popper via .popper classes from Tooltip component
-      // hope to get rid of those soon
-      padding: '15px !important',
-      '& [data-placement^="top"]': {
-        paddingLeft: '0 !important',
-        paddingRight: '0 !important',
-      },
-      '& [data-placement^="bottom"]': {
-        paddingLeft: '0 !important',
-        paddingRight: '0 !important',
-      },
-      '& [data-placement^="left"]': {
-        paddingTop: '0 !important',
-      },
-      '& [data-placement^="right"]': {
-        paddingTop: '0 !important',
-      },
     }),
   };
 });

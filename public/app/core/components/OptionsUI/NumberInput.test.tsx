@@ -61,7 +61,7 @@ describe('NumberInput', () => {
 
     tests.forEach((test, i) => {
       fireEvent.blur(data.input, { target: { value: test.value } });
-      expect(data.onChange).toBeCalledWith(test.onChangeCalledWith);
+      expect(data.onChange).toHaveBeenCalledWith(test.onChangeCalledWith);
       expect(data.onChange).toBeCalledTimes(i + 1);
       expect(data.input).toHaveValue(test.expected);
     });
@@ -102,7 +102,7 @@ describe('NumberInput', () => {
     tests.forEach((test, i) => {
       input = screen.getByTestId('input-wrapper').firstChild?.firstChild as HTMLInputElement;
       fireEvent.blur(input, { target: { value: test.value } });
-      expect(data.onChange).toBeCalledWith(test.onChangeCalledWith);
+      expect(data.onChange).toHaveBeenCalledWith(test.onChangeCalledWith);
       expect(data.onChange).toBeCalledTimes(i + 1);
       expect(screen.getByTestId('input-wrapper').firstChild?.firstChild).toHaveValue(test.expected);
     });

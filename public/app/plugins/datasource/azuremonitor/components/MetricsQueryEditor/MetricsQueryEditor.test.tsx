@@ -158,7 +158,7 @@ describe('MetricsQueryEditor', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
 
     expect(onChange).toBeCalledTimes(1);
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         subscription: 'def-456',
         azureMonitor: expect.objectContaining({
@@ -213,7 +213,7 @@ describe('MetricsQueryEditor', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
 
     expect(onChange).toBeCalledTimes(1);
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         subscription: 'def-456',
         azureMonitor: expect.objectContaining({
@@ -461,7 +461,7 @@ describe('MetricsQueryEditor', () => {
     await userEvent.click(applyButton);
 
     expect(onChange).toBeCalledTimes(1);
-    expect(onChange).toBeCalledWith(
+    expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
         azureMonitor: expect.objectContaining({
           resources: [{ subscription: 'def-123', metricNamespace: 'ns', resourceGroup: 'rg', resourceName: 'rn' }],

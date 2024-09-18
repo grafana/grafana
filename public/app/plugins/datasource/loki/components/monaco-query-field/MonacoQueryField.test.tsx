@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { createLokiDatasource } from '../../__mocks__/datasource';
 
 import MonacoQueryField from './MonacoQueryField';
@@ -31,6 +33,7 @@ describe('MonacoQueryField', () => {
   test('Renders with no errors', async () => {
     renderComponent();
 
-    expect(await screen.findByText('Loading...')).toBeInTheDocument();
+    const monacoEditor = await screen.findByTestId(selectors.components.ReactMonacoEditor.editorLazy);
+    expect(monacoEditor).toBeInTheDocument();
   });
 });

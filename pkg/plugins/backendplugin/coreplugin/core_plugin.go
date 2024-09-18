@@ -18,6 +18,7 @@ type corePlugin struct {
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 	backend.StreamHandler
+	backend.AdmissionHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
@@ -29,6 +30,7 @@ func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 			CheckHealthHandler:  opts.CheckHealthHandler,
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
+			AdmissionHandler:    opts.AdmissionHandler,
 			StreamHandler:       opts.StreamHandler,
 		}, nil
 	}
@@ -123,4 +125,28 @@ func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 		return cp.StreamHandler.RunStream(ctx, req, sender)
 	}
 	return plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
+	if cp.AdmissionHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.AdmissionHandler.MutateAdmission(ctx, req)
+	}
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
+	if cp.AdmissionHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.AdmissionHandler.ValidateAdmission(ctx, req)
+	}
+	return nil, plugins.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+	if cp.AdmissionHandler != nil {
+		ctx = backend.WithGrafanaConfig(ctx, req.PluginContext.GrafanaConfig)
+		return cp.AdmissionHandler.ConvertObject(ctx, req)
+	}
+	return nil, plugins.ErrMethodNotImplemented
 }

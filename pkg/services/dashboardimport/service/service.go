@@ -109,12 +109,11 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		req.FolderUid = folder.UID
 	}
 
-	namespaceID, identifier := req.User.GetNamespacedID()
+	namespace, identifier := req.User.GetNamespacedID()
 	userID := int64(0)
 
-	switch namespaceID {
-	case identity.NamespaceUser, identity.NamespaceServiceAccount:
-		userID, _ = identity.IntIdentifier(namespaceID, identifier)
+	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+		userID, _ = identity.IntIdentifier(namespace, identifier)
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{
@@ -141,7 +140,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	// nolint:staticcheck
-	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId)
+	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId, req.FolderUid)
 	if err != nil {
 		return nil, err
 	}

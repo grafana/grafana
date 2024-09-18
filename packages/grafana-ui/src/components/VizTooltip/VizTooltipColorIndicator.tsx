@@ -2,8 +2,10 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { FALLBACK_COLOR, GrafanaTheme2 } from '@grafana/data';
+import { LineStyle } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
+import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 import { ColorIndicator, DEFAULT_COLOR_INDICATOR } from './types';
 import { getColorIndicatorClass } from './utils';
@@ -17,6 +19,7 @@ interface Props {
   color?: string;
   colorIndicator?: ColorIndicator;
   position?: ColorIndicatorPosition;
+  lineStyle?: LineStyle;
 }
 
 export type ColorIndicatorStyles = ReturnType<typeof getStyles>;
@@ -25,8 +28,19 @@ export const VizTooltipColorIndicator = ({
   color = FALLBACK_COLOR,
   colorIndicator = DEFAULT_COLOR_INDICATOR,
   position = ColorIndicatorPosition.Leading,
+  lineStyle,
 }: Props) => {
   const styles = useStyles2(getStyles);
+
+  if (colorIndicator === ColorIndicator.series) {
+    return (
+      <SeriesIcon
+        color={color}
+        lineStyle={lineStyle}
+        className={position === ColorIndicatorPosition.Leading ? styles.leading : styles.trailing}
+      />
+    );
+  }
 
   return (
     <span
@@ -46,12 +60,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   trailing: css({
     marginLeft: theme.spacing(0.5),
-  }),
-  series: css({
-    width: '14px',
-    height: '4px',
-    borderRadius: theme.shape.radius.pill,
-    minWidth: '14px',
   }),
   value: css({
     width: '12px',

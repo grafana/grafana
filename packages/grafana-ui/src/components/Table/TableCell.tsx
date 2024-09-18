@@ -15,9 +15,22 @@ export interface Props {
   timeRange?: TimeRange;
   userProps?: object;
   frame: DataFrame;
+  rowStyled?: boolean;
+  textWrapped?: boolean;
+  height?: number;
 }
 
-export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, userProps, frame }: Props) => {
+export const TableCell = ({
+  cell,
+  tableStyles,
+  onCellFilterAdded,
+  timeRange,
+  userProps,
+  frame,
+  rowStyled,
+  textWrapped,
+  height,
+}: Props) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
 
@@ -43,6 +56,9 @@ export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, use
         timeRange,
         userProps,
         frame,
+        rowStyled,
+        textWrapped,
+        height,
       })}
     </>
   );

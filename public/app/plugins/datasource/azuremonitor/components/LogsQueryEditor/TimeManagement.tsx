@@ -10,6 +10,7 @@ import { setDashboardTime, setTimeColumn } from './setQueryValue';
 export function TimeManagement({ query, onQueryChange: onChange, schema }: AzureQueryEditorFieldProps) {
   const [defaultTimeColumns, setDefaultTimeColumns] = useState<SelectableValue[] | undefined>();
   const [timeColumns, setTimeColumns] = useState<SelectableValue[] | undefined>();
+  const [disabledTimePicker, setDisabledTimePicker] = useState<boolean>(false);
 
   const setDefaultColumn = useCallback((column: string) => onChange(setTimeColumn(query, column)), [query, onChange]);
 
@@ -76,6 +77,14 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
     },
     [onChange, query]
   );
+
+  useEffect(() => {
+    if (query.azureLogAnalytics?.basicLogsQuery) {
+      setDisabledTimePicker(true);
+    } else {
+      setDisabledTimePicker(false);
+    }
+  }, [query.azureLogAnalytics?.basicLogsQuery]);
   return (
     <>
       <InlineField
@@ -89,12 +98,14 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       >
         <RadioButtonGroup
           options={[
-            { label: 'Query', value: false },
-            { label: 'Dashboard', value: true },
+            { label: 'Query', value: 'query' },
+            { label: 'Dashboard', value: 'dashboard' },
           ]}
-          value={query.azureLogAnalytics?.dashboardTime ?? false}
+          value={query.azureLogAnalytics?.dashboardTime ? 'dashboard' : 'query'}
           size={'md'}
           onChange={(val) => onChange(setDashboardTime(query, val))}
+          disabled={disabledTimePicker}
+          disabledOptions={disabledTimePicker ? ['query'] : []}
         />
       </InlineField>
       {query.azureLogAnalytics?.dashboardTime && (

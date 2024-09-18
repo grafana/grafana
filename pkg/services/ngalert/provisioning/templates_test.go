@@ -414,7 +414,6 @@ var configWithTemplates = `
 				"uid": "",
 				"name": "email receiver",
 				"type": "email",
-				"isDefault": true,
 				"settings": {
 					"addresses": "<example@email.com>"
 				}
@@ -435,7 +434,6 @@ var brokenConfig = `
 				"uid": "abc",
 				"name": "default-email",
 				"type": "email",
-				"isDefault": true,
 				"settings": {}
 			}]
 		}]

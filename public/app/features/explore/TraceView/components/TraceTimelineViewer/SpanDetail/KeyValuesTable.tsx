@@ -14,7 +14,7 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import * as React from 'react';
+import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
@@ -92,21 +92,23 @@ function parseIfComplexJson(value: unknown) {
   return value;
 }
 
-export const LinkValue = (props: { href: string; title?: string; children: React.ReactNode }) => {
+interface LinkValueProps {
+  href: string;
+  title?: string;
+  children: React.ReactNode;
+}
+
+export const LinkValue = ({ href, title = '', children }: PropsWithChildren<LinkValueProps>) => {
   return (
-    <a href={props.href} title={props.title} target="_blank" rel="noopener noreferrer">
-      {props.children} <Icon name="external-link-alt" />
+    <a href={href} title={title} target="_blank" rel="noopener noreferrer">
+      {children} <Icon name="external-link-alt" />
     </a>
   );
 };
 
-LinkValue.defaultProps = {
-  title: '',
-};
-
 export type KeyValuesTableProps = {
   data: TraceKeyValuePair[];
-  linksGetter: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
+  linksGetter?: ((pairs: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
 };
 
 export default function KeyValuesTable(props: KeyValuesTableProps) {

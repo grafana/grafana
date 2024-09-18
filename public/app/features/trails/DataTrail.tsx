@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { AdHocVariableFilter, GrafanaTheme2 } from '@grafana/data';
+import { AdHocVariableFilter, GrafanaTheme2, VariableHide, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -18,19 +18,23 @@ import {
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
+  sceneUtils,
+  SceneVariable,
   SceneVariableSet,
+  VariableDependencyConfig,
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
-import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
+import { DataTrailHistory } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
-import { MetricSelectScene } from './MetricSelectScene';
+import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
 import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { LOGS_METRIC, MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
-import { getUrlForTrail } from './utils';
+import { MetricDatasourceHelper } from './helpers/MetricDatasourceHelper';
+import { reportChangeInLabelFilters } from './interactions';
+import { MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 
 export interface DataTrailState extends SceneObjectState {
   topScene?: SceneObject;
@@ -78,61 +82,114 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Some scene elements publish this
     this.subscribeToEvent(MetricSelectedEvent, this._handleMetricSelectedEvent.bind(this));
 
-    // Pay attention to changes in history (i.e., changing the step)
-    this.state.history.subscribeToState((newState, oldState) => {
-      const oldNumberOfSteps = oldState.steps.length;
-      const newNumberOfSteps = newState.steps.length;
+    const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, this);
+    if (filtersVariable instanceof AdHocFiltersVariable) {
+      this._subs.add(
+        filtersVariable?.subscribeToState((newState, prevState) => {
+          if (!this._addingFilterWithoutReportingInteraction) {
+            reportChangeInLabelFilters(newState.filters, prevState.filters);
+          }
+        })
+      );
+    }
 
-      const newStepWasAppended = newNumberOfSteps > oldNumberOfSteps;
+    // Disconnects the current step history state from the current state, to prevent changes affecting history state
+    const currentState = this.state.history.state.steps[this.state.history.state.currentStep]?.trailState;
+    if (currentState) {
+      this.restoreFromHistoryStep(currentState);
+    }
 
-      if (newStepWasAppended) {
-        // Do nothing because the state is already up to date -- it created a new step!
-        return;
-      }
+    this.enableUrlSync();
 
-      if (oldState.currentStep === newState.currentStep) {
-        // The same step was clicked on -- no need to change anything.
-        return;
-      }
-
-      // History changed because a different node was selected
-      const step = newState.steps[newState.currentStep];
-
-      this.goBackToStep(step);
-    });
+    // Save the current trail as a recent if the browser closes or reloads
+    const saveRecentTrail = () => getTrailStore().setRecentTrail(this);
+    window.addEventListener('unload', saveRecentTrail);
 
     return () => {
+      this.disableUrlSync();
+
       if (!this.state.embedded) {
-        getUrlSyncManager().cleanUp(this);
-        getTrailStore().setRecentTrail(this);
+        saveRecentTrail();
       }
+      window.removeEventListener('unload', saveRecentTrail);
     };
   }
 
-  private goBackToStep(step: DataTrailHistoryStep) {
+  private enableUrlSync() {
     if (!this.state.embedded) {
-      getUrlSyncManager().cleanUp(this);
-    }
-
-    if (!step.trailState.metric) {
-      step.trailState.metric = undefined;
-    }
-
-    this.setState(step.trailState);
-
-    if (!this.state.embedded) {
-      locationService.replace(getUrlForTrail(this));
-
       getUrlSyncManager().initSync(this);
     }
   }
 
-  private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
-    if (this.state.embedded) {
-      this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
-    } else {
-      locationService.partial({ metric: evt.payload, actionView: null });
+  private disableUrlSync() {
+    if (!this.state.embedded) {
+      getUrlSyncManager().cleanUp(this);
     }
+  }
+
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [VAR_DATASOURCE],
+    onReferencedVariableValueChanged: (variable: SceneVariable) => {
+      const { name } = variable.state;
+      if (name === VAR_DATASOURCE) {
+        this.datasourceHelper.reset();
+      }
+    },
+  });
+
+  /**
+   * Assuming that the change in filter was already reported with a cause other than `'adhoc_filter'`,
+   * this will modify the adhoc filter variable and prevent the automatic reporting which would
+   * normally occur through the call to `reportChangeInLabelFilters`.
+   */
+  public addFilterWithoutReportingInteraction(filter: AdHocVariableFilter) {
+    const variable = sceneGraph.lookupVariable('filters', this);
+    if (!(variable instanceof AdHocFiltersVariable)) {
+      return;
+    }
+
+    this._addingFilterWithoutReportingInteraction = true;
+
+    variable.setState({ filters: [...variable.state.filters, filter] });
+
+    this._addingFilterWithoutReportingInteraction = false;
+  }
+
+  private _addingFilterWithoutReportingInteraction = false;
+  private datasourceHelper = new MetricDatasourceHelper(this);
+
+  public getMetricMetadata(metric?: string) {
+    return this.datasourceHelper.getMetricMetadata(metric);
+  }
+
+  public getCurrentMetricMetadata() {
+    return this.getMetricMetadata(this.state.metric);
+  }
+
+  public restoreFromHistoryStep(state: DataTrailState) {
+    this.disableUrlSync();
+
+    if (!state.topScene && !state.metric) {
+      // If the top scene for an  is missing, correct it.
+      state.topScene = new MetricSelectScene({});
+    }
+
+    this.setState(
+      sceneUtils.cloneSceneObjectState(state, {
+        history: this.state.history,
+        metric: !state.metric ? undefined : state.metric,
+      })
+    );
+
+    const urlState = getUrlSyncManager().getUrlState(this);
+    const fullUrl = urlUtil.renderUrl(locationService.getLocation().pathname, urlState);
+    locationService.replace(fullUrl);
+
+    this.enableUrlSync();
+  }
+
+  private _handleMetricSelectedEvent(evt: MetricSelectedEvent) {
+    this.setState(this.getSceneUpdatesForNewMetricValue(evt.payload));
 
     // Add metric to adhoc filters baseFilter
     const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
@@ -161,7 +218,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       if (this.state.metric !== values.metric) {
         Object.assign(stateUpdate, this.getSceneUpdatesForNewMetricValue(values.metric));
       }
-    } else if (values.metric === null) {
+    } else if (values.metric == null) {
       stateUpdate.metric = undefined;
       stateUpdate.topScene = new MetricSelectScene({});
     }
@@ -170,7 +227,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history } = model.useState();
+    const { controls, topScene, history, settings } = model.useState();
     const styles = useStyles2(getStyles);
     const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
@@ -183,6 +240,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
+            <settings.Component model={settings} />
           </div>
         )}
         <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
@@ -191,7 +249,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   };
 }
 
-function getTopSceneFor(metric?: string) {
+export function getTopSceneFor(metric?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
@@ -205,12 +263,15 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
       new DataSourceVariable({
         name: VAR_DATASOURCE,
         label: 'Data source',
+        description: 'Only prometheus data sources are supported',
         value: initialDS,
-        pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
+        pluginId: 'prometheus',
       }),
       new AdHocFiltersVariable({
         name: VAR_FILTERS,
+        addFilterButtonText: 'Add label',
         datasource: trailDS,
+        hide: VariableHide.hideLabel,
         layout: 'vertical',
         filters: initialFilters ?? [],
         baseFilters: getBaseFiltersForMetric(metric),
@@ -232,13 +293,17 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(1),
     }),
     controls: css({
       display: 'flex',
       gap: theme.spacing(1),
+      padding: theme.spacing(1, 0),
       alignItems: 'flex-end',
       flexWrap: 'wrap',
+      position: 'sticky',
+      background: theme.isDark ? theme.colors.background.canvas : theme.colors.background.primary,
+      zIndex: theme.zIndex.navbarFixed,
+      top: 0,
     }),
   };
 }

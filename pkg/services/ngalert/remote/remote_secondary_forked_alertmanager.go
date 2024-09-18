@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	alertingNotify "github.com/grafana/alerting/notify"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -121,8 +123,8 @@ func (fam *RemoteSecondaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx cont
 	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
-	return fam.internal.GetStatus()
+func (fam *RemoteSecondaryForkedAlertmanager) GetStatus(ctx context.Context) (apimodels.GettableStatus, error) {
+	return fam.internal.GetStatus(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
@@ -165,9 +167,8 @@ func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, 
 	return fam.internal.TestTemplate(ctx, c)
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) CleanUp() {
-	// No cleanup to do in the remote Alertmanager.
-	fam.internal.CleanUp()
+func (fam *RemoteSecondaryForkedAlertmanager) SilenceState(ctx context.Context) (alertingNotify.SilenceState, error) {
+	return fam.internal.SilenceState(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {

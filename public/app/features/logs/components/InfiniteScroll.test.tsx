@@ -43,7 +43,7 @@ function ScrollWithWrapper({ children, ...props }: Props) {
   return (
     <div style={{ height: 40, overflowY: 'scroll' }} ref={scrollRef} data-testid="scroll-element">
       {initialized && (
-        <InfiniteScroll {...props} scrollElement={scrollRef.current!}>
+        <InfiniteScroll {...props} scrollElement={scrollRef.current!} topScrollEnabled>
           {children}
         </InfiniteScroll>
       )}
@@ -60,8 +60,16 @@ function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowMode
     act(() => {
       events['scroll'](new Event('scroll'));
     });
+
+    // When scrolling top, we wait for the user to reach the top, and then for a new scrolling event
+    // in the same direction before triggering a new query.
+    if (position === 0) {
+      wheel(-1);
+    }
   }
   function wheel(deltaY: number) {
+    element.scrollTop += deltaY;
+
     act(() => {
       const event = new WheelEvent('wheel', { deltaY });
       events['wheel'](event);
@@ -75,6 +83,7 @@ function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowMode
       rows={rows}
       scrollElement={element as unknown as HTMLDivElement}
       loadMoreLogs={loadMoreMock}
+      topScrollEnabled
     >
       <div data-testid="contents" style={{ height: 100 }} />
     </InfiniteScroll>

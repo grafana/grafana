@@ -28,7 +28,7 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
       component: SafeDynamicImport(
         () =>
           import(
-            /* webpackChunkName: "PublicDashboardPage" */ '../../features/dashboard/containers/PublicDashboardPage'
+            /* webpackChunkName: "PublicDashboardPage" */ '../../features/dashboard/containers/PublicDashboardPageProxy'
           )
       ),
     },

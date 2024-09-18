@@ -1,6 +1,6 @@
 import { MoveableManagerInterface, Renderer } from 'moveable';
 
-import { HorizontalConstraint, VerticalConstraint } from '../types';
+import { VerticalConstraint, HorizontalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { Scene } from './scene';
 

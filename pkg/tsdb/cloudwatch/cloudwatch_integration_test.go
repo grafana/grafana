@@ -68,7 +68,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 			{MetricName: aws.String("Test_MetricName8"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4"), Value: aws.String("Value1")}}},
 			{MetricName: aws.String("Test_MetricName9"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value2")}}},
 		}, MetricsPerPage: 100}
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -104,7 +104,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 			{MetricName: aws.String("Test_MetricName8"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
 			{MetricName: aws.String("Test_MetricName9"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
 		}, MetricsPerPage: 2}
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -129,7 +129,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	t.Run("Should handle standard dimension key query and return hard coded keys", func(t *testing.T) {
 		im := defaultTestInstanceManager()
 		api = mocks.FakeMetricsAPI{}
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -154,7 +154,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	t.Run("Should handle custom namespace dimension key query and return hard coded keys", func(t *testing.T) {
 		im := defaultTestInstanceManager()
 		api = mocks.FakeMetricsAPI{}
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -190,7 +190,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 			{MetricName: aws.String("Test_MetricName8"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
 			{MetricName: aws.String("Test_MetricName9"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
 		}, MetricsPerPage: 2}
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -227,7 +227,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 				},
 			},
 		}, nil)
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -249,7 +249,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 
 	t.Run("Should handle region requests and return regions from the api", func(t *testing.T) {
 		im := defaultTestInstanceManager()
-		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(im, log.NewNullLogger())
 		req := &backend.CallResourceRequest{
 			Method: "GET",
 			Path:   `/regions`,
@@ -275,7 +275,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 			}}, nil
 		})
 
-		executor := newExecutor(imWithoutDefaultRegion, &fakeSessionCache{}, log.NewNullLogger())
+		executor := newExecutor(imWithoutDefaultRegion, log.NewNullLogger())
 		req := &backend.CallResourceRequest{
 			Method: "GET",
 			Path:   `/regions`,

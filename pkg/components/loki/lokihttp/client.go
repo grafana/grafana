@@ -321,7 +321,7 @@ func (c *client) sendBatch(tenantID string, batch *batch) {
 	}
 
 	if err != nil {
-		c.logger.Error("final error sending batch", "status", status, "error")
+		c.logger.Error("final error sending batch", "status", status)
 		c.metrics.droppedBytes.WithLabelValues(c.cfg.URL.Host).Add(bufBytes)
 		c.metrics.droppedEntries.WithLabelValues(c.cfg.URL.Host).Add(float64(entriesCount))
 	}
@@ -351,7 +351,7 @@ func (c *client) send(ctx context.Context, tenantID string, buf []byte) (int, er
 	defer func() {
 		err := resp.Body.Close()
 		if err != nil {
-			c.logger.Error("closing response body", "error", err)
+			c.logger.Error("failed to close the response body", "error", err)
 		}
 	}()
 

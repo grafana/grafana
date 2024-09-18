@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { Button, Field, Form, Input } from '@grafana/ui';
+import { Button, Field, Input } from '@grafana/ui';
+import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { contextSrv } from 'app/core/core';

@@ -1,6 +1,6 @@
+import { PrometheusDatasource } from '@grafana/prometheus';
 import { UserItem } from 'app/percona/shared/core/reducers/users/users.types';
 import { AccessRole } from 'app/percona/shared/services/roles/Roles.types';
-import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { OrgRole, OrgUser } from 'app/types';
 
 export const stubUserSingleRole: OrgUser = {

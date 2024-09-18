@@ -1,22 +1,20 @@
 import { css, cx } from '@emotion/css';
-import React, { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
-import { usePopper } from 'react-popper';
-
 import {
-  DataFrame,
-  DataFrameFieldIndex,
-  dateTimeFormat,
-  Field,
-  FieldType,
-  formattedValueToString,
-  GrafanaTheme2,
-  LinkModel,
-  systemDateFormats,
-  TimeZone,
-} from '@grafana/data';
+  autoUpdate,
+  flip,
+  safePolygon,
+  shift,
+  useDismiss,
+  useFloating,
+  useHover,
+  useInteractions,
+} from '@floating-ui/react';
+import React, { CSSProperties, useCallback, useEffect, useState } from 'react';
+
+import { DataFrame, DataFrameFieldIndex, Field, formattedValueToString, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config as runtimeConfig } from '@grafana/runtime';
-import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { TimeZone } from '@grafana/schema';
+import { Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
 import { DisplayValue } from 'app/features/visualization/data-hover/DataHoverView';
 import { ExemplarHoverView } from 'app/features/visualization/data-hover/ExemplarHoverView';
 
@@ -44,25 +42,34 @@ export const ExemplarMarker = ({
   const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
-  const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
-  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
-    modifiers: [
-      {
-        name: 'preventOverflow',
-        options: {
-          altAxis: true,
-        },
-      },
-      {
-        name: 'flip',
-        options: {
-          fallbackPlacements: ['top', 'left-start'],
-        },
-      },
-    ],
+
+  // the order of middleware is important!
+  const middleware = [
+    flip({
+      fallbackAxisSideDirection: 'end',
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
+
+  const { context, refs, floatingStyles } = useFloating({
+    open: isOpen,
+    placement: 'bottom',
+    onOpenChange: setIsOpen,
+    middleware,
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
   });
-  const popoverRenderTimeout = useRef<NodeJS.Timeout>();
+
+  const dismiss = useDismiss(context);
+  const hover = useHover(context, {
+    handleClose: safePolygon(),
+    enabled: clickedExemplarFieldIndex === undefined,
+  });
+
+  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, hover]);
 
   useEffect(() => {
     if (
@@ -107,24 +114,9 @@ export const ExemplarMarker = ({
     return symbols[dataFrameFieldIndex.frameIndex % symbols.length];
   };
 
-  const onMouseEnter = useCallback(() => {
-    if (clickedExemplarFieldIndex === undefined) {
-      if (popoverRenderTimeout.current) {
-        clearTimeout(popoverRenderTimeout.current);
-      }
-      setIsOpen(true);
-    }
-  }, [setIsOpen, clickedExemplarFieldIndex]);
-
   const lockExemplarModal = () => {
     setIsLocked(true);
   };
-
-  const onMouseLeave = useCallback(() => {
-    popoverRenderTimeout.current = setTimeout(() => {
-      setIsOpen(false);
-    }, 150);
-  }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
     //Put fields with links on the top
@@ -134,13 +126,6 @@ export const ExemplarMarker = ({
       ...fieldsWithLinks,
       ...dataFrame.fields.filter((field) => !fieldsWithLinks.includes(field)),
     ];
-
-    const timeFormatter = (value: number) => {
-      return dateTimeFormat(value, {
-        format: systemDateFormats.fullDate,
-        timeZone,
-      });
-    };
 
     const onClose = () => {
       setIsLocked(false);
@@ -174,74 +159,21 @@ export const ExemplarMarker = ({
       marginRight: 0,
     };
 
-    const getExemplarMarkerContent = () => {
-      if (runtimeConfig.featureToggles.newVizTooltips) {
-        return (
-          <>
-            {isLocked && <ExemplarModalHeader onClick={onClose} style={exemplarHeaderCustomStyle} />}
-            <ExemplarHoverView displayValues={displayValues} links={links} />
-          </>
-        );
-      } else {
-        return (
-          <div className={styles.wrapper}>
-            {isLocked && <ExemplarModalHeader onClick={onClose} />}
-            <div className={styles.body}>
-              <div className={styles.header}>
-                <span className={styles.title}>Exemplars</span>
-              </div>
-              <div>
-                <table className={styles.exemplarsTable}>
-                  <tbody>
-                    {orderedDataFrameFields.map((field: Field, i) => {
-                      const value = field.values[dataFrameFieldIndex.fieldIndex];
-                      const links = field.config.links?.length
-                        ? field.getLinks?.({ valueRowIndex: dataFrameFieldIndex.fieldIndex })
-                        : undefined;
-                      return (
-                        <tr key={i}>
-                          <td valign="top">{field.name}</td>
-                          <td>
-                            <div className={styles.valueWrapper}>
-                              <span>{field.type === FieldType.time ? timeFormatter(value) : value}</span>
-                              {links && <FieldLinkList links={links} />}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        );
-      }
-    };
-
     return (
-      <div
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        className={styles.tooltip}
-        ref={setPopperElement}
-        style={popperStyles.popper}
-        {...attributes.popper}
-      >
-        {getExemplarMarkerContent()}
+      <div className={styles.tooltip} ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
+        {isLocked && <ExemplarModalHeader onClick={onClose} style={exemplarHeaderCustomStyle} />}
+        <ExemplarHoverView displayValues={displayValues} links={links} />
       </div>
     );
   }, [
-    attributes.popper,
     dataFrame.fields,
     dataFrameFieldIndex,
-    onMouseEnter,
-    onMouseLeave,
-    popperStyles.popper,
     styles,
-    timeZone,
     isLocked,
     setClickedExemplarFieldIndex,
+    floatingStyles,
+    getFloatingProps,
+    refs.setFloating,
   ]);
 
   const seriesColor = config
@@ -256,19 +188,18 @@ export const ExemplarMarker = ({
   return (
     <>
       <div
-        ref={setMarkerElement}
+        ref={refs.setReference}
+        className={styles.markerWrapper}
+        data-testid={selectors.components.DataSource.Prometheus.exemplarMarker}
+        role="button"
+        tabIndex={0}
+        {...getReferenceProps()}
         onClick={onExemplarClick}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Enter') {
             onExemplarClick();
           }
         }}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        className={styles.markerWrapper}
-        data-testid={selectors.components.DataSource.Prometheus.exemplarMarker}
-        role="button"
-        tabIndex={0}
       >
         <svg
           viewBox="0 0 7 7"
@@ -376,7 +307,9 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
     marble: css({
       display: 'block',
       opacity: 0.5,
-      transition: 'transform 0.15s ease-out',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'transform 0.15s ease-out',
+      },
     }),
     activeMarble: css({
       transform: 'scale(1.3)',

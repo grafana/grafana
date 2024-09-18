@@ -6,7 +6,7 @@ This document defines technical terms used in Grafana.
 
 ## TLS/SSL
 
-The acronyms [TLS](https://en.wikipedia.org/wiki/Transport_Layer_Security) (Transport Layer Security and
+The acronyms [TLS](https://en.wikipedia.org/wiki/Transport_Layer_Security) (Transport Layer Security) and
 [SSL](https://en.wikipedia.org/wiki/SSL) (Secure Socket Layer) are both used to describe the HTTPS security layer,
 and are in practice synonymous. However, TLS is considered the current name for the technology, and SSL is considered
 [deprecated](https://tools.ietf.org/html/rfc7568).

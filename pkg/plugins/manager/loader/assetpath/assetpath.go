@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Service provides methods for constructing asset paths for plugins.
@@ -18,10 +17,10 @@ import (
 // on the plugins CDN, and it will switch to the correct implementation depending on the plugin and the config.
 type Service struct {
 	cdn *pluginscdn.Service
-	cfg *config.Cfg
+	cfg *config.PluginManagementCfg
 }
 
-func ProvideService(cfg *config.Cfg, cdn *pluginscdn.Service) *Service {
+func ProvideService(cfg *config.PluginManagementCfg, cdn *pluginscdn.Service) *Service {
 	return &Service{cfg: cfg, cdn: cdn}
 }
 
@@ -39,7 +38,7 @@ func NewPluginInfo(pluginJSON plugins.JSONData, class plugins.Class, fs plugins.
 	}
 }
 
-func DefaultService(cfg *config.Cfg) *Service {
+func DefaultService(cfg *config.PluginManagementCfg) *Service {
 	return &Service{cfg: cfg, cdn: pluginscdn.ProvideService(cfg)}
 }
 
@@ -58,9 +57,7 @@ func (s *Service) Base(n PluginInfo) (string, error) {
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(n PluginInfo) (string, error) {
 	if n.class == plugins.ClassCore {
-		if s.cfg.Features != nil &&
-			s.cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalCorePlugins) &&
-			filepath.Base(n.dir) == "dist" {
+		if filepath.Base(n.dir) == "dist" {
 			// The core plugin has been built externally, use the module from the dist folder
 		} else {
 			baseDir := getBaseDir(n.dir)
