@@ -187,7 +187,6 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
-		clientmiddleware.NewResourceResponseMiddleware(),
 		clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features),
 		clientmiddleware.NewForwardIDMiddleware(),
 	)

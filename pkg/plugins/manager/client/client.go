@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -101,6 +102,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 				removeConnectionHeaders(res.Headers)
 				removeHopByHopHeaders(res.Headers)
 				removeNonAllowedHeaders(res.Headers)
+				proxyutil.SetProxyResponseHeaders(res.Headers)
 			}
 
 			ensureContentTypeHeader(res)
