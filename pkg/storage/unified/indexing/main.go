@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/mapping"
 )
 
 // *** This is the current schema of the resource table ***
@@ -63,14 +64,19 @@ func main() {
 	objects := seedObjects()
 
 	fmt.Println("Creating index for", len(objects), "objects")
-	// Create or open existing index
-	index, exists, err := createIndex(true)
-	if err != nil {
-		log.Fatalf("Failed to create index: %v", err)
-	}
+
+	// Create in memory index
+	index, exists := createInMemoryIndex()
+
+	// Create file based index
+	//index, exists, err := createFileIndex(true)
+	//if err != nil {
+	//	log.Fatalf("Failed to create index: %v", err)
+	//}
+
 	defer index.Close()
 
-	// only reindex if the index is new
+	// only reindex if the index is new (or in memory)
 	if !exists {
 		fmt.Println("Indexing...")
 		start := time.Now()
@@ -167,11 +173,11 @@ func seedObjects() []Object {
 		},
 	}
 
-	// creates 400,000 objects
+	// creates 4,000,000 objects
 	objects := []Object{}
 	for _, namespace := range namespaces {
 		for _, resource := range resources {
-			for i := 0; i < 100000; i++ {
+			for i := 0; i < 1000000; i++ {
 				objects = append(objects, Object{
 					//Guid:            fmt.Sprintf("%s-%s-%d", namespace, resource.Resource, i),
 					Guid:            "test1",
@@ -248,7 +254,7 @@ func indexObjects(index bleve.Index, objects []Object) {
 }
 
 // this will only create an in-memory index right now
-func createIndex(deleteExisting bool) (bleve.Index, bool, error) {
+func createFileIndex(deleteExisting bool) (bleve.Index, bool, error) {
 	// Define the index path
 	indexPath := "example.bleve"
 	exists := true
@@ -270,34 +276,7 @@ func createIndex(deleteExisting bool) (bleve.Index, bool, error) {
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		exists = false
 
-		// Define field mappings for specific fields
-		nameFieldMapping := bleve.NewTextFieldMapping()
-		creationTimestampFieldMapping := bleve.NewDateTimeFieldMapping()
-		resourceFieldMapping := bleve.NewTextFieldMapping()
-
-		//Create a K8sMeta mapping with specific fields
-		k8sMetaMapping := bleve.NewDocumentMapping()
-		k8sMetaMapping.AddFieldMappingsAt("Name", nameFieldMapping)
-		k8sMetaMapping.AddFieldMappingsAt("CreationTimestamp", creationTimestampFieldMapping)
-		k8sMetaMapping.Dynamic = false
-
-		//Create a K8sObject mapping and attach the K8sMeta mapping
-		k8sObjectMapping := bleve.NewDocumentMapping()
-		k8sObjectMapping.AddSubDocumentMapping("K8sMeta", k8sMetaMapping)
-		k8sObjectMapping.Dynamic = false
-
-		//Create the root document mapping and attach the K8sObject mapping
-		objectMapping := bleve.NewDocumentMapping()
-		objectMapping.AddSubDocumentMapping("Value", k8sObjectMapping)
-		objectMapping.AddFieldMappingsAt("Resource", resourceFieldMapping)
-		objectMapping.Dynamic = false
-
-		// Create the index mapping
-		indexMapping := bleve.NewIndexMapping()
-		indexMapping.DefaultMapping = objectMapping
-		indexMapping.DefaultMapping.Dynamic = false
-
-		index, err = bleve.NewMemOnly(indexMapping)
+		index, err = bleve.New(indexPath, createIndexMappings())
 		if err != nil {
 			log.Fatalf("Failed to create index: %v", err)
 		}
@@ -305,5 +284,46 @@ func createIndex(deleteExisting bool) (bleve.Index, bool, error) {
 	} else if err != nil {
 		log.Fatalf("Failed to open index: %v", err)
 	}
+
 	return index, exists, err
+}
+
+func createInMemoryIndex() (bleve.Index, bool) {
+	index, err := bleve.NewMemOnly(createIndexMappings())
+	if err != nil {
+		log.Fatalf("Failed to create index: %v", err)
+	}
+
+	return index, false
+}
+
+func createIndexMappings() *mapping.IndexMappingImpl {
+	// Define field mappings for specific fields
+	nameFieldMapping := bleve.NewTextFieldMapping()
+	creationTimestampFieldMapping := bleve.NewDateTimeFieldMapping()
+	resourceFieldMapping := bleve.NewTextFieldMapping()
+
+	//Create a K8sMeta mapping with specific fields
+	k8sMetaMapping := bleve.NewDocumentMapping()
+	k8sMetaMapping.AddFieldMappingsAt("Name", nameFieldMapping)
+	k8sMetaMapping.AddFieldMappingsAt("CreationTimestamp", creationTimestampFieldMapping)
+	k8sMetaMapping.Dynamic = false
+
+	//Create a K8sObject mapping and attach the K8sMeta mapping
+	k8sObjectMapping := bleve.NewDocumentMapping()
+	k8sObjectMapping.AddSubDocumentMapping("K8sMeta", k8sMetaMapping)
+	k8sObjectMapping.Dynamic = false
+
+	//Create the root document mapping and attach the K8sObject mapping
+	objectMapping := bleve.NewDocumentMapping()
+	objectMapping.AddSubDocumentMapping("Value", k8sObjectMapping)
+	objectMapping.AddFieldMappingsAt("Resource", resourceFieldMapping)
+	objectMapping.Dynamic = false
+
+	// Create the index mapping
+	indexMapping := bleve.NewIndexMapping()
+	indexMapping.DefaultMapping = objectMapping
+	indexMapping.DefaultMapping.Dynamic = false
+
+	return indexMapping
 }
