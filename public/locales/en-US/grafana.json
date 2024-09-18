@@ -1908,8 +1908,10 @@
         "installed-header": "Installed",
         "modal-confirmation": "Update",
         "modal-dismiss": "Close",
+        "modal-in-progress": "Updating...",
         "modal-title": "Update Plugins",
         "name-header": "Name",
+        "status-text": "plugins updated",
         "update-header": "Update"
       }
     },

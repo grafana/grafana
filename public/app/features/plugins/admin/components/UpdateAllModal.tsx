@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -13,32 +13,6 @@ type UpdateError = {
   id: string;
   message: string;
 };
-
-function getIcon({
-  id,
-  inProgress,
-  errorMap,
-  selectedPlugins,
-}: {
-  id: string;
-  inProgress: boolean;
-  errorMap: Map<string, UpdateError>;
-  selectedPlugins?: Set<string>;
-}) {
-  if (errorMap && errorMap.has(id)) {
-    return (
-      <Tooltip
-        content={`${t('plugins.catalog.update-all.error', 'Error updating plugin:')} ${errorMap.get(id)?.message}`}
-      >
-        <Icon size="xl" name="exclamation-circle" />
-      </Tooltip>
-    );
-  }
-  if (inProgress && selectedPlugins?.has(id)) {
-    return <Spinner />;
-  }
-  return '';
-}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   table: css({
@@ -84,20 +58,74 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: theme.spacing(32),
   }),
   modalContainer: css({
-    height: theme.spacing(41),
+    minHeight: theme.spacing(41),
+  }),
+  errorIcon: css({
+    color: theme.colors.error.main,
+  }),
+  successIcon: css({
+    color: theme.colors.success.main,
+  }),
+  pluginsInstalled: css({
+    marginTop: theme.spacing(1),
+    textAlign: 'center',
   }),
 });
 
+const StatusIcon = ({
+  id,
+  inProgress,
+  isSelected,
+  isInstalled,
+  errorMap,
+}: {
+  id: string;
+  inProgress: boolean;
+  isSelected: boolean;
+  isInstalled: boolean;
+  errorMap: Map<string, UpdateError>;
+}) => {
+  const styles = useStyles2(getStyles);
+
+  if (errorMap && errorMap.has(id)) {
+    return (
+      <Tooltip
+        content={`${t('plugins.catalog.update-all.error', 'Error updating plugin:')} ${errorMap.get(id)?.message}`}
+      >
+        <Icon className={styles.errorIcon} size="xl" name="exclamation-triangle" />
+      </Tooltip>
+    );
+  }
+  if (isInstalled) {
+    return <Icon className={styles.successIcon} size="xl" name="check" />;
+  }
+  if (inProgress && isSelected) {
+    return <Spinner />;
+  }
+  return '';
+};
+
 type ModalBodyProps = {
   plugins: CatalogPlugin[];
+  pluginsNotInstalled: Set<string>;
   inProgress: boolean;
   selectedPlugins?: Set<string>;
   onCheckboxChange: (id: string) => void;
   errorMap: Map<string, UpdateError>;
 };
 
-const ModalBody = ({ plugins, inProgress, selectedPlugins, onCheckboxChange, errorMap }: ModalBodyProps) => {
+const ModalBody = ({
+  plugins,
+  pluginsNotInstalled,
+  inProgress,
+  selectedPlugins,
+  onCheckboxChange,
+  errorMap,
+}: ModalBodyProps) => {
   const styles = useStyles2(getStyles);
+
+  const numberInstalled = plugins.length - pluginsNotInstalled.size;
+  const installationFinished = plugins.length !== pluginsNotInstalled.size && !inProgress;
 
   return (
     <div className={styles.modalContainer}>
@@ -134,17 +162,35 @@ const ModalBody = ({ plugins, inProgress, selectedPlugins, onCheckboxChange, err
                 {plugins.map(({ id, name, installedVersion, latestVersion }: CatalogPlugin) => (
                   <tr key={id} className={styles.tableRow}>
                     <td>
-                      <Checkbox onChange={() => onCheckboxChange(id)} value={selectedPlugins?.has(id)} />
+                      <Checkbox
+                        onChange={() => onCheckboxChange(id)}
+                        value={selectedPlugins?.has(id)}
+                        disabled={!pluginsNotInstalled.has(id)}
+                      />
                     </td>
                     <td>{name}</td>
                     <td>{installedVersion}</td>
                     <td>{latestVersion}</td>
-                    <td className={styles.icon}>{getIcon({ id, inProgress, errorMap, selectedPlugins })}</td>
+                    <td className={styles.icon}>
+                      <StatusIcon
+                        id={id}
+                        inProgress={inProgress}
+                        isSelected={selectedPlugins?.has(id) ?? false}
+                        isInstalled={!pluginsNotInstalled.has(id)}
+                        errorMap={errorMap}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          <div className={styles.pluginsInstalled}>
+            {numberInstalled > 0 && installationFinished
+              ? `${numberInstalled} ${t('plugins.catalog.update-all.status-text', 'plugins updated')}`
+              : ''}
+          </div>
+
           {config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall && (
             <footer className={styles.footer}>
               <Trans i18nKey="plugins.catalog.update-all.cloud-update-message">
@@ -171,9 +217,18 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
   const [errorMap, setErrorMap] = useState(new Map<string, UpdateError>());
   const [inProgress, setInProgress] = useState(false);
   const [selectedPlugins, setSelectedPlugins] = useState<Set<string>>();
+  const initialPluginsRef = useRef(plugins);
 
   const pluginsSet = useMemo(() => new Set(plugins.map((plugin) => plugin.id)), [plugins]);
   const installsRemaining = plugins.length;
+
+  // Since the plugins comes from the store and changes every time we update a plugin,
+  // we need to keep track of the initial plugins.
+  useEffect(() => {
+    if (initialPluginsRef.current.length === 0) {
+      initialPluginsRef.current = [...plugins];
+    }
+  }, [plugins]);
 
   // Updates the component state on every plugins change, since the installation will change the store content
   useEffect(() => {
@@ -241,6 +296,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
   };
 
   const onDismissClick = () => {
+    initialPluginsRef.current = [];
     setErrorMap(new Map());
     setInProgress(false);
     setSelectedPlugins(undefined);
@@ -274,7 +330,8 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       title={t('plugins.catalog.update-all.modal-title', 'Update Plugins')}
       body={
         <ModalBody
-          plugins={plugins}
+          plugins={initialPluginsRef.current}
+          pluginsNotInstalled={pluginsSet}
           inProgress={inProgress}
           errorMap={errorMap}
           onCheckboxChange={onCheckboxChange}
@@ -283,14 +340,33 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       }
       onConfirm={installsRemaining > 0 ? onConfirm : onDismissClick}
       onDismiss={onDismissClick}
-      disabled={pluginsSelected === 0 || inProgress}
-      confirmText={
-        installsRemaining > 0
-          ? `${t('plugins.catalog.update-all.modal-confirmation', 'Update')} (${pluginsSelected})`
-          : t('plugins.catalog.update-all.modal-dismiss', 'Close')
-      }
+      disabled={shouldDisableConfirm(inProgress, installsRemaining, pluginsSelected)}
+      confirmText={getConfirmationText(installsRemaining, inProgress, pluginsSelected)}
     />
   );
 };
+
+function getConfirmationText(installsRemaining: number, inProgress: boolean, pluginsSelected: number) {
+  if (inProgress) {
+    return t('plugins.catalog.update-all.modal-in-progress', 'Updating...');
+  }
+
+  if (installsRemaining > 0) {
+    return t('plugins.catalog.update-all.modal-confirmation', 'Update') + ` (${pluginsSelected})`;
+  }
+  return t('plugins.catalog.update-all.modal-dismiss', 'Close');
+}
+
+function shouldDisableConfirm(inProgress: boolean, installsRemaining: number, pluginsSelected: number) {
+  if (inProgress) {
+    return true;
+  }
+
+  if (installsRemaining > 0 && pluginsSelected === 0) {
+    return true;
+  }
+
+  return false;
+}
 
 export default UpdateAllModal;
