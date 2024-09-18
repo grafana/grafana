@@ -15,6 +15,11 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
 
     // iterate over preserved query params and append them to current query params if they don't already exist
     preservedQueryParams.forEach((value, key) => {
+      // ignore dashboard hide options
+      if (key.startsWith('_dash.hide')) {
+        return;
+      }
+
       if (!currentQueryParams.has(key)) {
         currentQueryParams.append(key, value);
       }
