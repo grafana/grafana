@@ -722,13 +722,23 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	obj := internalfolders.LegacyCreateCommandToUnstructured(cmd)
+	obj, err := internalfolders.LegacyCreateCommandToUnstructured(cmd)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalfolders.UnstructuredToLegacyFolderDTO(*out))
+
+	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, f)
 }
 
 func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
@@ -742,7 +752,14 @@ func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
 		fk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalfolders.UnstructuredToLegacyFolderDTO(*out))
+
+	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, f)
 }
 
 func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
@@ -777,7 +794,14 @@ func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
 		fk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, internalfolders.UnstructuredToLegacyFolderDTO(*out))
+
+	f, err := internalfolders.UnstructuredToLegacyFolderDTO(*out)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, f)
 }
 
 //-----------------------------------------------------------------------------------------

@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
-func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) unstructured.Unstructured {
+func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) (unstructured.Unstructured, error) {
 	obj := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]interface{}{
@@ -29,8 +29,12 @@ func LegacyCreateCommandToUnstructured(cmd folder.CreateFolderCommand) unstructu
 	}
 	// #TODO: let's see if we need to set the json field to "-"
 	obj.SetName(cmd.UID)
-	setParentUID(&obj, cmd.ParentUID)
-	return obj
+
+	if err := setParentUID(&obj, cmd.ParentUID); err != nil {
+		return unstructured.Unstructured{}, err
+	}
+
+	return obj, nil
 }
 
 func LegacyUpdateCommandToUnstructured(cmd folder.UpdateFolderCommand) unstructured.Unstructured {
@@ -55,20 +59,30 @@ func UnstructuredToLegacyFolder(item unstructured.Unstructured) *folder.Folder {
 	}
 }
 
-func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) *dtos.Folder {
+func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder, error) {
 	spec := item.Object["spec"].(map[string]any)
 	uid := item.GetName()
 	title := spec["title"].(string)
 
 	meta, err := utils.MetaAccessor(&item)
 	if err != nil {
-		return nil
+		return nil, err
+	}
+
+	id, err := getLegacyID(meta)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := getCreated(meta)
+	if err != nil {
+		return nil, err
 	}
 
 	dto := &dtos.Folder{
 		UID:       uid,
 		Title:     title,
-		ID:        getLegacyID(meta),
+		ID:        id,
 		ParentUID: meta.GetFolder(),
 		// #TODO add back CreatedBy, UpdatedBy once we figure out how to access userService
 		// to translate user ID into user login. meta.GetCreatedBy() only stores user ID
@@ -77,10 +91,10 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) *dtos.Folder 
 		// UpdatedBy: meta.GetCreatedBy(),
 		URL: getURL(meta),
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
-		Created: *getCreated(meta),
+		Created: *created,
 		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
 		// meta.GetUpdatedTimestamp() but it currently gets overwritten in prepareObjectForStorage().
-		Updated: *getCreated(meta),
+		Updated: *created,
 		// #TODO figure out how to set these properly
 		CanSave:   true,
 		CanEdit:   true,
@@ -90,10 +104,10 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) *dtos.Folder 
 
 		// #TODO figure out about adding version, parents, orgID fields
 	}
-	return dto
+	return dto, nil
 }
 
-func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) *v0alpha1.Folder {
+func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) (*v0alpha1.Folder, error) {
 	f := &v0alpha1.Folder{
 		TypeMeta: v0alpha1.FolderResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
@@ -109,21 +123,23 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	}
 
 	meta, err := utils.MetaAccessor(f)
-	if err == nil {
-		meta.SetUpdatedTimestamp(&v.Updated)
-		if v.ID > 0 { // nolint:staticcheck
-			meta.SetOriginInfo(&utils.ResourceOriginInfo{
-				Name:      "SQL",
-				Path:      fmt.Sprintf("%d", v.ID), // nolint:staticcheck
-				Timestamp: &v.Created,
-			})
-		}
-		if v.CreatedBy > 0 {
-			meta.SetCreatedBy(fmt.Sprintf("user:%d", v.CreatedBy))
-		}
-		if v.UpdatedBy > 0 {
-			meta.SetUpdatedBy(fmt.Sprintf("user:%d", v.UpdatedBy))
-		}
+	if err != nil {
+		return nil, err
+	}
+
+	meta.SetUpdatedTimestamp(&v.Updated)
+	if v.ID > 0 { // nolint:staticcheck
+		meta.SetOriginInfo(&utils.ResourceOriginInfo{
+			Name:      "SQL",
+			Path:      fmt.Sprintf("%d", v.ID), // nolint:staticcheck
+			Timestamp: &v.Created,
+		})
+	}
+	if v.CreatedBy > 0 {
+		meta.SetCreatedBy(fmt.Sprintf("user:%d", v.CreatedBy))
+	}
+	if v.UpdatedBy > 0 {
+		meta.SetUpdatedBy(fmt.Sprintf("user:%d", v.UpdatedBy))
 	}
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
@@ -136,26 +152,33 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 		}
 	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
-	return f
+	return f, nil
 }
 
-func setParentUID(u *unstructured.Unstructured, parentUid string) {
+func setParentUID(u *unstructured.Unstructured, parentUid string) error {
 	meta, err := utils.MetaAccessor(u)
 	if err != nil {
-		return
+		return err
 	}
 	meta.SetFolder(parentUid)
+	return nil
 }
 
-func getLegacyID(meta utils.GrafanaMetaAccessor) int64 {
-	info, _ := meta.GetOriginInfo()
+func getLegacyID(meta utils.GrafanaMetaAccessor) (int64, error) {
+	var i int64
+
+	info, err := meta.GetOriginInfo()
+	if err != nil {
+		return i, err
+	}
+
 	if info != nil && info.Name == "SQL" {
-		i, err := strconv.ParseInt(info.Path, 10, 64)
-		if err == nil {
-			return i
+		i, err = strconv.ParseInt(info.Path, 10, 64)
+		if err != nil {
+			return i, err
 		}
 	}
-	return 0
+	return i, nil
 }
 
 func getURL(meta utils.GrafanaMetaAccessor) string {
@@ -164,10 +187,10 @@ func getURL(meta utils.GrafanaMetaAccessor) string {
 	return dashboards.GetFolderURL(uid, slug)
 }
 
-func getCreated(meta utils.GrafanaMetaAccessor) *time.Time {
+func getCreated(meta utils.GrafanaMetaAccessor) (*time.Time, error) {
 	created, err := meta.GetOriginTimestamp()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	return created
+	return created, nil
 }
