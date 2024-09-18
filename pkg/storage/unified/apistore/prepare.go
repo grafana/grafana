@@ -117,11 +117,6 @@ func (s *Storage) updateSecureFields(obj utils.GrafanaMetaAccessor) (map[string]
 
 	fields := make(map[string]*resource.SecureValue, len(secure))
 	for k, v := range secure {
-		// Create a new GUID if we are writing an explicit value
-		if v.GUID != "" && (v.Value != "" || v.Ref != "") {
-			v.GUID = ""
-		}
-
 		if !v.IsValidForWrite() {
 			// fmt.Printf("updateSecureFields error: %s=%+v\n", k, v)
 			return nil, fmt.Errorf("unable to write secure value: %s", k)

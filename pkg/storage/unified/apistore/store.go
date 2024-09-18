@@ -613,6 +613,27 @@ func (s *Storage) GuaranteedUpdate(
 			}
 			continue
 		}
+
+		// Check if a raw secret value matches the existing values
+		updatedMeta, err := utils.MetaAccessor(updatedObj)
+		if err != nil {
+			return err
+		}
+
+		vals, _ := updatedMeta.GetSecureValues()
+		if len(vals) > 0 {
+			for k, v := range vals {
+				// Create a new GUID if we are writing an explicit value
+				if v.GUID != "" && (v.Value != "" || v.Ref != "") {
+					fmt.Printf("TODO... check if the raw value has changed or not!!\n")
+					v.GUID = ""
+					updatedMeta.SetSecureValue(k, v)
+
+					// HACK HACK HACK pretend it is the same -- then apply does not kick in
+					// updatedObj = existingObj
+				}
+			}
+		}
 		break
 	}
 
