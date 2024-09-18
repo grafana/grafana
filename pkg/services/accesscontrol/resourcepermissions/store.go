@@ -725,6 +725,9 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, cmd SetResourc
 }
 
 func (s *store) shouldStoreActionSet(resource, permission string) bool {
+	if s.features.IsEnabled(context.Background(), featuremgmt.FlagAccessActionSets) {
+		return true
+	}
 	if permission == "" {
 		return false
 	}
