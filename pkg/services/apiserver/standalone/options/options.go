@@ -201,7 +201,7 @@ func (o *Options) internalFlags(fs *pflag.FlagSet) {
 	// We also want to be able to set the MaxRequestSize by using flags. This is
 	// usually not exposed by k8s. The value is already set to the upstream default
 	// at this stage, so we can use it as the default.
-	// Reference: https://github.com/kubernetes/kubernetes/blob/7c599d37c0c3ae5b6455a94f19c0c17dcd031c6f/staging/src/k8s.io/apiserver/pkg/server/config.go#L453
+	// Reference: https://github.com/kubernetes/kubernetes/blob/v1.31.1/staging/src/k8s.io/apiserver/pkg/server/config.go#L453
 	fs.Int64Var(&o.ServerRunOptions.MaxRequestBodyBytes, "max-request-body-bytes",
 		o.ServerRunOptions.MaxRequestBodyBytes, ""+
 			"Specifies the maximum allowable size for a request payload sent to the API server in bytes."+
