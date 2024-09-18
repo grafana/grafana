@@ -872,7 +872,7 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 		}
 	} else if strings.Contains(keyPemBlock.Type, "RSA PRIVATE KEY") {
 		// Check if the PEM block is encrypted with PKCS#1
-		// This is still requested by some customers (and fairly used)
+		// Even if these methods are deprecated, RSA PKCS#1 was requested by some customers and fairly used
 		// nolint:staticcheck
 		if !x509.IsEncryptedPEMBlock(keyPemBlock) {
 			return nil, fmt.Errorf("password provided but Private key is not recorgnized as encrypted")
