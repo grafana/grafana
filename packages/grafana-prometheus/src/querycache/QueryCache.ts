@@ -224,7 +224,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
           // Warning! logic specific to prometheus.
           const target = request.targets.find((t) => t.refId === respFrames[0].refId);
 
-          // @todo needs unit testing
+          // TODO needs unit testing
           let dataPointStep = request.intervalMs;
           if (target?.interval) {
             const minStepMs = rangeUtil.intervalToMs(target.interval);
