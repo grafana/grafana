@@ -15,11 +15,6 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
 
     // iterate over preserved query params and append them to current query params if they don't already exist
     preservedQueryParams.forEach((value, key) => {
-      // ignore dashboard hide options
-      if (key.startsWith('_dash.hide')) {
-        return;
-      }
-
       if (!currentQueryParams.has(key)) {
         currentQueryParams.append(key, value);
       }
@@ -64,13 +59,9 @@ export function preserveDashboardSceneStateInLocalStorage(scene: DashboardScene)
       )
     );
 
-    const nonEmptyUrlStates = Object.fromEntries(
-      Object.entries(urlStates).filter(([key, value]) => !(Array.isArray(value) && value.length === 0))
-    );
-
     // If there's anything to preserve, save it to local storage
-    if (Object.keys(nonEmptyUrlStates).length > 0) {
-      window.sessionStorage.setItem(PRESERVED_SCENE_STATE_KEY, urlUtil.renderUrl('', nonEmptyUrlStates));
+    if (Object.keys(urlStates).length > 0) {
+      window.sessionStorage.setItem(PRESERVED_SCENE_STATE_KEY, urlUtil.renderUrl('', urlStates));
     } else {
       window.sessionStorage.removeItem(PRESERVED_SCENE_STATE_KEY);
     }

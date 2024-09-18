@@ -60,19 +60,6 @@ describe('dashboardSessionState', () => {
       expect(timeRange?.state.to).toEqual('now');
     });
 
-    it('should remove query params that start with _dash.hide', () => {
-      window.sessionStorage.setItem(
-        PRESERVED_SCENE_STATE_KEY,
-        '?var-customVar=b&from=now-5m&to=now&timezone=browser&_dash.hideTimePicker=true&_dash.hideVariables=true'
-      );
-      const scene = buildTestScene();
-
-      restoreDashboardStateFromLocalStorage(scene);
-      const location = locationService.getLocation();
-
-      expect(location.search).toBe('?var-customVar=b&from=now-5m&to=now&timezone=browser');
-    });
-
     it('should remove query params that are not applicable on a target dashboard', () => {
       window.sessionStorage.setItem(
         PRESERVED_SCENE_STATE_KEY,
