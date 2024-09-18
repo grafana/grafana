@@ -21,14 +21,18 @@
     {
       "metadata": {
         "name": "accessControlOnCall",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-10-19T16:10:09Z"
+        "resourceVersion": "1726562036211",
+        "creationTimestamp": "2022-10-19T16:10:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-17 08:33:56.211355566 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Access control primitives for OnCall",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/identity-access-team",
-        "hideFromAdminPage": true
+        "hideFromAdminPage": true,
+        "expression": "true"
       }
     },
     {
