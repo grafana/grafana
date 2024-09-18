@@ -74,7 +74,7 @@ jobs:
         run: |
           response=$(gh api /orgs/grafana/teams/${{ env.TEAM }}/memberships/${{ github.event.issue.user.login }} -i -H "Accept: application/vnd.github.v3+json")
           STATUS_CODE=$(echo "$response" | head -n 1 | cut -d' ' -f2)
-          if [ "$STATUS_CODE" -eq "204" ]; then
+          if [ "$STATUS_CODE" -eq "404" ]; then
             echo "The user was not found in the team."
             echo "USER_FOUND=false" >> "$GITHUB_ENV"
           else
