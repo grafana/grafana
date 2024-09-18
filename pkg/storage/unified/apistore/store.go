@@ -50,7 +50,6 @@ type Storage struct {
 	store  resource.ResourceClient
 	getKey func(string) (*resource.ResourceKey, error)
 
-	watchSet  *WatchSet
 	versioner storage.Versioner
 }
 
@@ -83,8 +82,7 @@ func NewStorage(
 		trigger:      trigger,
 		indexers:     indexers,
 
-		watchSet: NewWatchSet(),
-		getKey:   keyParser,
+		getKey: keyParser,
 
 		versioner: &storage.APIObjectVersioner{},
 	}
@@ -111,9 +109,7 @@ func NewStorage(
 		}
 	}
 
-	return s, func() {
-		s.watchSet.cleanupWatchers()
-	}, nil
+	return s, func() {}, nil
 }
 
 func (s *Storage) Versioner() storage.Versioner {
@@ -163,11 +159,6 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 			}
 		})
 	}
-
-	s.watchSet.notifyWatchers(watch.Event{
-		Object: out.DeepCopyObject(),
-		Type:   watch.Added,
-	}, nil)
 
 	return nil
 }
@@ -225,11 +216,6 @@ func (s *Storage) Delete(
 	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
 		return err
 	}
-
-	s.watchSet.notifyWatchers(watch.Event{
-		Object: out.DeepCopyObject(),
-		Type:   watch.Deleted,
-	}, nil)
 	return nil
 }
 
@@ -545,17 +531,6 @@ func (s *Storage) GuaranteedUpdate(
 		return err
 	}
 
-	if created {
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: destination.DeepCopyObject(),
-			Type:   watch.Added,
-		}, nil)
-	} else {
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: destination.DeepCopyObject(),
-			Type:   watch.Modified,
-		}, existingObj.DeepCopyObject())
-	}
 	return nil
 }
 
