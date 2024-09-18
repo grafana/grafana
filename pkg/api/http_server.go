@@ -881,6 +881,8 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 			if err != nil {
 				return nil, fmt.Errorf("error decrypting x509 PemBlock: %w", err)
 			}
+		} else {
+			return nil, fmt.Errorf("password provided but Private key is not recorgnized as encrypted")
 		}
 	} else {
 		return nil, fmt.Errorf("password provided but Private key is not encrypted or not supported")
