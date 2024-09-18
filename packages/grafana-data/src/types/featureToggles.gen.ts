@@ -214,4 +214,5 @@ export interface FeatureToggles {
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
   alertingQueryAndExpressionsStepMode?: boolean;
+  improvedExternalSessionHandling?: boolean;
 }

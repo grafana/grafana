@@ -790,4 +790,8 @@ const (
 	// FlagAlertingQueryAndExpressionsStepMode
 	// Enables step mode for alerting queries and expressions
 	FlagAlertingQueryAndExpressionsStepMode = "alertingQueryAndExpressionsStepMode"
+
+	// FlagImprovedExternalSessionHandling
+	// Enable improved support for external sessions in Grafana
+	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
 )
