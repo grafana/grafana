@@ -379,26 +379,62 @@ func TestService_ModuleHash_Cache(t *testing.T) {
 		signature.ProvideService(pCfg, statickey.New()),
 		pluginstore.NewFakePluginStore(),
 	)
-	p := newPlugin(
-		"grafana-test-datasource",
-		withSignatureStatus(plugins.SignatureStatusValid),
-		withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
-	)
+	const pluginID = "grafana-test-datasource"
 
-	_, ok := svc.moduleHashCache.Load(p.ID)
-	require.False(t, ok, "cache should initially be empty")
+	t.Run("cache key", func(t *testing.T) {
+		t.Run("with version", func(t *testing.T) {
+			const pluginVersion = "1.0.0"
+			p := newPlugin(pluginID, withInfo(plugins.Info{Version: pluginVersion}))
+			k := svc.moduleHashCacheKey(p)
+			require.Equal(t, pluginID+":"+pluginVersion, k, "cache key should be correct")
+		})
 
-	mh := svc.ModuleHash(context.Background(), p)
-	exp := newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
-	require.Equal(t, exp, mh, "returned value should be correct")
+		t.Run("without version", func(t *testing.T) {
+			p := newPlugin(pluginID)
+			k := svc.moduleHashCacheKey(p)
+			require.Equal(t, pluginID+":", k, "cache key should be correct")
+		})
+	})
 
-	cachedMh, ok := svc.moduleHashCache.Load(p.ID)
-	require.True(t, ok)
-	require.Equal(t, exp, cachedMh, "cache should contain the returned value")
+	t.Run("ModuleHash usage", func(t *testing.T) {
+		pV1 := newPlugin(
+			pluginID,
+			withInfo(plugins.Info{Version: "1.0.0"}),
+			withSignatureStatus(plugins.SignatureStatusValid),
+			withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
+		)
+		k := svc.moduleHashCacheKey(pV1)
 
-	svc.moduleHashCache.Store(p.ID, "hax")
-	mh = svc.ModuleHash(context.Background(), p)
-	require.Equal(t, "hax", mh, "cache should be used")
+		_, ok := svc.moduleHashCache.Load(k)
+		require.False(t, ok, "cache should initially be empty")
+
+		mhV1 := svc.ModuleHash(context.Background(), pV1)
+		pV1Exp := newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
+		require.Equal(t, pV1Exp, mhV1, "returned value should be correct")
+
+		cachedMh, ok := svc.moduleHashCache.Load(k)
+		require.True(t, ok)
+		require.Equal(t, pV1Exp, cachedMh, "cache should contain the returned value")
+
+		t.Run("different version uses different cache key", func(t *testing.T) {
+			pV2 := newPlugin(
+				pluginID,
+				withInfo(plugins.Info{Version: "2.0.0"}),
+				withSignatureStatus(plugins.SignatureStatusValid),
+				// different fs for different hash
+				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested"))),
+			)
+			mhV2 := svc.ModuleHash(context.Background(), pV2)
+			require.NotEqual(t, mhV2, mhV1, "different version should have different hash")
+			require.Equal(t, newSRIHash(t, "266c19bc148b22ddef2a288fc5f8f40855bda22ccf60be53340b4931e469ae2a"), mhV2)
+		})
+
+		t.Run("cache should be used", func(t *testing.T) {
+			// edit cache directly
+			svc.moduleHashCache.Store(k, "hax")
+			require.Equal(t, "hax", svc.ModuleHash(context.Background(), pV1))
+		})
+	})
 }
 
 func TestConvertHashFromSRI(t *testing.T) {
@@ -438,6 +474,13 @@ func newPlugin(pluginID string, cbs ...func(p pluginstore.Plugin) pluginstore.Pl
 		p = cb(p)
 	}
 	return p
+}
+
+func withInfo(info plugins.Info) func(p pluginstore.Plugin) pluginstore.Plugin {
+	return func(p pluginstore.Plugin) pluginstore.Plugin {
+		p.Info = info
+		return p
+	}
 }
 
 func withFS(fs plugins.FS) func(p pluginstore.Plugin) pluginstore.Plugin {

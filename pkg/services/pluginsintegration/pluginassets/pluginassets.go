@@ -88,7 +88,8 @@ func (s *Service) LoadingStrategy(_ context.Context, p pluginstore.Plugin) plugi
 // If the plugin is unsigned, an empty string is returned.
 // The results are cached to avoid repeated reads from the MANIFEST.txt file.
 func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
-	cachedValue, ok := s.moduleHashCache.Load(p.ID)
+	k := s.moduleHashCacheKey(p)
+	cachedValue, ok := s.moduleHashCache.Load(k)
 	if ok {
 		return cachedValue.(string)
 	}
@@ -96,7 +97,7 @@ func (s *Service) ModuleHash(ctx context.Context, p pluginstore.Plugin) string {
 	if err != nil {
 		s.log.Error("Failed to calculate module hash", "plugin", p.ID, "error", err)
 	}
-	s.moduleHashCache.Store(p.ID, mh)
+	s.moduleHashCache.Store(k, mh)
 	return mh
 }
 
@@ -188,4 +189,9 @@ func convertHashForSRI(h string) (string, error) {
 		return "", fmt.Errorf("hex decode string: %w", err)
 	}
 	return "sha256-" + base64.StdEncoding.EncodeToString(hb), nil
+}
+
+// moduleHashCacheKey returns a unique key for the module hash cache.
+func (s *Service) moduleHashCacheKey(p pluginstore.Plugin) string {
+	return p.ID + ":" + p.Info.Version
 }
