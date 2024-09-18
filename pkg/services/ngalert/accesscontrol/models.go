@@ -55,7 +55,7 @@ type actionAccess[T models.Identified] struct {
 // This method is preferred when many resources need to be checked.
 func (s actionAccess[T]) Filter(ctx context.Context, user identity.Requester, resources ...T) ([]T, error) {
 	if err := s.AuthorizePreConditions(ctx, user); err != nil {
-		return nil, err
+		return nil, nil // For filtering, we don't return an error if user does not have access to any resources.
 	}
 	canAll, err := s.HasAccess(ctx, user, s.authorizeAll)
 	if err != nil {
