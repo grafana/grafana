@@ -274,53 +274,61 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	}
 	d.recordLegacyDuration(false, mode1Str, d.resource, method, startLegacy)
 
-	go func(res runtime.Object) {
-		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
-		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage update timeout"))
-
-		resCopy := res.DeepCopyObject()
-		// get the object to be updated
-		foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
-			if !apierrors.IsNotFound(err) {
-				log.WithValues("object", foundObj).Error(err, "could not get object to update")
-				cancel()
-			}
-			log.Info("object not found for update, creating one")
-		}
-
-		updated, err := objInfo.UpdatedObject(ctx, resCopy)
-		if err != nil {
-			log.WithValues("object", updated).Error(err, "could not update or create object")
-			cancel()
-		}
-
-		// if the object is found, create a new updateWrapper with the object found
-		if foundObj != nil {
-			if err := enrichLegacyObject(foundObj, resCopy); err != nil {
-				log.Error(err, "could not enrich object")
-				cancel()
-			}
-			objInfo = &updateWrapper{
-				upstream: objInfo,
-				updated:  resCopy,
-			}
-		}
-		startStorage := time.Now()
-		defer cancel()
-		storageObj, _, errObjectSt := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-		d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
-		if err != nil {
-			cancel()
-		}
-		areEqual := Compare(storageObj, res)
-		d.recordOutcome(mode1Str, name, areEqual, method)
-		if !areEqual {
-			log.WithValues("name", name).Info("object from legacy and storage are not equal")
-		}
-	}(res)
+	//nolint:errcheck
+	go d.updateOnUnifiedStorage(ctx, res, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 
 	return res, async, err
+}
+
+func (d *DualWriterMode1) updateOnUnifiedStorage(ctx context.Context, res runtime.Object, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) error {
+	var method = "update"
+	log := d.Log.WithValues("name", name, "method", method, "name", name)
+
+	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage update timeout"))
+
+	resCopy := res.DeepCopyObject()
+	// get the object to be updated
+	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.WithValues("object", foundObj).Error(err, "could not get object to update")
+			cancel()
+		}
+		log.Info("object not found for update, creating one")
+	}
+
+	updated, err := objInfo.UpdatedObject(ctx, resCopy)
+	if err != nil {
+		log.WithValues("object", updated).Error(err, "could not update or create object")
+		cancel()
+	}
+
+	// if the object is found, create a new updateWrapper with the object found
+	if foundObj != nil {
+		if err := enrichLegacyObject(foundObj, resCopy); err != nil {
+			log.Error(err, "could not enrich object")
+			cancel()
+		}
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  resCopy,
+		}
+	}
+	startStorage := time.Now()
+	defer cancel()
+	storageObj, _, errObjectSt := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
+	if err != nil {
+		cancel()
+	}
+	areEqual := Compare(storageObj, res)
+	d.recordOutcome(mode1Str, name, areEqual, method)
+	if !areEqual {
+		log.WithValues("name", name).Info("object from legacy and storage are not equal")
+	}
+
+	return errObjectSt
 }
 
 func (d *DualWriterMode1) Destroy() {

@@ -679,3 +679,73 @@ func TestMode1_Update(t *testing.T) {
 		})
 	}
 }
+
+func TestMode1_UpdateOnUnifiedStorage(t *testing.T) {
+	ctxCanceled, cancel := context.WithCancel(context.TODO())
+	cancel()
+
+	type testCase struct {
+		ctx            *context.Context
+		setupLegacyFn  func(m *mock.Mock, input string)
+		setupStorageFn func(m *mock.Mock, input string)
+		setupGetFn     func(m *mock.Mock, input string)
+		name           string
+		input          string
+	}
+	tests :=
+		[]testCase{
+			{
+				name:  "Update on unified storage",
+				input: "foo",
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
+				},
+				setupGetFn: func(m *mock.Mock, input string) {
+					m.On("Get", mock.Anything, input, mock.Anything).Return(exampleObj, nil)
+				},
+			},
+			{
+				name:  "Update on unified storage works even if parent context is canceled",
+				ctx:   &ctxCanceled,
+				input: "foo",
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
+				},
+				setupGetFn: func(m *mock.Mock, input string) {
+					m.On("Get", mock.Anything, input, mock.Anything).Return(exampleObj, nil)
+				},
+			},
+		}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
+
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
+
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
+
+			if tt.setupGetFn != nil {
+				tt.setupGetFn(m, tt.input)
+			}
+
+			ctx := context.TODO()
+			if tt.ctx != nil {
+				ctx = *tt.ctx
+			}
+
+			dw := NewDualWriter(Mode1, ls, us, p, kind)
+
+			err := dw.(*DualWriterMode1).updateOnUnifiedStorage(ctx, exampleObj, tt.input, updatedObjInfoObj{}, func(ctx context.Context, obj runtime.Object) error { return nil }, func(ctx context.Context, obj, old runtime.Object) error { return nil }, false, &metav1.UpdateOptions{})
+			assert.NoError(t, err)
+		})
+	}
+}
