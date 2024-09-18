@@ -3,7 +3,6 @@ package folders
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -89,7 +89,7 @@ func UnstructuredToLegacyFolderDTO(item unstructured.Unstructured) (*dtos.Folder
 		// Could convert meta.GetCreatedBy() return value to a struct--id and name
 		// CreatedBy: meta.GetCreatedBy(),
 		// UpdatedBy: meta.GetCreatedBy(),
-		URL: getURL(meta),
+		URL: getURL(meta, title),
 		// #TODO get Created in format "2024-09-12T15:37:41.09466+02:00"
 		Created: *created,
 		// #TODO figure out whether we want to set "updated" and "updated by". Could replace with
@@ -144,13 +144,6 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 	if v.ParentUID != "" {
 		meta.SetFolder(v.ParentUID)
 	}
-	// #TODO find a better way to set it
-	if v.URL != "" {
-		splits := strings.Split(v.URL, v.UID+"/")
-		if len(splits) == 2 {
-			meta.SetSlug(splits[1])
-		}
-	}
 	f.UID = gapiutil.CalculateClusterWideUID(f)
 	return f, nil
 }
@@ -181,8 +174,8 @@ func getLegacyID(meta utils.GrafanaMetaAccessor) (int64, error) {
 	return i, nil
 }
 
-func getURL(meta utils.GrafanaMetaAccessor) string {
-	slug := meta.GetSlug()
+func getURL(meta utils.GrafanaMetaAccessor, title string) string {
+	slug := slugify.Slugify(title)
 	uid := meta.GetName()
 	return dashboards.GetFolderURL(uid, slug)
 }

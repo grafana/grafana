@@ -298,8 +298,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			"metadata": {
 			  "annotations": {
 				"grafana.app/originPath": "${originPath}",
-				"grafana.app/originName": "SQL",
-				"grafana.app/slug":"test"
+				"grafana.app/originName": "SQL"
 			  },
 			  "creationTimestamp": "${creationTimestamp}",
 			  "name": "` + uid + `",
