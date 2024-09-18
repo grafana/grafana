@@ -1,5 +1,7 @@
 // QueryAndExpressionsStep.test.tsx
 
+import { produce } from 'immer';
+
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ExpressionQuery, ExpressionQueryType, ReducerMode } from 'app/features/expressions/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
@@ -18,16 +20,27 @@ const dataQuery: AlertQuery<AlertDataQuery | ExpressionQuery> = {
   model: { refId: SIMPLE_CONDITION_QUERY_ID },
 };
 
-const reduceExpression: ExpressionQuery = {
-  type: ExpressionQueryType.reduce,
+const reduceExpression: AlertQuery<ExpressionQuery> = {
   refId: SIMPLE_CONDITION_REDUCER_ID,
-  settings: { mode: ReducerMode.Strict },
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.reduce,
+    refId: SIMPLE_CONDITION_REDUCER_ID,
+    settings: { mode: ReducerMode.Strict },
+  },
 };
-const thresholdExpression: ExpressionQuery = {
-  type: ExpressionQueryType.threshold,
+const thresholdExpression: AlertQuery<ExpressionQuery> = {
   refId: SIMPLE_CONDITION_THRESHOLD_ID,
+  queryType: 'expression',
+  datasourceUid: '__expr__',
+  model: {
+    type: ExpressionQueryType.threshold,
+    refId: SIMPLE_CONDITION_THRESHOLD_ID,
+  },
 };
-const expressionQueries: ExpressionQuery[] = [reduceExpression, thresholdExpression];
+
+const expressionQueries: Array<AlertQuery<ExpressionQuery>> = [reduceExpression, thresholdExpression];
 
 describe('areQueriesTransformableToSimpleCondition', () => {
   it('should return false if dataQueries length is not 1', () => {
@@ -69,8 +82,12 @@ describe('areQueriesTransformableToSimpleCondition', () => {
 
   it('should return false if reduceExpression settings mode is not ReducerMode.Strict', () => {
     const dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [dataQuery];
+    const transformedReduceExpression = produce(reduceExpression, (draft) => {
+      draft.model.settings = { mode: ReducerMode.DropNonNumbers };
+    });
+
     const result = areQueriesTransformableToSimpleCondition(dataQueries, [
-      { ...reduceExpression, settings: { mode: ReducerMode.DropNonNumbers } },
+      transformedReduceExpression,
       thresholdExpression,
     ]);
     expect(result).toBe(false);
@@ -78,20 +95,21 @@ describe('areQueriesTransformableToSimpleCondition', () => {
 
   it('should return false if thresholdExpression unloadEvaluator has a value', () => {
     const dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>> = [dataQuery];
+
+    const transformedThresholdExpression = produce(thresholdExpression, (draft) => {
+      draft.model.conditions = [
+        {
+          evaluator: { params: [1], type: EvalFunction.IsAbove },
+          unloadEvaluator: { params: [1], type: EvalFunction.IsAbove },
+          query: { params: ['A'] },
+          reducer: { params: [], type: 'avg' },
+          type: 'query',
+        },
+      ];
+    });
     const result = areQueriesTransformableToSimpleCondition(dataQueries, [
       reduceExpression,
-      {
-        ...thresholdExpression,
-        conditions: [
-          {
-            evaluator: { params: [1], type: EvalFunction.IsAbove },
-            unloadEvaluator: { params: [1], type: EvalFunction.IsAbove },
-            query: { params: ['A'] },
-            reducer: { params: [], type: 'avg' },
-            type: 'query',
-          },
-        ],
-      },
+      transformedThresholdExpression,
     ]);
     expect(result).toBe(false);
   });

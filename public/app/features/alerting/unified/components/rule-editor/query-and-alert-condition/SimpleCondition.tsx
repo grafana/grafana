@@ -9,6 +9,7 @@ import { Trans } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { ExpressionQuery, ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
 import { getReducerType } from 'app/features/expressions/utils/expressionTypes';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { ExpressionResult } from '../../expressions/Expression';
 
@@ -32,7 +33,7 @@ export interface SimpleCondition {
 export interface SimpleConditionEditorProps {
   simpleCondition: SimpleCondition;
   onChange: (condition: SimpleCondition) => void;
-  expressionQueriesList: ExpressionQuery[];
+  expressionQueriesList: Array<AlertQuery<ExpressionQuery>>;
   dispatch: Dispatch<UnknownAction>;
   previewData?: PanelData;
 }
@@ -151,67 +152,69 @@ export const SimpleConditionEditor = ({
 
 function updateReduceExpression(
   reducer: string,
-  expressionQueriesList: ExpressionQuery[],
+  expressionQueriesList: Array<AlertQuery<ExpressionQuery>>,
   dispatch: Dispatch<UnknownAction>
 ) {
   const reduceExpression = expressionQueriesList.find(
-    (model) => model.type === ExpressionQueryType.reduce && model.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) => query.model.type === ExpressionQueryType.reduce && query.model.refId === SIMPLE_CONDITION_REDUCER_ID
   );
 
-  const newReduceExpression = produce(reduceExpression, (draft) => {
-    if (draft && draft.conditions) {
-      draft.reducer = reducer;
-      draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
-    }
-  });
+  const newReduceExpression = reduceExpression
+    ? produce(reduceExpression?.model, (draft) => {
+        if (draft && draft.conditions) {
+          draft.reducer = reducer;
+          draft.conditions[0].reducer.type = getReducerType(reducer) ?? ReducerID.last;
+        }
+      })
+    : undefined;
   newReduceExpression && dispatch(updateExpression(newReduceExpression));
 }
 
 function updateThresholdFunction(
   evaluator: EvalFunction,
-  expressionQueriesList: ExpressionQuery[],
+  expressionQueriesList: Array<AlertQuery<ExpressionQuery>>,
   dispatch: Dispatch<UnknownAction>
 ) {
   const thresholdExpression = expressionQueriesList.find(
-    (model) => model.type === ExpressionQueryType.threshold && model.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) => query.model.type === ExpressionQueryType.threshold && query.model.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.conditions) {
-      draft.conditions[0].evaluator.type = evaluator;
+    if (draft && draft.model.conditions) {
+      draft.model.conditions[0].evaluator.type = evaluator;
     }
   });
-  newThresholdExpression && dispatch(updateExpression(newThresholdExpression));
+  newThresholdExpression && dispatch(updateExpression(newThresholdExpression.model));
 }
 
 function updateThresholdValue(
   value: number,
   index: number,
-  expressionQueriesList: ExpressionQuery[],
+  expressionQueriesList: Array<AlertQuery<ExpressionQuery>>,
   dispatch: Dispatch<UnknownAction>
 ) {
   const thresholdExpression = expressionQueriesList.find(
-    (model) => model.type === ExpressionQueryType.threshold && model.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) => query.model.type === ExpressionQueryType.threshold && query.model.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
 
   const newThresholdExpression = produce(thresholdExpression, (draft) => {
-    if (draft && draft.conditions) {
-      draft.conditions[0].evaluator.params[index] = value;
+    if (draft && draft.model.conditions) {
+      draft.model.conditions[0].evaluator.params[index] = value;
     }
   });
-  newThresholdExpression && dispatch(updateExpression(newThresholdExpression));
+  newThresholdExpression && dispatch(updateExpression(newThresholdExpression.model));
 }
 
-export function getSimpleConditionFromExpressions(expressions: ExpressionQuery[]): SimpleCondition {
+export function getSimpleConditionFromExpressions(expressions: Array<AlertQuery<ExpressionQuery>>): SimpleCondition {
   const reduceExpression = expressions.find(
-    (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
   );
   const thresholdExpression = expressions.find(
-    (query) => query.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
-  const conditionsFromThreshold = thresholdExpression?.conditions ?? [];
+  const conditionsFromThreshold = thresholdExpression?.model.conditions ?? [];
   return {
-    whenField: reduceExpression?.reducer ?? ReducerID.last,
+    whenField: reduceExpression?.model.reducer ?? ReducerID.last,
     evaluator: {
       params: [...conditionsFromThreshold[0]?.evaluator?.params] ?? [0],
       type: conditionsFromThreshold[0]?.evaluator?.type ?? EvalFunction.IsAbove,

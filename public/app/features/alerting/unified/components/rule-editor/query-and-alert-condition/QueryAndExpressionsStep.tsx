@@ -84,7 +84,7 @@ import { useAlertQueryRunner } from './useAlertQueryRunner';
 
 export function areQueriesTransformableToSimpleCondition(
   dataQueries: Array<AlertQuery<AlertDataQuery | ExpressionQuery>>,
-  expressionQueries: ExpressionQuery[]
+  expressionQueries: Array<AlertQuery<ExpressionQuery>>
 ) {
   if (dataQueries.length !== 1) {
     return false;
@@ -101,19 +101,20 @@ export function areQueriesTransformableToSimpleCondition(
   }
 
   const reduceExpressionIndex = expressionQueries.findIndex(
-    (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
+    (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
   );
   const reduceExpression = expressionQueries[reduceExpressionIndex];
   const reduceOk =
     reduceExpression &&
     reduceExpressionIndex === 0 &&
-    (reduceExpression.settings?.mode === ReducerMode.Strict || reduceExpression.settings?.mode === undefined);
+    (reduceExpression.model.settings?.mode === ReducerMode.Strict ||
+      reduceExpression.model.settings?.mode === undefined);
 
   const thresholdExpressionIndex = expressionQueries.findIndex(
-    (query) => query.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
+    (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
   const thresholdExpression = expressionQueries[thresholdExpressionIndex];
-  const conditions = thresholdExpression?.conditions ?? [];
+  const conditions = thresholdExpression?.model.conditions ?? [];
   const thresholdOk =
     thresholdExpression && thresholdExpressionIndex === 1 && conditions[0]?.unloadEvaluator === undefined;
 
@@ -150,7 +151,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   // expression queries only
   const expressionQueries = useMemo(() => {
-    return queries.filter((query) => isExpressionQuery(query.model));
+    return queries.filter((query) => isExpressionQueryInAlert(query));
   }, [queries]);
 
   const [type, condition, dataSourceName, editorSettings] = watch([
@@ -166,16 +167,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isRecordingRuleType = isCloudRecordingRuleByType(type);
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
 
-  const expressionQueriesList = useMemo(() => {
-    return queries.reduce((acc: ExpressionQuery[], query) => {
-      return isExpressionQuery(query.model) ? acc.concat(query.model) : acc;
-    }, []);
-  }, [queries]);
   const [showResetModeModal, setShowResetModal] = useState(false);
 
   const [simpleCondition, setSimpleCondition] = useState<SimpleCondition>(
-    isGrafanaAlertingType && areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)
-      ? getSimpleConditionFromExpressions(expressionQueriesList)
+    isGrafanaAlertingType && areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)
+      ? getSimpleConditionFromExpressions(expressionQueries)
       : {
           whenField: ReducerID.last,
           evaluator: {
@@ -188,9 +184,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   // If we switch to simple mode we need to update the simple condition with the data in the queries reducer
   useEffect(() => {
     if (!isAdvancedMode) {
-      setSimpleCondition(getSimpleConditionFromExpressions(expressionQueriesList));
+      setSimpleCondition(getSimpleConditionFromExpressions(expressionQueries));
     }
-  }, [isAdvancedMode, expressionQueriesList]);
+  }, [isAdvancedMode, expressionQueries]);
 
   const dispatchReduxAction = useDispatch();
   useEffect(() => {
@@ -485,7 +481,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           isModeAdvanced: isAdvancedMode,
           setAdvancedMode: (isAdvanced: boolean) => {
             if (!isAdvanced) {
-              if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueriesList)) {
+              if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
                 setShowResetModal(true);
                 return;
               }
@@ -638,7 +634,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 <SimpleConditionEditor
                   simpleCondition={simpleCondition}
                   onChange={setSimpleCondition}
-                  expressionQueriesList={expressionQueriesList}
+                  expressionQueriesList={expressionQueries}
                   dispatch={dispatch}
                   previewData={queryPreviewData[condition ?? '']}
                 />
@@ -762,3 +758,9 @@ const useSetExpressionAndDataSource = () => {
     }
   };
 };
+
+function isExpressionQueryInAlert(
+  query: AlertQuery<AlertDataQuery | ExpressionQuery>
+): query is AlertQuery<ExpressionQuery> {
+  return isExpressionQuery(query.model);
+}
