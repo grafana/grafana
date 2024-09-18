@@ -420,6 +420,13 @@ func newPlugin(pluginID string, cbs ...func(p pluginstore.Plugin) pluginstore.Pl
 	return &p
 }
 
+func withInfo(info plugins.Info) func(p pluginstore.Plugin) pluginstore.Plugin {
+	return func(p pluginstore.Plugin) pluginstore.Plugin {
+		p.Info = info
+		return p
+	}
+}
+
 func withFS(fs plugins.FS) func(p pluginstore.Plugin) pluginstore.Plugin {
 	return func(p pluginstore.Plugin) pluginstore.Plugin {
 		p.FS = fs
