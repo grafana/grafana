@@ -205,7 +205,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	ctx := c.Req.Context()
 	if s.features.IsEnabled(ctx, featuremgmt.FlagHomeSetupGuide) {
 		var children []*navtree.NavLink
-		// setup guide
+		// setup guide (submenu item under Home)
 		children = append(children, &navtree.NavLink{
 			Id:         "home-setup-guide",
 			Text:       "Setup guide",
