@@ -53,36 +53,28 @@ export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dash
 export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
 export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
 export const getResultApplicationsExpand = () => screen.getByTestId(selectors.tree.expand('applications', 'result'));
-export const queryResultApplicationsGrafanaTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-grafana', 'result'));
-export const getResultApplicationsGrafanaTitle = () =>
-  screen.getByTestId(selectors.tree.title('applications-grafana', 'result'));
+export const queryResultApplicationsGrafanaSelect = () =>
+  screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana', 'result'));
 export const getResultApplicationsGrafanaSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-grafana', 'result'));
-export const queryPersistedApplicationsGrafanaTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-grafana', 'persisted'));
-export const queryResultApplicationsMimirTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-mimir', 'result'));
-export const getResultApplicationsMimirTitle = () =>
-  screen.getByTestId(selectors.tree.title('applications-mimir', 'result'));
+  screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana', 'result'));
+export const queryPersistedApplicationsGrafanaSelect = () =>
+  screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana', 'persisted'));
+export const queryResultApplicationsMimirSelect = () =>
+  screen.queryByTestId(selectors.tree.select('applications-mimir', 'result'));
 export const getResultApplicationsMimirSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-mimir', 'result'));
-export const queryPersistedApplicationsMimirTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-mimir', 'persisted'));
-export const getPersistedApplicationsMimirTitle = () =>
-  screen.getByTestId(selectors.tree.title('applications-mimir', 'persisted'));
+  screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-mimir', 'result'));
+export const queryPersistedApplicationsMimirSelect = () =>
+  screen.queryByTestId(selectors.tree.select('applications-mimir', 'persisted'));
 export const getPersistedApplicationsMimirSelect = () =>
   screen.getByTestId(selectors.tree.select('applications-mimir', 'persisted'));
-export const queryResultApplicationsCloudTitle = () =>
-  screen.queryByTestId(selectors.tree.title('applications-cloud', 'result'));
+export const queryResultApplicationsCloudSelect = () =>
+  screen.queryByTestId(selectors.tree.select('applications-cloud', 'result'));
 export const getResultApplicationsCloudSelect = () =>
   screen.getByTestId(selectors.tree.select('applications-cloud', 'result'));
 export const getResultApplicationsCloudExpand = () =>
   screen.getByTestId(selectors.tree.expand('applications-cloud', 'result'));
 export const getResultApplicationsCloudDevSelect = () =>
   screen.getByTestId(selectors.tree.select('applications-cloud-dev', 'result'));
-export const getResultApplicationsCloudOpsSelect = () =>
-  screen.getByTestId(selectors.tree.select('applications-cloud-ops', 'result'));
 
 export const getResultCloudSelect = () => screen.getByTestId(selectors.tree.select('cloud', 'result'));
 export const getResultCloudExpand = () => screen.getByTestId(selectors.tree.expand('cloud', 'result'));
