@@ -100,17 +100,22 @@ export function areQueriesTransformableToSimpleCondition(
     return false;
   }
 
-  const reduceExpression = expressionQueries.find(
+  const reduceExpressionIndex = expressionQueries.findIndex(
     (query) => query.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
   );
+  const reduceExpression = expressionQueries[reduceExpressionIndex];
   const reduceOk =
     reduceExpression &&
+    reduceExpressionIndex === 0 &&
     (reduceExpression.settings?.mode === ReducerMode.Strict || reduceExpression.settings?.mode === undefined);
-  const thresholdExpression = expressionQueries.find(
+
+  const thresholdExpressionIndex = expressionQueries.findIndex(
     (query) => query.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
+  const thresholdExpression = expressionQueries[thresholdExpressionIndex];
   const conditions = thresholdExpression?.conditions ?? [];
-  const thresholdOk = thresholdExpression && conditions[0]?.unloadEvaluator === undefined;
+  const thresholdOk =
+    thresholdExpression && thresholdExpressionIndex === 1 && conditions[0]?.unloadEvaluator === undefined;
 
   return Boolean(reduceOk && thresholdOk);
 }
