@@ -287,16 +287,12 @@ func TestReceiverService_Delete(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeAlertRuleNotificationStore{}
+			store.ListNotificationSettingsFn = func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+				return tc.storeSettings, nil
+			}
 			sut := createReceiverServiceSut(t, &secretsService)
-
-			store := sut.ruleNotificationsStore.(*fakeConfigStore)
-			store.notificationSettings = map[int64]map[models.AlertRuleKey][]models.NotificationSettings{
-				1: make(map[models.AlertRuleKey][]models.NotificationSettings),
-			}
-
-			for key, settings := range tc.storeSettings {
-				store.notificationSettings[tc.user.GetOrgID()][key] = settings
-			}
+			sut.ruleNotificationsStore = store
 
 			if tc.existing != nil {
 				created, err := sut.CreateReceiver(context.Background(), tc.existing, tc.user.GetOrgID(), tc.user)
@@ -758,8 +754,6 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 	}}
 
 	secretsService := fake_secrets.NewFakeSecretsService()
-	sut := createReceiverServiceSut(t, &secretsService)
-
 	receiverName := "grafana-default-email"
 	newReceiverName := "new-name"
 	slackIntegration := models.IntegrationGen(models.IntegrationMuts.WithName(receiverName), models.IntegrationMuts.WithValidConfig("slack"))()
@@ -767,38 +761,78 @@ func TestReceiverService_UpdateReceiverName(t *testing.T) {
 	baseReceiver.Version = "cd95627c75892a39" // Correct version for grafana-default-email.
 	baseReceiver.Name = newReceiverName       // Done here instead of in a mutator so we keep the same uid.
 
-	store := sut.ruleNotificationsStore.(*fakeConfigStore)
-	ns := models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))()
-	store.notificationSettings = map[int64]map[models.AlertRuleKey][]models.NotificationSettings{
-		1: {
-			{OrgID: 1, UID: "rule1"}: {ns},
-		},
-	}
+	t.Run("renames receiver and all its dependencies", func(t *testing.T) {
+		ruleStore := &fakeAlertRuleNotificationStore{}
+		sut := createReceiverServiceSut(t, &secretsService)
+		sut.ruleNotificationsStore = ruleStore
 
-	_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
-	require.NoError(t, err)
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		require.NoError(t, err)
 
-	// Ensure receiver name is updated in notification settings.
-	oldSettings, err := sut.ruleNotificationsStore.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
-		OrgID:        writer.GetOrgID(),
-		ReceiverName: receiverName,
+		assert.Equal(t, "RenameReceiverInNotificationSettings", ruleStore.Calls[0].Method)
+		assert.Equal(t, writer.OrgID, ruleStore.Calls[0].Args[1])
+		assert.Equal(t, receiverName, ruleStore.Calls[0].Args[2])
+		assert.Equal(t, newReceiverName, ruleStore.Calls[0].Args[3])
+		assert.NotNil(t, ruleStore.Calls[0].Args[4])
+		assert.Falsef(t, ruleStore.Calls[0].Args[5].(bool), "dryrun expected to be false")
+
+		// Ensure receiver name is updated in routes.
+		revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
+		require.NoError(t, err)
+
+		assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName), "old receiver name '%s' should not be used by routes", receiverName)
+		assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName), "new receiver name '%s' should be used by routes", newReceiverName)
 	})
-	require.NoError(t, err)
-	assert.Equal(t, 0, len(oldSettings))
-	newSettings, err := sut.ruleNotificationsStore.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
-		OrgID:        writer.GetOrgID(),
-		ReceiverName: baseReceiver.Name,
+
+	t.Run("returns ErrReceiverDependentResourcesProvenance if route has different provenance status", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService)
+		provenanceStore := sut.provisioningStore.(*fakes.FakeProvisioningStore)
+		provenanceStore.Records[1] = map[string]models.Provenance{
+			(&definitions.Route{}).ResourceType(): models.ProvenanceFile,
+		}
+
+		ruleStore := &fakeAlertRuleNotificationStore{
+			RenameReceiverInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+				assertInTransaction(t, ctx)
+				return nil, nil, nil
+			},
+		}
+		sut.ruleNotificationsStore = ruleStore
+
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		require.ErrorIs(t, err, ErrReceiverDependentResourcesProvenance)
+
+		require.Len(t, ruleStore.Calls, 1)
+		assert.Equal(t, "RenameReceiverInNotificationSettings", ruleStore.Calls[0].Method)
+		assert.Equal(t, writer.OrgID, ruleStore.Calls[0].Args[1])
+		assert.Equal(t, receiverName, ruleStore.Calls[0].Args[2])
+		assert.Equal(t, newReceiverName, ruleStore.Calls[0].Args[3])
+		assert.NotNil(t, ruleStore.Calls[0].Args[4])
+		assert.True(t, ruleStore.Calls[0].Args[5].(bool)) // still check if there are rules that have incompatible provenance
 	})
-	require.NoError(t, err)
-	assert.Equal(t, 1, len(newSettings))
-	assert.Equal(t, newReceiverName, newSettings[models.AlertRuleKey{OrgID: 1, UID: "rule1"}][0].Receiver)
 
-	// Ensure receiver name is updated in routes.
-	revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
-	require.NoError(t, err)
+	t.Run("returns ErrReceiverDependentResourcesProvenance if rules have different provenance status", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService)
 
-	assert.Falsef(t, revision.ReceiverNameUsedByRoutes(receiverName), "old receiver name '%s' should not be used by routes", receiverName)
-	assert.Truef(t, revision.ReceiverNameUsedByRoutes(newReceiverName), "new receiver name '%s' should be used by routes", newReceiverName)
+		ruleStore := &fakeAlertRuleNotificationStore{
+			RenameReceiverInNotificationSettingsFn: func(ctx context.Context, orgID int64, old, new string, validate func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error) {
+				assertInTransaction(t, ctx)
+				return nil, []models.AlertRuleKey{models.GenerateRuleKey(orgID)}, nil
+			},
+		}
+		sut.ruleNotificationsStore = ruleStore
+
+		_, err := sut.UpdateReceiver(context.Background(), &baseReceiver, nil, writer.GetOrgID(), writer)
+		require.ErrorIs(t, err, ErrReceiverDependentResourcesProvenance)
+
+		require.Len(t, ruleStore.Calls, 1)
+		assert.Equal(t, "RenameReceiverInNotificationSettings", ruleStore.Calls[0].Method)
+		assert.Equal(t, writer.OrgID, ruleStore.Calls[0].Args[1])
+		assert.Equal(t, receiverName, ruleStore.Calls[0].Args[2])
+		assert.Equal(t, newReceiverName, ruleStore.Calls[0].Args[3])
+		assert.NotNil(t, ruleStore.Calls[0].Args[4])
+		assert.Falsef(t, ruleStore.Calls[0].Args[5].(bool), "dryrun expected to be false")
+	})
 }
 
 func TestReceiverServiceAC_Read(t *testing.T) {
@@ -825,7 +859,8 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 		permissions map[string][]string
 		existing    []models.Receiver
 
-		visible []models.Receiver
+		visible                 []models.Receiver
+		visibleWithProvisioning []models.Receiver
 	}{
 		{
 			name:     "not authorized without permissions",
@@ -874,6 +909,20 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			existing: allReceivers(),
 			visible:  []models.Receiver{recv1, recv3},
 		},
+		{
+			name:                    "provisioning read applies to only provisioning",
+			permissions:             map[string][]string{accesscontrol.ActionAlertingProvisioningRead: nil},
+			existing:                allReceivers(),
+			visible:                 nil,
+			visibleWithProvisioning: allReceivers(),
+		},
+		{
+			name:                    "provisioning read secrets applies to only provisioning",
+			permissions:             map[string][]string{accesscontrol.ActionAlertingProvisioningReadSecrets: nil},
+			existing:                allReceivers(),
+			visible:                 nil,
+			visibleWithProvisioning: allReceivers(),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -900,6 +949,28 @@ func TestReceiverServiceAC_Read(t *testing.T) {
 			for _, recv := range allReceivers() {
 				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
 				if isVisible(recv.UID) {
+					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
+					assert.NotNil(t, response)
+				} else {
+					assert.ErrorIsf(t, err, ac.ErrAuthorizationBase, "receiver '%s' should not be visible, but is", recv.Name)
+				}
+			}
+
+			isVisibleInProvisioning := func(uid string) bool {
+				if tc.visibleWithProvisioning == nil {
+					return isVisible(uid)
+				}
+				for _, recv := range tc.visibleWithProvisioning {
+					if recv.UID == uid {
+						return true
+					}
+				}
+				return false
+			}
+			sut.authz = ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), true)
+			for _, recv := range allReceivers() {
+				response, err := sut.GetReceiver(context.Background(), singleQ(orgId, recv.Name), usr)
+				if isVisibleInProvisioning(recv.UID) {
 					require.NoErrorf(t, err, "receiver '%s' should be visible, but isn't", recv.Name)
 					assert.NotNil(t, response)
 				} else {
@@ -933,14 +1004,14 @@ func TestReceiverServiceAC_Create(t *testing.T) {
 			hasAccess: nil,
 		},
 		{
-			name:        "global legacy permissions - not authorized without read",
+			name:        "global legacy permissions - authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingNotificationsWrite: nil},
-			hasAccess:   nil,
+			hasAccess:   allReceivers(),
 		},
 		{
-			name:        "receivers permissions - not authorized without read",
+			name:        "receivers permissions - authorized without read",
 			permissions: map[string][]string{accesscontrol.ActionAlertingReceiversCreate: nil},
-			hasAccess:   nil,
+			hasAccess:   allReceivers(),
 		},
 		{
 			name:        "global legacy permissions - create all",
@@ -1292,6 +1363,112 @@ func TestReceiverServiceAC_Delete(t *testing.T) {
 	}
 }
 
+func TestReceiverService_InUseMetadata(t *testing.T) {
+	secretsService := fake_secrets.NewFakeSecretsService()
+
+	admin := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleAdmin, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingNotificationsRead:  nil,
+		},
+	}}
+
+	for _, tc := range []struct {
+		name             string
+		user             identity.Requester
+		storeRoute       definitions.Route
+		storeSettings    map[models.AlertRuleKey][]models.NotificationSettings
+		existing         []*models.Receiver
+		expectedMetadata map[string]models.ReceiverMetadata
+	}{
+		{
+			name: "mixed metadata",
+			user: admin,
+			existing: []*models.Receiver{
+				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver1"))()),
+				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver2"))()),
+				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver3"))()),
+				util.Pointer(models.ReceiverGen(models.ReceiverMuts.WithName("receiver4"))()),
+			},
+			storeSettings: map[models.AlertRuleKey][]models.NotificationSettings{
+				{OrgID: 1, UID: "rule1uid"}: {
+					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver1"))(),
+					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver2"))(),
+				},
+				{OrgID: 1, UID: "rule2uid"}: {
+					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver2"))(),
+					models.NotificationSettingsGen(models.NSMuts.WithReceiver("receiver3"))(),
+				},
+			},
+			storeRoute: definitions.Route{
+				Receiver: "receiver1",
+				Routes: []*definitions.Route{
+					{Receiver: "receiver2"},
+					{Receiver: "receiver3"},
+					{
+						Receiver: "receiver4",
+						Routes: []*definitions.Route{
+							{Receiver: "receiver1"},
+							{Receiver: "receiver3"},
+						},
+					},
+				},
+			},
+			expectedMetadata: map[string]models.ReceiverMetadata{
+				legacy_storage.NameToUid("receiver1"): {
+					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}},
+					InUseByRoutes: 2,
+				},
+				legacy_storage.NameToUid("receiver2"): {
+					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule1uid"}, {OrgID: 1, UID: "rule2uid"}},
+					InUseByRoutes: 1,
+				},
+				legacy_storage.NameToUid("receiver3"): {
+					InUseByRules:  []models.AlertRuleKey{{OrgID: 1, UID: "rule2uid"}},
+					InUseByRoutes: 2,
+				},
+				legacy_storage.NameToUid("receiver4"): {
+					InUseByRules:  []models.AlertRuleKey{},
+					InUseByRoutes: 1,
+				},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeAlertRuleNotificationStore{}
+			store.ListNotificationSettingsFn = func(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+				return tc.storeSettings, nil
+			}
+
+			sut := createReceiverServiceSut(t, &secretsService)
+			sut.ruleNotificationsStore = store
+
+			for _, recv := range tc.existing {
+				_, err := sut.CreateReceiver(context.Background(), recv, tc.user.GetOrgID(), tc.user)
+				require.NoError(t, err)
+			}
+
+			// Create route after receivers as they will be referenced.
+			revision, err := sut.cfgStore.Get(context.Background(), tc.user.GetOrgID())
+			require.NoError(t, err)
+			revision.Config.AlertmanagerConfig.Route = &tc.storeRoute
+			err = sut.cfgStore.Save(context.Background(), revision, tc.user.GetOrgID())
+			require.NoError(t, err)
+
+			metadata, err := sut.InUseMetadata(context.Background(), tc.user.GetOrgID(), tc.existing...)
+			require.NoError(t, err)
+
+			assert.Lenf(t, metadata, len(tc.expectedMetadata), "unexpected metadata length")
+			for _, recv := range tc.existing {
+				expected, ok := tc.expectedMetadata[recv.UID]
+				assert.Truef(t, ok, "missing metadata for receiver uid: %q, name: %q", recv.UID, recv.Name)
+				assert.ElementsMatch(t, expected.InUseByRules, metadata[recv.UID].InUseByRules, "unexpected rules metadata for receiver uid: %q, name: %q", recv.UID, recv.Name)
+				assert.Equalf(t, expected.InUseByRoutes, metadata[recv.UID].InUseByRoutes, "unexpected routes metadata for receiver uid: %q, name: %q", recv.UID, recv.Name)
+			}
+		})
+	}
+}
+
 func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverService {
 	cfg := createEncryptedConfig(t, encryptSvc)
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
@@ -1302,7 +1479,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverS
 		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()), false),
 		legacy_storage.NewAlertmanagerConfigStore(store),
 		provisioningStore,
-		NewFakeConfigStore(t, nil),
+		&fakeAlertRuleNotificationStore{},
 		encryptSvc,
 		xact,
 		log.NewNopLogger(),
@@ -1386,4 +1563,8 @@ func newNopTransactionManager() *NopTransactionManager {
 
 func (n *NopTransactionManager) InTransaction(ctx context.Context, work func(ctx context.Context) error) error {
 	return work(context.WithValue(ctx, NopTransactionManager{}, struct{}{}))
+}
+
+func assertInTransaction(t *testing.T, ctx context.Context) {
+	assert.Truef(t, ctx.Value(NopTransactionManager{}) != nil, "Expected to be executed in transaction but there is none")
 }

@@ -5,7 +5,7 @@ import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
 import { PromOptions, PrometheusDatasource } from '@grafana/prometheus';
-import { locationService, setDataSourceSrv, setPluginExtensionsHook } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, setPluginLinksHook } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as ruler from 'app/features/alerting/unified/api/ruler';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -50,8 +50,8 @@ jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.spyOn(ruler, 'rulerUrlBuilder');
 jest.spyOn(alertingAbilities, 'useAlertRuleAbility');
 
-setPluginExtensionsHook(() => ({
-  extensions: [],
+setPluginLinksHook(() => ({
+  links: [],
   isLoading: false,
 }));
 

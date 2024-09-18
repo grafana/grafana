@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -23,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var logger = log.New("ngalert.eval")
@@ -648,6 +648,9 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 // Each non-empty Frame must be a single Field of type []*float64 and of length 1.
 // Also, each Frame must be uniquely identified by its Field.Labels or a single Error result will be returned.
 //
+// An exception to this is data that is returned by the query service, which might have a timestamp and single value.
+// Those are handled with the appropriated logic.
+//
 // Per Frame, data becomes a State based on the following rules:
 //
 // If no value is set:
@@ -702,6 +705,13 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 			continue
 		}
 
+		// The query service returns instant vectors from prometheus as scalars. We need to handle them accordingly.
+		if val, ok := scalarInstantVector(f); ok {
+			r := buildResult(f, val, ts)
+			evalResults = append(evalResults, r)
+			continue
+		}
+
 		if len(f.TypeIndices(data.FieldTypeTime, data.FieldTypeNullableTime)) > 0 {
 			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "looks like time series data, only reduced data can be alerted on."})
 			continue
@@ -734,23 +744,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		}
 
 		val := f.Fields[0].At(0).(*float64) // type checked by data.FieldTypeNullableFloat64 above
-
-		r := Result{
-			Instance:           f.Fields[0].Labels,
-			EvaluatedAt:        ts,
-			EvaluationDuration: time.Since(ts),
-			EvaluationString:   extractEvalString(f),
-			Values:             extractValues(f),
-		}
-
-		switch {
-		case val == nil:
-			r.State = NoData
-		case *val == 0:
-			r.State = Normal
-		default:
-			r.State = Alerting
-		}
+		r := buildResult(f, val, ts)
 
 		evalResults = append(evalResults, r)
 	}
@@ -774,6 +768,42 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 	}
 
 	return evalResults
+}
+
+func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
+	r := Result{
+		Instance:           f.Fields[0].Labels,
+		EvaluatedAt:        ts,
+		EvaluationDuration: time.Since(ts),
+		EvaluationString:   extractEvalString(f),
+		Values:             extractValues(f),
+	}
+	switch {
+	case val == nil:
+		r.State = NoData
+	case *val == 0:
+		r.State = Normal
+	default:
+		r.State = Alerting
+	}
+	return r
+}
+
+func scalarInstantVector(f *data.Frame) (*float64, bool) {
+	if len(f.Fields) != 2 {
+		return nil, false
+	}
+	if f.Fields[0].Len() > 1 || (f.Fields[0].Type() != data.FieldTypeNullableTime && f.Fields[0].Type() != data.FieldTypeTime) {
+		return nil, false
+	}
+	switch f.Fields[1].Type() {
+	case data.FieldTypeFloat64:
+		return util.Pointer(f.Fields[1].At(0).(float64)), true
+	case data.FieldTypeNullableFloat64:
+		return f.Fields[1].At(0).(*float64), true
+	default:
+		return nil, true
+	}
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.

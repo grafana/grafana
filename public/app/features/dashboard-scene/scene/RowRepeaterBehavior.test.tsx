@@ -1,3 +1,4 @@
+import { VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
@@ -144,23 +145,25 @@ describe('RowRepeaterBehavior', () => {
 
       expect(gridStateUpdates.length).toBe(1);
     });
-  });
 
-  describe('Should not repeat row', () => {
-    it('Should ignore repeat process if the variable is not a multi select variable', async () => {
-      const { scene, grid, repeatBehavior } = buildScene({ variableQueryTime: 0 }, undefined, { isMulti: false });
-      const gridStateUpdates = [];
-      grid.subscribeToState((state) => gridStateUpdates.push(state));
+    it('Should update panels on refresh if variables load on time range change', async () => {
+      const { scene, repeatBehavior } = buildScene({
+        variableQueryTime: 0,
+        variableRefresh: VariableRefresh.onTimeRangeChanged,
+      });
+
+      const notifyPanelsSpy = jest.spyOn(repeatBehavior, 'notifyRepeatedPanelsWaitingForVariables');
 
       activateFullSceneTree(scene);
-      await new Promise((r) => setTimeout(r, 1));
 
-      // trigger another repeat cycle by changing the variable
-      repeatBehavior.performRepeat();
+      expect(notifyPanelsSpy).toHaveBeenCalledTimes(0);
 
-      await new Promise((r) => setTimeout(r, 1));
+      scene.state.$timeRange?.onRefresh();
 
-      expect(gridStateUpdates.length).toBe(0);
+      //make sure notifier is called
+      expect(notifyPanelsSpy).toHaveBeenCalledTimes(1);
+
+      notifyPanelsSpy.mockRestore();
     });
   });
 
@@ -251,6 +254,7 @@ interface SceneOptions {
   maxPerRow?: number;
   itemHeight?: number;
   repeatDirection?: RepeatDirection;
+  variableRefresh?: VariableRefresh;
 }
 
 function buildScene(
@@ -334,6 +338,7 @@ function buildScene(
           isMulti: true,
           includeAll: true,
           delayMs: options.variableQueryTime,
+          refresh: options.variableRefresh,
           optionsToReturn: variableOptions ?? [
             { label: 'A', value: 'A1' },
             { label: 'B', value: 'B1' },

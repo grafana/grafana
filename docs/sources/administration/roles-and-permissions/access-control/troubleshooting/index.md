@@ -8,7 +8,7 @@ labels:
     - enterprise
 menuTitle: Troubleshooting RBAC
 title: Troubleshooting RBAC
-weight: 80
+weight: 100
 ---
 
 # Troubleshooting RBAC
