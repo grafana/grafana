@@ -102,9 +102,11 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 				removeConnectionHeaders(res.Headers)
 				removeHopByHopHeaders(res.Headers)
 				removeNonAllowedHeaders(res.Headers)
-				proxyutil.SetProxyResponseHeaders(res.Headers)
+			} else {
+				res.Headers = map[string][]string{}
 			}
 
+			proxyutil.SetProxyResponseHeaders(res.Headers)
 			ensureContentTypeHeader(res)
 		}
 
