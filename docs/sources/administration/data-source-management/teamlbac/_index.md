@@ -29,35 +29,34 @@ LBAC for datasources controls access to logs depending on the rules set for each
 This feature addresses two common challenges faced by Grafana users:
 
 1. Having a high number of Grafana Cloud data sources.
-   LBAC for datasources lets Grafana administrators reduce the total number of data sources per instance from hundreds, to one.
+   LBAC for data sources lets Grafana administrators reduce the total number of data sources per instance from hundreds, to one.
 1. Using the same dashboard across multiple teams.
-   LBAC for datasources lets Grafana Teams use the same dashboard with different access control rules.
+   LBAC for data sources lets Grafana Teams use the same dashboard with different access control rules.
 
-To set up LBAC for datasources for a Loki data source, refer to [Configure LBAC for datasources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
+To set up LBAC for data sources for a Loki data source, refer to [Configure LBAC for datasources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-loki/).
 
 ## Limitations
 
-- There is a set number of rules to be configured within a datasource, depending on the size of the rules.
+- There is a set number of rules to be configured within a data source, depending on the size of the rules.
   - Around ~500-600 rules is the upper limit.
-- If there are no LBAC for datasources rules for a user's team, that user can query all logs.
-- If an administrator is part of a team with LBAC for datasources rules, those rules are applied to the administrator requests.
-- Cloud Access Policy (CAP) LBAC rules override LBAC for datasources rules.
+- If there are no LBAC for data sources rules for a user's team, that user can query all logs.
+- If an administrator is part of a team with LBAC for data sources rules, those rules are applied to the administrator requests.
+- Cloud Access Policy (CAP) LBAC rules override LBAC for data sources rules.
   CAP are the access controls from Grafana Cloud.
 
-  You must remove any label selectors from your Cloud Access Policy that is configured for the Loki data source, otherwise the CAP label selectors, override the LBAC for datasources rules.
-  For more information about CAP label selectors, refer to [Use label-based access control (LBAC) with access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/label-access-policies/).
+You must remove any label selectors from your Cloud Access Policy that is configured for the Loki data source, otherwise the CAP label selectors override the LBAC for data sources rules. For more information about CAP label selectors, refer to [Use label-based access control (LBAC) with access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/label-access-policies/).
 
 ## Data source permissions
 
-Data source permissions allow the users access to query the data source.
-Administrators set the permissions at the data source level.
-All the teams and users that are part of the data source inherit those permissions.
+- Data source permissions allow the users access to query the data source.
+- Administrators set the permissions at the data source level.
+- All the teams and users that are part of the data source inherit those permissions.
 
 ## Recommended setup
 
-It's recommended that you create a single Loki data source for using LBAC for datasources rules so you have a clear separation of data sources using LBAC for datasources and those that aren't.
+It's recommended that you create a single Loki data source for using LBAC for data sources rules so you have a clear separation of data sources using LBAC for data sources and those that aren't.
 All teams should have with only teams having `query` permission.
-You should create another Loki data source configured without LBAC for datasources for full access to the logs.
+You should create another Loki data source configured without LBAC for data sources for full access to the logs.
 
 ## LBAC rules
 
