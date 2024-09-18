@@ -76,7 +76,7 @@ We have one team, Team A `Query` permissions. Loki access is setup with `Admin` 
 
 A user that is part of Team A will **NOT** have access to logs that match `secret!="true"`.
 
-### Task 3: Set up multiple rules for a team 
+### Task 3: Set up multiple rules for a team
 
 We have two teams, Team A and Team B with `Query` permissions. Loki access is setup with `Admin` roles having `Admin` permission.
 
