@@ -89,7 +89,24 @@ func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
 	if err != nil {
 		return models.AlertInstanceKey{}, err
 	}
-	return models.AlertInstanceKey{RuleOrgID: a.OrgID, RuleUID: a.AlertRuleUID, LabelsHash: labelsHash}, nil
+	return models.AlertInstanceKey{
+		RuleOrgID:  a.OrgID,
+		RuleUID:    a.AlertRuleUID,
+		LabelsHash: labelsHash,
+	}, nil
+}
+
+func (a *State) GetAlertInstanceKeyWithGroup() (models.AlertInstanceKeyWithGroup, error) {
+	key, err := a.GetAlertInstanceKey()
+
+	if err != nil {
+		return models.AlertInstanceKeyWithGroup{}, err
+	}
+
+	return models.AlertInstanceKeyWithGroup{
+		AlertInstanceKey: key,
+		RuleGroup:        a.AlertRuleGroup,
+	}, nil
 }
 
 // SetAlerting sets the state to Alerting. It changes both the start and end time.

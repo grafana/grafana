@@ -367,6 +367,7 @@ func (c *cache) asInstances(skipNormalState bool) []ngModels.AlertInstance {
 				}
 				states = append(states, ngModels.AlertInstance{
 					AlertInstanceKey:  key,
+					RuleGroup:         v2.AlertRuleGroup,
 					Labels:            ngModels.InstanceLabels(v2.Labels),
 					CurrentState:      ngModels.InstanceStateType(v2.State.String()),
 					CurrentReason:     v2.StateReason,

@@ -139,6 +139,7 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
+		RuleGroup:         rule.RuleGroup,
 		CurrentState:      models.InstanceStateNormal,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
@@ -157,6 +158,7 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
+		RuleGroup:         rule.RuleGroup,
 		CurrentState:      models.InstanceStateFiring,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
@@ -175,6 +177,7 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
+		RuleGroup:         rule.RuleGroup,
 		CurrentState:      models.InstanceStateNoData,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
@@ -193,6 +196,7 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
+		RuleGroup:         rule.RuleGroup,
 		CurrentState:      models.InstanceStateError,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
@@ -211,6 +215,7 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
+		RuleGroup:         rule.RuleGroup,
 		CurrentState:      models.InstanceStatePending,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
@@ -1733,6 +1738,7 @@ func TestStaleResultsHandler(t *testing.T) {
 				RuleUID:    rule.UID,
 				LabelsHash: hash1,
 			},
+			RuleGroup:         rule.RuleGroup,
 			CurrentState:      models.InstanceStateNormal,
 			Labels:            labels1,
 			LastEvalTime:      lastEval,
@@ -1748,6 +1754,7 @@ func TestStaleResultsHandler(t *testing.T) {
 				RuleUID:    rule.UID,
 				LabelsHash: hash2,
 			},
+			RuleGroup:         rule.RuleGroup,
 			CurrentState:      models.InstanceStateFiring,
 			Labels:            labels2,
 			LastEvalTime:      lastEval,
@@ -2004,6 +2011,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				RuleUID:    rule.UID,
 				LabelsHash: hash1,
 			},
+			RuleGroup:    rule.RuleGroup,
 			CurrentState: models.InstanceStateNormal,
 			Labels:       labels1,
 		},
@@ -2013,6 +2021,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				RuleUID:    rule.UID,
 				LabelsHash: hash2,
 			},
+			RuleGroup:    rule.RuleGroup,
 			CurrentState: models.InstanceStateFiring,
 			Labels:       labels2,
 		},
@@ -2093,7 +2102,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			assert.Equal(t, tc.startingInstanceDBCount, len(alerts))
 
 			expectedReason := util.GenerateShortUID()
-			transitions := st.DeleteStateByRuleUID(ctx, rule.GetKey(), expectedReason)
+			transitions := st.DeleteStateByRuleUID(ctx, rule.GetKeyWithGroup(), expectedReason)
 
 			// Check that the deleted states are the same as the ones that were in cache
 			assert.Equal(t, tc.startingStateCacheCount, len(transitions))
@@ -2146,6 +2155,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				RuleUID:    rule.UID,
 				LabelsHash: hash1,
 			},
+			RuleGroup:    rule.RuleGroup,
 			CurrentState: models.InstanceStateNormal,
 			Labels:       labels1,
 		},
@@ -2155,6 +2165,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				RuleUID:    rule.UID,
 				LabelsHash: hash2,
 			},
+			RuleGroup:    rule.RuleGroup,
 			CurrentState: models.InstanceStateFiring,
 			Labels:       labels2,
 		},
