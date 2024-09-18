@@ -52,7 +52,11 @@ export function setFilters(query: AzureMonitorQuery, filters: AzureTracesFilter[
   };
 }
 
-export function onLoad(query: AzureMonitorQuery, defaultValue: ResultFormat, handleChange: (change: SelectableValue<ResultFormat>) => void) {
+export function onLoad(
+  query: AzureMonitorQuery,
+  defaultValue: ResultFormat,
+  handleChange: (change: SelectableValue<ResultFormat>) => void
+) {
   if (!query.azureTraces?.resultFormat) {
     handleChange({ value: defaultValue });
   }

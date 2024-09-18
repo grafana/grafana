@@ -51,7 +51,11 @@ export function setBasicLogsQuery(query: AzureMonitorQuery, basicLogsQuery: bool
     },
   };
 }
-export function onLoad(query: AzureMonitorQuery, defaultValue: ResultFormat, handleChange: (change: SelectableValue<ResultFormat>) => void) {
+export function onLoad(
+  query: AzureMonitorQuery,
+  defaultValue: ResultFormat,
+  handleChange: (change: SelectableValue<ResultFormat>) => void
+) {
   if (!query.azureLogAnalytics) {
     handleChange({ value: defaultValue });
     return;

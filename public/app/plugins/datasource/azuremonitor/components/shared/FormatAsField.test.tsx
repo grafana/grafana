@@ -21,9 +21,13 @@ const setFormatAs = (query: AzureMonitorQuery, formatAs: ResultFormat): AzureMon
       resultFormat: formatAs,
     },
   };
-}
+};
 
-const onLoad = (_query: AzureMonitorQuery, _defaultValue: ResultFormat, _handleChange: (change: SelectableValue<ResultFormat>) => void) => {}
+const onLoad = (
+  _query: AzureMonitorQuery,
+  _defaultValue: ResultFormat,
+  _handleChange: (change: SelectableValue<ResultFormat>) => void
+) => {};
 
 const props = {
   query: createMockQuery(),
