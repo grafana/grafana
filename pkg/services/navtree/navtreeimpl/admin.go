@@ -154,7 +154,12 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if s.license.FeatureEnabled("groupsync") && s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) && hasAccess(ac.EvalPermission("groupsync.mappings:read", "groupsync.mappings:write")) {
+	if s.license.FeatureEnabled("groupsync") &&
+		s.features.IsEnabled(ctx, featuremgmt.FlagGroupAttributeSync) &&
+		hasAccess(ac.EvalAny(
+			ac.EvalPermission("groupsync.mappings:read"),
+			ac.EvalPermission("groupsync.mappings:write"),
+		)) {
 		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
 			Text:     "External group sync",
 			Id:       "groupsync",
