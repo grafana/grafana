@@ -16,6 +16,7 @@ const FormatAsField = ({
   inputId,
   options: formatOptions,
   defaultValue,
+  onLoad,
   setFormatAs,
   resultFormat,
 }: FormatAsFieldProps) => {
@@ -35,14 +36,11 @@ const FormatAsField = ({
   );
 
   useEffectOnce(() => {
-    if (!query.azureLogAnalytics && !query.azureMonitor && !query.azureTraces && !query.azureResourceGraph) {
-      handleChange({ value: defaultValue });
-    } else if (!query.azureLogAnalytics?.resultFormat) {
-      handleChange({ value: ResultFormat.TimeSeries });
-    }
-    else if (!formatOptions.find((item) => item.value === resultFormat)) {
+    //sets to default if the value is not found in the list
+    if (!formatOptions.find((item) => item.value === resultFormat)) {
       handleChange({ value: defaultValue });
     }
+    onLoad(query, defaultValue, handleChange);
   });
 
   return (
