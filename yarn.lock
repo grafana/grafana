@@ -3547,7 +3547,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.9.1":
+"@grafana/faro-core@npm:^1.10.0, @grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.9.1":
   version: 1.10.0
   resolution: "@grafana/faro-core@npm:1.10.0"
   dependencies:
@@ -3557,7 +3557,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.9.1, @grafana/faro-web-sdk@npm:^1.3.6, @grafana/faro-web-sdk@npm:^1.9.1":
+"@grafana/faro-web-sdk@npm:1.9.1":
   version: 1.9.1
   resolution: "@grafana/faro-web-sdk@npm:1.9.1"
   dependencies:
@@ -3565,6 +3565,17 @@ __metadata:
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^4.0.1"
   checksum: 10/436fa2da908b9aa20ce9700f3589e25f1c65eef1c855094d506afd6168278971bf347ca2f18b3f18dc0990a4551726670b9e481dd52124ae44b0d1909e879ea4
+  languageName: node
+  linkType: hard
+
+"@grafana/faro-web-sdk@npm:^1.3.6, @grafana/faro-web-sdk@npm:^1.9.1":
+  version: 1.10.0
+  resolution: "@grafana/faro-web-sdk@npm:1.10.0"
+  dependencies:
+    "@grafana/faro-core": "npm:^1.10.0"
+    ua-parser-js: "npm:^1.0.32"
+    web-vitals: "npm:^4.0.1"
+  checksum: 10/01f2cd2a1d3e9f0f3ede733a9a354643f31b2600ec62bd41c64caf256846fc8ae1a857ea3952a641df4e74971786cc605293248bd3bd8bff1debace369069e1e
   languageName: node
   linkType: hard
 
@@ -5090,9 +5101,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mswjs/interceptors@npm:^0.35.0":
-  version: 0.35.1
-  resolution: "@mswjs/interceptors@npm:0.35.1"
+"@mswjs/interceptors@npm:^0.35.3":
+  version: 0.35.3
+  resolution: "@mswjs/interceptors@npm:0.35.3"
   dependencies:
     "@open-draft/deferred-promise": "npm:^2.2.0"
     "@open-draft/logger": "npm:^0.3.0"
@@ -5100,7 +5111,7 @@ __metadata:
     is-node-process: "npm:^1.2.0"
     outvariant: "npm:^1.4.3"
     strict-event-emitter: "npm:^0.5.1"
-  checksum: 10/d7af1d100efa44bc874ea4751f3311b6dcb1a9d136553d46b83228df15c01fde404047430c99e0df87d12b8e158e5d2795e25db3abba010ec22685e34e8ed965
+  checksum: 10/e2760f5262cdb27cb731ba3f153c5fea834ef39682003568c3255bc3d48cecd25b606ae23f463b7c7de9ab3e9e4af57f38d6003375f8e1925170e2e671f31363
   languageName: node
   linkType: hard
 
@@ -18818,7 +18829,7 @@ __metadata:
     moment-timezone: "npm:0.5.45"
     monaco-editor: "npm:0.34.1"
     moveable: "npm:0.53.0"
-    msw: "npm:2.4.5"
+    msw: "npm:2.4.6"
     mutationobserver-shim: "npm:0.3.7"
     nanoid: "npm:^5.0.4"
     ngtemplate-loader: "npm:2.1.0"
@@ -23869,15 +23880,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"msw@npm:2.4.5":
-  version: 2.4.5
-  resolution: "msw@npm:2.4.5"
+"msw@npm:2.4.6":
+  version: 2.4.6
+  resolution: "msw@npm:2.4.6"
   dependencies:
     "@bundled-es-modules/cookie": "npm:^2.0.0"
     "@bundled-es-modules/statuses": "npm:^1.0.1"
     "@bundled-es-modules/tough-cookie": "npm:^0.1.6"
     "@inquirer/confirm": "npm:^3.0.0"
-    "@mswjs/interceptors": "npm:^0.35.0"
+    "@mswjs/interceptors": "npm:^0.35.3"
     "@open-draft/until": "npm:^2.1.0"
     "@types/cookie": "npm:^0.6.0"
     "@types/statuses": "npm:^2.0.4"
@@ -23897,7 +23908,7 @@ __metadata:
       optional: true
   bin:
     msw: cli/index.js
-  checksum: 10/72633a1d405ba2908e0309c19cbf8c39ce6ab8d78da415650bacb95de89f1ec340f0debc1483b0e51dfa0c3e7e271a5913e0338e701fd1e7d185aa0a805765ee
+  checksum: 10/b7a06d74c3d814c57a69f7d61886a7462a3a9a63f8e27eefb211cf67676942116506c1e5cf74f6bd3edb7e0aaf396aed4039208bf3bcb92e2067044d7502c111
   languageName: node
   linkType: hard
 
