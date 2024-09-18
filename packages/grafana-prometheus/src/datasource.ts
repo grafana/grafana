@@ -1000,5 +1000,10 @@ export function prometheusRegularEscape<T>(value: T) {
 }
 
 export function prometheusSpecialRegexEscape<T>(value: T) {
-  return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
+  return typeof value === 'string'
+    ? value
+        .replace(/\\/g, '\\\\\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&')
+    : value;
 }

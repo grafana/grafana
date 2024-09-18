@@ -514,8 +514,9 @@ describe('PrometheusDatasource', () => {
       expect(prometheusSpecialRegexEscape('cryptodepression')).toEqual('cryptodepression');
     });
 
-    it('should escape $^*+?.()|\\', () => {
+    it('should escape $^*+?.()|\\"', () => {
       expect(prometheusSpecialRegexEscape("looking'glass")).toEqual("looking\\\\'glass");
+      expect(prometheusSpecialRegexEscape('looking"glass')).toEqual('looking\\"glass');
       expect(prometheusSpecialRegexEscape('looking{glass')).toEqual('looking\\\\{glass');
       expect(prometheusSpecialRegexEscape('looking}glass')).toEqual('looking\\\\}glass');
       expect(prometheusSpecialRegexEscape('looking[glass')).toEqual('looking\\\\[glass');
