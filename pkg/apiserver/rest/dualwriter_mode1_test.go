@@ -546,6 +546,65 @@ func TestMode1_DeleteCollection(t *testing.T) {
 	}
 }
 
+func TestMode1_DeleteCollectionFromUnifiedStorage(t *testing.T) {
+	ctxCanceled, cancel := context.WithCancel(context.TODO())
+	cancel()
+
+	type testCase struct {
+		ctx            *context.Context
+		setupLegacyFn  func(m *mock.Mock)
+		setupStorageFn func(m *mock.Mock)
+		name           string
+		input          *metav1.DeleteOptions
+	}
+	tests :=
+		[]testCase{
+			{
+				name:  "Delete Collection from unified storage",
+				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, nil)
+				},
+			},
+			{
+				name:  "Delete Collection from unified storage works even if parent context is canceled",
+				input: &metav1.DeleteOptions{TypeMeta: metav1.TypeMeta{Kind: "foo"}},
+				ctx:   &ctxCanceled,
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, nil)
+				},
+			},
+		}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
+
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
+
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m)
+			}
+
+			ctx := context.TODO()
+			if tt.ctx != nil {
+				ctx = *tt.ctx
+			}
+
+			dw := NewDualWriter(Mode1, ls, us, p, kind)
+
+			err := dw.(*DualWriterMode1).deleteCollectionFromUnifiedStorage(ctx, exampleObj, func(ctx context.Context, obj runtime.Object) error { return nil }, tt.input, &metainternalversion.ListOptions{})
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestMode1_Update(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn  func(m *mock.Mock, input string)

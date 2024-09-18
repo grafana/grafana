@@ -232,24 +232,32 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 	}
 	d.recordLegacyDuration(false, mode1Str, d.resource, method, startLegacy)
 
-	go func(res runtime.Object) {
-		startStorage := time.Now()
-		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
-		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage deletecollection timeout"))
-		defer cancel()
-		storageObj, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
-		d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
-		if err != nil {
-			cancel()
-		}
-		areEqual := Compare(storageObj, res)
-		d.recordOutcome(mode1Str, getName(res), areEqual, method)
-		if !areEqual {
-			log.Info("object from legacy and storage are not equal")
-		}
-	}(res)
+	//nolint:errcheck
+	go d.deleteCollectionFromUnifiedStorage(ctx, res, deleteValidation, options, listOptions)
 
 	return res, err
+}
+
+func (d *DualWriterMode1) deleteCollectionFromUnifiedStorage(ctx context.Context, res runtime.Object, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) error {
+	var method = "delete-collection"
+	log := d.Log.WithValues("resourceVersion", listOptions.ResourceVersion, "method", method)
+
+	startStorage := time.Now()
+	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage deletecollection timeout"))
+	defer cancel()
+	storageObj, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
+	if err != nil {
+		cancel()
+	}
+	areEqual := Compare(storageObj, res)
+	d.recordOutcome(mode1Str, getName(res), areEqual, method)
+	if !areEqual {
+		log.Info("object from legacy and storage are not equal")
+	}
+
+	return err
 }
 
 func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
