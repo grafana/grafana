@@ -231,9 +231,10 @@ var (
 		{
 			Name:              "accessControlOnCall",
 			Description:       "Access control primitives for OnCall",
-			Stage:             FeatureStagePublicPreview,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:        "nestedFolders",
@@ -734,6 +735,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAppPlatformSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "kubernetesFolders",
+			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:            "datasourceQueryTypes",
@@ -1379,6 +1386,12 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
+		}, {
+			Name:         "alertingFilterV2",
+			Description:  "Enable the new alerting search experience",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
 		},
 		{
 			Name:            "backgroundPluginInstaller",
@@ -1447,6 +1460,21 @@ var (
 			Description: "Enable the app sidecar feature that allows rendering 2 apps at the same time",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaExploreSquad,
+		},
+		{
+			Name:         "groupAttributeSync",
+			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:              "improvedExternalSessionHandling",
+			Description:       "Enable improved support for external sessions in Grafana",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
 		},
 	}
 )

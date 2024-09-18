@@ -48,11 +48,11 @@ function getAttributeValue(value: collectorTypes.opentelemetryProto.common.v1.An
   }
 
   if (value.intValue !== undefined) {
-    return Number.parseInt(value.intValue as any, 10);
+    return Number.parseInt(String(value.intValue), 10);
   }
 
   if (value.doubleValue) {
-    return Number.parseFloat(value.doubleValue as any);
+    return Number.parseFloat(String(value.doubleValue));
   }
 
   if (value.arrayValue) {

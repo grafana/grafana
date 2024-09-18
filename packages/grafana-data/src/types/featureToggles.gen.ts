@@ -115,6 +115,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -200,6 +201,7 @@ export interface FeatureToggles {
   bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
+  alertingFilterV2?: boolean;
   backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;
@@ -210,4 +212,6 @@ export interface FeatureToggles {
   exploreLogsLimitedTimeRange?: boolean;
   appPlatformAccessTokens?: boolean;
   appSidecar?: boolean;
+  groupAttributeSync?: boolean;
+  improvedExternalSessionHandling?: boolean;
 }
