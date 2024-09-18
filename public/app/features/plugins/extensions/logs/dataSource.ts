@@ -15,13 +15,12 @@ import { RuntimeDataSource } from '@grafana/scenes';
 import { ExtensionsLog, LogItem } from './log';
 
 export class ExtensionsLogDataSource extends RuntimeDataSource {
-  extensionsLog: ExtensionsLog;
   constructor(
     public readonly pluginId: string,
-    public readonly uid: string
+    public readonly uid: string,
+    private readonly extensionsLog: ExtensionsLog
   ) {
     super(pluginId, uid);
-    this.extensionsLog = new ExtensionsLog();
   }
 
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
