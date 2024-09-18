@@ -188,7 +188,11 @@ export interface FormatAsFieldProps extends AzureQueryEditorFieldProps {
   defaultValue: ResultFormat;
   setFormatAs: (query: AzureMonitorQuery, formatAs: ResultFormat) => AzureMonitorQuery;
   resultFormat?: ResultFormat;
-  onLoad: (query: AzureMonitorQuery, defaultValue: ResultFormat, handleChange: (change: SelectableValue<ResultFormat>) => void) => void;
+  onLoad: (
+    query: AzureMonitorQuery,
+    defaultValue: ResultFormat,
+    handleChange: (change: SelectableValue<ResultFormat>) => void
+  ) => void;
 }
 
 export interface AzureResourceSummaryItem {

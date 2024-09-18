@@ -10,7 +10,6 @@ import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQuery
 
 import LogsQueryEditor from './LogsQueryEditor';
 
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
@@ -518,7 +517,7 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
-            setError={() => { } }
+            setError={() => {}}
             basicLogsEnabled={false}
           />
         );
@@ -531,7 +530,7 @@ describe('LogsQueryEditor', () => {
     });
     it('sets to logs if the query is new', async () => {
       const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
-      const query = {...createMockQuery(), azureLogAnalytics: undefined};
+      const query = { ...createMockQuery(), azureLogAnalytics: undefined };
       const onChange = jest.fn();
 
       await act(async () => {
@@ -541,14 +540,14 @@ describe('LogsQueryEditor', () => {
             datasource={mockDatasource}
             variableOptionGroup={variableOptionGroup}
             onChange={onChange}
-            setError={() => { } }
+            setError={() => {}}
             basicLogsEnabled={false}
           />
         );
       });
       const newQuery = {
         ...query,
-        azureLogAnalytics: {resultFormat: ResultFormat.Logs },
+        azureLogAnalytics: { resultFormat: ResultFormat.Logs },
       };
       expect(onChange).toHaveBeenCalledWith(newQuery);
     });
