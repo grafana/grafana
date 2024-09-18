@@ -86,7 +86,7 @@ export function DataTrailCard(props: Props) {
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+export function getStyles(theme: GrafanaTheme2) {
   return {
     tag: css({
       maxWidth: '260px',

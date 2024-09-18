@@ -3,7 +3,15 @@ import { useState } from 'react';
 import { Trans } from 'react-i18next';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  DataSourceVariable,
+  SceneComponentProps,
+  sceneGraph,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+} from '@grafana/scenes';
 import { Box, Button, Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 
@@ -11,15 +19,49 @@ import { DataTrail } from './DataTrail';
 // import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
 // import { DataTrailsBookmarks } from './DataTrailsBookmarks';
+import { RecentExplorationScene, RecentExplorationState } from './DataTrailsRecentMetrics';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { reportExploreMetrics } from './interactions';
+import { VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getDatasourceForNewTrail, getUrlForTrail, newMetricsTrail } from './utils';
 
-export interface DataTrailsHomeState extends SceneObjectState {}
+export interface DataTrailsHomeState extends SceneObjectState {
+  recentExplorations?: RecentExplorationScene[];
+}
 
 export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   public constructor(state: DataTrailsHomeState) {
     super(state);
+
+    this.addActivationHandler(this._onActivate.bind(this));
+  }
+  private _onActivate() {
+    // where we make the list of recent explorations
+    // say what type to type the array
+    if (this.state.recentExplorations === undefined) {
+      const recentExplorations = getTrailStore().recent.map((trail, index) => {
+        const resolvedTrail = trail.resolve();
+        const state: RecentExplorationState = {
+          metric: resolvedTrail.state.metric,
+          createdAt: resolvedTrail.state.createdAt,
+          $timeRange: resolvedTrail.state.$timeRange,
+        };
+        const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, resolvedTrail); // sceneGraph is a bunch of utility methods that lets you get things from graph of scene objects that something belongs to
+        // resolvedTrail is what we want to show in the box,
+        if (filtersVariable instanceof AdHocFiltersVariable) {
+          console.log('in filtersVariable if statement!!!');
+          state.filters = filtersVariable.state.filters;
+        }
+        console.log('after if statement, filtersVariable: ', filtersVariable);
+        const datasourceVariable = sceneGraph.lookupVariable(VAR_DATASOURCE, resolvedTrail);
+        // is this object you gave me an instance of DAtaSourceVariable
+        if (datasourceVariable instanceof DataSourceVariable) {
+          state.datasource = datasourceVariable?.state.value.toString();
+        }
+        return new RecentExplorationScene(state);
+      });
+      this.setState({ recentExplorations });
+    }
   }
 
   // button: new metric exploration
@@ -58,6 +100,8 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
       setLastDelete(Date.now()); // trigger re-render
     };
 
+    const { recentExplorations } = model.useState(); // current state list of recent explorations in scene format, we want to iterate over it with map
+
     // current/old code: if there are no recent trails, show metrics select page (all metrics)
     // probably need to change this logic to - if there are recent trails, show the sparklines, etc
     // If there are no recent trails, don't show home page and create a new trail
@@ -65,7 +109,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     //   const trail = newMetricsTrail(getDatasourceForNewTrail());
     //   return <Redirect to={getUrlForTrail(trail)} />;
     // }
-
     return (
       <div className={styles.container}>
         <div className={styles.homepageBox}>
@@ -110,22 +153,23 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         </div>
         {/* separate recent metircs + bookmarks code into separate components, then can conditionally render based on if there's a length */}
         {/* <Stack gap={5}> */}
-        {/* <div className={styles.column}>
-            <Text variant="h4">Recent metrics explorations</Text>
-            <div className={styles.trailList}>
-              {getTrailStore().recent.map((trail, index) => {
-                const resolvedTrail = trail.resolve();
+        <div className={styles.column}>
+          <Text variant="h4">Recent metrics explorations</Text>
+          <div className={styles.trailList}>
+            {recentExplorations &&
+              recentExplorations.map((recent, index) => {
                 return (
-                  <DataTrailCard
-                    key={(resolvedTrail.state.key || '') + index}
-                    trail={resolvedTrail}
-                    onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
-                  />
+                  <recent.Component model={recent} key={recent.state.key} /> // how we mount a scene inside of react
+                  // <DataTrailCard
+                  //   key={(resolvedTrail.state.key || '') + index}
+                  //   trail={resolvedTrail}
+                  //   onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
+                  // />
                 );
               })}
-            </div>
           </div>
-          <div className={styles.verticalLine} /> */}
+        </div>
+        <div className={styles.verticalLine} />
         {/* <DataTrailsBookmarks /> */}
         {/* <div className={styles.column}>
             <Text variant="h4">Bookmarks</Text>
