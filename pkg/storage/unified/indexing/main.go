@@ -81,7 +81,8 @@ func main() {
 		fmt.Println("Indexing...")
 		start := time.Now()
 
-		indexObjects(index, objects)
+		IndexObjects(index, objects)
+		//indexObjectsConcurrently(index, objects)
 
 		end := time.Since(start).Seconds()
 		fmt.Printf("Indexing completed in %f seconds\n", end)
@@ -177,10 +178,9 @@ func seedObjects() []Object {
 	objects := []Object{}
 	for _, namespace := range namespaces {
 		for _, resource := range resources {
-			for i := 0; i < 1000000; i++ {
+			for i := 0; i < 10000; i++ {
 				objects = append(objects, Object{
-					//Guid:            fmt.Sprintf("%s-%s-%d", namespace, resource.Resource, i),
-					Guid:            "test1",
+					Guid:            fmt.Sprintf("%s-%s-%d", namespace, resource.Resource, i),
 					ResourceVersion: time.Now().UnixNano(),
 					Group:           resource.Group,
 					Resource:        resource.Resource,
@@ -204,7 +204,18 @@ func seedObjects() []Object {
 	return objects
 }
 
-func indexObjects(index bleve.Index, objects []Object) {
+func IndexObjects(index bleve.Index, objects []Object) {
+	for _, obj := range objects {
+		err := index.Index(obj.Guid, obj)
+		if err != nil {
+			fmt.Println("Failed to index document:", err)
+		}
+	}
+
+	fmt.Println("Indexing synchronously completed")
+}
+
+func indexObjectsConcurrently(index bleve.Index, objects []Object) {
 	// Create a wait group to wait for all goroutines to finish
 	var wg sync.WaitGroup
 
