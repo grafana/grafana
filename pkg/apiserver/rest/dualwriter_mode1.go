@@ -189,24 +189,32 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 	}
 	d.recordLegacyDuration(false, mode1Str, name, method, startLegacy)
 
-	go func(res runtime.Object) {
-		startStorage := time.Now()
-		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
-		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage delete timeout"))
-		defer cancel()
-		storageObj, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-		d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
-		if err != nil {
-			cancel()
-		}
-		areEqual := Compare(storageObj, res)
-		d.recordOutcome(mode1Str, name, areEqual, method)
-		if !areEqual {
-			log.Info("object from legacy and storage are not equal")
-		}
-	}(res)
+	//nolint:errcheck
+	go d.deleteFromUnifiedStorage(ctx, res, name, deleteValidation, options)
 
 	return res, async, err
+}
+
+func (d *DualWriterMode1) deleteFromUnifiedStorage(ctx context.Context, res runtime.Object, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) error {
+	var method = "delete"
+	log := d.Log.WithValues("name", name, "method", method, "name", name)
+
+	startStorage := time.Now()
+	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage delete timeout"))
+	defer cancel()
+	storageObj, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
+	if err != nil {
+		cancel()
+	}
+	areEqual := Compare(storageObj, res)
+	d.recordOutcome(mode1Str, name, areEqual, method)
+	if !areEqual {
+		log.Info("object from legacy and storage are not equal")
+	}
+
+	return err
 }
 
 // DeleteCollection overrides the behavior of the generic DualWriter and deletes only from LegacyStorage.

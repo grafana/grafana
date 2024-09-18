@@ -221,7 +221,6 @@ func TestMode1_GetFromUnifiedStorage(t *testing.T) {
 		ctx            *context.Context
 		name           string
 		input          string
-		wantErr        bool
 	}
 	tests :=
 		[]testCase{
@@ -427,6 +426,63 @@ func TestMode1_Delete(t *testing.T) {
 			us.AssertNotCalled(t, "Delete", context.Background(), tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
 			assert.Equal(t, obj, exampleObj)
 			assert.NotEqual(t, obj, anotherObj)
+		})
+	}
+}
+
+func TestMode1_DeleteFromUnifiedStorage(t *testing.T) {
+	ctxCanceled, cancel := context.WithCancel(context.TODO())
+	cancel()
+
+	type testCase struct {
+		ctx            *context.Context
+		setupLegacyFn  func(m *mock.Mock, name string)
+		setupStorageFn func(m *mock.Mock, name string)
+		name           string
+		input          string
+	}
+	tests :=
+		[]testCase{
+			{
+				name: "Delete from unified storage",
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+			},
+			{
+				name: "Delete from unified storage works even if parent context is canceled",
+				ctx:  &ctxCanceled,
+				setupStorageFn: func(m *mock.Mock, input string) {
+					m.On("Delete", mock.Anything, input, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+			},
+		}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
+
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
+
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m, tt.input)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m, tt.input)
+			}
+
+			ctx := context.TODO()
+			if tt.ctx != nil {
+				ctx = *tt.ctx
+			}
+
+			dw := NewDualWriter(Mode1, ls, us, p, kind)
+
+			err := dw.(*DualWriterMode1).deleteFromUnifiedStorage(ctx, exampleObj, tt.input, func(ctx context.Context, obj runtime.Object) error { return nil }, &metav1.DeleteOptions{})
+			assert.NoError(t, err)
 		})
 	}
 }
