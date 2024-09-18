@@ -4,15 +4,20 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
 	ServiceAccounts AuthProvider = "ServiceAccounts"
-
-	// TmpOrgID is the orgID we use while global service accounts are not supported.
-	TmpOrgIDStr string = "1"
-	TmpOrgID    int64  = 1
 )
+
+func DefaultOrgID(cfg *setting.Cfg) int64 {
+	defaultOrgID := int64(cfg.AutoAssignOrgId)
+	if defaultOrgID == 0 {
+		defaultOrgID = 1
+	}
+	return defaultOrgID
+}
 
 type AuthProvider string
 

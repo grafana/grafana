@@ -1,12 +1,14 @@
 package serviceaccounts
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -18,7 +20,6 @@ var (
 const (
 	ServiceAccountPrefix = "sa-"
 	ExtSvcPrefix         = "extsvc-"
-	ExtSvcLoginPrefix    = ServiceAccountPrefix + extsvcauth.TmpOrgIDStr + "-" + ExtSvcPrefix
 )
 
 const (
@@ -206,3 +207,26 @@ var AccessEvaluator = accesscontrol.EvalAny(
 	accesscontrol.EvalPermission(ActionRead),
 	accesscontrol.EvalPermission(ActionCreate),
 )
+
+func ExtSvcLoginPrefix(orgID int64) string {
+	return fmt.Sprintf("%s%d-%s", ServiceAccountPrefix, orgID, ExtSvcPrefix)
+}
+
+func IsExternalServiceAccount(login string) bool {
+	parts := strings.Split(login, "-")
+
+	if len(parts) < 4 {
+		return false
+	}
+
+	if parts[0] != ServiceAccountPrefix || parts[2] != ExtSvcPrefix {
+		return false
+	}
+
+	// The orgID must be a number
+	if _, err := strconv.ParseInt(parts[1], 10, 64); err != nil {
+		return false
+	}
+
+	return true
+}
