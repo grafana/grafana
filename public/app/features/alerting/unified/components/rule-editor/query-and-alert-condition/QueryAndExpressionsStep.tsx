@@ -148,13 +148,18 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     return queries.filter((query) => isExpressionQuery(query.model));
   }, [queries]);
 
-  const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
+  const [type, condition, dataSourceName, editorSettings] = watch([
+    'type',
+    'condition',
+    'dataSourceName',
+    'editorSettings',
+  ]);
+  //if its a new rule, look at the local storage
+  const isAdvancedMode = editorSettings?.simplifiedQueryEditor !== true;
 
   const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
   const isRecordingRuleType = isCloudRecordingRuleByType(type);
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
-
-  const [isAdvancedMode, setIsAdvancedMode] = useState(isGrafanaAlertingType && isSwitchModeEnabled ? false : true);
 
   const expressionQueriesList = useMemo(() => {
     return queries.reduce((acc: ExpressionQuery[], query) => {
@@ -480,7 +485,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 return;
               }
             }
-            setIsAdvancedMode(isAdvanced);
+            setValue('editorSettings', { simplifiedQueryEditor: !isAdvanced });
           },
         }
       : undefined;
@@ -568,7 +573,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               panelData={queryPreviewData}
               condition={condition}
               onSetCondition={handleSetCondition}
-              isAdvancedMode={isAdvancedMode}
             />
             {isAdvancedMode && (
               <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
@@ -674,7 +678,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         confirmText="Yes"
         icon="exclamation-triangle"
         onConfirm={() => {
-          setIsAdvancedMode(false);
+          setValue('editorSettings', { simplifiedQueryEditor: true });
           setShowResetModal(false);
           dispatch(resetToSimpleCondition());
         }}

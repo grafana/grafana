@@ -32,9 +32,6 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
-
-  //mode
-  isAdvancedMode?: boolean;
 }
 
 export class QueryRows extends PureComponent<Props> {
@@ -211,7 +208,6 @@ export class QueryRows extends PureComponent<Props> {
                         onRunQueries={this.props.onRunQueries}
                         condition={this.props.condition}
                         onSetCondition={this.props.onSetCondition}
-                        isAdvancedMode={this.props.isAdvancedMode}
                       />
                     );
                   })}

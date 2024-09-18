@@ -15,7 +15,6 @@ interface Props {
   onDuplicateQuery: (query: AlertQuery) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
-  isAdvancedMode?: boolean;
 }
 
 export const QueryEditor = ({
@@ -27,7 +26,6 @@ export const QueryEditor = ({
   onDuplicateQuery,
   condition,
   onSetCondition,
-  isAdvancedMode,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -42,7 +40,6 @@ export const QueryEditor = ({
         onDuplicateQuery={onDuplicateQuery}
         condition={condition}
         onSetCondition={onSetCondition}
-        isAdvancedMode={isAdvancedMode}
       />
     </div>
   );

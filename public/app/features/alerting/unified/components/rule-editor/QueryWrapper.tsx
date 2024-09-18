@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
 import * as React from 'react';
 import { ChangeEvent, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
@@ -19,6 +20,7 @@ import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { RuleFormValues } from '../../types/rule-form';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
 
@@ -52,7 +54,6 @@ interface Props {
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
-  isAdvancedMode?: boolean;
 }
 
 export const QueryWrapper = ({
@@ -74,11 +75,13 @@ export const QueryWrapper = ({
   condition,
   onSetCondition,
   onChangeQueryOptions,
-  isAdvancedMode,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
+
+  const { getValues } = useFormContext<RuleFormValues>();
+  const isAdvancedMode = getValues('editorSettings.simplifiedQueryEditor') !== true;
 
   const queryWithDefaults = {
     ...defaults,

@@ -219,6 +219,10 @@ export interface GrafanaNotificationSettings {
   repeat_interval?: string;
   mute_time_intervals?: string[];
 }
+
+export interface GrafanaEditorSettings {
+  simplified_query_and_expressions_section: boolean;
+}
 export interface PostableGrafanaRuleDefinition {
   uid?: string;
   title: string;
@@ -228,6 +232,7 @@ export interface PostableGrafanaRuleDefinition {
   data: AlertQuery[];
   is_paused?: boolean;
   notification_settings?: GrafanaNotificationSettings;
+  editor_settings?: GrafanaEditorSettings;
   record?: {
     metric: string;
     from: string;
