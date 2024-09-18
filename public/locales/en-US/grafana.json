@@ -1178,9 +1178,8 @@
       "placeholder": "example: cn=%s"
     },
     "search-base-dns": {
-      "description": "An array of base dns to search through; separate by commas or spaces.",
-      "label": "Search base DNS *",
-      "placeholder": "example: \"dc=grafana.dc=org\""
+      "description": "An array of base dns to search through.",
+      "label": "Search base DNS *"
     },
     "subtitle": "The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in our <2><0>documentation</0></2>.",
     "title": "Basic Settings"

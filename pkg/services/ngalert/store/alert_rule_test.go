@@ -880,35 +880,91 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 		}
 	})
 
-	t.Run("RenameReceiverInNotificationSettings should update all rules that refer to the old receiver", func(t *testing.T) {
+	t.Run("RenameReceiverInNotificationSettings", func(t *testing.T) {
 		newName := "new-receiver"
-		affected, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName)
-		require.NoError(t, err)
-		require.Equal(t, len(receiveRules), affected)
 
-		expected := getKeyMap(receiveRules)
-
-		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
-			OrgID:        1,
-			ReceiverName: newName,
-		})
-		require.NoError(t, err)
-		assert.Len(t, actual, len(expected))
-		for _, rule := range actual {
-			assert.Contains(t, expected, rule.GetKey())
+		alwaysTrue := func(p models.Provenance) bool {
+			return true
 		}
 
-		actual, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
-			OrgID:        1,
-			ReceiverName: receiverName,
-		})
-		require.NoError(t, err)
-		require.Empty(t, actual)
-
 		t.Run("should do nothing if no rules that match the filter", func(t *testing.T) {
-			affected, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, util.GenerateShortUID())
+			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, "not-found", timeIntervalName, alwaysTrue, false)
 			require.NoError(t, err)
 			require.Empty(t, affected)
+			require.Empty(t, invalidProvenance)
+		})
+
+		t.Run("should do nothing if at least one rule has provenance that is not allowed", func(t *testing.T) {
+			calledTimes := 0
+			alwaysFalse := func(p models.Provenance) bool {
+				calledTimes++
+				return false
+			}
+
+			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName, alwaysFalse, false)
+
+			var expected []models.AlertRuleKey
+			for _, rule := range receiveRules {
+				expected = append(expected, rule.GetKey())
+			}
+
+			require.NoError(t, err)
+			require.Empty(t, affected)
+			require.ElementsMatch(t, expected, invalidProvenance)
+			assert.Equal(t, len(expected), calledTimes)
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:        1,
+				ReceiverName: receiverName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(receiveRules))
+		})
+
+		t.Run("should do nothing if dry run is set to true", func(t *testing.T) {
+			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName, alwaysTrue, true)
+			require.NoError(t, err)
+			require.Empty(t, invalidProvenance)
+			assert.Len(t, affected, len(receiveRules))
+			expected := getKeyMap(receiveRules)
+			for _, key := range affected {
+				assert.Contains(t, expected, key)
+			}
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:        1,
+				ReceiverName: receiverName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(receiveRules))
+		})
+
+		t.Run("should update all rules that refer to the old receiver", func(t *testing.T) {
+			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName, alwaysTrue, false)
+			require.NoError(t, err)
+			require.Empty(t, invalidProvenance)
+			assert.Len(t, affected, len(receiveRules))
+			expected := getKeyMap(receiveRules)
+			for _, key := range affected {
+				assert.Contains(t, expected, key)
+			}
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:        1,
+				ReceiverName: newName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(expected))
+			for _, rule := range actual {
+				assert.Contains(t, expected, rule.GetKey())
+			}
+
+			actual, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:        1,
+				ReceiverName: receiverName,
+			})
+			require.NoError(t, err)
+			require.Empty(t, actual)
 		})
 	})
 

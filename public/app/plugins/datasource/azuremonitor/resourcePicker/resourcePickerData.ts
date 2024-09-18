@@ -1,5 +1,3 @@
-import { uniq } from 'lodash';
-
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
@@ -359,28 +357,40 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
   private async fetchAllNamespaces() {
     const subscriptions = await this.getSubscriptions();
     reportInteraction('grafana_ds_azuremonitor_subscriptions_loaded', { subscriptions: subscriptions.length });
-    let supportedMetricNamespaces: string[] = [];
-    for await (const subscription of subscriptions) {
+
+    let supportedMetricNamespaces: Set<string> = new Set();
+    // We make use of these three regions as they *should* contain every possible namespace
+    const regions = ['westeurope', 'eastus', 'japaneast'];
+    const getNamespacesForRegion = async (region: string) => {
       const namespaces = await this.azureMonitorDatasource.getMetricNamespaces(
         {
-          resourceUri: `/subscriptions/${subscription.id}`,
+          // We only need to run this request against the first available subscription
+          resourceUri: `/subscriptions/${subscriptions[0].id}`,
         },
-        true
+        false,
+        region
       );
       if (namespaces) {
-        const namespaceVals = namespaces.map((namespace) => `"${namespace.value.toLocaleLowerCase()}"`);
-        supportedMetricNamespaces = supportedMetricNamespaces.concat(namespaceVals);
+        for (const namespace of namespaces) {
+          supportedMetricNamespaces.add(`"${namespace.value.toLocaleLowerCase()}"`);
+        }
       }
-    }
+    };
 
-    if (supportedMetricNamespaces.length === 0) {
+    const promises = regions.map((region) => getNamespacesForRegion(region));
+    await Promise.all(promises);
+
+    if (supportedMetricNamespaces.size === 0) {
       throw new Error(
         'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
       );
     }
-    this.supportedMetricNamespaces = uniq(
-      supportedMetricNamespaces.concat(resourceTypes.map((namespace) => `"${namespace}"`))
-    ).join(',');
+
+    resourceTypes.forEach((namespace) => {
+      supportedMetricNamespaces.add(`"${namespace}"`);
+    });
+
+    this.supportedMetricNamespaces = Array.from(supportedMetricNamespaces).join(',');
   }
 
   parseRows(resources: Array<string | AzureMonitorResource>): ResourceRow[] {
