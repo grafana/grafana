@@ -30,7 +30,7 @@ func TestService_Calculate(t *testing.T) {
 	tcs := []struct {
 		name           string
 		pluginSettings setting.PluginSettings
-		plugin         pluginstore.Plugin
+		plugin         *pluginstore.Plugin
 		expected       plugins.LoadingStrategy
 	}{
 		{
@@ -175,7 +175,7 @@ func TestService_Calculate(t *testing.T) {
 				log: log.NewNopLogger(),
 			}
 
-			got := s.LoadingStrategy(context.Background(), tc.plugin)
+			got := s.LoadingStrategy(context.Background(), *tc.plugin)
 			assert.Equal(t, tc.expected, got, "unexpected loading strategy")
 		})
 	}
@@ -189,8 +189,8 @@ func TestService_ModuleHash(t *testing.T) {
 	for _, tc := range []struct {
 		name          string
 		features      *config.Features
-		store         []pluginstore.Plugin
-		plugin        pluginstore.Plugin
+		store         []*pluginstore.Plugin
+		plugin        *pluginstore.Plugin
 		cdn           bool
 		expModuleHash string
 	}{
@@ -238,7 +238,7 @@ func TestService_ModuleHash(t *testing.T) {
 			// parentPluginID           (/)
 			// └── pluginID             (/datasource)
 			name: "nested plugin should return module hash from parent MANIFEST.txt",
-			store: []pluginstore.Plugin{
+			store: []*pluginstore.Plugin{
 				newPlugin(
 					parentPluginID,
 					withSignatureStatus(plugins.SignatureStatusValid),
@@ -259,7 +259,7 @@ func TestService_ModuleHash(t *testing.T) {
 			// parentPluginID           (/)
 			// └── pluginID             (/panels/one)
 			name: "nested plugin deeper than one subfolder should return module hash from parent MANIFEST.txt",
-			store: []pluginstore.Plugin{
+			store: []*pluginstore.Plugin{
 				newPlugin(
 					parentPluginID,
 					withSignatureStatus(plugins.SignatureStatusValid),
@@ -281,7 +281,7 @@ func TestService_ModuleHash(t *testing.T) {
 			// ├── parent-datasource    (/datasource)
 			// │   └── child-panel      (/datasource/panels/one)
 			name: "nested plugin of a nested plugin should return module hash from parent MANIFEST.txt",
-			store: []pluginstore.Plugin{
+			store: []*pluginstore.Plugin{
 				newPlugin(
 					"grand-parent-app",
 					withSignatureStatus(plugins.SignatureStatusValid),
@@ -306,7 +306,7 @@ func TestService_ModuleHash(t *testing.T) {
 		},
 		{
 			name:  "nested plugin should not return module hash from parent if it's not registered in the store",
-			store: []pluginstore.Plugin{},
+			store: []*pluginstore.Plugin{},
 			plugin: newPlugin(
 				pluginID,
 				withSignatureStatus(plugins.SignatureStatusValid),
@@ -356,85 +356,29 @@ func TestService_ModuleHash(t *testing.T) {
 				PluginSettings:        pluginSettings,
 				Features:              *features,
 			}
+			sigSvc := signature.ProvideService(pCfg, statickey.New())
+			for _, p := range append([]*pluginstore.Plugin{tc.plugin}, tc.store...) {
+				if p.FS == nil {
+					continue
+				}
+				if manifest, _ := sigSvc.ReadPluginManifestFromFS(context.Background(), p.FS); manifest != nil {
+					p.SignatureFiles = manifest.Files
+				}
+			}
+
+			storeCopy := make([]pluginstore.Plugin, len(tc.store))
+			for i, p := range tc.store {
+				storeCopy[i] = *p
+			}
 			svc := ProvideService(
 				pCfg,
 				pluginscdn.ProvideService(pCfg),
-				signature.ProvideService(pCfg, statickey.New()),
-				pluginstore.NewFakePluginStore(tc.store...),
+				pluginstore.NewFakePluginStore(storeCopy...),
 			)
-			mh := svc.ModuleHash(context.Background(), tc.plugin)
+			mh := svc.ModuleHash(context.Background(), *tc.plugin)
 			require.Equal(t, tc.expModuleHash, mh)
 		})
 	}
-}
-
-func TestService_ModuleHash_Cache(t *testing.T) {
-	pCfg := &config.PluginManagementCfg{
-		PluginSettings: setting.PluginSettings{},
-		Features:       config.Features{FilesystemSriChecksEnabled: true},
-	}
-	svc := ProvideService(
-		pCfg,
-		pluginscdn.ProvideService(pCfg),
-		signature.ProvideService(pCfg, statickey.New()),
-		pluginstore.NewFakePluginStore(),
-	)
-	const pluginID = "grafana-test-datasource"
-
-	t.Run("cache key", func(t *testing.T) {
-		t.Run("with version", func(t *testing.T) {
-			const pluginVersion = "1.0.0"
-			p := newPlugin(pluginID, withInfo(plugins.Info{Version: pluginVersion}))
-			k := svc.moduleHashCacheKey(p)
-			require.Equal(t, pluginID+":"+pluginVersion, k, "cache key should be correct")
-		})
-
-		t.Run("without version", func(t *testing.T) {
-			p := newPlugin(pluginID)
-			k := svc.moduleHashCacheKey(p)
-			require.Equal(t, pluginID+":", k, "cache key should be correct")
-		})
-	})
-
-	t.Run("ModuleHash usage", func(t *testing.T) {
-		pV1 := newPlugin(
-			pluginID,
-			withInfo(plugins.Info{Version: "1.0.0"}),
-			withSignatureStatus(plugins.SignatureStatusValid),
-			withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid"))),
-		)
-		k := svc.moduleHashCacheKey(pV1)
-
-		_, ok := svc.moduleHashCache.Load(k)
-		require.False(t, ok, "cache should initially be empty")
-
-		mhV1 := svc.ModuleHash(context.Background(), pV1)
-		pV1Exp := newSRIHash(t, "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
-		require.Equal(t, pV1Exp, mhV1, "returned value should be correct")
-
-		cachedMh, ok := svc.moduleHashCache.Load(k)
-		require.True(t, ok)
-		require.Equal(t, pV1Exp, cachedMh, "cache should contain the returned value")
-
-		t.Run("different version uses different cache key", func(t *testing.T) {
-			pV2 := newPlugin(
-				pluginID,
-				withInfo(plugins.Info{Version: "2.0.0"}),
-				withSignatureStatus(plugins.SignatureStatusValid),
-				// different fs for different hash
-				withFS(plugins.NewLocalFS(filepath.Join("testdata", "module-hash-valid-nested"))),
-			)
-			mhV2 := svc.ModuleHash(context.Background(), pV2)
-			require.NotEqual(t, mhV2, mhV1, "different version should have different hash")
-			require.Equal(t, newSRIHash(t, "266c19bc148b22ddef2a288fc5f8f40855bda22ccf60be53340b4931e469ae2a"), mhV2)
-		})
-
-		t.Run("cache should be used", func(t *testing.T) {
-			// edit cache directly
-			svc.moduleHashCache.Store(k, "hax")
-			require.Equal(t, "hax", svc.ModuleHash(context.Background(), pV1))
-		})
-	})
 }
 
 func TestConvertHashFromSRI(t *testing.T) {
@@ -464,7 +408,7 @@ func TestConvertHashFromSRI(t *testing.T) {
 	}
 }
 
-func newPlugin(pluginID string, cbs ...func(p pluginstore.Plugin) pluginstore.Plugin) pluginstore.Plugin {
+func newPlugin(pluginID string, cbs ...func(p pluginstore.Plugin) pluginstore.Plugin) *pluginstore.Plugin {
 	p := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
 			ID: pluginID,
@@ -473,7 +417,7 @@ func newPlugin(pluginID string, cbs ...func(p pluginstore.Plugin) pluginstore.Pl
 	for _, cb := range cbs {
 		p = cb(p)
 	}
-	return p
+	return &p
 }
 
 func withInfo(info plugins.Info) func(p pluginstore.Plugin) pluginstore.Plugin {

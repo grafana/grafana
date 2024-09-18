@@ -60,14 +60,15 @@ func (f *DefaultPluginFactory) newPlugin(p plugins.FoundPlugin, class plugins.Cl
 		return nil, fmt.Errorf("module url: %w", err)
 	}
 	plugin := &plugins.Plugin{
-		JSONData:      p.JSONData,
-		Class:         class,
-		FS:            p.FS,
-		BaseURL:       baseURL,
-		Module:        moduleURL,
-		Signature:     sig.Status,
-		SignatureType: sig.Type,
-		SignatureOrg:  sig.SigningOrg,
+		JSONData:       p.JSONData,
+		Class:          class,
+		FS:             p.FS,
+		BaseURL:        baseURL,
+		Module:         moduleURL,
+		Signature:      sig.Status,
+		SignatureType:  sig.Type,
+		SignatureOrg:   sig.SigningOrg,
+		SignatureFiles: sig.Files,
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))

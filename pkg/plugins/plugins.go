@@ -44,12 +44,13 @@ type Plugin struct {
 	Pinned          bool
 
 	// Signature fields
-	Signature     SignatureStatus
-	SignatureType SignatureType
-	SignatureOrg  string
-	Parent        *Plugin
-	Children      []*Plugin
-	Error         *Error
+	Signature      SignatureStatus
+	SignatureType  SignatureType
+	SignatureOrg   string
+	SignatureFiles map[string]string
+	Parent         *Plugin
+	Children       []*Plugin
+	Error          *Error
 
 	// SystemJS fields
 	Module  string
