@@ -623,11 +623,15 @@ func (s *Storage) GuaranteedUpdate(
 		vals, _ := updatedMeta.GetSecureValues()
 		if len(vals) > 0 {
 			for k, v := range vals {
-				// Create a new GUID if we are writing an explicit value
+				// Check where we have *both* a GUID and a real value
+				// this is typical with kubectl apply with raw secret values+references
 				if v.GUID != "" && (v.Value != "" || v.Ref != "") {
 					fmt.Printf("TODO... check if the raw value has changed or not!!\n")
 					v.GUID = ""
-					updatedMeta.SetSecureValue(k, v)
+					err = updatedMeta.SetSecureValue(k, v)
+					if err != nil {
+						return err
+					}
 
 					// HACK HACK HACK pretend it is the same -- then apply does not kick in
 					// updatedObj = existingObj
