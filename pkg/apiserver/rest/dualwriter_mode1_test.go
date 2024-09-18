@@ -199,6 +199,62 @@ func TestMode1_List(t *testing.T) {
 	}
 }
 
+func TestMode1_ListFromUnifiedStorage(t *testing.T) {
+	ctxCanceled, cancel := context.WithCancel(context.TODO())
+	cancel()
+
+	type testCase struct {
+		ctx            *context.Context
+		name           string
+		setupLegacyFn  func(m *mock.Mock)
+		setupStorageFn func(m *mock.Mock)
+	}
+	tests :=
+		[]testCase{
+			{
+				name: "list from unified storage",
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
+				},
+			},
+			{
+				name: "list from unified storage works even if parent context is canceled",
+				ctx:  &ctxCanceled,
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("List", mock.Anything, mock.Anything).Return(anotherList, nil)
+				},
+			},
+		}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			l := (LegacyStorage)(nil)
+			s := (Storage)(nil)
+			m := &mock.Mock{}
+
+			ls := legacyStoreMock{m, l}
+			us := storageMock{m, s}
+
+			if tt.setupLegacyFn != nil {
+				tt.setupLegacyFn(m)
+			}
+			if tt.setupStorageFn != nil {
+				tt.setupStorageFn(m)
+			}
+
+			ctx := context.TODO()
+			if tt.ctx != nil {
+				ctx = *tt.ctx
+			}
+
+			dw := NewDualWriter(Mode1, ls, us, p, kind)
+
+			err := dw.(*DualWriterMode1).listFromUnifiedStorage(ctx, &metainternalversion.ListOptions{}, anotherList)
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestMode1_Delete(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn  func(m *mock.Mock, name string)

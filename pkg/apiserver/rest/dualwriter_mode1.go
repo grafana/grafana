@@ -130,24 +130,32 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 	}
 	d.recordLegacyDuration(errLegacy != nil, mode1Str, d.resource, method, startLegacy)
 
-	go func(res runtime.Object) {
-		startStorage := time.Now()
-		// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
-		ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage list timeout"))
-		defer cancel()
-		storageObj, err := d.Storage.List(ctx, options)
-		d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
-		if err != nil {
-			cancel()
-		}
-		areEqual := Compare(storageObj, res)
-		d.recordOutcome(mode1Str, getName(res), areEqual, method)
-		if !areEqual {
-			log.Info("object from legacy and storage are not equal")
-		}
-	}(res)
+	go d.listFromUnifiedStorage(ctx, options, res)
 
 	return res, errLegacy
+}
+
+func (d *DualWriterMode1) listFromUnifiedStorage(ctx context.Context, options *metainternalversion.ListOptions, res runtime.Object) error {
+	var method = "list"
+	log := d.Log.WithValues("resourceVersion", options.ResourceVersion, "method", method)
+
+	startStorage := time.Now()
+	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage list timeout"))
+	defer cancel()
+	storageObj, err := d.Storage.List(ctx, options)
+	d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
+	if err != nil {
+		log.Error(err, "unable to list objects from unified storage")
+		cancel()
+	}
+	areEqual := Compare(storageObj, res)
+	d.recordOutcome(mode1Str, getName(res), areEqual, method)
+	if !areEqual {
+		log.Info("object from legacy and storage are not equal")
+	}
+
+	return err
 }
 
 func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {

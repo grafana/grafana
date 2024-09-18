@@ -2,6 +2,7 @@ package rest
 
 import (
 	"context"
+	"errors"
 
 	"github.com/stretchr/testify/mock"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -107,6 +108,12 @@ func (m storageMock) Create(ctx context.Context, obj runtime.Object, createValid
 }
 
 func (m storageMock) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context canceled")
+	default:
+	}
+
 	args := m.Called(ctx, options)
 	if options.Kind == "fail" {
 		return nil, args.Error(1)
