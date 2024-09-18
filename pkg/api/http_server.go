@@ -874,15 +874,14 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 		// Check if the PEM block is encrypted with PKCS#1
 		// This is still requested by some customers (and fairly used)
 		// nolint:staticcheck
-		if x509.IsEncryptedPEMBlock(keyPemBlock) {
-			// Only covers encrypted PEM data with a DEK-Info header.
-			// nolint:staticcheck
-			keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
-			if err != nil {
-				return nil, fmt.Errorf("error decrypting x509 PemBlock: %w", err)
-			}
-		} else {
+		if !x509.IsEncryptedPEMBlock(keyPemBlock) {
 			return nil, fmt.Errorf("password provided but Private key is not recorgnized as encrypted")
+		}
+		// Only covers encrypted PEM data with a DEK-Info header.
+		// nolint:staticcheck
+		keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
+		if err != nil {
+			return nil, fmt.Errorf("error decrypting x509 PemBlock: %w", err)
 		}
 	} else {
 		return nil, fmt.Errorf("password provided but Private key is not encrypted or not supported")
