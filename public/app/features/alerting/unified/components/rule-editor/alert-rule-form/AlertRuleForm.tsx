@@ -136,8 +136,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
     trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: values.type });
 
-    storeInLocalStorageValues(values, Boolean(existing));
-
     const ruleDefinition = grafanaTypeRule ? formValuesToRulerGrafanaRuleDTO(values) : formValuesToRulerRuleDTO(values);
 
     const ruleGroupIdentifier = existing
@@ -147,6 +145,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     // @TODO what is "evaluateEvery" being used for?
     // @TODO move this to a hook too to make sure the logic here is tested for regressions?
     if (!existing) {
+      // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
+      storeInLocalStorageValues(values);
       await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, values.evaluateEvery);
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
@@ -347,20 +347,17 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
   });
 }
 
-function storeInLocalStorageValues(values: RuleFormValues, existing: boolean) {
-  // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
-  if (!existing) {
-    if (values.manualRouting) {
-      localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+function storeInLocalStorageValues(values: RuleFormValues) {
+  if (values.manualRouting) {
+    localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+  } else {
+    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+  }
+  if (values.editorSettings) {
+    if (values.editorSettings.simplifiedQueryEditor) {
+      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
     } else {
-      localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
-    }
-    if (values.editorSettings) {
-      if (values.editorSettings.simplifiedQueryEditor) {
-        localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
-      } else {
-        localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
-      }
+      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
     }
   }
 }
