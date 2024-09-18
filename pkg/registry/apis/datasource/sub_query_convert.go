@@ -48,8 +48,25 @@ func (r *subQueryConvertREST) NewConnectOptions() (runtime.Object, bool, string)
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
-func ConvertQueryDataRequest(ctx context.Context, dqr data.QueryDataRequest, pluginCtx backend.PluginContext, fn backend.ConvertObjectsFunc) (*query.QueryDataRequest, error) {
-	_, _, err := data.ToDataSourceQueries(dqr)
+type pluginCtxFunc func(context.Context, string) (backend.PluginContext, error)
+
+func ConvertQueryDataRequest(ctx context.Context, req *http.Request, pluginCtxFn pluginCtxFunc, convertFn backend.ConvertObjectsFunc) (*query.QueryDataRequest, error) {
+	dqr := data.QueryDataRequest{}
+	err := web.Bind(req, &dqr)
+	if err != nil {
+		return nil, err
+	}
+
+	_, _, err = data.ToDataSourceQueries(dqr)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(dqr.Queries) == 0 {
+		return nil, fmt.Errorf("no queries")
+	}
+
+	pluginCtx, err := pluginCtxFn(ctx, dqr.Queries[0].Datasource.UID)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +87,7 @@ func ConvertQueryDataRequest(ctx context.Context, dqr data.QueryDataRequest, plu
 		},
 	}
 
-	convertResponse, err := fn(ctx, convertRequest)
+	convertResponse, err := convertFn(ctx, convertRequest)
 	if err != nil {
 		if convertResponse != nil && convertResponse.Result != nil {
 			return nil, fmt.Errorf("conversion failed. Err: %w. Result: %s", err, convertResponse.Result.Message)
@@ -94,20 +111,9 @@ func ConvertQueryDataRequest(ctx context.Context, dqr data.QueryDataRequest, plu
 	return r, nil
 }
 
-func (r *subQueryConvertREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.getPluginContext(ctx, name)
-	if err != nil {
-		return nil, err
-	}
+func (r *subQueryConvertREST) Connect(ctx context.Context, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		dqr := data.QueryDataRequest{}
-		err := web.Bind(req, &dqr)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		r, err := ConvertQueryDataRequest(ctx, dqr, pluginCtx, r.builder.client.ConvertObjects)
+		r, err := ConvertQueryDataRequest(ctx, req, r.builder.getPluginContext, r.builder.client.ConvertObjects)
 		if err != nil {
 			responder.Error(err)
 			return

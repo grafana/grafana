@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -68,7 +67,7 @@ func ProvideService(
 type Service interface {
 	Run(ctx context.Context) error
 	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
-	QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, dqr data.QueryDataRequest) (*query.QueryDataRequest, error)
+	QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, req *http.Request) (*query.QueryDataRequest, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -111,23 +110,16 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
 }
 
-func (s *ServiceImpl) QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, dqr data.QueryDataRequest) (*query.QueryDataRequest, error) {
-	if len(dqr.Queries) == 0 {
-		return nil, errors.New("no queries found")
+func (s *ServiceImpl) QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, req *http.Request) (*query.QueryDataRequest, error) {
+	pluginCtxFn := func(ctx context.Context, uid string) (backend.PluginContext, error) {
+		ds, err := s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipDSCache)
+		if err != nil {
+			return backend.PluginContext{}, err
+		}
+		return s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
 	}
 
-	uid := dqr.Queries[0].Datasource.UID
-	ds, err := s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipDSCache)
-	if err != nil {
-		return nil, err
-	}
-
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
-	if err != nil {
-		return nil, err
-	}
-
-	return datasource.ConvertQueryDataRequest(ctx, dqr, pCtx, s.pluginClient.ConvertObjects)
+	return datasource.ConvertQueryDataRequest(ctx, req, pluginCtxFn, s.pluginClient.ConvertObjects)
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers

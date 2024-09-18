@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -85,16 +84,11 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 }
 
 // QueryConvert returns query conversions.
-// Temporary until all plugins are updated to use the new apis.
+// Temporary until all plugins are migrated to use the new /apis.
 //
 // /ds/query/convert
 func (hs *HTTPServer) QueryConvert(c *contextmodel.ReqContext) response.Response {
-	reqDTO := data.QueryDataRequest{}
-	if err := web.Bind(c.Req, &reqDTO); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	resp, err := hs.queryDataService.QueryConvert(c.Req.Context(), c.SignedInUser, c.SkipDSCache, reqDTO)
+	resp, err := hs.queryDataService.QueryConvert(c.Req.Context(), c.SignedInUser, c.SkipDSCache, c.Req)
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}

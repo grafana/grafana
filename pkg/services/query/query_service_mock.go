@@ -3,7 +3,8 @@
 package query
 
 import (
-	context "context"
+	"context"
+	"net/http"
 
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -12,8 +13,6 @@ import (
 	mock "github.com/stretchr/testify/mock"
 
 	identity "github.com/grafana/grafana/pkg/apimachinery/identity"
-
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
@@ -46,7 +45,7 @@ func (_m *FakeQueryService) QueryData(ctx context.Context, _a1 identity.Requeste
 	return r0, r1
 }
 
-func (_m *FakeQueryService) QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, dqr data.QueryDataRequest) (*query.QueryDataRequest, error) {
+func (_m *FakeQueryService) QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, req *http.Request) (*query.QueryDataRequest, error) {
 	return nil, nil
 }
 
