@@ -210,7 +210,7 @@ func (o *Options) internalFlags(fs *pflag.FlagSet) {
 
 func (o *Options) internalFlagsValidate() []error {
 	if o.ServerRunOptions.MaxRequestBodyBytes > 0 {
-		return []error{fmt.Errorf("--max-request-body-bytes can not be negative value")}
+		return []error{fmt.Errorf("--max-request-body-bytes can not be a negative value")}
 	}
 	return nil
 }
