@@ -42,7 +42,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   const switchLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
 
   return (
-    <>
+    <div data-testid={selector.container}>
       <p>
         <Trans i18nKey="export.json.info-text">
           Copy or download a JSON file containing the JSON of your dashboard
@@ -107,7 +107,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
           </Button>
         </Stack>
       </div>
-    </>
+    </div>
   );
 }
 
