@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -73,6 +74,12 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	c.OrgB = c.createTestUsers("OrgB")
 
 	c.loadAPIGroups()
+
+	// ensure unified storage is alive and running
+	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
+	rsp, err := c.ResourceClient().IsHealthy(ctx, &resource.HealthCheckRequest{})
+	require.NoError(t, err, "unable to read resource client health check")
+	require.Equal(t, resource.HealthCheckResponse_SERVING, rsp.Status)
 
 	return c
 }
@@ -145,6 +152,11 @@ func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
 	statusError, ok := err.(*errors.StatusError)
 	require.True(c.t, ok)
 	return statusError
+}
+
+// Expose the embedded resource client
+func (c *K8sTestHelper) ResourceClient() resource.ResourceClient {
+	return c.env.Server.HTTPServer.ResourceClient
 }
 
 func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, replaceMeta ...string) string {
@@ -494,6 +506,9 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	require.NoError(c.t, err)
 	require.Equal(c.t, orgId, s.OrgID)
 	require.Equal(c.t, basicRole, s.OrgRole) // make sure the role was set properly
+
+	// TODO... can we make sure this is signed?
+	require.NotEmpty(c.t, s.IDToken, "expecting ID token")
 
 	usr := User{
 		Identity: s,
