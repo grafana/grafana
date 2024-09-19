@@ -38,11 +38,11 @@ function RecentExploration({ model }: Props) {
                 onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
             /> */}
       <Card onClick={onSelect} className={styles.card}>
-        <Card.Heading>{metric}</Card.Heading>
+        <Card.Heading>Last metric: {metric}</Card.Heading>
         <div className={styles.description}>
           <Stack gap={1.5} wrap="wrap">
             {filters.map((f) => (
-              <Tag key={f.key} name={`${f.key}: ${f.value}`} colorIndex={12} />
+              <Tag key={f.key} name={`${f.key}: ${f.value}`} colorIndex={12} /> // Labels / filters
             ))}
           </Stack>
         </div>
@@ -53,7 +53,7 @@ function RecentExploration({ model }: Props) {
             </div>
             {createdAt && (
               <i className={styles.secondary}>
-                <b>Created:</b> {dateTimeFormat(createdAt, { format: 'LL' })}
+                <b>Date created:</b> {dateTimeFormat(createdAt, { format: 'LL' })}
               </i>
             )}
           </Stack>
@@ -70,13 +70,12 @@ function RecentExploration({ model }: Props) {
           </Card.SecondaryActions>
         )}
       </Card>
-      <div>
+      {/* <div>
         Recent Exploration metric: {metric}, datasource: {datasource}, filters: {JSON.stringify(filters)}, createdAt:{' '}
         {createdAt}, time range from: {$timeRange && $timeRange.state.from}, time range to:{' '}
         {$timeRange && $timeRange.state.to}
-      </div>
-      ;
+      </div> */}
     </div>
-    // add time range, add sparklines
+    // REACH TODO: add sparklines
   );
 }

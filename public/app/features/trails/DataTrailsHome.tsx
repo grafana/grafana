@@ -26,20 +26,25 @@ import { VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getDatasourceForNewTrail, getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsHomeState extends SceneObjectState {
-  recentExplorations?: RecentExplorationScene[];
+  recentExplorations?: RecentExplorationScene[]; // declare the type of the state (of type RecentExplorationScene[])
 }
 
 export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
+  // start function class, in teh class we always need constructor to initialize the previously declared variables/types
   public constructor(state: DataTrailsHomeState) {
+    // need to declare state in the constructor
     super(state);
 
-    this.addActivationHandler(this._onActivate.bind(this));
+    this.addActivationHandler(this._onActivate.bind(this)); // calling the onActivate (have to use bind and pass this to it)
   }
   private _onActivate() {
+    // everything in here to set up the state
     // where we make the list of recent explorations
     // say what type to type the array
     if (this.state.recentExplorations === undefined) {
+      // if it's never defined before
       const recentExplorations = getTrailStore().recent.map((trail, index) => {
+        // store data into recentExplorations
         const resolvedTrail = trail.resolve();
         const state: RecentExplorationState = {
           metric: resolvedTrail.state.metric,
@@ -60,10 +65,11 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         }
         return new RecentExplorationScene(state);
       });
-      this.setState({ recentExplorations });
+      this.setState({ recentExplorations }); // passing recentExplorations from ln 42 into the state, which will update the variable into line 29
     }
   }
 
+  // CB funcs we pass into components; convention for react, when doing an event CB func (event handler func? e.g., onClick, onChange, on...) which means it's a CB func we pass into a component. safe to update state in these funcs bc they're not always being called. only called when user interacts w the component
   // button: new metric exploration
   public onNewMetricsTrail = () => {
     const app = getAppFor(this);
@@ -154,7 +160,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         {/* separate recent metircs + bookmarks code into separate components, then can conditionally render based on if there's a length */}
         {/* <Stack gap={5}> */}
         <div className={styles.column}>
-          <Text variant="h4">Recent metrics explorations</Text>
+          <Text variant="h4">Or view a recent exploration</Text>
           <div className={styles.trailList}>
             {recentExplorations &&
               recentExplorations.map((recent, index) => {
