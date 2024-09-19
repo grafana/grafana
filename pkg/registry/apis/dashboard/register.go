@@ -41,6 +41,7 @@ type DashboardsAPIBuilder struct {
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboardStorage
+	unified       resource.ResourceClient
 
 	log log.Logger
 }
@@ -68,6 +69,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
+		unified:          unified,
 
 		legacy: &dashboardStorage{
 			resource:       dashboard.DashboardResourceInfo,
@@ -138,9 +140,6 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore
-	storage[dash.StoragePath("dto")] = &DTOConnector{
-		builder: b,
-	}
 	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
 		b.legacy.server, // as client???
 		dashboard.DashboardResourceInfo.GroupResource(),
@@ -161,6 +160,12 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Register the DTO endpoint that will consolidate all dashboard bits
+	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], b)
+	if err != nil {
+		return nil, err
 	}
 
 	// Expose read only library panels
