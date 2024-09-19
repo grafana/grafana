@@ -284,11 +284,11 @@ const (
 	FlagMetricsSummary = "metricsSummary"
 
 	// FlagDatasourceAPIServers
-	// Expose some datasources as apiservers.  NOTE using grafanaAPIServerWithExperimentalAPIs will expose all of them
+	// Expose some datasources as apiservers.
 	FlagDatasourceAPIServers = "datasourceAPIServers"
 
 	// FlagGrafanaAPIServerWithExperimentalAPIs
-	// Register experimental APIs with the k8s API server
+	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
