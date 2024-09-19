@@ -61,7 +61,7 @@ func createRequest(ctx context.Context, dsInfo *datasourceInfo, proxyPass string
 	}
 	req, err := http.NewRequestWithContext(ctx, method, dsInfo.services[cloudMonitor].url, body)
 	if err != nil {
-		backend.Logger.Error("Failed to create request", "error", err)
+		backend.Logger.Error("Failed to create request", "error", err, "statusSource", backend.ErrorSourceDownstream)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
