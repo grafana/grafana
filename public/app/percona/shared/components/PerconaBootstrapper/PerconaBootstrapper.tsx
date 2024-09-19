@@ -148,6 +148,7 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
           </HorizontalGroup>
         </Modal>
       )}
+      {!showTour && <PerconaUpdateVersion />}
     </>
   );
 };
