@@ -36,69 +36,74 @@ func TestHTTPServer_readCertificates(t *testing.T) {
 	t.Run("ReadCertificates should return error when cert files are not configured", func(t *testing.T) {
 		_, err := ts.readCertificates()
 		assert.NotNil(t, err)
+		assert.Equal(t, "cert_file cannot be empty when using HTTPS", err.Error())
 	})
 }
 
-func TestHTTPServer_readEncryptedCertificates_PKCS8(t *testing.T) {
-	t.Run("readCertificates should return certificate if configuration is correct", func(t *testing.T) {
-		cfg, cleanUpFunc := getHttpServerCfg(t, certWithPassPKCS8, privateKeyWithPassPKCS8, passPKCS8)
-		defer cleanUpFunc()
+func TestHTTPServer_readEncryptedCertificates(t *testing.T) {
+	type testCase struct {
+		desc        string
+		primaryKey  []byte
+		cert        []byte
+		pass        string
+		expectedErr string
+	}
 
-		ts := &HTTPServer{
-			Cfg: cfg,
-		}
+	tests := []testCase{
+		{
+			desc:       "readCertificates should return certificate if configuration is correct - PKCS#8 with password",
+			primaryKey: privateKeyWithPassPKCS8,
+			cert:       certWithPassPKCS8,
+			pass:       passPKCS8,
+		},
+		{
+			desc:       "readCertificates should return certificate if configuration is correct - PKCS#1 with password",
+			primaryKey: privateKeyWithPassPKCS1,
+			cert:       certWithPassPKCS1,
+			pass:       passPKCS1,
+		},
+		{
+			desc:       "readCertificates should return certificate if configuration is correct - No pass",
+			primaryKey: privateKeyNoPass,
+			cert:       certNoPass,
+			pass:       "",
+		},
+		{
+			desc:        "readCertificates should return error if the password provided is not the correct one - PKCS#8 with password",
+			primaryKey:  privateKeyWithPassPKCS8,
+			cert:        certWithPassPKCS8,
+			pass:        "somethingThatIsNotTheCorrectPass",
+			expectedErr: "error parsing PKCS8 Private key: pkcs8: incorrect password",
+		},
+		{
+			desc:        "readCertificates should return error if the password provided is not the correct one - PKCS#1 with password",
+			primaryKey:  privateKeyWithPassPKCS1,
+			cert:        certWithPassPKCS1,
+			pass:        "somethingThatIsNotTheCorrectPass2",
+			expectedErr: "error decrypting x509 PemBlock: x509: decryption password incorrect",
+		},
+	}
 
-		c, err := ts.readCertificates()
-		require.Nil(t, err)
-		require.NotNil(t, c)
-	})
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			cfg, cleanUpFunc := getHttpServerCfg(t, tt.cert, tt.primaryKey, tt.pass)
+			defer cleanUpFunc()
 
-	t.Run("readCertificates should return error if the password provided is not the correct one", func(t *testing.T) {
-		cfg, cleanUpFunc := getHttpServerCfg(t, certWithPassPKCS8, privateKeyWithPassPKCS8, passPKCS8)
-		defer cleanUpFunc()
-		// change for a wrong password - 32char for consistency
-		cfg.CertPassword = "somethingThatIsNotTheCorrectPass"
+			ts := &HTTPServer{
+				Cfg: cfg,
+			}
 
-		ts := &HTTPServer{
-			Cfg: cfg,
-		}
-
-		c, err := ts.readCertificates()
-		require.Nil(t, c)
-		require.NotNil(t, err)
-		require.Equal(t, err.Error(), "error parsing PKCS8 Private key: pkcs8: incorrect password")
-	})
-}
-
-func TestHTTPServer_readEncryptedCertificates_PKCS1(t *testing.T) {
-	t.Run("readCertificates should return certificate if configuration is correct", func(t *testing.T) {
-		cfg, cleanUpFunc := getHttpServerCfg(t, certWithPassPKCS1, privateKeyWithPassPKCS1, passPKCS1)
-		defer cleanUpFunc()
-
-		ts := &HTTPServer{
-			Cfg: cfg,
-		}
-
-		c, err := ts.readCertificates()
-		require.Nil(t, err)
-		require.NotNil(t, c)
-	})
-
-	t.Run("readCertificates should return error if the password provided is not the correct one", func(t *testing.T) {
-		cfg, cleanUpFunc := getHttpServerCfg(t, certWithPassPKCS1, privateKeyWithPassPKCS1, passPKCS1)
-		defer cleanUpFunc()
-		// change for a wrong password - 32char for consistency
-		cfg.CertPassword = "somethingThatIsNotTheCorrectPass"
-
-		ts := &HTTPServer{
-			Cfg: cfg,
-		}
-
-		c, err := ts.readCertificates()
-		require.Nil(t, c)
-		require.NotNil(t, err)
-		require.Equal(t, err.Error(), "error decrypting x509 PemBlock: x509: decryption password incorrect")
-	})
+			c, err := ts.readCertificates()
+			if tt.expectedErr == "" {
+				require.Nil(t, err)
+				require.NotNil(t, c)
+			} else {
+				require.Nil(t, c)
+				require.NotNil(t, err)
+				require.Equal(t, tt.expectedErr, err.Error())
+			}
+		})
+	}
 }
 
 // returns Cfg and cleanup function for the created files
@@ -129,16 +134,16 @@ func getHttpServerCfg(t *testing.T, cert []byte, pk []byte, pass string) (*setti
 }
 
 /*
-* 	PKCS#8
-*	Certificates encrypted with password used for testing. These are valid until Aug 1st 2027.
-*	To generate new ones, use this commands:
-*
-*	# Generate RSA private key with a passphrase '12345678901234567890123456789012'
-*   sudo openssl genrsa -aes256 -passout pass:12345678901234567890123456789012 -out ./grafana_pass.key 2048
-*   # Create a new Certificate Signing Request (CSR) using the private key passing passphrase '12345678901234567890123456789012'
-*   sudo openssl req -new -nodes -sha256 -key ./grafana_pass.key -subj '/CN=testCertWithPass/C=us' -passin pass:12345678901234567890123456789012 -out ./grafana_pass.csr
-*   # Sign the CSR using the private key to create a self-signed certificate valid for 365 days
-*   sudo openssl x509 -req -days 1095 -in ./grafana_pass.csr -signkey ./grafana_pass.key -passin pass:12345678901234567890123456789012 -out ./grafana_pass.crt
+ * 	PKCS#8
+ *	Certificates encrypted with password used for testing. These are valid until Aug 1st 2027.
+ *	To generate new ones, use this commands:
+ *
+ *	# Generate RSA private key with a passphrase '12345678901234567890123456789012'
+ *  openssl genrsa -aes256 -passout pass:12345678901234567890123456789012 -out ./grafana_pass.key 2048
+ *  # Create a new Certificate Signing Request (CSR) using the private key passing passphrase '12345678901234567890123456789012'
+ *  openssl req -new -nodes -sha256 -key ./grafana_pass.key -subj '/CN=testCertWithPass/C=us' -passin pass:12345678901234567890123456789012 -out ./grafana_pass.csr
+ *  # Sign the CSR using the private key to create a self-signed certificate valid for 1095 days
+ *  openssl x509 -req -days 1095 -in ./grafana_pass.csr -signkey ./grafana_pass.key -passin pass:12345678901234567890123456789012 -out ./grafana_pass.crt
  */
 var certWithPassPKCS8 = []byte(
 	`-----BEGIN CERTIFICATE-----
@@ -195,61 +200,130 @@ Fx113Ns6T2LzzdARMN7S3qsiRveFRrz+Xm0Rtrl//KB5
 var passPKCS8 = "12345678901234567890123456789012"
 
 /*
- * 	PKCS#1
+ * PKCS#1
+ * Certificates encrypted with password used for testing. These are valid until Sept 19th 2027.
+ * To generate new ones, use this commands:
+ *
+ * # Generate RSA private key with a passphrase '111112222233333444445555566666612'.
+ * # The -traditional flag explicitly forces the use of the PKCS#1 format for RSA private keys. This is needed for newer versions of openssl
+ * openssl genrsa -traditional -aes256 -passout pass:111112222233333444445555566666612 -out encrypted_rsa_key.pem  2048
+ * # Create a new Certificate Signing Request (CSR) using the private key passing passphrase '111112222233333444445555566666612'
+ * openssl req -new -nodes -sha256 -key encrypted_rsa_key.pem -subj '/CN=testCertWithPass/C=us' -passin pass:111112222233333444445555566666612 -out certificate_request.csr
+ * # Sign the CSR using the private key to create a self-signed certificate valid for 1095 days
+ * openssl x509 -req -days 1095 -in certificate_request.csr -signkey encrypted_rsa_key.pem -passin pass:111112222233333444445555566666612 -out certificate.crt
  */
 var certWithPassPKCS1 = []byte(
 	`-----BEGIN CERTIFICATE-----
-MIIC1zCCAb8CFDpQmlYPWV4d8WHDh0H5XcER8qUPMA0GCSqGSIb3DQEBCwUAMCgx
+MIIC1zCCAb8CFGKBaDfnasNQFzOg7QR1Tm1vmQZ2MA0GCSqGSIb3DQEBCwUAMCgx
 GTAXBgNVBAMMEHRlc3RDZXJ0V2l0aFBhc3MxCzAJBgNVBAYTAnVzMB4XDTI0MDkx
-ODE3MzgwM1oXDTI1MDkxODE3MzgwM1owKDEZMBcGA1UEAwwQdGVzdENlcnRXaXRo
+OTEyMDgyOVoXDTI3MDkxOTEyMDgyOVowKDEZMBcGA1UEAwwQdGVzdENlcnRXaXRo
 UGFzczELMAkGA1UEBhMCdXMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIB
-AQDFhxKDCz9NJJjKaBIjqVuyxHWomOqeMeyR0fZcWAEG7YHqYXDNqq9WJkXS8Nf+
-8CEXnv5UiuVdZFGJ5I1J8ARDRQ+PgcgSIgpRPkuXtLaxdHnbkUFxSdftmtSD/kk8
-nDNQ/Nqo2GcUv5MhehQpZjO/66AnoQwFO4BrGh/EVaj+myhQ4tCUZeKOQk7QXST4
-lRCq5Hh3ve93lfkIbLu5bj8d8i0zrSvm67/436DeLZUI/xSkp0UFNxFfx3OGusPF
-aCZpCSLJPmT7fahBkj2rr8aK0crjQRgQADfhjYG2tA3vQY7L7i2V3eV10NIk4GDv
-pm5tDZZxJ2E1VZhcl/ajNQNtAgMBAAEwDQYJKoZIhvcNAQELBQADggEBALz74Cca
-JP/C9v2LGOPVxw07066PgU4KRVCt+t6WlLuvm/aRIqkz7OI+1ZehluuC3GzJAxQ+
-r67guBlVK1N0vQG+TbKu0LDvhfo2qtCG8dv+MruD9rIGt1N/B23HQ7MyEfCD+BwC
-+gMaG5Peg2xnBYsOGBYII8f/NUK920OpjEczx9M9PQhcgiu+uUL6MZBdJDb4Hq/a
-vl1POsIYgGv0YP2p0JzbFXMEhMc2nbzMvO5YgNzB/smWvcS/2qm78NKgAMA4Hfce
-RxP3avOP/tPjV5vmU5zMBfJW/LmRxAs3aOXWq1/hc+B736EsKXrCzwZ6OdWqU8mX
-UqsDpxqgWc0jXi4=
------END CERTIFICATE-----
-`)
+AQDGvaV1ROGZqNghVK4kjgME4joT32oe66nfYum4OiKJQPBA80umYiD++f/sglSl
+Nj+LIuus0EvXUFsweTJXW7CdECSlxXpzwXYuN9YncGjsX0Oywn/CMgXybVLZyOaX
+RiYB5X/pEJIWX7ywPtOS5gW1lIzuKnpyELh0EkI3oatMn7bdBcwg8kIuwJHdtF6D
+rqvrsDDfo4o9XqQfQZ2m+WXd22f1qcRR5svILzq16WT1d/6+JvVCypv2TmzNCuEZ
+SfDdwVyRGw2N8RVl9HdtTaIByFnusaYX7qbf6LfCcrKPDAnb8f1uYtJYYLDmQK3x
+JuFbtk47Qm2mh3JEWEIzwom/AgMBAAEwDQYJKoZIhvcNAQELBQADggEBADCAUlFN
+hv1t7RDB7nq9ow6Shu0VFxooP1ekeN6FuNthvG0tVI/APoetlyIwUr5Fp4Rhj9J3
+J6hnCsMARJAgDiCFya9NleG2PATzrLHm4DJL0zm005pZOtmfxDOeCt+/lDIGU+Rg
+fktYtY5Iuh4RD9UBt2COlUM9K9WuwFjgQhzspKfNys5Nm0l+3Oh4/F8XLjL15tEw
+mV+maFncQ2F1Yo5LJ4nGcF52z6v4Z5sk5lVBYuaO3S8d1ZrBgTyx5gZ8zI5+ewhH
+rTNsasDlsoXKws8yZWSGEOkldYwmMwpdEkbVoNuUbhmgL2v17gx9l8iBcVo+agn1
+KjQqJMB7C49JJ2w=
+-----END CERTIFICATE-----`)
 
 var privateKeyWithPassPKCS1 = []byte(
 	`-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
-DEK-Info: AES-256-CBC,0EDAEAF0B76FFD5FB96579F514CCF82A
+DEK-Info: AES-256-CBC,BFA318F0BA852F1D507C1FF646BD9E41
 
-5MRIdfHMvBu0OkZYA6sG2CGVg6k7V5nztadc/2j875homeDV5mB3LlxU2V/4w4rm
-S9TfrzHnWZ1imB3yCiLUhVE/g5BCWUJeyXAlb84NpGWEbZOaJpFFruTdGsGwMs0v
-Gj+FIjECxxV0OSz2WLa4aP+awZClwEDXCsn3k5dZlTNEHZRnsqbNJBbH9UM8Acuh
-W2S2Hv1Vqvlm4xoqZqnKA+IzlmbC43TWpw/gUIwDobrRuNvscO6FddTr4Px/jnd0
-loHkqwm47PPHuk8L+XZua5FDB9sfYY5bk5mTZM591iBDXE+KyA/Pzyj27Pe1LFRz
-buY4l+TyeStOMQaTrX1rjIhHwf0EI5k85HKyQfPFfOkb5+fbuCElKj0DqGNvVy6e
-WoiYipObu8+FGrM9fad6BWIXZMI9LGiiyyX3pi/iD4+AGhOVpsIzhvWRVhkHkSBu
-6QYF2+3ZbezVrjqOsRRMN60P6m1NQM4fwkY7KKJt1C+x/ejXQCXZwXaWm1jno3cH
-riPsGYWNC59pGt7bi507CxLSEOoyG7tFuMEeDK9yGqW9rzffSIMW7Y3ndarxMJsd
-wZEkKTZR7ZhSgcCENi4D6aNWcCrUqGbuVD1KSMyR3fuwauW0gvEDw7ydOnFvlQTJ
-PNi6ZOt6oTUI2WQQBiO9u393ZBzT0mECCIcM+hI/GH5ySPolX6GYByXye2MwFsYz
-gd3Qvg/Z4cuKp4ovFCkLYN/z8qefieojG2g00zd54Pk1pi559ckd1YKjZZ2IaPFJ
-JGei50dnVYSOgCthbmaPm8niuPzKALeH0w5/GTxG9YzWqIzXdWCrztO3/nc2QFfr
-JRcVpQrHvhLJVmXuTx50TDeHKC2iueBv1HDe87TKz+j0URxDQTb70tBYvbc8lPl7
-NPWc3BzJq3qHSOqV3wQTSnKLykYXIr8T60SdMGg//v6jHdioQdMCiP9wvaFc9NLs
-IYqK0zFZ43V2PcPFouqtoswyTzBKHZaXv1D8EqWMeCW9se1PwRrE789bzZ98Ul3m
-6CttE8XGmkkuJmP1YrSW/nXVe2+DMnC+zvCcjMCIL8b+vwE5iUDX/Gjrrog4qg4P
-/ZKVJg5r7d8oM0ZVkcFSn+66Oovm3pBWg3xnvkiPoF0mselnZ/sywrgcA9W6/hZK
-X2kD08IbT3tFgwOnYkpc1ZHwscMcPzAGQEaXsZjLazUGWRq3TOpKjzrDjy/mshco
-5MlCFXT2Qejtbu6iVfbP9qczwDu2Ghr+eqlIIOGBi8AqyTXwP9Vr2qHghso4rSMr
-pggeKNI2v+suPaLny5QBHHCboG8tOuBi19VUFum3ZA8GqQgtbIO2w0y2EzgxB5a3
-GxtCG7/wAIOugRCDAYRcKo7dwMY2zZzBYutkuJJAxMFnLo+TkJN8yW1YZZfaBGfm
-UUeQdpY3dAIbqmhXFvT0vqbQ+6Jj5/hN9KQ7bC3NQ+8My4YN7PMIOeESNIEF60J0
-tvFB82XZxK49N2TzFXkPZ/A/vhLaI6dFBcrrh+9keKJx1kCbbXs1Mj28Fn6555Zi
-e+x4woC2+QEPY4866v34TGm+3OVywHYZYKZ/NfdM2SnI3RVn6O8FsxxvTPBU+Zqr
------END RSA PRIVATE KEY-----
+E4UOCP1+oDxm36pqaI1AqSrl4vykLE0x4tN5P0uJgwCQ6CWN0ZiAxJYtXE4MxGIq
+eLk5L5GL/oeziFPT464Cxt01TdNjL57CwAuMw7ucS+/WV56Y5370FBNXkLQTUBkV
+GKXpqtE3T7VHwltNAddJPX9sQMqC/jgpMQBCwlg6KPfvs74acE75jyjSr7za0ozR
+jDUfY5dVROU7pgjwanz0K26joaBE9PUGlbQoN3HoIAQOl85GMJaeaXoPgJiY2Txm
+oTWqhDqY52Gj8n7vqpJyykIYaw0jHwCv1QR/fWN0BT7/aRQbM1xXwmGkCurm1BTI
+Gh4tq9iDs+cXj08DLxJ2QZ9c/kkcBtaiBW6W7Cm1VEMMAFKYnTvw2o6oBkfcy5qD
+fHVxA7x4MQJCXewt7T9ONq2MMfCQYE/y0RWD7nEOEnSa0rCGmlQnyi0poEtw97MQ
+itB5RO5OuhoGqYnaPPnX///xr0Lzc5xqtXQLGNXRvRpl7MUCgeD6gOc8whEdUWUq
+rGHAXEBSyfX+TWV2XlrzlH1s+gZ3kX65Gp5xuV66QSekLfyznKLuTarHZUUEOIAM
+/78PF9GcNd7NKWtTieAfu4Rz9OWVXe4M8x3KDmYc3n7sR4ZhO2tBMNzvgI5KWuW0
+o1AxJR3zOjDDeiz7undrmCFwh08VF+ZVNdBSDCXIYsjdD0BzfrliwqL6hn3Od1MW
+71xZBuQoXBgDM+MOvtHa5fGsBgny6ehHc6V9/fjdPMe/zmWLqDn7mRgcmRtP8u2c
+egZf0EfPqR+4iy7UtzOpdh5TI4r/rlKstOMU+lbVzoIv3Jh1oUw/fBbOFVteks3L
+jR7rTFdfJgr/dsnjd/PbMfcrOIDr6OkvST+RUiyBcgOC6snaPrPrL3+6kPtEiYVE
+Hmaw8TfH5AQ8mx+xDiabhnKduX5POUEN17sw40O0jIJmHQ5KDrawYzz24ZBxOsVC
+0RLExLJwXtUYZ4fUfVtyOMLGKYHqZnz1XzmHJ1m7/rpd6ccYzFAK9+SO7zEs7mRH
+iVC+4lOsU4lfrhFIDVkFvtTBPTneF+2oHQu5psm55/Hnm0VqDzrcXPapTZQznwVZ
+HRBsiahLaHzF1zF+xQPm3PspcEm1wQNp1EEW4QlZYQyg16dAt813i0JDL8MWQR/U
+aunhNyI0w6/rE7kEeT/3iFUqdJQkAXoRRQLg5urwTZJlhV32/5MG5ADr+k/e7LQe
+s2yUbEa0P0hrN0ACPl4RsmE10GFoPuJjcYyANd+UvZPRTrfJMWT8M3Ggv7qfgZmH
+uLJ5pi/xIH/bYAWf5B/mH+7z6T40x2z8N5sHiVBsK2iYRxNFpAKzVaOJmXyAxCTu
+MadzTUuqiXXr7pnmA8oKcJ80fcpAGtSw+QaQWIqJySo68MtSYg0RdljMYJ1mV/QD
+HhSeh4jdv3uSdb2TvpXkxnmmNnKyqhiqCWvAzG7GiMvZ0VnPvfcZUBYiGBfS49oY
+Igxrr1ibkqVn987DaBb6F77FfV0YDicn/mpTVbVdkeh1LAOwisqgWIRbkI4Vwk3q
+nGUA2Etz9Oq9imNLu4Sb96r9I0WfQDKvsgxK2dhRwb9fg6kZ7y6Nb6XzqU3XJs44
+-----END RSA PRIVATE KEY-----`)
 
-`)
+var passPKCS1 = "111112222233333444445555566666612"
 
-var passPKCS1 = "your-password-here"
+/**
+ * Certificates without password used for testing. These are valid until Sept 19th 2027.
+ * To generate new ones, use this commands:
+ *
+ * # Generate RSA private key
+ * openssl genrsa -out ./grafana_no_pass.key 2048
+ * # Create a new Certificate Signing Request (CSR) using the private key
+ * openssl req -new -key ./grafana_no_pass.key -subj '/CN=testCertWithoutPass/C=SK' -out ./grafana_no_pass.csr
+ * # Sign the CSR using the private key to create a self-signed certificate valid for 365 days
+ * openssl x509 -req -days 1095 -in ./grafana_no_pass.csr -signkey ./grafana_no_pass.key -out ./grafana_no_pass.crt
+ */
+
+var privateKeyNoPass = []byte(
+	`-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCiCb+D7DddLgsU
+TP4wu6B4fvFqmYbMH9O+mvP6iwAS2jazOrw2Was8+AKafxnSM1TrbPgH3nUS6TzM
+iSrisDgPUuZ/MxvSFG2VFNhB/vujteI6tyXZdNpiptvxJumHvPR4Qjc9wrCYl3qh
+x6T/KkKVkBEXi0+frWUJw0xFNiKu8Rdgo4ceZ3kHZt/ZqESDf26v18clQETBB7oR
+WzPmuktnCyX2WPN/B2DWl9eDNMUtQt8HzA8XhOL5nFYUYXOKmFSprD29JaeeKCrF
+YkIDfLq+k2lzxo1Btur6u1gJyOOi5X1hfoGgZNINNnWeuw0iuqX2Wgw9HjfBV1hS
+ACzeUJiVAgMBAAECggEABfQlvUsonZvbfFt324KJWuQPKsOJWGay+QXogQQqdIbg
+C6XU1Ipm6E6Uieixoi+QpzXRxzg9RPyc50cC9GFVLfr1zSarlwR5IkkpyQL9a/56
+2X1xPpQ0kftfiXTMj9g5g1GrhfFpW7H1J4yWW2nKGIS6nAraWhuc4sbyPnjGvXa/
+Pgdd1mW+bCd++qh0bsUZSosPZSc8xv/2rEA7eqa+mbADC/Cjf6OJl2lKXypJhRqg
+5wUCcYDzCPCXa0H1qcJK+9KrcejgFqUg0lC4LPEQtJfvxsOhxRnfaZUFBSD5UaR5
+eh9/jKxfAlGN6xynO73IYbZQax8OCGAG8na9SelD4QKBgQC2TOhoxhftg+d/pXK1
+CsAB/q/bIzmM1czC5HMZh52SJKGimUnRSbSKDiX2MTlXNIKxf8O00cH076FU5gZp
+18Er5D6b1nF4NhdmJEq+Y39DixqM9/ktArBoPMiqDxNMUvq0FVPRWA9vveTurVV5
+07ms5h7Ch2b2aIz4ckx1YpLg+wKBgQDji8yRZmNxzALesv5f7Rpr4Sv35Gd4UaL5
+R2N0N8C8nZAh/I+eWf9b/2u8s0tNt6v6U4YSI2F9koZyvRfAKRB9K7zOfaIcvxy7
+VTvSHpUavuK1f7FAsygNAYRDcEqX4m/7oEMs3MEBfgk1pkePA6Btoqfs2lfgc1y7
+dnx17QLXrwKBgQCKo8ioTebKomL/Z6Lp3mgR3FB/VrWgzsQvf6+tPb7u8t7eGrfR
+67zatVHXfq3+DRhLxz/eFxvrnAZU268K9aOaLrYSrC6VXoXDD1ysmFyj0Hl7teaR
+fZcNXxS4iEiD5iN1qzaYYeEzePZPMhFsWkG+JTBFftYmFXMIS1ysdTAA2wKBgQC5
+NxT3kVEG0tnPLgFSUav8/dcNO3RhgonWwJ4afjs7DEHC+FJqwbTSzJCEk6iLBSNO
+amgqIXR8gyU/Bd3sQ0CxskVICwlGvuUDMzizKsORdqkQtXSxRmMmWwKu5htBkEY4
+mlWzkajkrxOOAOAkb/5I32oyp/N5tk1YJfTfBGIY7wKBgFYFFhYsYXtZE24k+7y+
+KsTVyjc2AjRrG25BleEEvEEZkrltZ3RqirwasclAhOpdzvd59uzNgnPWwq3duj7H
+VtHK877LgPh5qhlwGI2i1i5wMO71lZtPcqNZPkvjhV5YUzp6BRF+HDsF7mn68ZA1
+7jNNIb06iJ8Ur9kYSgYdQslE
+-----END PRIVATE KEY-----`)
+
+var certNoPass = []byte(
+	`-----BEGIN CERTIFICATE-----
+MIIC3TCCAcUCFBL/b/HwmR9F9EK1u8PQvmNPFMo3MA0GCSqGSIb3DQEBCwUAMCsx
+HDAaBgNVBAMME3Rlc3RDZXJ0V2l0aG91dFBhc3MxCzAJBgNVBAYTAlNLMB4XDTI0
+MDkxOTEyMzQ1NFoXDTI3MDkxOTEyMzQ1NFowKzEcMBoGA1UEAwwTdGVzdENlcnRX
+aXRob3V0UGFzczELMAkGA1UEBhMCU0swggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw
+ggEKAoIBAQCiCb+D7DddLgsUTP4wu6B4fvFqmYbMH9O+mvP6iwAS2jazOrw2Was8
++AKafxnSM1TrbPgH3nUS6TzMiSrisDgPUuZ/MxvSFG2VFNhB/vujteI6tyXZdNpi
+ptvxJumHvPR4Qjc9wrCYl3qhx6T/KkKVkBEXi0+frWUJw0xFNiKu8Rdgo4ceZ3kH
+Zt/ZqESDf26v18clQETBB7oRWzPmuktnCyX2WPN/B2DWl9eDNMUtQt8HzA8XhOL5
+nFYUYXOKmFSprD29JaeeKCrFYkIDfLq+k2lzxo1Btur6u1gJyOOi5X1hfoGgZNIN
+NnWeuw0iuqX2Wgw9HjfBV1hSACzeUJiVAgMBAAEwDQYJKoZIhvcNAQELBQADggEB
+AHAoaCc0iaHOhr7nxDBOl7qPsrIpA95TU1d0rTaLQpK8Z5wC3+a0JvAxRk+RgIMA
+1Z+mL326gg2o7L3SdjVzkhBe/3+7RzAfuH/k8S8hn72G548o3XkQP87JmLUXs1+6
+2t467hpNPbuboO2lspCEEWbYs2kLFIFIE4V+iQe4xabz/tBgy2fE0hI1gwtWqonO
+ZXEiT0mcWOdtRV5WfkkSrjE0BtWUW6r+eW/0ZSLPESnGqBIpTgzDEk29bWbbMdwh
+dsdSPwCrdg9wYOPr1CNjfoA6GjX5SipJ6rU1hOzcOF8SQh0Oh9a5kpfkVD+ktHxr
++eLHA9/oarks8uDsI8ZzsPI=
+-----END CERTIFICATE-----`)
