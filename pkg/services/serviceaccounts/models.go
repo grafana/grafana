@@ -2,7 +2,6 @@ package serviceaccounts
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -213,10 +212,10 @@ func ExtSvcLoginPrefix(orgID int64) string {
 }
 
 func IsExternalServiceAccount(login string) bool {
-	parts := strings.Split(login, "-")
+	parts := strings.SplitAfter(login, "-")
 	if len(parts) < 4 {
 		return false
 	}
 
-	return parts[0]+"-" == ServiceAccountPrefix && parts[2]+"-" == ExtSvcPrefix
+	return parts[0] == ServiceAccountPrefix && parts[2] == ExtSvcPrefix
 }
