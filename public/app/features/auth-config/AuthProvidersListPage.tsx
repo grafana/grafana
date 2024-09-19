@@ -56,7 +56,7 @@ export const AuthConfigPageUnconnected = ({
   providers = providers.filter((p) => p.provider !== 'saml');
 
   providers = providers.map((p) => {
-    if (p.provider === 'ldap' || p.provider === 'saml') {
+    if (p.provider === 'ldap') {
       p.settings.type = p.provider;
     }
     return p;
