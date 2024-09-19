@@ -230,7 +230,7 @@ func (*AccessControlStore) savePermissions(ctx context.Context, sess *db.Session
 	return nil
 }
 
-func (s *AccessControlStore) saveUserAssignment(ctx context.Context, sess *db.Session, assignment accesscontrol.UserRole) error {
+func (*AccessControlStore) saveUserAssignment(ctx context.Context, sess *db.Session, assignment accesscontrol.UserRole) error {
 	ctx, span := tracer.Start(ctx, "accesscontrol.database.saveUserAssignment")
 	defer span.End()
 
