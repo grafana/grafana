@@ -472,12 +472,6 @@ func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasour
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
-	// check if the jsonData contains teamHTTPHeaders
-	// FIXME: basically we would have to do a diff of the old and new teamHTTPHeaders to check if there are any changes
-	if cmd.JsonData != nil && cmd.JsonData.Get("teamHTTPHeaders") != nil && !cmd.OnlyUpdateLBACRulesFromAPI {
-		return nil, fmt.Errorf("teamHTTPHeaders is not allowed to be updated via the API")
-	}
-
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
@@ -575,6 +569,10 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		dataSource, err = s.SQLStore.UpdateDataSource(ctx, cmd)
 		return err
 	})
+}
+
+func (s *Service) UpdateDataSourceLBACRules(ctx context.Context, cmd *datasources.UpdateDataSourceLBACRulesCommand) (*datasources.DataSource, error) {
+	return s.UpdateDataSource(ctx, &cmd.UpdateDataSourceCommand)
 }
 
 func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider,

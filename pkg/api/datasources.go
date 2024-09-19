@@ -457,6 +457,12 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
 
+	// could get expensive
+	// we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
+	if checkTeamHTTPHeadersDiff(nil, cmd.JsonData) {
+		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
+	}
+
 	dataSource, err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNameExists) || errors.Is(err, datasources.ErrDataSourceUidExists) {
@@ -529,7 +535,14 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
 
+	// could get expensive
+	// we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
+	if checkTeamHTTPHeadersDiff(ds, cmd.JsonData) {
+		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
+	}
+
 	// check if LBAC rules have been modified
+	// why is this function here?
 	hasAccess, errAccess := checkTeamHTTPHeaderPermissions(hs, c, ds, cmd)
 	if !hasAccess {
 		return response.Error(http.StatusForbidden, fmt.Sprintf("You'll need additional permissions to perform this action. Permissions needed: %s", datasources.ActionPermissionsWrite), errAccess)
@@ -577,6 +590,12 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 	}
 	cmd.ID = ds.ID
 
+	// could get expensive
+	// we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
+	if checkTeamHTTPHeadersDiff(ds, cmd.JsonData) {
+		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
+	}
+
 	// check if LBAC rules have been modified
 	hasAccess, errAccess := checkTeamHTTPHeaderPermissions(hs, c, ds, cmd)
 	if !hasAccess {
@@ -599,17 +618,32 @@ func getEncodedString(jsonData *simplejson.Json, key string) string {
 }
 
 func checkTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) (bool, error) {
-	currentTeamHTTPHeaders := getEncodedString(ds.JsonData, "teamHttpHeaders")
-	newTeamHTTPHeaders := getEncodedString(cmd.JsonData, "teamHttpHeaders")
-	if (currentTeamHTTPHeaders != "" || newTeamHTTPHeaders != "") && currentTeamHTTPHeaders != newTeamHTTPHeaders {
+	if checkTeamHTTPHeadersDiff(ds, cmd.JsonData) {
 		return evaluateTeamHTTPHeaderPermissions(hs, c, datasources.ScopePrefix+ds.UID)
 	}
 	return true, nil
 }
 
+func checkTeamHTTPHeadersDiff(ds *datasources.DataSource, jsonData *simplejson.Json) bool {
+	if ds == nil || jsonData == nil {
+		return false
+	}
+	currentTeamHTTPHeaders := getEncodedString(ds.JsonData, "teamHttpHeaders")
+	newTeamHTTPHeaders := getEncodedString(jsonData, "teamHttpHeaders")
+	if currentTeamHTTPHeaders == "" && newTeamHTTPHeaders == "" {
+		return false
+	}
+	return currentTeamHTTPHeaders != newTeamHTTPHeaders
+}
+
 func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) response.Response {
 	if ds.ReadOnly {
 		return response.Error(http.StatusForbidden, "Cannot update read-only data source", nil)
+	}
+	// could get expensive
+	// we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
+	if checkTeamHTTPHeadersDiff(ds, cmd.JsonData) {
+		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
 	}
 
 	_, err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
