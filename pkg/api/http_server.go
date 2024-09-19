@@ -108,7 +108,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/youmark/pkcs8"
@@ -201,9 +200,6 @@ type HTTPServer struct {
 	pluginsCDNService            *pluginscdn.Service
 	managedPluginsService        managedplugins.Manager
 
-	// Unified storage client -- exposed for testing
-	ResourceClient resource.ResourceClient
-
 	userService          user.Service
 	tempUserService      tempUser.Service
 	loginAttemptService  loginAttempt.Service
@@ -272,7 +268,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
-	userVerifier user.Verifier, resourceClient resource.ResourceClient,
+	userVerifier user.Verifier,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -376,7 +372,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
-		ResourceClient:               resourceClient,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
