@@ -130,7 +130,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.AddReceiverActionScopesMigration(mg)
 
-	ualert.AddRuleEditorSettings(mg)
+	ualert.AddRuleMetadata(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

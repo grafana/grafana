@@ -434,6 +434,11 @@ const (
 )
 
 // swagger:model
+type AlertRuleMetadata struct {
+	EditorSettings AlertRuleEditorSettings `json:"editor_settings" yaml:"editor_settings"`
+}
+
+// swagger:model
 type AlertRuleEditorSettings struct {
 	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section" yaml:"simplified_query_and_expressions_section"`
 }
@@ -505,7 +510,7 @@ type PostableGrafanaRule struct {
 	IsPaused             *bool                          `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
 	Record               *Record                        `json:"record" yaml:"record"`
-	EditorSettings       *AlertRuleEditorSettings       `json:"editor_settings,omitempty" yaml:"editor_settings,omitempty"`
+	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 }
 
 // swagger:model
@@ -527,7 +532,7 @@ type GettableGrafanaRule struct {
 	IsPaused             bool                           `json:"is_paused" yaml:"is_paused"`
 	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 	Record               *Record                        `json:"record,omitempty" yaml:"record,omitempty"`
-	EditorSettings       *AlertRuleEditorSettings       `json:"editor_settings,omitempty" yaml:"editor_settings,omitempty"`
+	Metadata             *AlertRuleMetadata             `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.

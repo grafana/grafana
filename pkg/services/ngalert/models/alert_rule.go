@@ -269,7 +269,11 @@ type AlertRule struct {
 	Labels               map[string]string
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
-	EditorSettings       EditorSettings
+	Metadata             AlertRuleMetadata
+}
+
+type AlertRuleMetadata struct {
+	EditorSettings EditorSettings `json:"editor_settings"`
 }
 
 type EditorSettings struct {

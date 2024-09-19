@@ -144,9 +144,9 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 		}
 	}
 
-	if in.GrafanaManagedAlert.EditorSettings != nil {
-		newRule.EditorSettings = ngmodels.EditorSettings{
-			SimplifiedQueryAndExpressionsSection: in.GrafanaManagedAlert.EditorSettings.SimplifiedQueryAndExpressionsSection,
+	if in.GrafanaManagedAlert.Metadata != nil {
+		newRule.Metadata.EditorSettings = ngmodels.EditorSettings{
+			SimplifiedQueryAndExpressionsSection: in.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection,
 		}
 	}
 

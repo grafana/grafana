@@ -81,10 +81,10 @@ func alertRuleToModelsAlertRule(ar alertRule, l log.Logger) (models.AlertRule, e
 		result.NotificationSettings = ns
 	}
 
-	if ar.EditorSettings != "" {
-		err = json.Unmarshal([]byte(ar.EditorSettings), &result.EditorSettings)
+	if ar.Metadata != "" {
+		err = json.Unmarshal([]byte(ar.Metadata), &result.Metadata)
 		if err != nil {
-			return models.AlertRule{}, fmt.Errorf("failed to parse editor settings: %w", err)
+			return models.AlertRule{}, fmt.Errorf("failed to metadata: %w", err)
 		}
 	}
 
@@ -159,11 +159,11 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		result.NotificationSettings = string(notificationSettingsData)
 	}
 
-	editorSettingsData, err := json.Marshal(ar.EditorSettings)
+	metadata, err := json.Marshal(ar.Metadata)
 	if err != nil {
-		return alertRule{}, fmt.Errorf("failed to marshal editor settings: %w", err)
+		return alertRule{}, fmt.Errorf("failed to metadata: %w", err)
 	}
-	result.EditorSettings = string(editorSettingsData)
+	result.Metadata = string(metadata)
 
 	return result, nil
 }
@@ -191,6 +191,6 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		Labels:               rule.Labels,
 		IsPaused:             rule.IsPaused,
 		NotificationSettings: rule.NotificationSettings,
-		EditorSettings:       rule.EditorSettings,
+		Metadata:             rule.Metadata,
 	}
 }

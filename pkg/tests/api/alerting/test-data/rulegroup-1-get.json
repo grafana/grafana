@@ -42,8 +42,10 @@
         "no_data_state": "NoData",
         "exec_err_state": "Alerting",
         "is_paused": false,
-        "editor_settings": {
-          "simplified_query_and_expressions_section": false
+        "metadata": {
+          "editor_settings": {
+            "simplified_query_and_expressions_section": false
+          }
         }
       }
     },
@@ -87,8 +89,10 @@
         "no_data_state": "NoData",
         "exec_err_state": "Alerting",
         "is_paused": false,
-        "editor_settings": {
-          "simplified_query_and_expressions_section": false
+        "metadata": {
+          "editor_settings": {
+            "simplified_query_and_expressions_section": false
+          }
         }
       }
     }

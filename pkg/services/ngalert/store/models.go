@@ -26,7 +26,7 @@ type alertRule struct {
 	Labels               string
 	IsPaused             bool
 	NotificationSettings string `xorm:"notification_settings"`
-	EditorSettings       string `xorm:"editor_settings"`
+	Metadata             string `xorm:"metadata"`
 }
 
 func (a alertRule) TableName() string {
@@ -60,7 +60,7 @@ type alertRuleVersion struct {
 	Labels               string
 	IsPaused             bool
 	NotificationSettings string `xorm:"notification_settings"`
-	EditorSettings       string `xorm:"editor_settings"`
+	Metadata             string `xorm:"metadata"`
 }
 
 func (a alertRuleVersion) TableName() string {
