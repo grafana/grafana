@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -119,6 +120,12 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}
 	}
 
+	logger := slog.Default().With("logger", "resource-server")
+	// register metrics
+	if err := prometheus.Register(NewStorageMetrics()); err != nil {
+		logger.Warn("failed to register storage metrics", "error", err)
+	}
+
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(claims.WithClaims(context.Background(),
 		&identity.StaticRequester{
@@ -129,7 +136,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		}))
 	return &server{
 		tracer:      opts.Tracer,
-		log:         slog.Default().With("logger", "resource-server"),
+		log:         logger,
 		backend:     opts.Backend,
 		index:       opts.Index,
 		diagnostics: opts.Diagnostics,
@@ -598,6 +605,10 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				}); err != nil {
 					return err
 				}
+
+				// record latency
+				latency := time.Since(event.Object.GetCreationTimestamp().Time).Seconds()
+				StorageServerMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latency)
 			}
 		}
 	}
