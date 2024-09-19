@@ -335,12 +335,19 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
 
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
   // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
-  if (ga.editor_settings && config.featureToggles.alertingQueryAndExpressionsStepMode) {
-    return {
-      simplifiedQueryEditor: ga.editor_settings.simplified_query_and_expressions_section,
-    };
+  if (config.featureToggles.alertingQueryAndExpressionsStepMode) {
+    if (ga.editor_settings) {
+      return {
+        simplifiedQueryEditor: ga.editor_settings.simplified_query_and_expressions_section,
+      };
+    } else {
+      return {
+        simplifiedQueryEditor: false,
+      };
+    }
+  } else {
+    return undefined;
   }
-  return getDefaultEditorSettings();
 }
 
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
