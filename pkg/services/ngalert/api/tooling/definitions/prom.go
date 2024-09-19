@@ -72,6 +72,7 @@ type DiscoveryBase struct {
 type RuleDiscovery struct {
 	// required: true
 	RuleGroups []RuleGroup      `json:"groups"`
+	NextToken  string           `json:"nextToken,omitempty"`
 	Totals     map[string]int64 `json:"totals,omitempty"`
 }
 
