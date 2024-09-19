@@ -3,7 +3,10 @@ import { config } from 'app/core/config';
 import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types';
 
-import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/constants';
+import {
+  PERMISSIONS_CONTACT_POINTS,
+  PERMISSIONS_CONTACT_POINTS_MODIFY,
+} from './unified/components/contact-points/constants';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
@@ -111,7 +114,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
         AccessControlAction.AlertingNotificationsExternalWrite,
-        ...PERMISSIONS_CONTACT_POINTS,
+        ...PERMISSIONS_CONTACT_POINTS_MODIFY,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
@@ -124,7 +127,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingNotificationsExternalWrite,
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...PERMISSIONS_CONTACT_POINTS,
+        ...PERMISSIONS_CONTACT_POINTS_MODIFY,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
