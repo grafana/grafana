@@ -60,7 +60,7 @@ jobs:
 
   auto-triage:
     needs: [main]
-    if: github.repository == 'grafana/grafana' && (github.event.issue.author_association == 'NONE' || github.event.issue.author_association == 'FIRST_TIMER' || github.event.issue.author_association == 'FIRST_TIME_CONTRIBUTOR')
+    if: github.repository == 'grafana/grafana' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
     runs-on: ubuntu-latest
     steps:
 
