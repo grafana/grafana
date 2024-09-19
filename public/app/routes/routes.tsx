@@ -1,7 +1,6 @@
 import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
-import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
@@ -298,7 +297,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
-      component: LdapPage,
+      component: config.featureToggles.ssoSettingsLDAP
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
+          )
+        : LdapPage,
     },
     {
       path: '/admin/authentication/:provider',
@@ -378,7 +381,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     // LOGIN / SIGNUP
     {
       path: '/login',
-      component: LoginPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LoginPage" */ 'app/core/components/Login/LoginPage')
+      ),
       pageClass: 'login-page',
       chromeless: true,
     },

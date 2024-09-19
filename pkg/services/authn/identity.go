@@ -72,13 +72,17 @@ type Identity struct {
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
-	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken       string
 	IDTokenClaims *authn.Claims[authn.IDTokenClaims]
+
+	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]
 }
 
 // Access implements claims.AuthInfo.
 func (i *Identity) GetAccess() claims.AccessClaims {
+	if i.AccessTokenClaims != nil {
+		return authn.NewAccessClaims(*i.AccessTokenClaims)
+	}
 	return &identity.IDClaimsWrapper{Source: i}
 }
 

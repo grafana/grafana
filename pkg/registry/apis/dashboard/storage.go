@@ -4,7 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
-	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -16,8 +16,8 @@ type storage struct {
 }
 
 func newStorage(scheme *runtime.Scheme) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme)
-	resourceInfo := v0alpha1.DashboardResourceInfo
+	resourceInfo := dashboard.DashboardResourceInfo
+	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,

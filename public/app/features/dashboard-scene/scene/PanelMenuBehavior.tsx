@@ -22,17 +22,13 @@ import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { ShareSnapshot } from '../sharing/ShareButton/share-snapshot/ShareSnapshot';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import { SharePanelEmbedTab } from '../sharing/SharePanelEmbedTab';
-import { SharePanelInternally } from '../sharing/panel-share/SharePanelInternally';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 
@@ -44,7 +40,6 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const panel = menu.parent as VizPanel;
-    const parent = panel.parent;
     const plugin = panel.getPlugin();
 
     const items: PanelMenuItem[] = [];
@@ -90,8 +85,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         shortcut: 'p u',
         onClick: () => {
           const drawer = new ShareDrawer({
-            title: t('share-panel.drawer.share-link-title', 'Link settings'),
-            body: new SharePanelInternally({ panelRef: panel.getRef() }),
+            shareView: shareDashboardType.link,
+            panelRef: panel.getRef(),
           });
 
           dashboard.showModal(drawer);
@@ -103,8 +98,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         shortcut: 'p e',
         onClick: () => {
           const drawer = new ShareDrawer({
-            title: t('share-panel.drawer.share-embed-title', 'Share embed'),
-            body: new SharePanelEmbedTab({ panelRef: panel.getRef() }),
+            shareView: shareDashboardType.embed,
+            panelRef: panel.getRef(),
           });
 
           dashboard.showModal(drawer);
@@ -118,8 +113,8 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
           shortcut: 'p s',
           onClick: () => {
             const drawer = new ShareDrawer({
-              title: t('share-panel.drawer.share-snapshot-title', 'Share snapshot'),
-              body: new ShareSnapshot({ dashboardRef: dashboard.getRef(), panelRef: panel.getRef() }),
+              shareView: shareDashboardType.snapshot,
+              panelRef: panel.getRef(),
             });
 
             dashboard.showModal(drawer);
@@ -150,6 +145,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
+        iconClassName: 'file-copy-alt',
         onClick: () => {
           dashboard.duplicatePanel(panel);
         },
@@ -160,6 +156,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     if (!isEditingPanel) {
       moreSubMenu.push({
         text: t('panel.header-menu.copy', `Copy`),
+        iconClassName: 'copy',
         onClick: () => {
           dashboard.copyPanel(panel);
         },
@@ -167,13 +164,14 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     }
 
     if (dashboard.state.isEditing && !isRepeat && !isEditingPanel) {
-      if (parent instanceof LibraryVizPanel) {
+      if (isLibraryPanel(panel)) {
         moreSubMenu.push({
           text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
+          iconClassName: 'link-broken',
           onClick: () => {
             dashboard.showModal(
               new UnlinkLibraryPanelModal({
-                panelRef: parent.getRef(),
+                panelRef: panel.getRef(),
               })
             );
           },
@@ -181,27 +179,44 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
 
         moreSubMenu.push({
           text: t('panel.header-menu.replace-library-panel', `Replace library panel`),
+          iconClassName: 'library-panel',
           onClick: () => {
-            dashboard.onShowAddLibraryPanelDrawer(parent.getRef());
+            dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
           },
         });
       } else {
-        moreSubMenu.push({
-          text: t('panel.header-menu.create-library-panel', `Create library panel`),
-          onClick: () => {
-            dashboard.showModal(
-              new ShareModal({
+        if (config.featureToggles.newDashboardSharingComponent) {
+          moreSubMenu.push({
+            text: t('share-panel.menu.new-library-panel-title', 'New library panel'),
+            iconClassName: 'plus-square',
+            onClick: () => {
+              const drawer = new ShareDrawer({
+                shareView: shareDashboardType.libraryPanel,
                 panelRef: panel.getRef(),
-                activeTab: shareDashboardType.libraryPanel,
-              })
-            );
-          },
-        });
+              });
+
+              dashboard.showModal(drawer);
+            },
+          });
+        } else {
+          moreSubMenu.push({
+            text: t('panel.header-menu.create-library-panel', `Create library panel`),
+            onClick: () => {
+              dashboard.showModal(
+                new ShareModal({
+                  panelRef: panel.getRef(),
+                  activeTab: shareDashboardType.libraryPanel,
+                })
+              );
+            },
+          });
+        }
       }
     }
 
     moreSubMenu.push({
       text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+      iconClassName: 'bell',
       onClick: (e) => onCreateAlert(panel),
     });
 
@@ -210,6 +225,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
         text: panel.state.options.legend.showLegend
           ? t('panel.header-menu.hide-legend', 'Hide legend')
           : t('panel.header-menu.show-legend', 'Show legend'),
+        iconClassName: panel.state.options.legend.showLegend ? 'legend-hide' : 'legend-show',
         onClick: (e) => {
           e.preventDefault();
           toggleVizPanelLegend(panel);
@@ -221,6 +237,7 @@ export function panelMenuBehavior(menu: VizPanelMenu, isRepeat = false) {
     if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery && !isRepeat) {
       moreSubMenu.push({
         text: t('panel.header-menu.get-help', 'Get help'),
+        iconClassName: 'question-circle',
         onClick: (e: React.MouseEvent) => {
           e.preventDefault();
           onInspectPanel(panel, InspectTab.Help);

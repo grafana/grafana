@@ -15,10 +15,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -42,10 +42,10 @@ type recordingRule struct {
 
 	maxAttempts int64
 
-	clock          clock.Clock
-	evalFactory    eval.EvaluatorFactory
-	featureToggles featuremgmt.FeatureToggles
-	writer         RecordingWriter
+	clock       clock.Clock
+	evalFactory eval.EvaluatorFactory
+	cfg         setting.RecordingRuleSettings
+	writer      RecordingWriter
 
 	// Event hooks that are only used in tests.
 	evalAppliedHook evalAppliedFunc
@@ -56,7 +56,7 @@ type recordingRule struct {
 	tracer  tracing.Tracer
 }
 
-func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) *recordingRule {
+func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, cfg setting.RecordingRuleSettings, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) *recordingRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key))
 	return &recordingRule{
 		key:                 key,
@@ -69,7 +69,7 @@ func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAtte
 		evaluationDuration:  atomic.NewDuration(0),
 		clock:               clock,
 		evalFactory:         evalFactory,
-		featureToggles:      ft,
+		cfg:                 cfg,
 		maxAttempts:         maxAttempts,
 		evalAppliedHook:     evalAppliedHook,
 		stopAppliedHook:     stopAppliedHook,
@@ -132,8 +132,8 @@ func (r *recordingRule) Run() error {
 				r.logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
-			if !r.featureToggles.IsEnabled(ctx, featuremgmt.FlagGrafanaManagedRecordingRules) {
-				r.logger.Warn("Recording rule scheduled but toggle is not enabled. Skipping")
+			if !r.cfg.Enabled {
+				r.logger.Warn("Recording rule scheduled but subsystem is not enabled. Skipping")
 				return nil
 			}
 			// TODO: Skipping the "evalRunning" guard that the alert rule routine does, because it seems to be dead code and impossible to hit.

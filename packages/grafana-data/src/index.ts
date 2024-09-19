@@ -145,6 +145,7 @@ export {
   validateFieldConfig,
   applyRawFieldOverrides,
   useFieldOverrides,
+  getFieldDataContextClone,
 } from './field/fieldOverrides';
 export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
 export {
@@ -515,6 +516,7 @@ export {
   type UserVariableModel,
   type SystemVariable,
   type BaseVariableModel,
+  type SnapshotVariableModel,
 } from './types/templateVars';
 export { type Threshold, ThresholdsMode, type ThresholdsConfig } from './types/thresholds';
 export {
@@ -554,7 +556,9 @@ export {
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
-  type PluginExposedComponentConfig,
+  type PluginExtensionExposedComponentConfig,
+  type PluginExtensionAddedComponentConfig,
+  type PluginExtensionAddedLinkConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -576,6 +580,7 @@ export {
   PluginSignatureType,
   PluginErrorCode,
   PluginIncludeType,
+  PluginLoadingStrategy,
   GrafanaPlugin,
   type PluginError,
   type AngularMeta,
@@ -796,6 +801,14 @@ export {
   VariableSuggestionsScope,
   OneClickMode,
 } from './types/dataLink';
+export {
+  type Action,
+  type ActionModel,
+  HttpRequestMethod,
+  defaultActionConfig,
+  contentTypeOptions,
+  httpMethodOptions,
+} from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {
   FieldType,

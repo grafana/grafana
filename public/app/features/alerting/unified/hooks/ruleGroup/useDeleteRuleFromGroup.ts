@@ -1,7 +1,5 @@
-import { t } from 'i18next';
-
-import { RuleGroupIdentifier } from 'app/types/unified-alerting';
-import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { t } from 'app/core/internationalization';
+import { EditableRuleIdentifier, RuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { deleteRuleAction } from '../../reducers/ruler/ruleGroups';
@@ -20,10 +18,10 @@ export function useDeleteRuleFromGroup() {
   const [upsertRuleGroup] = alertRuleApi.endpoints.upsertRuleGroupForNamespace.useMutation();
   const [deleteRuleGroup] = alertRuleApi.endpoints.deleteRuleGroupFromNamespace.useMutation();
 
-  return useAsync(async (ruleGroup: RuleGroupIdentifier, rule: RulerRuleDTO) => {
+  return useAsync(async (ruleGroup: RuleGroupIdentifier, ruleIdentifier: EditableRuleIdentifier) => {
     const { groupName, namespaceName } = ruleGroup;
 
-    const action = deleteRuleAction({ rule });
+    const action = deleteRuleAction({ identifier: ruleIdentifier });
     const { newRuleGroupDefinition, rulerConfig } = await produceNewRuleGroup(ruleGroup, action);
 
     const successMessage = t('alerting.rules.delete-rule.success', 'Rule successfully deleted');
@@ -34,7 +32,7 @@ export function useDeleteRuleFromGroup() {
         rulerConfig,
         namespace: namespaceName,
         group: groupName,
-        requestOptions: { successMessage },
+        notificationOptions: { successMessage },
       }).unwrap();
     }
 
@@ -43,7 +41,7 @@ export function useDeleteRuleFromGroup() {
       rulerConfig,
       namespace: namespaceName,
       payload: newRuleGroupDefinition,
-      requestOptions: { successMessage },
+      notificationOptions: { successMessage },
     }).unwrap();
   });
 }

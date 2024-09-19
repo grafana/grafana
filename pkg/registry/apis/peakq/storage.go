@@ -17,9 +17,9 @@ type storage struct {
 }
 
 func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
-	strategy := grafanaregistry.NewStrategy(scheme)
-
 	resourceInfo := peakq.QueryTemplateResourceInfo
+	strategy := grafanaregistry.NewStrategy(scheme, resourceInfo.GroupVersion())
+
 	store := &genericregistry.Store{
 		NewFunc:                   resourceInfo.NewFunc,
 		NewListFunc:               resourceInfo.NewListFunc,

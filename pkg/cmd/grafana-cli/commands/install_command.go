@@ -134,7 +134,9 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		Logger:        services.Logger,
 	})
 
-	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
+	// FIXME: Re-enable grafanaVersion. This check was broken in 10.2 so disabling it for the moment.
+	// Expected to be re-enabled in 12.x.
+	compatOpts := repo.NewCompatOpts("", runtime.GOOS, runtime.GOARCH)
 
 	var archive *repo.PluginArchive
 	var err error
@@ -144,6 +146,7 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 			return err
 		}
 	} else {
+		ctx = repo.WithRequestOrigin(ctx, "cli")
 		archiveInfo, err := repository.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err

@@ -33,7 +33,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   bodyContentWrapper: css({
     label: 'bodyContentWrapper',
     flex: 1,
-    overflow: 'hidden',
   }),
   loader: css({
     label: 'collapse__loader',
