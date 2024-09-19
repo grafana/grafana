@@ -86,7 +86,7 @@ func (s3 *S3) PresignedURLUpload(ctx context.Context, presignedURL, key string, 
 
 	if response.StatusCode >= 400 {
 		body, _ := io.ReadAll(response.Body)
-		return fmt.Errorf("unexpected response: status=%d body=%s", response.StatusCode, body)
+		return fmt.Errorf("unexpected response: status=%d body=%s", response.StatusCode, string(body))
 	}
 
 	return nil

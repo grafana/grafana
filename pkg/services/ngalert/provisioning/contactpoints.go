@@ -24,7 +24,7 @@ import (
 )
 
 type AlertRuleNotificationSettingsStore interface {
-	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
 	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
@@ -41,6 +41,7 @@ type ContactPointService struct {
 
 type receiverService interface {
 	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]*models.Receiver, error)
+	RenameReceiverInDependentResources(ctx context.Context, orgID int64, route *apimodels.Route, oldName, newName string, receiverProvenance models.Provenance) error
 }
 
 func NewContactPointService(store alertmanagerConfigStore, encryptionService secrets.Service,
@@ -290,17 +291,14 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
-			return err
-		}
 		if renamedReceiver != "" && renamedReceiver != mergedReceiver.Name {
-			affected, err := ecp.notificationSettingsStore.RenameReceiverInNotificationSettings(ctx, orgID, renamedReceiver, mergedReceiver.Name)
+			err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, renamedReceiver, mergedReceiver.Name, provenance)
 			if err != nil {
 				return err
 			}
-			if affected > 0 {
-				ecp.log.Info("Renamed receiver in notification settings", "oldName", renamedReceiver, "newName", mergedReceiver.Name, "affectedSettings", affected)
-			}
+		}
+		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
 		}
 		return ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
 	})
@@ -426,10 +424,9 @@ groupLoop:
 				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
 				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
 				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
-					legacy_storage.RenameReceiverInRoute(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
+					renamedReceiver = receiverGroup.Name // remember the old name of the receiver.
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
-					renamedReceiver = receiverGroup.Name
 				}
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
@@ -490,37 +487,62 @@ func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string
 		return nil, err
 	}
 	for _, secretKey := range secretKeys {
-		foundSecretKey, secretValue, err := getCaseInsensitive(e.Settings, secretKey)
+		secretValue, err := extractCaseInsensitive(e.Settings, secretKey)
 		if err != nil {
 			return nil, err
 		}
-		e.Settings.Del(foundSecretKey)
+		if secretValue == "" {
+			continue
+		}
 		s[secretKey] = secretValue
 	}
 	return s, nil
 }
 
-// getCaseInsensitive returns the value of the specified key, preferring an exact match but accepting a case-insensitive match.
+// extractCaseInsensitive returns the value of the specified key, preferring an exact match but accepting a case-insensitive match.
 // If no key matches, the second return value is an empty string.
-func getCaseInsensitive(jsonObj *simplejson.Json, key string) (string, string, error) {
-	// Check for an exact key match first.
-	if value, ok := jsonObj.CheckGet(key); ok {
-		return key, value.MustString(), nil
+func extractCaseInsensitive(jsonObj *simplejson.Json, key string) (string, error) {
+	if key == "" {
+		return "", nil
 	}
-
-	// If no exact match is found, look for a case-insensitive match.
-	settingsMap, err := jsonObj.Map()
-	if err != nil {
-		return "", "", err
-	}
-
-	for k, v := range settingsMap {
-		if strings.EqualFold(k, key) {
-			return k, v.(string), nil
+	path := strings.Split(key, ".")
+	getNodeCaseInsensitive := func(n *simplejson.Json, field string) (string, *simplejson.Json, error) {
+		// Check for an exact key match first.
+		if value, ok := n.CheckGet(field); ok {
+			return field, value, nil
 		}
+
+		// If no exact match is found, look for a case-insensitive match.
+		settingsMap, err := n.Map()
+		if err != nil {
+			return "", nil, err
+		}
+
+		for k := range settingsMap {
+			if strings.EqualFold(k, field) {
+				return k, n.GetPath(k), nil
+			}
+		}
+		return "", nil, nil
 	}
 
-	return key, "", nil
+	node := jsonObj
+	for idx, segment := range path {
+		_, value, err := getNodeCaseInsensitive(node, segment)
+		if err != nil {
+			return "", err
+		}
+		if value == nil {
+			return "", nil
+		}
+		if idx == len(path)-1 {
+			resultValue := value.MustString()
+			node.Del(segment)
+			return resultValue, nil
+		}
+		node = value
+	}
+	return "", nil
 }
 
 // convertRecSvcErr converts errors from notifier.ReceiverService to errors expected from ContactPointService.

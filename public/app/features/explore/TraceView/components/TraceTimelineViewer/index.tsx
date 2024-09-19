@@ -15,7 +15,7 @@
 import { css } from '@emotion/css';
 import { PureComponent, RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, TraceKeyValuePair, TraceLog } from '@grafana/data';
 import { SpanBarOptions, TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
@@ -25,7 +25,7 @@ import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
-import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
+import { TraceSpan, Trace, TraceLink, TraceSpanReference } from '../types/trace';
 
 import { TraceFlameGraphs } from './SpanDetail';
 import TimelineHeaderRow from './TimelineHeaderRow';

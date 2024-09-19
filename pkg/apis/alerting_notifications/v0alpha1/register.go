@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	scope "github.com/grafana/grafana/pkg/apis/scope/v0alpha1"
 )
@@ -25,7 +24,7 @@ const (
 )
 
 var (
-	TimeIntervalResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	TimeIntervalResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		"timeintervals", "timeinterval", "TimeInterval",
 		func() runtime.Object { return &TimeInterval{} },
 		func() runtime.Object { return &TimeIntervalList{} },
@@ -46,7 +45,7 @@ var (
 			},
 		},
 	)
-	ReceiverResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	ReceiverResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		"receivers", "receiver", "Receiver",
 		func() runtime.Object { return &Receiver{} },
 		func() runtime.Object { return &ReceiverList{} },
@@ -107,6 +106,22 @@ func AddKnownTypesGroup(scheme *runtime.Scheme, g schema.GroupVersion) error {
 		return err
 	}
 
+	err = scheme.AddFieldLabelConversionFunc(
+		ReceiverResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			fieldSet := SelectableReceiverFields(&Receiver{})
+			for key := range fieldSet {
+				if label == key {
+					return label, value, nil
+				}
+			}
+			return "", "", fmt.Errorf("field label not supported for %s: %s", scope.ScopeNodeResourceInfo.GroupVersionKind(), label)
+		},
+	)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -117,6 +132,16 @@ func SelectableTimeIntervalsFields(obj *TimeInterval) fields.Set {
 	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
 		"metadata.provenance": obj.GetProvenanceStatus(),
 		"spec.name":           obj.Spec.Name,
+	})
+}
+
+func SelectableReceiverFields(obj *Receiver) fields.Set {
+	if obj == nil {
+		return nil
+	}
+	return generic.MergeFieldsSets(generic.ObjectMetaFieldsSet(&obj.ObjectMeta, false), fields.Set{
+		"metadata.provenance": obj.GetProvenanceStatus(),
+		"spec.title":          obj.Spec.Title,
 	})
 }
 

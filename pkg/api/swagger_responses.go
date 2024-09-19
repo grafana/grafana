@@ -77,6 +77,11 @@ type InternalServerError GenericError
 // swagger:response unauthorisedError
 type UnauthorizedError GenericError
 
+// GoneError is returned when the requested endpoint was removed.
+//
+// swagger:response goneError
+type GoneError GenericError
+
 // AcceptedResponse
 //
 // swagger:response acceptedResponse

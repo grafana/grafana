@@ -1,16 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
-import { type PluginExtensionLinkConfig, PluginExtensionTypes, dateTime, usePluginContext } from '@grafana/data';
+import { dateTime, usePluginContext } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import {
   deepFreeze,
-  isPluginExtensionLinkConfig,
   handleErrorsInFn,
   getReadOnlyProxy,
-  getEventHelpers,
+  createOpenModalFunction,
   wrapWithPluginContext,
 } from './utils';
 
@@ -198,28 +197,6 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe('isPluginExtensionLinkConfig()', () => {
-    test('should return TRUE if the object is a command extension config', () => {
-      expect(
-        isPluginExtensionLinkConfig({
-          type: PluginExtensionTypes.link,
-          title: 'Title',
-          description: 'Description',
-          path: '...',
-        } as PluginExtensionLinkConfig)
-      ).toBe(true);
-    });
-    test('should return FALSE if the object is NOT a link extension', () => {
-      expect(
-        isPluginExtensionLinkConfig({
-          title: 'Title',
-          description: 'Description',
-          path: '...',
-        } as PluginExtensionLinkConfig)
-      ).toBe(false);
-    });
-  });
-
   describe('handleErrorsInFn()', () => {
     test('should catch errors thrown by the provided function and print them as console warnings', () => {
       global.console.warn = jest.fn();
@@ -335,111 +312,100 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe('getEventHelpers', () => {
-    describe('openModal', () => {
-      let renderModalSubscription: Unsubscribable | undefined;
+  describe('createOpenModalFunction()', () => {
+    let renderModalSubscription: Unsubscribable | undefined;
 
-      beforeAll(() => {
-        renderModalSubscription = appEvents.subscribe(ShowModalReactEvent, (event) => {
-          const { payload } = event;
-          const Modal = payload.component;
-          render(<Modal />);
-        });
-      });
-
-      afterAll(() => {
-        renderModalSubscription?.unsubscribe();
-      });
-
-      it('should open modal with provided title and body', async () => {
-        const pluginId = 'grafana-worldmap-panel';
-        const { openModal } = getEventHelpers(pluginId);
-
-        openModal({
-          title: 'Title in modal',
-          body: () => <div>Text in body</div>,
-        });
-
-        expect(await screen.findByRole('dialog')).toBeVisible();
-        expect(screen.getByRole('heading')).toHaveTextContent('Title in modal');
-        expect(screen.getByText('Text in body')).toBeVisible();
-      });
-
-      it('should open modal with default width if not specified', async () => {
-        const pluginId = 'grafana-worldmap-panel';
-        const { openModal } = getEventHelpers(pluginId);
-
-        openModal({
-          title: 'Title in modal',
-          body: () => <div>Text in body</div>,
-        });
-
-        const modal = await screen.findByRole('dialog');
-        const style = window.getComputedStyle(modal);
-
-        expect(style.width).toBe('750px');
-        expect(style.height).toBe('');
-      });
-
-      it('should open modal with specified width', async () => {
-        const pluginId = 'grafana-worldmap-panel';
-        const { openModal } = getEventHelpers(pluginId);
-
-        openModal({
-          title: 'Title in modal',
-          body: () => <div>Text in body</div>,
-          width: '70%',
-        });
-
-        const modal = await screen.findByRole('dialog');
-        const style = window.getComputedStyle(modal);
-
-        expect(style.width).toBe('70%');
-      });
-
-      it('should open modal with specified height', async () => {
-        const pluginId = 'grafana-worldmap-panel';
-        const { openModal } = getEventHelpers(pluginId);
-
-        openModal({
-          title: 'Title in modal',
-          body: () => <div>Text in body</div>,
-          height: 600,
-        });
-
-        const modal = await screen.findByRole('dialog');
-        const style = window.getComputedStyle(modal);
-
-        expect(style.height).toBe('600px');
-      });
-
-      it('should open modal with the plugin context being available', async () => {
-        const pluginId = 'grafana-worldmap-panel';
-        const { openModal } = getEventHelpers(pluginId);
-
-        const ModalContent = () => {
-          const context = usePluginContext();
-
-          return <div>Version: {context.meta.info.version}</div>;
-        };
-
-        openModal({
-          title: 'Title in modal',
-          body: ModalContent,
-        });
-
-        const modal = await screen.findByRole('dialog');
-        expect(modal).toHaveTextContent('Version: 1.0.0');
+    beforeAll(() => {
+      renderModalSubscription = appEvents.subscribe(ShowModalReactEvent, (event) => {
+        const { payload } = event;
+        const Modal = payload.component;
+        render(<Modal />);
       });
     });
 
-    describe('context', () => {
-      it('should return same object as passed to getEventHelpers', () => {
-        const pluginId = 'grafana-worldmap-panel';
-        const source = {};
-        const { context } = getEventHelpers(pluginId, source);
-        expect(context).toBe(source);
+    afterAll(() => {
+      renderModalSubscription?.unsubscribe();
+    });
+
+    it('should open modal with provided title and body', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction(pluginId);
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
       });
+
+      expect(await screen.findByRole('dialog')).toBeVisible();
+      expect(screen.getByRole('heading')).toHaveTextContent('Title in modal');
+      expect(screen.getByText('Text in body')).toBeVisible();
+    });
+
+    it('should open modal with default width if not specified', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction(pluginId);
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
+      });
+
+      const modal = await screen.findByRole('dialog');
+      const style = window.getComputedStyle(modal);
+
+      expect(style.width).toBe('750px');
+      expect(style.height).toBe('');
+    });
+
+    it('should open modal with specified width', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction(pluginId);
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
+        width: '70%',
+      });
+
+      const modal = await screen.findByRole('dialog');
+      const style = window.getComputedStyle(modal);
+
+      expect(style.width).toBe('70%');
+    });
+
+    it('should open modal with specified height', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction(pluginId);
+
+      openModal({
+        title: 'Title in modal',
+        body: () => <div>Text in body</div>,
+        height: 600,
+      });
+
+      const modal = await screen.findByRole('dialog');
+      const style = window.getComputedStyle(modal);
+
+      expect(style.height).toBe('600px');
+    });
+
+    it('should open modal with the plugin context being available', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const openModal = createOpenModalFunction(pluginId);
+
+      const ModalContent = () => {
+        const context = usePluginContext();
+
+        return <div>Version: {context.meta.info.version}</div>;
+      };
+
+      openModal({
+        title: 'Title in modal',
+        body: ModalContent,
+      });
+
+      const modal = await screen.findByRole('dialog');
+      expect(modal).toHaveTextContent('Version: 1.0.0');
     });
   });
 

@@ -1325,11 +1325,74 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Secure:       true,
 				},
 				{
-					Label:        "Disable certificate verification",
-					Element:      ElementTypeCheckbox,
-					Description:  "Do not verify the broker's certificate chain and host name.",
-					PropertyName: "insecureSkipVerify",
+					Label:   "QoS",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: "0",
+							Label: "At most once (0)",
+						},
+						{
+							Value: "1",
+							Label: "At least once (1)",
+						},
+						{
+							Value: "2",
+							Label: "Exactly once (2)",
+						},
+					},
+					Description:  "The quality of service to use when sending the message.",
+					PropertyName: "qos",
 					Required:     false,
+				},
+				{
+					Label:        "Retain",
+					Description:  "If set to true, the message will be retained by the broker.",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "retain",
+					Required:     false,
+				},
+				{
+					Label:        "TLS",
+					PropertyName: "tlsConfig",
+					Description:  "TLS configuration options",
+					Element:      ElementTypeSubform,
+					SubformOptions: []NotifierOption{
+						{
+							Label:        "Disable certificate verification",
+							Element:      ElementTypeCheckbox,
+							Description:  "Do not verify the broker's certificate chain and host name.",
+							PropertyName: "insecureSkipVerify",
+							Required:     false,
+						},
+						{
+							Label:        "CA Certificate",
+							Element:      ElementTypeTextArea,
+							Description:  "Certificate in PEM format to use when verifying the broker's certificate chain.",
+							InputType:    InputTypeText,
+							PropertyName: "caCertificate",
+							Required:     false,
+							Secure:       true,
+						},
+						{
+							Label:        "Client Certificate",
+							Element:      ElementTypeTextArea,
+							Description:  "Client certificate in PEM format to use when connecting to the broker.",
+							InputType:    InputTypeText,
+							PropertyName: "clientCertificate",
+							Required:     false,
+							Secure:       true,
+						},
+						{
+							Label:        "Client Key",
+							Element:      ElementTypeTextArea,
+							Description:  "Client key in PEM format to use when connecting to the broker.",
+							InputType:    InputTypeText,
+							PropertyName: "clientKey",
+							Required:     false,
+							Secure:       true,
+						},
+					},
 				},
 			},
 		},
@@ -1484,9 +1547,8 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 		{ // Since Grafana 11.1
 			Type:        "sns",
 			Name:        "AWS SNS",
-			Description: "Sends notifications to Cisco Webex Teams",
+			Description: "Sends notifications to AWS Simple Notification Service",
 			Heading:     "Webex settings",
-			Info:        "Notifications can be configured for any Cisco Webex Teams",
 			Options: []NotifierOption{
 				{
 					Label:        "The Amazon SNS API URL",
@@ -1602,16 +1664,28 @@ func GetSecretKeysForContactPointType(contactPointType string) ([]string, error)
 	notifiers := GetAvailableNotifiers()
 	for _, n := range notifiers {
 		if strings.EqualFold(n.Type, contactPointType) {
-			var secureFields []string
-			for _, field := range n.Options {
-				if field.Secure {
-					secureFields = append(secureFields, field.PropertyName)
-				}
-			}
-			return secureFields, nil
+			return getSecretFields("", n.Options), nil
 		}
 	}
 	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
+}
+
+func getSecretFields(parentPath string, options []NotifierOption) []string {
+	var secureFields []string
+	for _, field := range options {
+		name := field.PropertyName
+		if parentPath != "" {
+			name = parentPath + "." + name
+		}
+		if field.Secure {
+			secureFields = append(secureFields, name)
+			continue
+		}
+		if len(field.SubformOptions) > 0 {
+			secureFields = append(secureFields, getSecretFields(name, field.SubformOptions)...)
+		}
+	}
+	return secureFields
 }
 
 // ConfigForIntegrationType returns the config for the given integration type. Returns error is integration type is not known.
