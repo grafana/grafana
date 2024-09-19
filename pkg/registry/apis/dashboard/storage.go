@@ -1,12 +1,11 @@
 package dashboard
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
-
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"k8s.io/apimachinery/pkg/runtime"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 )
 
 var _ grafanarest.Storage = (*storage)(nil)
