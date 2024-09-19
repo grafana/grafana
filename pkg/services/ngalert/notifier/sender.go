@@ -22,6 +22,7 @@ func (s sender) SendWebhook(ctx context.Context, cmd *receivers.SendWebhookSetti
 		HttpHeader:  cmd.HTTPHeader,
 		ContentType: cmd.ContentType,
 		Validation:  cmd.Validation,
+		TLSConfig:   cmd.TLSConfig,
 	})
 }
 
