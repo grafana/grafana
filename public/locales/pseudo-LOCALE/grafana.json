@@ -2593,11 +2593,20 @@
   "trails": {
     "metric-overview": {
       "description-label": "Đęşčřįpŧįőŉ",
-      "labels-label": "Ŀäþęľş",
+      "labels": "Ŀäþęľş",
+      "metric-attributes": "Męŧřįč äŧŧřįþūŧęş",
       "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
       "type-label": "Ŧypę",
       "unit-label": "Ůŉįŧ",
       "unknown-type": "Ůŉĸŉőŵŉ"
+    },
+    "metric-select": {
+      "filter-by": "Fįľŧęř þy",
+      "otel-switch": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş."
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "Åľŵäyş ĸęęp şęľęčŧęđ męŧřįč ģřäpĥ įŉ-vįęŵ",
+      "show-previews-of-metric-graphs": "Ŝĥőŵ přęvįęŵş őƒ męŧřįč ģřäpĥş"
     }
   },
   "transformations": {

@@ -2593,11 +2593,20 @@
   "trails": {
     "metric-overview": {
       "description-label": "Description",
-      "labels-label": "Labels",
+      "labels": "Labels",
+      "metric-attributes": "Metric attributes",
       "no-description": "No description available",
       "type-label": "Type",
       "unit-label": "Unit",
       "unknown-type": "Unknown"
+    },
+    "metric-select": {
+      "filter-by": "Filter by",
+      "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
+      "show-previews-of-metric-graphs": "Show previews of metric graphs"
     }
   },
   "transformations": {
