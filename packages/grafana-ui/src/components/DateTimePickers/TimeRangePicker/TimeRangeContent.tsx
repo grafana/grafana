@@ -267,7 +267,13 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   if (isDateTime(value)) {
     return dateTimeFormat(value, { timeZone });
   }
-  return value;
+
+  if (value.indexOf('now') !== -1) {
+    return value;
+  }
+
+  const dt = dateTimeParse(value, { timeZone: 'utc' });
+  return dateTimeFormat(dt, { timeZone });
 }
 
 function getStyles(theme: GrafanaTheme2) {
