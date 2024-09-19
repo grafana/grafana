@@ -99,9 +99,7 @@ type ResourceServerOptions struct {
 	Now func() int64
 }
 
-type indexServer struct {
-	Backend StorageBackend
-}
+type indexServer struct{}
 
 func (s indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
 	res := &SearchResponse{}
@@ -116,8 +114,8 @@ func (s indexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginRes
 	return nil, nil
 }
 
-func NewResourceIndexServer(backend StorageBackend) ResourceIndexServer {
-	return indexServer{Backend: backend}
+func NewResourceIndexServer() ResourceIndexServer {
+	return indexServer{}
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -128,8 +126,6 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
-
-	opts.Index = NewResourceIndexServer(opts.Backend)
 
 	if opts.Diagnostics == nil {
 		opts.Diagnostics = &noopService{}

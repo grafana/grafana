@@ -191,22 +191,25 @@ func ProvideService(
 		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-		k8sRoute.Get("/search", middleware.ReqSignedIn, func(c *contextmodel.ReqContext) {
-			if c.SignedInUser != nil {
-				req := c.Req
-				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
-				req = req.WithContext(ctx)
-			}
 
-			urlQuery := c.Req.URL.Query().Get("query")
-			fmt.Println("urlQuery: ", urlQuery)
-			searchRequest := &resource.SearchRequest{Query: urlQuery}
-			r, err := unified.Search(c.Context.Req.Context(), searchRequest)
-			if err != nil {
-				panic(err)
-			}
-			c.JSON(200, r)
-		})
+		// Enable unified storage search/browse
+		if s.features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+			k8sRoute.Get("/search", middleware.ReqSignedIn, func(c *contextmodel.ReqContext) {
+				if c.SignedInUser != nil {
+					req := c.Req
+					ctx := identity.WithRequester(req.Context(), c.SignedInUser)
+					req = req.WithContext(ctx)
+				}
+
+				urlQuery := c.Req.URL.Query().Get("query")
+				searchRequest := &resource.SearchRequest{Query: urlQuery}
+				r, err := unified.Search(c.Context.Req.Context(), searchRequest)
+				if err != nil {
+					panic(err)
+				}
+				c.JSON(200, r)
+			})
+		}
 	}
 
 	s.rr.Group("/apis", proxyHandler)

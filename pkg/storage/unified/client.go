@@ -76,7 +76,6 @@ func ProvideUnifiedStorageClient(
 
 	// Use the local SQL
 	default:
-		fmt.Println("*******Using local SQL storage and local resource client")
 		server, err := sql.NewResourceServer(db, cfg, features, tracer)
 		if err != nil {
 			return nil, err
