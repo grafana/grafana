@@ -6,8 +6,6 @@ import 'file-saver';
 import 'jquery';
 import 'vendor/bootstrap/bootstrap';
 
-import 'app/features/all';
-
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -41,6 +39,7 @@ import {
   setPluginComponentsHook,
   setCurrentUser,
   setChromeHeaderHeightHook,
+  setPluginLinksHook,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -83,14 +82,13 @@ import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
-import { ReactivePluginExtensionsRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
-import { AddedComponentsRegistry } from './features/plugins/extensions/registry/AddedComponentsRegistry';
-import { ExposedComponentsRegistry } from './features/plugins/extensions/registry/ExposedComponentsRegistry';
-import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
-import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
+import { setupPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { PluginExtensionRegistries } from './features/plugins/extensions/registry/types';
+import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
+import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
+import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -127,6 +125,7 @@ if (process.env.NODE_ENV === 'development') {
 
 export class GrafanaApp {
   context!: GrafanaContextType;
+  pluginExtensionsRegistries!: PluginExtensionRegistries;
 
   async init() {
     try {
@@ -213,17 +212,7 @@ export class GrafanaApp {
       initWindowRuntime();
 
       // Initialize plugin extensions
-      const pluginExtensionsRegistries = {
-        extensionsRegistry: new ReactivePluginExtensionsRegistry(),
-        addedComponentsRegistry: new AddedComponentsRegistry(),
-        exposedComponentsRegistry: new ExposedComponentsRegistry(),
-      };
-      pluginExtensionsRegistries.extensionsRegistry.register({
-        pluginId: 'grafana',
-        extensionConfigs: getCoreExtensionConfigurations(),
-        exposedComponentConfigs: [],
-        addedComponentConfigs: [],
-      });
+      this.pluginExtensionsRegistries = setupPluginExtensionRegistries();
 
       if (contextSrv.user.orgRole !== '') {
         // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
@@ -232,24 +221,15 @@ export class GrafanaApp {
         const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
         const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
 
-        preloadPlugins(appPlugins, pluginExtensionsRegistries);
-        await preloadPlugins(awaitedAppPlugins, pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
+        preloadPlugins(appPlugins, this.pluginExtensionsRegistries);
+        await preloadPlugins(awaitedAppPlugins, this.pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
       }
 
-      setPluginExtensionGetter(
-        createPluginExtensionsGetter(
-          pluginExtensionsRegistries.extensionsRegistry,
-          pluginExtensionsRegistries.addedComponentsRegistry
-        )
-      );
-      setPluginExtensionsHook(
-        createUsePluginExtensions(
-          pluginExtensionsRegistries.extensionsRegistry,
-          pluginExtensionsRegistries.addedComponentsRegistry
-        )
-      );
-      setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
-      setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
+      setPluginExtensionGetter(createPluginExtensionsGetter(this.pluginExtensionsRegistries));
+      setPluginExtensionsHook(createUsePluginExtensions(this.pluginExtensionsRegistries));
+      setPluginLinksHook(usePluginLinks);
+      setPluginComponentHook(usePluginComponent);
+      setPluginComponentsHook(usePluginComponents);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

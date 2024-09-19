@@ -1,5 +1,6 @@
+import { VariableHide } from '@grafana/data';
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
+import { AdHocFiltersVariable, ConstantVariable, CustomVariable, sceneGraph } from '@grafana/scenes';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 
 import { MockDataSourceSrv, mockDataSource } from '../alerting/unified/mocks';
@@ -8,10 +9,23 @@ import { activateFullSceneTree } from '../dashboard-scene/utils/test-utils';
 import { DataTrail } from './DataTrail';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelect/MetricSelectScene';
-import { MetricSelectedEvent, VAR_FILTERS } from './shared';
+import {
+  MetricSelectedEvent,
+  VAR_FILTERS,
+  VAR_OTEL_DEPLOYMENT_ENV,
+  VAR_OTEL_JOIN_QUERY,
+  VAR_OTEL_RESOURCES,
+} from './shared';
+
+jest.mock('./otel/api', () => ({
+  totalOtelResources: jest.fn(() => ({ job: 'oteldemo', instance: 'instance' })),
+  getDeploymentEnvironments: jest.fn(() => ['production', 'staging']),
+  isOtelStandardization: jest.fn(() => true),
+}));
 
 describe('DataTrail', () => {
   beforeAll(() => {
+    jest.spyOn(DataTrail.prototype, 'checkDataSourceForOTelResources').mockImplementation(() => Promise.resolve());
     setDataSourceSrv(
       new MockDataSourceSrv({
         prom: mockDataSource({
@@ -20,6 +34,10 @@ describe('DataTrail', () => {
         }),
       })
     );
+  });
+
+  afterAll(() => {
+    jest.restoreAllMocks();
   });
 
   describe('Given starting non-embedded trail with url sync and no url state', () => {
@@ -457,6 +475,76 @@ describe('DataTrail', () => {
           expect(trail.state.$timeRange?.state.from).toBe('now-6h');
         });
       });
+    });
+  });
+
+  describe('OTel resources attributes', () => {
+    let trail: DataTrail;
+    const preTrailUrl =
+      '/trail?from=now-1h&to=now&var-ds=edwxqcebl0cg0c&var-deployment_environment=oteldemo01&var-otel_resources=k8s_cluster_name%7C%3D%7Cappo11ydev01&var-filters=&refresh=&metricPrefix=all&metricSearch=http&actionView=breakdown&var-groupby=$__all&metric=http_client_duration_milliseconds_bucket';
+
+    function getOtelDepEnvVar(trail: DataTrail) {
+      const variable = sceneGraph.lookupVariable(VAR_OTEL_DEPLOYMENT_ENV, trail);
+      if (variable instanceof CustomVariable) {
+        return variable;
+      }
+      throw new Error('getDepEnvVar failed');
+    }
+
+    function getOtelJoinQueryVar(trail: DataTrail) {
+      const variable = sceneGraph.lookupVariable(VAR_OTEL_JOIN_QUERY, trail);
+      if (variable instanceof ConstantVariable) {
+        return variable;
+      }
+      throw new Error('getDepEnvVar failed');
+    }
+
+    function getOtelResourcesVar(trail: DataTrail) {
+      const variable = sceneGraph.lookupVariable(VAR_OTEL_RESOURCES, trail);
+      if (variable instanceof AdHocFiltersVariable) {
+        return variable;
+      }
+      throw new Error('getOtelResourcesVar failed');
+    }
+
+    beforeEach(() => {
+      trail = new DataTrail({});
+      locationService.push(preTrailUrl);
+      activateFullSceneTree(trail);
+      getOtelResourcesVar(trail).setState({ filters: [{ key: 'service_name', operator: '=', value: 'adservice' }] });
+      getOtelDepEnvVar(trail).changeValueTo('production');
+    });
+
+    it('should start with hidden dep env variable', () => {
+      const depEnvVarHide = getOtelDepEnvVar(trail).state.hide;
+      expect(depEnvVarHide).toBe(VariableHide.hideVariable);
+    });
+
+    it('should start with hidden otel resources variable', () => {
+      const resourcesVarHide = getOtelResourcesVar(trail).state.hide;
+      expect(resourcesVarHide).toBe(VariableHide.hideVariable);
+    });
+
+    it('should start with hidden otel join query variable', () => {
+      const joinQueryVarHide = getOtelJoinQueryVar(trail).state.hide;
+      expect(joinQueryVarHide).toBe(VariableHide.hideVariable);
+    });
+
+    it('should add history step for when updating the otel resource variable', () => {
+      expect(trail.state.history.state.steps[2].type).toBe('resource');
+    });
+
+    it('Should have otel resource attribute selected as "service_name=adservice"', () => {
+      expect(getOtelResourcesVar(trail).state.filters[0].key).toBe('service_name');
+      expect(getOtelResourcesVar(trail).state.filters[0].value).toBe('adservice');
+    });
+
+    it('Should have deployment environment selected as "production"', () => {
+      expect(getOtelDepEnvVar(trail).getValue()).toBe('production');
+    });
+
+    it('should add history step for when updating the dep env variable', () => {
+      expect(trail.state.history.state.steps[3].type).toBe('dep_env');
     });
   });
 });

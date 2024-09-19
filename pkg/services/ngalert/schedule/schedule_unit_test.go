@@ -128,11 +128,10 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 1st tick rule metrics should report one active alert rule", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
-			`, alertRule1.OrgID, folderWithRuleGroup1)
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+				`, alertRule1.OrgID, folderWithRuleGroup1)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
 		require.NoError(t, err)
@@ -158,12 +157,10 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 2nd tick rule metrics should report two active alert rules in two groups", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active"} 1
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="paused"} 0
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -216,12 +213,10 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 5th tick rule metrics should report one active and one paused alert rules in two groups", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 0
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 1
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active"} 1
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="paused"} 0
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -251,14 +246,12 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 6th tick rule metrics should report two paused alert rules in two groups", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 0
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 1
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active"} 0
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="paused"} 1
-				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2)
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="paused",type="alerting"} 1
 
+				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2)
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
 		require.NoError(t, err)
 	})
@@ -281,12 +274,10 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 7th tick rule metrics should report two active alert rules in two groups", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
         	            	# TYPE grafana_alerting_rule_group_rules gauge
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active"} 1
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="paused"} 0
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2)
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -310,12 +301,10 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("after 8th tick rule metrics should report one active alert rule", func(t *testing.T) {
 		expectedMetric := fmt.Sprintf(
-			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
-							# TYPE grafana_alerting_rule_group_rules gauge
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-							grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
-				`, alertRule2.OrgID, folderWithRuleGroup2)
-
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+				`, alertRule1.OrgID, folderWithRuleGroup2)
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
 		require.NoError(t, err)
 	})
@@ -533,10 +522,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1})
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
 								# TYPE grafana_alerting_rule_group_rules gauge
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
+								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active", type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -555,12 +543,10 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2})
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
 								# TYPE grafana_alerting_rule_group_rules gauge
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="paused"} 0
+								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+                	            grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -572,12 +558,10 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRule1, alertRule2})
 
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+				`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, by type and state.
 								# TYPE grafana_alerting_rule_group_rules gauge
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="paused"} 0
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active"} 1
-								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="paused"} 0
+								grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[2]s",state="active",type="alerting"} 1
+                	            grafana_alerting_rule_group_rules{org="%[1]d",rule_group="%[3]s",state="active",type="alerting"} 1
 				`, alertRule1.OrgID, folderWithRuleGroup1, folderWithRuleGroup2)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
@@ -666,15 +650,9 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		t.Run("it should not show metrics", func(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithoutNotificationSettings})
 
-			// Because alertRuleWithoutNotificationSettings.orgID is present,
-			// the metric is also present but set to 0 because the org has no rules with NotificationSettings.
-			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_simple_routing_rules The number of alert rules using simplified routing.
-								# TYPE grafana_alerting_simple_routing_rules gauge
-								grafana_alerting_simple_routing_rules{org="%[1]d"} 0
-				`, alertRuleWithoutNotificationSettings.OrgID)
+			expectedMetric := ""
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simple_routing_rules")
-			require.NoError(t, err)
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simple_routing_rules]")
 		})
 
 		alertRule1 := models.RuleGen.With(
@@ -722,7 +700,6 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_simple_routing_rules The number of alert rules using simplified routing.
 								# TYPE grafana_alerting_simple_routing_rules gauge
-								grafana_alerting_simple_routing_rules{org="%[1]d"} 0
 								grafana_alerting_simple_routing_rules{org="%[2]d"} 1
 				`, alertRuleWithoutNotificationSettings.OrgID, alertRule2.OrgID)
 

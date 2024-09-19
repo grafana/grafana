@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-import { PluginMeta } from '@grafana/data';
+import { PluginLoadingStrategy, PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { plugins } from 'app/features/alerting/unified/testSetup/plugins';
 
@@ -18,6 +18,7 @@ export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
       preload: true,
       version: info.version,
       angular: angular ?? { detected: false, hideDeprecation: false },
+      loadingStrategy: PluginLoadingStrategy.script,
     };
   });
 

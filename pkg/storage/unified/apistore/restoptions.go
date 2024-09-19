@@ -25,11 +25,11 @@ import (
 var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
-	client   resource.ResourceStoreClient
+	client   resource.ResourceClient
 	original storagebackend.Config
 }
 
-func NewRESTOptionsGetterForClient(client resource.ResourceStoreClient, original storagebackend.Config) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		client:   client,
 		original: original,
@@ -50,7 +50,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 		return nil, err
 	}
 	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceStoreClient(server),
+		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
 	), nil
 }
@@ -84,7 +84,7 @@ func NewRESTOptionsGetterForFile(path string,
 		return nil, err
 	}
 	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceStoreClient(server),
+		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
 	), nil
 }

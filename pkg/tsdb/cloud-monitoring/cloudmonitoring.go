@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
@@ -342,6 +343,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
+	// There aren't any possible downstream errors here
 	queries, err := s.buildQueryExecutors(logger, req)
 	if err != nil {
 		return nil, err
@@ -361,11 +363,15 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	for _, queryExecutor := range queries {
 		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, logger)
 		if err != nil {
+			errorsource.AddErrorToResponse(queryExecutor.getRefID(), resp, err)
 			return resp, err
 		}
 		err = queryExecutor.parseResponse(queryRes, dr, executedQueryString, logger)
 		if err != nil {
-			queryRes.Error = err
+			// Default to a plugin error if there's no source
+			errWithSource := errorsource.SourceError(backend.ErrorSourcePlugin, err, false)
+			queryRes.Error = errWithSource.Unwrap()
+			queryRes.ErrorSource = errWithSource.ErrorSource()
 		}
 
 		resp.Responses[queryExecutor.getRefID()] = *queryRes
@@ -583,7 +589,8 @@ func (s *Service) ensureProject(ctx context.Context, dsInfo datasourceInfo, proj
 
 func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) (string, error) {
 	if dsInfo.authenticationType == gceAuthentication {
-		return s.gceDefaultProjectGetter(ctx, cloudMonitorScope)
+		project, err := s.gceDefaultProjectGetter(ctx, cloudMonitorScope)
+		return project, errorsource.DownstreamError(err, false)
 	}
 	return dsInfo.defaultProject, nil
 }
@@ -602,7 +609,7 @@ func unmarshalResponse(res *http.Response, logger log.Logger) (cloudMonitoringRe
 
 	if res.StatusCode/100 != 2 {
 		logger.Error("Request failed", "status", res.Status, "body", string(body))
-		return cloudMonitoringResponse{}, fmt.Errorf("query failed: %s", string(body))
+		return cloudMonitoringResponse{}, errorsource.SourceError(backend.ErrorSourceFromHTTPStatus(res.StatusCode), fmt.Errorf("query failed: %s", string(body)), false)
 	}
 
 	var data cloudMonitoringResponse
