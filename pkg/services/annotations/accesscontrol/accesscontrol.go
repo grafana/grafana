@@ -137,29 +137,21 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 
 	visibleDashboards := make(map[string]int64)
 
-	var page int64 = 1
-	var limit int64 = 1000
-	for {
-		var res []dashboardProjection
-		sql, params := sb.ToSQL(limit, page)
+	var page int64 = query.Page
+	var limit int64 = query.Limit
 
-		err = authz.db.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(sql, params...).Find(&res)
-		})
-		if err != nil {
-			return nil, err
-		}
+	var res []dashboardProjection
+	sql, params := sb.ToSQL(limit, page)
 
-		for _, p := range res {
-			visibleDashboards[p.UID] = p.ID
-		}
+	err = authz.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(sql, params...).Find(&res)
+	})
+	if err != nil {
+		return nil, err
+	}
 
-		// if the result is less than the limit, we have reached the end
-		if len(res) < int(limit) {
-			break
-		}
-
-		page++
+	for _, p := range res {
+		visibleDashboards[p.UID] = p.ID
 	}
 
 	return visibleDashboards, nil

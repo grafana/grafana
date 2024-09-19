@@ -72,12 +72,32 @@ func (r *RepositoryImpl) Update(ctx context.Context, item *annotations.Item) err
 }
 
 func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	resources, err := r.authZ.Authorize(ctx, query.OrgID, query)
-	if err != nil {
-		return make([]*annotations.ItemDTO, 0), err
+	if query.Limit == 0 {
+		query.Limit = 1000
 	}
 
-	return r.reader.Get(ctx, query, resources)
+	results := make([]*annotations.ItemDTO, 0, query.Limit)
+	query.Page = 1
+
+	for len(results) < int(query.Limit) {
+		resources, err := r.authZ.Authorize(ctx, query.OrgID, query)
+		if err != nil {
+			return []*annotations.ItemDTO{}, err
+		}
+
+		res, err := r.reader.Get(ctx, query, resources)
+		if err != nil {
+			return []*annotations.ItemDTO{}, err
+		}
+
+		results = append(results, res...)
+		query.Page++
+		if len(resources.Dashboards) < int(query.Limit) {
+			break
+		}
+	}
+
+	return results, nil
 }
 
 func (r *RepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {
