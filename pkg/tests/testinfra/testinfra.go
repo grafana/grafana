@@ -57,8 +57,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	unistore, _ := cfg.Raw.GetSection("grafana-apiserver")
 	if unistore != nil &&
 		unistore.Key("storage_type").MustString("") == string(options.StorageTypeUnifiedGrpc) &&
-		unistore.Key("address").String() == "" { // no address is configured
-
+		unistore.Key("address").String() == "" {
+		// Allocate a new address
 		listener2, err := net.Listen("tcp", "127.0.0.1:0")
 		require.NoError(t, err)
 
@@ -66,8 +66,10 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		cfg.GRPCServerAddress = listener2.Addr().String()
 		cfg.GRPCServerTLSConfig = nil
 		_, err = unistore.NewKey("address", cfg.GRPCServerAddress)
+		require.NoError(t, err)
 
-		err = listener2.Close() // release the one we just discovered so it can be used
+		// release the one we just discovered -- it will be used by the services on startup
+		err = listener2.Close()
 		require.NoError(t, err)
 		runstore = true
 	}
