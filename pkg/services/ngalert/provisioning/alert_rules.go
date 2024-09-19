@@ -506,7 +506,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 				if err != nil {
 					return err
 				}
-				update.New = &rule
+				*update.New = rule
 				// check that provenance is not changed in an invalid way
 				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, user.GetOrgID())
 				if err != nil {
@@ -536,7 +536,7 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 				if err != nil {
 					return err
 				}
-				new = &rule
+				*new = rule
 			}
 			uids, err := service.ruleStore.InsertAlertRules(ctx, withoutNilAlertRules(delta.New))
 			if err != nil {
