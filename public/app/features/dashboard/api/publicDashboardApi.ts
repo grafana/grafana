@@ -6,7 +6,6 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
 import {
-  isEmailSharingEnabled,
   PublicDashboard,
   PublicDashboardSettings,
   PublicDashboardShareType,
@@ -305,10 +304,6 @@ export const publicDashboardApi = createApi({
     }),
   }),
 });
-
-if (isEmailSharingEnabled()) {
-  require('app/extensions/publicdashboards/api/emailSharingApi');
-}
 
 export const {
   useGetPublicDashboardQuery,
