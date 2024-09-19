@@ -194,7 +194,7 @@ func ProvideService(
 	}
 
 	// register with grafana http server for now
-	s.rr.Get("/apis/filter", func(c *contextmodel.ReqContext) {
+	s.rr.Get("/apis/search", func(c *contextmodel.ReqContext) {
 		if c.SignedInUser != nil {
 			ctx := identity.WithRequester(c.Req.Context(), c.SignedInUser)
 			c.Req = c.Req.WithContext(ctx)
@@ -202,8 +202,8 @@ func ProvideService(
 
 		urlQuery := c.Req.URL.Query().Get("query")
 		fmt.Println("urlQuery: ", urlQuery)
-		filterRequest := &resource.FilterRequest{Query: urlQuery}
-		r, err := unified.Filter(c.Context.Req.Context(), filterRequest)
+		filterRequest := &resource.SearchRequest{Query: urlQuery}
+		r, err := unified.Search(c.Context.Req.Context(), filterRequest)
 		if err != nil {
 			panic(err)
 		}

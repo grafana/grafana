@@ -103,8 +103,8 @@ type indexServer struct {
 	Backend StorageBackend
 }
 
-func (s indexServer) Filter(ctx context.Context, req *FilterRequest) (*FilterResponse, error) {
-	res := &FilterResponse{}
+func (s indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+	res := &SearchResponse{}
 	return res, nil
 }
 
@@ -624,12 +624,11 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	}
 }
 
-func (s *server) Filter(ctx context.Context, req *FilterRequest) (*FilterResponse, error) {
+func (s *server) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
-	fmt.Println("calling index.Filter()")
-	return s.index.Filter(ctx, req)
+	return s.index.Search(ctx, req)
 }
 
 // History implements ResourceServer.

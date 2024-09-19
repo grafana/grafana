@@ -36,11 +36,6 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 
 	auth := &grpcUtils.Authenticator{}
 
-	channel.RegisterService(
-		&ResourceIndex_ServiceDesc,
-		server,
-	)
-
 	for _, desc := range []*grpc.ServiceDesc{
 		&ResourceStore_ServiceDesc,
 		&ResourceIndex_ServiceDesc,

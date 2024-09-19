@@ -1614,7 +1614,7 @@ func (x *WatchEvent) GetPrevious() *WatchEvent_Resource {
 	return nil
 }
 
-type FilterRequest struct {
+type SearchRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -1622,8 +1622,8 @@ type FilterRequest struct {
 	Query string `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 }
 
-func (x *FilterRequest) Reset() {
-	*x = FilterRequest{}
+func (x *SearchRequest) Reset() {
+	*x = SearchRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_resource_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1631,13 +1631,13 @@ func (x *FilterRequest) Reset() {
 	}
 }
 
-func (x *FilterRequest) String() string {
+func (x *SearchRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FilterRequest) ProtoMessage() {}
+func (*SearchRequest) ProtoMessage() {}
 
-func (x *FilterRequest) ProtoReflect() protoreflect.Message {
+func (x *SearchRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_resource_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1649,19 +1649,19 @@ func (x *FilterRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FilterRequest.ProtoReflect.Descriptor instead.
-func (*FilterRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SearchRequest.ProtoReflect.Descriptor instead.
+func (*SearchRequest) Descriptor() ([]byte, []int) {
 	return file_resource_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *FilterRequest) GetQuery() string {
+func (x *SearchRequest) GetQuery() string {
 	if x != nil {
 		return x.Query
 	}
 	return ""
 }
 
-type FilterResponse struct {
+type SearchResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -1669,8 +1669,8 @@ type FilterResponse struct {
 	Items []*ResourceWrapper `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 }
 
-func (x *FilterResponse) Reset() {
-	*x = FilterResponse{}
+func (x *SearchResponse) Reset() {
+	*x = SearchResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_resource_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1678,13 +1678,13 @@ func (x *FilterResponse) Reset() {
 	}
 }
 
-func (x *FilterResponse) String() string {
+func (x *SearchResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FilterResponse) ProtoMessage() {}
+func (*SearchResponse) ProtoMessage() {}
 
-func (x *FilterResponse) ProtoReflect() protoreflect.Message {
+func (x *SearchResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_resource_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1696,12 +1696,12 @@ func (x *FilterResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FilterResponse.ProtoReflect.Descriptor instead.
-func (*FilterResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SearchResponse.ProtoReflect.Descriptor instead.
+func (*SearchResponse) Descriptor() ([]byte, []int) {
 	return file_resource_proto_rawDescGZIP(), []int{21}
 }
 
-func (x *FilterResponse) GetItems() []*ResourceWrapper {
+func (x *SearchResponse) GetItems() []*ResourceWrapper {
 	if x != nil {
 		return x.Items
 	}
@@ -2442,9 +2442,9 @@ var file_resource_proto_rawDesc = []byte{
 	0x44, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x02, 0x12, 0x0b, 0x0a, 0x07, 0x44, 0x45, 0x4c, 0x45,
 	0x54, 0x45, 0x44, 0x10, 0x03, 0x12, 0x0c, 0x0a, 0x08, 0x42, 0x4f, 0x4f, 0x4b, 0x4d, 0x41, 0x52,
 	0x4b, 0x10, 0x04, 0x12, 0x09, 0x0a, 0x05, 0x45, 0x52, 0x52, 0x4f, 0x52, 0x10, 0x05, 0x22, 0x25,
-	0x0a, 0x0d, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x0a, 0x0d, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
 	0x14, 0x0a, 0x05, 0x71, 0x75, 0x65, 0x72, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05,
-	0x71, 0x75, 0x65, 0x72, 0x79, 0x22, 0x41, 0x0a, 0x0e, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52,
+	0x71, 0x75, 0x65, 0x72, 0x79, 0x22, 0x41, 0x0a, 0x0e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52,
 	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2f, 0x0a, 0x05, 0x69, 0x74, 0x65, 0x6d, 0x73,
 	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
 	0x65, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x57, 0x72, 0x61, 0x70, 0x70, 0x65,
@@ -2548,10 +2548,10 @@ var file_resource_proto_rawDesc = []byte{
 	0x73, 0x74, 0x1a, 0x14, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x57, 0x61,
 	0x74, 0x63, 0x68, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x30, 0x01, 0x32, 0xc9, 0x01, 0x0a, 0x0d, 0x52,
 	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x3b, 0x0a, 0x06,
-	0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x17, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
-	0x65, 0x2e, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x18, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x46, 0x69, 0x6c, 0x74, 0x65,
-	0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3e, 0x0a, 0x07, 0x48, 0x69, 0x73,
+	0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x12, 0x17, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
+	0x18, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63,
+	0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3e, 0x0a, 0x07, 0x48, 0x69, 0x73,
 	0x74, 0x6f, 0x72, 0x79, 0x12, 0x18, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
 	0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x79, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x19,
 	0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72,
@@ -2610,8 +2610,8 @@ var file_resource_proto_goTypes = []any{
 	(*ListResponse)(nil),                   // 20: resource.ListResponse
 	(*WatchRequest)(nil),                   // 21: resource.WatchRequest
 	(*WatchEvent)(nil),                     // 22: resource.WatchEvent
-	(*FilterRequest)(nil),                  // 23: resource.FilterRequest
-	(*FilterResponse)(nil),                 // 24: resource.FilterResponse
+	(*SearchRequest)(nil),                  // 23: resource.SearchRequest
+	(*SearchResponse)(nil),                 // 24: resource.SearchResponse
 	(*HistoryRequest)(nil),                 // 25: resource.HistoryRequest
 	(*HistoryResponse)(nil),                // 26: resource.HistoryResponse
 	(*OriginRequest)(nil),                  // 27: resource.OriginRequest
@@ -2643,7 +2643,7 @@ var file_resource_proto_depIdxs = []int32{
 	1,  // 18: resource.WatchEvent.type:type_name -> resource.WatchEvent.Type
 	32, // 19: resource.WatchEvent.resource:type_name -> resource.WatchEvent.Resource
 	32, // 20: resource.WatchEvent.previous:type_name -> resource.WatchEvent.Resource
-	4,  // 21: resource.FilterResponse.items:type_name -> resource.ResourceWrapper
+	4,  // 21: resource.SearchResponse.items:type_name -> resource.ResourceWrapper
 	3,  // 22: resource.HistoryRequest.key:type_name -> resource.ResourceKey
 	5,  // 23: resource.HistoryResponse.items:type_name -> resource.ResourceMeta
 	6,  // 24: resource.HistoryResponse.error:type_name -> resource.ErrorResult
@@ -2658,7 +2658,7 @@ var file_resource_proto_depIdxs = []int32{
 	13, // 33: resource.ResourceStore.Delete:input_type -> resource.DeleteRequest
 	19, // 34: resource.ResourceStore.List:input_type -> resource.ListRequest
 	21, // 35: resource.ResourceStore.Watch:input_type -> resource.WatchRequest
-	23, // 36: resource.ResourceIndex.Filter:input_type -> resource.FilterRequest
+	23, // 36: resource.ResourceIndex.Search:input_type -> resource.SearchRequest
 	25, // 37: resource.ResourceIndex.History:input_type -> resource.HistoryRequest
 	27, // 38: resource.ResourceIndex.Origin:input_type -> resource.OriginRequest
 	30, // 39: resource.Diagnostics.IsHealthy:input_type -> resource.HealthCheckRequest
@@ -2668,7 +2668,7 @@ var file_resource_proto_depIdxs = []int32{
 	14, // 43: resource.ResourceStore.Delete:output_type -> resource.DeleteResponse
 	20, // 44: resource.ResourceStore.List:output_type -> resource.ListResponse
 	22, // 45: resource.ResourceStore.Watch:output_type -> resource.WatchEvent
-	24, // 46: resource.ResourceIndex.Filter:output_type -> resource.FilterResponse
+	24, // 46: resource.ResourceIndex.Search:output_type -> resource.SearchResponse
 	26, // 47: resource.ResourceIndex.History:output_type -> resource.HistoryResponse
 	29, // 48: resource.ResourceIndex.Origin:output_type -> resource.OriginResponse
 	31, // 49: resource.Diagnostics.IsHealthy:output_type -> resource.HealthCheckResponse
@@ -2926,7 +2926,7 @@ func file_resource_proto_init() {
 			}
 		}
 		file_resource_proto_msgTypes[20].Exporter = func(v any, i int) any {
-			switch v := v.(*FilterRequest); i {
+			switch v := v.(*SearchRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2938,7 +2938,7 @@ func file_resource_proto_init() {
 			}
 		}
 		file_resource_proto_msgTypes[21].Exporter = func(v any, i int) any {
-			switch v := v.(*FilterResponse); i {
+			switch v := v.(*SearchResponse); i {
 			case 0:
 				return &v.state
 			case 1:

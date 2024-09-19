@@ -324,11 +324,11 @@ message WatchEvent {
   Resource previous = 4;
 }
 
-message FilterRequest {
+message SearchRequest {
   string query = 1;
 }
 
-message FilterResponse {
+message SearchResponse {
   repeated ResourceWrapper items = 1;
 }
 
@@ -448,7 +448,7 @@ service ResourceStore {
 // Unlike the ResourceStore, this service can be exposed to clients directly
 // It should be implemented with efficient indexes and does not need read-after-write semantics
 service ResourceIndex {
-   rpc Filter(FilterRequest) returns (FilterResponse);
+   rpc Search(SearchRequest) returns (SearchResponse);
 
   // Show resource history (and trash)
   rpc History(HistoryRequest) returns (HistoryResponse);
