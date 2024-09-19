@@ -911,6 +911,22 @@
     },
     {
       "metadata": {
+        "name": "datasourceAPIServers",
+        "resourceVersion": "1726731672938",
+        "creationTimestamp": "2024-09-12T07:32:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-19 07:41:12.938146 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Expose some datasources as apiservers.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourceProxyDisableRBAC",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-05-21T13:05:16Z",
@@ -1327,11 +1343,14 @@
     {
       "metadata": {
         "name": "grafanaAPIServerWithExperimentalAPIs",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-06T18:55:22Z"
+        "resourceVersion": "1726731672938",
+        "creationTimestamp": "2023-10-06T18:55:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-19 07:41:12.938146 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Register experimental APIs with the k8s API server",
+        "description": "Register experimental APIs with the k8s API server, including all datasources",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresDevMode": true,
