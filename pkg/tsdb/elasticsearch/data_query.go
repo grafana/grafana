@@ -77,7 +77,6 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
-
 		// We are returning error containing the source that was added through errorsource.Middleware
 		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, err), nil
 	}
