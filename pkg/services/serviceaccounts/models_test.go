@@ -24,12 +24,12 @@ func TestIsExternalServiceAccount(t *testing.T) {
 		},
 		{
 			name:  "not external service account (wrong sa prefix)",
-			login: "saN-1-extsvc-",
+			login: "saN-1-extsvc-test",
 			want:  false,
 		},
 		{
 			name:  "not external service account (wrong extsvc prefix)",
-			login: "sa-1-extsvcN-",
+			login: "sa-1-extsvcN-test",
 			want:  false,
 		},
 	}
