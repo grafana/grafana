@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -31,8 +32,9 @@ func TestIntegrationRequiresDevMode(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // should fail
-		DisableAnonymous:  true,
+		AppModeProduction:    true, // should fail
+		DisableAnonymous:     true,
+		APIServerStorageType: options.StorageTypeUnifiedGrpc, // tests remote connection
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},

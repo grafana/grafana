@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
@@ -73,6 +74,12 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 	c.OrgB = c.createTestUsers("OrgB")
 
 	c.loadAPIGroups()
+
+	// ensure unified storage is alive and running
+	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
+	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resource.HealthCheckRequest{})
+	require.NoError(t, err, "unable to read resource client health check")
+	require.Equal(t, resource.HealthCheckResponse_SERVING, rsp.Status)
 
 	return c
 }
@@ -485,6 +492,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	require.Equal(c.t, orgId, u.OrgID)
 	require.True(c.t, u.ID > 0)
 
+	// should this always return a user with ID token?
 	s, err := userSvc.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
 		UserID: u.ID,
 		Login:  u.Login,

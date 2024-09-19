@@ -98,8 +98,11 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	resource.RegisterResourceStoreServer(s.handler.GetServer(), server)
-	grpc_health_v1.RegisterHealthServer(s.handler.GetServer(), healthService)
+	srv := s.handler.GetServer()
+	resource.RegisterResourceStoreServer(srv, server)
+	resource.RegisterResourceIndexServer(srv, server)
+	resource.RegisterDiagnosticsServer(srv, server)
+	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service
 	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)
