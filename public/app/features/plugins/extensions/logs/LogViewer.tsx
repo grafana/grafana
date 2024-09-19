@@ -1,18 +1,18 @@
 import { nanoid } from 'nanoid';
 import { ReactElement, useMemo } from 'react';
 
-import { DataFrame, PanelData } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import {
   EmbeddedScene,
   PanelBuilders,
   SceneComponentProps,
   SceneFlexItem,
   SceneFlexLayout,
-  sceneGraph,
   SceneObjectBase,
   SceneQueryRunner,
   sceneUtils,
 } from '@grafana/scenes';
+import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useSelector } from 'app/types/store';
@@ -32,9 +32,8 @@ const baseQuery = {
   },
 };
 
-sceneUtils.registerRuntimeDataSource({
-  dataSource: new ExtensionsLogDataSource(DATASOURCE_REF.type, DATASOURCE_REF.uid, log),
-});
+const dataSource = new ExtensionsLogDataSource(DATASOURCE_REF.type, DATASOURCE_REF.uid, log);
+sceneUtils.registerRuntimeDataSource({ dataSource });
 
 export default function PluginExtensionsLog(): ReactElement | null {
   const scene = useLogScene();
@@ -70,7 +69,7 @@ function useLogScene() {
           }),
         ],
       }),
-      controls: [new LogFilterScene(queryRunner)],
+      controls: [new LogFilterScene(queryRunner, dataSource)],
     });
   }, []);
 }
@@ -78,16 +77,58 @@ function useLogScene() {
 class LogFilterScene extends SceneObjectBase {
   static Component = LogFilterSceneRenderer;
 
-  constructor(private queryRunner: SceneQueryRunner) {
+  constructor(
+    private queryRunner: SceneQueryRunner,
+    private dataSource: ExtensionsLogDataSource
+  ) {
     super({});
   }
 
-  public onFilter = () => {
+  public getSelectablePluginIds = (): Array<SelectableValue<string>> => {
+    return this.dataSource.getPluginIds().map((id) => ({ label: id, value: id }));
+  };
+
+  public getSelectableExtensionPointIds = (): Array<SelectableValue<string>> => {
+    return this.dataSource.getExtensionPointIds().map((id) => ({ label: id, value: id }));
+  };
+
+  public getSelectableLevels = (): Array<SelectableValue<string>> => {
+    return this.dataSource.getLevels().map((id) => ({ label: id, value: id }));
+  };
+
+  public onChangePluginIds = (values: Array<SelectableValue<string>>) => {
+    const [existingQuery] = this.queryRunner.state.queries;
     this.queryRunner.setState({
       queries: [
         {
-          ...baseQuery,
-          filter: true,
+          ...existingQuery,
+          pluginIds: values.length > 0 ? values.map((v) => v.value) : undefined,
+        },
+      ],
+    });
+    this.queryRunner.runQueries();
+  };
+
+  public onChangeExtensionPointIds = (values: Array<SelectableValue<string>>) => {
+    const [existingQuery] = this.queryRunner.state.queries;
+    this.queryRunner.setState({
+      queries: [
+        {
+          ...existingQuery,
+          extensionPointIds: values.length > 0 ? values.map((v) => v.value) : undefined,
+        },
+      ],
+    });
+    this.queryRunner.runQueries();
+  };
+
+  public onChangeLevels = (values: Array<SelectableValue<string>>) => {
+    const [existingQuery] = this.queryRunner.state.queries;
+    this.queryRunner.setState({
+      queries: [
+        {
+          ...existingQuery,
+          levels: values.length > 0 ? values.map((v) => v.value) : undefined,
         },
       ],
     });
@@ -96,56 +137,17 @@ class LogFilterScene extends SceneObjectBase {
 }
 
 function LogFilterSceneRenderer({ model }: SceneComponentProps<LogFilterScene>) {
-  const { data } = sceneGraph.getData(model).useState();
-  const options = useFilterOptions(data);
-  console.log('options', { options });
-
   return (
-    <div>
-      <pre>{JSON.stringify(data?.request)}</pre>
-      <pre>{JSON.stringify(data?.series)}</pre>
-    </div>
+    <InlineFieldRow>
+      <InlineField label="Plugin Id">
+        <MultiSelect options={model.getSelectablePluginIds()} onChange={model.onChangePluginIds} />
+      </InlineField>
+      <InlineField label="Extension Points">
+        <MultiSelect options={model.getSelectableExtensionPointIds()} onChange={model.onChangeExtensionPointIds} />
+      </InlineField>
+      <InlineField label="Levels">
+        <MultiSelect options={model.getSelectableLevels()} onChange={model.onChangeLevels} />
+      </InlineField>
+    </InlineFieldRow>
   );
-}
-
-type FilterOptions = {
-  pluginIds: Set<string>;
-  extensionPoints: Set<string>;
-  levels: Set<string>;
-};
-
-function useFilterOptions(data: PanelData | undefined): FilterOptions {
-  return useMemo(() => {
-    const series: DataFrame[] = data?.series ?? [];
-
-    const options: FilterOptions = {
-      pluginIds: new Set<string>(),
-      extensionPoints: new Set<string>(),
-      levels: new Set<string>(),
-    };
-
-    for (const serie of series) {
-      for (const field of serie.fields) {
-        if (field.name === 'severity') {
-          for (const value of field.values) {
-            options.levels.add(value);
-          }
-        }
-
-        if (field.name === 'labels') {
-          for (const value of field.values) {
-            const { extensionPointId, pluginId } = value;
-            if (extensionPointId) {
-              options.extensionPoints.add(extensionPointId);
-            }
-            if (pluginId) {
-              options.pluginIds.add(pluginId);
-            }
-          }
-        }
-      }
-    }
-
-    return options;
-  }, [data]);
 }
