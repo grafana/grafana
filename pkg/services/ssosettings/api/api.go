@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -113,10 +112,6 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 
 		if !hasAccess {
 			continue
-		}
-
-		if provider.Provider == social.LDAPProviderName {
-			provider.Settings["type"] = "LDAP"
 		}
 
 		authorizedProviders = append(authorizedProviders, provider)
