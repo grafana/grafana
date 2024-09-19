@@ -604,7 +604,7 @@ Content-Type: application/json
 ```
 
 {{% admonition type="note" %}}
-Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.## Update an existing data source by id
+Similar to [creating a data source](#create-a-data-source), `password` and `basicAuthPassword` should be defined under `secureJsonData` in order to be stored securely as an encrypted blob in the database. Then, the encrypted fields are listed under `secureJsonFields` section in the response.
 {{% /admonition %}}
 
 ## Delete an existing data source by id

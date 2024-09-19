@@ -1,58 +1,86 @@
 name: Run commands when issues are opened
+
+# important: this workflow uses a github app that is strictly limited
+# to issues. If you want to change the triggers for this workflow,
+# please review if the permissions are still sufficient.
 on:
   issues:
     types: [opened]
+
 concurrency:
   group: issue-opened-${{ github.event.issue.number }}
+
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   main:
     runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
     steps:
+
       - name: Checkout Actions
         uses: actions/checkout@v4
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
+
       - name: Install Actions
         run: npm install --production --prefix ./actions
+
       # give issue-openers a chance to add labels after submit
       - name: Sleep for 2 minutes
         run: sleep 2m
         shell: bash
-      - name: Run Commands
-        uses: ./actions/commands
+
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
         with:
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
-          token: ${{secrets.ISSUE_COMMANDS_TOKEN}}
-          configPath: "issue-opened"
-  config:
-    runs-on: "ubuntu-latest"
-    outputs:
-      has-secrets: ${{ steps.check.outputs.has-secrets }}
-    steps:
-      - name: "Check for secrets"
-        id: check
-        shell: bash
-        run: |
-          if [ -n "${{ (secrets.GRAFANA_DELIVERY_BOT_APP_ID != '' &&
-                        secrets.GRAFANA_DELIVERY_BOT_APP_PEM != '' &&
-                        secrets.OPENAI_API_KEY != '' &&
-                        secrets.SLACK_WEBHOOK_URL != ''
-                        ) || '' }}" ]; then
-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
-          fi
-  auto-triage:
-    needs: [main, config]
-    if: needs.config.outputs.has-secrets
-    runs-on: ubuntu-latest
-    steps:
+          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
+          repo_secrets: |
+            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
+            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
+
       - name: "Generate token"
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          app_id: ${{ env.GH_APP_ID }}
+          private_key: ${{ env.GH_APP_PEM }}
+
+      - name: Run Commands
+        uses: ./actions/commands
+        with:
+          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          token: ${{ steps.generate_token.outputs.token }}
+          configPath: "issue-opened"
+
+  auto-triage:
+    needs: [main]
+    if: github.repository == 'grafana/grafana' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
+          repo_secrets: |
+            AUTOTRIAGER_OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
+            AUTOTRIAGER_SLACK_WEBHOOK_URL=plugins_platform_issue_triager:AUTOTRIAGER_SLACK_WEBHOOK_URL
+            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
+            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
+
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ env.GH_APP_ID }}
+          private_key: ${{ env.GH_APP_PEM }}
 
       - name: Checkout auto-triager repository
         uses: actions/checkout@v4
@@ -67,20 +95,17 @@ jobs:
         #uses: grafana/auto-triager@main
         uses: ./auto-triager
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ github.event.issue.number }}
-          openai_api_key: ${{ secrets.OPENAI_API_KEY }}
-          # Leaving the action in monitoring mode for now
-          # should be set to true when ready to use
-          # add_labels: true
-          add_labels: false
+          openai_api_key: ${{ env.AUTOTRIAGER_OPENAI_API_KEY }}
+          add_labels: true
 
       - name: Labels from auto triage
         run: |
           echo ${{ steps.auto_triage.outputs.triage_labels }}
 
       - name: "Send Slack notification"
-        if : ${{ steps.auto_triage.outputs.triage_labels != '' }}
+        if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: >
@@ -88,8 +113,8 @@ jobs:
               "icon_emoji": ":robocto:",
               "username": "Auto Triager",
               "type": "mrkdwn",
-              "text": "Auto triager found the following labels: ${{ steps.auto_triage.outputs.triage_labels }} for [issue #${{ github.event.issue.number }}](${{ github.event.issue.html_url }})",
+              "text": "Auto triager found the following labels: ${{ steps.auto_triage.outputs.triage_labels }} for issue ${{ github.event.issue.html_url }}",
               "channel": "#triage-automation-ci"
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL:  ${{ env.AUTOTRIAGER_SLACK_WEBHOOK_URL }}

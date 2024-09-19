@@ -1,17 +1,6 @@
 package dashboard
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
-
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -28,9 +17,23 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 )
 
-var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder      = (*DashboardsAPIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor = (*DashboardsAPIBuilder)(nil)
+)
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
@@ -38,6 +41,7 @@ type DashboardsAPIBuilder struct {
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboardStorage
+	unified       resource.ResourceClient
 
 	log log.Logger
 }
@@ -51,6 +55,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 	sql db.DB,
 	tracing *tracing.TracingService,
+	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -64,6 +69,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
+		unified:          unified,
 
 		legacy: &dashboardStorage{
 			resource:       dashboard.DashboardResourceInfo,
@@ -134,9 +140,6 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore
-	storage[dash.StoragePath("dto")] = &DTOConnector{
-		builder: b,
-	}
 	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
 		b.legacy.server, // as client???
 		dashboard.DashboardResourceInfo.GroupResource(),
@@ -157,6 +160,12 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Register the DTO endpoint that will consolidate all dashboard bits
+	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], b)
+	if err != nil {
+		return nil, err
 	}
 
 	// Expose read only library panels
