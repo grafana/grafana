@@ -163,7 +163,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
 			Text:     "External group sync",
 			Id:       "groupsync",
-			SubTitle: "Manage mappings of Identity Provider groups to Grafana user attributes",
+			SubTitle: "Manage mappings of Identity Provider groups to Grafana Roles",
 			Icon:     "",
 			Url:      s.cfg.AppSubURL + "/admin/access/groupsync",
 		})
