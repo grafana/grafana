@@ -231,9 +231,10 @@ var (
 		{
 			Name:              "accessControlOnCall",
 			Description:       "Access control primitives for OnCall",
-			Stage:             FeatureStagePublicPreview,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:        "nestedFolders",
