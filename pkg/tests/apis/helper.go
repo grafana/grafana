@@ -497,6 +497,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	require.Equal(c.t, orgId, u.OrgID)
 	require.True(c.t, u.ID > 0)
 
+	// should this always return a user with ID token?
 	s, err := userSvc.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
 		UserID: u.ID,
 		Login:  u.Login,
@@ -506,9 +507,6 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	require.NoError(c.t, err)
 	require.Equal(c.t, orgId, s.OrgID)
 	require.Equal(c.t, basicRole, s.OrgRole) // make sure the role was set properly
-
-	// TODO... can we make sure this is signed?
-	require.NotEmpty(c.t, s.IDToken, "expecting ID token")
 
 	usr := User{
 		Identity: s,

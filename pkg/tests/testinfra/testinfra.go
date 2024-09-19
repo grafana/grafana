@@ -52,6 +52,26 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
 
+	// Potentially allocate a real gRPC port for unified storage
+	runstore := false
+	unistore, _ := cfg.Raw.GetSection("grafana-apiserver")
+	if unistore != nil &&
+		unistore.Key("storage_type").MustString("") == string(options.StorageTypeUnifiedGrpc) &&
+		unistore.Key("address").String() == "" { // no address is configured
+
+		listener2, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+
+		cfg.GRPCServerNetwork = "tcp"
+		cfg.GRPCServerAddress = listener2.Addr().String()
+		cfg.GRPCServerTLSConfig = nil
+		_, err = unistore.NewKey("address", cfg.GRPCServerAddress)
+
+		err = listener2.Close() // release the one we just discovered so it can be used
+		require.NoError(t, err)
+		runstore = true
+	}
+
 	env, err := server.InitializeForTest(t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 
@@ -74,16 +94,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 	// UnifiedStorageOverGRPC
 	var storage sql.UnifiedStorageGrpcService
-	unistore, _ := env.Cfg.Raw.GetSection("grafana-apiserver")
-	if unistore != nil &&
-		unistore.Key("storage_type").MustString("") == string(options.StorageTypeUnifiedGrpc) &&
-		unistore.Key("address").String() == "" { // no address is configured
-		copy := *env.Cfg
-		copy.GRPCServerNetwork = "tcp"
-		copy.GRPCServerAddress = "localhost:0"
-		copy.GRPCServerTLSConfig = nil
-
-		storage, err = sql.ProvideUnifiedStorageGrpcService(&copy, env.FeatureToggles, env.SQLStore, env.Cfg.Logger)
+	if runstore {
+		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore, env.Cfg.Logger)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -91,7 +103,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		err = storage.AwaitRunning(ctx)
 		require.NoError(t, err)
 
-		_, err = unistore.NewKey("address", storage.GetAddress())
 		require.NoError(t, err)
 		t.Logf("Unified storage running on %s", storage.GetAddress())
 	}
