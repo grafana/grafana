@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { PanelData, SelectableValue, TimeRange } from '@grafana/data';
+import { PanelData, TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Alert, LinkButton, Text, TextLink } from '@grafana/ui';
