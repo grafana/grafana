@@ -64,22 +64,20 @@ func meetsBasicLogsCriteria(resources []string, fromAlert bool, basicLogsEnabled
 	return true, nil
 }
 
+// This function should be part of migration function
 func ParseResultFormat(queryResultFormat *dataquery.ResultFormat, queryType dataquery.AzureQueryType) dataquery.ResultFormat {
-	var resultFormat dataquery.ResultFormat
-	if queryResultFormat != nil {
-		resultFormat = *queryResultFormat
+	if queryResultFormat != nil && *queryResultFormat != "" {
+		return *queryResultFormat
 	}
-	if resultFormat == "" {
-		if queryType == dataquery.AzureQueryTypeAzureLogAnalytics {
-			// Default to logs format for logs queries
-			resultFormat = dataquery.ResultFormatLogs
-		}
-		if queryType == dataquery.AzureQueryTypeAzureTraces {
-			// Default to table format for traces queries as many traces may be returned
-			resultFormat = dataquery.ResultFormatTable
-		}
+	if queryType == dataquery.AzureQueryTypeAzureLogAnalytics {
+		// Default to time series format for logs queries. It was time series before this change
+		return dataquery.ResultFormatTimeSeries
 	}
-	return resultFormat
+	if queryType == dataquery.AzureQueryTypeAzureTraces {
+		// Default to table format for traces queries as many traces may be returned
+		return dataquery.ResultFormatTable
+	}
+	return ""
 }
 
 func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool, basicLogsQuery bool) string {
