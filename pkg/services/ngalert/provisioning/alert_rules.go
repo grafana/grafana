@@ -211,6 +211,10 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 			interval = existingGroup[0].IntervalSeconds
 		}
 	}
+	rule, err = validation.ValidateRule(rule)
+	if err != nil {
+		return models.AlertRule{}, err
+	}
 	rule.IntervalSeconds = interval
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
@@ -498,6 +502,11 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 		if len(delta.Update) > 0 {
 			updates := make([]models.UpdateRule, 0, len(delta.Update))
 			for _, update := range delta.Update {
+				rule, err := validation.ValidateRule(*update.New)
+				if err != nil {
+					return err
+				}
+				update.New = &rule
 				// check that provenance is not changed in an invalid way
 				storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, user.GetOrgID())
 				if err != nil {
@@ -522,6 +531,13 @@ func (service *AlertRuleService) persistDelta(ctx context.Context, user identity
 		}
 
 		if len(delta.New) > 0 {
+			for _, new := range delta.New {
+				rule, err := validation.ValidateRule(*new)
+				if err != nil {
+					return err
+				}
+				new = &rule
+			}
 			uids, err := service.ruleStore.InsertAlertRules(ctx, withoutNilAlertRules(delta.New))
 			if err != nil {
 				return fmt.Errorf("failed to insert alert rules: %w", err)
@@ -583,6 +599,10 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+	}
+	rule, err = validation.ValidateRule(rule)
+	if err != nil {
+		return models.AlertRule{}, err
 	}
 	if len(rule.NotificationSettings) > 0 {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
