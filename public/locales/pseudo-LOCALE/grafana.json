@@ -2530,7 +2530,6 @@
       "title": "Ÿőū ĥävęŉ'ŧ čřęäŧęđ äŉy ŧęämş yęŧ"
     }
   },
-  "This switch enables filtering by OTel resources for OTel native data sources": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş.",
   "time-picker": {
     "absolute": {
       "recent-title": "Ŗęčęŉŧľy ūşęđ äþşőľūŧę řäŉģęş",
@@ -2602,7 +2601,8 @@
       "unknown-type": "Ůŉĸŉőŵŉ"
     },
     "metric-select": {
-      "filter-by": "Fįľŧęř þy"
+      "filter-by": "Fįľŧęř þy",
+      "otel-switch": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş."
     },
     "settings": {
       "always-keep-selected-metric-graph-in-view": "Åľŵäyş ĸęęp şęľęčŧęđ męŧřįč ģřäpĥ įŉ-vįęŵ",

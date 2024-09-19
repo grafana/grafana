@@ -571,7 +571,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> i
                     size="sm"
                     variant={'secondary'}
                     tooltip={
-                      <Trans i18nKey={''}>
+                      <Trans i18nKey="trails.metric-select.otel-switch">
                         This switch enables filtering by OTel resources for OTel native data sources.
                       </Trans>
                     }
