@@ -12,11 +12,11 @@ const (
 )
 
 func DefaultOrgID(cfg *setting.Cfg) int64 {
-	defaultOrgID := int64(cfg.AutoAssignOrgId)
-	if defaultOrgID == 0 {
-		defaultOrgID = 1
+	orgID := int64(1)
+	if cfg.AutoAssignOrg && cfg.AutoAssignOrgId > 0 {
+		orgID = int64(cfg.AutoAssignOrgId)
 	}
-	return defaultOrgID
+	return orgID
 }
 
 type AuthProvider string
