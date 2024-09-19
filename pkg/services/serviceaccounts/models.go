@@ -214,19 +214,9 @@ func ExtSvcLoginPrefix(orgID int64) string {
 
 func IsExternalServiceAccount(login string) bool {
 	parts := strings.Split(login, "-")
-
 	if len(parts) < 4 {
 		return false
 	}
 
-	if parts[0]+"-" != ServiceAccountPrefix || parts[2]+"-" != ExtSvcPrefix {
-		return false
-	}
-
-	// The orgID must be a number
-	if _, err := strconv.ParseInt(parts[1], 10, 64); err != nil {
-		return false
-	}
-
-	return true
+	return parts[0]+"-" == ServiceAccountPrefix && parts[2]+"-" == ExtSvcPrefix
 }
