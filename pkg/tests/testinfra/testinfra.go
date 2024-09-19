@@ -56,20 +56,21 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	runstore := false
 	unistore, _ := cfg.Raw.GetSection("grafana-apiserver")
 	if unistore != nil &&
-		unistore.Key("storage_type").MustString("") == string(options.StorageTypeUnifiedGrpc) &&
-		unistore.Key("address").String() == "" {
-		// Allocate a new address
-		listener2, err := net.Listen("tcp", "127.0.0.1:0")
-		require.NoError(t, err)
+		unistore.Key("storage_type").MustString("") == string(options.StorageTypeUnifiedGrpc) {
+		if cfg.GRPCServerAddress == "" {
+			// Allocate a new address
+			listener2, err := net.Listen("tcp", "127.0.0.1:0")
+			require.NoError(t, err)
 
-		cfg.GRPCServerNetwork = "tcp"
-		cfg.GRPCServerAddress = listener2.Addr().String()
-		cfg.GRPCServerTLSConfig = nil
+			cfg.GRPCServerNetwork = "tcp"
+			cfg.GRPCServerAddress = listener2.Addr().String()
+			cfg.GRPCServerTLSConfig = nil
+
+			// release the one we just discovered -- it will be used by the services on startup
+			err = listener2.Close()
+			require.NoError(t, err)
+		}
 		_, err = unistore.NewKey("address", cfg.GRPCServerAddress)
-		require.NoError(t, err)
-
-		// release the one we just discovered -- it will be used by the services on startup
-		err = listener2.Close()
 		require.NoError(t, err)
 		runstore = true
 	}
@@ -392,17 +393,19 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 			require.NoError(t, err)
 		}
 
-		if o.APIServerStorageType != "" {
-			section, err := getOrCreateSection("grafana-apiserver")
-			require.NoError(t, err)
-			_, err = section.NewKey("storage_type", string(o.APIServerStorageType))
-			require.NoError(t, err)
+		// Default to running unified-grpc.  This is the most similar to cloud deployments
+		if o.APIServerStorageType == "" {
+			o.APIServerStorageType = options.StorageTypeUnifiedGrpc
+		}
+		apiserverSection, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = apiserverSection.NewKey("storage_type", string(o.APIServerStorageType))
+		require.NoError(t, err)
 
-			// Hardcoded local etcd until this is needed to run in CI
-			if o.APIServerStorageType == "etcd" {
-				_, err = section.NewKey("etcd_servers", "localhost:2379")
-				require.NoError(t, err)
-			}
+		// Hardcoded local etcd until this is needed to run in CI
+		if o.APIServerStorageType == "etcd" {
+			_, err = apiserverSection.NewKey("etcd_servers", "localhost:2379")
+			require.NoError(t, err)
 		}
 
 		if o.GRPCServerAddress != "" {
