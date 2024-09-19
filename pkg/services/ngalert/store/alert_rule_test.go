@@ -1502,8 +1502,8 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		}
 
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			alertRuleVersions := make([]*models.AlertRuleVersion, 0)
-			err := sess.Table(models.AlertRuleVersion{}).Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).Find(&alertRuleVersions)
+			alertRuleVersions := make([]*alertRuleVersion, 0)
+			err := sess.Table(alertRuleVersion{}).Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).Find(&alertRuleVersions)
 			if err != nil {
 				return err
 			}
@@ -1559,8 +1559,8 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		require.Equal(t, int64(2), rowsAffected)
 
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			var alertRuleVersions []*models.AlertRuleVersion
-			err := sess.Table(models.AlertRuleVersion{}).Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).Find(&alertRuleVersions)
+			var alertRuleVersions []*alertRuleVersion
+			err := sess.Table(alertRuleVersion{}).Desc("id").Where("rule_org_id = ? and rule_uid = ?", rule.OrgID, rule.UID).Find(&alertRuleVersions)
 			if err != nil {
 				return err
 			}

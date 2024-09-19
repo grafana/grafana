@@ -299,7 +299,7 @@ func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string
 
 	var affectedRows int64
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		highest := &ngmodels.AlertRuleVersion{}
+		highest := &alertRuleVersion{}
 		ok, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ?", orgID).Where("rule_uid = ?", ruleUID).Limit(1, limit).Get(highest)
 		if err != nil {
 			return err
