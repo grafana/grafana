@@ -23,6 +23,12 @@ export const VAR_DATASOURCE = 'ds';
 export const VAR_DATASOURCE_EXPR = '${ds}';
 export const VAR_LOGS_DATASOURCE = 'logsDs';
 export const VAR_LOGS_DATASOURCE_EXPR = '${logsDs}';
+export const VAR_OTEL_RESOURCES = 'otel_resources';
+export const VAR_OTEL_RESOURCES_EXPR = '${otel_resources}';
+export const VAR_OTEL_DEPLOYMENT_ENV = 'deployment_environment';
+export const VAR_OTEL_DEPLOYMENT_ENV_EXPR = '${deployment_environment}';
+export const VAR_OTEL_JOIN_QUERY = 'otel_join_query';
+export const VAR_OTEL_JOIN_QUERY_EXPR = '${otel_join_query}';
 
 export const LOGS_METRIC = '$__logs__';
 export const KEY_SQR_METRIC_VIZ_QUERY = 'sqr-metric-viz-query';
@@ -43,6 +49,16 @@ export function getVariablesWithMetricConstant(metric: string) {
     new ConstantVariable({
       name: VAR_METRIC,
       value: metric,
+      hide: VariableHide.hideVariable,
+    }),
+  ];
+}
+
+export function getVariablesWithOtelJoinQueryConstant(otelJoinQuery: string) {
+  return [
+    new ConstantVariable({
+      name: VAR_OTEL_JOIN_QUERY,
+      value: otelJoinQuery,
       hide: VariableHide.hideVariable,
     }),
   ];
