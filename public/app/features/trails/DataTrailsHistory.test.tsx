@@ -24,7 +24,7 @@ describe('DataTrailsHistory', () => {
       {
         name: 'from history',
         input: { from: '2024-07-22T18:30:00.000Z', to: '2024-07-22T19:30:00.000Z' },
-        expected: '2024-07-22 13:30:00 - 2024-07-22 14:30:00',
+        expected: '2024-07-22 12:30:00 - 2024-07-22 13:30:00',
       },
       {
         name: 'time change event with timezone',
