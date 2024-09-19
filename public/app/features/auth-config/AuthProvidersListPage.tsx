@@ -52,8 +52,15 @@ export const AuthConfigPageUnconnected = ({
     reportInteraction('authentication_ui_provider_clicked', { provider: providerType, enabled });
   };
 
-  // filter out saml and ldap from sso providers because it is already included in availableProviders
+  // filter out saml from sso providers because it is already included in availableProviders
   providers = providers.filter((p) => p.provider !== 'saml');
+
+  providers = providers.map((p) => {
+    if (p.provider === 'ldap') {
+      p.settings.type = p.provider;
+    }
+    return p;
+  });
 
   const providerList = availableProviders.length
     ? [
