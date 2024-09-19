@@ -12,5 +12,4 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     steps:
-heckout@v4/d
       - uses: grafana/writers-toolkit/add-to-docs-project@add-to-docs-project/v1
