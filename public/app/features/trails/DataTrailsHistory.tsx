@@ -124,8 +124,6 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
         this.setState({ filtersApplied });
       }
 
-      // BUG: not currently picking up the dep env variable change
-      // when removing to none selected because custom variable does not allow this
       if (evt.payload.state.name === VAR_OTEL_DEPLOYMENT_ENV) {
         const otelDepEnvs = this.state.otelDepEnvs;
         const urlState = sceneUtils.getUrlState(trail);
