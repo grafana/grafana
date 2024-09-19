@@ -9,13 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type IndexableFields struct {
-	kind string
-}
-
 type IndexConfig struct {
 	ResourceClient resource.ResourceClient
-	IndexableFields
 }
 
 // IndexFromBeginning indexes selected fields and indexes them, for all resources
@@ -40,20 +35,21 @@ func (i IndexConfig) IndexFromBeginning(ctx context.Context) error {
 			return fmt.Errorf("could not index resource: %w", err)
 		}
 	}
-
 	return nil
 }
 
 func createIndexMapping() *mapping.IndexMappingImpl {
 	m := bleve.NewIndexMapping()
+	resourceIndex := bleve.NewDocumentMapping()
+	m.AddDocumentMapping("resourceIndexes", resourceIndex)
+
 	resource := bleve.NewDocumentMapping()
-	m.AddDocumentMapping("resource", resource)
+	resourceFieldMapping := bleve.NewTextFieldMapping()
 
-	kind := bleve.NewDocumentMapping()
-	kindFieldMapping := bleve.NewTextFieldMapping()
-	resource.AddFieldMappingsAt("kind", kindFieldMapping)
-	resource.AddSubDocumentMapping("kind", kind)
+	// right now we are only indexing the resource kind
+	resourceIndex.AddFieldMappingsAt("resource", resourceFieldMapping)
+	resourceIndex.AddSubDocumentMapping("resource", resource)
 
-	m.DefaultMapping = resource
+	m.DefaultMapping = resourceIndex
 	return m
 }
