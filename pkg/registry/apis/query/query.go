@@ -377,9 +377,19 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 
 func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
 	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
+	if len(req.Request.Queries) == 0 {
+		return nil, errors.New("no queries to convert")
+	}
+	if qdr == nil {
+		return nil, errors.New("queryDataResponse is nil")
+	}
 	allowLongFrames := false
 	refID := req.Request.Queries[0].RefID
-	_, results, err := b.converter.Convert(ctx, req.PluginId, qdr.Responses[refID].Frames, allowLongFrames)
+	if _, exist := qdr.Responses[refID]; !exist {
+		return nil, fmt.Errorf("refID '%s' does not exist", refID)
+	}
+	frames := qdr.Responses[refID].Frames
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, allowLongFrames)
 	if err != nil {
 		results.Error = err
 	}
