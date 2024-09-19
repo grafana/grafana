@@ -41,6 +41,11 @@ func TestHTTPServer_CheckEnabled(t *testing.T) {
 			pluginID:     "grafana-test-app_disabled",
 			expectedCode: 404,
 		},
+		{
+			name:         "should not set an error code if the plugin is auto enabled, without a saved plugin setting",
+			pluginID:     "grafana-test-app_autoEnabled",
+			expectedCode: 0,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -50,6 +55,7 @@ func TestHTTPServer_CheckEnabled(t *testing.T) {
 					{JSONData: plugins.JSONData{ID: "mysql"}},
 					{JSONData: plugins.JSONData{Type: plugins.TypeApp, ID: "grafana-test-app"}},
 					{JSONData: plugins.JSONData{Type: plugins.TypeApp, ID: "grafana-test-app_disabled"}},
+					{JSONData: plugins.JSONData{Type: plugins.TypeApp, ID: "grafana-test-app_autoEnabled", AutoEnabled: true}},
 				},
 			}
 			hs.PluginSettings = &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{

@@ -28,7 +28,13 @@ func checkAppEnabled(pluginStore pluginstore.Store, pluginSettings pluginsetting
 		})
 		if err != nil {
 			if errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-				c.JsonApiErr(http.StatusNotFound, "Plugin not found", nil)
+				// If the plugin is auto enabled, we don't want to return an error because auto enabling allows us
+				// to enable plugins that are not explicitly configured.
+				if p.AutoEnabled {
+					return
+				}
+
+				c.JsonApiErr(http.StatusNotFound, "Plugin setting not found", nil)
 				return
 			}
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to get plugin settings", err)
