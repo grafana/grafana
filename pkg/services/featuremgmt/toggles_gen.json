@@ -2768,13 +2768,17 @@
     {
       "metadata": {
         "name": "teamHttpHeaders",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-10-17T10:23:54Z"
+        "resourceVersion": "1726744402319",
+        "creationTimestamp": "2023-10-17T10:23:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-19 11:13:22.319622 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables Team LBAC for datasources to apply team headers to the client requests",
+        "description": "Enables LBAC for datasources to apply logql filtering of logs to the client requests for users in teams",
         "stage": "preview",
-        "codeowner": "@grafana/identity-access-team"
+        "codeowner": "@grafana/identity-access-team",
+        "allowSelfServe": true
       }
     },
     {
