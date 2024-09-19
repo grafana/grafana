@@ -36,6 +36,9 @@ type DataSourceService interface {
 	// UpdateDataSource updates an existing datasource.
 	UpdateDataSource(ctx context.Context, cmd *UpdateDataSourceCommand) (*DataSource, error)
 
+	// Shortlived: UpdateDataSourceLBACRules updates the LBAC rules of a datasource.
+	UpdateDataSourceLBACRules(ctx context.Context, cmd *UpdateDataSourceLBACRulesCommand) (*DataSource, error)
+
 	// GetHTTPTransport gets a datasource specific HTTP transport.
 	GetHTTPTransport(ctx context.Context, ds *DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error)
 
@@ -68,4 +71,11 @@ type CacheService interface {
 
 	// GetDatasourceByUID gets a datasource identified by datasource unique identifier (UID).
 	GetDatasourceByUID(ctx context.Context, datasourceUID string, user identity.Requester, skipCache bool) (*DataSource, error)
+}
+
+// UpdateDataSourceLBACRulesCommand represents the command to update LBAC rules of a datasource.
+type UpdateDataSourceLBACRulesCommand struct {
+	DataSourceID    int64           `json:"datasourceId"`
+	TeamHTTPHeaders TeamHTTPHeaders `json:"rules"`
+	UpdatedBy       string          `json:"updatedBy"`
 }
