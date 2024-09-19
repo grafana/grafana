@@ -436,9 +436,12 @@ func (r responderWrapper) Error(err error) {
 
 // Checks if the request only contains a single query and not expression.
 func alertQueryWithoutExpression(req parsedRequestInfo) bool {
+	if len(req.Requests) != 1 {
+		return false
+	}
 	headers := req.Requests[0].Headers
 	_, exist := headers[models.FromAlertHeaderName]
-	if exist && len(req.Requests) == 1 && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
+	if exist && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
 		return true
 	}
 	return false
