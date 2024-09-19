@@ -1178,9 +1178,8 @@
       "placeholder": "ęχämpľę: čŉ=%ş"
     },
     "search-base-dns": {
-      "description": "Åŉ äřřäy őƒ þäşę đŉş ŧő şęäřčĥ ŧĥřőūģĥ; şępäřäŧę þy čőmmäş őř şpäčęş.",
-      "label": "Ŝęäřčĥ þäşę ĐŃŜ *",
-      "placeholder": "ęχämpľę: \"đč=ģřäƒäŉä.đč=őřģ\""
+      "description": "Åŉ äřřäy őƒ þäşę đŉş ŧő şęäřčĥ ŧĥřőūģĥ.",
+      "label": "Ŝęäřčĥ þäşę ĐŃŜ *"
     },
     "subtitle": "Ŧĥę ĿĐÅP įŉŧęģřäŧįőŉ įŉ Ğřäƒäŉä äľľőŵş yőūř Ğřäƒäŉä ūşęřş ŧő ľőģ įŉ ŵįŧĥ ŧĥęįř ĿĐÅP čřęđęŉŧįäľş. Fįŉđ őūŧ mőřę įŉ őūř <2><0>đőčūmęŉŧäŧįőŉ</0></2>.",
     "title": "ßäşįč Ŝęŧŧįŉģş"
@@ -2594,11 +2593,20 @@
   "trails": {
     "metric-overview": {
       "description-label": "Đęşčřįpŧįőŉ",
-      "labels-label": "Ŀäþęľş",
+      "labels": "Ŀäþęľş",
+      "metric-attributes": "Męŧřįč äŧŧřįþūŧęş",
       "no-description": "Ńő đęşčřįpŧįőŉ äväįľäþľę",
       "type-label": "Ŧypę",
       "unit-label": "Ůŉįŧ",
       "unknown-type": "Ůŉĸŉőŵŉ"
+    },
+    "metric-select": {
+      "filter-by": "Fįľŧęř þy",
+      "otel-switch": "Ŧĥįş şŵįŧčĥ ęŉäþľęş ƒįľŧęřįŉģ þy ØŦęľ řęşőūřčęş ƒőř ØŦęľ ŉäŧįvę đäŧä şőūřčęş."
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "Åľŵäyş ĸęęp şęľęčŧęđ męŧřįč ģřäpĥ įŉ-vįęŵ",
+      "show-previews-of-metric-graphs": "Ŝĥőŵ přęvįęŵş őƒ męŧřįč ģřäpĥş"
     }
   },
   "transformations": {

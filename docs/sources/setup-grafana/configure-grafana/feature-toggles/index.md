@@ -29,6 +29,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `correlations`                         | Correlations page                                                                                                                                                         | Yes                |
 | `autoMigrateXYChartPanel`              | Migrate old XYChart panel to new XYChart2 model                                                                                                                           | Yes                |
 | `cloudWatchCrossAccountQuerying`       | Enables cross-account querying in CloudWatch datasources                                                                                                                  | Yes                |
+| `accessControlOnCall`                  | Access control primitives for OnCall                                                                                                                                      | Yes                |
 | `nestedFolders`                        | Enable folder nesting                                                                                                                                                     | Yes                |
 | `logsContextDatasourceUi`              | Allow datasource to provide custom UI for context view                                                                                                                    | Yes                |
 | `lokiQuerySplitting`                   | Split large interval queries into subqueries with smaller time intervals                                                                                                  | Yes                |
@@ -85,7 +86,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `autoMigrateStatPanel`                 | Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking                                                                            |
 | `disableAngular`                       | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
 | `grpcServer`                           | Run the GRPC server                                                                                                                                                                          |
-| `accessControlOnCall`                  | Access control primitives for OnCall                                                                                                                                                         |
 | `alertingNoNormalState`                | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `renderAuthJWT`                        | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
 | `refactorVariablesTimeRange`           | Refactor time range variables flow to reduce number of API calls made when query variables are chained                                                                                       |
@@ -145,6 +145,7 @@ Experimental features might be changed or removed without prior notice.
 | `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                                                                                                                                                 |
 | `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                                                                                                                                                                                                    |
 | `metricsSummary`                            | Enables metrics summary queries in the Tempo data source                                                                                                                                                                                                                          |
+| `datasourceAPIServers`                      | Expose some datasources as apiservers.                                                                                                                                                                                                                                            |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder                                                                                                                                                                       |
 | `aiGeneratedDashboardChanges`               | Enable AI powered features for dashboards to auto-summary changes when saving                                                                                                                                                                                                     |
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.                                                                                             |
@@ -206,8 +207,8 @@ Experimental features might be changed or removed without prior notice.
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name                    | Description                                                    |
-| -------------------------------------- | -------------------------------------------------------------- |
-| `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server             |
-| `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options    |
-| `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1 |
+| Feature toggle name                    | Description                                                                   |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
+| `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server, including all datasources |
+| `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options                   |
+| `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1                |

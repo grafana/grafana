@@ -211,13 +211,15 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     const { labels, body, loading, value, blockingMessage } = model.useState();
     const styles = useStyles2(getStyles);
 
+    const { useOtelExperience } = getTrailFor(model).useState();
+
     return (
       <div className={styles.container}>
         <StatusWrapper {...{ isLoading: loading, blockingMessage }}>
           <div className={styles.controls}>
             {!loading && labels.length && (
               <div className={styles.controlsLeft}>
-                <Field label="By label">
+                <Field label={useOtelExperience ? 'By metric attribute' : 'By label'}>
                   <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
                 </Field>
               </div>

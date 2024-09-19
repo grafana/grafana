@@ -60,6 +60,10 @@ func ProvideUnifiedStorageClient(
 		return resource.NewLocalResourceClient(server), nil
 
 	case options.StorageTypeUnifiedGrpc:
+		if opts.Address == "" {
+			return nil, fmt.Errorf("expecting address for storage_type: %s", opts.StorageType)
+		}
+
 		// Create a connection to the gRPC server
 		conn, err := grpc.NewClient(opts.Address,
 			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
