@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, ConfirmModal, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier } from 'app/types/unified-alerting';
+import { CombinedRuleGroup, CombinedRuleNamespace, RuleGroupIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { LogMessages, logInfo } from '../../Analytics';
 import { useDeleteRuleGroup } from '../../hooks/ruleGroup/useDeleteRuleGroup';
@@ -229,16 +229,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           onToggle={setIsCollapsed}
           data-testid={selectors.components.AlertRules.groupToggle}
         />
-        <Icon name={isCollapsed ? 'folder' : 'folder-open'} />
-        {isCloudRulesSource(rulesSource) && (
-          <Tooltip content={rulesSource.name} placement="top">
-            <img
-              alt={rulesSource.meta.name}
-              className={styles.dataSourceIcon}
-              src={rulesSource.meta.info.logos.small}
-            />
-          </Tooltip>
-        )}
+        <FolerIcon isCollapsed={isCollapsed} />
+        <CloudSourceLogo rulesSource={rulesSource} />
         {
           // eslint-disable-next-line
           <div className={styles.groupName} onClick={() => setIsCollapsed(!isCollapsed)}>
@@ -323,6 +315,33 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 });
 
 RulesGroup.displayName = 'RulesGroup';
+
+// It's a simple component but we render 80 of them on the list page it needs to be fast
+// The Tooltip component is expensive to render and the rulesSource doesn't change often
+// so memoization seems to bring a lot of benefit here
+const CloudSourceLogo = React.memo(({ rulesSource }: { rulesSource: RulesSource | string }) => {
+  const styles = useStyles2(getStyles);
+
+  if (isCloudRulesSource(rulesSource)) {
+    return (
+      <Tooltip content={rulesSource.name} placement="top">
+        <img alt={rulesSource.meta.name} className={styles.dataSourceIcon} src={rulesSource.meta.info.logos.small} />
+      </Tooltip>
+    );
+  }
+
+  return null;
+});
+
+CloudSourceLogo.displayName = 'CloudSourceLogo';
+
+// We render a lot of these on the list page, and the Icon component does quite a bit of work
+// to render its contents
+const FolerIcon = React.memo(({ isCollapsed }: { isCollapsed: boolean }) => {
+  return <Icon name={isCollapsed ? 'folder' : 'folder-open'} />;
+});
+
+FolerIcon.displayName = 'FolerIcon';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
