@@ -361,20 +361,21 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 	for _, queryExecutor := range queries {
-		queryRes, dr, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, logger)
+		dr, queryRes, executedQueryString, err := queryExecutor.run(ctx, req, s, dsInfo, logger)
 		if err != nil {
 			errorsource.AddErrorToResponse(queryExecutor.getRefID(), resp, err)
-			return resp, nil
+			return resp, err
 		}
-		err = queryExecutor.parseResponse(queryRes, dr, executedQueryString, logger)
+		err = queryExecutor.parseResponse(dr, queryRes, executedQueryString, logger)
 		if err != nil {
-			// Default to a plugin error if there's no source
+			dr.Error = err
+			// // Default to a plugin error if there's no source
 			errWithSource := errorsource.SourceError(backend.ErrorSourcePlugin, err, false)
-			queryRes.Error = errWithSource.Unwrap()
-			queryRes.ErrorSource = errWithSource.ErrorSource()
+			dr.Error = errWithSource.Unwrap()
+			dr.ErrorSource = errWithSource.ErrorSource()
 		}
 
-		resp.Responses[queryExecutor.getRefID()] = *queryRes
+		resp.Responses[queryExecutor.getRefID()] = *dr
 	}
 
 	return resp, nil

@@ -23,7 +23,8 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, promQLQ.parameters.ProjectName)
 	if err != nil {
-		return dr, backend.DataResponse{}, "", err
+		dr.Error = err
+		return dr, backend.DataResponse{}, "", nil
 	}
 	r, err := createRequest(ctx, &dsInfo, path.Join("/v1/projects", projectName, "location/global/prometheus/api/v1/query_range"), nil)
 	if err != nil {
@@ -43,7 +44,8 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 
 	res, err := doRequestProm(r, dsInfo, requestBody)
 	if err != nil {
-		return dr, backend.DataResponse{}, "", err
+		dr.Error = err
+		return dr, backend.DataResponse{}, "", nil
 	}
 
 	defer func() {

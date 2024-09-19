@@ -142,7 +142,8 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, projectName)
 	if err != nil {
-		return dr, cloudMonitoringResponse{}, "", err
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 	timeSeriesMethod := "timeSeries"
 	if body != nil {
@@ -150,7 +151,8 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 	}
 	r, err := createRequest(ctx, &dsInfo, path.Join("/v3/projects", projectName, timeSeriesMethod), nil)
 	if err != nil {
-		return dr, cloudMonitoringResponse{}, "", err
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	span := traceReq(ctx, req, dsInfo, r, params.Encode())
@@ -158,7 +160,8 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 
 	d, err := doRequestWithPagination(ctx, r, dsInfo, params, body, logger)
 	if err != nil {
-		return dr, cloudMonitoringResponse{}, "", err
+		dr.Error = err
+		return dr, cloudMonitoringResponse{}, "", nil
 	}
 
 	return dr, d, r.URL.RawQuery, nil
