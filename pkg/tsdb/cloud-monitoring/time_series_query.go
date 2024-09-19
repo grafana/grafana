@@ -78,7 +78,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 	}
 	if len(response.TimeSeriesData) > 0 {
 		dl := timeSeriesQuery.buildDeepLink()
-		frames = addConfigData(frames, dl, response.Unit, timeSeriesQuery.parameters.GraphPeriod)
+		frames = addConfigData(frames, dl, response.Unit, timeSeriesQuery.parameters.GraphPeriod, logger)
 	}
 
 	queryRes.Frames = frames
