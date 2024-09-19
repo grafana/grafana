@@ -232,7 +232,9 @@ export interface PostableGrafanaRuleDefinition {
   data: AlertQuery[];
   is_paused?: boolean;
   notification_settings?: GrafanaNotificationSettings;
-  editor_settings?: GrafanaEditorSettings;
+  metadata?: {
+    editor_settings?: GrafanaEditorSettings;
+  };
   record?: {
     metric: string;
     from: string;

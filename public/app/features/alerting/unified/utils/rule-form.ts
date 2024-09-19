@@ -246,7 +246,9 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
   }
 
   const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
-  const editorSettings = values.editorSettings ? getEditorSettingsForDTO(values.editorSettings) : undefined;
+  const metadata = values.editorSettings
+    ? { editor_settings: getEditorSettingsForDTO(values.editorSettings) }
+    : undefined;
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   const labels = arrayToRecord(cleanLabels(values.labels));
@@ -266,7 +268,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         no_data_state: noDataState,
         exec_err_state: execErrState,
         notification_settings: notificationSettings,
-        editor_settings: editorSettings,
+        metadata,
       },
       annotations,
       labels,
@@ -336,9 +338,9 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
   // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
   if (config.featureToggles.alertingQueryAndExpressionsStepMode) {
-    if (ga.editor_settings) {
+    if (ga.metadata?.editor_settings) {
       return {
-        simplifiedQueryEditor: ga.editor_settings.simplified_query_and_expressions_section,
+        simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,
       };
     } else {
       return {
