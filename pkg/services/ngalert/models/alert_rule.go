@@ -610,7 +610,18 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 	if !prommodels.IsValidMetricName(metricName) {
 		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
+
+	clearRecordingRuleIgnoredFields(rule)
+
 	return nil
+}
+
+func clearRecordingRuleIgnoredFields(rule *AlertRule) {
+	rule.NoDataState = ""
+	rule.ExecErrState = ""
+	rule.Condition = ""
+	rule.For = 0
+	rule.NotificationSettings = nil
 }
 
 func (alertRule *AlertRule) ResourceType() string {
