@@ -113,7 +113,7 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 					},
 				},
 			},
-			expectedPermissions: map[string][]string{"dashboards:read": {"dashboards:uid:*"}},
+			expectedPermissions: map[string][]string{"dashboards:read": {"dashboards:uid:*", "folders:uid:*"}},
 		},
 		{
 			name: "fetch scopeless permissions from permissions registry",
@@ -155,7 +155,7 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 				},
 			},
 			expectedPermissions: map[string][]string{
-				"dashboards:read":              {"dashboards:uid:*"},
+				"dashboards:read":              {"dashboards:uid:*", "folders:uid:*"},
 				accesscontrol.ActionTeamsWrite: {accesscontrol.ScopeTeamsAll},
 			},
 		},
