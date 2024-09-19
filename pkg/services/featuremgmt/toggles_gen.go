@@ -794,4 +794,8 @@ const (
 	// FlagImprovedExternalSessionHandling
 	// Enable improved support for external sessions in Grafana
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
+
+	// FlagUnifiedStorageSearch
+	// Enable unified storage search
+	FlagUnifiedStorageSearch = "unifiedStorageSearch"
 )
