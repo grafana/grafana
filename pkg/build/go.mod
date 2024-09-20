@@ -39,7 +39,7 @@ require (
 	golang.org/x/crypto v0.27.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/mod v0.20.0 // @grafana/grafana-backend-group
 	golang.org/x/net v0.29.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.22.0 // @grafana/identity-access-team
+	golang.org/x/oauth2 v0.23.0 // @grafana/identity-access-team
 	golang.org/x/sync v0.8.0 // indirect; @grafana/alerting-backend
 	golang.org/x/text v0.18.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.6.0 // indirect; @grafana/grafana-backend-group
@@ -116,7 +116,7 @@ require (
 	go.opentelemetry.io/otel/log v0.2.0-alpha // indirect
 	go.opentelemetry.io/otel/sdk/log v0.2.0-alpha // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
+	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
 
