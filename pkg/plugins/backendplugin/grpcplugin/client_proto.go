@@ -145,16 +145,16 @@ func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
 	}
 
 	if r.state == pluginStateStopped {
-		logger.Debug("Plugin client has not started successfully yet")
+		logger.Debug("Plugin client has stopped")
 		return nil, false
 	}
 
 	if r.plugin.Exited() {
+		logger.Debug("Plugin client has exited")
 		return nil, false
 	}
 
 	if r.plugin.pluginClient == nil {
-		r.mu.RUnlock()
 		return nil, false
 	}
 	pc := r.plugin.pluginClient
