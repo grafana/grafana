@@ -60,7 +60,7 @@ export const LdapDrawerComponent = ({
   useEffect(() => {
     const { client_cert, client_key, root_ca_cert } = getValues(serverConfig);
     setEncryptionProvider(
-      !client_cert.length && !client_key.length && !root_ca_cert?.length
+      !client_cert?.length && !client_key?.length && !root_ca_cert?.length
         ? EncryptionProvider.Base64
         : EncryptionProvider.FilePath
     );
@@ -89,8 +89,9 @@ export const LdapDrawerComponent = ({
   </>);
 
   const onAddGroupMapping = () => {
+    const groupMappings = getValues(`${serverConfig}.group_mappings`) || [];
     setValue(`${serverConfig}.group_mappings`, [
-      ...getValues(`${serverConfig}.group_mappings`),
+      ...groupMappings,
       {
         group_dn: '',
         org_id: 1,

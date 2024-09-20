@@ -114,7 +114,10 @@ export const LdapSettingsPage = () => {
   useEffect(() => {
     async function init() {
       const payload = await getSettings();
-      const serverConfig = payload.settings.config.servers[0];
+      let serverConfig = emptySettings.settings.config.servers[0];
+      if (payload.settings.config.servers?.length > 0) {
+        serverConfig = payload.settings.config.servers[0];
+      }
       setMapKeyCertConfigured({
         rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
         clientCertValue: serverConfig.client_cert_value !== '',
