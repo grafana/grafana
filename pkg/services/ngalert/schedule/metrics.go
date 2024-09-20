@@ -47,7 +47,7 @@ func (sch *schedule) updateRulesMetrics(alertRules []*models.AlertRule) {
 	// gauge for groups per org
 	groupsPerOrg := make(map[int64]map[string]struct{})
 
-	simplifiedEditorSettingsPerOrg := make(map[int64]map[string]int64)
+	simplifiedEditorSettingsPerOrg := make(map[int64]map[string]int64) // orgID -> setting -> count
 
 	for _, rule := range alertRules {
 		// Count rules by org, type and state

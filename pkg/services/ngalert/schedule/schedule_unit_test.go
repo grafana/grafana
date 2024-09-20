@@ -771,14 +771,14 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		t.Run("after removing one of the rules it should show one present rule and two org", func(t *testing.T) {
+		t.Run("after removing one of the rules it should show one present rule and one org", func(t *testing.T) {
 			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithAdvancedSettings, alertRule2})
 
 			expectedMetric := fmt.Sprintf(
 				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
 								# TYPE grafana_alerting_simplified_editor_rules gauge
-								grafana_alerting_simplified_editor_rules{org="%[2]d",setting="simplified_query_and_expressions_section"} 1
-				`, alertRuleWithAdvancedSettings.OrgID, alertRule2.OrgID)
+								grafana_alerting_simplified_editor_rules{org="%d",setting="simplified_query_and_expressions_section"} 1
+				`, alertRule2.OrgID)
 
 			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
 			require.NoError(t, err)
