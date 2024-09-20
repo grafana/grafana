@@ -329,9 +329,9 @@ function useRuleStatus(rule: CombinedRule) {
   const { hasRuler, rulerRulesLoaded } = useHasRuler(rule.namespace.rulesSource);
   const { promRule, rulerRule } = rule;
 
-  // If prometheusRulesPrimary is enabled, we don't fetch all rules rules
+  // If prometheusRulesPrimary is enabled, we don't fetch rules from the Ruler API (except for Grafana managed rules)
   // so there is no way to detect statuses
-  if (prometheusRulesPrimary) {
+  if (prometheusRulesPrimary && !isGrafanaRulerRule(rulerRule)) {
     return { isDeleting: false, isCreating: false, isPaused: false };
   }
 

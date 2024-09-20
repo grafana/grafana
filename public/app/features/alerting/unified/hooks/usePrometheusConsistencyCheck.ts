@@ -5,6 +5,7 @@ import { CloudRuleIdentifier, RuleIdentifier } from 'app/types/unified-alerting'
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import * as ruleId from '../utils/rule-id';
+import { isGrafanaRuleIdentifier } from '../utils/rules';
 
 import { RuleLocation, useRuleLocation } from './useCombinedRule';
 
@@ -62,13 +63,14 @@ export function usePrometheusConsistencyCheck(ruleIdentifier: RuleIdentifier) {
 
   // By default the isConsistent is true as this should be the case most of the time.
   // We only want to run interval check if the rule is actually inconsistent.
+  // GMA rules use the Ruler API so no need to check consistency.
   useEffect(() => {
-    if (!ruleLocation) {
+    if (!ruleLocation || isGrafanaRuleIdentifier(ruleIdentifier)) {
       return;
     }
 
     checkConsistency(ruleLocation);
-  }, [ruleLocation, checkConsistency]);
+  }, [ruleLocation, checkConsistency, ruleIdentifier]);
 
   return { isConsistent, loading, error };
 }

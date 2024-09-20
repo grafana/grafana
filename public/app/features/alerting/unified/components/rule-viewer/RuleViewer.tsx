@@ -267,6 +267,11 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
   );
 };
 
+/**
+ * This component displays an Alert warning component if discovers inconsistencies between Prometheus and Ruler rules
+ * It will show loading indicator until the Prometheus and Ruler rule is consistent
+ * It will not show the warning if the rule is Grafana managed
+ */
 function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
   const { isConsistent, loading, error } = usePrometheusConsistencyCheck(ruleIdentifier);
 
