@@ -327,7 +327,7 @@ export const LdapSettingsPage = () => {
                   <Controller
                     name={`${serverConfig}.search_base_dns`}
                     control={control}
-                    render={({ field: { onChange, ...field } }) => (
+                    render={({ field: { onChange, ref, ...field } }) => (
                       <MultiSelect
                         {...field}
                         allowCustomValue
