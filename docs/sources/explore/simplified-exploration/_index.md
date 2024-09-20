@@ -18,19 +18,19 @@ cards:
   items:
     - title: Explore Metrics
       href: ./metrics/
-      description: Grafana Explore Metrics is a query-less experience for browsing Prometheus-compatible metrics. Quickly find related metrics with just a few simple clicks, without needing to write PromQL queries to retrieve metrics.
+      description: Quickly find related metrics with just a few simple clicks, without needing to write PromQL queries to retrieve metrics.
       height: 24
     - title: Explore Logs
       href: ./logs/
-      description: Explore Logs offers a queryless experience for easily surfacing insights from logs stored in Grafana Loki, Grafana Cloud Logs, and Grafana Enterprise Logs. Explore Logs generates visualizations of log volumes to let you easily detect anomalies or related changes across labels and over time.
+      description: Visualize log volumes to easily detect anomalies or significant changes across labels and fields over time.
       height: 24
     - title: Explore Traces
       href: ./traces/
-      description: Explore Traces helps you make sense of your tracing data so you can automatically visualize insights from your Tempo traces data. Using the app, you can use Rate, Errors, and Duration (RED) metrics derived from traces to investigate to understand errors and latency issues within complex distributed systems.
+      description: Use Rate, Errors, and Duration (RED) metrics derived from traces to investigate to understand errors and latency issues within complex distributed systems.
       height: 24
     - title: Explore Profiles
       href: ./profiles/
-      description: Using Explore Profiles, you can view high-level service performance to get a high-level view of all of your services and how they're functioning. You can identify problem processes or services that you can optimize for better performance and diagnose issues to determine the root cause.
+      description: View and analyze high-level service performance, identify problem processes for optimization, and diagnose issues to determine root causes.
       height: 24
 ---
 
