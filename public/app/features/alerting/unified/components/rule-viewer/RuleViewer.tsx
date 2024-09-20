@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { chain, isEmpty } from 'lodash';
+import { chain, isEmpty, truncate } from 'lodash';
 import { useState } from 'react';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
@@ -150,12 +150,14 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const styles = useStyles2(getStyles);
 
   if (runbookUrl) {
+    /* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */
+    const truncatedUrl = truncate(runbookUrl, { length: 42 });
     const valueToAdd = isValidRunbookURL(runbookUrl) ? (
       <TextLink variant="bodySmall" className={styles.url} href={runbookUrl} external>
-        {runbookUrl}
+        {truncatedUrl}
       </TextLink>
     ) : (
-      <Text variant="bodySmall">{runbookUrl}</Text>
+      <Text variant="bodySmall">{truncatedUrl}</Text>
     );
     metadata.push({
       label: 'Runbook URL',
