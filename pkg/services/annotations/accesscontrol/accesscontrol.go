@@ -134,7 +134,9 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 	}
 
 	sb := &searchstore.Builder{Dialect: authz.db.GetDialect(), Filters: filters, Features: authz.features}
-	sql, params := sb.ToSQL(query.Limit, query.Page)
+	// This is a limit for a batch size, not for the end query result.
+	var limit int64 = 1000
+	sql, params := sb.ToSQL(limit, query.Page)
 
 	visibleDashboards := make(map[string]int64)
 	var res []dashboardProjection
