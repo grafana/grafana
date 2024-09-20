@@ -36,17 +36,17 @@ type TestApiKey struct {
 	ServiceAccountID *int64
 }
 
-func SetupUserServiceAccount(t *testing.T, store db.DB, cfg *setting.Cfg, testUser TestUser) *user.User {
+func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser TestUser) *user.User {
 	role := string(org.RoleViewer)
 	if testUser.Role != "" {
 		role = testUser.Role
 	}
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	quotaService := quotaimpl.ProvideService(db, cfg)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
+		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		quotaService, supportbundlestest.NewFakeBundleService(),
 	)
 	require.NoError(t, err)
@@ -112,7 +112,7 @@ func SetupApiKey(t *testing.T, store db.DB, cfg *setting.Cfg, testKey TestApiKey
 func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, testUsers []TestUser) (orgID int64) {
 	role := string(org.RoleNone)
 
-	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(sqlStore), cfg)
+	quotaService := quotaimpl.ProvideService(sqlStore, cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
