@@ -68,13 +68,14 @@ export class ExtensionsLogDataSource extends RuntimeDataSource<LogDataQuery> {
     return this.extensionsLog.asObservable().pipe(
       tap((item: LogItem) => {
         if (item.level) {
+          console.log('levels');
           this.levels.add(item.level);
         }
         if (isString(item.labels['pluginId'])) {
           this.pluginIds.add(item.labels['pluginId']);
         }
         if (isString(item.labels['extensionPointId'])) {
-          this.pluginIds.add(item.labels['extensionPointId']);
+          this.extensionPointIds.add(item.labels['extensionPointId']);
         }
       }),
       filter((item: LogItem, index: number) => {

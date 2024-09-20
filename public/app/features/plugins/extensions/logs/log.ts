@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { Observable, Subject } from 'rxjs';
+import { Observable, ReplaySubject, Subject } from 'rxjs';
 
 enum LogLevel {
   info = 'info',
@@ -22,7 +22,7 @@ const channelName = 'ui-extension-logs';
 
 export class ExtensionsLog {
   private baseLabels: Record<string | symbol, unknown> | undefined;
-  private subject: Subject<LogItem> | undefined;
+  private subject: ReplaySubject<LogItem> | undefined;
   private channel: BroadcastChannel;
 
   constructor(baseLabels?: Record<string | symbol, unknown>) {
@@ -73,7 +73,7 @@ export class ExtensionsLog {
     if (!this.subject) {
       // Lazily create the subject on first subscription to prevent
       // to create buffers when no subscribers exists
-      this.subject = new Subject<LogItem>();
+      this.subject = new ReplaySubject<LogItem>(1000, 1000 * 60 * 10);
       this.channel.onmessage = (msg: MessageEvent<LogItem>) => this.subject?.next(msg.data);
     }
 

@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { ReactElement, useMemo } from 'react';
+import { useObservable } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import {
@@ -8,6 +9,7 @@ import {
   SceneComponentProps,
   SceneFlexItem,
   SceneFlexLayout,
+  sceneGraph,
   SceneObjectBase,
   SceneQueryRunner,
   sceneUtils,
@@ -137,6 +139,8 @@ class LogFilterScene extends SceneObjectBase {
 }
 
 function LogFilterSceneRenderer({ model }: SceneComponentProps<LogFilterScene>) {
+  useObservable(sceneGraph.getData(model).getResultsStream());
+
   return (
     <InlineFieldRow>
       <InlineField label="Plugin Id">
