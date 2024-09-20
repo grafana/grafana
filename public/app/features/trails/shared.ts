@@ -2,7 +2,7 @@ import { BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
-export type ActionViewType = 'overview' | 'breakdown' | 'logs' | 'related';
+export type ActionViewType = 'overview' | 'breakdown' | 'label-breakdown' | 'logs' | 'related';
 export interface ActionViewDefinition {
   displayName: string;
   value: ActionViewType;

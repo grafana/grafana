@@ -3,12 +3,12 @@ import {
   FieldConfigBuilders,
   SceneCSSGridItem,
   SceneDataProvider,
+  sceneGraph,
   SceneStatelessBehavior,
   VizPanel,
-  sceneGraph,
 } from '@grafana/scenes';
 
-import { BreakdownScene } from './BreakdownScene';
+import { LabelBreakdownScene } from './LabelBreakdownScene';
 import { findSceneObjectsByType } from './utils';
 
 export class BreakdownAxisChangeEvent extends BusEventWithPayload<{ min: number; max: number }> {
@@ -16,7 +16,7 @@ export class BreakdownAxisChangeEvent extends BusEventWithPayload<{ min: number;
 }
 
 export const yAxisSyncBehavior: SceneStatelessBehavior = (sceneObject: SceneCSSGridItem) => {
-  const breakdownScene = sceneGraph.getAncestor(sceneObject, BreakdownScene);
+  const breakdownScene = sceneGraph.getAncestor(sceneObject, LabelBreakdownScene);
 
   // Handle query runners from vizPanels that haven't been activated yet
   findSceneObjectsByType(sceneObject, VizPanel).forEach((vizPanel) => {
