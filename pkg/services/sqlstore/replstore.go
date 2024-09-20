@@ -2,7 +2,6 @@ package sqlstore
 
 import (
 	"errors"
-	"sync/atomic"
 	"time"
 
 	"github.com/dlmiddlecote/sqlstats"
@@ -25,37 +24,23 @@ import (
 // SQLStore.
 type ReplStore struct {
 	*SQLStore
-	repls []*SQLStore
-
-	// next is the index of the next read-only SQLStore in the chain.
-	next uint64
+	repl *SQLStore
 }
 
 // DB returns the main SQLStore.
-func (rs *ReplStore) DB() *SQLStore {
+func (rs ReplStore) DB() *SQLStore {
 	return rs.SQLStore
 }
 
 // ReadReplica returns the read-only SQLStore. If no read replica is configured,
 // it returns the main SQLStore.
-func (rs *ReplStore) ReadReplica() *SQLStore {
-	if len(rs.repls) == 0 {
+func (rs ReplStore) ReadReplica() *SQLStore {
+	if rs.repl == nil {
 		rs.log.Debug("ReadReplica not configured, using main SQLStore")
 		return rs.SQLStore
 	}
 	rs.log.Debug("Using ReadReplica")
-	return rs.nextRepl()
-}
-
-// nextRepl() returns the next read-only SQLStore in the chain. If no read replica is configured, the Primary is returned.
-func (rs *ReplStore) nextRepl() *SQLStore {
-	// start by grabbing the replica at the current index
-	selected := rs.repls[(int(rs.next))%len(rs.repls)]
-
-	// then increment the index for the next call
-	atomic.AddUint64(&rs.next, 1)
-
-	return selected
+	return rs.repl
 }
 
 // ProvideServiceWithReadReplica creates a new *SQLStore connection intended for
@@ -65,7 +50,7 @@ func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator,
 	bus bus.Bus, tracer tracing.Tracer) (*ReplStore, error) {
 	// start with the initialized SQLStore
-	replStore := &ReplStore{primary, nil, 0}
+	replStore := &ReplStore{primary, nil}
 
 	// FeatureToggle fallback: If the FlagDatabaseReadReplica feature flag is not enabled, return a single SQLStore.
 	if !features.IsEnabledGlobally(featuremgmt.FlagDatabaseReadReplica) {
@@ -77,32 +62,22 @@ func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
-
-	// Parsing the configuration to get the number of repls
-	replCfgs, err := NewRODatabaseConfigs(cfg, features)
+	s, err := newReadOnlySQLStore(cfg, features, bus, tracer)
 	if err != nil {
 		return nil, err
 	}
+	s.features = features
+	s.tracer = tracer
 
-	if len(replCfgs) > 0 {
-		replStore.repls = make([]*SQLStore, len(replCfgs))
+	// initialize and register metrics wrapper around the *sql.DB
+	db := s.engine.DB().DB
+
+	// register the go_sql_stats_connections_* metrics
+	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana_repl", db)); err != nil {
+		s.log.Warn("Failed to register sqlstore stats collector", "error", err)
 	}
 
-	for i, replCfg := range replCfgs {
-		s, err := newReadOnlySQLStore(cfg, replCfg, features, bus, tracer)
-		if err != nil {
-			return nil, err
-		}
-
-		// initialize and register metrics wrapper around the *sql.DB
-		db := s.engine.DB().DB
-
-		// register the go_sql_stats_connections_* metrics
-		if err := prometheus.Register(sqlstats.NewStatsCollector("grafana_repl", db)); err != nil {
-			s.log.Warn("Failed to register sqlstore stats collector", "error", err)
-		}
-		replStore.repls[i] = s
-	}
+	replStore.repl = s
 	return replStore, nil
 }
 
@@ -110,15 +85,16 @@ func ProvideServiceWithReadReplica(primary *SQLStore, cfg *setting.Cfg,
 // fully-populated read replica of the main Grafana Database. It provides no
 // write capabilities and does not run migrations, but other tracing and logging
 // features are enabled.
-func newReadOnlySQLStore(cfg *setting.Cfg, dbCfg *DatabaseConfig, features featuremgmt.FeatureToggles, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+func newReadOnlySQLStore(cfg *setting.Cfg, features featuremgmt.FeatureToggles, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
 	s := &SQLStore{
-		log:      log.New("replstore"),
-		bus:      bus,
-		tracer:   tracer,
-		features: features,
-		dbCfg:    dbCfg,
-		cfg:      cfg,
+		cfg:    cfg,
+		log:    log.New("replstore"),
+		bus:    bus,
+		tracer: tracer,
 	}
+
+	s.features = features
+	s.tracer = tracer
 
 	err := s.initReadOnlyEngine(s.engine)
 	if err != nil {
@@ -134,6 +110,12 @@ func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 		ss.log.Debug("Already connected to database replica")
 		return nil
 	}
+
+	dbCfg, err := NewRODatabaseConfig(ss.cfg, ss.features)
+	if err != nil {
+		return err
+	}
+	ss.dbCfg = dbCfg
 
 	if ss.cfg.DatabaseInstrumentQueries {
 		ss.dbCfg.Type = WrapDatabaseReplDriverWithHooks(ss.dbCfg.Type, ss.tracer)
@@ -176,44 +158,27 @@ func (ss *SQLStore) initReadOnlyEngine(engine *xorm.Engine) error {
 }
 
 // NewRODatabaseConfig creates a new read-only database configuration.
-func NewRODatabaseConfigs(cfg *setting.Cfg, features featuremgmt.FeatureToggles) ([]*DatabaseConfig, error) {
+func NewRODatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*DatabaseConfig, error) {
 	if cfg == nil {
 		return nil, errors.New("cfg cannot be nil")
 	}
 
-	// if only one replica is configured in the database_replicas section, use it as the default
-	defaultReplCfg := &DatabaseConfig{}
-	if err := defaultReplCfg.readConfigSection(cfg, "database_replicas"); err != nil {
+	dbCfg := &DatabaseConfig{}
+	if err := dbCfg.readConfigSection(cfg, "database_replica"); err != nil {
 		return nil, err
 	}
-	err := defaultReplCfg.buildConnectionString(cfg, features)
-	if err != nil {
+
+	if err := dbCfg.buildConnectionString(cfg, features); err != nil {
 		return nil, err
 	}
-	ret := []*DatabaseConfig{defaultReplCfg}
 
-	// Check for additional replicas as children of the database_replicas section (e.g. database_replicas.one, database_replicas.cheetara)
-	repls := cfg.Raw.Section("database_replicas")
-	if len(repls.ChildSections()) > 0 {
-		for _, sec := range repls.ChildSections() {
-			replCfg := &DatabaseConfig{}
-			if err := replCfg.parseConfigIni(sec); err != nil {
-				return nil, err
-			}
-			if err := replCfg.buildConnectionString(cfg, features); err != nil {
-				return nil, err
-			}
-			ret = append(ret, replCfg)
-		}
-	}
-
-	return ret, nil
+	return dbCfg, nil
 }
 
 // ProvideServiceWithReadReplicaForTests wraps the SQLStore in a ReplStore, with the main sqlstore as both the primary and read replica.
 // TODO: eventually this should be replaced with a more robust test setup which in
 func ProvideServiceWithReadReplicaForTests(testDB *SQLStore, t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*ReplStore, error) {
-	return newReplStore(testDB, testDB), nil
+	return &ReplStore{testDB, testDB}, nil
 }
 
 // InitTestReplDB initializes a test DB and returns it wrapped in a ReplStore with the main SQLStore as both the primary and read replica.
@@ -225,7 +190,7 @@ func InitTestReplDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*ReplStore, *sett
 	if err != nil {
 		t.Fatalf("failed to initialize sql repl store: %s", err)
 	}
-	return newReplStore(ss, ss), cfg
+	return &ReplStore{ss, ss}, cfg
 }
 
 // InitTestReplDBWithMigration initializes the test DB given custom migrations.
@@ -237,16 +202,5 @@ func InitTestReplDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseM
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
-	return newReplStore(ss, ss)
-}
-
-// newReplStore is a wrapper function that returns a ReplStore with the given primary and read replicas.
-func newReplStore(primary *SQLStore, readReplicas ...*SQLStore) *ReplStore {
-	ret := &ReplStore{
-		SQLStore: primary,
-		repls:    make([]*SQLStore, len(readReplicas)),
-		next:     0,
-	}
-	ret.repls = readReplicas
-	return ret
+	return &ReplStore{ss, ss}
 }
