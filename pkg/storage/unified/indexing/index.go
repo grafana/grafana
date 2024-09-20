@@ -56,11 +56,12 @@ type Opts struct {
 	query      bool
 	inMemory   bool
 	concurrent bool
+	size       int
 }
 
 func run(opts Opts) {
 	fmt.Println("Seeding...")
-	objects := seedObjects()
+	objects := seedObjects(&opts)
 
 	fmt.Println("Creating index for", len(objects), "objects")
 
@@ -102,6 +103,8 @@ func run(opts Opts) {
 
 		end := time.Since(start).Seconds()
 		fmt.Printf("Indexed  %d docs in %f seconds\n", count, end)
+		perSecond := float64(count) / end
+		fmt.Printf("Indexing speed: %f docs/second\n", perSecond)
 	}
 
 	if opts.query {
@@ -181,7 +184,7 @@ func queryIndex(index bleve.Index) {
 	}
 }
 
-func seedObjects() []Object {
+func seedObjects(opts *Opts) []Object {
 	type Resource struct {
 		Group      string
 		Resource   string
@@ -205,11 +208,16 @@ func seedObjects() []Object {
 		},
 	}
 
+	defaultSize := 10000
+	if opts.size == 0 {
+		opts.size = defaultSize
+	}
+
 	// creates 4,000,000 objects
 	objects := []Object{}
 	for _, namespace := range namespaces {
 		for _, resource := range resources {
-			for i := 0; i < 10000; i++ {
+			for i := 0; i < opts.size; i++ {
 				objects = append(objects, Object{
 					Guid:            fmt.Sprintf("%s-%s-%d", namespace, resource.Resource, i),
 					ResourceVersion: time.Now().UnixNano(),
