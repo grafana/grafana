@@ -213,7 +213,6 @@ func seedObjects(opts *Opts) []Object {
 		opts.size = defaultSize
 	}
 
-	// creates 4,000,000 objects
 	objects := []Object{}
 	for _, namespace := range namespaces {
 		for _, resource := range resources {
