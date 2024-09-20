@@ -18,7 +18,7 @@ cards:
   items:
     - title: Explore Metrics
       href: ./metrics/
-      description: Quickly find related metrics with just a few simple clicks, without needing to write PromQL queries to retrieve metrics.
+      description: Quickly find related metrics with a few clicks, without needing to write PromQL queries to retrieve metrics.
       height: 24
     - title: Explore Logs
       href: ./logs/
@@ -26,7 +26,7 @@ cards:
       height: 24
     - title: Explore Traces
       href: ./traces/
-      description: Use Rate, Errors, and Duration (RED) metrics derived from traces to investigate to understand errors and latency issues within complex distributed systems.
+      description: Use Rate, Errors, and Duration (RED) metrics derived from traces to investigate and understand errors and latency issues within complex distributed systems.
       height: 24
     - title: Explore Profiles
       href: ./profiles/
