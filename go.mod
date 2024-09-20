@@ -508,4 +508,4 @@ replace xorm.io/xorm => github.com/grafana/grafana/pkg/util/xorm v0.0.1
 // lock for mysql tsdb compat
 replace github.com/go-sql-driver/mysql => github.com/go-sql-driver/mysql v1.7.1
 
-replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.249.1-0.20240918131754-dc37cb5a3695
+replace github.com/grafana/grafana-plugin-sdk-go => github.com/grafana/grafana-plugin-sdk-go v0.250.1-0.20240920111026-e9804864f83f
