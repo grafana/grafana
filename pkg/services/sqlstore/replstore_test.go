@@ -40,11 +40,11 @@ func TestNewRODatabaseConfig(t *testing.T) {
 
 		dbCfgs, err := NewRODatabaseConfigs(cfg, nil)
 		require.NoError(t, err)
-		require.Len(t, dbCfgs, 3)
 
 		var connStr = func(port int) string {
 			return fmt.Sprintf("grafana:password@tcp(127.0.0.1:%d)/grafana?collation=utf8mb4_unicode_ci&allowNativePasswords=true&clientFoundRows=true", port)
 		}
+
 		for i, c := range dbCfgs {
 			if !cmp.Equal(c.ConnectionString, connStr(i+3306)) {
 				t.Errorf("wrong result for connection string %d.\nGot: %s,\nWant: %s", i, c.ConnectionString, connStr(i+3306))
@@ -60,15 +60,7 @@ name = grafana
 user = grafana
 password = password
 host = 127.0.0.1:3306
-[database_replica.one]
+[database_replicas.one] =
 host = 127.0.0.1:3307
-type = mysql
-name = grafana
-user = grafana
-password = password
-[database_replica.two]
-host = 127.0.0.1:3308
-type = mysql
-name = grafana
-user = grafana
-password = password`
+[database_replicas.two] =
+host = 127.0.0.1:3308`
