@@ -8,13 +8,8 @@ import ConditionalWrap from 'app/features/alerting/unified/components/Conditiona
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
-import {
-  ANNOTATION_INUSE_ROUTES,
-  ANNOTATION_INUSE_RULES,
-  canDeleteEntity,
-  canEditEntity,
-} from 'app/features/alerting/unified/utils/k8s/utils';
+import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
+import { canDeleteEntity, canEditEntity, getAnnotation } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { createRelativeUrl } from '../../utils/url';
@@ -51,11 +46,11 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
    * either taken from the annotations (k8s) or from the alertmanager config
    */
   const numberOfPolicies = Number(
-    contactPoint.metadata?.annotations?.[ANNOTATION_INUSE_ROUTES] ?? regularPolicyReferences.length
+    getAnnotation(contactPoint, K8sAnnotations.InUseRoutes) ?? regularPolicyReferences.length
   );
 
   /** Number of rules that use this contact point for simplified routing */
-  const numberOfRules = Number(contactPoint.metadata?.annotations?.[ANNOTATION_INUSE_RULES]) || 0;
+  const numberOfRules = Number(getAnnotation(contactPoint, K8sAnnotations.InUseRules)) || 0;
 
   /** Is the contact point referenced by anything such as notification policies or as a simplified routing contact point? */
   const isReferencedByAnything = numberOfRules + numberOfPolicies > 0;
@@ -199,7 +194,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
           </TextLink>
         )}
         {provisioned && (
-          <ProvisioningBadge tooltip provenance={contactPoint.metadata?.annotations?.[PROVENANCE_ANNOTATION]} />
+          <ProvisioningBadge tooltip provenance={getAnnotation(contactPoint, K8sAnnotations.Provenance)} />
         )}
         {!isReferencedByAnything && <UnusedContactPointBadge />}
         <Spacer />
