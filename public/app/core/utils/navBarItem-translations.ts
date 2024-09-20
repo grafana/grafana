@@ -211,7 +211,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'dashboards/snapshots':
       return t(
         'nav.snapshots.subtitle',
-        'Interactive, publically available, point-in-time representations of dashboards'
+        'Interactive, publically available, point-in-time representations of dashboards and panels'
       );
     case 'dashboards/public':
       return config.featureToggles.newDashboardSharingComponent
@@ -262,6 +262,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.api-keys.subtitle', 'Manage and create API keys that are used to interact with Grafana HTTP APIs');
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
+    case 'groupsync':
+      return t('nav.groupsync.subtitle', 'Manage mappings of Identity Provider groups to Grafana Roles');
     case 'global-users':
       return t('nav.global-users.subtitle', 'Manage users in Grafana');
     case 'global-orgs':

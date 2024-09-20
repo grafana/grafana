@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import { Dispatch, SetStateAction, useEffect, useId, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   useStyles2,
+  Button,
   CollapsableSection,
   Divider,
   Drawer,
@@ -24,6 +25,8 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { LdapPayload, MapKeyCertConfigured } from 'app/types';
+
+import { GroupMappingComponent } from './LdapGroupMapping';
 
 interface Props {
   onClose: () => void;
@@ -46,7 +49,7 @@ export const LdapDrawerComponent = ({
   const [encryptionProvider, setEncryptionProvider] = useState(EncryptionProvider.Base64);
 
   const styles = useStyles2(getStyles);
-  const { getValues, register, setValue, watch } = useFormContext<LdapPayload>();
+  const { control, getValues, register, setValue, watch } = useFormContext<LdapPayload>();
 
   const nameId = useId();
   const surnameId = useId();
@@ -89,6 +92,23 @@ export const LdapDrawerComponent = ({
       }
     </Trans>
   );
+
+  const onAddGroupMapping = () => {
+    setValue(`${serverConfig}.group_mappings`, [
+      ...getValues(`${serverConfig}.group_mappings`),
+      {
+        group_dn: '',
+        org_id: 1,
+        org_role: 'Viewer',
+        grafana_admin: false,
+      },
+    ]);
+  };
+
+  const onRemoveGroupMapping = (index: number) => {
+    const groupMappings = getValues(`${serverConfig}.group_mappings`);
+    setValue(`${serverConfig}.group_mappings`, [...groupMappings.slice(0, index), ...groupMappings.slice(index + 1)]);
+  };
 
   return (
     <Drawer title={t('ldap-drawer.title', 'Advanced settings')} onClose={onClose}>
@@ -204,7 +224,13 @@ export const LdapDrawerComponent = ({
             {...register(`${serverConfig}.group_search_filter_user_attribute`)}
           />
         </Field>
+        {watch('settings.config.servers.0.group_mappings')?.map((_, i) => {
+          return <GroupMappingComponent key={i} groupMappingIndex={i} onRemove={() => onRemoveGroupMapping(i)} />;
+        })}
         <Divider />
+        <Button className={styles.button} variant="secondary" icon="plus" onClick={() => onAddGroupMapping()}>
+          <Trans i18nKey="ldap-drawer.group-mapping-section.add.button">Add group mapping</Trans>
+        </Button>
       </CollapsableSection>
       <CollapsableSection
         label={t('ldap-drawer.extra-security-section.label', 'Extra security measures')}
@@ -309,19 +335,17 @@ export const LdapDrawerComponent = ({
                     'Root CA certificate content'
                   )}
                 >
-                  <MultiSelect
-                    id="root-ca-cert"
-                    allowCustomValue
-                    onChange={(v) => {
-                      setValue(
-                        `${serverConfig}.root_ca_cert_value`,
-                        v.filter(({ v }) => typeof v === 'string')?.map(({ v }) => v)
-                      );
-                    }}
-                    value={watch(`${serverConfig}.root_ca_cert_value`)?.map((v) => ({
-                      label: renderMultiSelectLabel(v),
-                      value: v,
-                    }))}
+                  <Controller
+                    name={`${serverConfig}.root_ca_cert_value`}
+                    control={control}
+                    render={({ field: { onChange, value, ...field } }) => (
+                      <MultiSelect
+                        {...field}
+                        allowCustomValue
+                        onChange={(v) => onChange(v.map(({ value }) => String(value)))}
+                        value={value?.map((v) => ({ label: renderMultiSelectLabel(v), value: v }))}
+                      />
+                    )}
                   />
                 </Field>
                 <Field
@@ -419,6 +443,9 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     sectionLabel: css({
       fontSize: theme.typography.size.lg,
+    }),
+    button: css({
+      marginBottom: theme.spacing(4),
     }),
   };
 }

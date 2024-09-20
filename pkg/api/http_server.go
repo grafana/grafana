@@ -78,6 +78,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -146,6 +147,7 @@ type HTTPServer struct {
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
+	pluginAssets                 *pluginassets.Service
 	SearchService                search.Service
 	ShortURLService              shorturls.Service
 	QueryHistoryService          queryhistory.Service
@@ -247,7 +249,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
-	serviceaccountsService serviceaccounts.Service,
+	serviceaccountsService serviceaccounts.Service, pluginAssets *pluginassets.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService,
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
@@ -286,6 +288,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
 		pluginDashboardService:       pluginDashboardService,
+		pluginAssets:                 pluginAssets,
 		pluginErrorResolver:          pluginErrorResolver,
 		pluginFileStore:              pluginFileStore,
 		grafanaUpdateChecker:         grafanaUpdateChecker,
@@ -638,6 +641,8 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	if hs.Cfg.EnforceDomain {
 		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
+	// handle action urls
+	m.UseMiddleware(middleware.ValidateActionUrl(hs.Cfg, hs.log))
 
 	m.Use(middleware.HandleNoCacheHeaders)
 
@@ -855,7 +860,7 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 
 	var keyBytes []byte
 	// Process the PKCS-encrypted PEM block.
-	if strings.Contains(keyPemBlock.Type, "ENCRYPTED") {
+	if strings.Contains(keyPemBlock.Type, "ENCRYPTED PRIVATE KEY") {
 		// The pkcs8 package only handles the PKCS #5 v2.0 scheme.
 		decrypted, err := pkcs8.ParsePKCS8PrivateKey(keyPemBlock.Bytes, []byte(certKeyFilePassword))
 		if err != nil {
@@ -864,6 +869,19 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 		keyBytes, err = x509.MarshalPKCS8PrivateKey(decrypted)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling PKCS8 Private key: %w", err)
+		}
+	} else if strings.Contains(keyPemBlock.Type, "RSA PRIVATE KEY") {
+		// Check if the PEM block is encrypted with PKCS#1
+		// Even if these methods are deprecated, RSA PKCS#1 was requested by some customers and fairly used
+		// nolint:staticcheck
+		if !x509.IsEncryptedPEMBlock(keyPemBlock) {
+			return nil, fmt.Errorf("password provided but Private key is not recorgnized as encrypted")
+		}
+		// Only covers encrypted PEM data with a DEK-Info header.
+		// nolint:staticcheck
+		keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
+		if err != nil {
+			return nil, fmt.Errorf("error decrypting x509 PemBlock: %w", err)
 		}
 	} else {
 		return nil, fmt.Errorf("password provided but Private key is not encrypted or not supported")

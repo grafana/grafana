@@ -122,7 +122,7 @@ func (o *APIServerOptions) Config(tracer tracing.Tracer) (*genericapiserver.Reco
 		setting.BuildVersion,
 		setting.BuildCommit,
 		setting.BuildBranch,
-		o.factory.GetOptionalMiddlewares(tracer)...,
+		o.factory.GetBuildHandlerChainFunc(tracer, o.builders),
 	)
 	return serverConfig, err
 }
@@ -144,7 +144,7 @@ func (o *APIServerOptions) Validate() error {
 	}
 
 	if errs := o.Options.Validate(); len(errs) > 0 {
-		errors = append(errors, errors...)
+		errors = append(errors, errs...)
 	}
 
 	return utilerrors.NewAggregate(errors)

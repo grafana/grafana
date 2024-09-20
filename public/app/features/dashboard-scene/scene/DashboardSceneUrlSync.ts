@@ -18,13 +18,7 @@ import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { ShareModal } from '../sharing/ShareModal';
-import {
-  findVizPanelByKey,
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  isPanelClone,
-  isWithinUnactivatedRepeatRow,
-} from '../utils/utils';
+import { findVizPanelByKey, getDashboardSceneFor, getLibraryPanelBehavior, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -105,11 +99,6 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ viewPanel: null });
-        return;
-      }
-
-      if (isWithinUnactivatedRepeatRow(panel)) {
-        this._handleViewRepeatClone(values.viewPanel);
         return;
       }
 
@@ -234,10 +223,6 @@ class ResolveInspectPanelByKey extends SceneObjectBase<ResolveInspectPanelByKeyS
 
     if (dashboard.state.editPanel) {
       panel = dashboard.state.editPanel.state.vizManager.state.panel;
-    }
-
-    if (dashboard.state.viewPanelScene && dashboard.state.viewPanelScene.state.body) {
-      panel = dashboard.state.viewPanelScene.state.body;
     }
 
     if (panel) {

@@ -1,11 +1,26 @@
 import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { getBackendSrv, getAppEvents } from '@grafana/runtime';
-import { useStyles2, Alert, Box, Button, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
+import {
+  useStyles2,
+  Alert,
+  Box,
+  Button,
+  Field,
+  IconButton,
+  Input,
+  LinkButton,
+  Menu,
+  Stack,
+  Text,
+  TextLink,
+  Dropdown,
+  MultiSelect,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -29,6 +44,8 @@ const pageNav: NavModelItem = {
   icon: 'shield',
   id: 'LDAP',
 };
+
+const serverConfig = 'settings.config.servers.0';
 
 const emptySettings: LdapPayload = {
   id: '',
@@ -90,21 +107,13 @@ export const LdapSettingsPage = () => {
   });
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
-  const { getValues, handleSubmit, register, reset } = methods;
+  const { control, getValues, handleSubmit, register, reset, watch } = methods;
 
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function init() {
-      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
-      if (!payload || !payload.settings || !payload.settings.config) {
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
-        });
-        return;
-      }
-
+      const payload = await getSettings();
       const serverConfig = payload.settings.config.servers[0];
       setMapKeyCertConfigured({
         rootCaCertValue: serverConfig.root_ca_cert_value?.length > 0,
@@ -135,6 +144,30 @@ export const LdapSettingsPage = () => {
   }
 
   /**
+   * Fetches the settings from the backend
+   * @returns Promise<LdapPayload>
+   */
+  const getSettings = async () => {
+    try {
+      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
+      if (!payload || !payload.settings || !payload.settings.config) {
+        appEvents.publish({
+          type: AppEvents.alertError.name,
+          payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
+        });
+        return emptySettings;
+      }
+      return payload;
+    } catch (error) {
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [t('ldap-settings-page.alert.error-fetching', 'Error fetching LDAP settings')],
+      });
+      return emptySettings;
+    }
+  };
+
+  /**
    * Save payload to the backend
    * @param payload LdapPayload
    */
@@ -151,6 +184,7 @@ export const LdapSettingsPage = () => {
         type: AppEvents.alertSuccess.name,
         payload: [t('ldap-settings-page.alert.saved', 'LDAP settings saved')],
       });
+      reset(await getSettings());
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -176,18 +210,11 @@ export const LdapSettingsPage = () => {
   const saveForm = () => {
     putPayload(getValues());
   };
-  const discardForm = async () => {
+  const deleteLDAPConfig = async () => {
     try {
       setIsLoading(true);
       await getBackendSrv().delete('/api/v1/sso-settings/ldap');
-      const payload = await getBackendSrv().get<LdapPayload>('/api/v1/sso-settings/ldap');
-      if (!payload || !payload.settings || !payload.settings.config) {
-        appEvents.publish({
-          type: AppEvents.alertError.name,
-          payload: [t('ldap-settings-page.alert.error-update', 'Error updating LDAP settings')],
-        });
-        return;
-      }
+      const payload = await getSettings();
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: [t('ldap-settings-page.alert.discard-success', 'LDAP settings discarded')],
@@ -203,24 +230,33 @@ export const LdapSettingsPage = () => {
     }
   };
 
-  const documentation = (
-    <TextLink
-      href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/"
-      external
-    >
-      <Trans i18nKey="ldap-settings-page.documentation">documentation</Trans>
-    </TextLink>
-  );
   const subTitle = (
     <Trans i18nKey="ldap-settings-page.subtitle">
       The LDAP integration in Grafana allows your Grafana users to log in with their LDAP credentials. Find out more in
-      our {documentation}.
+      our{' '}
+      <TextLink
+        href="https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/"
+        external
+      >
+        <Trans i18nKey="ldap-settings-page.documentation">documentation</Trans>
+      </TextLink>
+      .
     </Trans>
+  );
+
+  const disabledFormAlert = (
+    <Alert title={t('ldap-settings-page.login-form-alert.title', 'Basic login disabled')}>
+      <Trans i18nKey="ldap-settings-page.login-form-alert.description">
+        Your LDAP configuration is not working because the basic login form is currently disabled. Please enable the
+        login form to use LDAP authentication. You can enable it on the Authentication page under “Auth settings”.
+      </Trans>
+    </Alert>
   );
 
   return (
     <Page navId="authentication" pageNav={pageNav} subTitle={subTitle}>
       <Page.Contents>
+        {config.disableLoginForm && disabledFormAlert}
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)}>
             {isLoading && <Loader />}
@@ -240,7 +276,7 @@ export const LdapSettingsPage = () => {
                     id="host"
                     placeholder={t('ldap-settings-page.host.placeholder', 'example: 127.0.0.1')}
                     type="text"
-                    {...register('settings.config.servers.0.host', { required: true })}
+                    {...register(`${serverConfig}.host`, { required: true })}
                   />
                 </Field>
                 <Field
@@ -254,14 +290,14 @@ export const LdapSettingsPage = () => {
                     id="bind-dn"
                     placeholder={t('ldap-settings-page.bind-dn.placeholder', 'example: cn=admin,dc=grafana,dc=org')}
                     type="text"
-                    {...register('settings.config.servers.0.bind_dn')}
+                    {...register(`${serverConfig}.bind_dn`)}
                   />
                 </Field>
                 <Field label={t('ldap-settings-page.bind-password.label', 'Bind password')}>
                   <Input
                     id="bind-password"
                     type="text"
-                    {...register('settings.config.servers.0.bind_password', { required: false })}
+                    {...register(`${serverConfig}.bind_password`, { required: false })}
                   />
                 </Field>
                 <Field
@@ -275,22 +311,27 @@ export const LdapSettingsPage = () => {
                     id="search_filter"
                     placeholder={t('ldap-settings-page.search_filter.placeholder', 'example: cn=%s')}
                     type="text"
-                    {...register('settings.config.servers.0.search_filter', { required: true })}
+                    {...register(`${serverConfig}.search_filter`, { required: true })}
                   />
                 </Field>
                 <Field
                   label={t('ldap-settings-page.search-base-dns.label', 'Search base DNS *')}
                   description={t(
                     'ldap-settings-page.search-base-dns.description',
-                    'An array of base dns to search through; separate by commas or spaces.'
+                    'An array of base dns to search through.'
                   )}
                 >
-                  <Input
-                    id="search-base-dns"
-                    placeholder={t('ldap-settings-page.search-base-dns.placeholder', 'example: "dc=grafana.dc=org"')}
-                    type="text"
-                    {...register('settings.config.servers.0.search_base_dns', { required: true })}
-                  />
+                  <Controller
+                    name={`${serverConfig}.search_base_dns`}
+                    control={control}
+                    render={({ field: { onChange, ...field } }) => (
+                      <MultiSelect
+                        {...field}
+                        allowCustomValue
+                        onChange={(v) => onChange(v.map(({ value }) => String(value)))}
+                      />
+                    )}
+                  ></Controller>
                 </Field>
                 <Box borderColor="strong" borderStyle="solid" padding={2} width={68}>
                   <Stack alignItems={'center'} direction={'row'} gap={2} justifyContent={'space-between'}>
@@ -309,17 +350,34 @@ export const LdapSettingsPage = () => {
                     </Button>
                   </Stack>
                 </Box>
-                <Box display={'flex'} gap={2} marginTop={5}>
-                  <Stack alignItems={'center'} gap={2}>
-                    <Button type={'submit'}>
+                <Box display="flex" gap={2} marginTop={5}>
+                  <Stack alignItems="center" gap={2}>
+                    <Button type="submit">
                       <Trans i18nKey="ldap-settings-page.buttons-section.save-and-enable.button">Save and enable</Trans>
                     </Button>
                     <Button variant="secondary" onClick={saveForm}>
                       <Trans i18nKey="ldap-settings-page.buttons-section.save.button">Save</Trans>
                     </Button>
-                    <Button variant="secondary" onClick={discardForm}>
+                    <LinkButton href="/admin/authentication" variant="secondary">
                       <Trans i18nKey="ldap-settings-page.buttons-section.discard.button">Discard</Trans>
-                    </Button>
+                    </LinkButton>
+                    <Dropdown
+                      overlay={
+                        <Menu>
+                          <Menu.Item label="Reset to default values" icon="history-alt" onClick={deleteLDAPConfig} />
+                        </Menu>
+                      }
+                      placement="bottom-start"
+                    >
+                      <IconButton
+                        tooltip="More actions"
+                        title="More actions"
+                        size="md"
+                        variant="secondary"
+                        name="ellipsis-v"
+                        hidden={watch('source') === 'system'}
+                      />
+                    </Dropdown>
                   </Stack>
                 </Box>
               </section>

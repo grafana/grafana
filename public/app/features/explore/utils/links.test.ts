@@ -719,10 +719,10 @@ function setup(
       };
     },
     getAnchorInfo(link) {
-      return { ...link };
+      return { ...link, href: link.url ?? '' };
     },
     getLinkUrl(link) {
-      return link.url;
+      return link.url ?? '';
     },
   });
 
