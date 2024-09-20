@@ -607,7 +607,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				}
 
 				// record latency
-				latencyMilliseconds := time.Now().UnixMilli() - event.ResourceVersion
+				latencyMilliseconds := time.Now().UnixMicro() - event.ResourceVersion
 				StorageServerMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(float64(latencyMilliseconds))
 			}
 		}
