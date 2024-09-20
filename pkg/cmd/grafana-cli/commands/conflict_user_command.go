@@ -71,7 +71,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to load configuration", err)
 	}
-	s, replstore, err := getSqlStore(cfg, tracer, features)
+	s, err := getSqlStore(cfg, tracer, features)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get to sql", err)
 	}
@@ -86,7 +86,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	}
 	routing := routing.ProvideRegister()
 
-	acService, err := acimpl.ProvideService(cfg, replstore, routing, nil, nil, nil, features, tracer, zanzana.NewNoopClient(), permreg.ProvidePermissionRegistry())
+	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, nil, features, tracer, zanzana.NewNoopClient(), permreg.ProvidePermissionRegistry())
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
 	}
@@ -95,15 +95,9 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	return &resolver, nil
 }
 
-func getSqlStore(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*sqlstore.SQLStore, *sqlstore.ReplStore, error) {
+func getSqlStore(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*sqlstore.SQLStore, error) {
 	bus := bus.ProvideBus(tracer)
-	ss, err := sqlstore.ProvideService(cfg, features, &migrations.OSSMigrations{}, bus, tracer)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	replStore, err := sqlstore.ProvideServiceWithReadReplica(ss, cfg, features, &migrations.OSSMigrations{}, bus, tracer)
-	return ss, replStore, err
+	return sqlstore.ProvideService(cfg, features, &migrations.OSSMigrations{}, bus, tracer)
 }
 
 func runListConflictUsers() func(context *cli.Context) error {
