@@ -14,6 +14,7 @@ const SubscriptionsApiVersion = "2020-01-01"
 
 func GetFirstSubscriptionOrDefault(ctx context.Context, dsInfo types.DatasourceInfo, logger log.Logger) (string, error) {
 	if dsInfo.Settings.SubscriptionId != "" {
+		logger.Info("sub_information", "default_sub_id", dsInfo.Settings.SubscriptionId)
 		return dsInfo.Settings.SubscriptionId, nil
 	}
 
@@ -42,6 +43,7 @@ func GetFirstSubscriptionOrDefault(ctx context.Context, dsInfo types.DatasourceI
 		return "", fmt.Errorf("no subscriptions found: %v", err)
 	}
 
+	logger.Info("sub_information", "retrieved_sub", subscriptions[0])
 	return subscriptions[0], nil
 }
 
