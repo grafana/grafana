@@ -545,7 +545,6 @@ func (d *dashboardStore) GetDashboardsByPluginID(ctx context.Context, query *das
 	}
 	return dashboards, nil
 }
-
 func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetSoftDeletedDashboard")
 	defer span.End()
@@ -788,7 +787,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 	defer span.End()
 
 	var queryResult *dashboards.Dashboard
-	err := d.store.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		// nolint:staticcheck
 		if query.ID == 0 && len(query.UID) == 0 && (query.Title == nil || (query.FolderID == nil && query.FolderUID == nil)) {
@@ -854,7 +853,7 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 	defer span.End()
 
 	var dashboards = make([]*dashboards.Dashboard, 0)
-	err := d.store.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		if len(query.DashboardIDs) == 0 && len(query.DashboardUIDs) == 0 {
 			return star.ErrCommandValidationFailed
 		}
@@ -884,7 +883,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	ctx, span := tracer.Start(ctx, "dashboards.database.FindDashboards")
 	defer span.End()
 
-	recursiveQueriesAreSupported, err := d.store.ReadReplica().RecursiveQueriesAreSupported()
+	recursiveQueriesAreSupported, err := d.store.DB().RecursiveQueriesAreSupported()
 	if err != nil {
 		return nil, err
 	}
@@ -917,11 +916,11 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	if len(query.Title) > 0 {
-		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.ReadReplica().GetDialect(), Title: query.Title})
+		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.DB().GetDialect(), Title: query.Title})
 	}
 
 	if len(query.Type) > 0 {
-		filters = append(filters, searchstore.TypeFilter{Dialect: d.store.ReadReplica().GetDialect(), Type: query.Type})
+		filters = append(filters, searchstore.TypeFilter{Dialect: d.store.DB().GetDialect(), Type: query.Type})
 	}
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
@@ -931,7 +930,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	if len(query.FolderUIDs) > 0 {
 		filters = append(filters, searchstore.FolderUIDFilter{
-			Dialect:              d.store.ReadReplica().GetDialect(),
+			Dialect:              d.store.DB().GetDialect(),
 			OrgID:                orgID,
 			UIDs:                 query.FolderUIDs,
 			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
@@ -948,7 +947,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
 
 	var res []dashboards.DashboardSearchProjection
-	sb := &searchstore.Builder{Dialect: d.store.ReadReplica().GetDialect(), Filters: filters, Features: d.features}
+	sb := &searchstore.Builder{Dialect: d.store.DB().GetDialect(), Filters: filters, Features: d.features}
 
 	limit := query.Limit
 	if limit < 1 {
@@ -962,7 +961,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	sql, params := sb.ToSQL(limit, page)
 
-	err = d.store.ReadReplica().WithDbSession(ctx, func(sess *db.Session) error {
+	err = d.store.DB().WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)
 	})
 
@@ -1066,7 +1065,7 @@ func (d *dashboardStore) GetAllDashboards(ctx context.Context) ([]*dashboards.Da
 	defer span.End()
 
 	var dashboards = make([]*dashboards.Dashboard, 0)
-	err := d.store.ReadReplica().WithDbSession(ctx, func(session *db.Session) error {
+	err := d.store.DB().WithDbSession(ctx, func(session *db.Session) error {
 		err := session.Find(&dashboards)
 		return err
 	})
