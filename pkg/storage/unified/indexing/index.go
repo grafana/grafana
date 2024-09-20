@@ -95,8 +95,13 @@ func run(opts Opts) {
 			indexObjectsConcurrently(index, objects, opts)
 		}
 
+		count, err := index.DocCount()
+		if err != nil {
+			log.Fatalf("Failed to get doc count: %v", err)
+		}
+
 		end := time.Since(start).Seconds()
-		fmt.Printf("Indexing completed in %f seconds\n", end)
+		fmt.Printf("Indexed  %d docs in %f seconds\n", count, end)
 	}
 
 	if opts.query {
@@ -231,11 +236,17 @@ func seedObjects() []Object {
 }
 
 func IndexObjects(index bleve.Index, objects []Object) {
+	batch := index.NewBatch()
 	for _, obj := range objects {
-		err := index.Index(obj.Guid, obj)
+		err := batch.Index(obj.Guid, obj)
 		if err != nil {
-			fmt.Println("Failed to index document:", err)
+			fmt.Println("Failed to add document to batch:", err)
 		}
+	}
+
+	err := index.Batch(batch)
+	if err != nil {
+		fmt.Println("Failed to index batch:", err)
 	}
 
 	fmt.Println("Indexing synchronously completed")
