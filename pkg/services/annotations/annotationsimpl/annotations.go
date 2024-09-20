@@ -76,6 +76,16 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 		query.Limit = 1000
 	}
 
+	// Return early if no annotations found, it's not necessary to perform expensive access control filtering
+	res, err := r.reader.Get(ctx, query, &accesscontrol.AccessResources{
+		Dashboards:               map[string]int64{},
+		CanAccessDashAnnotations: true,
+		CanAccessOrgAnnotations:  true,
+	})
+	if err != nil || len(res) == 0 {
+		return []*annotations.ItemDTO{}, err
+	}
+
 	results := make([]*annotations.ItemDTO, 0, query.Limit)
 	query.Page = 1
 
