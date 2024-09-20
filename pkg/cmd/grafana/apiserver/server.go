@@ -144,7 +144,7 @@ func (o *APIServerOptions) Validate() error {
 	}
 
 	if errs := o.Options.Validate(); len(errs) > 0 {
-		errors = append(errors, errors...)
+		errors = append(errors, errs...)
 	}
 
 	return utilerrors.NewAggregate(errors)

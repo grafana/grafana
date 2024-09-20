@@ -32,6 +32,27 @@ func (srv AlertmanagerSrv) provenanceGuard(currentConfig apimodels.GettableUserC
 	return nil
 }
 
+func (srv AlertmanagerSrv) k8sApiServiceGuard(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
+	// Modifications to receivers via this API is tricky with new per-receiver RBAC. Assuming we restrict the API to only
+	// those users with global edit permissions, we would still need to consider the following:
+	// - Since the UIDs stored in the database for the purposes of per-receiver RBAC are generated based on the receiver
+	//   name, we would need to ensure continuity of permissions when a receiver is renamed. This would, preferably,
+	//   require detecting renames and updating the permissions UID in the database.
+	// - It would need to determine newly created and deleted receivers so it can populate per-receiver access control defaults.
+
+	// Neither of these are insurmountable, but considering this endpoint will be removed once FlagAlertingApiServer
+	// becomes GA, the complexity may not be worthwhile. To that end, for now we reject any request that attempts to
+	// modify receivers.
+	delta, err := calculateReceiversDelta(currentConfig.AlertmanagerConfig.Receivers, newConfig.AlertmanagerConfig.Receivers)
+	if err != nil {
+		return err
+	}
+	if !delta.IsEmpty() {
+		return fmt.Errorf("cannot modify receivers using this API while per-receiver RBAC is enabled; either disable the `alertingApiServer` feature flag or use an API that supports per-receiver RBAC (e.g. provisioning or receivers API)")
+	}
+	return nil
+}
+
 func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
 	reporter := cmputil.DiffReporter{}
 	options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{})}

@@ -24,6 +24,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	notificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -33,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -102,24 +104,25 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.Equal(t, newResource.Spec, actual.Spec)
 	})
 
-	// TODO uncomment when renaming is supported
-	// t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
-	// 	existing, err := client.Get(ctx, resourceID, v1.GetOptions{})
-	// 	require.NoError(t, err)
-	//
-	// 	updated := existing.DeepCopy()
-	// 	updated.Spec.Title = "another-newReceiver"
-	//
-	// 	actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
-	// 	require.NoError(t, err)
-	// 	require.Equal(t, updated.Spec, actual.Spec)
-	// 	require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
-	// 	require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
-	//
-	// 	resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
-	// 	require.NoError(t, err)
-	// 	require.Equal(t, actual, resource)
-	// })
+	t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
+		existing, err := client.Get(ctx, resourceID, v1.GetOptions{})
+		require.NoError(t, err)
+
+		updated := existing.DeepCopy()
+		updated.Spec.Title = "another-newReceiver"
+
+		actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, updated.Spec, actual.Spec)
+		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
+
+		resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, actual.Spec, resource.Spec)
+		require.Equal(t, actual.Name, resource.Name)
+		require.Equal(t, actual.ResourceVersion, resource.ResourceVersion)
+	})
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
@@ -426,6 +429,10 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
+
 	// Prepare environment and create notification policy and rule that use receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
@@ -440,8 +447,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	parentRoute.Routes = []*definitions.Route{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	persistInitialConfig(t, amConfig, adminClient, legacyCli)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -470,10 +476,6 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	legacyCli.CreateFolder(t, folderUID, "TEST")
 	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
-
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
 
 	requestReceivers := func(t *testing.T, title string) (v0alpha1.Receiver, v0alpha1.Receiver) {
 		t.Helper()
@@ -508,7 +510,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Removing the new extra route should leave only 1.
 	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
-	success, err = legacyCli.PostConfiguration(t, amConfig)
+	success, err := legacyCli.PostConfiguration(t, amConfig)
 	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
@@ -786,6 +788,26 @@ func TestIntegrationPatch(t *testing.T) {
 	})
 }
 
+func TestIntegrationRejectConfigApiReceiverModification(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := getTestHelper(t)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	// This config has new and modified receivers.
+	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
+	require.NoError(t, err)
+	var amConfig definitions.PostableUserConfig
+	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Falsef(t, success, "Expected receiver modification to be rejected, but got %s", err)
+}
+
 func TestIntegrationReferentialIntegrity(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -793,14 +815,18 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	// env := helper.GetEnv()
-	// ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
-	// db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
-	// require.NoError(t, err)
-	// orgID := helper.Org1.Admin.Identity.GetOrgID()
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	require.NoError(t, err)
+	orgID := helper.Org1.Admin.Identity.GetOrgID()
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
 
 	// Prepare environment and create notification policy and rule that use time receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
@@ -808,8 +834,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	persistInitialConfig(t, amConfig, adminClient, legacyCli)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -821,10 +846,6 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
 	receivers, err := adminClient.List(ctx, v1.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, receivers.Items, 2)
@@ -833,71 +854,63 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	})
 	receiver := receivers.Items[idx]
 
-	// TODO uncomment when renaming is enabled
-	// currentRoute := legacyCli.GetRoute(t)
-	// currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
-	// replace := func(input []string, oldName, newName string) []string {
-	// 	result := make([]string, 0, len(input))
-	// 	for _, s := range input {
-	// 		if s == oldName {
-	// 			result = append(result, newName)
-	// 			continue
-	// 		}
-	// 		result = append(result, s)
-	// 	}
-	// 	return result
-	// }
-	//
-	// t.Run("Update", func(t *testing.T) {
-	// 	t.Run("should rename all references if name changes", func(t *testing.T) {
-	// 		renamed := receiver.DeepCopy()
-	// 		expectedTitle := renamed.Spec.Title + "-new"
-	// 		renamed.Spec.Title += expectedTitle
-	//
-	// 		actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
-	// 		require.NoError(t, err)
-	//
-	// 		updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
-	// 		for idx, rule := range updatedRuleGroup.Rules {
-	// 			assert.Equalf(t, expectedTitle, rule.GrafanaManagedAlert.NotificationSettings.Receiver, "receiver in rule %d should have been renamed but it did not", idx)
-	// 		}
-	//
-	// 		updatedRoute := legacyCli.GetRoute(t)
-	// 		for _, route := range updatedRoute.Routes {
-	// 			assert.Equalf(t, expectedTitle, route.Receiver, "time receiver in routes should have been renamed but it did not")
-	// 		}
-	// 		receiver = *actual
-	// 	})
-	//
-	// 	t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
-	// 		require.NoError(t, err)
-	// 		renamed := receiver.DeepCopy()
-	// 		renamed.Spec.Title += util.GenerateShortUID()
-	//
-	// 		t.Run("provisioned route", func(t *testing.T) {
-	// 			require.NoError(t, db.SetProvenance(ctx, &currentRoute, orgID, "API"))
-	// 			t.Cleanup(func() {
-	// 				require.NoError(t, db.DeleteProvenance(ctx, &currentRoute, orgID))
-	// 			})
-	// 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
-	// 			require.Errorf(t, err, "Expected error but got successful result: %v", actual)
-	// 			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
-	// 		})
-	//
-	// 		t.Run("provisioned rules", func(t *testing.T) {
-	// 			ruleUid := currentRuleGroup.Rules[0].GrafanaManagedAlert.UID
-	// 			resource := &ngmodels.AlertRule{UID: ruleUid}
-	// 			require.NoError(t, db.SetProvenance(ctx, resource, orgID, "API"))
-	// 			t.Cleanup(func() {
-	// 				require.NoError(t, db.DeleteProvenance(ctx, resource, orgID))
-	// 			})
-	//
-	// 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
-	// 			require.Errorf(t, err, "Expected error but got successful result: %v", actual)
-	// 			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
-	// 		})
-	// 	})
-	// })
+	currentRoute := legacyCli.GetRoute(t)
+	currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+
+	t.Run("Update", func(t *testing.T) {
+		t.Run("should rename all references if name changes", func(t *testing.T) {
+			renamed := receiver.DeepCopy()
+			expectedTitle := renamed.Spec.Title + "-new"
+			renamed.Spec.Title = expectedTitle
+
+			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+			require.NoError(t, err)
+
+			updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			for idx, rule := range updatedRuleGroup.Rules {
+				assert.Equalf(t, expectedTitle, rule.GrafanaManagedAlert.NotificationSettings.Receiver, "receiver in rule %d should have been renamed but it did not", idx)
+			}
+
+			updatedRoute := legacyCli.GetRoute(t)
+			for _, route := range updatedRoute.Routes {
+				assert.Equalf(t, expectedTitle, route.Receiver, "time receiver in routes should have been renamed but it did not")
+			}
+
+			actual, err = adminClient.Get(ctx, actual.Name, v1.GetOptions{})
+			require.NoError(t, err)
+
+			receiver = *actual
+		})
+
+		t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
+			require.NoError(t, err)
+			renamed := receiver.DeepCopy()
+			renamed.Spec.Title += util.GenerateShortUID()
+
+			t.Run("provisioned route", func(t *testing.T) {
+				require.NoError(t, db.SetProvenance(ctx, &currentRoute, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, &currentRoute, orgID))
+				})
+				actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+
+			t.Run("provisioned rules", func(t *testing.T) {
+				ruleUid := currentRuleGroup.Rules[0].GrafanaManagedAlert.UID
+				resource := &ngmodels.AlertRule{UID: ruleUid}
+				require.NoError(t, db.SetProvenance(ctx, resource, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, resource, orgID))
+				})
+
+				actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+		})
+	})
 
 	t.Run("Delete", func(t *testing.T) {
 		t.Run("should fail to delete if receiver is used in rule and routes", func(t *testing.T) {
@@ -1171,14 +1184,72 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	})
 }
 
+// persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
+// modifications, so we need to use k8s API to create new receivers before posting the config.
+func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, adminClient notificationsv0alpha1.ReceiverInterface, legacyCli alerting.LegacyApiClient) {
+	ctx := context.Background()
+
+	var defaultReceiver *definitions.PostableApiReceiver
+	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
+		if receiver.Name == "grafana-default-email" {
+			defaultReceiver = receiver
+			continue
+		}
+
+		toCreate := v0alpha1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ReceiverSpec{
+				Title:        receiver.Name,
+				Integrations: []v0alpha1.Integration{},
+			},
+		}
+
+		for _, integration := range receiver.GrafanaManagedReceivers {
+			settings := common.Unstructured{}
+			require.NoError(t, settings.UnmarshalJSON(integration.Settings))
+			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.Integration{
+				Settings:              settings,
+				Type:                  integration.Type,
+				DisableResolveMessage: util.Pointer(false),
+			})
+		}
+
+		created, err := adminClient.Create(ctx, &toCreate, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		for i, integration := range created.Spec.Integrations {
+			receiver.GrafanaManagedReceivers[i].UID = *integration.Uid
+		}
+	}
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+
+	gettable, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
+	require.Equalf(t, http.StatusOK, status, body)
+
+	idx := slices.IndexFunc(gettable.AlertmanagerConfig.Receivers, func(recv *definitions.GettableApiReceiver) bool {
+		return recv.Name == "grafana-default-email"
+	})
+	gettableDefault := gettable.AlertmanagerConfig.Receivers[idx]
+
+	// Assign uid of default receiver as well.
+	defaultReceiver.GrafanaManagedReceivers[0].UID = gettableDefault.GrafanaManagedReceivers[0].UID
+}
+
 func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
+	return createIntegrationWithSettings(t, integrationType, cfg.Config)
+}
+func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.Integration {
 	settings := common.Unstructured{}
-	require.NoError(t, settings.UnmarshalJSON([]byte(cfg.Config)))
+	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
 	return v0alpha1.Integration{
 		Settings:              settings,
-		Type:                  cfg.NotifierType,
+		Type:                  integrationType,
 		DisableResolveMessage: util.Pointer(false),
 	}
 }
