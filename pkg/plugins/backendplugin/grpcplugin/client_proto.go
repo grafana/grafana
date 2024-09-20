@@ -51,10 +51,10 @@ type protoClient struct {
 type pluginState int
 
 const (
-	pluginStateStopped pluginState = iota
-	pluginStateNotStarted
+	pluginStateNotStarted pluginState = iota
 	pluginStateStartSuccess
 	pluginStateStartFail
+	pluginStateStopped
 )
 
 type ProtoClientOpts struct {
