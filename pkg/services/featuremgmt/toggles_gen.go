@@ -283,8 +283,12 @@ const (
 	// Enables metrics summary queries in the Tempo data source
 	FlagMetricsSummary = "metricsSummary"
 
+	// FlagDatasourceAPIServers
+	// Expose some datasources as apiservers.
+	FlagDatasourceAPIServers = "datasourceAPIServers"
+
 	// FlagGrafanaAPIServerWithExperimentalAPIs
-	// Register experimental APIs with the k8s API server
+	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
@@ -428,7 +432,7 @@ const (
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
 	// FlagTeamHttpHeaders
-	// Enables Team LBAC for datasources to apply team headers to the client requests
+	// Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagCachingOptimizeSerializationMemoryUsage

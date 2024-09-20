@@ -546,7 +546,9 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 						t.Reset(interval)
 						continue
 					}
-					since[group][resource] = next
+					if next > since[group][resource] {
+						since[group][resource] = next
+					}
 				}
 			}
 
