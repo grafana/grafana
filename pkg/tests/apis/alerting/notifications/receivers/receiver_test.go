@@ -27,6 +27,7 @@ import (
 	notificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -142,6 +143,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 		canCreate      bool
 		canDelete      bool
 		canReadSecrets bool
+		canAdmin       bool
 	}
 	// region users
 	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
@@ -185,6 +187,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 			},
 		},
 	})
+	adminLikeUser := helper.CreateUser("adminLikeUser", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(append(
+			[]string{accesscontrol.ActionAlertingReceiversCreate},
+			ossaccesscontrol.ReceiversAdminActions...,
+		)...),
+	})
 
 	// endregion
 
@@ -197,11 +205,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete: false,
 		},
 		{
-			user:      org1.Admin,
-			canRead:   true,
-			canUpdate: true,
-			canCreate: true,
-			canDelete: true,
+			user:           org1.Admin,
+			canRead:        true,
+			canCreate:      true,
+			canUpdate:      true,
+			canDelete:      true,
+			canAdmin:       true,
+			canReadSecrets: true,
 		},
 		{
 			user:      org1.Editor,
@@ -248,6 +258,15 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canCreate: true,
 			canUpdate: true,
 			canDelete: true,
+		},
+		{
+			user:           adminLikeUser,
+			canRead:        true,
+			canCreate:      true,
+			canUpdate:      true,
+			canDelete:      true,
+			canAdmin:       true,
+			canReadSecrets: true,
 		},
 	}
 
@@ -314,6 +333,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 				}
 				if tc.canReadSecrets {
 					expectedWithMetadata.SetAccessControl("canReadSecrets")
+				}
+				if tc.canAdmin {
+					expectedWithMetadata.SetAccessControl("canAdmin")
 				}
 				t.Run("should be able to list receivers", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
@@ -1027,6 +1049,8 @@ func TestIntegrationCRUD(t *testing.T) {
 		// Set expected metadata
 		receiver.SetAccessControl("canWrite")
 		receiver.SetAccessControl("canDelete")
+		receiver.SetAccessControl("canReadSecrets")
+		receiver.SetAccessControl("canAdmin")
 		receiver.SetInUse(0, nil)
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.

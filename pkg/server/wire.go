@@ -315,6 +315,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.FolderPermissionsService), new(*ossaccesscontrol.FolderPermissionsService)),
 	ossaccesscontrol.ProvideDashboardPermissions,
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
+	ossaccesscontrol.ProvideReceiverPermissionsService,
+	wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)),
 	starimpl.ProvideService,
 	playlistimpl.ProvideService,
 	apikeyimpl.ProvideService,

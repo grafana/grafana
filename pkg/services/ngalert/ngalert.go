@@ -489,7 +489,7 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return DeclareFixedRoles(ng.accesscontrolService)
+	return DeclareFixedRoles(ng.accesscontrolService, ng.FeatureToggles)
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {

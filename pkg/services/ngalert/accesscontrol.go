@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -115,13 +116,50 @@ var (
 		},
 	}
 
+	receiversReaderRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.receivers:reader",
+			DisplayName: "Contact Point Reader",
+			Description: "Read all contact points in Grafana",
+			Group:       AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingReceiversRead, Scope: ac.ScopeReceiversAll},
+			},
+		},
+	}
+
+	receiversCreatorRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.receivers:creator",
+			DisplayName: "Contact Point Creator",
+			Description: "Create new contact points in Grafana",
+			Group:       AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingReceiversCreate},
+			},
+		},
+	}
+
+	receiversWriterRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.receivers:writer",
+			DisplayName: "Contact Point Writer",
+			Description: "Create, update, and delete all contact points in Grafana",
+			Group:       AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, receiversCreatorRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingReceiversUpdate, Scope: ac.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingReceiversDelete, Scope: ac.ScopeReceiversAll},
+			}),
+		},
+	}
+
 	notificationsReaderRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.notifications:reader",
 			DisplayName: "Notifications Reader",
 			Description: "Read notification policies and contact points in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Permissions: []accesscontrol.Permission{
+			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsRead,
 				},
@@ -132,11 +170,7 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
 				},
-				{
-					Action: accesscontrol.ActionAlertingReceiversRead,
-					Scope:  ac.ScopeReceiversAll,
-				},
-			},
+			}),
 		},
 	}
 
@@ -146,25 +180,13 @@ var (
 			DisplayName: "Notifications Writer",
 			Description: "Add, update, and delete contact points and notification policies in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, receiversWriterRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsWrite,
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsExternalWrite,
 					Scope:  datasources.ScopeAll,
-				},
-				{
-					Action: accesscontrol.ActionAlertingReceiversCreate,
-					Scope:  ac.ScopeReceiversAll,
-				},
-				{
-					Action: accesscontrol.ActionAlertingReceiversUpdate,
-					Scope:  ac.ScopeReceiversAll,
-				},
-				{
-					Action: accesscontrol.ActionAlertingReceiversDelete,
-					Scope:  ac.ScopeReceiversAll,
 				},
 			}),
 		},
@@ -184,12 +206,27 @@ var (
 	alertingWriterRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting:writer",
-			DisplayName: "Full access",
-			Description: "Add,update and delete alert rules, instances, silences, contact points, and notification policies in Grafana and all external providers",
+			DisplayName: "Full write access",
+			Description: "Add, update and delete alert rules, instances, silences, contact points, and notification policies in Grafana and all external providers",
 			Group:       AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(rulesWriterRole.Role.Permissions, instancesWriterRole.Role.Permissions, notificationsWriterRole.Role.Permissions),
 		},
-		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)},
+		Grants: []string{string(org.RoleEditor)},
+	}
+
+	alertingAdminRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting:admin",
+			DisplayName: "Full admin access",
+			Description: "Full write access in Grafana and all external providers, including their permissions and secrets",
+			Group:       AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(alertingWriterRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingReceiversPermissionsRead, Scope: ac.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingReceiversPermissionsWrite, Scope: ac.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: ac.ScopeReceiversAll},
+			}),
+		},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	alertingProvisionerRole = accesscontrol.RoleRegistration{
@@ -266,11 +303,17 @@ var (
 	}
 )
 
-func DeclareFixedRoles(service accesscontrol.Service) error {
-	return service.DeclareFixedRoles(
+func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.FeatureToggles) error {
+	fixedRoles := []accesscontrol.RoleRegistration{
 		rulesReaderRole, rulesWriterRole,
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
-		alertingReaderRole, alertingWriterRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole, alertingProvisioningStatus,
-	)
+		alertingReaderRole, alertingWriterRole, alertingAdminRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole, alertingProvisioningStatus,
+	}
+
+	if features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
+		fixedRoles = append(fixedRoles, receiversReaderRole, receiversCreatorRole, receiversWriterRole)
+	}
+
+	return service.DeclareFixedRoles(fixedRoles...)
 }
