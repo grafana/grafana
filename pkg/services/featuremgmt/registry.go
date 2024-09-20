@@ -795,7 +795,7 @@ var (
 		},
 		{
 			Name:           "teamHttpHeaders",
-			Description:    "Enables LBAC for datasources to apply logql filtering of logs to the client requests for users in teams",
+			Description:    "Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams",
 			Stage:          FeatureStagePublicPreview,
 			FrontendOnly:   false,
 			AllowSelfServe: true,
