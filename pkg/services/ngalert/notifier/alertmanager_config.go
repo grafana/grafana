@@ -273,13 +273,14 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 	}
 
 	// Get the last known working configuration
-	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
+	previousConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return fmt.Errorf("failed to get latest configuration %w", err)
 		}
 	}
+	cleanPermissionsErr := err
 
 	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
@@ -308,6 +309,21 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 			return ErrAlertmanagerTimeIntervalInUse.Build(errutil.TemplateData{Public: map[string]interface{}{"Interval": errTimeIntervalDoesNotExist.Reference}, Error: err})
 		}
 		return AlertmanagerConfigRejectedError{err}
+	}
+
+	// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
+	// Failure should not prevent the default config from being applied.
+	if cleanPermissionsErr == nil {
+		cleanPermissionsErr = func() error {
+			newReceiverNames := make(sets.Set[string], len(config.AlertmanagerConfig.Receivers))
+			for _, r := range config.AlertmanagerConfig.Receivers {
+				newReceiverNames.Insert(r.Name)
+			}
+			return moa.cleanPermissions(ctx, org, previousConfig, newReceiverNames)
+		}()
+	}
+	if cleanPermissionsErr != nil {
+		moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
 	}
 
 	return nil
