@@ -1,5 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
 
+import { config } from '@grafana/runtime';
 import { AlertingRule, RecordingRule, RuleIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
@@ -142,6 +143,30 @@ describe('hashRulerRule', () => {
   it('should throw for malformed identifier', () => {
     expect(() => parse('foo$bar$baz', false)).toThrow(/failed to parse/i);
   });
+
+  describe('when prometheusRulesPrimary is enabled', () => {
+    beforeAll(() => {
+      config.featureToggles.alertingPrometheusRulesPrimary = true;
+    });
+    afterAll(() => {
+      config.featureToggles.alertingPrometheusRulesPrimary = false;
+    });
+
+    it('should not take query into account', () => {
+      const rule1: RulerAlertingRuleDTO = {
+        ...alertingRule.ruler,
+        expr: 'vector(20) > 7',
+      };
+
+      const rule2: RulerAlertingRuleDTO = {
+        ...alertingRule.ruler,
+        expr: 'http_requests_total{node="node1"}',
+      };
+
+      expect(rule1.expr).not.toBe(rule2.expr);
+      expect(hashRulerRule(rule1)).toBe(hashRulerRule(rule2));
+    });
+  });
 });
 
 describe('hashRule', () => {
@@ -157,6 +182,30 @@ describe('hashRule', () => {
     const rulerHash = hashRulerRule(recordingRule.ruler);
 
     expect(promHash).toBe(rulerHash);
+  });
+
+  describe('when prometheusRulesPrimary is enabled', () => {
+    beforeAll(() => {
+      config.featureToggles.alertingPrometheusRulesPrimary = true;
+    });
+    afterAll(() => {
+      config.featureToggles.alertingPrometheusRulesPrimary = false;
+    });
+
+    it('should not take query into account', () => {
+      const rule1: AlertingRule = {
+        ...alertingRule.prom,
+        query: 'vector(20) > 7',
+      };
+
+      const rule2: AlertingRule = {
+        ...alertingRule.prom,
+        query: 'http_requests_total{node="node1"}',
+      };
+
+      expect(rule1.query).not.toBe(rule2.query);
+      expect(hashRule(rule1)).toBe(hashRule(rule2));
+    });
   });
 });
 
