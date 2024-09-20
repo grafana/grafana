@@ -1,6 +1,7 @@
 package apistore
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -17,10 +18,11 @@ import (
 )
 
 type streamDecoder struct {
-	client    resource.ResourceStore_WatchClient
-	newFunc   func() runtime.Object
-	predicate storage.SelectionPredicate
-	codec     runtime.Codec
+	client      resource.ResourceStore_WatchClient
+	newFunc     func() runtime.Object
+	predicate   storage.SelectionPredicate
+	codec       runtime.Codec
+	cancelWatch context.CancelFunc
 }
 
 func (d *streamDecoder) toObject(w *resource.WatchEvent_Resource) (runtime.Object, error) {
@@ -45,8 +47,8 @@ decode:
 		}
 
 		evt, err := d.client.Recv()
-		if errors.Is(err, io.EOF) {
-			return watch.Error, nil, err
+		if errors.Is(err, io.EOF) || errors.Is(d.client.Context().Err(), context.Canceled) {
+			return watch.Error, nil, io.EOF
 		}
 
 		if grpcStatus.Code(err) == grpcCodes.Canceled {
@@ -194,10 +196,16 @@ decode:
 }
 
 func (d *streamDecoder) Close() {
+	klog.Info("client: closing stream")
+
+	// Close the send stream
 	err := d.client.CloseSend()
 	if err != nil {
 		klog.Errorf("error closing watch stream: %s", err)
 	}
+	// Cancel the watch context to close the receive stream
+	klog.Info("client: closed stream")
+	d.cancelWatch()
 }
 
 var _ watch.Decoder = (*streamDecoder)(nil)

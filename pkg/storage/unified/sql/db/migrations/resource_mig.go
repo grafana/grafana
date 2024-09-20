@@ -49,6 +49,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "value", Type: migrator.DB_LongText, Nullable: true},
 			{Name: "action", Type: migrator.DB_Int, Nullable: false}, // 1: create, 2: update, 3: delete
+			{Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: true},
 
 			// Hashed label set
 			{Name: "label_set", Type: migrator.DB_NVarchar, Length: 64, Nullable: true}, // null is no labels

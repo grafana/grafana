@@ -240,7 +240,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	if opts.SendInitialEvents != nil {
 		cmd.SendInitialEvents = *opts.SendInitialEvents
 	}
-
+	ctx, cancelWatch := context.WithCancel(ctx)
 	client, err := s.store.Watch(ctx, cmd)
 	if err != nil {
 		// if the context was canceled, just return a new empty watch
@@ -252,10 +252,11 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
 	decoder := &streamDecoder{
-		client:    client,
-		newFunc:   s.newFunc,
-		predicate: predicate,
-		codec:     s.codec,
+		client:      client,
+		newFunc:     s.newFunc,
+		predicate:   predicate,
+		codec:       s.codec,
+		cancelWatch: cancelWatch,
 	}
 
 	return watch.NewStreamWatcher(decoder, reporter), nil

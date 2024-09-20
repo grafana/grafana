@@ -587,15 +587,37 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				// }
 				// TODO: return values that match either the old or the new
 
-				if err := srv.Send(&WatchEvent{
+				value := event.Value
+				// remove the delete marker stored in the value for deleted objects
+				if event.Type == WatchEvent_DELETED {
+					value = []byte{}
+				}
+				resp := &WatchEvent{
 					Timestamp: event.Timestamp,
 					Type:      event.Type,
 					Resource: &WatchEvent_Resource{
-						Value:   event.Value,
+						Value:   value,
 						Version: event.ResourceVersion,
 					},
-					// TODO... previous???
-				}); err != nil {
+				}
+				if event.PreviousRV > 0 {
+					prevObj, err := s.Read(ctx, &ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
+					if err != nil {
+						// TODO: Are we expecting to discar the event if the previous object is not found? Or should we send the event with the current object only?
+						// Failing to send the previous object means consumers might see get the event when using precondition checks.
+						// For now, we will sent the event with the current object only and log the error.
+						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
+					}
+					if prevObj.ResourceVersion != event.PreviousRV {
+						s.log.Error("resource version missmatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
+						return fmt.Errorf("resource version missmatch")
+					}
+					resp.Previous = &WatchEvent_Resource{
+						Value:   prevObj.Value,
+						Version: prevObj.ResourceVersion,
+					}
+				}
+				if err := srv.Send(resp); err != nil {
 					return err
 				}
 			}

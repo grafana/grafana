@@ -627,6 +627,11 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 			return nextRV, fmt.Errorf("missing key in response")
 		}
 		nextRV = rec.ResourceVersion
+
+		prevRv := int64(0)
+		if rec.PreviousRV != nil {
+			prevRv = *rec.PreviousRV
+		}
 		stream <- &resource.WrittenEvent{
 			WriteEvent: resource.WriteEvent{
 				Value: rec.Value,
@@ -636,7 +641,8 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 					Resource:  rec.Key.Resource,
 					Name:      rec.Key.Name,
 				},
-				Type: resource.WatchEvent_Type(rec.Action),
+				Type:       resource.WatchEvent_Type(rec.Action),
+				PreviousRV: prevRv,
 			},
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
@@ -665,9 +671,10 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 		// if there wasn't a row associated with the given resource, we create one with
 		// version 1
 		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
-			SQLTemplate: sqltemplate.New(d),
-			Group:       key.Group,
-			Resource:    key.Resource,
+			SQLTemplate:     sqltemplate.New(d),
+			Group:           key.Group,
+			Resource:        key.Resource,
+			resourceVersion: &resourceVersion{1},
 		}); err != nil {
 			return 0, fmt.Errorf("insert into resource_version: %w", err)
 		}

@@ -70,6 +70,7 @@ func (r sqlResourceRequest) Validate() error {
 type historyPollResponse struct {
 	Key             resource.ResourceKey
 	ResourceVersion int64
+	PreviousRV      *int64
 	Value           []byte
 	Action          int
 }
