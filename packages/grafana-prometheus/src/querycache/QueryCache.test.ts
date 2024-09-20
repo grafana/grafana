@@ -6,8 +6,8 @@ import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@gra
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { QueryCache } from './QueryCache';
-import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
+import { CacheRequestInfo, QueryCache } from './QueryCache';
+import { IncrementalStorageDataFrameScenarios, trimmedFirstPointInPromFrames } from './QueryCacheTestData';
 
 // Will not interpolate vars!
 const interpolateStringTest = (query: PromQuery) => {
@@ -496,6 +496,56 @@ describe('QueryCache: Prometheus', function () {
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
+  });
+
+  it('should not modify the initial request', () => {
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+    });
+
+    const firstFrames = trimmedFirstPointInPromFrames as unknown as DataFrame[];
+    // There are 6 values
+    expect(firstFrames[0].fields[1].values.length).toBe(6);
+    const expectedValueLength = firstFrames[0].fields[1].values.length;
+
+    const cache = new Map<string, string>();
+    const interval = 15000;
+    // start time of scenario
+    const firstFrom = dateTime(new Date(1726835104488));
+    const firstTo = dateTime(new Date(1726836004488));
+    const firstRange: TimeRange = {
+      from: firstFrom,
+      to: firstTo,
+      raw: {
+        from: 'now-15m',
+        to: 'now',
+      },
+    };
+    // Signifier definition
+    const dashboardId = `dashid`;
+    const panelId = 200;
+    const targetIdentity = `${dashboardId}|${panelId}|A`;
+
+    const request = mockPromRequest({
+      range: firstRange,
+      dashboardUID: dashboardId,
+      panelId: panelId,
+    });
+
+    // we set a bigger interval than query interval
+    request.targets[0].interval = '1m';
+    const requestInfo: CacheRequestInfo<PromQuery> = {
+      requests: [], // unused
+      targSigs: cache,
+      shouldCache: true,
+    };
+    const targetSignature = `1=1|${interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
+    cache.set(targetIdentity, targetSignature);
+
+    const firstQueryResult = storage.procFrames(request, requestInfo, firstFrames);
+
+    expect(firstQueryResult[0].fields[1].values.length).toBe(expectedValueLength);
   });
 
   it('Should modify request', () => {

@@ -268,7 +268,6 @@ function findDatapointStep(request: DataQueryRequest<PromQuery>, respFrames: Dat
 
   const target = request.targets.find((t) => t.refId === respFrames[0].refId);
 
-  // TODO needs unit testing
   let dataPointStep = request.intervalMs;
   if (target?.interval) {
     const minStepMs = rangeUtil.intervalToMs(target.interval);
