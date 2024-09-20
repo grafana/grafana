@@ -147,7 +147,7 @@ func (s *ExtendedJWT) authenticateAsUser(
 		ClientParams: authn.ClientParams{
 			SyncPermissions: true,
 			FetchPermissionsParams: authn.FetchPermissionsParams{
-				ActionsLookup: accessTokenClaims.Rest.DelegatedPermissions,
+				RestrictedActions: accessTokenClaims.Rest.DelegatedPermissions,
 			},
 			FetchSyncedUser: true,
 		}}, nil
@@ -168,6 +168,20 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		return nil, errExtJWTInvalidSubject.Errorf("unexpected identity: %s", accessTokenClaims.Subject)
 	}
 
+	permissions := accessTokenClaims.Rest.Permissions
+	fetchPermissionsParams := authn.FetchPermissionsParams{}
+	if len(permissions) > 0 {
+		fetchPermissionsParams.Roles = make([]string, 0, len(permissions))
+		fetchPermissionsParams.AllowedActions = make([]string, 0, len(permissions))
+		for i := range permissions {
+			if strings.HasPrefix(permissions[i], "fixed:") {
+				fetchPermissionsParams.Roles = append(fetchPermissionsParams.Roles, permissions[i])
+			} else {
+				fetchPermissionsParams.AllowedActions = append(fetchPermissionsParams.AllowedActions, permissions[i])
+			}
+		}
+	}
+
 	return &authn.Identity{
 		ID:                         id,
 		UID:                        id,
@@ -179,11 +193,9 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		AuthID:                     accessTokenClaims.Subject,
 		AllowedKubernetesNamespace: accessTokenClaims.Rest.Namespace,
 		ClientParams: authn.ClientParams{
-			SyncPermissions: true,
-			FetchPermissionsParams: authn.FetchPermissionsParams{
-				Roles: accessTokenClaims.Rest.Permissions,
-			},
-			FetchSyncedUser: false,
+			SyncPermissions:        true,
+			FetchPermissionsParams: fetchPermissionsParams,
+			FetchSyncedUser:        false,
 		},
 	}, nil
 }

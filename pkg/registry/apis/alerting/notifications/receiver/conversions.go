@@ -1,6 +1,7 @@
 package receiver
 
 import (
+	"fmt"
 	"maps"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,15 +12,33 @@ import (
 	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
-func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, namespacer request.NamespaceMapper, selector fields.Selector) (*model.ReceiverList, error) {
+func convertToK8sResources(
+	orgID int64,
+	receivers []*ngmodels.Receiver,
+	accesses map[string]ngmodels.ReceiverPermissionSet,
+	metadatas map[string]ngmodels.ReceiverMetadata,
+	namespacer request.NamespaceMapper,
+	selector fields.Selector,
+) (*model.ReceiverList, error) {
 	result := &model.ReceiverList{
 		Items: make([]model.Receiver, 0, len(receivers)),
 	}
 	for _, receiver := range receivers {
-		k8sResource, err := convertToK8sResource(orgID, receiver, namespacer)
+		var access *ngmodels.ReceiverPermissionSet
+		if accesses != nil {
+			if a, ok := accesses[receiver.GetUID()]; ok {
+				access = &a
+			}
+		}
+		var metadata *ngmodels.ReceiverMetadata
+		if metadatas != nil {
+			if m, ok := metadatas[receiver.GetUID()]; ok {
+				metadata = &m
+			}
+		}
+		k8sResource, err := convertToK8sResource(orgID, receiver, access, metadata, namespacer)
 		if err != nil {
 			return nil, err
 		}
@@ -31,7 +50,13 @@ func convertToK8sResources(orgID int64, receivers []*ngmodels.Receiver, namespac
 	return result, nil
 }
 
-func convertToK8sResource(orgID int64, receiver *ngmodels.Receiver, namespacer request.NamespaceMapper) (*model.Receiver, error) {
+func convertToK8sResource(
+	orgID int64,
+	receiver *ngmodels.Receiver,
+	access *ngmodels.ReceiverPermissionSet,
+	metadata *ngmodels.ReceiverMetadata,
+	namespacer request.NamespaceMapper,
+) (*model.Receiver, error) {
 	spec := model.ReceiverSpec{
 		Title: receiver.Name,
 	}
@@ -56,12 +81,40 @@ func convertToK8sResource(orgID int64, receiver *ngmodels.Receiver, namespacer r
 		Spec: spec,
 	}
 	r.SetProvenanceStatus(string(receiver.Provenance))
+
+	if access != nil {
+		for _, action := range ngmodels.ReceiverPermissions() {
+			mappedAction, ok := permissionMapper[action]
+			if !ok {
+				return nil, fmt.Errorf("unknown action %v", action)
+			}
+			if can, _ := access.Has(action); can {
+				r.SetAccessControl(mappedAction)
+			}
+		}
+	}
+
+	if metadata != nil {
+		rules := make([]string, 0, len(metadata.InUseByRules))
+		for _, rule := range metadata.InUseByRules {
+			rules = append(rules, rule.UID)
+		}
+		r.SetInUse(metadata.InUseByRoutes, rules)
+	}
+
 	return r, nil
+}
+
+var permissionMapper = map[ngmodels.ReceiverPermission]string{
+	ngmodels.ReceiverPermissionReadSecret: "canReadSecrets",
+	//ngmodels.ReceiverPermissionAdmin:      "canAdmin", // TODO: Add when resource permissions are implemented.
+	ngmodels.ReceiverPermissionWrite:  "canWrite",
+	ngmodels.ReceiverPermissionDelete: "canDelete",
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
 	domain := &ngmodels.Receiver{
-		UID:          legacy_storage.NameToUid(receiver.Spec.Title),
+		UID:          receiver.Name,
 		Name:         receiver.Spec.Title,
 		Integrations: make([]*ngmodels.Integration, 0, len(receiver.Spec.Integrations)),
 		Version:      receiver.ResourceVersion,

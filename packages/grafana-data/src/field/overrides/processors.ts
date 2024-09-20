@@ -19,7 +19,7 @@ export interface NumberFieldConfigSettings {
 }
 
 export const numberOverrideProcessor = (
-  value: any,
+  value: unknown,
   context: FieldOverrideContext,
   settings?: NumberFieldConfigSettings
 ) => {
@@ -27,7 +27,7 @@ export const numberOverrideProcessor = (
     return undefined;
   }
 
-  return parseFloat(value);
+  return parseFloat(String(value));
 };
 
 export const displayNameOverrideProcessor = (

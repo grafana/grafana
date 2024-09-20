@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -648,17 +649,43 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 	}
 }
 
+func (fk8s *folderK8sHandler) searchFolders(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+	out, err := client.List(c.Req.Context(), v1.ListOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	query := strings.ToUpper(c.Query("query"))
+	folders := []folder.Folder{}
+	for _, item := range out.Items {
+		p := internalfolders.UnstructuredToLegacyFolder(item)
+		if p == nil {
+			continue
+		}
+		if query != "" && !strings.Contains(strings.ToUpper(p.Title), query) {
+			continue // query filter
+		}
+		folders = append(folders, *p)
+	}
+	c.JSON(http.StatusOK, folders)
+}
+
 func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 	client, ok := fk8s.getClient(c)
 	if !ok {
 		return // error is already sent
 	}
-	cmd := folder.CreateFolderCommand{}
+	cmd := folder.UpdateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
-	obj := internalfolders.LegacyCreateCommandToUnstructured(cmd)
+	obj := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
 	out, err := client.Create(c.Req.Context(), &obj, v1.CreateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
@@ -674,6 +701,41 @@ func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
 	}
 	uid := web.Params(c.Req)[":uid"]
 	out, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, internalfolders.UnstructuredToLegacyFolderDTO(*out))
+}
+
+func (fk8s *folderK8sHandler) deleteFolder(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+	uid := web.Params(c.Req)[":uid"]
+	err := client.Delete(c.Req.Context(), uid, v1.DeleteOptions{})
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, "")
+}
+
+func (fk8s *folderK8sHandler) updateFolder(c *contextmodel.ReqContext) {
+	client, ok := fk8s.getClient(c)
+	if !ok {
+		return // error is already sent
+	}
+	uid := web.Params(c.Req)[":uid"]
+	cmd := folder.UpdateFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+		return
+	}
+	obj := internalfolders.LegacyUpdateCommandToUnstructured(cmd)
+	obj.SetName(uid)
+	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
 	if err != nil {
 		fk8s.writeError(c, err)
 		return

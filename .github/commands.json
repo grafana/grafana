@@ -1098,5 +1098,13 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/457"
     }
+  },
+  {
+    "type": "label",
+    "name": "area/query-library",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/736"
+    }
   }
 ]
