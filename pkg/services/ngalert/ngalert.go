@@ -77,6 +77,7 @@ func ProvideService(
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
 	httpClientProvider httpclient.Provider,
+	resourcePermissions accesscontrol.ReceiverPermissionsService,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -104,6 +105,7 @@ func ProvideService(
 		tracer:               tracer,
 		store:                ruleStore,
 		httpClientProvider:   httpClientProvider,
+		resourcePermissions:  resourcePermissions,
 	}
 
 	if ng.IsDisabled() {
@@ -148,6 +150,7 @@ type AlertNG struct {
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
+	resourcePermissions  accesscontrol.ReceiverPermissionsService
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
 
@@ -423,6 +426,7 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
+		ng.resourcePermissions,
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
@@ -432,6 +436,7 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
+		ng.resourcePermissions,
 	)
 
 	// Provisioning
