@@ -22,7 +22,7 @@ cards:
       height: 24
     - title: Explore Logs
       href: ./logs/
-      description: Visualize log volumes to easily detect anomalies or significant changes across labels and fields over time.
+      description: Visualize log volumes to easily detect anomalies or significant changes over time, without needing to compose LogQL queries.
       height: 24
     - title: Explore Traces
       href: ./traces/
