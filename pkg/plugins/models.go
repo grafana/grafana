@@ -82,10 +82,7 @@ type Dependency struct {
 }
 
 type BuildInfo struct {
-	Time   int64  `json:"time,omitempty"`
-	Repo   string `json:"repo,omitempty"`
-	Branch string `json:"branch,omitempty"`
-	Hash   string `json:"hash,omitempty"`
+	Time int64 `json:"time,omitempty"`
 }
 
 type Info struct {
