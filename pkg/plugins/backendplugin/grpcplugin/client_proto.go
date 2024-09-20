@@ -52,9 +52,9 @@ type pluginState int
 
 const (
 	pluginStateStopped pluginState = iota
-	pluginStateInit
-	pluginStateSuccess
-	pluginStateFail
+	pluginStateNotStarted
+	pluginStateStartSuccess
+	pluginStateStartFail
 )
 
 type ProtoClientOpts struct {
@@ -78,7 +78,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 		func() []string { return opts.Env },
 	)
 
-	return &protoClient{plugin: p, pluginVersion: opts.PluginJSON.Info.Version, pluginJSON: opts.PluginJSON, state: pluginStateStopped}, nil
+	return &protoClient{plugin: p, pluginVersion: opts.PluginJSON.Info.Version, pluginJSON: opts.PluginJSON, state: pluginStateNotStarted}, nil
 }
 
 func (r *protoClient) PID(ctx context.Context) (string, error) {
@@ -112,15 +112,13 @@ func (r *protoClient) Start(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.state = pluginStateInit
-
 	err := r.plugin.Start(ctx)
 	if err != nil {
-		r.state = pluginStateFail
+		r.state = pluginStateStartFail
 		return err
 	}
 
-	r.state = pluginStateSuccess
+	r.state = pluginStateStartSuccess
 	return nil
 }
 
@@ -136,12 +134,12 @@ func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
 	defer r.mu.RUnlock()
 
 	logger := r.Logger().FromContext(ctx)
-	if r.state == pluginStateInit {
+	if r.state == pluginStateNotStarted {
 		logger.Debug("Plugin client has not been started yet")
 		return nil, false
 	}
 
-	if r.state == pluginStateFail {
+	if r.state == pluginStateStartFail {
 		logger.Debug("Plugin client failed to start")
 		return nil, false
 	}
