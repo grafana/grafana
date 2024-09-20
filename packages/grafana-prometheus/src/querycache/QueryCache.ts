@@ -221,17 +221,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           let table: Table = frame.fields.map((field) => field.values) as Table;
 
-          // Warning! logic specific to prometheus.
-          const target = request.targets.find((t) => t.refId === respFrames[0].refId);
-
-          // TODO needs unit testing
-          let dataPointStep = request.intervalMs;
-          if (target?.interval) {
-            const minStepMs = rangeUtil.intervalToMs(target.interval);
-            if (minStepMs > request.intervalMs) {
-              dataPointStep = minStepMs;
-            }
-          }
+          const dataPointStep = findDatapointStep(request, respFrames);
 
           // query interval is greater than request.intervalMs, use query interval to make sure we've always got one datapoint outside the panel viewport
           let trimmed = trimTable(table, newFrom - dataPointStep, newTo);
@@ -268,4 +258,23 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
     return respFrames;
   }
+}
+
+function findDatapointStep(request: DataQueryRequest<PromQuery>, respFrames: DataFrame[]): number {
+  // Prometheus specific logic below
+  if (request.targets[0].datasource?.type !== 'prometheus') {
+    return 0;
+  }
+
+  const target = request.targets.find((t) => t.refId === respFrames[0].refId);
+
+  // TODO needs unit testing
+  let dataPointStep = request.intervalMs;
+  if (target?.interval) {
+    const minStepMs = rangeUtil.intervalToMs(target.interval);
+    if (minStepMs > request.intervalMs) {
+      dataPointStep = minStepMs;
+    }
+  }
+  return dataPointStep;
 }
