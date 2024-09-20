@@ -1056,6 +1056,7 @@
         "name": "dsQueryConvert",
         "resourceVersion": "1726731337445",
         "creationTimestamp": "2024-09-04T08:52:35Z",
+        "deletionTimestamp": "2024-09-20T12:36:51Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-09-19 07:35:37.445505 +0000 UTC"
         }

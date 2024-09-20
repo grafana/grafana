@@ -35,7 +35,7 @@ func TestSubQueryConvertConnect(t *testing.T) {
 	mr := &mockResponderConvert{
 		writer: rr,
 	}
-	handler, err := sqr.Connect(context.Background(), nil, mr)
+	handler, err := sqr.Connect(context.Background(), "", nil, mr)
 	require.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/some-path", bytes.NewReader([]byte(originReq)))

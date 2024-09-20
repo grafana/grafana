@@ -48,25 +48,22 @@ func (r *subQueryConvertREST) NewConnectOptions() (runtime.Object, bool, string)
 	return nil, false, "" // true means you can use the trailing path as a variable
 }
 
-type pluginCtxFunc func(context.Context, string) (backend.PluginContext, error)
-
-func ConvertQueryDataRequest(ctx context.Context, req *http.Request, pluginCtxFn pluginCtxFunc, convertFn backend.ConvertObjectsFunc) (*query.QueryDataRequest, error) {
+func (r *subQueryConvertREST) convertQueryDataRequest(ctx context.Context, req *http.Request, name string) (*query.QueryDataRequest, error) {
 	dqr := data.QueryDataRequest{}
 	err := web.Bind(req, &dqr)
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, err = data.ToDataSourceQueries(dqr)
+	_, dsRef, err := data.ToDataSourceQueries(dqr)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(dqr.Queries) == 0 {
-		return nil, fmt.Errorf("no queries")
+	if dsRef != nil && dsRef.UID != name {
+		return nil, fmt.Errorf("expected query body datasource and request to match")
 	}
 
-	pluginCtx, err := pluginCtxFn(ctx, dqr.Queries[0].Datasource.UID)
+	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +84,7 @@ func ConvertQueryDataRequest(ctx context.Context, req *http.Request, pluginCtxFn
 		},
 	}
 
-	convertResponse, err := convertFn(ctx, convertRequest)
+	convertResponse, err := r.builder.client.ConvertObjects(ctx, convertRequest)
 	if err != nil {
 		if convertResponse != nil && convertResponse.Result != nil {
 			return nil, fmt.Errorf("conversion failed. Err: %w. Result: %s", err, convertResponse.Result.Message)
@@ -95,7 +92,7 @@ func ConvertQueryDataRequest(ctx context.Context, req *http.Request, pluginCtxFn
 		return nil, err
 	}
 
-	r := &query.QueryDataRequest{}
+	qr := &query.QueryDataRequest{}
 	for _, obj := range convertResponse.Objects {
 		if obj.ContentType != "application/json" {
 			return nil, fmt.Errorf("unexpected content type: %s", obj.ContentType)
@@ -105,15 +102,15 @@ func ConvertQueryDataRequest(ctx context.Context, req *http.Request, pluginCtxFn
 		if err != nil {
 			return nil, fmt.Errorf("unmarshal: %w", err)
 		}
-		r.Queries = append(r.Queries, *q)
+		qr.Queries = append(qr.Queries, *q)
 	}
 
-	return r, nil
+	return qr, nil
 }
 
-func (r *subQueryConvertREST) Connect(ctx context.Context, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *subQueryConvertREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		r, err := ConvertQueryDataRequest(ctx, req, r.builder.getPluginContext, r.builder.client.ConvertObjects)
+		r, err := r.convertQueryDataRequest(ctx, req, name)
 		if err != nil {
 			responder.Error(err)
 			return

@@ -83,18 +83,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 	return hs.toJsonStreamingResponse(c.Req.Context(), resp)
 }
 
-// QueryConvert returns query conversions.
-// Temporary until all plugins are migrated to use the new /apis.
-//
-// /ds/query/convert
-func (hs *HTTPServer) QueryConvert(c *contextmodel.ReqContext) response.Response {
-	resp, err := hs.queryDataService.QueryConvert(c.Req.Context(), c.SignedInUser, c.SkipDSCache, c.Req)
-	if err != nil {
-		return hs.handleQueryMetricsError(err)
-	}
-	return response.JSON(http.StatusOK, resp)
-}
-
 func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.QueryDataResponse) response.Response {
 	statusCode := http.StatusOK
 	for _, res := range qdr.Responses {

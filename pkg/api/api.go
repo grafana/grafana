@@ -540,9 +540,6 @@ func (hs *HTTPServer) registerRoutes() {
 		// metrics
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagDsQueryConvert) {
-			apiRoute.Post("/ds/query/convert", authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryConvert))
-		}
 
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(

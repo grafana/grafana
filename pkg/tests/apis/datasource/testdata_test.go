@@ -90,7 +90,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
               				"version": ""
             			},
             			"subresource": "query-convert",
-            			"verbs": []
+			            "verbs": [
+            			  "create"
+            			]
 			        },
 					{
 					  "responseKind": {

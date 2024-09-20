@@ -17,12 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -67,7 +65,6 @@ func ProvideService(
 type Service interface {
 	Run(ctx context.Context) error
 	QueryData(ctx context.Context, user identity.Requester, skipDSCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error)
-	QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, req *http.Request) (*query.QueryDataRequest, error)
 }
 
 // Gives us compile time error if the service does not adhere to the contract of the interface
@@ -108,18 +105,6 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user identity.Requester, sk
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
-}
-
-func (s *ServiceImpl) QueryConvert(ctx context.Context, user identity.Requester, skipDSCache bool, req *http.Request) (*query.QueryDataRequest, error) {
-	pluginCtxFn := func(ctx context.Context, uid string) (backend.PluginContext, error) {
-		ds, err := s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipDSCache)
-		if err != nil {
-			return backend.PluginContext{}, err
-		}
-		return s.pCtxProvider.GetWithDataSource(ctx, ds.Type, user, ds)
-	}
-
-	return datasource.ConvertQueryDataRequest(ctx, req, pluginCtxFn, s.pluginClient.ConvertObjects)
 }
 
 // splitResponse contains the results of a concurrent data source query - the response and any headers
