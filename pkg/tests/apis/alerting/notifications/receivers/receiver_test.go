@@ -293,33 +293,35 @@ func TestIntegrationAccessControl(t *testing.T) {
 			d, err := json.Marshal(expected)
 			require.NoError(t, err)
 
+			newReceiver := expected.DeepCopy()
+			newReceiver.Spec.Title = fmt.Sprintf("receiver-2-%s", tc.user.Identity.GetLogin())
 			if tc.canCreate {
 				t.Run("should be able to create receiver", func(t *testing.T) {
-					newReceiver := expected
-
 					actual, err := client.Create(ctx, newReceiver, v1.CreateOptions{})
 					require.NoErrorf(t, err, "Payload %s", string(d))
 
-					require.Equal(t, expected.Spec, actual.Spec)
+					require.Equal(t, newReceiver.Spec, actual.Spec)
 
 					t.Run("should fail if already exists", func(t *testing.T) {
 						_, err := client.Create(ctx, newReceiver, v1.CreateOptions{})
 						require.Truef(t, errors.IsConflict(err), "expected  bad request but got %s", err)
 					})
 
-					expected = actual
+					// Cleanup.
+					require.NoError(t, adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{}))
 				})
 			} else {
 				t.Run("should be forbidden to create", func(t *testing.T) {
-					_, err := client.Create(ctx, expected, v1.CreateOptions{})
+					_, err := client.Create(ctx, newReceiver, v1.CreateOptions{})
 					require.Truef(t, errors.IsForbidden(err), "Payload %s", string(d))
 				})
-
-				// create resource to proceed with other tests
-				expected, err = adminClient.Create(ctx, expected, v1.CreateOptions{})
-				require.NoErrorf(t, err, "Payload %s", string(d))
-				require.NotNil(t, expected)
 			}
+
+			// create resource to proceed with other tests. We don't use the one created above because the user will always
+			// have admin permissions on it.
+			expected, err = adminClient.Create(ctx, expected, v1.CreateOptions{})
+			require.NoErrorf(t, err, "Payload %s", string(d))
+			require.NotNil(t, expected)
 
 			if tc.canRead {
 				// Set expected metadata.
