@@ -161,11 +161,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     'editorSettings',
   ]);
   //if its a new rule, look at the local storage
-  const isAdvancedMode = editorSettings?.simplifiedQueryEditor !== true;
 
   const isGrafanaAlertingType = isGrafanaAlertingRuleByType(type);
   const isRecordingRuleType = isCloudRecordingRuleByType(type);
   const isCloudAlertRuleType = isCloudAlertingRuleByType(type);
+
+  const isAdvancedMode = editorSettings?.simplifiedQueryEditor !== true || !isGrafanaAlertingType;
 
   const [showResetModeModal, setShowResetModal] = useState(false);
 
@@ -476,7 +477,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }
 
   const switchMode =
-    isGrafanaManagedRuleByType(type) && isSwitchModeEnabled
+    isGrafanaAlertingType && isSwitchModeEnabled
       ? {
           isModeAdvanced: isAdvancedMode,
           setAdvancedMode: (isAdvanced: boolean) => {
@@ -601,7 +602,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               />
             )}
             {/* Expression Queries */}
-            {isAdvancedMode && (
+            {isAdvancedMode && isGrafanaAlertingType && (
               <>
                 <Stack direction="column" gap={0}>
                   <Text element="h5">Expressions</Text>
