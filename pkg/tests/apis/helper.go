@@ -25,6 +25,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
@@ -442,13 +443,12 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	c.t.Helper()
 
 	store := c.env.SQLStore
-	replStore := c.env.ReadReplStore
 	defer func() {
 		c.env.Cfg.AutoAssignOrg = false
 		c.env.Cfg.AutoAssignOrgId = 1 // the default
 	}()
 
-	quotaService := quotaimpl.ProvideService(replStore, c.env.Cfg)
+	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), c.env.Cfg)
 
 	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
 	require.NoError(c.t, err)
@@ -469,7 +469,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	c.env.Cfg.AutoAssignOrg = true
 	c.env.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc, err := teamimpl.ProvideService(replStore, c.env.Cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := teamimpl.ProvideService(store, c.env.Cfg, tracing.InitializeTracerForTest())
 	require.NoError(c.t, err)
 
 	cache := localcache.ProvideService()

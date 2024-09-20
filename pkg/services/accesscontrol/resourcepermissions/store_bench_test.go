@@ -140,7 +140,7 @@ func GenerateDatasourcePermissions(b *testing.B, db db.DB, cfg *setting.Cfg, ac 
 }
 
 func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users int) ([]int64, []int64) {
-	teamSvc, err := teamimpl.ProvideService(db.FakeReplDBFromDB(store), cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := teamimpl.ProvideService(store, cfg, tracing.InitializeTracerForTest())
 	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
