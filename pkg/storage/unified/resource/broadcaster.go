@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 	"io"
 )
 
@@ -109,7 +108,6 @@ type broadcaster[T any] struct {
 
 	// subscription management
 
-	cache       channelCache[T]
 	subscribe   chan chan T
 	unsubscribe chan (<-chan T)
 	subs        map[<-chan T]chan T
@@ -166,7 +164,6 @@ func (b *broadcaster[T]) init(ctx context.Context, connect ConnectFunc[T]) error
 
 	// initialize our internal state
 	b.shouldTerminate = ctx.Done()
-	b.cache = newChannelCache[T](ctx, 100)
 	b.subscribe = make(chan chan T, 100)
 	b.unsubscribe = make(chan (<-chan T), 100)
 	b.subs = make(map[<-chan T]chan T)
@@ -207,12 +204,6 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			return
 
 		case sub := <-b.subscribe: // subscribe
-			// send initial batch of cached items
-			err := b.cache.ReadInto(sub)
-			if err != nil {
-				close(sub)
-				continue
-			}
 			b.subs[sub] = sub
 
 		case recv := <-b.unsubscribe: // unsubscribe
@@ -226,7 +217,6 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			if !ok {
 				return
 			}
-			b.cache.Add(item)
 			for _, sub := range b.subs {
 				select {
 				case sub <- item:
@@ -237,128 +227,4 @@ func (b *broadcaster[T]) stream(input <-chan T) {
 			}
 		}
 	}
-}
-
-const defaultCacheSize = 100
-
-type channelCache[T any] interface {
-	Len() int
-	Add(item T)
-	Get(i int) T
-	Range(f func(T) error) error
-	Slice() []T
-	ReadInto(dst chan T) error
-}
-
-type cache[T any] struct {
-	cache     []T
-	size      int
-	cacheZero int
-	cacheLen  int
-	add       chan T
-	read      chan chan T
-	ctx       context.Context
-}
-
-func newChannelCache[T any](ctx context.Context, size int) channelCache[T] {
-	c := &cache[T]{}
-
-	c.ctx = ctx
-	if size <= 0 {
-		size = defaultCacheSize
-	}
-	c.size = size
-	c.cache = make([]T, c.size)
-
-	c.add = make(chan T)
-	c.read = make(chan chan T)
-
-	go c.run()
-
-	return c
-}
-
-func (c *cache[T]) Len() int {
-	return c.cacheLen
-}
-
-func (c *cache[T]) Add(item T) {
-	c.add <- item
-}
-
-func (c *cache[T]) run() {
-	for {
-		select {
-		case <-c.ctx.Done():
-			return
-		case item := <-c.add:
-			i := (c.cacheZero + c.cacheLen) % len(c.cache)
-			c.cache[i] = item
-			if c.cacheLen < len(c.cache) {
-				c.cacheLen++
-			} else {
-				c.cacheZero = (c.cacheZero + 1) % len(c.cache)
-			}
-		case r := <-c.read:
-		read:
-			for i := 0; i < c.cacheLen; i++ {
-				select {
-				case r <- c.cache[(c.cacheZero+i)%len(c.cache)]:
-				// don't wait for slow consumers
-				default:
-					break read
-				}
-			}
-			close(r)
-		}
-	}
-}
-
-func (c *cache[T]) Get(i int) T {
-	r := make(chan T, c.size)
-	c.read <- r
-	idx := 0
-	for item := range r {
-		if idx == i {
-			return item
-		}
-		idx++
-	}
-	var zero T
-	return zero
-}
-
-func (c *cache[T]) Range(f func(T) error) error {
-	r := make(chan T, c.size)
-	c.read <- r
-	for item := range r {
-		err := f(item)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *cache[T]) Slice() []T {
-	s := make([]T, 0, c.size)
-	r := make(chan T, c.size)
-	c.read <- r
-	for item := range r {
-		s = append(s, item)
-	}
-	return s
-}
-
-func (c *cache[T]) ReadInto(dst chan T) error {
-	r := make(chan T, c.size)
-	c.read <- r
-	for item := range r {
-		select {
-		case dst <- item:
-		default:
-			return fmt.Errorf("slow consumer")
-		}
-	}
-	return nil
 }

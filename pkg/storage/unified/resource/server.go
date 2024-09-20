@@ -295,6 +295,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 }
 
 func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
+	s.log.Info("create request", "key", req.Key, "value", req.Value)
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
@@ -336,6 +337,7 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 }
 
 func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateResponse, error) {
+	s.log.Info("update request", "key", req.Key, "value", req.Value)
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 
@@ -390,6 +392,7 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 }
 
 func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
+	s.log.Info("delete request", "key", req.Key)
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
 
@@ -458,6 +461,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 }
 
 func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, error) {
+	s.log.Info("read request", "key", req.Key)
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
@@ -546,6 +550,8 @@ func (s *server) initWatcher() error {
 }
 
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
+	s.log.Info("watch request", "since", req.Since, "req", req)
+
 	ctx := srv.Context()
 
 	if err := s.Init(ctx); err != nil {
@@ -560,14 +566,43 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	defer s.broadcaster.Unsubscribe(stream)
 
 	since := req.Since
-	if req.SendInitialEvents {
-		fmt.Printf("TODO... query\n")
-		// All initial events are CREATE
-
-		if req.AllowWatchBookmarks {
-			fmt.Printf("TODO... send bookmark\n")
+	// TODO: req.SendInitialEvents ??
+	if req.Since == 0 {
+		// Backfill the stream
+		_, err := s.backend.ListIterator(ctx, &ListRequest{Options: req.Options}, func(iter ListIterator) error {
+			for iter.Next() {
+				if err := iter.Error(); err != nil {
+					return err
+				}
+				s.log.Info("backfilling watch", "key", req.Options.Key, "namespace", iter.Namespace(), "name", iter.Name())
+				if err := srv.Send(&WatchEvent{
+					Type: WatchEvent_ADDED,
+					Resource: &WatchEvent_Resource{
+						Value:   iter.Value(),
+						Version: iter.ResourceVersion(),
+					},
+				}); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 	}
+	// // Send a bookmark
+	// if req.SendInitialEvents && req.AllowWatchBookmarks {
+	// 	s.log.Info("sending bookmark", "resourceVersion", resp.ResourceVersion)
+	// 	if err := srv.Send(&WatchEvent{
+	// 		Type: WatchEvent_BOOKMARK,
+	// 		Resource: &WatchEvent_Resource{
+	// 			Version: resp.ResourceVersion,
+	// 		},
+	// 	}); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	for {
 		select {

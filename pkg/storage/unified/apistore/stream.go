@@ -196,15 +196,12 @@ decode:
 }
 
 func (d *streamDecoder) Close() {
-	klog.Info("client: closing stream")
-
 	// Close the send stream
 	err := d.client.CloseSend()
 	if err != nil {
 		klog.Errorf("error closing watch stream: %s", err)
 	}
 	// Cancel the watch context to close the receive stream
-	klog.Info("client: closed stream")
 	d.cancelWatch()
 }
 
