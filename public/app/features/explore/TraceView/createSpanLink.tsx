@@ -383,10 +383,10 @@ function getQueryForLoki(
 
   let expr = '{${__tags}}';
   if (filterByTraceID && span.traceID) {
-    expr += ' |="${__span.traceId}"';
+    expr += ' | trace_id="${__span.traceId}"';
   }
   if (filterBySpanID && span.spanID) {
-    expr += ' |="${__span.spanId}"';
+    expr += ' | span_id="${__span.spanId}"';
   }
 
   return {
