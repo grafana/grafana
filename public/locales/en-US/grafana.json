@@ -1615,6 +1615,9 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
+    "groupsync": {
+      "subtitle": "Manage mappings of Identity Provider groups to Grafana Roles"
+    },
     "help": {
       "title": "Help"
     },
