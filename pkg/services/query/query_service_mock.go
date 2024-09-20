@@ -3,7 +3,7 @@
 package query
 
 import (
-	"context"
+	context "context"
 
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 

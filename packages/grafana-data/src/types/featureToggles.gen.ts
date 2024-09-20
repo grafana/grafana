@@ -210,7 +210,6 @@ export interface FeatureToggles {
   singleTopNav?: boolean;
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
-  dsQueryConvert?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
   appPlatformAccessTokens?: boolean;
   appSidecar?: boolean;
