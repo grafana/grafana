@@ -1652,8 +1652,8 @@ Status: Accepted
 
 ### <span id="duration"></span> Duration
 
-| Name     | Type                      | Go type | Default | Description | Example |
-| -------- | ------------------------- | ------- | ------- | ----------- | ------- |
+| Name     | Type   | Go type | Default | Description | Example |
+| -------- | ------ | ------- | ------- | ----------- | ------- |
 | Duration | string | int64   |         |             |         |
 
 ### <span id="embedded-contact-point"></span> EmbeddedContactPoint
