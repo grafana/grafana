@@ -28,6 +28,7 @@ type RulesFilterProps = {
 
 type ActiveTab = 'custom' | 'saved';
 
+// eslint-disable-next-line no-unused-vars
 export default function RulesFilter({ onClear = () => {} }: RulesFilterProps) {
   const styles = useStyles2(getStyles);
   const [activeTab, setActiveTab] = useState<ActiveTab>('custom');
@@ -155,6 +156,7 @@ type TableColumns = {
 };
 
 const SavedSearches = () => {
+  // eslint-disable-next-line no-unused-vars
   const applySearch = useCallback((name: string) => {}, []);
 
   return (

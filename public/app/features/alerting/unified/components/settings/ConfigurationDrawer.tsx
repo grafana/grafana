@@ -68,9 +68,7 @@ export function useEditConfigurationDrawer() {
             onReset={resetAlertmanagerSettings}
           />
         )}
-        {activeTab === 'versions' && dataSourceName && (
-          <AlertmanagerConfigurationVersionManager alertmanagerName={dataSourceName} />
-        )}
+        {activeTab === 'versions' && dataSourceName && <AlertmanagerConfigurationVersionManager />}
       </Drawer>
     );
   }, [open, dataSourceName, handleDismiss, activeTab, updateAlertmanagerSettings, resetAlertmanagerSettings]);
