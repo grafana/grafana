@@ -193,7 +193,6 @@ export interface FeatureToggles {
   openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
-  databaseReadReplica?: boolean;
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;

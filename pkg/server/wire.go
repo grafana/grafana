@@ -389,7 +389,6 @@ var wireSet = wire.NewSet(
 	wireBasicSet,
 	metrics.WireSet,
 	sqlstore.ProvideService,
-	sqlstore.ProvideServiceWithReadReplica,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
@@ -405,7 +404,6 @@ var wireCLISet = wire.NewSet(
 	wireBasicSet,
 	metrics.WireSet,
 	sqlstore.ProvideService,
-	sqlstore.ProvideServiceWithReadReplica,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationService)),
@@ -421,14 +419,12 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	metrics.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
-	sqlstore.ProvideServiceWithReadReplicaForTests,
 	ngmetrics.ProvideServiceForTest,
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
-	wire.Bind(new(db.ReplDB), new(*sqlstore.ReplStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
@@ -442,7 +438,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 
 func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
-	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, ReadReplStore: &sqlstore.ReplStore{}, Cfg: &setting.Cfg{}}, nil
+	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
 func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {

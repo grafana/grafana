@@ -707,10 +707,6 @@ const (
 	// Throws an error if a datasource has an invalid UIDs
 	FlagFailWrongDSUID = "failWrongDSUID"
 
-	// FlagDatabaseReadReplica
-	// Use a read replica for some database queries.
-	FlagDatabaseReadReplica = "databaseReadReplica"
-
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
