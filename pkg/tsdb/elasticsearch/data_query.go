@@ -77,7 +77,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
-		// We are returning error containing the source that was added trough errorsource.Middleware
+		// We are returning error containing the source that was added through errorsource.Middleware
 		return errorsource.AddErrorToResponse(e.dataQueries[0].RefID, response, err), nil
 	}
 
@@ -87,7 +87,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
 	err := isQueryWithError(q)
 	if err != nil {
-		err = fmt.Errorf("received invalid query. %w", err)
+		err = errorsource.DownstreamError(fmt.Errorf("received invalid query. %w", err), false)
 		return err
 	}
 
