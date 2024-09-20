@@ -25,7 +25,6 @@ export const RuleListStateSection = ({ rules, state, defaultCollapsed = false }:
       <h4 className={styles.header}>
         <CollapseToggle
           className={styles.collapseToggle}
-          size="xxl"
           isCollapsed={collapsed}
           onToggle={() => setCollapsed(!collapsed)}
         />
