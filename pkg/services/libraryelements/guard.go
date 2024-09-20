@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -58,18 +59,20 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 }
 
 func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user identity.Requester, folderID int64) error {
+	l.log.Error("requireViewPermissionsOnFolder", "folder_id", folderID, "current_role", user.GetOrgRole(), "has_role_viewer", user.HasRole(org.RoleViewer), "identity_type", user.GetIdentityType(), "permissions", user.GetPermissions())
+
 	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
 		return nil
 	}
 
 	g, err := guardian.New(ctx, folderID, user.GetOrgID(), user)
 	if err != nil {
-		return err
+		return fmt.Errorf("guardian.New (folderID=%v): %w", folderID, err)
 	}
 
 	canView, err := g.CanView()
 	if err != nil {
-		return err
+		return fmt.Errorf("g.CanView (folderID=%v): %w", folderID, err)
 	}
 	if !canView {
 		return dashboards.ErrFolderAccessDenied

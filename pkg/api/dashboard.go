@@ -630,6 +630,8 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	// connect library panels for this dashboard after the dashboard is stored and has an ID
 	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(ctx, c.SignedInUser, dashboard)
 	if err != nil {
+		hs.log.Error("Unable to connect library panel for dashboard", "uid", dashboard.UID, "error", err.Error())
+
 		return response.Error(http.StatusInternalServerError, "Error while connecting library panels", err)
 	}
 
