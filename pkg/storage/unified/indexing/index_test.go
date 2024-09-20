@@ -4,18 +4,13 @@ import "testing"
 
 func TestPerformanceInMemory(t *testing.T) {
 	opts := Opts{
-		workers:   10,
-		batchSize: 1000,
-		inMemory:  true,
+		inMemory: true,
 	}
 	run(opts)
 }
 
 func TestPerformanceFile(t *testing.T) {
-	opts := Opts{
-		workers:   10,
-		batchSize: 1000,
-	}
+	opts := Opts{}
 	run(opts)
 }
 
@@ -40,9 +35,7 @@ func TestPerformanceFileConcurrent(t *testing.T) {
 
 func TestPerformanceFileLargeIndex(t *testing.T) {
 	opts := Opts{
-		workers:   10,
-		batchSize: 1000,
-		size:      100000,
+		size: 100000,
 	}
 	run(opts)
 }
@@ -59,7 +52,17 @@ func TestPerformanceFileConcurrentLargeIndex(t *testing.T) {
 
 func TestPerformanceFileConcurrentLargeIndeMoreWorkers(t *testing.T) {
 	opts := Opts{
-		workers:    100,
+		workers:    50,
+		batchSize:  100,
+		concurrent: true,
+		size:       100000,
+	}
+	run(opts)
+}
+
+func TestPerformanceFileConcurrentLargeIndeMoreWorkersBiggerBatch(t *testing.T) {
+	opts := Opts{
+		workers:    1000,
 		batchSize:  1000,
 		concurrent: true,
 		size:       100000,
