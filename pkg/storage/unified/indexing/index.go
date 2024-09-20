@@ -1,4 +1,4 @@
-package main
+package indexing
 
 import (
 	"fmt"
@@ -50,44 +50,78 @@ type K8sObject struct {
 	K8sMeta    K8sMeta
 }
 
-// ***** Constants for indexing ********
-// This controls how many goroutines are used to index objects
-const INDEX_WORKERS = 10
+type Opts struct {
+	workers    int // This controls how many goroutines are used to index objects
+	batchSize  int // This is the batch size for how many objects to add to the index at once
+	query      bool
+	inMemory   bool
+	concurrent bool
+	size       int
+}
 
-// This is the batch size for how many objects to add to the index at once
-const INDEX_BATCH_SIZE = 1000
-
-//**************************************
-
-func main() {
+func run(opts Opts) {
 	fmt.Println("Seeding...")
-	objects := seedObjects()
+	objects := seedObjects(&opts)
 
 	fmt.Println("Creating index for", len(objects), "objects")
 
-	// Create in memory index
-	index, exists := createInMemoryIndex()
+	index, exists, err := createIndex(opts)
+	if err != nil {
+		log.Fatalf("Failed to create index: %v", err)
+	}
 
-	// Create file based index
-	//index, exists, err := createFileIndex(true)
-	//if err != nil {
-	//	log.Fatalf("Failed to create index: %v", err)
-	//}
-
-	defer index.Close()
+	defer func() {
+		err := index.Close()
+		if err != nil {
+			fmt.Printf("Failed to close index: %v", err)
+		}
+		fmt.Printf("removing index files from: %v", index.Name())
+		err = os.RemoveAll(index.Name())
+		if err != nil {
+			fmt.Println("Error:", err)
+		} else {
+			fmt.Println("Index files deleted successfully!")
+			exists = false
+		}
+	}()
 
 	// only reindex if the index is new (or in memory)
 	if !exists {
 		fmt.Println("Indexing...")
 		start := time.Now()
 
-		IndexObjects(index, objects)
-		//indexObjectsConcurrently(index, objects)
+		if !opts.concurrent {
+			IndexObjects(index, objects)
+		} else {
+			indexObjectsConcurrently(index, objects, opts)
+		}
+
+		count, err := index.DocCount()
+		if err != nil {
+			log.Fatalf("Failed to get doc count: %v", err)
+		}
 
 		end := time.Since(start).Seconds()
-		fmt.Printf("Indexing completed in %f seconds\n", end)
+		fmt.Printf("Indexed  %d docs in %f seconds\n", count, end)
+		perSecond := float64(count) / end
+		fmt.Printf("Indexing speed: %f docs/second\n", perSecond)
 	}
 
+	if opts.query {
+		queryIndex(index)
+	}
+}
+
+func createIndex(opts Opts) (bleve.Index, bool, error) {
+	if opts.inMemory {
+		index, exists := createInMemoryIndex()
+		return index, exists, nil
+	}
+	// Create file based index
+	return createFileIndex()
+}
+
+func queryIndex(index bleve.Index) {
 	fields, _ := index.Fields()
 	fmt.Println("Indexed fields are:", fields)
 
@@ -150,7 +184,7 @@ func main() {
 	}
 }
 
-func seedObjects() []Object {
+func seedObjects(opts *Opts) []Object {
 	type Resource struct {
 		Group      string
 		Resource   string
@@ -174,11 +208,15 @@ func seedObjects() []Object {
 		},
 	}
 
-	// creates 4,000,000 objects
+	defaultSize := 10000
+	if opts.size == 0 {
+		opts.size = defaultSize
+	}
+
 	objects := []Object{}
 	for _, namespace := range namespaces {
 		for _, resource := range resources {
-			for i := 0; i < 10000; i++ {
+			for i := 0; i < opts.size; i++ {
 				objects = append(objects, Object{
 					Guid:            fmt.Sprintf("%s-%s-%d", namespace, resource.Resource, i),
 					ResourceVersion: time.Now().UnixNano(),
@@ -205,29 +243,45 @@ func seedObjects() []Object {
 }
 
 func IndexObjects(index bleve.Index, objects []Object) {
+	batch := index.NewBatch()
 	for _, obj := range objects {
-		err := index.Index(obj.Guid, obj)
+		err := batch.Index(obj.Guid, obj)
 		if err != nil {
-			fmt.Println("Failed to index document:", err)
+			fmt.Println("Failed to add document to batch:", err)
 		}
+	}
+
+	err := index.Batch(batch)
+	if err != nil {
+		fmt.Println("Failed to index batch:", err)
 	}
 
 	fmt.Println("Indexing synchronously completed")
 }
 
-func indexObjectsConcurrently(index bleve.Index, objects []Object) {
+func indexObjectsConcurrently(index bleve.Index, objects []Object, opts Opts) {
 	// Create a wait group to wait for all goroutines to finish
 	var wg sync.WaitGroup
 
-	// Create a channel to send batches to the workers
-	batchChan := make(chan *bleve.Batch)
+	// Create a channel to send chunks to the workers
+	batchChan := make(chan []Object)
 
+	fmt.Println("Creating workers...")
+	start := time.Now()
 	// Start workers (goroutines)
-	for i := 0; i < INDEX_WORKERS; i++ {
+	for i := 0; i < opts.workers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for batch := range batchChan {
+			for chunk := range batchChan {
+				batch := index.NewBatch()
+				for _, obj := range chunk {
+					docID := obj.Guid
+					err := batch.Index(docID, obj)
+					if err != nil {
+						fmt.Println("Failed to add document to batch:", err)
+					}
+				}
 				err := index.Batch(batch)
 				if err != nil {
 					log.Fatal(err)
@@ -235,27 +289,23 @@ func indexObjectsConcurrently(index bleve.Index, objects []Object) {
 			}
 		}()
 	}
+	end := time.Since(start).Seconds()
+	fmt.Printf("workers completed in %f seconds\n", end)
 
-	// Create and send batches
-	for i := 0; i < len(objects); i += INDEX_BATCH_SIZE {
-		end := i + INDEX_BATCH_SIZE
-		if end > len(objects) {
-			end = len(objects)
+	fmt.Println("Creating batches...")
+	start = time.Now()
+	// Create and send chunks to be indexed
+	for i := 0; i < len(objects); i += opts.batchSize {
+		endd := i + opts.batchSize
+		if endd > len(objects) {
+			endd = len(objects)
 		}
-
-		// Add documents to a new batch of size INDEX_BATCH_SIZE
-		batch := index.NewBatch()
-		for _, obj := range objects[i:end] {
-			docID := obj.Guid
-			err := batch.Index(docID, obj)
-			if err != nil {
-				fmt.Println("Failed to add document to batch:", err)
-			}
-		}
-
-		// Send the batch to the workers
-		batchChan <- batch
+		chunk := objects[i:endd]
+		batchChan <- chunk
 	}
+
+	end = time.Since(start).Seconds()
+	fmt.Printf("batches completed in %f seconds\n", end)
 
 	// Close the channel and wait for all workers to finish
 	close(batchChan)
@@ -265,21 +315,10 @@ func indexObjectsConcurrently(index bleve.Index, objects []Object) {
 }
 
 // this will only create an in-memory index right now
-func createFileIndex(deleteExisting bool) (bleve.Index, bool, error) {
+func createFileIndex() (bleve.Index, bool, error) {
 	// Define the index path
-	indexPath := "example.bleve"
+	indexPath := os.TempDir() + "example.bleve"
 	exists := true
-
-	// delete the index files if they exist
-	if deleteExisting {
-		err := os.RemoveAll(indexPath)
-		if err != nil {
-			fmt.Println("Error:", err)
-		} else {
-			fmt.Println("Index files deleted successfully!")
-			exists = false
-		}
-	}
 
 	// Attempt to open an existing index
 	index, err := bleve.Open(indexPath)
