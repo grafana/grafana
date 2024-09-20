@@ -83,17 +83,6 @@ exports[`RuleEditor cloud can create a new cloud alert 1`] = `
       ],
     ],
     "method": "GET",
-    "url": "http://localhost/api/ruler/mimir/api/v1/rules?subtype=mimir",
-  },
-  {
-    "body": "",
-    "headers": [
-      [
-        "accept",
-        "application/json, text/plain, */*",
-      ],
-    ],
-    "method": "GET",
     "url": "http://localhost/api/ruler/mimir/api/v1/rules/namespace-2/group-3?subtype=mimir",
   },
 ]

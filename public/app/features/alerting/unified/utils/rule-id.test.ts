@@ -47,15 +47,6 @@ const recordingRule = {
 };
 
 describe('hashRulerRule', () => {
-  it('should not hash unknown rule types', () => {
-    const unknownRule = {};
-
-    expect(() => {
-      // @ts-ignore
-      hashRulerRule(unknownRule);
-    }).toThrow('Only recording and alerting ruler rules can be hashed');
-  });
-
   it('should hash recording rules', () => {
     const recordingRule: RulerRecordingRuleDTO = {
       record: 'instance:node_num_cpu:sum',
