@@ -43,12 +43,19 @@ type protoClient struct {
 	pluginVersion string
 	pluginJSON    plugins.JSONData
 
-	startInit    bool
-	startSuccess bool
-	startFail    bool
+	state pluginState
 
 	mu sync.RWMutex
 }
+
+type pluginState int
+
+const (
+	pluginStateStopped pluginState = iota
+	pluginStateInit
+	pluginStateSuccess
+	pluginStateFail
+)
 
 type ProtoClientOpts struct {
 	PluginJSON     plugins.JSONData
@@ -105,40 +112,42 @@ func (r *protoClient) Start(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.startInit = true
+	r.state = pluginStateInit
 
 	err := r.plugin.Start(ctx)
 	if err != nil {
-		r.startFail = true
+		r.state = pluginStateFail
 		return err
 	}
 
-	r.startSuccess = true
+	r.state = pluginStateSuccess
 	return nil
 }
 
 func (r *protoClient) Stop(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.state = pluginStateStopped
 	return r.plugin.Stop(ctx)
 }
 
-func (r *protoClient) client(_ context.Context) (*ClientV2, bool) {
+func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if !r.startInit {
-		r.Logger().Debug("Plugin client has not been started yet")
+	logger := r.Logger().FromContext(ctx)
+	if r.state == pluginStateInit {
+		logger.Debug("Plugin client has not been started yet")
 		return nil, false
 	}
 
-	if r.startFail {
-		r.Logger().Debug("Plugin client failed to start")
+	if r.state == pluginStateFail {
+		logger.Debug("Plugin client failed to start")
 		return nil, false
 	}
 
-	if !r.startSuccess {
-		r.Logger().Debug("Plugin client has not started successfully yet")
+	if r.state == pluginStateStopped {
+		logger.Debug("Plugin client has not started successfully yet")
 		return nil, false
 	}
 
