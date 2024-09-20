@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -412,11 +411,6 @@ func validateLBACHeader(headervalue string) bool {
 	}
 	_, err = parser.ParseMetricSelector(string(match[1]))
 	return err == nil
-}
-
-func evaluateTeamHTTPHeaderPermissions(hs *HTTPServer, c *contextmodel.ReqContext, scope string) (bool, error) {
-	ev := ac.EvalPermission(datasources.ActionPermissionsWrite, ac.Scope(scope))
-	return hs.AccessControl.Evaluate(c.Req.Context(), c.SignedInUser, ev)
 }
 
 // swagger:route POST /datasources datasources addDataSource
