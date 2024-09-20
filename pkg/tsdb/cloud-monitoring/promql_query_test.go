@@ -59,8 +59,10 @@ func TestPromqlQuery(t *testing.T) {
 		}
 
 		dr, parsedProm, _, err := query.run(context.Background(), &backend.QueryDataRequest{}, service, dsInfo, service.logger)
-		require.Error(t, err)
-		require.Equal(t, "not found!", err.Error())
+		require.NoError(t, err)
+		require.Error(t, dr.Error)
+		require.Equal(t, "not found!", dr.Error.Error())
+		require.True(t, backend.IsDownstreamError(dr.Error))
 
 		err = query.parseResponse(dr, parsedProm, "", service.logger)
 		require.NoError(t, err)
