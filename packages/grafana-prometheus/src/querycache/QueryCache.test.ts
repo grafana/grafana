@@ -6,7 +6,7 @@ import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@gra
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { QueryCache } from './QueryCache';
+import { CacheRequestInfo, QueryCache } from './QueryCache';
 import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
 
 // Will not interpolate vars!
@@ -124,7 +124,7 @@ describe('QueryCache: Generic', function () {
       }),
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       firstFrames
@@ -148,7 +148,7 @@ describe('QueryCache: Generic', function () {
       secondRequest,
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       secondFrames
@@ -241,7 +241,7 @@ describe('QueryCache: Prometheus', function () {
         request,
         {
           requests: [], // unused
-          targSigs: targetSignatures,
+          targetSignatures: targetSignatures,
           shouldCache: true,
         },
         firstFrames
@@ -265,7 +265,7 @@ describe('QueryCache: Prometheus', function () {
         secondRequest,
         {
           requests: [], // unused
-          targSigs: targetSignatures,
+          targetSignatures: targetSignatures,
           shouldCache: true,
         },
         secondFrames
@@ -387,9 +387,9 @@ describe('QueryCache: Prometheus', function () {
       panelId: panelId,
     });
 
-    const requestInfo = {
+    const requestInfo: CacheRequestInfo<PromQuery> = {
       requests: [], // unused
-      targSigs: cache,
+      targetSignatures: cache,
       shouldCache: true,
     };
     const targetSignature = `1=1|${interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
@@ -407,7 +407,7 @@ describe('QueryCache: Prometheus', function () {
       }),
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       secondFrames
@@ -430,7 +430,7 @@ describe('QueryCache: Prometheus', function () {
       }),
       {
         requests: [], // unused
-        targSigs: cache,
+        targetSignatures: cache,
         shouldCache: true,
       },
       thirdFrames
