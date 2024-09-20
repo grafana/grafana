@@ -9,7 +9,6 @@ import (
 	"math/rand"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
@@ -418,8 +417,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db, cfg := sqlstore.InitTestReplDB(t)
-	cfg.UnifiedAlerting.BaseInterval = time.Second
+	db, cfg := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -828,7 +826,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		guardian.New = g
 	})
 
-	db, _ := sqlstore.InitTestReplDB(t)
+	db, _ := sqlstore.InitTestDB(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
 	nestedFolderStore := ProvideStore(db)
@@ -1459,7 +1457,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db, cfg := sqlstore.InitTestReplDB(t)
+	db, cfg := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -1863,7 +1861,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 }
 
 func TestFolderServiceGetFolder(t *testing.T) {
-	db, _ := sqlstore.InitTestReplDB(t)
+	db, _ := sqlstore.InitTestDB(t)
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
@@ -1962,7 +1960,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 }
 
 func TestFolderServiceGetFolders(t *testing.T) {
-	db, cfg := sqlstore.InitTestReplDB(t)
+	db, cfg := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -2038,7 +2036,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 // TODO replace it with an API test under /pkg/tests/api/folders
 // whenever the golang client with get updated to allow filtering child folders by permission
 func TestGetChildrenFilterByPermission(t *testing.T) {
-	db, cfg := sqlstore.InitTestReplDB(t)
+	db, cfg := sqlstore.InitTestDB(t)
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {

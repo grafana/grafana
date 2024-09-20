@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -43,7 +42,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sql := db.InitTestReplDB(t)
+	sql := db.InitTestDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
@@ -210,8 +209,8 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	allDashboards := make([]dashInfo, 0, folder.MaxNestedFolderDepth+1)
 	annotationsTexts := make([]string, 0, folder.MaxNestedFolderDepth+1)
 
-	setupFolderStructure := func() *sqlstore.ReplStore {
-		sql, cfg := db.InitTestReplDBWithCfg(t)
+	setupFolderStructure := func() db.DB {
+		sql, cfg := db.InitTestDBWithCfg(t)
 
 		// enable nested folders so that the folder table is populated for all the tests
 		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)

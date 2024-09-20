@@ -1792,8 +1792,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		GetsConfig(models.AlertConfiguration{
 			AlertmanagerConfiguration: string(raw),
 		})
-	replDB, cfg := db.InitTestReplDBWithCfg(t)
-	sqlStore := replDB.DB()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 
 	quotas := &provisioning.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
@@ -1817,7 +1816,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		}}, nil).Maybe()
 
 	ac := &recordingAccessControlFake{}
-	dashboardStore, err := database.ProvideDashboardStore(replDB, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotatest.New(false, nil))
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)

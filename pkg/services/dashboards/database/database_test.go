@@ -44,16 +44,16 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var sqlStore db.ReplDB
+	var sqlStore db.DB
 	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *dashboards.Dashboard
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore.DB()), quotaService)
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		// insertTestDashboard creates the following hierarchy:
 		// 1 test dash folder
@@ -539,16 +539,16 @@ func TestIntegrationGetSoftDeletedDashboard(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	var sqlStore db.ReplDB
+	var sqlStore *sqlstore.SQLStore
 	var cfg *setting.Cfg
 	var savedFolder, savedDash *dashboards.Dashboard
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestReplDBWithCfg(t)
+		sqlStore, cfg = db.InitTestDBWithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		var err error
-		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore.DB()), quotaService)
+		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
@@ -660,7 +660,7 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -685,7 +685,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
@@ -736,7 +736,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
@@ -780,7 +780,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 }
 
 func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
@@ -818,7 +818,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
@@ -936,7 +936,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
@@ -1118,8 +1118,8 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	}
 }
 
-func insertTestRule(t *testing.T, sqlStore db.ReplDB, foderOrgID int64, folderUID string) {
-	err := sqlStore.DB().WithDbSession(context.Background(), func(sess *db.Session) error {
+func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		type alertQuery struct {
 			RefID         string
 			DatasourceUID string

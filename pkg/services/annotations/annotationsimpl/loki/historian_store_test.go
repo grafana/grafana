@@ -33,6 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -44,7 +46,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	sql, cfg := db.InitTestReplDBWithCfg(t)
+	sql, cfg := db.InitTestDBWithCfg(t)
 
 	dashboard1 := testutil.CreateDashboard(t, sql, cfg, featuremgmt.WithFeatures(), dashboards.SaveDashboardCommand{
 		UserID: 1,
