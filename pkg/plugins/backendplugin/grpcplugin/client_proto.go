@@ -45,6 +45,7 @@ type protoClient struct {
 
 	startInit    bool
 	startSuccess bool
+	startFail    bool
 
 	mu sync.RWMutex
 }
@@ -108,6 +109,7 @@ func (r *protoClient) Start(ctx context.Context) error {
 
 	err := r.plugin.Start(ctx)
 	if err != nil {
+		r.startFail = true
 		return err
 	}
 
@@ -124,12 +126,20 @@ func (r *protoClient) Stop(ctx context.Context) error {
 func (r *protoClient) client(_ context.Context) (*ClientV2, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+
 	if !r.startInit {
 		r.Logger().Debug("Plugin client has not been started yet")
+		return nil, false
+	}
+
+	if r.startFail {
+		r.Logger().Debug("Plugin client failed to start")
+		return nil, false
 	}
 
 	if !r.startSuccess {
-		r.Logger().Debug("Plugin client has not successfully started yet")
+		r.Logger().Debug("Plugin client has not started successfully yet")
+		return nil, false
 	}
 
 	if r.plugin.Exited() {
