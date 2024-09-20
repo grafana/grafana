@@ -78,7 +78,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 		func() []string { return opts.Env },
 	)
 
-	return &protoClient{plugin: p, pluginVersion: opts.PluginJSON.Info.Version, pluginJSON: opts.PluginJSON}, nil
+	return &protoClient{plugin: p, pluginVersion: opts.PluginJSON.Info.Version, pluginJSON: opts.PluginJSON, state: pluginStateStopped}, nil
 }
 
 func (r *protoClient) PID(ctx context.Context) (string, error) {
