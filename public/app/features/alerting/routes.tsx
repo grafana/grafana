@@ -73,6 +73,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingInstanceCreate,
         AccessControlAction.AlertingInstancesExternalWrite,
+        AccessControlAction.AlertingSilenceCreate,
+        AccessControlAction.AlertingSilenceUpdate,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertSilences" */ 'app/features/alerting/unified/Silences')
