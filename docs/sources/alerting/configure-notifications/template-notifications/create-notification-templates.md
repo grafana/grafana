@@ -230,11 +230,11 @@ Template alert notifications based on a label. In this example the label represe
 
    `.CommonLabels` is a map containing the labels that are common to all the alerts firing.
 
-   Make sure that the replace the `.namespace` label with a label that exists in your alert rule.
+   Make sure to replace the `.namespace` label with a label that exists in your alert rule.
 
 1. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values.
 1. Navigate to your contact point in Grafana
-1. In the **Message** field, reference the template by name (see **Optional Email settings** section):
+1. In the **Message** field, reference the template by name (see **Optional settings** section):
 
    ```
    {{ template "my_conditional_notification" . }}
