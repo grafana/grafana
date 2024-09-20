@@ -245,9 +245,7 @@ func indexObjectsConcurrently(index bleve.Index, objects []Object, opts Opts) {
 	// Create a wait group to wait for all goroutines to finish
 	var wg sync.WaitGroup
 
-	// Create a channel to send batches to the workers
-	// batchChan := make(chan *bleve.Batch)
-
+	// Create a channel to send chunks to the workers
 	batchChan := make(chan []Object)
 
 	fmt.Println("Creating workers...")
@@ -258,13 +256,6 @@ func indexObjectsConcurrently(index bleve.Index, objects []Object, opts Opts) {
 		go func() {
 			defer wg.Done()
 			for chunk := range batchChan {
-				// err := index.Batch(batch)
-				// if err != nil {
-				// 	log.Fatal(err)
-				// }
-				// fmt.Println("Creating batch...")
-				// start11 := time.Now()
-
 				batch := index.NewBatch()
 				for _, obj := range chunk {
 					docID := obj.Guid
@@ -273,18 +264,10 @@ func indexObjectsConcurrently(index bleve.Index, objects []Object, opts Opts) {
 						fmt.Println("Failed to add document to batch:", err)
 					}
 				}
-
-				// end1 := time.Since(start11).Seconds()
-				// fmt.Printf("Batch created in %f seconds\n", end1)
-
 				err := index.Batch(batch)
 				if err != nil {
 					log.Fatal(err)
 				}
-
-				// end11 := time.Since(start11).Seconds()
-				// fmt.Printf("Batch written to index in %f seconds\n", end11)
-
 			}
 		}()
 	}
@@ -293,31 +276,13 @@ func indexObjectsConcurrently(index bleve.Index, objects []Object, opts Opts) {
 
 	fmt.Println("Creating batches...")
 	start = time.Now()
-	// Create and send batches
+	// Create and send chunks to be indexed
 	for i := 0; i < len(objects); i += opts.batchSize {
 		endd := i + opts.batchSize
 		if endd > len(objects) {
 			endd = len(objects)
 		}
-
-		// fmt.Println("Creating batch...")
-		// start1 := time.Now()
-		// Add documents to a new batch of size INDEX_BATCH_SIZE
-		// batch := index.NewBatch()
-		// for _, obj := range objects[i:end] {
-		// 	docID := obj.Guid
-		// 	err := batch.Index(docID, obj)
-		// 	if err != nil {
-		// 		fmt.Println("Failed to add document to batch:", err)
-		// 	}
-		// }
-
 		chunk := objects[i:endd]
-
-		// end1 := time.Since(start1).Seconds()
-		// fmt.Printf("batch completed in %f seconds\n", end1)
-
-		// Send the batch to the workers
 		batchChan <- chunk
 	}
 
