@@ -80,7 +80,7 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	query.Page = 1
 
 	for len(results) < int(query.Limit) {
-		resources, err := r.authZ.Authorize(ctx, query.OrgID, query)
+		resources, err := r.authZ.Authorize(ctx, query)
 		if err != nil {
 			return []*annotations.ItemDTO{}, err
 		}
