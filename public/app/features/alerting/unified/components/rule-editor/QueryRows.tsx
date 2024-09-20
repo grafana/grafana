@@ -171,6 +171,11 @@ export class QueryRows extends PureComponent<Props> {
                       error = errorFromPreviewData(data);
                     }
 
+                    if (error) {
+                      // TODO: use error correctly
+                      console.error(error);
+                    }
+
                     if (!dsSettings) {
                       return (
                         <DatasourceNotFound
