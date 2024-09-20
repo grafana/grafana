@@ -18,8 +18,7 @@ import {
 } from '../types/receiver-form';
 
 export function grafanaReceiverToFormValues(
-  receiver: GrafanaManagedContactPoint,
-  notifiers: NotifierDTO[]
+  receiver: GrafanaManagedContactPoint
 ): [ReceiverFormValues<GrafanaChannelValues>, GrafanaChannelMap] {
   const channelMap: GrafanaChannelMap = {};
   // giving each form receiver item a unique id so we can use it to map back to "original" items
@@ -32,8 +31,7 @@ export function grafanaReceiverToFormValues(
       receiver.grafana_managed_receiver_configs?.map((channel) => {
         const id = String(idCounter++);
         channelMap[id] = channel;
-        const notifier = notifiers.find(({ type }) => type === channel.type);
-        return grafanaChannelConfigToFormChannelValues(id, channel, notifier);
+        return grafanaChannelConfigToFormChannelValues(id, channel);
       }) ?? [],
   };
   return [values, channelMap];
@@ -138,8 +136,7 @@ function cloudChannelConfigToFormChannelValues(
 
 function grafanaChannelConfigToFormChannelValues(
   id: string,
-  channel: GrafanaManagedReceiverConfig,
-  notifier?: NotifierDTO
+  channel: GrafanaManagedReceiverConfig
 ): GrafanaChannelValues {
   const values: GrafanaChannelValues = {
     __id: id,
