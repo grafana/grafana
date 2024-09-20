@@ -215,6 +215,12 @@
       "paused": "Paused",
       "recording-rule": "Recording rule"
     },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "This rule has been updated recently. Updates are not yet reflected on the alert list page. It will take up to a minute to propagate the changes.",
+        "alert-title": "Updates in progress"
+      }
+    },
     "rules": {
       "add-rule": {
         "success": "Rule added successfully"

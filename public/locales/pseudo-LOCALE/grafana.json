@@ -215,6 +215,12 @@
       "paused": "Päūşęđ",
       "recording-rule": "Ŗęčőřđįŉģ řūľę"
     },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "Ŧĥįş řūľę ĥäş þęęŉ ūpđäŧęđ řęčęŉŧľy. Ůpđäŧęş äřę ŉőŧ yęŧ řęƒľęčŧęđ őŉ ŧĥę äľęřŧ ľįşŧ päģę. Ĩŧ ŵįľľ ŧäĸę ūp ŧő ä mįŉūŧę ŧő přőpäģäŧę ŧĥę čĥäŉģęş.",
+        "alert-title": "Ůpđäŧęş įŉ přőģřęşş"
+      }
+    },
     "rules": {
       "add-rule": {
         "success": "Ŗūľę äđđęđ şūččęşşƒūľľy"
