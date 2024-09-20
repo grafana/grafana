@@ -1,3 +1,5 @@
+[![Open in DevZero](https://assets.devzero.io/open-in-devzero.svg)](https://www.devzero.io/dashboard/recipes/new?repo-url=https://github.com/grafana/grafana)
+
 ![Grafana Logo (Light)](docs/logo-horizontal.png#gh-light-mode-only)
 ![Grafana Logo (Dark)](docs/logo-horizontal-dark.png#gh-dark-mode-only)
 
