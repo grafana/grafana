@@ -67,7 +67,6 @@ export const Pages = {
           shareInternally: 'data-testid new share button share internally',
           shareExternally: 'data-testid new share button share externally',
           shareSnapshot: 'data-testid new share button share snapshot',
-          scheduleReport: 'data-testid new share button schedule report',
         },
       },
       NewExportButton: {
