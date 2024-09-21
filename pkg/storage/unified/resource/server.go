@@ -566,10 +566,11 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	defer s.broadcaster.Unsubscribe(stream)
 
 	since := req.Since
-	// TODO: req.SendInitialEvents ??
-	if req.Since == 0 {
+
+	listRV := int64(0)
+	if req.SendInitialEvents {
 		// Backfill the stream
-		_, err := s.backend.ListIterator(ctx, &ListRequest{Options: req.Options}, func(iter ListIterator) error {
+		listRV, err = s.backend.ListIterator(ctx, &ListRequest{Options: req.Options}, func(iter ListIterator) error {
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
@@ -591,18 +592,18 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			return err
 		}
 	}
-	// // Send a bookmark
-	// if req.SendInitialEvents && req.AllowWatchBookmarks {
-	// 	s.log.Info("sending bookmark", "resourceVersion", resp.ResourceVersion)
-	// 	if err := srv.Send(&WatchEvent{
-	// 		Type: WatchEvent_BOOKMARK,
-	// 		Resource: &WatchEvent_Resource{
-	// 			Version: resp.ResourceVersion,
-	// 		},
-	// 	}); err != nil {
-	// 		return err
-	// 	}
-	// }
+	// Send a bookmark
+	if req.SendInitialEvents && req.AllowWatchBookmarks {
+		s.log.Info("sending bookmark", "resourceVersion", listRV)
+		if err := srv.Send(&WatchEvent{
+			Type: WatchEvent_BOOKMARK,
+			Resource: &WatchEvent_Resource{
+				Version: listRV,
+			},
+		}); err != nil {
+			return err
+		}
+	}
 
 	for {
 		select {
@@ -638,7 +639,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				if event.PreviousRV > 0 {
 					prevObj, err := s.Read(ctx, &ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
 					if err != nil {
-						// TODO: Are we expecting to discar the event if the previous object is not found? Or should we send the event with the current object only?
+						// TODO: Are we expecting to discard the event if the previous object is not found? Or should we send the event with the current object only?
 						// Failing to send the previous object means consumers might see get the event when using precondition checks.
 						// For now, we will sent the event with the current object only and log the error.
 						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
