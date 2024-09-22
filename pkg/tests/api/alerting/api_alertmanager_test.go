@@ -731,6 +731,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 		re = regexp.MustCompile(`"updated":"(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)"`)
 		b = re.ReplaceAll(b, []byte(`"updated":"2021-05-19T19:47:55Z"`))
 
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK
 		expectedGetRulesResponseBody := fmt.Sprintf(`{
 			"default": [
 				{
@@ -776,7 +777,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								"namespace_uid": %q,
 								"rule_group": "arulegroup",
 								"no_data_state": "NoData",
-								"exec_err_state": "Alerting"
+								"exec_err_state": "OK"
 							}
 						}
 					]
@@ -1207,6 +1208,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		// copy result to a variable with a wider scope
 		// to be used by the next test
 		ruleUID = generatedUIDs[0]
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK
 		expectedGetNamespaceResponseBody = `
 		{
 		   "default":[
@@ -1253,7 +1255,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"OK"
 					   }
 					},
 					{
@@ -1289,7 +1291,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"OK"
 					   }
 					}
 				 ]
@@ -1549,6 +1551,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, 1, len(returnedUIDs))
 		assert.Equal(t, ruleUID, returnedUIDs[0])
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK
 		assert.JSONEq(t, `
 		{
 		   "default":[
@@ -1597,7 +1600,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "namespace_uid":"nsuid",
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
-		                  "exec_err_state":"Alerting"
+		                  "exec_err_state":"OK"
 		               }
 		            }
 		         ]
@@ -1666,6 +1669,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, 1, len(returnedUIDs))
 		assert.Equal(t, ruleUID, returnedUIDs[0])
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK
 		assert.JSONEq(t, `
 			{
 			   "default":[
@@ -1706,7 +1710,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
-					  "exec_err_state":"Alerting"
+					  "exec_err_state":"OK"
 				       }
 				    }
 				 ]
@@ -1754,6 +1758,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, 1, len(returnedUIDs))
 		assert.Equal(t, ruleUID, returnedUIDs[0])
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK
 		assert.JSONEq(t, `
 			{
 			   "default":[
@@ -1794,7 +1799,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "namespace_uid":"nsuid",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
-					  "exec_err_state":"Alerting"
+					  "exec_err_state":"OK"
 				       }
 				    }
 				 ]
@@ -2209,6 +2214,7 @@ func TestIntegrationQuota(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, 1, len(returnedUIDs))
 		assert.Equal(t, ruleUID, returnedUIDs[0])
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK
 		assert.JSONEq(t, `
 				{
 				   "default":[
@@ -2249,7 +2255,7 @@ func TestIntegrationQuota(t *testing.T) {
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
-						  "exec_err_state":"Alerting"
+						  "exec_err_state":"OK"
 					       }
 					    }
 					 ]

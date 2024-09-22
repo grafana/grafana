@@ -426,8 +426,10 @@ func TestNeedsSending(t *testing.T) {
 			},
 		},
 		{
-			name:        "state: no-data, needs to be re-sent",
-			expected:    true,
+			// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Do not send a notification on error or no data state
+			name:     "state: no-data, should not be re-sent with evaluation time ",
+			expected: false,
+			// LOGZ.IO GRAFANA CHANGE :: End
 			resendDelay: 1 * time.Minute,
 			testState: &State{
 				State:              eval.NoData,
@@ -446,8 +448,10 @@ func TestNeedsSending(t *testing.T) {
 			},
 		},
 		{
-			name:        "state: error, needs to be re-sent",
-			expected:    true,
+			// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Do not send a notification on error or no data state
+			name:     "state: error, should not be re-sent with evaluation time",
+			expected: false,
+			// LOGZ.IO GRAFANA CHANGE :: End
 			resendDelay: 1 * time.Minute,
 			testState: &State{
 				State:              eval.Error,

@@ -1235,7 +1235,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 						return a.ID < b.ID
 					}),
 					cmpopts.IgnoreUnexported(ngModels.AlertRule{}, ngModels.AlertQuery{}),
-					cmpopts.IgnoreFields(ngModels.AlertRule{}, "Updated", "UID", "ID"),
+					cmpopts.IgnoreFields(ngModels.AlertRule{}, "Updated", "UID", "ID", "ExecErrState"), // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 				}
 				if tt.expectedFolder != nil {
 					cOpt = append(cOpt, cmpopts.IgnoreFields(ngModels.AlertRule{}, "NamespaceUID"))

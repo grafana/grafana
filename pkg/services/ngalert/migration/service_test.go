@@ -1617,7 +1617,7 @@ func compareRules(t *testing.T, x *xorm.Engine, orgId int64, expectedRules []*mo
 			return a.Title < b.Title
 		}),
 		cmpopts.IgnoreUnexported(models.AlertRule{}, models.AlertQuery{}),
-		cmpopts.IgnoreFields(models.AlertRule{}, "Updated", "UID", "ID", "Version"),
+		cmpopts.IgnoreFields(models.AlertRule{}, "Updated", "UID", "ID", "Version", "ExecErrState"), // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 	}
 	if !cmp.Equal(expectedRules, rules, cOpt...) {
 		t.Errorf("Unexpected Rule: %v", cmp.Diff(expectedRules, rules, cOpt...))

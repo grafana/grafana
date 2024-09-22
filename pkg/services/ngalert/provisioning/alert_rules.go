@@ -157,6 +157,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 			}
 		}
 	}
+	rule.ExecErrState = models.OkErrState // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		ids, err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
 			rule,
@@ -411,6 +412,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
 	rule.IntervalSeconds = storedRule.IntervalSeconds
+	rule.ExecErrState = models.OkErrState // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
 		return models.AlertRule{}, err

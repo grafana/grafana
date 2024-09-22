@@ -744,7 +744,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 							return a.Permission < b.Permission
 						}),
 						cmpopts.IgnoreUnexported(ngModels.AlertRule{}, ngModels.AlertQuery{}),
-						cmpopts.IgnoreFields(ngModels.AlertRule{}, "ID", "Updated", "UID"),
+						cmpopts.IgnoreFields(ngModels.AlertRule{}, "ID", "Updated", "UID", "ExecErrState"), // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 						cmpopts.IgnoreFields(dashboards.Dashboard{}, "ID", "Created", "Updated", "Data", "Slug"),
 					}
 					if !cmp.Equal(tt.expected, actual, cOpt...) {

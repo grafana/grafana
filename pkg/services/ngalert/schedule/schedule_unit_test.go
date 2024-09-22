@@ -752,13 +752,20 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			require.NoError(t, err)
 		})
 
-		t.Run("it should send special alert DatasourceError", func(t *testing.T) {
-			sender.AssertNumberOfCalls(t, "Send", 1)
-			args, ok := sender.Calls()[0].Arguments[2].(definitions.PostableAlerts)
-			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls()[0].Arguments[2]))
-			assert.Len(t, args.PostableAlerts, 1)
-			assert.Equal(t, state.ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Do not send a notification on error or no data state
+		//t.Run("it should send special alert DatasourceError", func(t *testing.T) {
+		//	sender.AssertNumberOfCalls(t, "Send", 1)
+		//	args, ok := sender.Calls()[0].Arguments[2].(definitions.PostableAlerts)
+		//	require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls()[0].Arguments[2]))
+		//	assert.Len(t, args.PostableAlerts, 1)
+		//	assert.Equal(t, state.ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
+		//})
+		t.Run("it should not send special alert DatasourceError", func(t *testing.T) {
+			sender.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
+
+			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 		})
+		// LOGZ.IO GRAFANA CHANGE :: End
 	})
 
 	t.Run("when there are alerts that should be firing", func(t *testing.T) {

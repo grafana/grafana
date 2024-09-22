@@ -123,6 +123,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 				"GrafanaManagedAlert.Data.Model",
 				"GrafanaManagedAlert.NamespaceUID",
 				"GrafanaManagedAlert.NamespaceID",
+				"GrafanaManagedAlert.ExecErrState", // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -139,9 +140,11 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 			for _, rule := range allRules["folder1"][0].Rules {
 				assert.Equal(t, "folder1", rule.GrafanaManagedAlert.NamespaceUID)
+				require.Equal(t, rule.GrafanaManagedAlert.ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			}
 			for _, rule := range allRules["folder2"][0].Rules {
 				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
+				require.Equal(t, rule.GrafanaManagedAlert.ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			}
 		})
 
@@ -173,6 +176,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 			pathsToIgnore := []string{
 				"Groups.Rules.UID",
 				"Groups.Folder",
+				"Groups.Rules.ExecErrState", // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -189,6 +193,8 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 			require.Equal(t, "folder1", allExport.Groups[0].Folder)
 			require.Equal(t, "folder2", allExport.Groups[1].Folder)
+			require.Equal(t, allExport.Groups[0].Rules[0].ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
+			require.Equal(t, allExport.Groups[1].Rules[0].ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {
@@ -424,6 +430,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 				"GrafanaManagedAlert.Data.Model",
 				"GrafanaManagedAlert.NamespaceUID",
 				"GrafanaManagedAlert.NamespaceID",
+				"GrafanaManagedAlert.ExecErrState", // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -440,14 +447,17 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 
 			for _, rule := range allRules["folder1"][0].Rules {
 				assert.Equal(t, "folder1", rule.GrafanaManagedAlert.NamespaceUID)
+				require.Equal(t, rule.GrafanaManagedAlert.ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			}
 
 			for _, rule := range allRules["folder2"][0].Rules {
 				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
+				require.Equal(t, rule.GrafanaManagedAlert.ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			}
 
 			for _, rule := range allRules["folder1/subfolder"][0].Rules {
 				assert.Equal(t, "subfolder", rule.GrafanaManagedAlert.NamespaceUID)
+				require.Equal(t, rule.GrafanaManagedAlert.ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			}
 		})
 
@@ -493,6 +503,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			pathsToIgnore := []string{
 				"Groups.Rules.UID",
 				"Groups.Folder",
+				"Groups.Rules.ExecErrState", // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 			}
 
 			// compare expected and actual and ignore the dynamic fields
@@ -510,6 +521,9 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			require.Equal(t, "folder1", allExport.Groups[0].Folder)
 			require.Equal(t, "folder2", allExport.Groups[1].Folder)
 			require.Equal(t, "subfolder", allExport.Groups[2].Folder)
+			require.Equal(t, allExport.Groups[0].Rules[0].ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
+			require.Equal(t, allExport.Groups[1].Rules[0].ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
+			require.Equal(t, allExport.Groups[2].Rules[0].ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 		})
 
 		t.Run("Export from one folder", func(t *testing.T) {
@@ -769,6 +783,7 @@ func TestAlertRulePostExport(t *testing.T) {
 			"Groups.Rules.UID",
 			"Groups.Folder",
 			"Data.Model", // Model is not amended with default values
+			"Groups.Rules.ExecErrState", // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 		}
 
 		// compare expected and actual and ignore the dynamic fields
@@ -784,6 +799,7 @@ func TestAlertRulePostExport(t *testing.T) {
 		require.Empty(t, diff)
 
 		require.Equal(t, actual.Groups[0].Folder, "folder1")
+		require.Equal(t, actual.Groups[0].Rules[0].ExecErrState, apimodels.OkErrState) // LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
 	})
 
 	t.Run("should return 403 when no access to folder", func(t *testing.T) {
@@ -981,6 +997,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		require.Len(t, resp.Created, len(rules.Rules))
 	}
 
+	// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK
 	expectedAllJSON := fmt.Sprintf(`
 {
 	"default": [{
@@ -1021,7 +1038,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
-				"exec_err_state": "Alerting"
+				"exec_err_state": "OK"
 			}
 		}, {
 			"expr": "",
@@ -1054,7 +1071,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "Alerting",
-				"exec_err_state": "Alerting"
+				"exec_err_state": "OK"
 			}
 		}]
 	}]
@@ -1099,7 +1116,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"namespace_uid": "nsuid",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
-				"exec_err_state": "Alerting"
+				"exec_err_state": "OK"
 			}
 		}]
 	}]

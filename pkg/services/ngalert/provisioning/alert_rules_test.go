@@ -68,6 +68,20 @@ func TestAlertRuleService(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
+	t.Run("update alert rule ExecErrState enforces OK state", func(t *testing.T) {
+		rule := dummyRule("test-update-errstate", orgID)
+		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+		require.NoError(t, err)
+		require.Equal(t, models.OkErrState, rule.ExecErrState)
+
+		rule.ExecErrState = models.ErrorErrState
+		rule, err = ruleService.UpdateAlertRule(context.Background(), rule, models.ProvenanceNone)
+		require.NoError(t, err)
+		require.Equal(t, models.OkErrState, rule.ExecErrState)
+	})
+	// LOGZ.IO GRAFANA CHANGE :: End
+
 	t.Run("group creation should propagate group title correctly", func(t *testing.T) {
 		group := createDummyGroup("group-test-3", orgID)
 		group.Rules[0].RuleGroup = "something different"
@@ -556,6 +570,16 @@ func TestCreateAlertRule(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
+	t.Run("should create rule with ExecErrState OK state enforced", func(t *testing.T) {
+		rule := dummyRule("test-create-errstate", orgID)
+		rule.ExecErrState = models.AlertingErrState
+		rule, err := ruleService.CreateAlertRule(context.Background(), rule, models.ProvenanceNone, 0)
+		require.NoError(t, err)
+		require.Equal(t, models.OkErrState, rule.ExecErrState)
+	})
+	// LOGZ.IO GRAFANA CHANGE :: End
 }
 
 func createAlertRuleService(t *testing.T) AlertRuleService {

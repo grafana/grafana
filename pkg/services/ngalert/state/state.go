@@ -408,6 +408,10 @@ func (a *State) NeedsSending(resendDelay time.Duration) bool {
 	case eval.Normal:
 		// We should send a notification if the state is Normal because it was resolved
 		return a.Resolved
+	// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Do not send a notification on error or no data state
+	case eval.NoData, eval.Error:
+		return false
+	// LOGZ.IO GRAFANA CHANGE :: end
 	default:
 		// We should send, and re-send notifications, each time LastSentAt is <= LastEvaluationTime + resendDelay
 		nextSent := a.LastSentAt.Add(resendDelay)

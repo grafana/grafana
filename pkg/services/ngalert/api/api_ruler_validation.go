@@ -54,18 +54,20 @@ func validateRuleNode(
 		}
 	}
 
-	errorState := ngmodels.AlertingErrState
+	// LOGZ.IO GRAFANA CHANGE :: DEV-46410 - Change default ExecErrState to OK and enforce OK value
+	errorState := ngmodels.OkErrState
 
-	if ruleNode.GrafanaManagedAlert.ExecErrState == "" && canPatch {
-		errorState = ""
-	}
-
-	if ruleNode.GrafanaManagedAlert.ExecErrState != "" {
-		errorState, err = ngmodels.ErrStateFromString(string(ruleNode.GrafanaManagedAlert.ExecErrState))
-		if err != nil {
-			return nil, err
-		}
-	}
+	//if ruleNode.GrafanaManagedAlert.ExecErrState == "" && canPatch {
+	//	errorState = ""
+	//}
+	//
+	//if ruleNode.GrafanaManagedAlert.ExecErrState != "" {
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	errorState, err = ngmodels.ErrStateFromString(string(ruleNode.GrafanaManagedAlert.ExecErrState))
+	//}
+	// LOGZ.IO GRAFANA CHANGE :: End
 
 	if len(ruleNode.GrafanaManagedAlert.Data) == 0 {
 		if canPatch {
