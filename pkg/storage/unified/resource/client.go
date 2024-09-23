@@ -42,19 +42,24 @@ func NewResourceClient(channel *grpc.ClientConn) ResourceClient {
 	}
 }
 
-func NewLocalResourceClient(server ResourceStoreServer) ResourceClient {
-	// scenario: local in-proc
+func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	channel := &inprocgrpc.Channel{}
 
 	grpcAuthInt := grpcutils.NewInProcGrpcAuthenticator()
-	channel.RegisterService(
-		grpchan.InterceptServer(
-			&ResourceStore_ServiceDesc,
-			grpcAuth.UnaryServerInterceptor(grpcAuthInt.Authenticate),
-			grpcAuth.StreamServerInterceptor(grpcAuthInt.Authenticate),
-		),
-		server, // Implements all the things
-	)
+	for _, desc := range []*grpc.ServiceDesc{
+		&ResourceStore_ServiceDesc,
+		&ResourceIndex_ServiceDesc,
+		&Diagnostics_ServiceDesc,
+	} {
+		channel.RegisterService(
+			grpchan.InterceptServer(
+				desc,
+				grpcAuth.UnaryServerInterceptor(grpcAuthInt.Authenticate),
+				grpcAuth.StreamServerInterceptor(grpcAuthInt.Authenticate),
+			),
+			server,
+		)
+	}
 
 	clientInt, _ := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
