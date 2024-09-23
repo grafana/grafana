@@ -51,9 +51,22 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   return `Series (${index})`;
 }
 
-export function cacheFieldDisplayNames(frames: DataFrame[]) {
+/**
+ * NOTE: make sure this has a useMemo(frames) somewhere above it when recalc=true
+ * @internal
+ */
+export function cacheFieldDisplayNames(frames: DataFrame[], recalc = false) {
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
+      if (recalc) {
+        // for some reason a panel sometimes gets field.state.displayName populated with something different
+        // than what comes back from a fresh/uncached getFieldDisplayName() call inside the panel.
+        // this happens when e.g. `field.config.displayName` fieldConfig panel option is set to something like `${__field.displayName} ${__field.labels}`
+        // (maybe related to matching in applyFieldOverrides() and having to get the diplay name multiple times, or something in the __field macro)
+        // see https://github.com/grafana/support-escalations/issues/12460
+        delete field.state?.displayName;
+      }
+
       getFieldDisplayName(field, frame, frames);
     });
   });

@@ -300,7 +300,7 @@ export function prepareTimelineFields(
     return { warn: 'No data in response' };
   }
 
-  cacheFieldDisplayNames(series);
+  cacheFieldDisplayNames(series, true);
 
   let hasTimeseries = false;
   const frames: DataFrame[] = [];

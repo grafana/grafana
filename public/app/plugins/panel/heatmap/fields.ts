@@ -89,7 +89,7 @@ export function prepareHeatmapData({
     return {};
   }
 
-  cacheFieldDisplayNames(frames);
+  cacheFieldDisplayNames(frames, true);
 
   const exemplars = annotations?.find((f) => f.name === 'exemplar');
 

@@ -42,7 +42,7 @@ export function prepSeries(
   frames: DataFrame[],
   fieldConfig: FieldConfigSource
 ) {
-  cacheFieldDisplayNames(frames);
+  cacheFieldDisplayNames(frames, true);
   decoupleHideFromState(frames, fieldConfig);
 
   let series: XYSeries[] = [];

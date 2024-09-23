@@ -62,7 +62,7 @@ export function prepSeries(
     return { series: [], _rest: [], warn: 'No data in response' };
   }
 
-  cacheFieldDisplayNames(frames);
+  cacheFieldDisplayNames(frames, true);
   decoupleHideFromState(frames, fieldConfig);
 
   let frame: DataFrame | undefined = { ...frames[0] };

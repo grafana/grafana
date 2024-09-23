@@ -81,7 +81,7 @@ export function prepareGraphableFields(
     return null;
   }
 
-  cacheFieldDisplayNames(series);
+  cacheFieldDisplayNames(series, true);
 
   let useNumericX = xNumFieldIdx != null;
 
