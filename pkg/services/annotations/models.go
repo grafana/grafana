@@ -21,6 +21,7 @@ type ItemQuery struct {
 	SignedInUser identity.Requester
 
 	Limit int64 `json:"limit"`
+	Page  int64
 }
 
 // TagsQuery is the query for a tags search.
