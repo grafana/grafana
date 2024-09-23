@@ -72,10 +72,6 @@ func (r *RepositoryImpl) Update(ctx context.Context, item *annotations.Item) err
 }
 
 func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	if query.Limit == 0 {
-		query.Limit = 1000
-	}
-
 	// Return early if no annotations found, it's not necessary to perform expensive access control filtering
 	res, err := r.reader.Get(ctx, query, &accesscontrol.AccessResources{
 		Dashboards:               map[string]int64{},

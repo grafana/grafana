@@ -48,6 +48,9 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		MatchAny:     c.QueryBool("matchAny"),
 		SignedInUser: c.SignedInUser,
 	}
+	if query.Limit == 0 {
+		query.Limit = 1000
+	}
 
 	// When dashboard UID present in the request, we ignore dashboard ID
 	if query.DashboardUID != "" {
