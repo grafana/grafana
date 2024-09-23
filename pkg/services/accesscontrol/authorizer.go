@@ -11,7 +11,7 @@ import (
 
 // ResourceResolver is called before authorization is performed.
 // It can be used to translate resoruce name into one or more valid scopes that
-// will be used for authorization. If more than one scopes are returned from a resolver
+// will be used for authorization. If more than one scope is returned from a resolver
 // only one needs to match to allow call to be authorized.
 type ResourceResolver interface {
 	Resolve(ctx context.Context, ns claims.NamespaceInfo, name string) ([]string, error)
