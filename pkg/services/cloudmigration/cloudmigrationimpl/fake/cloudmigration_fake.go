@@ -3,6 +3,7 @@ package fake
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -109,27 +110,31 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 		return nil, fmt.Errorf("mock error")
 	}
 
-	if query.Limit == 1 {
-		return []cloudmigration.CloudMigrationSnapshot{
-			{
-				UID:        "fake_uid",
-				SessionUID: query.SessionUID,
-				Status:     cloudmigration.SnapshotStatusCreating,
-			},
-		}, nil
+	cloudSnapshots := []cloudmigration.CloudMigrationSnapshot{
+		{
+			UID:        "fake_uid",
+			SessionUID: query.SessionUID,
+			Status:     cloudmigration.SnapshotStatusCreating,
+			Created:    time.Date(2024, 6, 5, 17, 30, 40, 0, time.UTC),
+		},
+		{
+			UID:        "fake_uid",
+			SessionUID: query.SessionUID,
+			Status:     cloudmigration.SnapshotStatusCreating,
+			Created:    time.Date(2024, 6, 5, 18, 30, 40, 0, time.UTC),
+		},
 	}
-	return []cloudmigration.CloudMigrationSnapshot{
-		{
-			UID:        "fake_uid",
-			SessionUID: query.SessionUID,
-			Status:     cloudmigration.SnapshotStatusCreating,
-		},
-		{
-			UID:        "fake_uid",
-			SessionUID: query.SessionUID,
-			Status:     cloudmigration.SnapshotStatusCreating,
-		},
-	}, nil
+
+	if query.Latest {
+		sort.Slice(cloudSnapshots, func(i, j int) bool {
+			return cloudSnapshots[i].Created.After(cloudSnapshots[j].Created)
+		})
+	}
+
+	if query.Limit > 0 {
+		return cloudSnapshots[0:min(len(cloudSnapshots), query.Limit)], nil
+	}
+	return cloudSnapshots, nil
 }
 
 func (m FakeServiceImpl) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {

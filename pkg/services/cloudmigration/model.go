@@ -142,6 +142,7 @@ type ListSnapshotsQuery struct {
 	SessionUID string
 	Page       int
 	Limit      int
+	Latest     bool
 }
 
 type UpdateSnapshotCmd struct {
