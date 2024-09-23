@@ -269,7 +269,7 @@ export const LdapSettingsPage = () => {
                   <Trans i18nKey="ldap-settings-page.title">Basic Settings</Trans>
                 </h3>
                 <Field
-                  label={t('ldap-settings-page.host.label', 'Server host')}
+                  label={t('ldap-settings-page.host.label', 'Server host *')}
                   description={t(
                     'ldap-settings-page.host.description',
                     'Hostname or IP address of the LDAP server you wish to connect to.'

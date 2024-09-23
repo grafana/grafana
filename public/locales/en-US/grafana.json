@@ -1165,7 +1165,7 @@
     "documentation": "documentation",
     "host": {
       "description": "Hostname or IP address of the LDAP server you wish to connect to.",
-      "label": "Server host",
+      "label": "Server host *",
       "placeholder": "example: 127.0.0.1"
     },
     "login-form-alert": {
