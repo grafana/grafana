@@ -67,7 +67,7 @@ var (
 			},
 		},
 	)
-	TemplateGroupResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	TemplateGroupResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 		"templategroups", "templategroup", "TemplateGroup",
 		func() runtime.Object { return &TemplateGroup{} },
 		func() runtime.Object { return &TemplateGroupList{} },
