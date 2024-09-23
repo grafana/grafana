@@ -338,6 +338,8 @@ export const LdapDrawerComponent = ({
                       <MultiSelect
                         {...field}
                         allowCustomValue
+                        className={styles.multiSelect}
+                        noOptionsMessage={""}
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                         value={value?.map((v) => ({ label: renderMultiSelectLabel(v), value: v }))}
                       />
@@ -442,6 +444,11 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     button: css({
       marginBottom: theme.spacing(4),
+    }),
+    multiSelect: css({
+      'svg': {
+        display: 'none',
+      },
     }),
   };
 }

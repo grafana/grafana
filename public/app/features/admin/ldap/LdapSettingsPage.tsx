@@ -331,6 +331,8 @@ export const LdapSettingsPage = () => {
                       <MultiSelect
                         {...field}
                         allowCustomValue
+                        className={styles.multiSelect}
+                        noOptionsMessage={""}
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                       />
                     )}
@@ -403,6 +405,11 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     form: css({
       width: theme.spacing(68),
+    }),
+    multiSelect: css({
+      'svg': {
+        display: 'none',
+      },
     }),
   };
 }
