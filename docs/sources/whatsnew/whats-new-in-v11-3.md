@@ -121,6 +121,20 @@ To better support the legend integration, we've added the ability to hide names 
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/bar-gauge/#legend-options)
 
+### All number fields for Binary operation transformation
+
+<!-- Drew Slobodnjak; #grafana-dataviz -->
+
+_Generally available in all editions of Grafana_
+
+We've made a helpful update to the **Binary operation** mode of the **Add field from calculation** transformation!
+
+When you set up a binary operation calculation, there's a new **All number fields** option available to select. Use this to apply a mathematical operator to multiple number fields simultaneously. This feature is particularly useful when you're scaling or offsetting data containing multiple, dynamically named fields, allowing the transformation to be applied when dealing with unknown field names.
+
+{{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-3-all-number-fields-binary-operation.png" alt="Binary operation calculation being applied to all number fields" >}}
+
+[Documentation](https://grafana.com/docs/grafana/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
+
 ## OnCall
 
 ### Improved onboarding for OnCall users
@@ -132,6 +146,18 @@ _Generally available in all editions of Grafana_
 We've streamlined the onboarding process for OnCall, making it quicker and easier for new users to get started.
 
 Now, new users can access OnCall immediately without waiting for an admin to log in. OnCall initialization has been moved to the backend, reducing setup time and minimizing potential errors. Additionally, user synchronization between Grafana and OnCall is significantly faster, so newly created users can start using OnCall within minutes—without any delays or extra steps.
+
+### Manual trigger for webhooks
+
+<!-- #gops-irm -->
+
+_Generally available in all editions of Grafana_
+
+Webhooks are a useful and flexible way to interact with third-party services. While OnCall has supported advanced webhook integrations for some time, they were previously limited to automatic triggers, such as event-based triggers (e.g., alert group status changes) or escalation chain steps.
+
+Now, you can manually trigger webhooks within the context of an alert group. This new feature enables you to push alert group data to external systems on demand, giving you greater flexibility and control over your integrations.
+
+{{< figure src="/static/img/oncall/screenshot-oncall-trigger-webhook.png" >}}
 
 ## Announcement banner
 
@@ -158,3 +184,15 @@ _Generally available in all editions of Grafana_
 You can now create subfolders in folders where you have Edit or Admin rights without needing any additional permissions. This enables users and teams to fully manage their folder and dashboard hierarchy, and allows you to keep your instance secure by granting users the minimum necessary set of permissions.
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/manage-dashboards/#create-a-dashboard-folder)
+
+## Plugins
+
+### Plugin details page redesign
+
+<!-- #grafana-plugins-platform -->
+
+_Available in public preview in all editions of Grafana_
+
+To help make it easier for administrators to assess and interact with Grafana plugins, we are reworking the plugin details page to highlight important metadata, such as when the plugin was last updated.
+
+We intend to further extend this new layout with consistent links for all plugins, to complement the custom links which can currently be optionally configured. This improved consistency will enable simpler interaction with a plugin's developer - whether that is Grafana Labs, our commercial partners, or our community. These links will include actions such as raising feature requests or bug reports, as well as allowing our community developers to indicate available support and sponsorship options for those that depend on their work.
