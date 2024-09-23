@@ -228,9 +228,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 		if !receiverFound {
 			// Compatibility with new receiver resource permissions.
 			// Since this is a new receiver, we need to set default resource permissions so that viewers and editors can see and edit it.
-			if ecp.resourcePermissions != nil {
-				ecp.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, legacy_storage.NameToUid(contactPoint.Name))
-			}
+			ecp.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, legacy_storage.NameToUid(contactPoint.Name))
 		}
 		return ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
 	})
@@ -316,26 +314,21 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		if mergedReceiver.Name != oldReceiverName {
 			if newReceiverCreated {
 				// Copy receiver permissions
-				if ecp.resourcePermissions != nil {
-					permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, nil, legacy_storage.NameToUid(oldReceiverName), legacy_storage.NameToUid(mergedReceiver.Name))
-					if err != nil {
-						return err
-					}
-					if permissionsUpdated > 0 {
-						ecp.log.FromContext(ctx).Debug("Moved custom receiver permissions", "oldName", oldReceiverName, "newName", mergedReceiver.Name, "count", permissionsUpdated)
-					}
+				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, nil, legacy_storage.NameToUid(oldReceiverName), legacy_storage.NameToUid(mergedReceiver.Name))
+				if err != nil {
+					return err
+				}
+				if permissionsUpdated > 0 {
+					ecp.log.FromContext(ctx).Debug("Moved custom receiver permissions", "oldName", oldReceiverName, "newName", mergedReceiver.Name, "count", permissionsUpdated)
 				}
 			}
 
 			if fullRemoval {
-				err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, oldReceiverName, mergedReceiver.Name, provenance)
-				if err != nil {
+				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, oldReceiverName, mergedReceiver.Name, provenance); err != nil {
 					return err
 				}
-				if ecp.resourcePermissions != nil {
-					if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(oldReceiverName)); err != nil {
-						return err
-					}
+				if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(oldReceiverName)); err != nil {
+					return err
 				}
 			}
 		}
@@ -397,10 +390,8 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 
 			// Compatibility with new receiver resource permissions.
 			// We need to cleanup resource permissions.
-			if ecp.resourcePermissions != nil {
-				if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(name)); err != nil {
-					ecp.log.Error("Could not delete receiver permissions", "receiverName", name, "error", err)
-				}
+			if err := ecp.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(name)); err != nil {
+				ecp.log.Error("Could not delete receiver permissions", "receiverName", name, "error", err)
 			}
 		}
 

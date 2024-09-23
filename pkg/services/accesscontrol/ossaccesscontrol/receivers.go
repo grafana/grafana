@@ -39,10 +39,6 @@ func ProvideReceiverPermissionsService(
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
-		return nil, nil
-	}
-
 	options := resourcepermissions.Options{
 		Resource:          "receivers",
 		ResourceAttribute: "uid",
@@ -66,7 +62,7 @@ func ProvideReceiverPermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &ReceiverPermissionsService{srv, service, log.New("resourcepermissions.receivers")}, nil
+	return &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}, nil
 }
 
 var _ accesscontrol.ReceiverPermissionsService = new(ReceiverPermissionsService)
