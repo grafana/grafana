@@ -2,6 +2,7 @@ import { Location } from 'history';
 import { isEqual } from 'lodash';
 
 import { getBackendSrv, getGrafanaLiveSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 export class NewFrontendAssetsChecker {
   private hasUpdates = false;
@@ -47,7 +48,7 @@ export class NewFrontendAssetsChecker {
       this.reloadIfUpdateDetected();
     }
     // Moving to dashboard (or changing dashboards)
-    else if (newLocationSegments[1] === 'd') {
+    else if (newLocationSegments[1] === 'd' && !playlistSrv.state.isPlaying) {
       this.reloadIfUpdateDetected();
     }
     // Track potential page change
