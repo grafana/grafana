@@ -225,6 +225,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
+			st.Bus.Publish(ctx, &RuleChangeEvent{})
 		}
 		return nil
 	})
@@ -274,6 +275,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
+			st.Bus.Publish(ctx, &RuleChangeEvent{})
 		}
 		return nil
 	})
