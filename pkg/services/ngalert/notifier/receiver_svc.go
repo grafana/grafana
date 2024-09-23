@@ -316,11 +316,9 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		if err != nil {
 			return err
 		}
-		if rs.resourcePermissions != nil {
-			err = rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, uid)
-			if err != nil {
-				rs.log.Error("Could not delete receiver permissions", "receiver", existing.Name, "error", err)
-			}
+		err = rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, uid)
+		if err != nil {
+			rs.log.Error("Could not delete receiver permissions", "receiver", existing.Name, "error", err)
 		}
 		return rs.deleteProvenances(ctx, orgID, existing.Integrations)
 	})
@@ -359,9 +357,7 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		if err != nil {
 			return err
 		}
-		if rs.resourcePermissions != nil {
-			rs.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, createdReceiver.GetUID())
-		}
+		rs.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, createdReceiver.GetUID())
 		return rs.setReceiverProvenance(ctx, orgID, &createdReceiver)
 	})
 	if err != nil {
@@ -439,17 +435,15 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 				return err
 			}
 			// Update receiver permissions
-			if rs.resourcePermissions != nil {
-				permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, legacy_storage.NameToUid(existing.Name), legacy_storage.NameToUid(r.Name))
-				if err != nil {
-					return err
-				}
-				if permissionsUpdated > 0 {
-					rs.log.FromContext(ctx).Debug("Moved custom receiver permissions", "oldName", existing.Name, "newName", r.Name, "count", permissionsUpdated)
-				}
-				if err := rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(existing.Name)); err != nil {
-					return err
-				}
+			permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, legacy_storage.NameToUid(existing.Name), legacy_storage.NameToUid(r.Name))
+			if err != nil {
+				return err
+			}
+			if permissionsUpdated > 0 {
+				rs.log.FromContext(ctx).Info("Moved custom receiver permissions", "oldName", existing.Name, "newName", r.Name, "count", permissionsUpdated)
+			}
+			if err := rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(existing.Name)); err != nil {
+				return err
 			}
 		}
 		err = rs.cfgStore.Save(ctx, revision, orgID)
