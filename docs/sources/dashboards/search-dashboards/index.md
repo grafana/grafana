@@ -11,7 +11,7 @@ labels:
     - oss
 menutitle: Search dashboards
 title: Search dashboards and folders
-weight: 1
+weight: 400
 ---
 
 # Search dashboards and folders
