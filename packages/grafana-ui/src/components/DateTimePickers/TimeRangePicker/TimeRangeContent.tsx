@@ -268,12 +268,12 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
     return dateTimeFormat(value, { timeZone });
   }
 
-  if (value.indexOf('now') !== -1) {
-    return value;
+  if (value.endsWith('Z')) {
+    const dt = dateTimeParse(value, { timeZone: 'utc' });
+    return dateTimeFormat(dt, { timeZone });
   }
 
-  const dt = dateTimeParse(value, { timeZone: 'utc' });
-  return dateTimeFormat(dt, { timeZone });
+  return value;
 }
 
 function getStyles(theme: GrafanaTheme2) {
