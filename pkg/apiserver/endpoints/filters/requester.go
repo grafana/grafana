@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 // WithRequester makes sure there is an identity.Requester in context
@@ -50,8 +51,8 @@ func WithRequester(handler http.Handler) http.Handler {
 
 					Permissions: map[int64]map[string][]string{
 						orgId: {
-							"*": {"*"}, // all resources, all scopes
-
+							"*":                              {"*"}, // all resources, all scopes
+							accesscontrol.ActionOrgUsersRead: {"*"},
 							// Dashboards do not support wildcard action
 							// dashboards.ActionDashboardsRead:   {"*"},
 							// dashboards.ActionDashboardsCreate: {"*"},
