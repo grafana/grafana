@@ -40,7 +40,7 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bu
 	logger := log.New("serviceauth.extsvcaccounts")
 	esa := &ExtSvcAccountsService{
 		acSvc:        acSvc,
-		defaultOrgID: extsvcauth.DefaultOrgID(cfg),
+		defaultOrgID: cfg.DefaultOrgID(),
 		logger:       logger,
 		saSvc:        saSvc,
 		features:     features,
