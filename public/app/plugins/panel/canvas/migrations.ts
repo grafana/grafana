@@ -68,13 +68,23 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
       }
     }
 
-    // migrate oneClickLinks to oneClickMode
     const root = panel.options?.root;
     if (root?.elements) {
       for (const element of root.elements) {
+        // migrate oneClickLinks to oneClickMode
         if (element.oneClickLinks) {
           element.oneClickMode = OneClickMode.Link;
           delete element.oneClickLinks;
+        }
+
+        // migrate action options to new format (fetch)
+        if (element.actions) {
+          for (const action of element.actions) {
+            if (action.options) {
+              action.fetch = { ...action.options };
+              delete action.options;
+            }
+          }
         }
       }
     }
