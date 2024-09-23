@@ -72,6 +72,10 @@ func (r *RepositoryImpl) Update(ctx context.Context, item *annotations.Item) err
 }
 
 func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
+	if query.Limit == 0 {
+		query.Limit = 100
+	}
+
 	// Search by tags is expensive, so check without access control first
 	if len(query.Tags) > 0 && query.DashboardID == 0 && query.DashboardUID == "" {
 		// Return early if no annotations found, it's not necessary to perform expensive access control filtering
