@@ -64,10 +64,6 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	if err := enrichLegacyObject(original, created, true); err != nil {
-		return created, err
-	}
-
 	startStorage := time.Now()
 	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
 	if err != nil {
@@ -77,11 +73,16 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	}
 	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
+	if err := enrichLegacyObject(original, created, true); err != nil {
+		return created, err
+	}
+
 	areEqual := Compare(rsp, created)
 	d.recordOutcome(mode2Str, getName(rsp), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
 	}
+
 	return rsp, err
 }
 
@@ -287,6 +288,8 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		log.Info("object not found for update, creating one")
 	}
 
+	fmt.Printf("foundObj: %v\n", foundObj)
+
 	startLegacy := time.Now()
 	obj, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
@@ -298,12 +301,14 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 
 	//if the object is found, create a new updateWrapper with the object found
 	if foundObj != nil {
+		fmt.Println("FOUND!")
 		err = enrichLegacyObject(foundObj, obj, false)
 		if err != nil {
 			return obj, false, err
 		}
 		objInfo = &updateWrapper{
-			updated: obj,
+			updated:  obj,
+			upstream: nil,
 		}
 	} else {
 		acc, err := meta.Accessor(obj)
@@ -314,6 +319,8 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		acc.SetUID(types.UID(uuid.New().String()))
 		forceAllowCreate = true
 	}
+
+	fmt.Printf("update wrapper:%v\n", objInfo)
 
 	startStorage := time.Now()
 	res, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
@@ -396,8 +403,8 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object, isCreated bool)
 		// accessorReturned.SetUID("")
 	} else {
 		accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
-		accessorReturned.SetUID(accessorOriginal.GetUID())
 	}
+	accessorReturned.SetUID(accessorOriginal.GetUID())
 
 	return nil
 }
