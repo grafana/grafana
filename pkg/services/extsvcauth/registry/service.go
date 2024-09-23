@@ -113,7 +113,7 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 	switch provider {
 	case extsvcauth.ServiceAccounts:
 		if !r.enabled {
-			r.logger.Warn("Skipping External Service authentication, flag disabled",
+			r.logger.Warn("Skipping External Service authentication, flag or configuration option is disabled",
 				"service", name,
 				"flag", featuremgmt.FlagExternalServiceAccounts,
 				"option", "ManagedServiceAccountsEnabled",
