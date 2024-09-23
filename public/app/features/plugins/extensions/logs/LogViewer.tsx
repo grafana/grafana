@@ -104,7 +104,7 @@ class LogFilterScene extends SceneObjectBase {
       queries: [
         {
           ...existingQuery,
-          pluginIds: values.length > 0 ? values.map((v) => v.value) : undefined,
+          pluginIds: mapToSet(values),
         },
       ],
     });
@@ -117,7 +117,7 @@ class LogFilterScene extends SceneObjectBase {
       queries: [
         {
           ...existingQuery,
-          extensionPointIds: values.length > 0 ? values.map((v) => v.value) : undefined,
+          extensionPointIds: mapToSet(values),
         },
       ],
     });
@@ -130,7 +130,7 @@ class LogFilterScene extends SceneObjectBase {
       queries: [
         {
           ...existingQuery,
-          levels: values.length > 0 ? values.map((v) => v.value) : undefined,
+          levels: mapToSet(values),
         },
       ],
     });
@@ -139,6 +139,7 @@ class LogFilterScene extends SceneObjectBase {
 }
 
 function LogFilterSceneRenderer({ model }: SceneComponentProps<LogFilterScene>) {
+  // Added to get responsive UI with the selectable options when things changes in the data.
   useObservable(sceneGraph.getData(model).getResultsStream());
 
   return (
@@ -154,4 +155,19 @@ function LogFilterSceneRenderer({ model }: SceneComponentProps<LogFilterScene>) 
       </InlineField>
     </InlineFieldRow>
   );
+}
+
+function mapToSet(selected: Array<SelectableValue<string>>): Set<string> | undefined {
+  if (selected.length <= 0) {
+    return undefined;
+  }
+
+  const values = selected.reduce((all: string[], current) => {
+    if (typeof current?.value === 'string') {
+      all.push(current.value);
+    }
+    return all;
+  }, []);
+
+  return new Set<string>(values);
 }

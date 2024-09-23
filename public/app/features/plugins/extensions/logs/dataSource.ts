@@ -68,7 +68,6 @@ export class ExtensionsLogDataSource extends RuntimeDataSource<LogDataQuery> {
     return this.extensionsLog.asObservable().pipe(
       tap((item: LogItem) => {
         if (item.level) {
-          console.log('levels');
           this.levels.add(item.level);
         }
         if (isString(item.labels['pluginId'])) {
@@ -80,10 +79,12 @@ export class ExtensionsLogDataSource extends RuntimeDataSource<LogDataQuery> {
       }),
       filter((item: LogItem, index: number) => {
         const { extensionPointIds, levels, pluginIds } = query;
+        console.log('query', query);
 
         if (extensionPointIds) {
           const pointId = item.labels['extensionPointId'];
           if (isString(pointId)) {
+            console.log('extensionPointId', pointId);
             return extensionPointIds.has(pointId);
           } else {
             return false;

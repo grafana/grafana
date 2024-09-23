@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { Observable, ReplaySubject, Subject } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 
 enum LogLevel {
   info = 'info',
@@ -25,9 +25,14 @@ export class ExtensionsLog {
   private subject: ReplaySubject<LogItem> | undefined;
   private channel: BroadcastChannel;
 
-  constructor(baseLabels?: Record<string | symbol, unknown>) {
+  constructor(
+    baseLabels?: Record<string | symbol, unknown>,
+    subject?: ReplaySubject<LogItem>,
+    channel?: BroadcastChannel
+  ) {
     this.baseLabels = baseLabels;
-    this.channel = new BroadcastChannel(channelName);
+    this.channel = channel ?? new BroadcastChannel(channelName);
+    this.subject = subject;
   }
 
   info(message: string, labels?: LogItem['labels']): void {
@@ -81,10 +86,14 @@ export class ExtensionsLog {
   }
 
   child(labels: Record<string | symbol, unknown>): ExtensionsLog {
-    return new ExtensionsLog({
-      ...labels,
-      ...this.baseLabels,
-    });
+    return new ExtensionsLog(
+      {
+        ...labels,
+        ...this.baseLabels,
+      },
+      this.subject,
+      this.channel
+    );
   }
 }
 
