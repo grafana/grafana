@@ -3,7 +3,6 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/base64"
-	"slices"
 	"strconv"
 	"testing"
 
@@ -241,10 +240,9 @@ func TestGetSnapshotList(t *testing.T) {
 		for _, snapshot := range snapshots {
 			ids = append(ids, snapshot.UID)
 		}
-		slices.Sort(ids)
 
 		// There are 3 snapshots in the db but only 2 of them belong to this specific session.
-		assert.Equal(t, []string{"lkjhg", "poiuy"}, ids)
+		assert.Equal(t, []string{"poiuy", "lkjhg"}, ids)
 	})
 
 	t.Run("returns only one snapshot that belongs to a session", func(t *testing.T) {
@@ -259,7 +257,7 @@ func TestGetSnapshotList(t *testing.T) {
 		assert.Empty(t, snapshots)
 	})
 
-	t.Run("return only one snapshot that belongs to a session, paginated", func(t *testing.T) {
+	t.Run("returns paginated snapshot that belongs to a session", func(t *testing.T) {
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 2, Limit: 1})
 		require.NoError(t, err)
 
@@ -270,6 +268,19 @@ func TestGetSnapshotList(t *testing.T) {
 
 		// Return paginated snapshot of the 2 belonging to this specific session
 		assert.Equal(t, []string{"lkjhg"}, ids)
+	})
+
+	t.Run("returns desc sorted list of snapshots that belong to a session", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100, Latest: true})
+		require.NoError(t, err)
+
+		ids := make([]string, 0)
+		for _, snapshot := range snapshots {
+			ids = append(ids, snapshot.UID)
+		}
+
+		// Return desc sorted snapshots belonging to this specific session
+		assert.Equal(t, []string{"lkjhg", "poiuy"}, ids)
 	})
 
 	t.Run("only the snapshots that belong to a specific session are returned", func(t *testing.T) {
@@ -370,7 +381,7 @@ func setUpTest(t *testing.T) (*sqlstore.SQLStore, *sqlStore) {
 			cloud_migration_snapshot (session_uid, uid, created, updated, finished, status)
 		VALUES
 			('qwerty', 'poiuy', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
-			('qwerty', 'lkjhg', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
+			('qwerty', 'lkjhg', '2024-03-26 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished"),
 			('zxcvbn', 'mnbvvc', '2024-03-25 15:30:36.000', '2024-03-27 15:30:43.000', '2024-03-27 15:30:43.000', "finished");
 		`,
 	)
