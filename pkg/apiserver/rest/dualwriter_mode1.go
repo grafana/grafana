@@ -81,7 +81,7 @@ func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, in runtime
 	}
 
 	startStorage := time.Now()
-	storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
+	storageObj, errObjectSt := d.Storage.Create(ctx, original, createValidation, options)
 	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
 	if errObjectSt != nil {
 		log.Error(err, "unable to create object in storage")
