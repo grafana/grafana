@@ -76,7 +76,6 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
       subtitle={
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
-            <FeatureBadge featureState={FeatureState.beta} />
             <a
               href="https://grafana.com/docs/grafana/latest/troubleshooting/"
               target="blank"
