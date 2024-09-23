@@ -575,7 +575,6 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				if err := iter.Error(); err != nil {
 					return err
 				}
-				s.log.Info("backfilling watch", "key", req.Options.Key, "namespace", iter.Namespace(), "name", iter.Name())
 				if err := srv.Send(&WatchEvent{
 					Type: WatchEvent_ADDED,
 					Resource: &WatchEvent_Resource{
@@ -592,9 +591,8 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			return err
 		}
 	}
-	// Send a bookmark
+
 	if req.SendInitialEvents && req.AllowWatchBookmarks {
-		s.log.Info("sending bookmark", "resourceVersion", listRV)
 		if err := srv.Send(&WatchEvent{
 			Type: WatchEvent_BOOKMARK,
 			Resource: &WatchEvent_Resource{
@@ -617,12 +615,6 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
-				// Currently sending *every* event
-				// if req.Options.Labels != nil {
-				// 	// match *either* the old or new object
-				// }
-				// TODO: return values that match either the old or the new
-
 				value := event.Value
 				// remove the delete marker stored in the value for deleted objects
 				if event.Type == WatchEvent_DELETED {

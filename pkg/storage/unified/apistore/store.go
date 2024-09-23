@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
@@ -244,6 +245,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	client, err := s.store.Watch(ctx, cmd)
 	if err != nil {
 		// if the context was canceled, just return a new empty watch
+		cancelWatch()
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
