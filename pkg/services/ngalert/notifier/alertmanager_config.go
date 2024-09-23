@@ -68,26 +68,23 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, 
 		return err
 	}
 
-	// TODO: Remove this check once permission migration is complete, so that we maintain permissions after the initial migration.
-	if moa.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingApiServer) {
-		// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
-		// Failure should not prevent the default config from being applied.
-		if cleanPermissionsErr == nil {
-			cleanPermissionsErr = func() error {
-				defaultedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
-				if err != nil {
-					return err
-				}
-				newReceiverNames, err := extractReceiverNames(defaultedConfig.AlertmanagerConfiguration)
-				if err != nil {
-					return err
-				}
-				return moa.cleanPermissions(ctx, orgId, previousConfig, newReceiverNames)
-			}()
-		}
-		if cleanPermissionsErr != nil {
-			moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
-		}
+	// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
+	// Failure should not prevent the default config from being applied.
+	if cleanPermissionsErr == nil {
+		cleanPermissionsErr = func() error {
+			defaultedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
+			if err != nil {
+				return err
+			}
+			newReceiverNames, err := extractReceiverNames(defaultedConfig.AlertmanagerConfiguration)
+			if err != nil {
+				return err
+			}
+			return moa.cleanPermissions(ctx, orgId, previousConfig, newReceiverNames)
+		}()
+	}
+	if cleanPermissionsErr != nil {
+		moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
 	}
 
 	return nil
@@ -166,22 +163,19 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 	}
 	moa.logger.Info("Applied historical alertmanager configuration", "org", orgId, "id", id)
 
-	// TODO: Remove this check once permission migration is complete, so that we maintain permissions after the initial migration.
-	if moa.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingApiServer) {
-		// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
-		// Failure should not prevent the default config from being applied.
-		if cleanPermissionsErr == nil {
-			cleanPermissionsErr = func() error {
-				newReceiverNames, err := extractReceiverNames(config.AlertmanagerConfiguration)
-				if err != nil {
-					return err
-				}
-				return moa.cleanPermissions(ctx, orgId, previousConfig, newReceiverNames)
-			}()
-		}
-		if cleanPermissionsErr != nil {
-			moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
-		}
+	// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
+	// Failure should not prevent the default config from being applied.
+	if cleanPermissionsErr == nil {
+		cleanPermissionsErr = func() error {
+			newReceiverNames, err := extractReceiverNames(config.AlertmanagerConfiguration)
+			if err != nil {
+				return err
+			}
+			return moa.cleanPermissions(ctx, orgId, previousConfig, newReceiverNames)
+		}()
+	}
+	if cleanPermissionsErr != nil {
+		moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
 	}
 
 	return nil
@@ -317,22 +311,19 @@ func (moa *MultiOrgAlertmanager) SaveAndApplyAlertmanagerConfiguration(ctx conte
 		return AlertmanagerConfigRejectedError{err}
 	}
 
-	// TODO: Remove this check once permission migration is complete, so that we maintain permissions after the initial migration.
-	if moa.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingApiServer) {
-		// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
-		// Failure should not prevent the default config from being applied.
-		if cleanPermissionsErr == nil {
-			cleanPermissionsErr = func() error {
-				newReceiverNames := make(sets.Set[string], len(config.AlertmanagerConfig.Receivers))
-				for _, r := range config.AlertmanagerConfig.Receivers {
-					newReceiverNames.Insert(r.Name)
-				}
-				return moa.cleanPermissions(ctx, org, previousConfig, newReceiverNames)
-			}()
-		}
-		if cleanPermissionsErr != nil {
-			moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
-		}
+	// Attempt to cleanup permissions for receivers that are no longer defined and add defaults for new receivers.
+	// Failure should not prevent the default config from being applied.
+	if cleanPermissionsErr == nil {
+		cleanPermissionsErr = func() error {
+			newReceiverNames := make(sets.Set[string], len(config.AlertmanagerConfig.Receivers))
+			for _, r := range config.AlertmanagerConfig.Receivers {
+				newReceiverNames.Insert(r.Name)
+			}
+			return moa.cleanPermissions(ctx, org, previousConfig, newReceiverNames)
+		}()
+	}
+	if cleanPermissionsErr != nil {
+		moa.logger.Error("Failed to clean permissions for receivers", "error", cleanPermissionsErr)
 	}
 
 	return nil
