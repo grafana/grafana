@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -501,7 +500,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 		decryptFn,
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
-		ngfakes.NewFakeReceiverPermissionsService(),
+		fakes.NewFakeReceiverPermissionsService(),
 		log.New("testlogger"),
 		secretsService,
 		featuremgmt.WithFeatures(),
