@@ -29,7 +29,7 @@ type ProtoClient interface {
 
 	PID(context.Context) (string, error)
 	PluginID() string
-	PluginJSON() plugins.JSONData
+	PluginVersion() string
 	Backend() backendplugin.Plugin
 }
 
@@ -73,8 +73,8 @@ func (r *protoClient) PluginID() string {
 	return r.plugin.descriptor.pluginID
 }
 
-func (r *protoClient) PluginJSON() plugins.JSONData {
-	return r.pluginJSON
+func (r *protoClient) PluginVersion() string {
+	return r.pluginJSON.Info.Version
 }
 
 func (r *protoClient) Backend() backendplugin.Plugin {
