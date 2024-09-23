@@ -52,6 +52,7 @@ type pluginState int
 
 const (
 	pluginStateNotStarted pluginState = iota
+	pluginStateStartInit
 	pluginStateStartSuccess
 	pluginStateStartFail
 	pluginStateStopped
@@ -110,22 +111,27 @@ func (r *protoClient) Logger() log.Logger {
 
 func (r *protoClient) Start(ctx context.Context) error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
+	r.state = pluginStateStartInit
+	r.mu.Unlock()
 
 	err := r.plugin.Start(ctx)
 	if err != nil {
+		r.mu.Lock()
 		r.state = pluginStateStartFail
+		r.mu.Unlock()
 		return err
 	}
 
+	r.mu.Lock()
 	r.state = pluginStateStartSuccess
+	r.mu.Unlock()
 	return nil
 }
 
 func (r *protoClient) Stop(ctx context.Context) error {
 	r.mu.Lock()
-	defer r.mu.Unlock()
 	r.state = pluginStateStopped
+	r.mu.Unlock()
 	return r.plugin.Stop(ctx)
 }
 
@@ -139,6 +145,10 @@ func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
 		return nil, false
 	}
 
+	if r.state == pluginStateStartInit {
+		logger.Debug("Plugin client is starting")
+		return nil, false
+	}
 	if r.state == pluginStateStartFail {
 		logger.Debug("Plugin client failed to start")
 		return nil, false
