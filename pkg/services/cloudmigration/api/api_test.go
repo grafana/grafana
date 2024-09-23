@@ -398,6 +398,14 @@ func TestCloudMigrationAPI_GetSnapshotList(t *testing.T) {
 			expectedBody:       `{"snapshots":[{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z"},{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z"}]}`,
 		},
 		{
+			desc:               "with limit query param, should return 200 if everything is ok",
+			requestHttpMethod:  http.MethodGet,
+			requestUrl:         "/api/cloudmigration/migration/1234/snapshots?limit=1",
+			basicRole:          org.RoleAdmin,
+			expectedHttpResult: http.StatusOK,
+			expectedBody:       `{"snapshots":[{"uid":"fake_uid","status":"CREATING","sessionUid":"1234","created":"0001-01-01T00:00:00Z","finished":"0001-01-01T00:00:00Z"}]}`,
+		},
+		{
 			desc:               "should return 403 if no used is not admin",
 			requestHttpMethod:  http.MethodGet,
 			requestUrl:         "/api/cloudmigration/migration/1234/snapshots",

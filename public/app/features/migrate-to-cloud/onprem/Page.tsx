@@ -65,17 +65,17 @@ const SNAPSHOT_REBUILD_STATUSES: Array<SnapshotDto['status']> = ['PENDING_UPLOAD
 const SNAPSHOT_BUILDING_STATUSES: Array<SnapshotDto['status']> = ['INITIALIZING', 'CREATING'];
 const SNAPSHOT_UPLOADING_STATUSES: Array<SnapshotDto['status']> = ['UPLOADING', 'PENDING_PROCESSING', 'PROCESSING'];
 
-const PAGE_SIZE = 50;
+const RESOURCES_PAGE_SIZE = 50;
 
 function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
-  const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid } : skipToken);
+  const listResult = useGetShapshotListQuery(sessionUid ? { uid: sessionUid, page: 1, limit: 1 } : skipToken);
   const lastItem = listResult.currentData?.snapshots?.at(0);
 
   const getSnapshotQueryArgs =
     sessionUid && lastItem?.uid
-      ? { uid: sessionUid, snapshotUid: lastItem.uid, resultLimit: PAGE_SIZE, resultPage: page }
+      ? { uid: sessionUid, snapshotUid: lastItem.uid, resultLimit: RESOURCES_PAGE_SIZE, resultPage: page }
       : skipToken;
 
   const snapshotResult = useGetSnapshotQuery(getSnapshotQueryArgs, {
@@ -239,7 +239,7 @@ export const Page = () => {
             <ResourcesTable
               resources={snapshot.data.results}
               onChangePage={setPage}
-              numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / PAGE_SIZE)}
+              numberOfPages={Math.ceil((snapshot?.data?.stats?.total || 0) / RESOURCES_PAGE_SIZE)}
               page={page}
             />
             <SupportedTypesDisclosure />

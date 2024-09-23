@@ -108,6 +108,17 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
+
+	if query.Limit == 1 {
+		return []cloudmigration.CloudMigrationSnapshot{
+			{
+				UID:        "fake_uid",
+				SessionUID: query.SessionUID,
+				Status:     cloudmigration.SnapshotStatusCreating,
+			},
+		}, nil
+
+	}
 	return []cloudmigration.CloudMigrationSnapshot{
 		{
 			UID:        "fake_uid",

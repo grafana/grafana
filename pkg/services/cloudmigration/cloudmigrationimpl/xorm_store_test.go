@@ -247,6 +247,32 @@ func TestGetSnapshotList(t *testing.T) {
 		assert.Equal(t, []string{"lkjhg", "poiuy"}, ids)
 	})
 
+	t.Run("returns only one snapshot that belongs to a session", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 1})
+		require.NoError(t, err)
+		assert.Len(t, snapshots, 1)
+	})
+
+	t.Run("return no snapshots if limit is set to 0", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 0})
+		require.NoError(t, err)
+		assert.Empty(t, snapshots)
+	})
+
+	t.Run("return only one snapshot that belongs to a session, paginated", func(t *testing.T) {
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 2, Limit: 1})
+		require.NoError(t, err)
+
+		ids := make([]string, 0)
+		for _, snapshot := range snapshots {
+			ids = append(ids, snapshot.UID)
+		}
+
+		// Return paginated snapshot of the 2 belonging to this specific session
+		assert.Equal(t, []string{"lkjhg"}, ids)
+
+	})
+
 	t.Run("only the snapshots that belong to a specific session are returned", func(t *testing.T) {
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: "session-uid-that-doesnt-exist", Page: 1, Limit: 100})
 		require.NoError(t, err)
