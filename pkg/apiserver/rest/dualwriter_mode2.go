@@ -9,11 +9,6 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/klog/v2"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-)
 
 type DualWriterMode2 struct {
 	Storage Storage
@@ -57,7 +52,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	if err := enrichLegacyObject(original, created); err != nil {
+	if err := enrichLegacyObject(original, created, true); err != nil {
 		return created, err
 	}
 
@@ -270,7 +265,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
-	// get foundObj and (updated) object so they can be stored in legacy store
+	//get foundObj and (updated) object so they can be stored in legacy store
 	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -289,11 +284,14 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, "update", startLegacy)
 
-	// if the object is found, create a new updateWrapper with the object found
+	//if the object is found, create a new updateWrapper with the object found
 	if foundObj != nil {
-		err = enrichLegacyObject(foundObj, obj)
+		err = enrichLegacyObject(foundObj, obj, false)
 		if err != nil {
 			return obj, false, err
+		}
+		objInfo = &updateWrapper{
+			updated: obj,
 		}
 	} else {
 		acc, err := meta.Accessor(obj)
@@ -301,14 +299,12 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 			return obj, false, err
 		}
 		acc.SetResourceVersion("")
-		acc.SetUID("")
+		acc.SetUID(types.UID(uuid.New().String()))
 		forceAllowCreate = true
 	}
 
 	startStorage := time.Now()
-	res, created, err := d.Storage.Update(ctx, name, &updateWrapper{
-		updated: obj, // use the objected returned from legacy
-	}, createValidation, updateValidation, forceAllowCreate, options)
+	res, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
 		log.WithValues("object", res).Error(err, "could not update in storage")
 		d.recordStorageDuration(true, mode2Str, d.resource, "update", startStorage)
@@ -361,7 +357,7 @@ func parseList(legacyList []runtime.Object) (map[string]int, error) {
 	return indexMap, nil
 }
 
-func enrichLegacyObject(originalObj, returnedObj runtime.Object) error {
+func enrichLegacyObject(originalObj, returnedObj runtime.Object, isCreated bool) error {
 	accessorReturned, err := meta.Accessor(returnedObj)
 	if err != nil {
 		return err
@@ -383,7 +379,13 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object) error {
 	}
 	accessorReturned.SetAnnotations(ac)
 
-	accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
-	accessorReturned.SetUID(accessorOriginal.GetUID())
+	if isCreated {
+		accessorReturned.SetResourceVersion("")
+		// accessorReturned.SetUID("")
+	} else {
+		accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
+		accessorReturned.SetUID(accessorOriginal.GetUID())
+	}
+
 	return nil
 }
