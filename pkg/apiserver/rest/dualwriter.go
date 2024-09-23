@@ -96,11 +96,17 @@ const (
 	// reading and writing to Storage on a best effort basis for the sake of collecting metrics.
 	Mode1
 	// Mode2 is the dual writing mode that represents writing to LegacyStorage and Storage and reading from LegacyStorage.
+	// The objects written to storage will include any labels and annotations.
+	// When reading values, the results will be from Storage when they exist, otherwise from legacy storage
 	Mode2
 	// Mode3 represents writing to LegacyStorage and Storage and reading from Storage.
+	// NOTE: Requesting mode3 will only happen when after a background sync job succeeds
 	Mode3
 	// Mode4 represents writing and reading from Storage.
+	// NOTE: Requesting mode4 will only happen when after a background sync job succeeds
 	Mode4
+	// Mode5 uses storage regardless of the background sync state
+	Mode5
 )
 
 // TODO: make this function private as there should only be one public way of setting the dual writing mode
@@ -126,7 +132,7 @@ func NewDualWriter(
 	case Mode3:
 		// write to both, read from storage only
 		return newDualWriterMode3(legacy, storage, metrics, resource)
-	case Mode4:
+	case Mode4, Mode5:
 		return storage
 	default:
 		return newDualWriterMode1(legacy, storage, metrics, resource)
@@ -199,7 +205,7 @@ func SetDualWritingMode(
 
 	if !valid && ok {
 		// Only log if "ok" because initially all instances will have mode unset for playlists.
-		klog.Info("invalid dual writing mode for playlists mode:", m)
+		klog.Infof("invalid dual writing mode for %s mode: %v", entity, m)
 	}
 
 	if !valid || !ok {

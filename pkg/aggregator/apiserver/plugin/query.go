@@ -47,7 +47,7 @@ func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
 		// the datasource type in the query body should match the plugin ID
 		if dsRef.Type != dsType {
 			err := errors.New("invalid datasource type")
-			klog.ErrorS(err, "type", dsType, "ref.Type", dsRef.Type)
+			klog.ErrorS(err, err.Error(), "dsType", dsType, "refType", dsRef.Type)
 			responder.Error(w, req, err)
 			return
 		}
@@ -55,7 +55,7 @@ func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
 		// the UID in the query body should match the UID in the URL
 		if dsRef.UID != dsUID {
 			err := errors.New("invalid datasource UID")
-			klog.ErrorS(err, "path", dsUID, "ref.UID", dsRef.UID)
+			klog.ErrorS(err, err.Error(), "path", dsUID, "refUID", dsRef.UID)
 			responder.Error(w, req, err)
 			return
 		}
