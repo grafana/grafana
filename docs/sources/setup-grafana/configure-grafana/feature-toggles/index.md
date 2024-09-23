@@ -95,7 +95,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `reportingRetries`                     | Enables rendering retries for the reporting feature                                                                                                                                          |
 | `externalServiceAccounts`              | Automatic service account and token setup for plugins                                                                                                                                        |
 | `cloudWatchBatchQueries`               | Runs CloudWatch metrics queries as separate batches                                                                                                                                          |
-| `teamHttpHeaders`                      | Enables Team LBAC for datasources to apply team headers to the client requests                                                                                                               |
+| `teamHttpHeaders`                      | Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams                                                                                      |
 | `pdfTables`                            | Enables generating table data as PDF in reporting                                                                                                                                            |
 | `canvasPanelPanZoom`                   | Allow pan and zoom in canvas panel                                                                                                                                                           |
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
@@ -105,6 +105,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `accessActionSets`                     | Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.                           |
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                                                 |
 | `cloudwatchMetricInsightsCrossAccount` | Enables cross account observability for Cloudwatch Metric Insights query builder                                                                                                             |
+| `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                                                                                 |
 
 ## Experimental feature toggles
 

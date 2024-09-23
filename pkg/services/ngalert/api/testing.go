@@ -129,6 +129,11 @@ func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix strin
 	panic("implement me")
 }
 
+func (a *recordingAccessControlFake) WithoutResolvers() ac.AccessControl {
+	// TODO implement me
+	panic("implement me")
+}
+
 func (a *recordingAccessControlFake) IsDisabled() bool {
 	return a.Disabled
 }
