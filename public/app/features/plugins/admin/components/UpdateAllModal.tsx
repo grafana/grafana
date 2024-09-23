@@ -196,13 +196,14 @@ const ModalBody = ({
               : ''}
           </div>
 
-          {(config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) || true && (
-            <footer className={styles.footer}>
-              <Trans i18nKey="plugins.catalog.update-all.cloud-update-message">
-                * It may take a few minutes for the plugins to be available for usage.
-              </Trans>
-            </footer>
-          )}
+          {(config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) ||
+            (true && (
+              <footer className={styles.footer}>
+                <Trans i18nKey="plugins.catalog.update-all.cloud-update-message">
+                  * It may take a few minutes for the plugins to be available for usage.
+                </Trans>
+              </footer>
+            ))}
         </>
       )}
     </div>
@@ -347,7 +348,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       onDismiss={onDismissClick}
       disabled={shouldDisableConfirm(inProgress, installsRemaining, pluginsSelected)}
       confirmText={getConfirmationText(installsRemaining, inProgress, pluginsSelected)}
-      confirmButtonVariant='primary'
+      confirmButtonVariant="primary"
     />
   );
 };
