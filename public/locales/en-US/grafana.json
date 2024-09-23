@@ -130,7 +130,7 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policies",
+      "used-by_other": "Used by {{ count }} notification policy",
       "used-by-rules_one": "Used by {{ count }} alert rule",
       "used-by-rules_other": "Used by {{ count }} alert rules"
     },
@@ -186,7 +186,7 @@
         "inherited": "Inherited",
         "mute-time": "Muted when",
         "n-instances_one": "instance",
-        "n-instances_other": "instances",
+        "n-instances_other": "instance",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
@@ -202,7 +202,7 @@
           }
         }
       },
-      "n-more-policies_one": "{{count}} additional policy",
+      "n-more-policies_one": "{{count}} additional policies",
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
@@ -308,15 +308,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
+      "alertRule_other": "{{count}} alert rule",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
+      "dashboard_other": "{{count}} dashboard",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
+      "folder_other": "{{count}} folder",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
+      "libraryPanel_other": "{{count}} library panel",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
+      "total_other": "{{count}} item"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -952,6 +952,11 @@
     }
   },
   "explore-metrics": {
+    "breakdown": {
+      "clearFilter": "Clear filter",
+      "labelSelect": "Select",
+      "noMatchingValue": "No values found matching; {{filter}}"
+    },
     "viewBy": "View by"
   },
   "export": {
@@ -1632,6 +1637,9 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
+    "groupsync": {
+      "subtitle": "Manage mappings of Identity Provider groups to Grafana Roles"
+    },
     "help": {
       "title": "Help"
     },
@@ -2180,16 +2188,16 @@
       "confirm-text": "Delete",
       "delete-button": "Delete",
       "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
       "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
       "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
-      "folder-picker-text_one": "Please choose a folder where your dashboard will be restored.",
+      "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
       "folder-picker-text_other": "Please choose a folder where your dashboards will be restored.",
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
@@ -2610,11 +2618,20 @@
   "trails": {
     "metric-overview": {
       "description-label": "Description",
-      "labels-label": "Labels",
+      "labels": "Labels",
+      "metric-attributes": "Metric attributes",
       "no-description": "No description available",
       "type-label": "Type",
       "unit-label": "Unit",
       "unknown-type": "Unknown"
+    },
+    "metric-select": {
+      "filter-by": "Filter by",
+      "otel-switch": "This switch enables filtering by OTel resources for OTel native data sources."
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "Always keep selected metric graph in-view",
+      "show-previews-of-metric-graphs": "Show previews of metric graphs"
     }
   },
   "transformations": {

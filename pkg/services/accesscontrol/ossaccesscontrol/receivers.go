@@ -26,6 +26,7 @@ var ReceiversViewActions = []string{accesscontrol.ActionAlertingReceiversRead}
 var ReceiversEditActions = append(ReceiversViewActions, []string{accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversDelete}...)
 var ReceiversAdminActions = append(ReceiversEditActions, []string{accesscontrol.ActionAlertingReceiversReadSecrets, accesscontrol.ActionAlertingReceiversPermissionsRead, accesscontrol.ActionAlertingReceiversPermissionsWrite}...)
 
+// defaultPermissions returns the default permissions for a newly created receiver.
 func defaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 	return []accesscontrol.SetResourcePermissionCommand{
 		{BuiltinRole: string(org.RoleEditor), Permission: string(alertingac.ReceiverPermissionEdit)},
@@ -33,62 +34,11 @@ func defaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 	}
 }
 
-func registerReceiverRoles(cfg *setting.Cfg, service accesscontrol.Service) error {
-	if !cfg.RBAC.PermissionsWildcardSeed("receiver") { // TODO: Do we need wildcard seed support in alerting?
-		return nil
-	}
-
-	viewer := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:receivers:viewer",
-			DisplayName: "Viewer",
-			Description: "View all receivers",
-			Group:       ngalert.AlertRolesGroup,
-			Permissions: accesscontrol.PermissionsForActions(ReceiversViewActions, alertingac.ScopeReceiversAll),
-			Hidden:      true,
-		},
-		Grants: []string{string(org.RoleViewer)},
-	}
-
-	editor := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:receivers:editor",
-			DisplayName: "Editor",
-			Description: "Edit all receivers.",
-			Group:       ngalert.AlertRolesGroup,
-			Permissions: accesscontrol.PermissionsForActions(ReceiversEditActions, alertingac.ScopeReceiversAll),
-			Hidden:      true,
-		},
-		Grants: []string{string(org.RoleEditor)},
-	}
-
-	admin := accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Name:        "fixed:receivers:admin",
-			DisplayName: "Admin",
-			Description: "Administer all receivers (reads secrets).",
-			Group:       ngalert.AlertRolesGroup,
-			Permissions: accesscontrol.PermissionsForActions(ReceiversAdminActions, alertingac.ScopeReceiversAll),
-			Hidden:      true,
-		},
-		Grants: []string{string(org.RoleAdmin)},
-	}
-
-	return service.DeclareFixedRoles(viewer, editor, admin)
-}
-
 func ProvideReceiverPermissionsService(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
-		return nil, nil
-	}
-	if err := registerReceiverRoles(cfg, service); err != nil {
-		return nil, err
-	}
-
 	options := resourcepermissions.Options{
 		Resource:          "receivers",
 		ResourceAttribute: "uid",
@@ -112,7 +62,7 @@ func ProvideReceiverPermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &ReceiverPermissionsService{srv, service, log.New("resourcepermissions.receivers")}, nil
+	return &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}, nil
 }
 
 var _ accesscontrol.ReceiverPermissionsService = new(ReceiverPermissionsService)
@@ -123,9 +73,9 @@ type ReceiverPermissionsService struct {
 	log log.Logger
 }
 
+// SetDefaultPermissions sets the default permissions for a newly created receiver.
 func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string) {
-	// TODO: Do we need support for cfg.RBAC.PermissionsOnCreation?
-
+	r.log.Debug("Setting default permissions for receiver", "receiver_uid", uid)
 	permissions := defaultPermissions()
 	clearCache := false
 	if user != nil && user.IsIdentityType(claims.TypeUser) {
@@ -151,6 +101,8 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 	}
 }
 
+// copyPermissionUser returns a user with permissions to copy permissions from one receiver to another. This must include
+// permissions to read and write permissions for the receiver, as well as read permissions for users, service accounts, and teams.
 func copyPermissionUser(orgID int64) identity.Requester {
 	return accesscontrol.BackgroundUser("receiver_access_service", orgID, org.RoleAdmin, accesscontrol.ConcatPermissions(
 		accesscontrol.PermissionsForActions(ReceiversAdminActions, alertingac.ScopeReceiversAll),
@@ -167,6 +119,7 @@ func copyPermissionUser(orgID int64) identity.Requester {
 // method to be used during receiver renaming that is necessitated by receiver uids being generated from the receiver
 // name.
 func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error) {
+	r.log.Debug("Copying permissions from receiver", "old_uid", oldUID, "new_uid", newUID)
 	currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldUID)
 	if err != nil {
 		return 0, err
@@ -186,6 +139,8 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 	return countCustomPermissions(setPermissionCommands), nil
 }
 
+// toSetResourcePermissionCommands converts a list of resource permissions to a list of set resource permission commands.
+// Only includes managed permissions.
 func (r ReceiverPermissionsService) toSetResourcePermissionCommands(permissions []accesscontrol.ResourcePermission) []accesscontrol.SetResourcePermissionCommand {
 	cmds := make([]accesscontrol.SetResourcePermissionCommand, 0, len(permissions))
 	for _, p := range permissions {
@@ -196,9 +151,6 @@ func (r ReceiverPermissionsService) toSetResourcePermissionCommands(permissions 
 		if permission == "" {
 			continue
 		}
-		//if p.BuiltInRole == "Admin" && p.Permission == "Admin" {
-		//	continue // No need to set the admin role.
-		//}
 		cmds = append(cmds, accesscontrol.SetResourcePermissionCommand{
 			Permission:  permission,
 			BuiltinRole: p.BuiltInRole,
@@ -209,6 +161,8 @@ func (r ReceiverPermissionsService) toSetResourcePermissionCommands(permissions 
 	return cmds
 }
 
+// countCustomPermissions counts the number of custom permissions in a list of set resource permission commands. A
+// custom permission is a permission that is not a default permission for a receiver.
 func countCustomPermissions(permissions []accesscontrol.SetResourcePermissionCommand) int {
 	cacheKey := func(p accesscontrol.SetResourcePermissionCommand) accesscontrol.SetResourcePermissionCommand {
 		return accesscontrol.SetResourcePermissionCommand{

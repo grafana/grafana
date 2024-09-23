@@ -17,6 +17,7 @@ import {
   getPluginMissingHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
@@ -126,6 +127,7 @@ export const removePlugin = (pluginId: string) => {
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
+  clearPluginSettingsCache(pluginId);
   server.use(getDisabledPluginHandler(pluginId));
 };
 

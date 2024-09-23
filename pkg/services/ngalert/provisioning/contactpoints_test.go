@@ -493,17 +493,19 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		secretService,
 		xact,
 		log.NewNopLogger(),
-		nil,
+		fakes.NewFakeReceiverPermissionsService(),
 	)
 
-	return &ContactPointService{
-		configStore:       legacy_storage.NewAlertmanagerConfigStore(configStore),
-		provenanceStore:   provisioningStore,
-		receiverService:   receiverService,
-		xact:              xact,
-		encryptionService: secretService,
-		log:               log.NewNopLogger(),
-	}
+	return NewContactPointService(
+		legacy_storage.NewAlertmanagerConfigStore(configStore),
+		secretService,
+		provisioningStore,
+		xact,
+		receiverService,
+		log.NewNopLogger(),
+		nil,
+		fakes.NewFakeReceiverPermissionsService(),
+	)
 }
 
 func createTestContactPoint() definitions.EmbeddedContactPoint {

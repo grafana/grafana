@@ -144,6 +144,10 @@ export enum AccessControlAction {
   // Settings
   SettingsRead = 'settings:read',
   SettingsWrite = 'settings:write',
+
+  // GroupSync
+  GroupSyncMappingsRead = 'groupsync.mappings:read',
+  GroupSyncMappingsWrite = 'groupsync.mappings:write',
 }
 
 export interface Role {

@@ -290,7 +290,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.secretService,
 		ps.SQLStore,
 		ps.log,
-		nil,
+		ps.resourcePermissions,
 	)
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		st, ps.SQLStore, receiverSvc, ps.log, &st, ps.resourcePermissions)

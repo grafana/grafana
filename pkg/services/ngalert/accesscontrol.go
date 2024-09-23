@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -302,12 +303,17 @@ var (
 	}
 )
 
-func DeclareFixedRoles(service accesscontrol.Service) error {
-	return service.DeclareFixedRoles(
+func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.FeatureToggles) error {
+	fixedRoles := []accesscontrol.RoleRegistration{
 		rulesReaderRole, rulesWriterRole,
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
 		alertingReaderRole, alertingWriterRole, alertingAdminRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole, alertingProvisioningStatus,
-		receiversReaderRole, receiversCreatorRole, receiversWriterRole,
-	)
+	}
+
+	if features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
+		fixedRoles = append(fixedRoles, receiversReaderRole, receiversCreatorRole, receiversWriterRole)
+	}
+
+	return service.DeclareFixedRoles(fixedRoles...)
 }
