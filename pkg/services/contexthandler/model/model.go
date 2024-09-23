@@ -35,6 +35,10 @@ type ReqContext struct {
 
 	PerfmonTimer   prometheus.Summary
 	LookupTokenErr error
+
+	// FIXME: Remove this temporary flag after the rollout of FlagUseSessionStorageRedirect feature flag
+	// UseSessionStorageRedirect is introduced to simplify the rollout of the new redirect logic
+	UseSessionStorageRedirect bool
 }
 
 // Handle handles and logs error by given status.

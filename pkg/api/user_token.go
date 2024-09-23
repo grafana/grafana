@@ -84,6 +84,10 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
+	if !c.UseSessionStorageRedirect {
+		return response.Redirect(hs.GetRedirectURL(c))
+	}
+
 	return response.Redirect(hs.Cfg.AppSubURL + "/")
 }
 

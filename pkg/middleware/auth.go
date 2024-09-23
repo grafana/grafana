@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -43,8 +44,22 @@ func notAuthorized(c *contextmodel.ReqContext) {
 		return
 	}
 
+	if !c.UseSessionStorageRedirect {
+		writeRedirectCookie(c)
+	}
+
 	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
+		if !c.UseSessionStorageRedirect {
+			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
+			return
+		}
+
 		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate" + getRedirectToQueryParam(c))
+		return
+	}
+
+	if !c.UseSessionStorageRedirect {
+		c.Redirect(setting.AppSubUrl + "/login")
 		return
 	}
 
@@ -63,7 +78,28 @@ func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
 		return
 	}
 
+	if !c.UseSessionStorageRedirect {
+		writeRedirectCookie(c)
+		c.Redirect(setting.AppSubUrl + "/login")
+		return
+	}
+
 	c.Redirect(setting.AppSubUrl + "/login" + getRedirectToQueryParam(c))
+}
+
+func writeRedirectCookie(c *contextmodel.ReqContext) {
+	redirectTo := c.Req.RequestURI
+	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
+		redirectTo = setting.AppSubUrl + c.Req.RequestURI
+	}
+
+	if redirectTo == "/" {
+		return
+	}
+
+	// remove any forceLogin=true params
+	redirectTo = removeForceLoginParams(redirectTo)
+	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 }
 
 func getRedirectToQueryParam(c *contextmodel.ReqContext) string {

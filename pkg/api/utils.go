@@ -7,11 +7,25 @@ import (
 	"net/mail"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"go.opentelemetry.io/otel/trace"
 )
+
+func (hs *HTTPServer) GetRedirectURL(c *contextmodel.ReqContext) string {
+	redirectURL := hs.Cfg.AppSubURL + "/"
+	if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
+		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
+			redirectURL = redirectTo
+		} else {
+			hs.log.FromContext(c.Req.Context()).Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
+		}
+		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+	}
+	return redirectURL
+}
 
 func (hs *HTTPServer) errOnExternalUser(ctx context.Context, userID int64) response.Response {
 	isExternal, err := hs.isExternalUser(ctx, userID)
