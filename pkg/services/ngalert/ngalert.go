@@ -77,6 +77,7 @@ func ProvideService(
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
 	httpClientProvider httpclient.Provider,
+	resourcePermissions accesscontrol.ReceiverPermissionsService,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -98,12 +99,13 @@ func ProvideService(
 		dashboardService:     dashboardService,
 		renderService:        renderService,
 		bus:                  bus,
-		accesscontrolService: accesscontrolService,
+		AccesscontrolService: accesscontrolService,
 		annotationsRepo:      annotationsRepo,
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
 		store:                ruleStore,
 		httpClientProvider:   httpClientProvider,
+		ResourcePermissions:  resourcePermissions,
 	}
 
 	if ng.IsDisabled() {
@@ -147,7 +149,8 @@ type AlertNG struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
-	accesscontrolService accesscontrol.Service
+	AccesscontrolService accesscontrol.Service
+	ResourcePermissions  accesscontrol.ReceiverPermissionsService
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
 
@@ -423,6 +426,7 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
+		ng.ResourcePermissions,
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
@@ -432,6 +436,7 @@ func (ng *AlertNG) init() error {
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
+		ng.ResourcePermissions,
 	)
 
 	// Provisioning
@@ -489,7 +494,7 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return DeclareFixedRoles(ng.accesscontrolService, ng.FeatureToggles)
+	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {

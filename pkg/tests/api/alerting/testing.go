@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -271,6 +272,42 @@ func (a apiClient) ReloadCachedPermissions(t *testing.T) {
 	}()
 	require.NoErrorf(t, err, "failed to reload permissions cache")
 	require.Equalf(t, http.StatusOK, resp.StatusCode, "failed to reload permissions cache")
+}
+
+// AssignReceiverPermission sends a request to access control API to assign permissions to a user, role, or team on a receiver.
+func (a apiClient) AssignReceiverPermission(t *testing.T, receiverUID string, cmd accesscontrol.SetResourcePermissionCommand) (int, string) {
+	t.Helper()
+
+	var assignment string
+	var assignTo string
+	if cmd.UserID != 0 {
+		assignment = "users"
+		assignTo = fmt.Sprintf("%d", cmd.UserID)
+	} else if cmd.TeamID != 0 {
+		assignment = "teams"
+		assignTo = fmt.Sprintf("%d", cmd.TeamID)
+	} else {
+		assignment = "builtInRoles"
+		assignTo = cmd.BuiltinRole
+	}
+
+	body := strings.NewReader(fmt.Sprintf(`{"permission": "%s"}`, cmd.Permission))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/access-control/receivers/%s/%s/%s", a.url, receiverUID, assignment, assignTo), body)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
 }
 
 // CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted

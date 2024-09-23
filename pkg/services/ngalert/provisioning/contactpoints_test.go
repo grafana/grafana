@@ -493,6 +493,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 		secretService,
 		xact,
 		log.NewNopLogger(),
+		fakes.NewFakeReceiverPermissionsService(),
 	)
 
 	return &ContactPointService{

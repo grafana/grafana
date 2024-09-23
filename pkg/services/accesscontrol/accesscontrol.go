@@ -155,6 +155,8 @@ type ServiceAccountPermissionsService interface {
 
 type ReceiverPermissionsService interface {
 	PermissionsService
+	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
+	CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error)
 }
 
 type PermissionsService interface {
