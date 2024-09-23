@@ -2326,41 +2326,6 @@
         }
       }
     },
-    "/cloudmigration/migration/run/{runUID}": {
-      "get": {
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Get the result of a single migration run.",
-        "operationId": "getCloudMigrationRun",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "RunUID of a migration run",
-            "name": "runUID",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/cloudmigration/migration/{uid}": {
       "get": {
         "tags": [
@@ -2411,75 +2376,6 @@
           }
         ],
         "responses": {
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/cloudmigration/migration/{uid}/run": {
-      "get": {
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Get a list of migration runs for a migration.",
-        "operationId": "getCloudMigrationRunList",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID of a migration",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunListResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "description": "It returns migrations that has been created.",
-        "tags": [
-          "migrations"
-        ],
-        "summary": "Trigger the run of a migration to the Grafana Cloud.",
-        "operationId": "runCloudMigration",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "UID of a migration",
-            "name": "uid",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/cloudMigrationRunResponse"
-          },
           "400": {
             "$ref": "#/responses/badRequestError"
           },

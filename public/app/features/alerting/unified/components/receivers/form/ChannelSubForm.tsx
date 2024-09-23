@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, FieldErrors, FieldValues, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -90,12 +90,12 @@ export function ChannelSubForm<R extends ChannelValues>({
     return () => subscription.unsubscribe();
   }, [selectedType, initialValues, setValue, fieldName, watch]);
 
-  const [_secureFields, setSecureFields] = useState(secureFields ?? {});
+  const [_secureFields, setSecureFields] = useState<Record<string, boolean | ''>>(secureFields ?? {});
 
   const onResetSecureField = (key: string) => {
     if (_secureFields[key]) {
       const updatedSecureFields = { ..._secureFields };
-      delete updatedSecureFields[key];
+      updatedSecureFields[key] = '';
       setSecureFields(updatedSecureFields);
       setValue(`${pathPrefix}.secureFields`, updatedSecureFields);
     }

@@ -283,8 +283,12 @@ const (
 	// Enables metrics summary queries in the Tempo data source
 	FlagMetricsSummary = "metricsSummary"
 
+	// FlagDatasourceAPIServers
+	// Expose some datasources as apiservers.
+	FlagDatasourceAPIServers = "datasourceAPIServers"
+
 	// FlagGrafanaAPIServerWithExperimentalAPIs
-	// Register experimental APIs with the k8s API server
+	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
@@ -428,7 +432,7 @@ const (
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
 	// FlagTeamHttpHeaders
-	// Enables Team LBAC for datasources to apply team headers to the client requests
+	// Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagCachingOptimizeSerializationMemoryUsage
@@ -743,10 +747,6 @@ const (
 	// Enable the new alerting search experience
 	FlagAlertingFilterV2 = "alertingFilterV2"
 
-	// FlagBackgroundPluginInstaller
-	// Enable background plugin installer
-	FlagBackgroundPluginInstaller = "backgroundPluginInstaller"
-
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
@@ -786,4 +786,12 @@ const (
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
+
+	// FlagImprovedExternalSessionHandling
+	// Enable improved support for external sessions in Grafana
+	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
+
+	// FlagUseSessionStorageForRedirection
+	// Use session storage for handling the redirection after login
+	FlagUseSessionStorageForRedirection = "useSessionStorageForRedirection"
 )

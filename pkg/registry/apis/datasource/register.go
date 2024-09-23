@@ -58,16 +58,17 @@ func RegisterAPIService(
 	accessControl accesscontrol.AccessControl,
 	reg prometheus.Registerer,
 ) (*DataSourceAPIBuilder, error) {
+	// We want to expose just a limited set of plugins
+	explictPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
+
 	// This requires devmode!
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !(explictPluginList || features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
 	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
-	// ATTENTION: Adding a datasource here requires the plugin to implement
-	// an AdmissionHandler to validate the datasource settings.
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
@@ -75,7 +76,7 @@ func RegisterAPIService(
 	}
 
 	for _, ds := range all {
-		if !slices.Contains(ids, ds.ID) {
+		if explictPluginList && !slices.Contains(ids, ds.ID) {
 			continue // skip this one
 		}
 
