@@ -6,11 +6,10 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/authorization/union"
 )
 
 func NewResourceAuthorizer(c claims.AccessClient) authorizer.Authorizer {
-	return union.New(ResourceAuthorizer{c}, newLastAuthorizer())
+	return ResourceAuthorizer{c}
 }
 
 // ResourceAuthorizer is used to translate authorizer.Authorizer calls to claims.AccessClient calls
@@ -47,24 +46,4 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 	}
 
 	return authorizer.DecisionAllow, "", nil
-}
-
-var _ authorizer.Authorizer = (*lastAuthorizer)(nil)
-
-func newLastAuthorizer() authorizer.Authorizer {
-	return lastAuthorizer{}
-}
-
-type lastAuthorizer struct{}
-
-func (d lastAuthorizer) Authorize(_ context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-	if !attr.IsResourceRequest() {
-		return authorizer.DecisionAllow, "", nil
-	}
-
-	if attr.GetVerb() == "list" {
-		return authorizer.DecisionAllow, "", nil
-	}
-
-	return authorizer.DecisionDeny, "", nil
 }
