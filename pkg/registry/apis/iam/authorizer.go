@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
 
