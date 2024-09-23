@@ -1,7 +1,7 @@
 import { PureComponent } from 'react';
 
 import { AnnotationQuery, DataSourceApi } from '@grafana/data';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { AngularComponent, config, getAngularLoader } from '@grafana/runtime';
 
 export interface Props {
   annotation: AnnotationQuery;
@@ -29,7 +29,9 @@ export class AngularEditorLoader extends PureComponent<Props> {
   }
 
   componentDidMount() {
-    if (this.ref) {
+    // check if angular support is enabled in the instance
+    const isAngularEnabled = config.angularSupportEnabled;
+    if (this.ref && isAngularEnabled) {
       this.loadAngular();
     }
   }
