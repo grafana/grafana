@@ -38,6 +38,6 @@ cards:
 
 The Grafana Explore apps are designed for effortless data exploration through intuitive, queryless interactions.
 
-Easily explore telemetry signals with specialized tools, tailored specifically for the Grafana databases to provide quick and accurate insights.
+Easily explore telemetry signals with these specialized tools, tailored specifically for the Grafana databases to provide quick and accurate insights.
 
 {{< card-grid key="cards" type="simple" >}}
