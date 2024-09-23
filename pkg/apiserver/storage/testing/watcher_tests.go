@@ -126,13 +126,11 @@ func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recur
 			}
 
 			// Get the current RV from which we can start watching.
-			t.Logf("Getting the current resource version for %s", watchKey)
 			out := &example.PodList{}
 			t.Log("Listing pods")
 			if err := store.GetList(ctx, watchKey, storage.ListOptions{ResourceVersion: "", Predicate: tt.pred, Recursive: recursive}, out); err != nil {
 				t.Fatalf("List failed: %v", err)
 			}
-			t.Logf("Resource version for %s is %s", watchKey, out.ResourceVersion)
 
 			w, err := store.Watch(ctx, watchKey, storage.ListOptions{ResourceVersion: out.ResourceVersion, Predicate: tt.pred, Recursive: recursive})
 			if err != nil {
@@ -144,7 +142,6 @@ func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recur
 			badKey := KeyFunc(fmt.Sprintf("%s-bad", tt.namespace), "foo")
 			badOut := &example.Pod{}
 
-			t.Logf("Create a pod in a different namespace with key %s", badKey)
 			err = store.GuaranteedUpdate(ctx, badKey, badOut, true, nil, storage.SimpleUpdate(
 				func(runtime.Object) (runtime.Object, error) {
 					obj := basePod.DeepCopy()
@@ -159,7 +156,6 @@ func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recur
 			for _, watchTest := range tt.watchTests {
 				out := &example.Pod{}
 				if watchTest.obj != nil {
-					t.Logf("Create a pod with key %s", key)
 					err := store.GuaranteedUpdate(ctx, key, out, true, nil, storage.SimpleUpdate(
 						func(runtime.Object) (runtime.Object, error) {
 							obj := watchTest.obj.DeepCopy()
@@ -170,7 +166,6 @@ func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recur
 						t.Fatalf("GuaranteedUpdate failed: %v", err)
 					}
 				} else {
-					t.Logf("Deleting pod with key %s", key)
 					err := store.Delete(ctx, key, out, nil, storage.ValidateAllObjectFunc, nil)
 					if err != nil {
 						t.Fatalf("Delete failed: %v", err)
