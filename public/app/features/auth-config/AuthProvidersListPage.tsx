@@ -61,7 +61,7 @@ export const AuthConfigPageUnconnected = ({
         ...p,
         settings: {
           ...p.settings,
-          type: "LDAP",
+          type: 'LDAP',
         },
       };
     }

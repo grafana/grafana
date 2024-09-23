@@ -334,7 +334,7 @@ export const LdapSettingsPage = () => {
                         {...field}
                         allowCustomValue
                         className={styles.multiSelect}
-                        noOptionsMessage={""}
+                        noOptionsMessage={''}
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                       />
                     )}
@@ -399,13 +399,18 @@ export const LdapSettingsPage = () => {
           </form>
         </FormProvider>
       </Page.Contents>
-      <Modal title={t('ldap-settings-page.discard-modal.title', 'Leave LDAP configuration?')} isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)}>
-        <Stack direction={"column"} gap={2}>
+      <Modal
+        title={t('ldap-settings-page.discard-modal.title', 'Leave LDAP configuration?')}
+        isOpen={isModalOpen}
+        onDismiss={() => setIsModalOpen(false)}
+      >
+        <Stack direction={'column'} gap={2}>
           <Trans i18nKey="ldap-settings-page.discard-modal.description">
-            Are you sure you want to abandon the changes you've made to the LDAP configuration? All changes will be lost.
+            Are you sure you want to abandon the changes you've made to the LDAP configuration? All changes will be
+            lost.
           </Trans>
           <Stack direction="row" gap={2} justifyContent="flex-end">
-            <Button onClick={() => setIsModalOpen(false)} variant='secondary'>
+            <Button onClick={() => setIsModalOpen(false)} variant="secondary">
               <Trans i18nKey="ldap-settings-page.discard-modal.cancel-button">Back to editing</Trans>
             </Button>
             <LinkButton href="/admin/authentication" variant="destructive">
@@ -424,7 +429,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: theme.spacing(68),
     }),
     multiSelect: css({
-      'svg': {
+      svg: {
         display: 'none',
       },
     }),

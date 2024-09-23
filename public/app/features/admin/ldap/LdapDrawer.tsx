@@ -82,11 +82,16 @@ export const LdapDrawerComponent = ({
     </Label>
   );
 
-  const useTlsDescription = (<>
-    <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl-tooltip">For a complete list of supported ciphers and TLS versions, refer to:</Trans>
-    {' '}
-    <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>https://go.dev/src/crypto/tls/cipher_suites.go</TextLink>
-  </>);
+  const useTlsDescription = (
+    <>
+      <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl-tooltip">
+        For a complete list of supported ciphers and TLS versions, refer to:
+      </Trans>{' '}
+      <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
+        https://go.dev/src/crypto/tls/cipher_suites.go
+      </TextLink>
+    </>
+  );
 
   const onAddGroupMapping = () => {
     const groupMappings = getValues(`${serverConfig}.group_mappings`) || [];
@@ -339,7 +344,7 @@ export const LdapDrawerComponent = ({
                         {...field}
                         allowCustomValue
                         className={styles.multiSelect}
-                        noOptionsMessage={""}
+                        noOptionsMessage={''}
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                         value={value?.map((v) => ({ label: renderMultiSelectLabel(v), value: v }))}
                       />
@@ -446,7 +451,7 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(4),
     }),
     multiSelect: css({
-      'svg': {
+      svg: {
         display: 'none',
       },
     }),
