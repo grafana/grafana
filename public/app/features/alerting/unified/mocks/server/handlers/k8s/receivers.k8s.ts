@@ -43,7 +43,7 @@ const createNamespacedReceiverHandler = () =>
   http.post<{ namespace: string }>(
     `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`,
     async ({ request }) => {
-      const body = await request.json();
+      const body = await request.clone().json();
       return HttpResponse.json(body);
     }
   );
