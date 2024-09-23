@@ -268,7 +268,9 @@ export class GrafanaApp {
           app: this,
         })
       );
-      handleRedirectTo();
+      if (config.featureToggles.useSessionStorageForRedirection) {
+        handleRedirectTo();
+      }
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();

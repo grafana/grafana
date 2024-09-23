@@ -117,7 +117,22 @@ export class LoginCtrl extends PureComponent<Props, State> {
     });
   };
 
-  toGrafana = () => window.location.assign(config.appSubUrl + '/');
+  toGrafana = () => {
+    if (config.featureToggles.useSessionStorageForRedirection) {
+      window.location.assign(config.appSubUrl + '/');
+      return;
+    }
+
+    if (this.result?.redirectUrl) {
+      if (config.appSubUrl !== '' && !this.result.redirectUrl.startsWith(config.appSubUrl)) {
+        window.location.assign(config.appSubUrl + this.result.redirectUrl);
+      } else {
+        window.location.assign(this.result.redirectUrl);
+      }
+    } else {
+      window.location.assign(config.appSubUrl + '/');
+    }
+  };
 
   render() {
     const { children } = this.props;
