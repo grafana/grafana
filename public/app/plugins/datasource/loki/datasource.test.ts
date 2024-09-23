@@ -1429,11 +1429,10 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
+          expr: 'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
-          legendFormat: '{{ level }}',
         });
       });
 
@@ -1448,11 +1447,10 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
+          expr: 'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
-          legendFormat: '{{ level }}',
         });
       });
 
@@ -1468,8 +1466,7 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))',
-          legendFormat: '{{ level }}',
+          expr: 'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))',
           queryType: 'range',
           refId: 'log-volume-A',
           supportingQueryType: 'logsVolume',
@@ -1510,7 +1507,9 @@ describe('LokiDatasource', () => {
             refId: 'A',
           }
         );
-        expect(query?.expr).toEqual('sum by (level) (count_over_time({label="value"} | drop __error__[$__auto]))');
+        expect(query?.expr).toEqual(
+          'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))'
+        );
       });
     });
 
