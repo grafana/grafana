@@ -139,6 +139,10 @@ func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
+	if r.plugin.pluginClient != nil {
+		return r.plugin.pluginClient, true
+	}
+
 	logger := r.Logger().FromContext(ctx)
 	if r.state == pluginStateNotStarted {
 		logger.Debug("Plugin client has not been started yet")
