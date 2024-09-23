@@ -19,7 +19,7 @@ import { ShareDrawerContext } from './ShareDrawerContext';
 export interface ShareDrawerState extends SceneObjectState {
   panelRef?: SceneObjectRef<VizPanel>;
   shareView: string;
-  activeShare: ShareView;
+  activeShare?: ShareView;
 }
 
 type CustomShareViewType = { id: string; shareOption: new (...args: SceneShareTabState[]) => ShareView };
@@ -33,7 +33,7 @@ export class ShareDrawer extends SceneObjectBase<ShareDrawerState> implements Mo
   static Component = ShareDrawerRenderer;
 
   constructor(state: Omit<ShareDrawerState, 'activeShare'>) {
-    super({ ...state, activeShare: new ShareInternally({}) });
+    super({ ...state });
     this.addActivationHandler(() => this.buildActiveShare(state.shareView!));
   }
 
@@ -63,9 +63,9 @@ function ShareDrawerRenderer({ model }: SceneComponentProps<ShareDrawer>) {
   const dashboard = getDashboardSceneFor(model);
 
   return (
-    <Drawer title={activeShare.getTabLabel()} onClose={model.onDismiss} size="md">
+    <Drawer title={activeShare?.getTabLabel()} onClose={model.onDismiss} size="md">
       <ShareDrawerContext.Provider value={{ dashboard, onDismiss: model.onDismiss }}>
-        {<activeShare.Component model={activeShare} />}
+        {activeShare && <activeShare.Component model={activeShare} />}
       </ShareDrawerContext.Provider>
     </Drawer>
   );
