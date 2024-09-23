@@ -735,7 +735,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.SaveExternalServiceRole")
 	defer span.End()
 
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
@@ -751,7 +751,7 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.DeleteExternalServiceRole")
 	defer span.End()
 
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	if !s.cfg.ManagedServiceAccountsEnabled || !s.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}

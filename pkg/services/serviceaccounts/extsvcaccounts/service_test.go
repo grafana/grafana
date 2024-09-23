@@ -41,6 +41,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	t.Helper()
 
 	cfg := setting.NewCfg()
+	cfg.ManagedServiceAccountsEnabled = true
 	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
 	env := &TestEnv{
