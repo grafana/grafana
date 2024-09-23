@@ -36,7 +36,6 @@ type ProtoClient interface {
 	Logger() log.Logger
 	Start(context.Context) error
 	Stop(context.Context) error
-	Running(context.Context) bool
 }
 
 type protoClient struct {
@@ -110,24 +109,13 @@ func (r *protoClient) Stop(ctx context.Context) error {
 	return r.plugin.Stop(ctx)
 }
 
-func (r *protoClient) Running(_ context.Context) bool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return !r.plugin.Exited()
-}
-
 func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
-	if !r.Running(ctx) {
-		return nil, false
-	}
-
 	r.mu.RLock()
-	if r.plugin.pluginClient == nil {
-		r.mu.RUnlock()
+	pc, ok := r.plugin.getPluginClient(ctx)
+	r.mu.RUnlock()
+	if !ok {
 		return nil, false
 	}
-	pc := r.plugin.pluginClient
-	r.mu.RUnlock()
 	return pc, true
 }
 
