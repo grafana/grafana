@@ -127,6 +127,8 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 	})
 }
 
+// TestIntegrationResourcePermissions focuses on testing resource permissions for the alerting receiver resource. It
+// verifies that access is correctly set when creating resources and assigning permissions to users, teams, and roles.
 func TestIntegrationResourcePermissions(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -140,13 +142,9 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 
 	org1 := helper.Org1
 
-	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-		createWildcardPermission(
-			accesscontrol.ActionAlertingReceiversCreate,
-		),
-	})
+	noneUser := helper.CreateUser("none", apis.Org1, org.RoleNone, nil)
 
-	otherCreator := helper.CreateUser("other_creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		createWildcardPermission(
 			accesscontrol.ActionAlertingReceiversCreate,
 		),
@@ -198,9 +196,9 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			expRead:       true,
 		},
 		{
-			name:          "Admin creates, creator has no metadata and no access",
+			name:          "Admin creates, noneUser has no metadata and no access",
 			creatingUser:  admin,
-			testUser:      creator,
+			testUser:      noneUser,
 			assignments:   nil,
 			expACMetadata: nil,
 			expRead:       false,
@@ -221,51 +219,51 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 		},
 		// User-based assignments.
 		{
-			name:          "Admin creates, assigns read, creator has no metadata but has access",
+			name:          "Admin creates, assigns read, noneUser has no metadata but has access",
 			creatingUser:  admin,
-			testUser:      creator,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(creator), Permission: string(alertingac.ReceiverPermissionView)}},
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionView)}},
 			expACMetadata: nil,
 			expRead:       true,
 		},
 		{
-			name:          "Admin creates, assigns write, creator has write metadata and access",
+			name:          "Admin creates, assigns write, noneUser has write metadata and access",
 			creatingUser:  admin,
-			testUser:      creator,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(creator), Permission: string(alertingac.ReceiverPermissionEdit)}},
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionEdit)}},
 			expACMetadata: writeACMetadata,
 			expRead:       true,
 		},
 		{
-			name:          "Admin creates, assigns admin, creator has all metadata and access",
+			name:          "Admin creates, assigns admin, noneUser has all metadata and access",
 			creatingUser:  admin,
-			testUser:      creator,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(creator), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionAdmin)}},
 			expACMetadata: allACMetadata,
 			expRead:       true,
 		},
 		// Other users don't get assignments.
 		{
-			name:          "Admin creates, assigns read to creator, otherCreator has no metadata and no access",
+			name:          "Admin creates, assigns read to noneUser, creator has no metadata and no access",
 			creatingUser:  admin,
-			testUser:      otherCreator,
-			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(creator), Permission: string(alertingac.ReceiverPermissionView)}},
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionView)}},
 			expACMetadata: nil,
 			expRead:       false,
 		},
 		{
-			name:          "Admin creates, assigns write to creator, otherCreator has no metadata and no access",
+			name:          "Admin creates, assigns write to noneUser, creator has no metadata and no access",
 			creatingUser:  admin,
-			testUser:      otherCreator,
-			assignments:   nil,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionEdit)}},
 			expACMetadata: nil,
 			expRead:       false,
 		},
 		{
-			name:          "Admin creates, assigns admin to creator, otherCreator has no metadata and no access",
+			name:          "Admin creates, assigns admin to noneUser, creator has no metadata and no access",
 			creatingUser:  admin,
-			testUser:      otherCreator,
-			assignments:   nil,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionAdmin)}},
 			expACMetadata: nil,
 			expRead:       false,
 		},
@@ -357,7 +355,10 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 
 					// Set expected metadata.
 					expectedGetWithMetadata := expectedGet.DeepCopy()
-					expectedGetWithMetadata.ClearAccessControl()
+					// Clear any existing access control metadata.
+					for _, k := range allACMetadata {
+						delete(expectedGetWithMetadata.Annotations, v0alpha1.AccessControlAnnotation(k))
+					}
 					for _, ac := range tc.expACMetadata {
 						expectedGetWithMetadata.SetAccessControl(ac)
 					}
@@ -367,7 +368,10 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 					expectedListWithMetadata := extractReceiverFromList(expectedList, created.Name)
 					require.NotNil(t, expectedListWithMetadata)
 					expectedListWithMetadata = expectedListWithMetadata.DeepCopy()
-					expectedListWithMetadata.ClearAccessControl()
+					// Clear any existing access control metadata.
+					for _, k := range allACMetadata {
+						delete(expectedListWithMetadata.Annotations, v0alpha1.AccessControlAnnotation(k))
+					}
 					for _, ac := range tc.expACMetadata {
 						expectedListWithMetadata.SetAccessControl(ac)
 					}
