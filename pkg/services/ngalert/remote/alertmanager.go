@@ -263,7 +263,24 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 	if !am.shouldSendConfig(ctx, decrypted) {
 		return nil
 	}
-	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, config.Default)
+
+	isDefault, err := am.isDefaultConfiguration(decrypted)
+	if err != nil {
+		return err
+	}
+
+	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, isDefault)
+}
+
+func (am *Alertmanager) isDefaultConfiguration(cfg *apimodels.PostableUserConfig) (bool, error) {
+	rawCfg, err := json.Marshal(cfg)
+	if err != nil {
+		return false, err
+	}
+
+	configHash := fmt.Sprintf("%x", md5.Sum(rawCfg))
+
+	return configHash == am.defaultConfigHash, nil
 }
 
 func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) (*apimodels.PostableUserConfig, error) {

@@ -28,12 +28,13 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { reduceTransformRegistryItem } from 'app/features/transformers/editors/ReduceTransformerEditor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { DashboardDataDTO } from 'app/types';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
@@ -44,11 +45,7 @@ import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import snapshotableDashboardJson from './testfiles/snapshotable_dashboard.json';
 import snapshotableWithRowsDashboardJson from './testfiles/snapshotable_with_rows.json';
-import {
-  buildGridItemForLibPanel,
-  buildGridItemForPanel,
-  transformSaveModelToScene,
-} from './transformSaveModelToScene';
+import { buildGridItemForPanel, transformSaveModelToScene } from './transformSaveModelToScene';
 import {
   gridItemToPanel,
   gridRowToSaveModel,
@@ -136,6 +133,8 @@ jest.mock('@grafana/runtime', () => ({
         toDataQuery: (q: StandardVariableQuery) => q,
       },
     }),
+    // mock getInstanceSettings()
+    getInstanceSettings: jest.fn(),
   }),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
@@ -194,7 +193,7 @@ describe('transformSceneToSaveModel', () => {
         },
         links: [{ ...NEW_LINK, title: 'Link 1' }],
       };
-      const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboardWithCustomSettings as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
@@ -203,7 +202,7 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Given a simple scene with variables', () => {
     it('Should transform back to persisted model', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel).toMatchSnapshot();
@@ -212,7 +211,10 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Given a scene with rows', () => {
     it('Should transform back to persisted model', () => {
-      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
 
       const saveModel = transformSceneToSaveModel(scene);
 
@@ -224,7 +226,10 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('Should remove repeated rows in save model', () => {
-      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
 
       const variable = scene.state.$variables?.state.variables[0] as MultiValueVariable;
       variable.changeValueTo(['a', 'b', 'c']);
@@ -346,33 +351,33 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Library panels', () => {
     it('given a library panel', () => {
-      // Not using buildGridItemFromPanelSchema since it strips options/fieldConfig
-      const libVizPanel = new LibraryVizPanel({
-        name: 'Some lib panel panel',
-        title: 'A panel',
-        uid: 'lib-panel-uid',
-        panelKey: 'lib-panel',
-        panel: new VizPanel({
-          key: 'panel-4',
-          title: 'Panel blahh blah',
-          fieldConfig: {
-            defaults: {},
-            overrides: [],
+      const libVizPanel = new VizPanel({
+        key: 'panel-4',
+        title: 'Panel blahh blah',
+        $behaviors: [
+          new LibraryPanelBehavior({
+            name: 'Some lib panel panel',
+            title: 'A panel',
+            uid: 'lib-panel-uid',
+          }),
+        ],
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        options: {
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'bottom',
+            showLegend: true,
           },
-          options: {
-            legend: {
-              calcs: [],
-              displayMode: 'list',
-              placement: 'bottom',
-              showLegend: true,
-            },
-            tooltip: {
-              maxHeight: 600,
-              mode: 'single',
-              sort: 'none',
-            },
+          tooltip: {
+            maxHeight: 600,
+            mode: 'single',
+            sort: 'none',
           },
-        }),
+        },
       });
 
       const panel = new DashboardGridItem({
@@ -429,7 +434,7 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Annotations', () => {
     it('should transform annotations to save model', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel.annotations?.list?.length).toBe(4);
@@ -437,7 +442,7 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('should transform annotations to save model after state changes', () => {
-      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as DashboardDataDTO, meta: {} });
 
       const layers = (scene.state.$data as DashboardDataLayerSet)?.state.annotationLayers;
       const enabledLayer = layers[1];
@@ -680,7 +685,7 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('attaches snapshot data to panels using Grafana snapshot query', async () => {
-      const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as DashboardDataDTO, meta: {} });
 
       activateFullSceneTree(scene);
 
@@ -735,7 +740,10 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('handles basic rows', async () => {
-      const scene = transformSaveModelToScene({ dashboard: snapshotableWithRowsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: snapshotableWithRowsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
 
       activateFullSceneTree(scene);
 
@@ -822,32 +830,33 @@ describe('transformSceneToSaveModel', () => {
       it('handles repeated library panels', () => {
         const { scene, repeater } = buildPanelRepeaterScene(
           { variableQueryTime: 0, numberOfOptions: 2 },
-          new LibraryVizPanel({
-            name: 'Some lib panel panel',
-            title: 'A panel',
-            uid: 'lib-panel-uid',
-            panelKey: 'lib-panel',
-            panel: new VizPanel({
-              key: 'panel-4',
-              title: 'Panel blahh blah',
-              fieldConfig: {
-                defaults: {},
-                overrides: [],
+          new VizPanel({
+            key: 'panel-4',
+            title: 'Panel blahh blah',
+            fieldConfig: {
+              defaults: {},
+              overrides: [],
+            },
+            options: {
+              legend: {
+                calcs: [],
+                displayMode: 'list',
+                placement: 'bottom',
+                showLegend: true,
               },
-              options: {
-                legend: {
-                  calcs: [],
-                  displayMode: 'list',
-                  placement: 'bottom',
-                  showLegend: true,
-                },
-                tooltip: {
-                  maxHeight: 600,
-                  mode: 'single',
-                  sort: 'none',
-                },
+              tooltip: {
+                maxHeight: 600,
+                mode: 'single',
+                sort: 'none',
               },
-            }),
+            },
+            $behaviors: [
+              new LibraryPanelBehavior({
+                name: 'Some lib panel panel',
+                title: 'A panel',
+                uid: 'lib-panel-uid',
+              }),
+            ],
           })
         );
 
@@ -941,7 +950,7 @@ describe('transformSceneToSaveModel', () => {
       let snapshot: Dashboard = {} as Dashboard;
 
       beforeEach(() => {
-        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as DashboardDataDTO, meta: {} });
         activateFullSceneTree(scene);
         snapshot = transformSceneToSaveModel(scene, true);
       });
@@ -1005,7 +1014,7 @@ describe('transformSceneToSaveModel', () => {
       });
 
       it('should remove links', async () => {
-        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as any, meta: {} });
+        const scene = transformSaveModelToScene({ dashboard: snapshotableDashboardJson as DashboardDataDTO, meta: {} });
         activateFullSceneTree(scene);
         const snapshot = transformSceneToSaveModel(scene, true);
         expect(snapshot.links?.length).toBe(1);
@@ -1105,7 +1114,10 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Given a scene with repeated panels and non-repeated panels', () => {
     it('should save repeated panels itemHeight as height', () => {
-      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
       const gridItem = sceneGraph.findByKey(scene, 'grid-item-2') as DashboardGridItem;
       expect(gridItem).toBeInstanceOf(DashboardGridItem);
       expect(gridItem.state.height).toBe(10);
@@ -1118,7 +1130,10 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('should not save non-repeated panels itemHeight as height', () => {
-      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const scene = transformSaveModelToScene({
+        dashboard: repeatingRowsAndPanelsDashboardJson as DashboardDataDTO,
+        meta: {},
+      });
       const gridItem = sceneGraph.findByKey(scene, 'grid-item-15') as DashboardGridItem;
       expect(gridItem).toBeInstanceOf(DashboardGridItem);
       expect(gridItem.state.height).toBe(2);
@@ -1136,9 +1151,5 @@ describe('transformSceneToSaveModel', () => {
 });
 
 export function buildGridItemFromPanelSchema(panel: Partial<Panel>) {
-  if (panel.libraryPanel) {
-    return buildGridItemForLibPanel(new PanelModel(panel))!;
-  }
-
   return buildGridItemForPanel(new PanelModel(panel));
 }

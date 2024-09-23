@@ -1,12 +1,13 @@
 package serviceaccounts
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -18,7 +19,6 @@ var (
 const (
 	ServiceAccountPrefix = "sa-"
 	ExtSvcPrefix         = "extsvc-"
-	ExtSvcLoginPrefix    = ServiceAccountPrefix + extsvcauth.TmpOrgIDStr + "-" + ExtSvcPrefix
 )
 
 const (
@@ -50,10 +50,6 @@ type MigrationResult struct {
 	Failed          int      `json:"failed"`
 	FailedApikeyIDs []int64  `json:"failedApikeyIDs"`
 	FailedDetails   []string `json:"failedDetails"`
-}
-
-type ServiceAccount struct {
-	Id int64
 }
 
 // swagger:model
@@ -210,3 +206,16 @@ var AccessEvaluator = accesscontrol.EvalAny(
 	accesscontrol.EvalPermission(ActionRead),
 	accesscontrol.EvalPermission(ActionCreate),
 )
+
+func ExtSvcLoginPrefix(orgID int64) string {
+	return fmt.Sprintf("%s%d-%s", ServiceAccountPrefix, orgID, ExtSvcPrefix)
+}
+
+func IsExternalServiceAccount(login string) bool {
+	parts := strings.SplitAfter(login, "-")
+	if len(parts) < 4 {
+		return false
+	}
+
+	return parts[0] == ServiceAccountPrefix && parts[2] == ExtSvcPrefix
+}

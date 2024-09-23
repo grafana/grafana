@@ -1,3 +1,4 @@
+import { VariableRefresh } from '@grafana/data';
 import {
   DeepPartial,
   EmbeddedScene,
@@ -15,7 +16,6 @@ import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/co
 import { DashboardDTO } from 'app/types';
 
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
@@ -103,9 +103,10 @@ interface SceneOptions {
   usePanelRepeater?: boolean;
   useRowRepeater?: boolean;
   throwError?: string;
+  variableRefresh?: VariableRefresh;
 }
 
-export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel | LibraryVizPanel) {
+export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel) {
   const defaults = { usePanelRepeater: true, ...options };
 
   const withRepeat = new DashboardGridItem({
@@ -157,6 +158,7 @@ export function buildPanelRepeaterScene(options: SceneOptions, source?: VizPanel
       { label: 'E', value: '5' },
     ].slice(0, options.numberOfOptions),
     throwError: defaults.throwError,
+    refresh: options.variableRefresh,
   });
 
   const rowRepeatVariable = new TestVariable({

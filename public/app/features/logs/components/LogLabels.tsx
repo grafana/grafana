@@ -5,7 +5,7 @@ import { GrafanaTheme2, Labels } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 // Levels are already encoded in color, filename is a Loki-ism
-const HIDDEN_LABELS = ['level', 'lvl', 'filename'];
+const HIDDEN_LABELS = ['detected_level', 'level', 'lvl', 'filename'];
 
 interface Props {
   labels: Labels;

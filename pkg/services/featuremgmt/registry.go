@@ -166,6 +166,14 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
+			Name:              "vizActions",
+			Description:       "Allow actions in visualizations",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaDatavizSquad,
+			HideFromAdminPage: true,
+		},
+		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			Stage:           FeatureStageExperimental,
@@ -215,11 +223,18 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
+			Name:        "mysqlParseTime",
+			Description: "Ensure the parseTime flag is set for MySQL driver",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:              "accessControlOnCall",
 			Description:       "Access control primitives for OnCall",
-			Stage:             FeatureStagePublicPreview,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:        "nestedFolders",
@@ -317,14 +332,6 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:           "prometheusDataplane",
-			Description:    "Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from 'Value' to the value of the `__name__` label.",
-			Expression:     "true",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
 		},
 		{
 			Name:           "lokiMetricDataplane",
@@ -511,8 +518,15 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+			Name:            "datasourceAPIServers",
+			Description:     "Expose some datasources as apiservers.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
-			Description:     "Register experimental APIs with the k8s API server",
+			Description:     "Register experimental APIs with the k8s API server, including all datasources",
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			RequiresDevMode: true,
@@ -730,6 +744,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:        "kubernetesFolders",
+			Description: "Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+		},
+		{
 			Name:            "datasourceQueryTypes",
 			Description:     "Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)",
 			Stage:           FeatureStageExperimental,
@@ -781,11 +801,12 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:         "teamHttpHeaders",
-			Description:  "Enables Team LBAC for datasources to apply team headers to the client requests",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: false,
-			Owner:        identityAccessTeam,
+			Name:           "teamHttpHeaders",
+			Description:    "Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams",
+			Stage:          FeatureStagePublicPreview,
+			FrontendOnly:   false,
+			AllowSelfServe: true,
+			Owner:          identityAccessTeam,
 		},
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
@@ -1041,8 +1062,9 @@ var (
 		{
 			Name:        "promQLScope",
 			Description: "In-development feature that will allow injection of labels into prometheus queries.",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Expression:  "true",
 		},
 		{
 			Name:         "sqlExpressions",
@@ -1196,9 +1218,10 @@ var (
 		{
 			Name:         "newDashboardSharingComponent",
 			Description:  "Enables the new sharing drawer design",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
+			Expression:   "false", // disabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
@@ -1372,13 +1395,12 @@ var (
 			Stage:       FeatureStageDeprecated,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // Enabled by default for now
-		},
-		{
-			Name:            "backgroundPluginInstaller",
-			Description:     "Enable background plugin installer",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
+		}, {
+			Name:         "alertingFilterV2",
+			Description:  "Enable the new alerting search experience",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
 		},
 		{
 			Name:            "dataplaneAggregator",
@@ -1388,10 +1410,79 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:        "adhocFilterOneOf",
-			Description: "Exposes a new 'one of' operator for ad-hoc filters. This operator allows users to filter by multiple values in a single filter.",
+			Name:        "newFiltersUI",
+			Description: "Enables new combobox style UI for the Ad hoc filters variable in scenes architecture",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
+		},
+		{
+			Name:        "lokiSendDashboardPanelNames",
+			Description: "Send dashboard and panel names to Loki when querying",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "singleTopNav",
+			Description:  "Unifies the top search bar and breadcrumb bar into one",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:         "exploreLogsShardSplitting",
+			Description:  "Used in Explore Logs to split queries into multiple queries based on the number of shards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "exploreLogsAggregatedMetrics",
+			Description:  "Used in Explore Logs to query by aggregated metrics",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "exploreLogsLimitedTimeRange",
+			Description:  "Used in Explore Logs to limit the time range",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:              "appPlatformAccessTokens",
+			Description:       "Enables the use of access tokens for the App Platform",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:        "appSidecar",
+			Description: "Enable the app sidecar feature that allows rendering 2 apps at the same time",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaExploreSquad,
+		},
+		{
+			Name:         "groupAttributeSync",
+			Description:  "Enable the groupsync extension for managing Group Attribute Sync feature",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+		},
+		{
+			Name:              "improvedExternalSessionHandling",
+			Description:       "Enable improved support for external sessions in Grafana",
+			Stage:             FeatureStageExperimental,
+			Owner:             identityAccessTeam,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:        "useSessionStorageForRedirection",
+			Description: "Use session storage for handling the redirection after login",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
 		},
 	}
 )
