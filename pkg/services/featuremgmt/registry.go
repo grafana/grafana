@@ -1484,6 +1484,12 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:        "useSessionStorageForRedirection",
+			Description: "Use session storage for handling the redirection after login",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
+		},
 	}
 )
 
