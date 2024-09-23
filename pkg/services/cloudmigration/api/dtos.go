@@ -106,6 +106,7 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
+	Name string `json:"name"`
 	// required:true
 	Type MigrateDataType `json:"type"`
 	// required:true
@@ -193,6 +194,7 @@ func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) Migra
 	for i := 0; i < len(r.Items); i++ {
 		item := r.Items[i]
 		items[i] = MigrateDataResponseItemDTO{
+			Name:    item.Name,
 			Type:    MigrateDataType(item.Type),
 			RefID:   item.RefID,
 			Status:  ItemStatus(item.Status),
