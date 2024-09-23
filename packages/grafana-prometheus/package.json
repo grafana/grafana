@@ -79,7 +79,7 @@
     "@grafana/e2e-selectors": "11.3.0-pre",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-image": "3.0.3",
-    "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-node-resolve": "15.2.4",
     "@swc/core": "1.4.2",
     "@swc/helpers": "0.5.13",
     "@testing-library/dom": "10.0.0",
