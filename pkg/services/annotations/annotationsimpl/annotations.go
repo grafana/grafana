@@ -90,7 +90,7 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	results := make([]*annotations.ItemDTO, 0, query.Limit)
 	query.Page = 1
 
-	// Iterate over available annotations util query limit is reached
+	// Iterate over available annotations until query limit is reached
 	// or all available dashboards are checked
 	for len(results) < int(query.Limit) {
 		resources, err := r.authZ.Authorize(ctx, query)
