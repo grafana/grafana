@@ -187,11 +187,16 @@ const ModalBody = ({
           </div>
           <div className={styles.pluginsInstalled}>
             {numberInstalled > 0 && installationFinished
-              ? `${numberInstalled} ${t('plugins.catalog.update-all.status-text', 'plugins updated')}`
+              ? `${numberInstalled || 8} ${t('plugins.catalog.update-all.update-status-text', 'plugins updated')}`
+              : ''}
+          </div>
+          <div className={styles.pluginsInstalled}>
+            {errorMap.size > 0 && installationFinished
+              ? `${errorMap.size || 2} ${t('plugins.catalog.update-all.error-status-text', 'failed - see error messages')}`
               : ''}
           </div>
 
-          {config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall && (
+          {(config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) || true && (
             <footer className={styles.footer}>
               <Trans i18nKey="plugins.catalog.update-all.cloud-update-message">
                 * It may take a few minutes for the plugins to be available for usage.
@@ -342,6 +347,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
       onDismiss={onDismissClick}
       disabled={shouldDisableConfirm(inProgress, installsRemaining, pluginsSelected)}
       confirmText={getConfirmationText(installsRemaining, inProgress, pluginsSelected)}
+      confirmButtonVariant='primary'
     />
   );
 };
