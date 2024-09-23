@@ -288,6 +288,8 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return nil, false, fmt.Errorf("name is empty")
 	}
 
+	fmt.Printf("foundObj: %v\n", foundObj)
+
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
