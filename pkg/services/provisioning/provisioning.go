@@ -53,6 +53,7 @@ func ProvideService(
 	quotaService quota.Service,
 	secrectService secrets.Service,
 	orgService org.Service,
+	resourcePermissions accesscontrol.ReceiverPermissionsService,
 ) (*ProvisioningServiceImpl, error) {
 	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
@@ -76,6 +77,7 @@ func ProvideService(
 		log:                          log.New("provisioning"),
 		orgService:                   orgService,
 		folderService:                folderService,
+		resourcePermissions:          resourcePermissions,
 	}
 
 	if err := s.setDashboardProvisioner(); err != nil {
@@ -154,6 +156,7 @@ type ProvisioningServiceImpl struct {
 	quotaService                 quota.Service
 	secretService                secrets.Service
 	folderService                folder.Service
+	resourcePermissions          accesscontrol.ReceiverPermissionsService
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
@@ -287,6 +290,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.secretService,
 		ps.SQLStore,
 		ps.log,
+		ps.resourcePermissions,
 	)
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
 		st, ps.SQLStore, receiverSvc, ps.log, &st)
