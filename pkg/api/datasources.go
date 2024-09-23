@@ -574,35 +574,9 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 	return hs.updateDataSourceByID(c, ds, cmd)
 }
 
-func getEncodedString(jsonData *simplejson.Json, key string) string {
-	if jsonData == nil {
-		return ""
-	}
-	jsonValues, exists := jsonData.CheckGet(key)
-	if !exists {
-		return ""
-	}
-	val, _ := jsonValues.Encode()
-	return string(val)
-}
-
-func checkTeamHTTPHeadersDiff(currentJsonData *simplejson.Json, newJsonData *simplejson.Json) bool {
-	currentTeamHTTPHeaders := getEncodedString(currentJsonData, "teamHttpHeaders")
-	newTeamHTTPHeaders := getEncodedString(newJsonData, "teamHttpHeaders")
-	if currentTeamHTTPHeaders == "" && newTeamHTTPHeaders == "" {
-		return false
-	}
-	return currentTeamHTTPHeaders != newTeamHTTPHeaders
-}
-
 func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datasources.DataSource, cmd datasources.UpdateDataSourceCommand) response.Response {
 	if ds.ReadOnly {
 		return response.Error(http.StatusForbidden, "Cannot update read-only data source", nil)
-	}
-	// could get expensive
-	// we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
-	if checkTeamHTTPHeadersDiff(ds.JsonData, cmd.JsonData) {
-		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
 	}
 
 	_, err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)

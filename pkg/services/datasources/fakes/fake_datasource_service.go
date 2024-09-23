@@ -112,10 +112,6 @@ func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datas
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) UpdateDataSourceLBACRules(ctx context.Context, cmd *datasources.UpdateDataSourceLBACRulesCommand) (*datasources.DataSource, error) {
-	return nil, nil
-}
-
 func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {
 	rt, err := provider.GetTransport(sdkhttpclient.Options{})
 	if err != nil {

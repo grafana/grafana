@@ -528,6 +528,11 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			}
 		}
 
+		// TODO: we will eventually remove this check for moving the resource to it's separate API
+		if !cmd.OnlyUpdateLBACRulesFromAPI && datasources.CheckTeamHTTPHeadersDiff(dataSource.JsonData, cmd.JsonData) {
+			return datasources.ErrDataSourceUpdateLBACRulesForbidden
+		}
+
 		if cmd.Name != "" && cmd.Name != dataSource.Name {
 			query := &datasources.GetDataSourceQuery{
 				Name:  cmd.Name,
@@ -569,10 +574,6 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		dataSource, err = s.SQLStore.UpdateDataSource(ctx, cmd)
 		return err
 	})
-}
-
-func (s *Service) UpdateDataSourceLBACRules(ctx context.Context, cmd *datasources.UpdateDataSourceLBACRulesCommand) (*datasources.DataSource, error) {
-	return s.UpdateDataSource(ctx, &cmd.UpdateDataSourceCommand)
 }
 
 func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider,

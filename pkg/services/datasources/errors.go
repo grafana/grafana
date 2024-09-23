@@ -19,4 +19,6 @@ var (
 	ErrDataSourceURLInvalid              = errutil.ValidationFailed("datasource.urlInvalid", errutil.WithPublicMessage("Invalid datasource url."))
 	ErrDataSourceAPIVersionInvalid       = errutil.ValidationFailed("datasource.apiVersionInvalid", errutil.WithPublicMessage("Invalid datasource apiVersion."))
 	ErrDataSourceUIDInvalid              = errutil.ValidationFailed("datasource.uidInvalid", errutil.WithPublicMessage("Invalid datasource UID."))
+
+	ErrDataSourceUpdateLBACRulesForbidden = errutil.ValidationFailed("datasource.updateLBACRulesForbidden", errutil.WithPublicMessage("teamHttpHeaders is not allowed to be set without using the updateDatasourceLBACRules API"))
 )
