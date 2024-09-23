@@ -3,8 +3,6 @@ package grpcplugin
 import (
 	"context"
 	"errors"
-	"sync"
-
 	"google.golang.org/grpc"
 
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
@@ -30,20 +28,13 @@ type ProtoClient interface {
 
 	PID(context.Context) (string, error)
 	PluginID() string
-	PluginVersion() string
 	PluginJSON() plugins.JSONData
 	Backend() backendplugin.Plugin
-	Logger() log.Logger
-	Start(context.Context) error
-	Stop(context.Context) error
 }
 
 type protoClient struct {
-	plugin        *grpcPlugin
-	pluginVersion string
-	pluginJSON    plugins.JSONData
-
-	mu sync.RWMutex
+	plugin     *grpcPlugin
+	pluginJSON plugins.JSONData
 }
 
 type ProtoClientOpts struct {
@@ -67,7 +58,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 		func() []string { return opts.Env },
 	)
 
-	return &protoClient{plugin: p, pluginVersion: opts.PluginJSON.Info.Version, pluginJSON: opts.PluginJSON}, nil
+	return &protoClient{plugin: p, pluginJSON: opts.PluginJSON}, nil
 }
 
 func (r *protoClient) PID(ctx context.Context) (string, error) {
@@ -79,10 +70,6 @@ func (r *protoClient) PID(ctx context.Context) (string, error) {
 
 func (r *protoClient) PluginID() string {
 	return r.plugin.descriptor.pluginID
-}
-
-func (r *protoClient) PluginVersion() string {
-	return r.pluginVersion
 }
 
 func (r *protoClient) PluginJSON() plugins.JSONData {
@@ -97,26 +84,8 @@ func (r *protoClient) Logger() log.Logger {
 	return r.plugin.logger
 }
 
-func (r *protoClient) Start(ctx context.Context) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.plugin.Start(ctx)
-}
-
-func (r *protoClient) Stop(ctx context.Context) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return r.plugin.Stop(ctx)
-}
-
 func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
-	r.mu.RLock()
-	pc, ok := r.plugin.getPluginClient(ctx)
-	r.mu.RUnlock()
-	if !ok {
-		return nil, false
-	}
-	return pc, true
+	return r.plugin.getPluginClient(ctx)
 }
 
 func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {
