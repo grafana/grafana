@@ -168,8 +168,7 @@ To make alerts more concise, you can group multiple instances of a firing alert 
 
 Follow these steps to create a custom notification template that consolidates alert instances into a table.
 
-1.Modify the alert rule to include an annotation that is referenced in the notification template later on.
-
+1. Modify the alert rule to include an annotation that is referenced in the notification template later on.
 1. Enter a name for the **custom annotation**: In this example, _ServerInfo_.
 1. Enter the following code as the value for the annotation. It retrieves the server's instance name and a corresponding metric value, formatted as a table row:
 
@@ -198,17 +197,50 @@ Follow these steps to create a custom notification template that consolidates al
    {{ end }}
    ```
 
-   The notification template outputs a list of server information from the "ServerInfo" annotation for each alert.
+   The notification template outputs a list of server information from the "ServerInfo" annotation for each alert instance.
 
-1. Apply the template you your contact point.
 1. Navigate to your contact point in Grafana
-1. In the **Message** reference the template by name (see **Optional Email settings** section):
+1. In the **Message** field, reference the template by name (see **Optional Email settings** section):
 
    ```
    {{ template "Table" . }}
    ```
 
    This generates a neatly formatted table in the email, grouping information for all affected servers into a single notification.
+
+## Conditional notification template
+
+Template alert notifications based on a label. In this example the label represents a namespace.
+
+1. Use the following code in your notification template to display different messages based on the namespace:
+
+   ```go
+   {{ define "my_conditional_notification" }}
+   {{ if eq .CommonLabels.namespace "namespace-a" }}
+   Alert: CPU limits have reached 80% in namespace-a.
+   {{ else if eq .CommonLabels.namespace "namespace-b" }}
+   Alert: CPU limits have reached 80% in namespace-b.
+   {{ else if eq .CommonLabels.namespace "namespace-c" }}
+   Alert: CPU limits have reached 80% in namespace-c.
+   {{ else }}
+   Alert: CPU limits have reached 80% for {{ .CommonLabels.namespace }} namespace.
+   {{ end }}
+   {{ end }}
+   ```
+
+   `.CommonLabels` is a map containing the labels that are common to all the alerts firing.
+
+   Make sure to replace the `.namespace` label with a label that exists in your alert rule.
+
+1. Replace `namespace-a`, `namespace-b`, and `namespace-c` with your specific namespace values.
+1. Navigate to your contact point in Grafana
+1. In the **Message** field, reference the template by name (see **Optional settings** section):
+
+   ```
+   {{ template "my_conditional_notification" . }}
+   ```
+
+   This template alters the content of alert notifications depending on the namespace value.
 
 ## Template the title of a Slack message
 
