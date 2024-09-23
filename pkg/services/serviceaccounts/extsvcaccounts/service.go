@@ -28,7 +28,6 @@ import (
 type ExtSvcAccountsService struct {
 	acSvc        ac.Service
 	defaultOrgID int64
-	features     featuremgmt.FeatureToggles
 	logger       log.Logger
 	metrics      *metrics
 	saSvc        sa.Service
@@ -44,7 +43,6 @@ func ProvideExtSvcAccountsService(acSvc ac.Service, cfg *setting.Cfg, bus bus.Bu
 		defaultOrgID: extsvcauth.DefaultOrgID(cfg),
 		logger:       logger,
 		saSvc:        saSvc,
-		features:     features,
 		skvStore:     kvstore.NewSQLSecretsKVStore(db, secretsSvc, logger), // Using SQL store to avoid a cyclic dependency
 		tracer:       tracer,
 		enabled:      cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
