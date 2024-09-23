@@ -130,6 +130,7 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 			return cloudSnapshots[i].Created.After(cloudSnapshots[j].Created)
 		})
 	}
+
 	if query.Limit > 0 {
 		return cloudSnapshots[0:min(len(cloudSnapshots), query.Limit)], nil
 	}
