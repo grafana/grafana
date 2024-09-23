@@ -117,7 +117,7 @@ func (s *LegacyStore) listWithCheck(ctx context.Context, ns claims.NamespaceInfo
 outer:
 	for len(items) < int(p.Limit) && c != 0 {
 		var more []iamv0.User
-		more, c, _, err = list(common.Pagination{Limit: p.Limit - int64(len(items)), Continue: c})
+		more, c, _, err = list(common.Pagination{Limit: p.Limit, Continue: c})
 		if err != nil {
 			return nil, err
 		}
