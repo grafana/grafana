@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "";
+export const pluginVersion = "11.1.5";
 
 export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
