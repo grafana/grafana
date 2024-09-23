@@ -83,13 +83,13 @@ Annotations and alerts are not currently supported for tables.
 
 A filter icon appears next to each column title.
 
-{{< figure src="/static/img/docs/tables/column-filter-with-icon.png" max-width="500px" alt="Column filtering turned on" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/column-filter-with-icon.png" max-width="350px" alt="Column filtering turned on" class="docs-image--no-shadow" >}}
 
 ### Filter column values
 
 To filter column values, click the filter (funnel) icon next to a column title. Grafana displays the filter options for that column.
 
-{{< figure src="/static/img/docs/tables/filter-column-values.png" max-width="500px" alt="Filter column values" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/filter-column-values.png" max-width="300px" alt="Filter column values" class="docs-image--no-shadow" >}}
 
 Click the check box next to the values that you want to display. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
 
@@ -105,7 +105,7 @@ Click the check box above the **Ok** and **Cancel** buttons to add or remove all
 
 Columns with filters applied have a blue funnel displayed next to the title.
 
-{{< figure src="/static/img/docs/tables/filtered-column.png" max-width="500px" alt="Filtered column" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/filtered-column.png" max-width="100px" alt="Filtered column" class="docs-image--no-shadow" >}}
 
 To remove the filter, click the blue funnel icon and then click **Clear filter**.
 
@@ -113,13 +113,13 @@ To remove the filter, click the blue funnel icon and then click **Clear filter**
 
 Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can sort multiple columns by holding the `shift` key and clicking the column name.
 
-![Sort descending](/static/img/docs/tables/sort-descending.png 'Sort descending')
+{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
 ## Data set selector
 
 If the data queried contains multiple data sets, a table displays a drop-down list at the bottom, so you can select the data set you want to visualize.
 
-![Table visualization with multiple data sets](/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png)
+{{< figure src="/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png" max-width="650px" alt="Table visualization with multiple data sets" class="docs-image--no-shadow" >}}
 
 ## Configuration options
 
