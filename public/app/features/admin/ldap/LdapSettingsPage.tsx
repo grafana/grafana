@@ -95,6 +95,7 @@ const emptySettings: LdapPayload = {
 export const LdapSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [mapKeyCertConfigured, setMapKeyCertConfigured] = useState<MapKeyCertConfigured>({
     // values
@@ -352,20 +353,20 @@ export const LdapSettingsPage = () => {
                       </Text>
                     </Stack>
                     <Button variant="secondary" onClick={() => setIsDrawerOpen(true)}>
-                      <Trans i18nKey="ldap-settings-page.advanced-settings-section.edit.button">Edit</Trans>
+                      <Trans i18nKey="ldap-settings-page.advanced-settings-section.edit-button">Edit</Trans>
                     </Button>
                   </Stack>
                 </Box>
                 <Box display="flex" gap={2} marginTop={5}>
                   <Stack alignItems="center" gap={2}>
                     <Button type="submit">
-                      <Trans i18nKey="ldap-settings-page.buttons-section.save-and-enable.button">Save and enable</Trans>
+                      <Trans i18nKey="ldap-settings-page.buttons-section.save-and-enable-button">Save and enable</Trans>
                     </Button>
                     <Button variant="secondary" onClick={saveForm}>
-                      <Trans i18nKey="ldap-settings-page.buttons-section.save.button">Save</Trans>
+                      <Trans i18nKey="ldap-settings-page.buttons-section.save-button">Save</Trans>
                     </Button>
                     <Button onClick={() => setIsModalOpen(true)} variant="secondary">
-                      <Trans i18nKey="ldap-settings-page.buttons-section.discard.button">Discard</Trans>
+                      <Trans i18nKey="ldap-settings-page.buttons-section.discard-button">Discard</Trans>
                     </Button>
                     <Dropdown
                       overlay={

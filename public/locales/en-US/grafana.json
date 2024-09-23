@@ -1079,7 +1079,7 @@
       "tls-ciphers-placeholder": "e.g. [\"TLS_AES_256_GCM_SHA384\"]",
       "use-ssl-description": "Set to true if LDAP server should use TLS connection (either with STARTTLS or LDAPS)",
       "use-ssl-label": "Use SSL",
-      "use-ssl-tooltip": "For a complete list of supported ciphers and TLS versions, refer to: {\n        <TextLink style={{ fontSize: 'inherit' }} href=\"https://go.dev/src/crypto/tls/cipher_suites.go\" external>\n          https://go.dev/src/crypto/tls/cipher_suites.go\n        </TextLink>}"
+      "use-ssl-tooltip": "For a complete list of supported ciphers and TLS versions, refer to:"
     },
     "group-mapping": {
       "grafana-admin": {
@@ -1129,9 +1129,7 @@
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
-      "edit": {
-        "button": "Edit"
-      },
+      "edit-button": "Edit",
       "subtitle": "Mappings, extra security measures, and more.",
       "title": "Advanced Settings"
     },
@@ -1152,15 +1150,15 @@
       "label": "Bind password"
     },
     "buttons-section": {
-      "discard": {
-        "button": "Discard"
-      },
-      "save": {
-        "button": "Save"
-      },
-      "save-and-enable": {
-        "button": "Save and enable"
-      }
+      "discard-button": "Discard",
+      "save-and-enable-button": "Save and enable",
+      "save-button": "Save"
+    },
+    "discard-modal": {
+      "cancel-button": "Back to editing",
+      "description": "Are you sure you want to abandon the changes you've made to the LDAP configuration? All changes will be lost.",
+      "discard-button": "Abandon LDAP",
+      "title": "Leave LDAP configuration?"
     },
     "documentation": "documentation",
     "host": {
