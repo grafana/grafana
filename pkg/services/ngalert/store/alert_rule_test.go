@@ -42,12 +42,11 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
 	sqlStore := db.InitTestReplDB(t)
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		Cfg:           cfg.UnifiedAlerting,
-		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:        &logtest.Fake{},
-	}
+	logger := &logtest.Fake{}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, bus)
+
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval))
 	recordingRuleGen := gen.With(gen.WithAllRecordingRules())
@@ -112,6 +111,24 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 
 		require.ErrorIs(t, err, ErrOptimisticLock)
 	})
+
+	t.Run("should emit event when rules are updated", func(t *testing.T) {
+		calledCount := 0
+		bus.AddEventListener(func(ctx context.Context, event *RuleChangeEvent) error {
+			require.NotNil(t, event)
+			calledCount++
+			return nil
+		})
+		rule := createRule(t, store, gen)
+		newRule := models.CopyRule(rule)
+		newRule.Title = util.GenerateShortUID()
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule,
+			New:      *newRule,
+		}})
+		require.NoError(t, err)
+		require.Equal(t, 1, calledCount)
+	})
 }
 
 func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) {
@@ -121,12 +138,9 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
 	sqlStore := db.InitTestReplDB(t)
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		Cfg:           cfg.UnifiedAlerting,
-		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:        &logtest.Fake{},
-	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, bus)
 
 	gen := models.RuleGen
 	createRuleInFolder := func(title string, orgID int64, namespaceUID string) *models.AlertRule {
@@ -378,13 +392,11 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	}
 
 	sqlStore := db.InitTestReplDB(t)
-	store := &DBstore{
-		Logger:         &logtest.Fake{},
-		SQLStore:       sqlStore,
-		Cfg:            cfg.UnifiedAlerting,
-		FolderService:  setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		FeatureToggles: featuremgmt.WithFeatures(),
-	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	logger := &logtest.Fake{}
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, bus)
+	store.FeatureToggles = featuremgmt.WithFeatures()
 
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithUniqueOrgID())
@@ -503,7 +515,9 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
-	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, bus)
 
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithRandomRecordingRules())
@@ -568,11 +582,11 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 
 	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:        log.New("test-dbstore"),
-	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, bus)
+
 	rule := createRule(t, store, nil)
 
 	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
@@ -601,11 +615,10 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 
 	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:        log.New("test-dbstore"),
-	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, bus)
 
 	u := &user.SignedInUser{
 		UserID:         1,
@@ -656,12 +669,10 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:        log.New("test-dbstore"),
-		Cfg:           cfg.UnifiedAlerting,
-	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, bus)
 
 	gen := models.RuleGen.With(
 		models.RuleGen.WithOrgID(orgID),
@@ -789,6 +800,20 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
 		require.ErrorContains(t, err, "rule UID under the same organisation should be unique")
 	})
+
+	t.Run("should emit event when rules are inserted", func(t *testing.T) {
+		calledCount := 0
+		bus.AddEventListener(func(ctx context.Context, event *RuleChangeEvent) error {
+			require.NotNil(t, event)
+			calledCount++
+			return nil
+		})
+		rule := gen.Generate()
+		rules, err := store.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, rules, 1)
+		require.Equal(t, 1, calledCount)
+	})
 }
 
 func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
@@ -807,12 +832,10 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:        log.New("test-dbstore"),
-		Cfg:           cfg.UnifiedAlerting,
-	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, bus)
 
 	receiverName := "receiver\"-" + uuid.NewString()
 	timeIntervalName := "time-" + util.GenerateShortUID()
@@ -1081,14 +1104,12 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	}
 
 	sqlStore := db.InitTestReplDB(t)
+	folderService := setupFolderService(t, sqlStore, setting.NewCfg(), featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:        log.New("test-dbstore"),
-		Cfg:           cfg.UnifiedAlerting,
-	}
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, bus)
 
 	searchName := `name-%"-👍'test`
 	gen := models.RuleGen
@@ -1206,12 +1227,10 @@ func TestIntegrationGetNamespacesByRuleUID(t *testing.T) {
 	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:        log.New("test-dbstore"),
-		Cfg:           cfg.UnifiedAlerting,
-	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, bus)
 
 	rules := models.RuleGen.With(models.RuleMuts.WithOrgID(1), models.RuleMuts.WithRandomRecordingRules()).GenerateMany(5)
 	_, err := store.InsertAlertRules(context.Background(), rules)
@@ -1257,13 +1276,11 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
-	store := &DBstore{
-		SQLStore:       sqlStore,
-		FolderService:  setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:         log.New("test-dbstore"),
-		Cfg:            cfg.UnifiedAlerting,
-		FeatureToggles: featuremgmt.WithFeatures(),
-	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, bus)
+	store.FeatureToggles = featuremgmt.WithFeatures()
 
 	gen := models.RuleGen.With(models.RuleMuts.WithOrgID(1))
 	misc := gen.GenerateMany(5, 10)
@@ -1364,12 +1381,9 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
 	sqlStore := db.InitTestReplDB(t)
-	store := &DBstore{
-		SQLStore:      sqlStore,
-		Cfg:           cfg.UnifiedAlerting,
-		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
-		Logger:        &logtest.Fake{},
-	}
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, bus)
 	orgID := int64(1)
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval)).With(gen.WithOrgID(orgID))
@@ -1470,4 +1484,20 @@ func setupFolderService(t *testing.T, sqlStore db.ReplDB, cfg *setting.Cfg, feat
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
 	return testutil.SetupFolderService(t, cfg, sqlStore.DB(), dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
+}
+
+func createTestStore(
+	sqlStore db.DB,
+	folderService folder.Service,
+	logger log.Logger,
+	cfg setting.UnifiedAlertingSettings,
+	bus bus.Bus,
+) *DBstore {
+	return &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: folderService,
+		Logger:        logger,
+		Cfg:           cfg,
+		Bus:           bus,
+	}
 }
