@@ -26,7 +26,6 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationInflux(t *testing.T) {
-	// https://raintank-corp.slack.com/archives/C036J5B39/p1727114836026269?thread_ts=1727111015.458279&cid=C036J5B39
 	t.Skip("skipping due to flaky test")
 
 	if testing.Short() {
