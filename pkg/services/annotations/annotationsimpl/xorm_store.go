@@ -351,7 +351,9 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 		if err != nil {
 			return err
 		}
-		sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
+		if acFilter != "" {
+			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
+		}
 
 		if query.Limit == 0 {
 			query.Limit = 100
@@ -372,6 +374,10 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 }
 
 func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, error) {
+	if accessResources.SkipAccessControlFilter {
+		return "", nil
+	}
+
 	var filters []string
 
 	if accessResources.CanAccessOrgAnnotations {
