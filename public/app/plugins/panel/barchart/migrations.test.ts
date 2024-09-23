@@ -41,7 +41,7 @@ describe('Bar chart Migrations', () => {
           {
             "matcher": {
               "id": "byName",
-              "options": "Name",
+              "options": "Field",
             },
             "properties": [
               {

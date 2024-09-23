@@ -31,7 +31,7 @@ export const changeToBarChartPanelMigrationHandler: PanelTypeChangedHandler = (p
       fieldConfig.overrides.push({
         matcher: {
           id: FieldMatcherID.byName,
-          options: 'Value',
+          options: 'Field',
         },
         properties: [
           {
