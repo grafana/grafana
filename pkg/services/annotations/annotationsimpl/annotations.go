@@ -76,8 +76,8 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 		query.Limit = 100
 	}
 
-	// Search by tags is expensive, so check without access control first
-	if len(query.Tags) > 0 && query.DashboardID == 0 && query.DashboardUID == "" {
+	// Search without dashboard UID filter is expensive, so check without access control first
+	if query.DashboardID == 0 && query.DashboardUID == "" {
 		// Return early if no annotations found, it's not necessary to perform expensive access control filtering
 		res, err := r.reader.Get(ctx, query, &accesscontrol.AccessResources{
 			SkipAccessControlFilter: true,
