@@ -39,10 +39,6 @@ func ProvideReceiverPermissionsService(
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
-		return nil, nil
-	}
-
 	options := resourcepermissions.Options{
 		Resource:          "receivers",
 		ResourceAttribute: "uid",
