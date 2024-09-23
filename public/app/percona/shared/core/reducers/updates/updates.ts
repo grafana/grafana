@@ -1,8 +1,14 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
+import { withSerializedError } from 'app/features/alerting/unified/utils/redux';
 import { UpdatesService } from 'app/percona/shared/services/updates';
 
-import { CheckUpdatesPayload, UpdatesState } from './updates.types';
+import {
+  CheckUpdatesChangelogsPayload,
+  CheckUpdatesPayload,
+  SnoozePayloadResponse,
+  UpdatesState,
+} from './updates.types';
 import { responseToPayload } from './updates.utils';
 
 const initialState: UpdatesState = {
@@ -29,6 +35,51 @@ export const updatesSlice = createSlice({
       ...initialState,
       isLoading: false,
     }));
+    builder.addCase(checkUpdatesChangelogs.pending, () => ({
+      ...initialState,
+      isLoading: true,
+    }));
+
+    builder.addCase(checkUpdatesChangelogs.fulfilled, (state, { payload }) => ({
+      ...state,
+      isLoading: false,
+      changeLogs: payload,
+    }));
+
+    builder.addCase(checkUpdatesChangelogs.rejected, () => ({
+      ...initialState,
+      isLoading: false,
+    }));
+    builder.addCase(getSnoozeCurrentUpdate.pending, () => ({
+      ...initialState,
+      isLoading: true,
+    }));
+
+    builder.addCase(getSnoozeCurrentUpdate.fulfilled, (state, { payload }) => ({
+      ...state,
+      snoozeCurrentVersion: payload,
+      isLoading: false,
+    }));
+
+    builder.addCase(getSnoozeCurrentUpdate.rejected, () => ({
+      ...initialState,
+      isLoading: false,
+    }));
+    builder.addCase(snoozeCurrentUpdate.pending, () => ({
+      ...initialState,
+      isLoading: true,
+    }));
+
+    builder.addCase(snoozeCurrentUpdate.fulfilled, (state, { payload }) => ({
+      ...state,
+      snoozeCurrentVersion: payload,
+      isLoading: false,
+    }));
+
+    builder.addCase(snoozeCurrentUpdate.rejected, () => ({
+      ...initialState,
+      isLoading: false,
+    }));
   },
 });
 
@@ -41,5 +92,35 @@ export const checkUpdatesAction = createAsyncThunk('percona/checkUpdates', async
     return responseToPayload(res);
   }
 });
+
+export const checkUpdatesChangelogs = createAsyncThunk(
+  'percona/checkUpdatesChangelogs',
+  async (): Promise<CheckUpdatesChangelogsPayload> =>
+    withSerializedError(
+      (async () => {
+        return await UpdatesService.getUpdatesChangelogs();
+      })()
+    )
+);
+
+export const snoozeCurrentUpdate = createAsyncThunk(
+  'percona/checkUpdatesChangelogs',
+  async (body): Promise<SnoozePayloadResponse> =>
+    withSerializedError(
+      (async () => {
+        return await UpdatesService.snoozeCurrentVersion(body);
+      })()
+    )
+);
+
+export const getSnoozeCurrentVersion = createAsyncThunk(
+  'percona/checkUpdatesChangelogs',
+  async (body): Promise<SnoozePayloadResponse> =>
+    withSerializedError(
+      (async () => {
+        return await UpdatesService.getSnoozeCurrentVersion();
+      })()
+    )
+);
 
 export default updatesSlice.reducer;

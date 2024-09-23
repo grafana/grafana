@@ -17,6 +17,8 @@ export interface UpdatesState {
   latest?: LatestInformation;
   latestNewsUrl?: string;
   lastChecked?: string;
+  changeLogs?: CheckUpdatesChangelogsPayload;
+  snoozeCurrentVersion?: SnoozePayloadResponse;
 }
 
 export interface CheckUpdatesPayload {
@@ -25,4 +27,30 @@ export interface CheckUpdatesPayload {
   latestNewsUrl?: string;
   lastChecked?: string;
   updateAvailable: boolean;
+}
+
+export interface UpdatesChangelogs {
+  version: string;
+  tag: string;
+  timestamp: string;
+  releaseNodesUrl: string;
+  releaseNotesText: string;
+}
+
+export interface CheckUpdatesChangelogsPayload {
+  updates: UpdatesChangelogs[];
+  lastCheck: string;
+}
+
+export interface SnoozePayloadBody {
+  productTourCompleted: boolean;
+  alertingTourCompleted: boolean;
+  snoozedPmmVersion: string;
+}
+
+export interface SnoozePayloadResponse {
+  userId: number;
+  productTourCompleted: boolean;
+  alertingTourCompleted: boolean;
+  snoozedPmmVersion: string;
 }

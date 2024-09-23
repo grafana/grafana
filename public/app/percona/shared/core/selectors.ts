@@ -26,3 +26,5 @@ export const getCategorizedAdvisors = createSelector([getAdvisors], (advisors) =
 );
 export const getDumps = (state: StoreState) => state.percona.pmmDumps;
 export const getUpdatesInfo = (state: StoreState) => state.percona.updates;
+export const getChangeLogs = (state: StoreState) => state.percona.updates.changeLogs.updates;
+export const getUserSnoozeVersion = (state: StoreState) => state.percona.updates.snoozeCurrentVersion;
