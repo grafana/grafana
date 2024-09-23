@@ -214,19 +214,19 @@ Template alert notifications based on a label. In this example the label represe
 
 1. Use the following code in your notification template to display different messages based on the namespace:
 
-      ``` go
-      {{ define "my_conditional_notification" }}
-      {{ if eq .CommonLabels.namespace "namespace-a" }}
-      Alert: CPU limits have reached 80% in namespace-a.
-      {{ else if eq .CommonLabels.namespace "namespace-b" }}
-      Alert: CPU limits have reached 80% in namespace-b.
-      {{ else if eq .CommonLabels.namespace "namespace-c" }}
-      Alert: CPU limits have reached 80% in namespace-c.
-      {{ else }}
-      Alert: CPU limits have reached 80% for {{ .CommonLabels.namespace }} namespace.
-      {{ end }}
-      {{ end }}
-      ```
+   ```go
+   {{ define "my_conditional_notification" }}
+   {{ if eq .CommonLabels.namespace "namespace-a" }}
+   Alert: CPU limits have reached 80% in namespace-a.
+   {{ else if eq .CommonLabels.namespace "namespace-b" }}
+   Alert: CPU limits have reached 80% in namespace-b.
+   {{ else if eq .CommonLabels.namespace "namespace-c" }}
+   Alert: CPU limits have reached 80% in namespace-c.
+   {{ else }}
+   Alert: CPU limits have reached 80% for {{ .CommonLabels.namespace }} namespace.
+   {{ end }}
+   {{ end }}
+   ```
 
    `.CommonLabels` is a map containing the labels that are common to all the alerts firing.
 
