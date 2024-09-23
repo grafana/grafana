@@ -16,7 +16,7 @@ func CopyFile(src, dst string) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path of source file %q: %w", src, err)
 	}
-	sfi, err := os.Stat(src)
+	sfi, err := os.Lstat(src)
 	if err != nil {
 		err = fmt.Errorf("couldn't stat source file %q: %w", absSrc, err)
 		return
@@ -112,7 +112,7 @@ func copyPermissions(src, dst string) error {
 
 // CopyRecursive copies files and directories recursively.
 func CopyRecursive(src, dst string) error {
-	sfi, err := os.Stat(src)
+	sfi, err := os.Lstat(src)
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func CopyRecursive(src, dst string) error {
 		return CopyFile(src, dst)
 	}
 
-	if _, err := os.Stat(dst); os.IsNotExist(err) {
+	if _, err := os.Lstat(dst); os.IsNotExist(err) {
 		if err := os.MkdirAll(dst, sfi.Mode()); err != nil {
 			return fmt.Errorf("failed to create directory %q: %s", dst, err)
 		}
@@ -134,7 +134,7 @@ func CopyRecursive(src, dst string) error {
 		srcPath := filepath.Join(src, entry.Name())
 		dstPath := filepath.Join(dst, entry.Name())
 
-		srcFi, err := os.Stat(srcPath)
+		srcFi, err := os.Lstat(srcPath)
 		if err != nil {
 			return err
 		}
@@ -154,12 +154,6 @@ func CopyRecursive(src, dst string) error {
 			}
 		default:
 			if err := CopyFile(srcPath, dstPath); err != nil {
-				return err
-			}
-		}
-
-		if srcFi.Mode()&os.ModeSymlink != 0 {
-			if err := os.Chmod(dstPath, srcFi.Mode()); err != nil {
 				return err
 			}
 		}
