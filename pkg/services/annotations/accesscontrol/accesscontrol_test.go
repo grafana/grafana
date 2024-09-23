@@ -175,8 +175,8 @@ func TestIntegrationAuthorize(t *testing.T) {
 
 			authz := NewAuthService(sql, featuremgmt.WithFeatures(tc.featureToggle))
 
-			query := &annotations.ItemQuery{SignedInUser: u}
-			resources, err := authz.Authorize(context.Background(), 1, query)
+			query := &annotations.ItemQuery{SignedInUser: u, OrgID: 1}
+			resources, err := authz.Authorize(context.Background(), query)
 			require.NoError(t, err)
 
 			if tc.expectedResources.Dashboards != nil {
