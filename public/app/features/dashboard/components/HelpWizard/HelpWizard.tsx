@@ -150,7 +150,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
       {currentTab === SnapshotTab.Support && (
         <>
           <Field
-            label="Randomize data"
+            label="Obfuscate data"
             description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
           >
             <HorizontalGroup>
@@ -181,14 +181,14 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
           <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
             <Stack>
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                Dashboard ({snapshotSize})
+                Download Snapshot ({snapshotSize})
               </Button>
               <ClipboardButton
                 icon="github"
                 getText={service.onGetMarkdownForClipboard}
                 title="Copy a complete GitHub comment to the clipboard"
               >
-                Copy to clipboard
+                Copy Github comment
               </ClipboardButton>
               <Button
                 onClick={service.onPreviewDashboard}
