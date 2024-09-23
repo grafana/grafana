@@ -406,8 +406,8 @@ export const LdapSettingsPage = () => {
       >
         <Stack direction={'column'} gap={2}>
           <Trans i18nKey="ldap-settings-page.discard-modal.description">
-            Are you sure you want to abandon the changes you've made to the LDAP configuration? All changes will be
-            lost.
+            Are you sure you want to abandon the changes you&lsquo;ve made to the LDAP configuration? All changes will
+            be lost.
           </Trans>
           <Stack direction="row" gap={2} justifyContent="flex-end">
             <Button onClick={() => setIsModalOpen(false)} variant="secondary">

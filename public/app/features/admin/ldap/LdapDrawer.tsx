@@ -87,6 +87,7 @@ export const LdapDrawerComponent = ({
       <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl-tooltip">
         For a complete list of supported ciphers and TLS versions, refer to:
       </Trans>{' '}
+      {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
       <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
         https://go.dev/src/crypto/tls/cipher_suites.go
       </TextLink>
