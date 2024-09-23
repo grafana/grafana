@@ -362,9 +362,9 @@ const mapIntegrationSettingsForK8s = (integration: GrafanaManagedReceiverConfig)
   }, {});
 
   const mappedSecureSettings = Object.entries(secureSettings || {}).reduce((acc, [key, value]) => {
-    // If the value is an empty string, then we need to omit it from the payload
+    // If the value is an empty string/falsy value, then we need to omit it from the payload
     // so the backend knows to remove it
-    if (value === '') {
+    if (!value) {
       return acc;
     }
 
@@ -372,7 +372,7 @@ const mapIntegrationSettingsForK8s = (integration: GrafanaManagedReceiverConfig)
     return set(acc, key, value);
   }, {});
 
-  // Merge settings so we don't lose any information from nested keys/secure settings
+  // Merge settings properly with lodash so we don't lose any information from nested keys/secure settings
   const mergedSettings = merge({}, settings, mappedSecureSettings);
 
   return {
