@@ -67,8 +67,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.success.main,
   }),
   pluginsInstalled: css({
-    marginTop: theme.spacing(1),
-    textAlign: 'center',
+    svg: {
+      marginRight: theme.spacing(1),
+    },
   }),
 });
 
@@ -185,25 +186,25 @@ const ModalBody = ({
               </tbody>
             </table>
           </div>
-          <div className={styles.pluginsInstalled}>
-            {numberInstalled > 0 && installationFinished
-              ? `${numberInstalled || 8} ${t('plugins.catalog.update-all.update-status-text', 'plugins updated')}`
-              : ''}
-          </div>
-          <div className={styles.pluginsInstalled}>
-            {errorMap.size > 0 && installationFinished
-              ? `${errorMap.size || 2} ${t('plugins.catalog.update-all.error-status-text', 'failed - see error messages')}`
-              : ''}
-          </div>
-
-          {(config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall) ||
-            (true && (
-              <footer className={styles.footer}>
-                <Trans i18nKey="plugins.catalog.update-all.cloud-update-message">
-                  * It may take a few minutes for the plugins to be available for usage.
-                </Trans>
-              </footer>
-            ))}
+          {numberInstalled > 0 && installationFinished && (
+            <div className={styles.pluginsInstalled}>
+              <Icon className={styles.successIcon} size="lg" name="check" />
+              {`${numberInstalled || 8} ${t('plugins.catalog.update-all.update-status-text', 'plugins updated')}`}
+            </div>
+          )}
+          {numberInstalled > 0 && installationFinished && (
+            <div className={styles.pluginsInstalled}>
+              <Icon className={styles.errorIcon} size="lg" name="exclamation-triangle" />
+              {`${errorMap.size || 2} ${t('plugins.catalog.update-all.error-status-text', 'failed - see error messages')}`}
+            </div>
+          )}
+          {config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall && (
+            <footer className={styles.footer}>
+              <Trans i18nKey="plugins.catalog.update-all.cloud-update-message">
+                * It may take a few minutes for the plugins to be available for usage.
+              </Trans>
+            </footer>
+          )}
         </>
       )}
     </div>
