@@ -39,7 +39,7 @@ On Windows, the `sample.ini` file is located in the same directory as `defaults.
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/opt/homebrew/etc/grafana/grafana.ini` or `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override the settings defined in `conf/defaults.ini`.
 
 ## Remove comments in the .ini files
 
@@ -1353,7 +1353,7 @@ Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `e
 
 ### enable_tracing
 
-Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.oentelemetry.*` sections.
+Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.opentelemetry.*` sections.
 
 <hr>
 
@@ -1913,9 +1913,8 @@ Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
 ## [grafana_net]
 
-### url
-
-Default is https://grafana.com.
+Refer to [grafana_com] config as that is the new and preferred config name.
+The grafana_net config is still accepted and parsed to grafana_com config.
 
 <hr>
 
@@ -1924,6 +1923,7 @@ Default is https://grafana.com.
 ### url
 
 Default is https://grafana.com.
+The default authentication identity provider for Grafana Cloud.
 
 <hr>
 

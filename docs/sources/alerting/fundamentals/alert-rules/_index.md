@@ -69,7 +69,7 @@ Grafana supports two different alert rule types: Grafana-managed alert rules and
 
 ## Grafana-managed alert rules
 
-Grafana-managed alert rules are the most flexible alert rule type. They allow you to create alerts that can act on data from any of the [supported data sources](#supported-data-sources), and use multiple data sources in a single alert rule.
+Grafana-managed alert rules are the most flexible alert rule type. They allow you to create alert rules that can act on data from any of the [supported data sources](#supported-data-sources), and use multiple data sources in a single alert rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported.
 
 Additionally, you can also add [expressions to transform your data](ref:expression-queries), set custom alert conditions, and include [images in alert notifications](ref:notification-images).
 
@@ -87,9 +87,11 @@ Find the public data sources supporting Alerting in the [Grafana Plugins directo
 
 ## Data source-managed alert rules
 
-Data source-managed alert rules can improve query performance via [recording rules](#recording-rules) and ensure high-availability and fault tolerance when implementing a distributed architecture.
+Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources which have been configured to support rule creation.
 
-They are only supported for Prometheus-based or Loki data sources with the Ruler API enabled. For more information, refer to the [Loki Ruler API](/docs/loki/<GRAFANA_VERSION>/api/#ruler) or [Mimir Ruler API](/docs/mimir/<GRAFANA_VERSION>/references/http-api/#ruler).
+They can improve query performance via [recording rules](#recording-rules) and ensure high-availability and fault tolerance when implementing a distributed architecture.
+
+They are only supported for Grafana Mimir or Grafana Loki data sources with the Ruler API enabled. For more information, refer to the [Loki Ruler API](/docs/loki/<GRAFANA_VERSION>/api/#ruler) or [Mimir Ruler API](/docs/mimir/<GRAFANA_VERSION>/references/http-api/#ruler).
 
 {{< figure src="/media/docs/alerting/mimir-managed-alerting-architecture-v2.png" max-width="750px" caption="Mimir-managed alerting architecture" >}}
 
@@ -98,7 +100,7 @@ They are only supported for Prometheus-based or Loki data sources with the Ruler
 1. Alert rules are evaluated by the Alert Rule Evaluation Engine.
 1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
-### Recording rules
+## Recording rules
 
 A recording rule allows you to pre-compute frequently needed or computationally expensive expressions and save their result as a new set of time series. This is useful if you want to run alerts on aggregated data or if you have dashboards that query computationally expensive expressions repeatedly.
 
@@ -114,7 +116,7 @@ When choosing which alert rule type to use, consider the following comparison be
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Create alert rules<wbr /> based on data from any of the supported data sources | Yes                                                                                                                          | No. You can only create alert rules that are based on Prometheus-based data.                                                                            |
 | Mix and match data sources                                                     | Yes                                                                                                                          | No                                                                                                                                                      |
-| Includes support for recording rules                                           | No                                                                                                                           | Yes                                                                                                                                                     |
+| Includes support for recording rules                                           | Yes. Only for Grafana OSS users with the `grafanaManagedRecordingRules` feature flag enabled.                                | Yes                                                                                                                                                     |
 | Add expressions to transform<wbr /> your data and set alert conditions         | Yes                                                                                                                          | No                                                                                                                                                      |
 | Use images in alert notifications                                              | Yes                                                                                                                          | No                                                                                                                                                      |
 | Organization                                                                   | Organize and manage access with folders                                                                                      | Use namespaces                                                                                                                                          |

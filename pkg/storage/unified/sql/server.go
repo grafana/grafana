@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 )
 
-// Creates a ResourceServer
-func ProvideResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
+// Creates a new ResourceServer
+func NewResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
 	}

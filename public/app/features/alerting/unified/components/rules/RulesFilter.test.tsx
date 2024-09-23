@@ -8,7 +8,7 @@ import * as analytics from '../../Analytics';
 import { MockDataSourceSrv } from '../../mocks';
 import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
 
-import RulesFilter from './RulesFilter';
+import RulesFilter from './Filter/RulesFilter';
 
 setupMswServer();
 jest.spyOn(analytics, 'logInfo');

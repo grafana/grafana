@@ -1,0 +1,116 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Can create a new grafana managed alert using simplified routing can create new grafana managed alert when using simplified routing and selecting a contact point 1`] = `
+[
+  {
+    "body": {
+      "interval": "1m",
+      "name": "empty-group",
+      "rules": [
+        {
+          "annotations": {},
+          "for": "1m",
+          "grafana_alert": {
+            "condition": "B",
+            "data": [
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "A",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "A",
+                  "reducer": "last",
+                  "refId": "A",
+                  "type": "reduce",
+                },
+                "queryType": "",
+                "refId": "A",
+              },
+              {
+                "datasourceUid": "__expr__",
+                "model": {
+                  "conditions": [
+                    {
+                      "evaluator": {
+                        "params": [
+                          0,
+                        ],
+                        "type": "gt",
+                      },
+                      "operator": {
+                        "type": "and",
+                      },
+                      "query": {
+                        "params": [
+                          "B",
+                        ],
+                      },
+                      "reducer": {
+                        "params": [],
+                        "type": "last",
+                      },
+                      "type": "query",
+                    },
+                  ],
+                  "datasource": {
+                    "type": "__expr__",
+                    "uid": "__expr__",
+                  },
+                  "expression": "A",
+                  "refId": "B",
+                  "type": "threshold",
+                },
+                "queryType": "",
+                "refId": "B",
+              },
+            ],
+            "exec_err_state": "Error",
+            "is_paused": false,
+            "no_data_state": "NoData",
+            "notification_settings": {
+              "receiver": "lotsa-emails",
+            },
+            "title": "my great new rule",
+          },
+          "labels": {},
+        },
+      ],
+    },
+    "headers": [
+      [
+        "content-type",
+        "application/json",
+      ],
+      [
+        "accept",
+        "application/json, text/plain, */*",
+      ],
+    ],
+    "method": "POST",
+    "url": "http://localhost/api/ruler/grafana/api/v1/rules/6abdb25bc1eb?subtype=cortex",
+  },
+]
+`;
