@@ -131,8 +131,8 @@ The table visualization helps with debugging when you need to know exactly what 
 
 1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
 1. On the table panel you want to filter, open the panel editor.
-1. Click the **Field** tab.
-1. In Table options, turn on the **Column filter** option.
+1. Expand the the **Table** options section.
+1. Toggle on the **Column filter** switch.
 
 A filter icon appears next to each column title.
 
@@ -168,11 +168,11 @@ Click a column title to change the sort order from default to descending to asce
 
 {{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
 
-## Data set selector
+## Dataset selector
 
-If the data queried contains multiple data sets, a table displays a drop-down list at the bottom, so you can select the data set you want to visualize.
+If the data queried contains multiple datasets, a table displays a drop-down list at the bottom, so you can select the dataset you want to visualize.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png" max-width="650px" alt="Table visualization with multiple data sets" class="docs-image--no-shadow" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/TablePanelMultiSet.png" max-width="650px" alt="Table visualization with multiple datasets" class="docs-image--no-shadow" >}}
 
 ## Configuration options
 
