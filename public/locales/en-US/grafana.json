@@ -1156,7 +1156,7 @@
     },
     "discard-modal": {
       "cancel-button": "Back to editing",
-      "description": "Are you sure you want to abandon the changes you've made to the LDAP configuration? All changes will be lost.",
+      "description": "Are you sure you want to abandon the changes you&lsquo;ve made to the LDAP configuration? All changes will be lost.",
       "discard-button": "Abandon LDAP",
       "title": "Leave LDAP configuration?"
     },
