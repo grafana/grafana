@@ -270,7 +270,6 @@ func TestGetSnapshotList(t *testing.T) {
 
 		// Return paginated snapshot of the 2 belonging to this specific session
 		assert.Equal(t, []string{"lkjhg"}, ids)
-
 	})
 
 	t.Run("only the snapshots that belong to a specific session are returned", func(t *testing.T) {

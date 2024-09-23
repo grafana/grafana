@@ -117,7 +117,6 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 				Status:     cloudmigration.SnapshotStatusCreating,
 			},
 		}, nil
-
 	}
 	return []cloudmigration.CloudMigrationSnapshot{
 		{
