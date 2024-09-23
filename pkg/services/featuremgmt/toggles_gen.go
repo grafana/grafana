@@ -747,10 +747,6 @@ const (
 	// Enable the new alerting search experience
 	FlagAlertingFilterV2 = "alertingFilterV2"
 
-	// FlagBackgroundPluginInstaller
-	// Enable background plugin installer
-	FlagBackgroundPluginInstaller = "backgroundPluginInstaller"
-
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
 	FlagDataplaneAggregator = "dataplaneAggregator"
@@ -794,4 +790,8 @@ const (
 	// FlagImprovedExternalSessionHandling
 	// Enable improved support for external sessions in Grafana
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
+
+	// FlagUseSessionStorageForRedirection
+	// Use session storage for handling the redirection after login
+	FlagUseSessionStorageForRedirection = "useSessionStorageForRedirection"
 )

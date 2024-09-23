@@ -580,7 +580,8 @@
       "metadata": {
         "name": "backgroundPluginInstaller",
         "resourceVersion": "1723202510081",
-        "creationTimestamp": "2024-08-09T11:21:50Z"
+        "creationTimestamp": "2024-08-09T11:21:50Z",
+        "deletionTimestamp": "2024-09-20T13:20:41Z"
       },
       "spec": {
         "description": "Enable background plugin installer",
@@ -1964,14 +1965,18 @@
     {
       "metadata": {
         "name": "newDashboardSharingComponent",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-03T15:02:18Z"
+        "resourceVersion": "1726241874335",
+        "creationTimestamp": "2024-05-03T15:02:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-13 15:37:54.335099 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new sharing drawer design",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -2911,6 +2916,31 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "useSeessionStorageForRedirection",
+        "resourceVersion": "1727082170583",
+        "creationTimestamp": "2024-09-23T09:02:50Z",
+        "deletionTimestamp": "2024-09-23T09:10:18Z"
+      },
+      "spec": {
+        "description": "Use session storage for handling the redirection after login",
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
+        "name": "useSessionStorageForRedirection",
+        "resourceVersion": "1727082618788",
+        "creationTimestamp": "2024-09-23T09:10:18Z"
+      },
+      "spec": {
+        "description": "Use session storage for handling the redirection after login",
+        "stage": "preview",
+        "codeowner": "@grafana/identity-access-team"
       }
     },
     {
