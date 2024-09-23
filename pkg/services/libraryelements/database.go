@@ -786,10 +786,6 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 				return err
 			}
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
-			// nolint:staticcheck
-			if err := l.requireViewPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
-				return fmt.Errorf("failed require view permissions: %w", err)
-			}
 
 			var userID int64
 			if id, err := identity.UserIdentifier(signedInUser.GetID()); err == nil {
