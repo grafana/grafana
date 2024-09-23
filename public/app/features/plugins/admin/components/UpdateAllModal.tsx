@@ -2,12 +2,14 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Checkbox, ConfirmModal, EmptyState, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { useInstall, useInstallStatus } from '../state/hooks';
 import { CatalogPlugin } from '../types';
+
+const PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME = 'plugins_update_all_clicked';
 
 type UpdateError = {
   id: string;
@@ -221,6 +223,8 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
 
   const onConfirm = async () => {
     if (!inProgress) {
+      reportInteraction(PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME);
+
       setInProgress(true);
 
       // in cloud the requests need to be sync
