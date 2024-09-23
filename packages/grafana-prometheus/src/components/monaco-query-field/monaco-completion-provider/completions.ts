@@ -1,5 +1,6 @@
 // Core grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/monaco-query-field/monaco-completion-provider/completions.ts
 import UFuzzy from '@leeoniya/ufuzzy';
+import debounce from 'debounce-promise';
 
 import { config } from '@grafana/runtime';
 
@@ -49,8 +50,14 @@ export function filterMetricNames({ metricNames, inputText, limit }: MetricFilte
 }
 
 // we order items like: history, functions, metrics
-function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] {
-  let metricNames = dataProvider.getAllMetricNames();
+async function getAllMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
+  let metricNames: string[] = [];
+  if (dataProvider.languageProvider.datasource.hasLabelsMatchAPISupport()) {
+    // use the metric regex with match[] param for partial typing of metric name to filter metric names
+    metricNames = await debounce(() => dataProvider.getLimitedMetricNames(dataProvider.inputInRange), 300)();
+  } else {
+    metricNames = dataProvider.getAllMetricNames();
+  }
 
   if (
     config.featureToggles.prometheusCodeModeMetricNamesSearch &&
@@ -58,7 +65,6 @@ function getAllMetricNamesCompletions(dataProvider: DataProvider): Completion[] 
   ) {
     const { monacoSettings } = dataProvider;
     monacoSettings.enableAutocompleteSuggestionsUpdate();
-
     if (monacoSettings.inputInRange) {
       metricNames = filterMetricNames({
         metricNames,
@@ -88,7 +94,7 @@ const FUNCTION_COMPLETIONS: Completion[] = FUNCTIONS.map((f) => ({
 }));
 
 async function getAllFunctionsAndMetricNamesCompletions(dataProvider: DataProvider): Promise<Completion[]> {
-  const metricNames = getAllMetricNamesCompletions(dataProvider);
+  const metricNames = await getAllMetricNamesCompletions(dataProvider);
 
   return [...FUNCTION_COMPLETIONS, ...metricNames];
 }
@@ -212,7 +218,7 @@ async function getLabelValuesForMetricCompletions(
   }));
 }
 
-export function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
+export async function getCompletions(situation: Situation, dataProvider: DataProvider): Promise<Completion[]> {
   switch (situation.type) {
     case 'IN_DURATION':
       return Promise.resolve(DURATION_COMPLETIONS);
@@ -222,7 +228,7 @@ export function getCompletions(situation: Situation, dataProvider: DataProvider)
       return getAllFunctionsAndMetricNamesCompletions(dataProvider);
     }
     case 'EMPTY': {
-      const metricNames = getAllMetricNamesCompletions(dataProvider);
+      const metricNames = await getAllMetricNamesCompletions(dataProvider);
       const historyCompletions = getAllHistoryCompletions(dataProvider);
       return Promise.resolve([...historyCompletions, ...FUNCTION_COMPLETIONS, ...metricNames]);
     }
