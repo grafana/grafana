@@ -451,10 +451,9 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
 
-	// could get expensive
 	// Temporary: we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
 	// until we move from datasources, we need to keep this check to make sure that we don't allow users to update team HTTP headers from datasources apis
-	if checkTeamHTTPHeadersDiff(nil, cmd.JsonData) {
+	if cmd.JsonData.Get("teamHttpHeaders").MustString() != "" {
 		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
 	}
 
@@ -530,12 +529,6 @@ func (hs *HTTPServer) UpdateDataSourceByID(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
 
-	// could get expensive
-	// we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
-	if checkTeamHTTPHeadersDiff(ds, cmd.JsonData) {
-		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
-	}
-
 	return hs.updateDataSourceByID(c, ds, cmd)
 }
 
@@ -578,13 +571,6 @@ func (hs *HTTPServer) UpdateDataSourceByUID(c *contextmodel.ReqContext) response
 	}
 	cmd.ID = ds.ID
 
-	// we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
-	// could get expensive, need to see how fast this part is, w. 500 rules
-	if checkTeamHTTPHeadersDiff(ds, cmd.JsonData) {
-		datasourcesLogger.Error("Cannot update team HTTP headers for data source", "error", "need to use updateDatasourceLBACRules API", "dataSourceID", ds.ID, "dataSourceUID", ds.UID, "orgID", c.SignedInUser.GetOrgID())
-		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
-	}
-
 	return hs.updateDataSourceByID(c, ds, cmd)
 }
 
@@ -600,12 +586,9 @@ func getEncodedString(jsonData *simplejson.Json, key string) string {
 	return string(val)
 }
 
-func checkTeamHTTPHeadersDiff(ds *datasources.DataSource, jsonData *simplejson.Json) bool {
-	if ds == nil || jsonData == nil {
-		return false
-	}
-	currentTeamHTTPHeaders := getEncodedString(ds.JsonData, "teamHttpHeaders")
-	newTeamHTTPHeaders := getEncodedString(jsonData, "teamHttpHeaders")
+func checkTeamHTTPHeadersDiff(currentJsonData *simplejson.Json, newJsonData *simplejson.Json) bool {
+	currentTeamHTTPHeaders := getEncodedString(currentJsonData, "teamHttpHeaders")
+	newTeamHTTPHeaders := getEncodedString(newJsonData, "teamHttpHeaders")
 	if currentTeamHTTPHeaders == "" && newTeamHTTPHeaders == "" {
 		return false
 	}
@@ -618,7 +601,7 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 	}
 	// could get expensive
 	// we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
-	if checkTeamHTTPHeadersDiff(ds, cmd.JsonData) {
+	if checkTeamHTTPHeadersDiff(ds.JsonData, cmd.JsonData) {
 		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
 	}
 
