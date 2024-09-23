@@ -15,6 +15,7 @@ import {
   Input,
   LinkButton,
   Menu,
+  Modal,
   Stack,
   Text,
   TextLink,
@@ -363,9 +364,9 @@ export const LdapSettingsPage = () => {
                     <Button variant="secondary" onClick={saveForm}>
                       <Trans i18nKey="ldap-settings-page.buttons-section.save.button">Save</Trans>
                     </Button>
-                    <LinkButton href="/admin/authentication" variant="secondary">
+                    <Button onClick={() => setIsModalOpen(true)} variant="secondary">
                       <Trans i18nKey="ldap-settings-page.buttons-section.discard.button">Discard</Trans>
-                    </LinkButton>
+                    </Button>
                     <Dropdown
                       overlay={
                         <Menu>
@@ -397,6 +398,21 @@ export const LdapSettingsPage = () => {
           </form>
         </FormProvider>
       </Page.Contents>
+      <Modal title={t('ldap-settings-page.discard-modal.title', 'Leave LDAP configuration?')} isOpen={isModalOpen} onDismiss={() => setIsModalOpen(false)}>
+        <Stack direction={"column"} gap={2}>
+          <Trans i18nKey="ldap-settings-page.discard-modal.description">
+            Are you sure you want to abandon the changes you've made to the LDAP configuration? All changes will be lost.
+          </Trans>
+          <Stack direction="row" gap={2} justifyContent="flex-end">
+            <Button onClick={() => setIsModalOpen(false)} variant='secondary'>
+              <Trans i18nKey="ldap-settings-page.discard-modal.cancel-button">Back to editing</Trans>
+            </Button>
+            <LinkButton href="/admin/authentication" variant="destructive">
+              <Trans i18nKey="ldap-settings-page.discard-modal.discard-button">Abandon LDAP</Trans>
+            </LinkButton>
+          </Stack>
+        </Stack>
+      </Modal>
     </Page>
   );
 };
