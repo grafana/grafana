@@ -32,8 +32,8 @@ func (a *recordingAccessControlFake) RegisterScopeAttributeResolver(prefix strin
 	panic("implement me")
 }
 
-func (a *recordingAccessControlFake) IsDisabled() bool {
-	return a.Disabled
+func (a *recordingAccessControlFake) WithoutResolvers() accesscontrol.AccessControl {
+	panic("unimplemented")
 }
 
 var _ accesscontrol.AccessControl = &recordingAccessControlFake{}

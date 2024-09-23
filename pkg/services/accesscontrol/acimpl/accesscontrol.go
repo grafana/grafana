@@ -205,6 +205,16 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
 }
 
+func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
+	return &AccessControl{
+		features:  a.features,
+		log:       a.log,
+		zclient:   a.zclient,
+		metrics:   a.metrics,
+		resolvers: accesscontrol.NewResolvers(a.log),
+	}
+}
+
 func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg string, eval accesscontrol.Evaluator) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.debug")
 	defer span.End()

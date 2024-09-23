@@ -3,19 +3,6 @@ package iam
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -25,14 +12,34 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+
+	"github.com/grafana/authlib/claims"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
-	Store      legacy.LegacyIdentityStore
-	SSOService ssosettings.Service
+	store        legacy.LegacyIdentityStore
+	authorizer   authorizer.Authorizer
+	accessClient claims.AccessClient
+
+	// Not set for multi-tenant deployment for now
+	sso ssosettings.Service
 }
 
 func RegisterAPIService(
@@ -40,18 +47,42 @@ func RegisterAPIService(
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
+	ac accesscontrol.AccessControl,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis
+		// skip registration unless opting into experimental apis
+		return nil, nil
 	}
 
+	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
+	authorizer, client := newLegacyAuthorizer(ac, store)
+
 	builder := &IdentityAccessManagementAPIBuilder{
-		Store:      legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql)),
-		SSOService: ssoService,
+		store:        store,
+		sso:          ssoService,
+		authorizer:   authorizer,
+		accessClient: client,
 	}
 	apiregistration.RegisterAPI(builder)
 
 	return builder, nil
+}
+
+func NewAPIService(store legacy.LegacyIdentityStore) *IdentityAccessManagementAPIBuilder {
+	return &IdentityAccessManagementAPIBuilder{
+		store: store,
+		authorizer: authorizer.AuthorizerFunc(
+			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+				user, err := identity.GetRequester(ctx)
+				if err != nil {
+					return authorizer.DecisionDeny, "no identity found", err
+				}
+				if user.GetIsGrafanaAdmin() {
+					return authorizer.DecisionAllow, "", nil
+				}
+				return authorizer.DecisionDeny, "only grafana admins have access for now", nil
+			}),
+	}
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -80,27 +111,27 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 
 	teamResource := iamv0.TeamResourceInfo
-	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.Store)
-	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.Store)
+	storage[teamResource.StoragePath()] = team.NewLegacyStore(b.store)
+	storage[teamResource.StoragePath("members")] = team.NewLegacyTeamMemberREST(b.store)
 
 	teamBindingResource := iamv0.TeamBindingResourceInfo
-	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.Store)
+	storage[teamBindingResource.StoragePath()] = team.NewLegacyBindingStore(b.store)
 
 	userResource := iamv0.UserResourceInfo
-	storage[userResource.StoragePath()] = user.NewLegacyStore(b.Store)
-	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.Store)
+	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.accessClient)
+	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
 	serviceaccountResource := iamv0.ServiceAccountResourceInfo
-	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.Store)
-	storage[serviceaccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.Store)
+	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store)
+	storage[serviceaccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
-	if b.SSOService != nil {
+	if b.sso != nil {
 		ssoResource := iamv0.SSOSettingResourceInfo
-		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.SSOService)
+		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
 	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["display"] = user.NewLegacyDisplayREST(b.Store)
+	storage["display"] = user.NewLegacyDisplayREST(b.store)
 
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
 	return &apiGroupInfo, nil
@@ -116,16 +147,5 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	// TODO: handle authorization based in entity.
-	return authorizer.AuthorizerFunc(
-		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
-			user, err := identity.GetRequester(ctx)
-			if err != nil {
-				return authorizer.DecisionDeny, "no identity found", err
-			}
-			if user.GetIsGrafanaAdmin() {
-				return authorizer.DecisionAllow, "", nil
-			}
-			return authorizer.DecisionDeny, "only grafana admins have access for now", nil
-		})
+	return b.authorizer
 }
