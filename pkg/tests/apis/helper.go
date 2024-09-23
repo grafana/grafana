@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -502,6 +503,11 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	require.NoError(c.t, err)
 	require.Equal(c.t, orgId, s.OrgID)
 	require.Equal(c.t, basicRole, s.OrgRole) // make sure the role was set properly
+
+	idToken, idClaims, err := idtest.CreateInternalToken(s, []byte("secret"))
+	require.NoError(c.t, err)
+	s.IDToken = idToken
+	s.IDTokenClaims = idClaims
 
 	usr := User{
 		Identity: s,
