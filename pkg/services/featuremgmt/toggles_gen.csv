@@ -159,7 +159,7 @@ disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-me
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/explore-squad,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
-newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
+newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
 notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,false
 dashboardRestore,experimental,@grafana/search-and-storage,false,false,false
@@ -184,7 +184,6 @@ bodyScrolling,preview,@grafana/grafana-frontend-platform,false,false,true
 cloudwatchMetricInsightsCrossAccount,preview,@grafana/aws-datasources,false,false,true
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
 alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
-backgroundPluginInstaller,experimental,@grafana/plugins-platform-backend,false,true,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 newFiltersUI,experimental,@grafana/dashboards-squad,false,false,false
 lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
@@ -196,3 +195,4 @@ appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,f
 appSidecar,experimental,@grafana/explore-squad,false,false,false
 groupAttributeSync,experimental,@grafana/identity-access-team,false,false,false
 improvedExternalSessionHandling,experimental,@grafana/identity-access-team,false,false,false
+useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,false,false
