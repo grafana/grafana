@@ -278,7 +278,9 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 			offset := (query.Page - 1) * query.Limit
 			sess.Limit(query.Limit, offset)
 		}
-		sess.OrderBy("created DESC")
+		if query.Latest {
+			sess.OrderBy("created DESC")
+		}
 		return sess.Find(&snapshots, &cloudmigration.CloudMigrationSnapshot{
 			SessionUID: query.SessionUID,
 		})
