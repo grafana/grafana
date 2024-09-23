@@ -3890,7 +3890,7 @@ __metadata:
     "@types/jest": "npm:^29.5.4"
     "@types/node": "npm:20.16.5"
     "@types/react": "npm:18.3.3"
-    "@types/systemjs": "npm:6.15.0"
+    "@types/systemjs": "npm:6.15.1"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     jest: "npm:^29.6.4"
     react: "npm:18.2.0"
@@ -4072,7 +4072,7 @@ __metadata:
     "@types/lodash": "npm:4.17.7"
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
-    "@types/systemjs": "npm:6.15.0"
+    "@types/systemjs": "npm:6.15.1"
     esbuild: "npm:0.24.0"
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
@@ -4192,7 +4192,7 @@ __metadata:
     "@types/react": "npm:18.3.3"
     "@types/react-dom": "npm:18.2.25"
     "@types/react-virtualized-auto-sizer": "npm:1.0.4"
-    "@types/systemjs": "npm:6.15.0"
+    "@types/systemjs": "npm:6.15.1"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/uuid": "npm:9.0.8"
     immutable: "npm:4.3.7"
@@ -10727,10 +10727,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/systemjs@npm:6.15.0":
-  version: 6.15.0
-  resolution: "@types/systemjs@npm:6.15.0"
-  checksum: 10/2a0aed8176ddf7041c6c1103c223557ec94161bfe861f4fc03f10e88e7979fddddfbee2173c506781669d1be54489856137bb349552eeb7dcd89ac3f65f332b8
+"@types/systemjs@npm:6.15.1":
+  version: 6.15.1
+  resolution: "@types/systemjs@npm:6.15.1"
+  checksum: 10/4c29f4951299b67a287b8b21219416c4d8eee277582ae045f6a97eaaa9d27ad59789f6b608c5519adf0e42eee23f139c4027cc157f37807a16b4601b353f5442
   languageName: node
   linkType: hard
 
@@ -19004,7 +19004,7 @@ __metadata:
     "@types/slate-plain-serializer": "npm:0.7.5"
     "@types/slate-react": "npm:0.22.9"
     "@types/swagger-ui-react": "npm:4.18.3"
-    "@types/systemjs": "npm:6.15.0"
+    "@types/systemjs": "npm:6.15.1"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:9.0.8"
