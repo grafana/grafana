@@ -197,7 +197,7 @@ Follow these steps to create a custom notification template that consolidates al
    {{ end }}
    ```
 
-   The notification template outputs a list of server information from the "ServerInfo" annotation for each alert instace.
+   The notification template outputs a list of server information from the "ServerInfo" annotation for each alert instance.
 
 1. Navigate to your contact point in Grafana
 1. In the **Message** field, reference the template by name (see **Optional Email settings** section):
