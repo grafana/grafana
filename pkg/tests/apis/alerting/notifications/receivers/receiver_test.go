@@ -137,9 +137,6 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	env := helper.GetEnv()
-	resourcePermissions := env.Server.HTTPServer.AlertNG.ResourcePermissions
-
 	org1 := helper.Org1
 
 	noneUser := helper.CreateUser("none", apis.Org1, org.RoleNone, nil)
@@ -331,9 +328,17 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			require.NoErrorf(t, err, "Payload %s", string(d))
 			require.NotNil(t, created)
 
+			defer func() {
+				_ = adminClient.Delete(ctx, created.Name, v1.DeleteOptions{})
+			}()
+
 			// Assign resource permissions
-			_, err = resourcePermissions.SetPermissions(ctx, admin.Identity.GetOrgID(), string(created.ObjectMeta.UID), tc.assignments...)
-			require.NoError(t, err)
+			cliCfg := helper.Org1.Admin.NewRestConfig()
+			alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+			for _, permission := range tc.assignments {
+				status, body := alertingApi.AssignReceiverPermission(t, created.Name, permission)
+				require.Equalf(t, http.StatusOK, status, "Expected status 200 but got %d: %s", status, body)
+			}
 
 			// Test read
 			if tc.expRead {
@@ -401,9 +406,6 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 				})
 			}
-
-			// Cleanup
-			require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
 		})
 	}
 }
