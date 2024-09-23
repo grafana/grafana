@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -45,6 +46,7 @@ type ReceiverService struct {
 	xact                   transactionManager
 	log                    log.Logger
 	provenanceValidator    validation.ProvenanceStatusTransitionValidator
+	resourcePermissions    ac.ReceiverPermissionsService
 }
 
 type alertRuleNotificationSettingsStore interface {
@@ -96,6 +98,7 @@ func NewReceiverService(
 	encryptionService secretService,
 	xact transactionManager,
 	log log.Logger,
+	resourcePermissions ac.ReceiverPermissionsService,
 ) *ReceiverService {
 	return &ReceiverService{
 		authz:                  authz,
@@ -106,6 +109,7 @@ func NewReceiverService(
 		xact:                   xact,
 		log:                    log,
 		provenanceValidator:    validation.ValidateProvenanceRelaxed,
+		resourcePermissions:    resourcePermissions,
 	}
 }
 
@@ -312,6 +316,12 @@ func (rs *ReceiverService) DeleteReceiver(ctx context.Context, uid string, calle
 		if err != nil {
 			return err
 		}
+		if rs.resourcePermissions != nil {
+			err = rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, uid)
+			if err != nil {
+				rs.log.Error("Could not delete receiver permissions", "receiver", existing.Name, "error", err)
+			}
+		}
 		return rs.deleteProvenances(ctx, orgID, existing.Integrations)
 	})
 }
@@ -336,6 +346,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		return nil, legacy_storage.MakeErrReceiverInvalid(err)
 	}
 
+	// Generate UID from name.
+	createdReceiver.UID = legacy_storage.NameToUid(createdReceiver.Name)
+
 	created, err := revision.CreateReceiver(&createdReceiver)
 	if err != nil {
 		return nil, err
@@ -345,6 +358,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 		err = rs.cfgStore.Save(ctx, revision, orgID)
 		if err != nil {
 			return err
+		}
+		if rs.resourcePermissions != nil {
+			rs.resourcePermissions.SetDefaultPermissions(ctx, orgID, user, createdReceiver.GetUID())
 		}
 		return rs.setReceiverProvenance(ctx, orgID, &createdReceiver)
 	})
@@ -421,6 +437,19 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 			err := rs.RenameReceiverInDependentResources(ctx, orgID, revision.Config.AlertmanagerConfig.Route, existing.Name, r.Name, r.Provenance)
 			if err != nil {
 				return err
+			}
+			// Update receiver permissions
+			if rs.resourcePermissions != nil {
+				permissionsUpdated, err := rs.resourcePermissions.CopyPermissions(ctx, orgID, user, legacy_storage.NameToUid(existing.Name), legacy_storage.NameToUid(r.Name))
+				if err != nil {
+					return err
+				}
+				if permissionsUpdated > 0 {
+					rs.log.FromContext(ctx).Debug("Moved custom receiver permissions", "oldName", existing.Name, "newName", r.Name, "count", permissionsUpdated)
+				}
+				if err := rs.resourcePermissions.DeleteResourcePermissions(ctx, orgID, legacy_storage.NameToUid(existing.Name)); err != nil {
+					return err
+				}
 			}
 		}
 		err = rs.cfgStore.Save(ctx, revision, orgID)
