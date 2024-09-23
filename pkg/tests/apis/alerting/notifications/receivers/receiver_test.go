@@ -294,6 +294,23 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			expACMetadata: allACMetadata,
 			expRead:       true,
 		},
+		// Team-based access. Staff team has editor+admin but not viewer in it.
+		{
+			name:          "Admin creates, assigns admin to staff, viewer has no metadata and access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin to staff, editor has all metadata and access",
+			creatingUser:  admin,
+			testUser:      editor,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			createClient := newClient(t, tc.creatingUser)

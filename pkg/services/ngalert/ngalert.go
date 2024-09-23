@@ -99,7 +99,7 @@ func ProvideService(
 		dashboardService:     dashboardService,
 		renderService:        renderService,
 		bus:                  bus,
-		accesscontrolService: accesscontrolService,
+		AccesscontrolService: accesscontrolService,
 		annotationsRepo:      annotationsRepo,
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
@@ -149,7 +149,7 @@ type AlertNG struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
-	accesscontrolService accesscontrol.Service
+	AccesscontrolService accesscontrol.Service
 	ResourcePermissions  accesscontrol.ReceiverPermissionsService
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
@@ -494,7 +494,7 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return DeclareFixedRoles(ng.accesscontrolService, ng.FeatureToggles)
+	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
