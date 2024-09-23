@@ -81,6 +81,10 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 		if err != nil || len(res) == 0 {
 			return []*annotations.ItemDTO{}, err
 		}
+		// If number of resources is less than limit, it makes sense to set query limit to this
+		// value, otherwise query will be iterating over all user's dashboards since original
+		// query limit is never reached.
+		query.Limit = int64(len(res))
 	}
 
 	results := make([]*annotations.ItemDTO, 0, query.Limit)
