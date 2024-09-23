@@ -94,12 +94,12 @@ func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery)
 	for len(results) < int(query.Limit) {
 		resources, err := r.authZ.Authorize(ctx, query)
 		if err != nil {
-			return []*annotations.ItemDTO{}, err
+			return nil, err
 		}
 
 		res, err := r.reader.Get(ctx, query, resources)
 		if err != nil {
-			return []*annotations.ItemDTO{}, err
+			return nil, err
 		}
 
 		results = append(results, res...)
