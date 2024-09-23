@@ -215,4 +215,5 @@ export interface FeatureToggles {
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
   improvedExternalSessionHandling?: boolean;
+  useSessionStorageForRedirection?: boolean;
 }
