@@ -80,6 +80,10 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
+		if !ds.JSONData.Backend {
+			continue // skip frontend only plugins
+		}
+
 		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
 			pluginClient,
 			datasources.GetDatasourceProvider(ds.JSONData),
