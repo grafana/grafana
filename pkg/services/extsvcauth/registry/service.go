@@ -147,7 +147,7 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 		switch cmd.AuthProvider {
 		case extsvcauth.ServiceAccounts:
 			if !r.enabled {
-				ctxLogger.Warn("Skipping External Service authentication, flag disabled",
+				ctxLogger.Warn("Skipping External Service authentication, flag or configuration option disabled",
 					"service", cmd.Name,
 					"flag", featuremgmt.FlagExternalServiceAccounts,
 					"option", "ManagedServiceAccountsEnabled",
