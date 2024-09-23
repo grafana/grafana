@@ -158,7 +158,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], b)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Expose read only library panels
