@@ -71,12 +71,8 @@ func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, original r
 	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage create timeout"))
 	defer cancel()
 
-	if err := enrichLegacyObject(original, createdCopy); err != nil {
-		cancel()
-	}
-
 	startStorage := time.Now()
-	storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
+	storageObj, errObjectSt := d.Storage.Create(ctx, original, createValidation, options)
 	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
 	if errObjectSt != nil {
 		cancel()
@@ -304,17 +300,6 @@ func (d *DualWriterMode1) updateOnUnifiedStorage(ctx context.Context, res runtim
 		cancel()
 	}
 
-	// if the object is found, create a new updateWrapper with the object found
-	if foundObj != nil {
-		if err := enrichLegacyObject(foundObj, resCopy); err != nil {
-			log.Error(err, "could not enrich object")
-			cancel()
-		}
-		objInfo = &updateWrapper{
-			upstream: objInfo,
-			updated:  resCopy,
-		}
-	}
 	startStorage := time.Now()
 	defer cancel()
 	storageObj, _, errObjectSt := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
