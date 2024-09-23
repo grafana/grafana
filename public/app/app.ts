@@ -196,6 +196,10 @@ export class GrafanaApp {
         getPanelPluginFromCache: syncGetPanelPlugin,
       });
 
+      if (config.featureToggles.useSessionStorageForRedirection) {
+        handleRedirectTo();
+      }
+
       locationUtil.initialize({
         config,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
@@ -268,9 +272,6 @@ export class GrafanaApp {
           app: this,
         })
       );
-      if (config.featureToggles.useSessionStorageForRedirection) {
-        handleRedirectTo();
-      }
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
@@ -397,15 +398,13 @@ function handleRedirectTo(): void {
     return;
   }
 
-  const redirectToPath = window.sessionStorage.getItem(RedirectToUrlKey);
-  if (!redirectToPath) {
+  const redirectTo = window.sessionStorage.getItem(RedirectToUrlKey);
+  if (!redirectTo) {
     return;
   }
 
-  const redirectTo = window.location.origin + redirectToPath;
-
   window.sessionStorage.removeItem(RedirectToUrlKey);
-  window.location.replace(redirectTo);
+  locationService.replace(redirectTo);
 }
 
 export default new GrafanaApp();
