@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { PanelPlugin, GrafanaTheme2, FeatureState } from '@grafana/data';
+import { PanelPlugin, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   Drawer,
@@ -11,12 +11,10 @@ import {
   CodeEditor,
   useStyles2,
   Field,
-  HorizontalGroup,
   InlineSwitch,
   Button,
   Spinner,
   Alert,
-  FeatureBadge,
   Select,
   ClipboardButton,
   Icon,
@@ -152,7 +150,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             label="Obfuscate data"
             description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
           >
-            <HorizontalGroup>
+            <Stack direction="row" gap={1}>
               <InlineSwitch
                 label="Labels"
                 id="randomize-labels"
@@ -174,13 +172,13 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
                 value={Boolean(randomize.values)}
                 onChange={() => service.onToggleRandomize('values')}
               />
-            </HorizontalGroup>
+            </Stack>
           </Field>
 
           <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
             <Stack>
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                Download Snapshot ({snapshotSize})
+                Download snapshot ({snapshotSize})
               </Button>
               <ClipboardButton
                 icon="github"
