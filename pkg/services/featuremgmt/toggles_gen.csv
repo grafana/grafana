@@ -159,7 +159,7 @@ disableNumericMetricsSortingInExpressions,experimental,@grafana/observability-me
 grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 queryLibrary,experimental,@grafana/explore-squad,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
-newDashboardSharingComponent,experimental,@grafana/sharing-squad,false,false,true
+newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
 alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
 notificationBanner,experimental,@grafana/grafana-frontend-platform,false,false,false
 dashboardRestore,experimental,@grafana/search-and-storage,false,false,false

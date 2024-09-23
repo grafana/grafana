@@ -1964,14 +1964,18 @@
     {
       "metadata": {
         "name": "newDashboardSharingComponent",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-05-03T15:02:18Z"
+        "resourceVersion": "1726241874335",
+        "creationTimestamp": "2024-05-03T15:02:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-13 15:37:54.335099 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new sharing drawer design",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
