@@ -12,7 +12,7 @@ import {
   getDisplayProcessor,
 } from '@grafana/data';
 import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
-import { isGrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
+import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from '../../../utils/matchers';
@@ -46,9 +46,6 @@ export function historyResultToDataFrame(data: DataFrameJSON): DataFrame[] {
     const line = lines[index];
     // values property can be undefined for some instance states (e.g. NoData)
     if (isLine(line)) {
-      if (!isGrafanaAlertState(line.current)) {
-        return acc;
-      }
       // we have to filter out by state at that point , because we are going to group by timestamp and these states are going to be lost
       const baseStateTo = mapStateWithReasonToBaseState(line.current);
       const baseStateFrom = mapStateWithReasonToBaseState(line.previous);

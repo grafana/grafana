@@ -574,9 +574,6 @@ function useRuleHistoryRecords(
       }
       // values property can be undefined for some instance states (e.g. NoData)
       const filterMatch = line.labels && labelsMatchMatchers(line.labels, filterMatchers);
-      if (!isGrafanaAlertState(line.current) || !isGrafanaAlertState(line.previous)) {
-        return acc;
-      }
       const baseStateTo = mapStateWithReasonToBaseState(line.current);
       const baseStateFrom = mapStateWithReasonToBaseState(line.previous);
       const stateToMatch = filterInStateTo !== StateFilterValues.all ? filterInStateTo === baseStateTo : true;
