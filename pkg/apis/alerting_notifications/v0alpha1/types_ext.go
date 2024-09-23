@@ -2,6 +2,7 @@ package v0alpha1
 
 import (
 	"fmt"
+	"strings"
 )
 
 const InternalPrefix = "grafana.com/"
@@ -55,6 +56,17 @@ func (o *Receiver) SetAccessControl(action string) {
 		o.Annotations = make(map[string]string, 1)
 	}
 	o.Annotations[AccessControlAnnotation(action)] = "true"
+}
+
+func (o *Receiver) ClearAccessControl() {
+	if o.Annotations == nil {
+		return
+	}
+	for k := range o.Annotations {
+		if strings.HasPrefix(k, fmt.Sprintf("%s%s/", InternalPrefix, "access")) {
+			delete(o.Annotations, k)
+		}
+	}
 }
 
 // AccessControlAnnotation returns the key for the access control annotation for the given action.

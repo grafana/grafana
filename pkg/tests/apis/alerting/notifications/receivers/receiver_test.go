@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -124,6 +125,266 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.Equal(t, actual.Name, resource.Name)
 		require.Equal(t, actual.ResourceVersion, resource.ResourceVersion)
 	})
+}
+
+func TestIntegrationResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	env := helper.GetEnv()
+	resourcePermissions := env.Server.HTTPServer.AlertNG.ResourcePermissions
+
+	org1 := helper.Org1
+
+	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
+		),
+	})
+
+	otherCreator := helper.CreateUser("other_creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
+		),
+	})
+
+	newClient := func(t *testing.T, user apis.User) notificationsv0alpha1.ReceiverInterface {
+		k8sClient, err := versioned.NewForConfig(user.NewRestConfig())
+		require.NoError(t, err)
+		return k8sClient.NotificationsV0alpha1().Receivers("default")
+	}
+
+	admin := org1.Admin
+	viewer := org1.Viewer
+	editor := org1.Editor
+	adminClient := newClient(t, admin)
+
+	writeACMetadata := []string{"canWrite", "canDelete"}
+	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin"}
+
+	mustID := func(user apis.User) int64 {
+		id, err := user.Identity.GetInternalID()
+		require.NoError(t, err)
+		return id
+	}
+
+	for _, tc := range []struct {
+		name          string
+		creatingUser  apis.User
+		testUser      apis.User
+		assignments   []accesscontrol.SetResourcePermissionCommand
+		expACMetadata []string
+		expRead       bool
+	}{
+		// Basic access.
+		{
+			name:          "Admin creates and has all metadata and access",
+			creatingUser:  admin,
+			testUser:      admin,
+			assignments:   nil,
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Creator creates and has all metadata and access",
+			creatingUser:  creator,
+			testUser:      creator,
+			assignments:   nil,
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, creator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   nil,
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		{
+			name:          "Admin creates, viewer has no metadata but has access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, editor has write metadata and access",
+			creatingUser:  admin,
+			testUser:      editor,
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+		},
+		// User-based assignments.
+		{
+			name:          "Admin creates, assigns read, creator has no metadata but has access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(creator), Permission: string(alertingac.ReceiverPermissionView)}},
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns write, creator has write metadata and access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(creator), Permission: string(alertingac.ReceiverPermissionEdit)}},
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin, creator has all metadata and access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(creator), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		// Other users don't get assignments.
+		{
+			name:          "Admin creates, assigns read to creator, otherCreator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      otherCreator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(creator), Permission: string(alertingac.ReceiverPermissionView)}},
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		{
+			name:          "Admin creates, assigns write to creator, otherCreator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      otherCreator,
+			assignments:   nil,
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		{
+			name:          "Admin creates, assigns admin to creator, otherCreator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      otherCreator,
+			assignments:   nil,
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		// Role-based access.
+		{
+			name:          "Admin creates, assigns editor, viewer has write metadata and access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(alertingac.ReceiverPermissionEdit)}},
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin, viewer has all metadata and access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin, editor has all metadata and access",
+			creatingUser:  admin,
+			testUser:      editor,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(editor), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			createClient := newClient(t, tc.creatingUser)
+			client := newClient(t, tc.testUser)
+
+			var created = &v0alpha1.Receiver{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: v0alpha1.ReceiverSpec{
+					Title:        "receiver-1",
+					Integrations: nil,
+				},
+			}
+			d, err := json.Marshal(created)
+			require.NoError(t, err)
+
+			// Create receiver with creatingUser
+			created, err = createClient.Create(ctx, created, v1.CreateOptions{})
+			require.NoErrorf(t, err, "Payload %s", string(d))
+			require.NotNil(t, created)
+
+			// Assign resource permissions
+			_, err = resourcePermissions.SetPermissions(ctx, admin.Identity.GetOrgID(), string(created.ObjectMeta.UID), tc.assignments...)
+			require.NoError(t, err)
+
+			// Test read
+			if tc.expRead {
+				// Helper methods.
+				extractReceiverFromList := func(list *v0alpha1.ReceiverList, name string) *v0alpha1.Receiver {
+					for i := range list.Items {
+						if list.Items[i].Name == name {
+							return list.Items[i].DeepCopy()
+						}
+					}
+					return nil
+				}
+
+				// Obtain expected responses using admin client as source of truth.
+				expectedGetWithMetadata, expectedListWithMetadata := func() (*v0alpha1.Receiver, *v0alpha1.Receiver) {
+					expectedGet, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+					require.NoError(t, err)
+					require.NotNil(t, expectedGet)
+
+					// Set expected metadata.
+					expectedGetWithMetadata := expectedGet.DeepCopy()
+					expectedGetWithMetadata.ClearAccessControl()
+					for _, ac := range tc.expACMetadata {
+						expectedGetWithMetadata.SetAccessControl(ac)
+					}
+
+					expectedList, err := adminClient.List(ctx, v1.ListOptions{})
+					require.NoError(t, err)
+					expectedListWithMetadata := extractReceiverFromList(expectedList, created.Name)
+					require.NotNil(t, expectedListWithMetadata)
+					expectedListWithMetadata = expectedListWithMetadata.DeepCopy()
+					expectedListWithMetadata.ClearAccessControl()
+					for _, ac := range tc.expACMetadata {
+						expectedListWithMetadata.SetAccessControl(ac)
+					}
+					return expectedGetWithMetadata, expectedListWithMetadata
+				}()
+
+				t.Run("should be able to list receivers", func(t *testing.T) {
+					list, err := client.List(ctx, v1.ListOptions{})
+					require.NoError(t, err)
+					listedReceiver := extractReceiverFromList(list, created.Name)
+					assert.Equalf(t, expectedListWithMetadata, listedReceiver, "Expected %v but got %v", expectedListWithMetadata, listedReceiver)
+				})
+
+				t.Run("should be able to read receiver by resource identifier", func(t *testing.T) {
+					got, err := client.Get(ctx, expectedGetWithMetadata.Name, v1.GetOptions{})
+					require.NoError(t, err)
+					assert.Equalf(t, expectedGetWithMetadata, got, "Expected %v but got %v", expectedGetWithMetadata, got)
+				})
+			} else {
+				t.Run("should be forbidden to list receivers", func(t *testing.T) {
+					_, err := client.List(ctx, v1.ListOptions{})
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				})
+
+				t.Run("should be forbidden to read receiver by name", func(t *testing.T) {
+					_, err := client.Get(ctx, created.Name, v1.GetOptions{})
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				})
+			}
+
+			// Cleanup
+			require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+		})
+	}
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
