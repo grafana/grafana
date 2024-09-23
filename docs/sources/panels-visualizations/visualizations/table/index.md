@@ -133,40 +133,15 @@ If the data queried contains multiple data sets, a table displays a drop-down li
 If you are using a table created before Grafana 7.0, then you need to migrate to the new table version in order to see these options. To migrate, on the Panel tab, click **Table** visualization. Grafana updates the table version and you can then access all table options.
 {{% /admonition %}}
 
-#### Show header
-
-Show or hide column names imported from your data source.
-
-#### Column width
-
-By default, Grafana automatically calculates the column width based on the table size and the minimum column width. This field option can override the setting and define the width for all columns in pixels.
-
-For example, if you enter `100` in the field, then when you click outside the field, all the columns will be set to 100 pixels wide.
-
-#### Minimum column width
-
-By default, the minimum width of the table column is 150 pixels. This field option can override that default and will define the new minimum column width for the table in pixels.
-
-For example, if you enter `75` in the field, then when you click outside the field, all the columns will scale to no smaller than 75 pixels wide.
-
-For small-screen devices, such as smartphones or tablets, reduce the default `150` pixel value to`50` to allow table-based panels to render correctly in dashboards.
-
-#### Column alignment
-
-Choose how Grafana should align cell contents:
-
-- Auto (default)
-- Left
-- Center
-- Right
-
-#### Column filter
-
-You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns](#filter-table-columns).
-
-#### Pagination
-
-Use this option to enable or disable pagination. It is a front-end option that does not affect queries. When enabled, the page size automatically adjusts to the height of the table.
+| Option               | Description                                                                                                                                                                                                                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Show table header    | Show or hide column names imported from your data source.                                                                                                                                                                                                                                     |
+| Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, and **Large**.                                                                                                                                                                                                                 |
+| Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries.                                                                                                   |
+| Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as smartphones or tablets, reduce the default `150` pixel value to `50` to allow table-based panels to render correctly in dashboards. |
+| [Column width]       | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width.                                                                                               |
+| Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, and **Right**.                                                                                                                                                                             |
+| Column filter        | Temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns](#filter-table-columns).                                                                              |
 
 ### Table footer options
 
