@@ -128,6 +128,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			TargetUID:   &writableDs,
 			OrgId:       writableDsOrgId,
 			Provisioned: true,
+			Type:        correlations.CorrelationType("query"),
 		})
 
 		res := ctx.Patch(PatchParams{
@@ -155,6 +156,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			SourceUID: writableDs,
 			TargetUID: &writableDs,
 			OrgId:     writableDsOrgId,
+			Type:      correlations.CorrelationType("query"),
 		})
 
 		// no params
@@ -220,6 +222,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			TargetUID: &writableDs,
 			OrgId:     writableDsOrgId,
 			Label:     "a label",
+			Type:      correlations.CorrelationType("query"),
 		})
 
 		res := ctx.Patch(PatchParams{
@@ -249,9 +252,9 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 			OrgId:       writableDsOrgId,
 			Label:       "0",
 			Description: "0",
+			Type:        correlations.CorrelationType("query"),
 			Config: correlations.CorrelationConfig{
 				Field:  "fieldName",
-				Type:   "query",
 				Target: map[string]any{"expr": "foo"},
 			},
 		})

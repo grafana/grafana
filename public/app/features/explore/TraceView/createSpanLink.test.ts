@@ -1654,6 +1654,11 @@ function createMultiLinkDataFrame() {
                 },
                 datasourceUid: 'loki1_uid',
                 datasourceName: 'loki1',
+              },
+              url: '',
+              title: 'Test',
+              origin: DataLinkConfigOrigin.Correlations,
+              meta: {
                 transformations: [
                   {
                     type: SupportedTransformationType.Regex,
@@ -1662,9 +1667,6 @@ function createMultiLinkDataFrame() {
                   },
                 ],
               },
-              url: '',
-              title: 'Test',
-              origin: DataLinkConfigOrigin.Correlations,
             },
             {
               internal: {
@@ -1673,6 +1675,11 @@ function createMultiLinkDataFrame() {
                 },
                 datasourceUid: 'loki1_uid',
                 datasourceName: 'loki1',
+              },
+              url: '',
+              title: 'Test',
+              origin: DataLinkConfigOrigin.Correlations,
+              meta: {
                 transformations: [
                   {
                     type: SupportedTransformationType.Regex,
@@ -1681,9 +1688,6 @@ function createMultiLinkDataFrame() {
                   },
                 ],
               },
-              url: '',
-              title: 'Test2',
-              origin: DataLinkConfigOrigin.Correlations,
             },
           ],
         },

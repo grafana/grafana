@@ -14,12 +14,13 @@ var (
 	ErrTargetDataSourceDoesNotExists = errors.New("target data source does not exist")
 	ErrCorrelationNotFound           = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams  = errors.New("not enough parameters to edit correlation")
-	ErrInvalidConfigType             = errors.New("invalid correlation config type")
+	ErrInvalidType                   = errors.New("invalid correlation type")
 	ErrInvalidTransformationType     = errors.New("invalid transformation type")
 	ErrTransformationNotNested       = errors.New("transformations must be nested under config")
 	ErrTransformationRegexReqExp     = errors.New("regex transformations require expression")
 	ErrCorrelationsQuotaFailed       = errors.New("error getting correlations quota")
 	ErrCorrelationsQuotaReached      = errors.New("correlations quota reached")
+	ErrInvalidConfigType             = errors.New("correlation contains non default value in config.type")
 )
 
 const (
@@ -27,7 +28,14 @@ const (
 	QuotaTarget    quota.Target    = "correlations"
 )
 
+// the type of correlation, either query for containing query information, or external for containing an external URL
+// +enum
 type CorrelationType string
+
+const (
+	query    CorrelationType = "query"
+	external CorrelationType = "external"
+)
 
 type Transformation struct {
 	//Enum: regex,logfmt
@@ -37,13 +45,9 @@ type Transformation struct {
 	MapValue   string `json:"mapValue,omitempty"`
 }
 
-const (
-	TypeQuery CorrelationType = "query"
-)
-
 func (t CorrelationType) Validate() error {
-	if t != TypeQuery {
-		return fmt.Errorf("%s: \"%s\"", ErrInvalidConfigType, t)
+	if t != query && t != external {
+		return fmt.Errorf("%s: \"%s\"", ErrInvalidType, t)
 	}
 	return nil
 }
@@ -161,7 +165,7 @@ type CreateCorrelationCommand struct {
 	Config CorrelationConfig `json:"config" binding:"Required"`
 	// True if correlation was created with provisioning. This makes it read-only.
 	Provisioned bool `json:"provisioned"`
-	// correlation type, currently only valid value is "query"
+	// correlation type
 	Type CorrelationType `json:"type" binding:"Required"`
 }
 
@@ -169,8 +173,8 @@ func (c CreateCorrelationCommand) Validate() error {
 	if err := c.Type.Validate(); err != nil {
 		return err
 	}
-	if c.TargetUID == nil && c.Type == TypeQuery {
-		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", TypeQuery)
+	if c.TargetUID == nil && c.Type == query {
+		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", query)
 	}
 
 	if err := c.Config.Transformations.Validate(); err != nil {
