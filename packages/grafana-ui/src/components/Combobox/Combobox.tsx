@@ -162,7 +162,7 @@ export const Combobox = <T extends string | number>({
       }
     },
   });
-  const { inputRef, floatingRef, popoverStyles } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
+  const { inputRef, floatingRef, floatStyles } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
@@ -219,7 +219,7 @@ export const Combobox = <T extends string | number>({
       <div
         className={cx(styles.menu, hasMinHeight && styles.menuHeight, !isOpen && styles.menuClosed)}
         style={{
-          ...popoverStyles,
+          ...floatStyles,
         }}
         {...getMenuProps({
           ref: floatingRef,
@@ -333,12 +333,12 @@ const useComboboxFloat = (
     }
   }, [items, range, setPopoverWidth]);
 
-  const popoverStyles = {
+  const floatStyles = {
     ...floatingStyles,
     width: popoverWidth,
     maxWidth: popoverMaxWidth,
     minWidth: inputRef.current?.offsetWidth,
   };
 
-  return { inputRef, floatingRef, popoverStyles };
+  return { inputRef, floatingRef, floatStyles };
 };
