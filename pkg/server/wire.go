@@ -48,6 +48,7 @@ import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
+	externalsession "github.com/grafana/grafana/pkg/services/auth/externalsessionimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
@@ -382,6 +383,8 @@ var wireBasicSet = wire.NewSet(
 	connectors.ProvideOrgRoleMapper,
 	wire.Bind(new(user.Verifier), new(*userimpl.Verifier)),
 	authz.WireSet,
+	externalsession.ProvideStore,
+	externalsession.ProvideService,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,

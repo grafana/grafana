@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/externalsessionimpl"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -30,7 +32,7 @@ var (
 
 func ProvideUserAuthTokenService(sqlStore db.DB,
 	serverLockService *serverlock.ServerLockService,
-	quotaService quota.Service,
+	quotaService quota.Service, secretService secrets.Service,
 	cfg *setting.Cfg) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
 		sqlStore:          sqlStore,
@@ -39,6 +41,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 		log:               log.New("auth"),
 		singleflight:      new(singleflight.Group),
 	}
+	s.externalSessions = externalsessionimpl.ProvideStore(sqlStore, secretService)
 
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
@@ -61,10 +64,11 @@ type UserAuthTokenService struct {
 	serverLockService *serverlock.ServerLockService
 	cfg               *setting.Cfg
 	log               log.Logger
+	externalSessions  auth.ExternalSessionStore
 	singleflight      *singleflight.Group
 }
 
-func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
+func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, externalSession *auth.ExternalSession) (*auth.UserToken, error) {
 	token, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
 	if err != nil {
 		return nil, err
@@ -88,6 +92,23 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User,
 		SeenAt:        0,
 		RevokedAt:     0,
 		AuthTokenSeen: false,
+	}
+
+	if externalSession != nil {
+		// existingSession, err := s.externalSessions.LookupExternalSessionBySessionID(ctx, externalSession.SessionID)
+		// if err != nil && err != auth.ErrExternalSessionNotFound {
+		// 	return nil, err
+		// }
+
+		// if err == auth.ErrExternalSessionNotFound {
+		err = s.externalSessions.CreateExternalSession(ctx, externalSession)
+		if err != nil {
+			return nil, err
+		}
+		userAuthToken.ExternalSessionId = externalSession.ID
+		// } else {
+		// 	userAuthToken.ExternalSessionId = existingSession.ID
+		// }
 	}
 
 	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -210,6 +231,31 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	return &userToken, err
 }
 
+func (s *UserAuthTokenService) GetTokenForExternalSession(ctx context.Context, externalSessionID int64) (*auth.UserToken, error) {
+	var token userAuthToken
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+		exists, err := dbSession.Where("external_session_id = ?", externalSessionID).Get(&token)
+		if err != nil {
+			return err
+		}
+
+		if !exists {
+			return auth.ErrUserTokenNotFound
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var userToken auth.UserToken
+	err = token.toUserToken(&userToken)
+
+	return &userToken, err
+}
+
 func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
 	if cmd.UnHashedToken == "" {
 		return nil, auth.ErrInvalidSessionToken
@@ -318,6 +364,12 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *auth.User
 			rowsAffected, err = dbSession.Delete(model)
 			return err
 		})
+
+		if err != nil {
+			return err
+		}
+
+		err = s.externalSessions.DeleteExternalSession(ctx, model.ExternalSessionId)
 	}
 
 	if err != nil {
