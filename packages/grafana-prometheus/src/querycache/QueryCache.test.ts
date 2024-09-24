@@ -6,7 +6,7 @@ import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@gra
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { CacheRequestInfo, QueryCache } from './QueryCache';
+import { CacheRequestInfo, findDatapointStep, QueryCache } from './QueryCache';
 import { IncrementalStorageDataFrameScenarios, trimmedFirstPointInPromFrames } from './QueryCacheTestData';
 
 // Will not interpolate vars!
@@ -557,5 +557,16 @@ describe('QueryCache: Prometheus', function () {
     const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
+  });
+});
+
+describe('findDataPointStep', () => {
+  it('should interpolate custom interval', () => {
+    const mockApplyInterpolation = jest.fn().mockImplementation(() => '1m');
+    const req = mockPromRequest();
+    req.targets[0].interval = '$interval';
+    const respFrames = trimmedFirstPointInPromFrames as unknown as DataFrame[];
+    findDatapointStep(req, respFrames, mockApplyInterpolation);
+    expect(mockApplyInterpolation).toBeCalledTimes(1);
   });
 });
