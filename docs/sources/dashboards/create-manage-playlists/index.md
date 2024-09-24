@@ -15,7 +15,7 @@ labels:
 menuTitle: Manage playlists
 title: Manage playlists
 description: Create and manage dashboard playlists
-weight: 9
+weight: 500
 ---
 
 # Manage playlists

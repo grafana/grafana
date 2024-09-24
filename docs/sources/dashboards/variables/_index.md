@@ -10,7 +10,7 @@ labels:
     - oss
 title: Variables
 description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards
-weight: 130
+weight: 800
 ---
 
 # Variables
