@@ -1,4 +1,4 @@
-package template
+package template_group
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -8,6 +8,7 @@ import (
 	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func convertToK8sResources(orgID int64, list []definitions.NotificationTemplate, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TemplateGroupList, error) {
@@ -46,6 +47,6 @@ func convertToDomainModel(template *model.TemplateGroup) definitions.Notificatio
 		Name:            template.Spec.Title,
 		Template:        template.Spec.Content,
 		ResourceVersion: template.ResourceVersion,
-		Provenance:      "",
+		Provenance:      definitions.Provenance(ngmodels.ProvenanceNone),
 	}
 }

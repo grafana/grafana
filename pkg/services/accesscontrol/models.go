@@ -434,16 +434,16 @@ const (
 	ActionAlertingSilencesCreate = "alert.silences:create"
 	ActionAlertingSilencesWrite  = "alert.silences:write"
 
-	// Alerting Notification policies actions
+	// Alerting Notification actions (legacy)
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
 
-	// Alerting notifications time interval actions
+	// Alerting notifications template actions
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
 	ActionAlertingNotificationsTemplatesWrite  = "alert.notifications.templates:write"
 	ActionAlertingNotificationsTemplatesDelete = "alert.notifications.templates:delete"
 
-	// Alerting notifications template group actions
+	// Alerting notifications time interval actions
 	ActionAlertingNotificationsTimeIntervalsRead   = "alert.notifications.time-intervals:read"
 	ActionAlertingNotificationsTimeIntervalsWrite  = "alert.notifications.time-intervals:write"
 	ActionAlertingNotificationsTimeIntervalsDelete = "alert.notifications.time-intervals:delete"

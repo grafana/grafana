@@ -1,4 +1,4 @@
-package template
+package template_group
 
 import (
 	"context"
@@ -141,20 +141,13 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return old, false, err
 	}
-	create := old == nil
-	if create {
-		if createValidation != nil {
-			if err := createValidation(ctx, obj); err != nil {
-				return nil, false, err
-			}
-		}
-	} else {
-		if updateValidation != nil {
-			if err := updateValidation(ctx, obj, old); err != nil {
-				return nil, false, err
-			}
+
+	if updateValidation != nil {
+		if err := updateValidation(ctx, obj, old); err != nil {
+			return nil, false, err
 		}
 	}
+
 	p, ok := obj.(*notifications.TemplateGroup)
 	if !ok {
 		return nil, false, fmt.Errorf("expected template but got %s", obj.GetObjectKind().GroupVersionKind())
@@ -167,7 +160,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	}
 
 	r := convertToK8sResource(info.OrgID, updated, s.namespacer)
-	return r, create, nil
+	return r, false, nil
 }
 
 // GracefulDeleter

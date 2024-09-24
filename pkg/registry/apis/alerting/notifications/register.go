@@ -16,7 +16,7 @@ import (
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	receiver "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
-	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/template"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/template_group"
 	timeInterval "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -82,9 +82,9 @@ func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiser
 		return fmt.Errorf("failed to initialize receiver storage: %w", err)
 	}
 
-	templ, err := template.NewStorage(t.ng.Api.Templates, t.namespacer, scheme, optsGetter, dualWriteBuilder)
+	templ, err := template_group.NewStorage(t.ng.Api.Templates, t.namespacer, scheme, optsGetter, dualWriteBuilder)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize templates storage: %w", err)
+		return fmt.Errorf("failed to initialize templates group storage: %w", err)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
@@ -129,7 +129,7 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
 			case notificationsModels.TemplateGroupResourceInfo.GroupResource().Resource:
-				return template.Authorize(ctx, t.authz, a)
+				return template_group.Authorize(ctx, t.authz, a)
 			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
 				return timeInterval.Authorize(ctx, t.authz, a)
 			case notificationsModels.ReceiverResourceInfo.GroupResource().Resource:
