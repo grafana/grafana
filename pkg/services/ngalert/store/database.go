@@ -70,4 +70,6 @@ func ProvideDBStore(
 	return &store, nil
 }
 
-type RuleChangeEvent struct{}
+type RuleChangeEvent struct {
+	RuleKeys []models.AlertRuleKey
+}
