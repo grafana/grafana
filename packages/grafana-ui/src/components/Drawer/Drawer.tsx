@@ -257,7 +257,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     drawer: css({
       '.main-view &': {
-        top: 80,
+        top: window.grafanaBootData?.settings.featureToggles.singleTopNav ? 40 : 80,
       },
 
       '.main-view--search-bar-hidden &': {
@@ -309,7 +309,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         right: 0,
 
         '.main-view &': {
-          top: 80,
+          top: window.grafanaBootData?.settings.featureToggles.singleTopNav ? 40 : 80,
         },
 
         '.main-view--search-bar-hidden &': {
