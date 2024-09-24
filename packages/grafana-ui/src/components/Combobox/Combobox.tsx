@@ -46,7 +46,6 @@ function estimateSize() {
   return 45;
 }
 
-const MIN_HEIGHT = 400;
 // On every 100th index we will recalculate the width of the popover.
 const INDEX_WIDTH_CALCULATION = 100;
 // A multiplier guesstimate times the amount of characters. If any padding or image support etc. is added this will need to be updated.
@@ -168,8 +167,6 @@ export const Combobox = <T extends string | number>({
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
 
-  const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_HEIGHT;
-
   return (
     <div>
       <Input
@@ -217,7 +214,7 @@ export const Combobox = <T extends string | number>({
         })}
       />
       <div
-        className={cx(styles.menu, hasMinHeight && styles.menuHeight, !isOpen && styles.menuClosed)}
+        className={cx(styles.menu, !isOpen && styles.menuClosed)}
         style={{
           ...floatStyles,
         }}
