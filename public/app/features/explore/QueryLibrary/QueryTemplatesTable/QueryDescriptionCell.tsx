@@ -2,6 +2,7 @@ import { cx } from '@emotion/css';
 import { CellProps } from 'react-table';
 
 import { Spinner, Tooltip } from '@grafana/ui';
+import { createQueryText } from 'app/core/utils/richHistory';
 
 import { useDatasource } from '../utils/useDatasource';
 
@@ -9,6 +10,7 @@ import { useQueryLibraryListStyles } from './styles';
 import { QueryTemplateRow } from './types';
 
 export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
+  // TODO: This logic needs to be elevated because I need to search the query display text
   const datasourceApi = useDatasource(props.row.original.datasourceRef);
   const styles = useQueryLibraryListStyles();
 
@@ -20,7 +22,8 @@ export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
     return <div>No queries</div>;
   }
   const query = props.row.original.query;
-  const queryDisplayText = datasourceApi?.getQueryDisplayText?.(query) || '';
+  const queryDisplayText = createQueryText(query, datasourceApi);
+
   const description = props.row.original.description;
   const dsName = datasourceApi?.name || '';
 
