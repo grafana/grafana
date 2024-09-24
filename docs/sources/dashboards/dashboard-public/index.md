@@ -6,7 +6,7 @@ labels:
     - oss
 title: Public dashboards
 description: Make your Grafana dashboards public and share them with anyone
-weight: 8
+weight: 350
 refs:
   dashboard-sharing:
     - pattern: /docs/grafana/

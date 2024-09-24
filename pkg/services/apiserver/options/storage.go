@@ -32,9 +32,6 @@ type StorageOptions struct { // The desired storage type
 
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
-
-	// TODO... this will be moved to UnifiedStorageConfig
-	DualWriterDataSyncJobEnabled map[string]bool
 }
 
 func NewStorageOptions() *StorageOptions {
