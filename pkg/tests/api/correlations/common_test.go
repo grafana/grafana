@@ -193,6 +193,11 @@ func (c TestContext) createCorrelation(cmd correlations.CreateCorrelationCommand
 	return correlation
 }
 
+func (c TestContext) createCorrelationPassError(cmd correlations.CreateCorrelationCommand) (correlations.Correlation, error) {
+	c.t.Helper()
+	return c.env.Server.HTTPServer.CorrelationsService.CreateCorrelation(context.Background(), cmd)
+}
+
 func (c TestContext) createOrUpdateCorrelation(cmd correlations.CreateCorrelationCommand) {
 	c.t.Helper()
 	err := c.env.Server.HTTPServer.CorrelationsService.CreateOrUpdateCorrelation(context.Background(), cmd)
