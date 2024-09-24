@@ -2,7 +2,7 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionAddedComponentConfig } from '@grafana/data';
 
-import { logWarning, wrapWithPluginContext } from '../utils';
+import { isAddedComponentMetaInfoMissing, logWarning, wrapWithPluginContext } from '../utils';
 import {
   extensionPointEndsWithVersion,
   isExtensionPointIdValid,
@@ -53,6 +53,10 @@ export class AddedComponentsRegistry extends Registry<
 
       if (!config.description) {
         logWarning(`Could not register added component with title '${config.title}'. Reason: Description is missing.`);
+        continue;
+      }
+
+      if (pluginId !== 'grafana' && isAddedComponentMetaInfoMissing(pluginId, config)) {
         continue;
       }
 
