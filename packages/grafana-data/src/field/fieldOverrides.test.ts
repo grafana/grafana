@@ -317,7 +317,7 @@ describe('applyFieldOverrides', () => {
           displayName: '${__field.displayName} and more!',
         },
         overrides: [],
-      }, // defaults + overrides
+      },
       replaceVariables: (v, scopedVars) => {
         const dataContext = scopedVars?.__dataContext?.value;
         if (dataContext) {
@@ -347,7 +347,7 @@ describe('applyFieldOverrides', () => {
             properties: [{ id: 'displayName', value: '${__field.displayName} and more!' }],
           },
         ],
-      }, // defaults + overrides
+      },
       replaceVariables: (v, scopedVars) => {
         const dataContext = scopedVars?.__dataContext?.value;
         if (dataContext) {
