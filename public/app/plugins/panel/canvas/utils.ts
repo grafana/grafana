@@ -296,39 +296,35 @@ export const getParent = (scene: Scene) => {
 };
 
 export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions) {
+  const fields = new Set<Field>();
   const cfg = opts.config ?? {};
 
-  const elementFields = new Set<Field>();
-
-  frames?.forEach((frame) => {
+  frames.forEach((frame) => {
     frame.fields.forEach((field) => {
       const name = getFieldDisplayName(field, frame, frames);
 
+      // (intentional fall-through)
       switch (name) {
         // General element config
         case opts.background?.color?.field:
         case opts.background?.image?.field:
         case opts.border?.color?.field:
-
         // Text config
         case cfg.text?.field:
         case cfg.color?.field:
-
         // Icon config
         case cfg.path?.field:
         case cfg.fill?.field:
-
         // Server config
         case cfg.blinkRate?.field:
         case cfg.statusColor?.field:
         case cfg.bulbColor?.field:
-
         // Wind turbine config (maybe remove / not support this?)
         case cfg.rpm?.field:
-          elementFields.add(field);
+          fields.add(field);
       }
     });
   });
 
-  return [...elementFields];
+  return [...fields];
 }
