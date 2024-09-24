@@ -86,6 +86,8 @@ interface State {
   orderedRows: LogRowModel[];
   showDuplicates: boolean;
   keyMaker: UniqueKeyMaker;
+  showLogDetails: number[];
+  virtualizedListKey: string;
 }
 
 class UnThemedLogRows extends PureComponent<Props, State> {
@@ -104,7 +106,14 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     orderedRows: [],
     showDuplicates: false,
     keyMaker: new UniqueKeyMaker(),
+    virtualizedListKey: '',
+    showLogDetails: [],
   };
+
+  constructor(props: Props) {
+    super(props);
+    this.setVirtualizedListKey();
+  }
 
   /**
    * Toggle the `contextIsOpen` state when a context of one LogRow is opened in order to not show the menu of the other log rows.
@@ -190,17 +199,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     this.updateLogRows();
   }
 
-  /**
-   * When settings change, we need the virtualized list to re-render. Passing a new array to the list is not enough to trigger it.
-   */
-  virtualizedListKey = () => {
-    const reRenderTriggers = ['dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage', 'prettifyLogMessage'];
-    return reRenderTriggers.reduce((key: string, attr: string) => {
-      // @ts-expect-error
-      return `${key}${this.props[attr].toString()}`
-    }, '');
-  }
-
   updateLogRows() {
     const { deduplicatedRows, logRows, dedupStrategy, logsSortOrder } = this.props;
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
@@ -234,6 +232,19 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     sortLogRows(logRows, logsSortOrder)
   );
 
+  /**
+   * When settings change, we need the virtualized list to re-render. Passing a new array to the list is not enough to trigger it.
+   */
+  setVirtualizedListKey = () => {
+    const reRenderTriggers = ['dedupStrategy', 'logsSortOrder', 'showLabels', 'showTime', 'wrapLogMessage', 'prettifyLogMessage'];
+    const virtualizedListKey = reRenderTriggers.reduce((key: string, attr: string) => {
+      // @ts-expect-error
+      return `${key}${this.props[attr]?.toString()}`
+    }, '') + (`details-${this.state.showLogDetails.length}`);
+
+    this.setState({ virtualizedListKey });
+  }
+
   Row = ({ getRows, rows, showDuplicates, styles }: { getRows(): LogRowModel[], rows: LogRowModel[], showDuplicates: boolean, styles: ReturnType<typeof getLogRowStyles> }, { index, style }: { index: number, style: CSSProperties }) => {
     return <LogRow
       style={style}
@@ -252,6 +263,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       pinned={this.props.pinnedRowId === rows[index].uid || this.props.pinnedLogs?.some((logId) => logId === rows[index].rowId)}
       isFilterLabelActive={this.props.isFilterLabelActive}
       handleTextSelection={this.popoverMenuSupported() ? this.handleSelection : undefined}
+      showDetails={this.isRowExpanded(rows[index])}
+      onRowClick={this.onRowClick}
       {...this.props}
     />
   }
@@ -264,7 +277,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
   estimateRowHeight = (rows: LogRowModel[], index: number) => {
     const rowHeight = 20.14;
     const lineHeight = 18.5;
-    const line = restructureLog(rows[index].raw, this.props.prettifyLogMessage);
+    const detailsHeight = this.isRowExpanded(rows[index]) ? window.innerHeight * 0.35 + 41 : 0;
+    const line = restructureLog(rows[index].raw, this.props.prettifyLogMessage, this.props.wrapLogMessage, this.isRowExpanded(rows[index]));
+
     if (this.props.prettifyLogMessage) {
       try {
         const parsed: Record<string, string> = JSON.parse(line);
@@ -272,15 +287,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         for (let key in parsed) {
           jsonHeight += this.estimateMessageLines(`  "${key}": "${parsed[key]}"`) * lineHeight;
         }
-        return jsonHeight;
+        return jsonHeight + detailsHeight;
       } catch (e) {
         console.error(e);
       }
     }
     if (!this.props.wrapLogMessage) {
-      return rowHeight;
+      return rowHeight + detailsHeight;
     }
-    return this.estimateMessageLines(line) * rowHeight;
+    return (this.estimateMessageLines(line) * rowHeight) + detailsHeight;
   }
 
   estimateMessageLines = (line: string) => {
@@ -298,10 +313,42 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     return Math.ceil((line.length * letter) / (window.innerWidth - margins));
   }
 
+  onRowClick = (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => {
+    if (this.handleSelection(e, row)) {
+      // Event handled by the parent.
+      return;
+    }
+
+    if (!this.props.enableLogDetails) {
+      return;
+    }
+
+    const rowIndex = this.props.logRows?.indexOf(row);
+    if (rowIndex === undefined) {
+      return;
+    }
+    const showLogDetails: number[] = [...this.state.showLogDetails];
+    if (showLogDetails.indexOf(rowIndex) >= 0) {
+      showLogDetails.splice(showLogDetails.indexOf(rowIndex), 1);
+    } else {
+      showLogDetails.push(rowIndex);
+    }
+
+    this.setState({
+      showLogDetails,
+    });
+  };
+
+  isRowExpanded = (row: LogRowModel) => {
+    const rowIndex = this.props.logRows?.indexOf(row) ?? -1;
+    return this.state.showLogDetails.indexOf(rowIndex) >= 0;
+  }
+
   render() {
     const { deduplicatedRows, logRows, dedupStrategy, theme, logsSortOrder, previewLimit, ...rest } = this.props;
     const { orderedRows, showDuplicates } = this.state;
     const styles = getLogRowStyles(theme);
+    this.setVirtualizedListKey();
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
@@ -321,7 +368,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         )}
         <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
           <VariableSizeList
-            key={this.virtualizedListKey()}
+            key={this.state.virtualizedListKey}
             height={height}
             itemCount={orderedRows?.length || 0}
             itemSize={this.estimateRowHeight.bind(this, orderedRows)}
