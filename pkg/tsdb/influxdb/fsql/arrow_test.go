@@ -37,6 +37,8 @@ func TestNewQueryDataResponse(t *testing.T) {
 			{Name: "utf8", Type: &arrow.StringType{}},
 			{Name: "duration", Type: &arrow.DurationType{}},
 			{Name: "timestamp", Type: &arrow.TimestampType{}},
+
+			{Name: "item", Type: arrow.ListOf(&arrow.StringType{})},
 		},
 		nil,
 	)
@@ -58,6 +60,8 @@ func TestNewQueryDataResponse(t *testing.T) {
 		newJSONArray(`["foo", "bar", "baz"]`, &arrow.StringType{}),
 		newJSONArray(`[0, 1, -2]`, &arrow.DurationType{}),
 		newJSONArray(`[0, 1, 2]`, &arrow.TimestampType{}),
+
+		newJSONArray(`[["test", "test1", "test2"],[],[]]`, arrow.ListOf(&arrow.StringType{})),
 	}
 
 	arr := make([]arrow.Array, 0, len(strValues))
@@ -82,7 +86,7 @@ func TestNewQueryDataResponse(t *testing.T) {
 	resp := newQueryDataResponse(errReader{RecordReader: reader}, query, metadata.MD{})
 	assert.NoError(t, resp.Error)
 	assert.Len(t, resp.Frames, 1)
-	assert.Len(t, resp.Frames[0].Fields, 13)
+	assert.Len(t, resp.Frames[0].Fields, 14)
 
 	frame := resp.Frames[0]
 	f0 := frame.Fields[0]
@@ -156,6 +160,14 @@ func TestNewQueryDataResponse(t *testing.T) {
 		},
 		extractFieldValues[time.Time](t, f12),
 	)
+
+	s1 := "test"
+	s2 := "test1"
+	s3 := "test2"
+	f13 := frame.Fields[13]
+	assert.Equal(t, f13.Name, "item")
+	assert.Equal(t, f13.Type(), data.FieldTypeNullableString)
+	assert.Equal(t, []*string{&s1, &s2, &s3}, extractFieldValues[*string](t, f13))
 }
 
 type jsonArray struct {
