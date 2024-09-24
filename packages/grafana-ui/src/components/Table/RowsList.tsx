@@ -254,8 +254,7 @@ export const RowsList = (props: RowsListProps) => {
 
     if (textWrapField !== undefined) {
       textWrapFinal = textWrapField;
-    }
-    else if (longestField !== undefined) {
+    } else if (longestField !== undefined) {
       textWrapFinal = longestField;
     }
   }
