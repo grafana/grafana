@@ -4,21 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
-)
 
-var (
-	_ rest.Storage              = (*queryConvertStorage)(nil)
-	_ rest.Scoper               = (*queryConvertStorage)(nil)
-	_ rest.SingularNameProvider = (*queryConvertStorage)(nil)
-	_ rest.Creater              = (*queryConvertStorage)(nil)
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // PluginContext requires adding system settings (feature flags, etc) to the datasource config
@@ -26,55 +22,61 @@ type PluginContextWrapper interface {
 	PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error)
 }
 
-type queryConvertStorage struct {
-	resourceInfo    *utils.ResourceInfo
-	tableConverter  rest.TableConvertor
-	client          PluginClientConversion
-	contextProvider PluginContextWrapper
-}
-
 type PluginClientConversion interface {
 	backend.ConversionHandler
 }
 
-func RegisterQueryTypes(client PluginClientConversion, storage map[string]rest.Storage, contextProvider PluginContextWrapper) error {
-	resourceInfo := query.QueryConvertDefinitionResourceInfo
-	store := &queryConvertStorage{
-		resourceInfo:    &resourceInfo,
-		tableConverter:  rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
+type queryConvertREST struct {
+	client          PluginClientConversion
+	contextProvider PluginContextWrapper
+}
+
+var (
+	_ rest.Storage              = (*queryConvertREST)(nil)
+	_ rest.Connecter            = (*queryConvertREST)(nil)
+	_ rest.Scoper               = (*queryConvertREST)(nil)
+	_ rest.SingularNameProvider = (*queryConvertREST)(nil)
+)
+
+func RegisterQueryConvert(client PluginClientConversion, contextProvider PluginContextWrapper, storage map[string]rest.Storage) {
+	store := &queryConvertREST{
 		client:          client,
 		contextProvider: contextProvider,
 	}
-	storage[resourceInfo.StoragePath()] = store
-	return nil
+	storage["queryconvert"] = store
 }
 
-func (s *queryConvertStorage) New() runtime.Object {
-	return s.resourceInfo.NewFunc()
+func (r *queryConvertREST) New() runtime.Object {
+	return &query.QueryDataRequest{}
 }
 
-func (s *queryConvertStorage) Destroy() {}
+func (r *queryConvertREST) Destroy() {}
 
-func (s *queryConvertStorage) NamespaceScoped() bool {
+func (r *queryConvertREST) NamespaceScoped() bool {
 	return true
 }
 
-func (s *queryConvertStorage) GetSingularName() string {
-	return s.resourceInfo.GetSingularName()
+func (r *queryConvertREST) GetSingularName() string {
+	return "queryconvert"
 }
 
-func (s *queryConvertStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
-	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
+func (r *queryConvertREST) ConnectMethods() []string {
+	return []string{"POST"}
 }
 
-func (s *queryConvertStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	dqr, ok := obj.(*query.QueryDataRequest)
-	if !ok {
-		return nil, fmt.Errorf("unexpected object type: %T", obj)
+func (r *queryConvertREST) NewConnectOptions() (runtime.Object, bool, string) {
+	return nil, false, "" // true means you can use the trailing path as a variable
+}
+
+func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *http.Request) (*query.QueryDataRequest, error) {
+	dqr := data.QueryDataRequest{}
+	err := web.Bind(req, &dqr)
+	if err != nil {
+		return nil, err
 	}
 
 	ds := dqr.Queries[0].Datasource
-	pluginCtx, err := s.contextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
+	pluginCtx, err := r.contextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
 		Type:       ds.Type,
 		UID:        ds.UID,
 		APIVersion: ds.APIVersion,
@@ -98,7 +100,7 @@ func (s *queryConvertStorage) Create(ctx context.Context, obj runtime.Object, cr
 		},
 	}
 
-	convertResponse, err := s.client.ConvertObjects(ctx, convertRequest)
+	convertResponse, err := r.client.ConvertObjects(ctx, convertRequest)
 	if err != nil {
 		if convertResponse != nil && convertResponse.Result != nil {
 			return nil, fmt.Errorf("conversion failed. Err: %w. Result: %s", err, convertResponse.Result.Message)
@@ -120,4 +122,21 @@ func (s *queryConvertStorage) Create(ctx context.Context, obj runtime.Object, cr
 	}
 
 	return qr, nil
+}
+
+func (r *queryConvertREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+	// See: /pkg/services/apiserver/builder/helper.go#L34
+	// The name is set with a rewriter hack
+	if name != "name" {
+		return nil, errors.NewNotFound(schema.GroupResource{}, name)
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		r, err := r.convertQueryDataRequest(ctx, req)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		responder.Object(http.StatusOK, r)
+	}), nil
 }

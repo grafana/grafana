@@ -227,11 +227,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	// Register query conversion
-	err = queryconvert.RegisterQueryTypes(b.client, storage, b.contextProvider)
-	if err != nil {
-		return err
-	}
+	queryconvert.RegisterQueryConvert(b.client, b.contextProvider, storage)
 
 	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
 	return err
