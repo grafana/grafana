@@ -35,9 +35,6 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
 				},
-				{
-					Action: accesscontrol.ActionAlertingReceiversList,
-				},
 			},
 		},
 	}

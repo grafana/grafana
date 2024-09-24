@@ -52,8 +52,8 @@ WHERE rr.name = 'fixed:alerting.receivers:reader'
   AND NOT EXISTS(SELECT 1
                  FROM user_role AS uu
                  WHERE uu.org_id = ur.org_id
-                   AND uu.user_id == ur.user_id
-                   AND uu.role_id == rr.id)
+                   AND uu.user_id = ur.user_id
+                   AND uu.role_id = rr.id)
 `, time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to grant users with role 'fixed:alerting.rules:writer' role 'fixed:alerting.receivers:reader': %w", err)
@@ -83,8 +83,8 @@ WHERE rr.name = 'fixed:alerting.receivers:reader'
   AND NOT EXISTS(SELECT 1
                  FROM team_role AS tt
                  WHERE tt.org_id = tr.org_id
-                   AND tt.team_id == tr.team_id
-                   AND tt.role_id == rr.id)
+                   AND tt.team_id = tr.team_id
+                   AND tt.role_id = rr.id)
 `, time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to grant teams with role 'fixed:alerting.rules:writer' role 'fixed:alerting.receivers:reader': %w", err)
