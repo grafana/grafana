@@ -1,4 +1,4 @@
-import { FieldMatcherID, PanelTypeChangedHandler } from '@grafana/data';
+import { FieldMatcherID, PanelTypeChangedHandler, ReducerID } from '@grafana/data';
 import { AxisPlacement } from '@grafana/ui';
 
 /*
@@ -16,7 +16,7 @@ export const changeToBarChartPanelMigrationHandler: PanelTypeChangedHandler = (p
         {
           id: 'reduce',
           options: {
-            reducers: graphOptions.xaxis?.values ?? ['sum'],
+            reducers: getReducer(graphOptions.xaxis?.values),
           },
         },
         {
@@ -50,6 +50,27 @@ export const changeToBarChartPanelMigrationHandler: PanelTypeChangedHandler = (p
   }
 
   return {};
+};
+
+const getReducer = (reducers: string[] | undefined) => {
+  const transformReducers: string[] = [];
+
+  reducers?.forEach((reducer) => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    if (!Object.values(ReducerID).includes(reducer as ReducerID)) {
+      if (reducer === 'current') {
+        transformReducers.push(ReducerID.lastNotNull);
+      } else if (reducer === 'total') {
+        transformReducers.push(ReducerID.sum);
+      } else if (reducer === 'avg') {
+        transformReducers.push(ReducerID.mean);
+      }
+    } else {
+      transformReducers.push(reducer);
+    }
+  });
+
+  return reducers ? transformReducers : [ReducerID.sum];
 };
 
 interface GraphOptions {
