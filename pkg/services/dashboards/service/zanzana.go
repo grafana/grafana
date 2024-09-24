@@ -103,10 +103,10 @@ func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersis
 	if query.Limit > 0 && query.Limit < maxListQueryLimit && len(query.Title) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
-	if len(query.DashboardUIDs) > 0 && len(query.DashboardUIDs) < maxListQueryLimit {
+	if len(query.DashboardUIDs) > 0 || len(query.DashboardIds) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
-	if len(query.FolderUIDs) > 0 && len(query.FolderUIDs) < maxListQueryLimit {
+	if len(query.FolderUIDs) > 0 || len(query.FolderIds) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
 	if len(query.Title) <= maxListQueryLength {
@@ -224,6 +224,12 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 // findDashboardsZanzanaList implements "List, then search" strategy. It first retrieve a list of resources
 // with given type available to the user and then passes that list as a filter to the search query.
 func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+	// Always use "search, then check" if dashboard or folder UIDs provided. Otherwise we should make intersection
+	// of user's resources and provided UIDs which might not be correct if ListObjects() request is limited by OpenFGA.
+	if len(query.DashboardUIDs) > 0 || len(query.DashboardIds) > 0 || len(query.FolderUIDs) > 0 || len(query.FolderIds) > 0 {
+		return dr.findDashboardsZanzanaCheck(ctx, query)
+	}
+
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaList")
 	defer span.End()
 
@@ -232,7 +238,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 		return nil, err
 	}
 
-	query.DashboardUIDs = append(query.DashboardUIDs, resourceUIDs...)
+	query.DashboardUIDs = resourceUIDs
 	query.SkipAccessControlFilter = true
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
