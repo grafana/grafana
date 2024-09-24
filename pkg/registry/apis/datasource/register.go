@@ -101,6 +101,7 @@ type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
+	backend.ConversionHandler
 }
 
 func NewDataSourceAPIBuilder(
@@ -223,13 +224,13 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Register hardcoded query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Register query conversion
 	err = queryconvert.RegisterQueryTypes(b.client, storage, b.contextProvider)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
