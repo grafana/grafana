@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -24,10 +25,11 @@ type corePlugin struct {
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, _ func() []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger log.Logger, tracer tracing.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
-			pluginID:            pluginID,
-			logger:              logger,
+			pluginID: pluginID,
+			logger:   logger,
+			// tracer:              tracer,
 			CheckHealthHandler:  opts.CheckHealthHandler,
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,

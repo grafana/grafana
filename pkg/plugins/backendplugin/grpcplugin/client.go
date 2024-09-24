@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
@@ -40,7 +41,7 @@ var pluginSet = map[int]goplugin.PluginSet{
 	},
 }
 
-func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, logger log.Logger,
+func newClientConfig(executablePath string, args []string, env []string, skipHostEnvVars bool, logger log.Logger, tracer tracing.Tracer,
 	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
 	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 	// nolint:gosec

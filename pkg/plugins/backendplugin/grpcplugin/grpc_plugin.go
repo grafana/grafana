@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 
 	"github.com/grafana/grafana/pkg/infra/process"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -37,17 +38,17 @@ const (
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
-		return newGrpcPlugin(descriptor, logger, env), nil
+	return func(pluginID string, logger log.Logger, tracer tracing.Tracer, env func() []string) (backendplugin.Plugin, error) {
+		return newGrpcPlugin(descriptor, logger, tracer, env), nil
 	}
 }
 
-func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, env func() []string) *grpcPlugin {
+func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer tracing.Tracer, env func() []string) *grpcPlugin {
 	return &grpcPlugin{
 		descriptor: descriptor,
 		logger:     logger,
 		clientFactory: func() *plugin.Client {
-			return plugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, env(), descriptor.skipHostEnvVars, logger, descriptor.versionedPlugins))
+			return plugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, env(), descriptor.skipHostEnvVars, logger, tracer, descriptor.versionedPlugins))
 		},
 		state: pluginStateNotStarted,
 	}
