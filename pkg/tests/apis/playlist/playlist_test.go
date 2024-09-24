@@ -424,6 +424,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			Body:   []byte(legacyPayload),
 		}, &playlist.Playlist{})
 		require.NotNil(t, legacyCreate.Result)
+		require.Equal(t, 200, legacyCreate.Response.StatusCode)
 		fmt.Printf("OUT %+v\n", legacyCreate.Result)
 		uid := legacyCreate.Result.UID
 		require.NotEmpty(t, uid)
