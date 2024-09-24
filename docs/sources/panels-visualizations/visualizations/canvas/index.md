@@ -91,6 +91,10 @@ To set a custom icon, upload or add the image URL for both the **Icon** and **Ba
 
 ![Canvas visualization icon image options](/media/docs/grafana/panels-visualizations/screenshot-canvas-icon-images-11.2.png)
 
+#### Upload a custom image
+
+To upload a custom image
+
 ### Server
 
 The server element lets you easily represent a single server, a stack of servers, a database, or a terminal. Server elements support status color, bulb color, and a bulb blink rate all configurable by fixed or field values.
