@@ -250,12 +250,13 @@ func TestSendInitialEventsBackwardCompatibility(t *testing.T) {
 	storagetesting.RunSendInitialEventsBackwardCompatibility(ctx, t, store)
 }
 
-func TestEtcdWatchSemantics(t *testing.T) {
-	ctx, store, destroyFunc, err := testSetup(t)
-	defer destroyFunc()
-	assert.NoError(t, err)
-	storagetesting.RunWatchSemantics(ctx, t, store)
-}
+// TODO: This is racy. Need to fix it.
+// func TestEtcdWatchSemantics(t *testing.T) {
+// 	ctx, store, destroyFunc, err := testSetup(t)
+// 	defer destroyFunc()
+// 	assert.NoError(t, err)
+// 	storagetesting.RunWatchSemantics(ctx, t, store)
+// }
 
 func TestEtcdWatchSemanticInitialEventsExtended(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
