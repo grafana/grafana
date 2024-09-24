@@ -43,28 +43,31 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     keys: ['_dash.hideTimePicker', '_dash.hideVariables', '_dash.hideLinks'],
   });
 
+  /**
+   * We want the hideXX url keys to only sync one way (url => state) on init
+   * We don't want these flags to be added to URL.
+   */
   getUrlState() {
-    return {
-      '_dash.hideTimePicker': this.state.hideTimeControls ? 'true' : undefined,
-      '_dash.hideVariables': this.state.hideVariableControls ? 'true' : undefined,
-      '_dash.hideLinks': this.state.hideLinksControls ? 'true' : undefined,
-    };
+    return {};
   }
 
   updateFromUrl(values: SceneObjectUrlValues) {
-    const update: Partial<DashboardControlsState> = {};
+    const { hideTimeControls, hideVariableControls, hideLinksControls } = this.state;
+    const isEnabledViaUrl = (key: string) => values[key] === 'true' || values[key] === '';
 
-    update.hideTimeControls =
-      values['_dash.hideTimePicker'] === 'true' || values['_dash.hideTimePicker'] === '' || this.state.hideTimeControls;
-    update.hideVariableControls =
-      values['_dash.hideVariables'] === 'true' ||
-      values['_dash.hideVariables'] === '' ||
-      this.state.hideVariableControls;
-    update.hideLinksControls =
-      values['_dash.hideLinks'] === 'true' || values['_dash.hideLinks'] === '' || this.state.hideLinksControls;
+    // Only allow hiding, never "unhiding" from url
+    // Becasue this should really only change on first init it's fine to do multiple setState here
 
-    if (Object.entries(update).some(([k, v]) => v !== this.state[k as keyof DashboardControlsState])) {
-      this.setState(update);
+    if (!hideTimeControls && isEnabledViaUrl('_dash.hideTimePicker')) {
+      this.setState({ hideTimeControls: true });
+    }
+
+    if (!hideVariableControls && isEnabledViaUrl('_dash.hideVariables')) {
+      this.setState({ hideVariableControls: true });
+    }
+
+    if (!hideLinksControls && isEnabledViaUrl('_dash.hideLinks')) {
+      this.setState({ hideLinksControls: true });
     }
   }
 
