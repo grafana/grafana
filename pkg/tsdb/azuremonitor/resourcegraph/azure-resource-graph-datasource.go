@@ -137,7 +137,6 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	}
 
 	req, err := e.createRequest(ctx, reqBody, dsURL)
-
 	if err != nil {
 		return nil, err
 	}
