@@ -300,122 +300,114 @@ export function getElementFields(frames: DataFrame[], elementOptions: CanvasElem
   const elementFields = new Set<Field>();
 
   frames?.forEach((frame) => {
-    const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
-
     // Text config
     const isTextTiedToFieldData =
       elementConfig?.text?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field);
 
     const isTextColorTiedToFieldData =
       elementConfig?.color?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.color?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.color?.field);
 
     // General element config
     const isElementBackgroundColorTiedToFieldData =
       elementOptions?.background?.color?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field);
     const isElementBackgroundImageTiedToFieldData =
       elementOptions?.background?.image?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.image?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.background?.image?.field);
     const isElementBorderColorTiedToFieldData =
       elementOptions?.border?.color?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field);
 
     // Icon config
     const isIconSVGTiedToFieldData =
       elementConfig?.path?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field);
     const isIconColorTiedToFieldData =
       elementConfig?.fill?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field);
 
     // Wind turbine config (maybe remove / not support this?)
     const isWindTurbineRPMTiedToFieldData =
       elementConfig?.rpm?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field);
 
     // Server config
     const isServerBlinkRateTiedToFieldData =
       elementConfig?.blinkRate?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.blinkRate?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.blinkRate?.field);
     const isServerStatusColorTiedToFieldData =
       elementConfig?.statusColor?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.statusColor?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.statusColor?.field);
     const isServerBulbColorTiedToFieldData =
       elementConfig?.bulbColor?.field &&
-      visibleFields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.bulbColor?.field);
+      frame.fields.some((field) => getFieldDisplayName(field, frame) === elementConfig?.bulbColor?.field);
 
     if (isTextTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field
-      )[0];
+      const field = frame.fields.filter((field) => getFieldDisplayName(field, frame) === elementConfig?.text?.field)[0];
       elementFields.add(field);
     }
 
     if (isTextColorTiedToFieldData) {
-      const field = visibleFields.filter(
+      const field = frame.fields.filter(
         (field) => getFieldDisplayName(field, frame) === elementConfig?.color?.field
       )[0];
       elementFields.add(field);
     }
 
     if (isElementBackgroundColorTiedToFieldData) {
-      const field = visibleFields.filter(
+      const field = frame.fields.filter(
         (field) => getFieldDisplayName(field, frame) === elementOptions?.background?.color?.field
       )[0];
       elementFields.add(field);
     }
 
     if (isElementBackgroundImageTiedToFieldData) {
-      const field = visibleFields.filter(
+      const field = frame.fields.filter(
         (field) => getFieldDisplayName(field, frame) === elementOptions?.background?.image?.field
       )[0];
       elementFields.add(field);
     }
 
     if (isElementBorderColorTiedToFieldData) {
-      const field = visibleFields.filter(
+      const field = frame.fields.filter(
         (field) => getFieldDisplayName(field, frame) === elementOptions?.border?.color?.field
       )[0];
       elementFields.add(field);
     }
 
     if (isIconSVGTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field
-      )[0];
+      const field = frame.fields.filter((field) => getFieldDisplayName(field, frame) === elementConfig?.path?.field)[0];
       elementFields.add(field);
     }
 
     if (isIconColorTiedToFieldData) {
-      const field = visibleFields.filter(
-        (field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field
-      )[0];
+      const field = frame.fields.filter((field) => getFieldDisplayName(field, frame) === elementConfig?.fill?.field)[0];
       elementFields.add(field);
     }
 
     if (isWindTurbineRPMTiedToFieldData) {
-      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field)[0];
+      const field = frame.fields.filter((field) => getFieldDisplayName(field, frame) === elementConfig?.rpm?.field)[0];
       elementFields.add(field);
     }
 
     if (isServerBlinkRateTiedToFieldData) {
-      const field = visibleFields.filter(
+      const field = frame.fields.filter(
         (field) => getFieldDisplayName(field, frame) === elementConfig?.blinkRate?.field
       )[0];
       elementFields.add(field);
     }
 
     if (isServerStatusColorTiedToFieldData) {
-      const field = visibleFields.filter(
+      const field = frame.fields.filter(
         (field) => getFieldDisplayName(field, frame) === elementConfig?.statusColor?.field
       )[0];
       elementFields.add(field);
     }
 
     if (isServerBulbColorTiedToFieldData) {
-      const field = visibleFields.filter(
+      const field = frame.fields.filter(
         (field) => getFieldDisplayName(field, frame) === elementConfig?.bulbColor?.field
       )[0];
       elementFields.add(field);
