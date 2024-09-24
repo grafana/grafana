@@ -446,17 +446,21 @@ function getStringsFromObject(obj: Object): string {
   return acc;
 }
 
+const isValidEnhancedFn = (enhancedReplaceVariables: Function | object | undefined) => {
+  return enhancedReplaceVariables !== undefined && typeof enhancedReplaceVariables === 'function';
+};
+
 const defaultInternalLinkPostProcessor: DataLinkPostProcessor = (options) => {
   // For internal links at the moment only destination is Explore.
   const { link, linkModel, dataLinkScopedVars, field, replaceVariables, enhancedReplaceVariables } = options;
 
   if (link.internal) {
     let showInternalLink = false;
-    if (enhancedReplaceVariables === undefined) {
-      showInternalLink = true;
-    } else {
-      const variableInfo = enhancedReplaceVariables(getStringsFromObject(link), dataLinkScopedVars);
+    if (isValidEnhancedFn(enhancedReplaceVariables)) {
+      const variableInfo = enhancedReplaceVariables!(getStringsFromObject(link), dataLinkScopedVars);
       showInternalLink = variableInfo.allFound;
+    } else {
+      showInternalLink = true;
     }
 
     return showInternalLink
@@ -524,8 +528,8 @@ export const getLinksSupplier =
         replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
 
       const enhancedBoundReplacedVariables = (value: string, scopedVars: ScopedVars, format: string | Function) => {
-        if (enhancedReplaceVariables) {
-          const replaceInfo = enhancedReplaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
+        if (isValidEnhancedFn(enhancedReplaceVariables)) {
+          const replaceInfo = enhancedReplaceVariables!(value, { ...dataLinkScopedVars, ...scopedVars }, format);
           if (replaceInfo.allFound) {
             return replaceInfo.replaceStr;
           } else {

@@ -1,5 +1,5 @@
-import { dateTime, QueryVariableModel, TimeRange, TypedVariableModel } from '@grafana/data';
-import { setDataSourceSrv, VariableInterpolation } from '@grafana/runtime';
+import { dateTime, QueryVariableModel, TimeRange, TypedVariableModel, VariableInterpolation } from '@grafana/data';
+import { setDataSourceSrv } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,

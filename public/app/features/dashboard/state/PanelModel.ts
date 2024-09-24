@@ -72,6 +72,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   key: true,
   isNew: true,
   refreshWhenInView: true,
+  enhancedReplaceVariables: true,
 };
 
 // For angular panels we need to clean up properties when changing type
