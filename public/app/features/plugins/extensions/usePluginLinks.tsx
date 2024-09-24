@@ -2,7 +2,7 @@ import { isString } from 'lodash';
 import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
-import { PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionLink, PluginExtensionTypes, usePluginContext } from '@grafana/data';
 import {
   UsePluginLinksOptions,
   UsePluginLinksResult,
@@ -15,6 +15,9 @@ import {
   getLinkExtensionOverrides,
   getLinkExtensionPathWithTracking,
   getReadOnlyProxy,
+  isExtensionPointIdInvalid,
+  isExtensionPointMetaInfoMissing,
+  isGrafanaDevMode,
 } from './utils';
 
 // Returns an array of component extensions for the given extension point
@@ -24,9 +27,31 @@ export function usePluginLinks({
   context,
 }: UsePluginLinksOptions): UsePluginLinksResult {
   const registry = useAddedLinksRegistry();
+  const pluginContext = usePluginContext();
   const registryState = useObservable(registry.asObservable());
 
   return useMemo(() => {
+    // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
+    const enableRestrictions = isGrafanaDevMode && pluginContext;
+
+    if (enableRestrictions && isExtensionPointIdInvalid(extensionPointId, pluginContext)) {
+      console.error(`usePluginLinks("${extensionPointId}") - The extension point ID "${extensionPointId}" is invalid.`);
+      return {
+        isLoading: false,
+        links: [],
+      };
+    }
+
+    if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
+      console.error(
+        `usePluginLinks("${extensionPointId}") - The extension point is missing from the "plugin.json" file.`
+      );
+      return {
+        isLoading: false,
+        links: [],
+      };
+    }
+
     if (!registryState || !registryState[extensionPointId]) {
       return {
         isLoading: false,
@@ -80,5 +105,5 @@ export function usePluginLinks({
       isLoading: false,
       links: extensions,
     };
-  }, [context, extensionPointId, limitPerPlugin, registryState]);
+  }, [context, extensionPointId, limitPerPlugin, registryState, pluginContext]);
 }
