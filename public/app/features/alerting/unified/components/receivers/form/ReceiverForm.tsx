@@ -8,7 +8,7 @@ import { Alert, Button, Field, Input, LinkButton, Stack, useStyles2 } from '@gra
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useValidateContactPoint } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
-import ManagePermissions from 'app/features/alerting/unified/components/permissions/ManagePermissions';
+import { ManagePermissions } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 
 import { getMessageFromError } from '../../../../../../core/utils/errors';
 import { logError } from '../../../Analytics';

@@ -49,7 +49,7 @@ const DefaultButton = ({ onClick }: ButtonProps) => {
  *
  * Provides capability to render button as custom component, and manages open/close state internally
  */
-const ManagePermissions = ({ resource, resourceId, resourceName, title, renderButton }: Props) => {
+export const ManagePermissions = ({ resource, resourceId, resourceName, title, renderButton }: Props) => {
   const [showDrawer, setShowDrawer] = useState(false);
   const closeDrawer = () => setShowDrawer(false);
   const openDrawer = () => setShowDrawer(true);
@@ -69,5 +69,3 @@ const ManagePermissions = ({ resource, resourceId, resourceName, title, renderBu
     </>
   );
 };
-
-export default ManagePermissions;
