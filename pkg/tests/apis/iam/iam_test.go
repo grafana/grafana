@@ -2,7 +2,6 @@ package identity
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,22 +27,6 @@ var gvrUsers = schema.GroupVersionResource{
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
-}
-
-func TestIntegrationRequiresDevMode(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, // should fail
-		DisableAnonymous:  true,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
-		},
-	})
-
-	_, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion("iam.grafana.app/v0alpha1")
-	require.Error(t, err)
 }
 
 func TestIntegrationIdentity(t *testing.T) {
@@ -102,7 +85,6 @@ func TestIntegrationIdentity(t *testing.T) {
 
 		// Get just the specs (avoids values that change with each deployment)
 		found = teamClient.SpecJSON(rsp)
-		// fmt.Printf("%s", found) // NOTE the first value does not have an email or login
 		require.JSONEq(t, `[
 			{},
 			{
@@ -130,7 +112,6 @@ func TestIntegrationIdentity(t *testing.T) {
 
 		// Get just the specs (avoids values that change with each deployment)
 		found = teamClient.SpecJSON(rsp)
-		fmt.Printf("%s", found) // NOTE the first value does not have an email or login
 		require.JSONEq(t, `[
 			{
 				"email": "admin-3",

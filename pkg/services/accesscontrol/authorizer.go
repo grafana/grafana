@@ -27,6 +27,9 @@ func (r ResourceResolverFunc) Resolve(ctx context.Context, ns claims.NamespaceIn
 type ResourceAuthorizerOptions struct {
 	// Resource is the resource name in plural.
 	Resource string
+	// Unchecked is used to skip authorization checks for specified verbs.
+	// This takes precedence over configured Mapping
+	Unchecked map[string]bool
 	// Attr is attribute used for resource scope. It's usually 'id' or 'uid'
 	// depending on what is stored for the resource.
 	Attr string
@@ -45,6 +48,9 @@ func NewLegacyAccessClient(ac AccessControl, opts ...ResourceAuthorizerOptions) 
 	stored := map[string]ResourceAuthorizerOptions{}
 
 	for _, o := range opts {
+		if o.Unchecked == nil {
+			o.Unchecked = map[string]bool{}
+		}
 		if o.Mapping == nil {
 			o.Mapping = map[string]string{}
 		}
@@ -73,6 +79,11 @@ func (c *LegacyAccessClient) HasAccess(ctx context.Context, id claims.AuthInfo, 
 			return true, nil
 		}
 		return false, nil
+	}
+
+	skip := opts.Unchecked[req.Verb]
+	if skip {
+		return true, nil
 	}
 
 	action, ok := opts.Mapping[req.Verb]
