@@ -87,7 +87,6 @@ func ProvideOSSService(
 		store:          store,
 		sync:           migrator.NewZanzanaSynchroniser(zclient, db),
 		permRegistry:   permRegistry,
-		zclient:        zclient,
 	}
 
 	return s
@@ -105,7 +104,6 @@ type Service struct {
 	store          accesscontrol.Store
 	sync           *migrator.ZanzanaSynchroniser
 	permRegistry   permreg.PermissionRegistry
-	zclient        zanzana.Client
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
