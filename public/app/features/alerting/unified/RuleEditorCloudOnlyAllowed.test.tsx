@@ -14,7 +14,6 @@ import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace } from 
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
-import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { DataSourceType } from './utils/datasource';
 
@@ -31,7 +30,6 @@ jest.mock('./api/ruler', () => ({
   fetchRulerRules: jest.fn(),
   fetchRulerRulesGroup: jest.fn(),
   fetchRulerRulesNamespace: jest.fn(),
-  fetchRulerRulesIfNotFetchedYet: jest.fn(),
 }));
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
@@ -123,7 +121,6 @@ const mocks = {
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
     fetchRulerRules: jest.mocked(fetchRulerRules),
-    fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
 
