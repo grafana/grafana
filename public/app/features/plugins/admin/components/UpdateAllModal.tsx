@@ -2,12 +2,14 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Checkbox, ConfirmModal, EmptyState, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { useInstall, useInstallStatus } from '../state/hooks';
 import { CatalogPlugin } from '../types';
+
+const PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME = 'plugins_update_all_clicked';
 
 type UpdateError = {
   id: string;
@@ -160,11 +162,12 @@ const ModalBody = ({ plugins, inProgress, selectedPlugins, onCheckboxChange, err
 
 type Props = {
   isOpen: boolean;
+  isLoading: boolean;
   onDismiss: () => void;
   plugins: CatalogPlugin[];
 };
 
-export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
+export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props) => {
   const install = useInstall();
   const { error } = useInstallStatus();
   const [errorMap, setErrorMap] = useState(new Map<string, UpdateError>());
@@ -195,11 +198,11 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
 
   // Initialize the component with all the plugins selected
   useEffect(() => {
-    if (selectedPlugins === undefined && plugins.length > 0) {
+    if (selectedPlugins === undefined && plugins.length > 0 && !isLoading) {
       const initialSelectedPlugins = new Set(plugins.map((plugin) => plugin.id));
       setSelectedPlugins(initialSelectedPlugins);
     }
-  }, [plugins, selectedPlugins]);
+  }, [isLoading, plugins, selectedPlugins]);
 
   // Updates the component state on every error that comes from the store
   useEffect(() => {
@@ -220,6 +223,8 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
 
   const onConfirm = async () => {
     if (!inProgress) {
+      reportInteraction(PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME);
+
       setInProgress(true);
 
       // in cloud the requests need to be sync
@@ -265,6 +270,8 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
     }
   };
 
+  const pluginsSelected = selectedPlugins?.size || 0;
+
   return (
     <ConfirmModal
       isOpen={isOpen}
@@ -280,10 +287,10 @@ export const UpdateAllModal = ({ isOpen, onDismiss, plugins }: Props) => {
       }
       onConfirm={installsRemaining > 0 ? onConfirm : onDismissClick}
       onDismiss={onDismissClick}
-      disabled={selectedPlugins?.size === 0 || inProgress}
+      disabled={pluginsSelected === 0 || inProgress}
       confirmText={
         installsRemaining > 0
-          ? `${t('plugins.catalog.update-all.modal-confirmation', 'Update')} (${selectedPlugins?.size})`
+          ? `${t('plugins.catalog.update-all.modal-confirmation', 'Update')} (${pluginsSelected})`
           : t('plugins.catalog.update-all.modal-dismiss', 'Close')
       }
     />

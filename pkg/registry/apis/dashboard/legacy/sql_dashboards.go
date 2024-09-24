@@ -352,6 +352,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	if !ok || user == nil {
 		return nil, created, fmt.Errorf("no user found in context")
 	}
+
 	if dash.Name != "" {
 		dash.Spec.Set("uid", dash.Name)
 
@@ -371,8 +372,8 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		dash.Spec.Remove("uid")
 	}
 
-	idClaims := user.GetIdentity()
 	var userID int64
+	idClaims := user.GetIdentity()
 	if claims.IsIdentityType(idClaims.IdentityType(), claims.TypeUser) {
 		var err error
 		userID, err = identity.UserIdentifier(idClaims.Subject())

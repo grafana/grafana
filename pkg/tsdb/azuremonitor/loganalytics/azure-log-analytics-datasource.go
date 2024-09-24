@@ -169,6 +169,7 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	timeColumn := ""
 	azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
 	basicLogsQuery := false
+	basicLogsEnabled := false
 
 	resultFormat := ParseResultFormat(azureLogAnalyticsTarget.ResultFormat, dataquery.AzureQueryTypeAzureLogAnalytics)
 
@@ -180,9 +181,12 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 	resources, resourceOrWorkspace := retrieveResources(azureLogAnalyticsTarget)
 	appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
 
+	if value, ok := dsInfo.JSONData["basicLogsEnabled"].(bool); ok {
+		basicLogsEnabled = value
+	}
+
 	if basicLogsQueryFlag {
-		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert); meetsBasicLogsCriteriaErr != nil {
-			// This error is a downstream error
+		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, basicLogsEnabled); meetsBasicLogsCriteriaErr != nil {
 			return nil, meetsBasicLogsCriteriaErr
 		} else {
 			basicLogsQuery = meetsBasicLogsCriteria

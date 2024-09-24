@@ -20,11 +20,14 @@ import (
 )
 
 var (
-	_ Service = (*service)(nil)
+	_ UnifiedStorageGrpcService = (*service)(nil)
 )
 
-type Service interface {
+type UnifiedStorageGrpcService interface {
 	services.NamedService
+
+	// Return the address where this service is running
+	GetAddress() string
 }
 
 type service struct {
@@ -45,12 +48,12 @@ type service struct {
 	log log.Logger
 }
 
-func ProvideService(
+func ProvideUnifiedStorageGrpcService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	db infraDB.DB,
 	log log.Logger,
-) (*service, error) {
+) (UnifiedStorageGrpcService, error) {
 	tracingCfg, err := tracing.ProvideTracingConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -84,7 +87,7 @@ func ProvideService(
 }
 
 func (s *service) start(ctx context.Context) error {
-	server, err := ProvideResourceServer(s.db, s.cfg, s.features, s.tracing)
+	server, err := NewResourceServer(s.db, s.cfg, s.features, s.tracing)
 	if err != nil {
 		return err
 	}
@@ -98,8 +101,11 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	resource.RegisterResourceStoreServer(s.handler.GetServer(), server)
-	grpc_health_v1.RegisterHealthServer(s.handler.GetServer(), healthService)
+	srv := s.handler.GetServer()
+	resource.RegisterResourceStoreServer(srv, server)
+	resource.RegisterResourceIndexServer(srv, server)
+	resource.RegisterDiagnosticsServer(srv, server)
+	grpc_health_v1.RegisterHealthServer(srv, healthService)
 
 	// register reflection service
 	_, err = grpcserver.ProvideReflectionService(s.cfg, s.handler)

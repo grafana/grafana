@@ -87,6 +87,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagVizActions
+	// Allow actions in visualizations
+	FlagVizActions = "vizActions"
+
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -279,8 +283,12 @@ const (
 	// Enables metrics summary queries in the Tempo data source
 	FlagMetricsSummary = "metricsSummary"
 
+	// FlagDatasourceAPIServers
+	// Expose some datasources as apiservers.
+	FlagDatasourceAPIServers = "datasourceAPIServers"
+
 	// FlagGrafanaAPIServerWithExperimentalAPIs
-	// Register experimental APIs with the k8s API server
+	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
@@ -391,6 +399,10 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
+	// FlagKubernetesFolders
+	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
+	FlagKubernetesFolders = "kubernetesFolders"
+
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
@@ -420,7 +432,7 @@ const (
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
 	// FlagTeamHttpHeaders
-	// Enables Team LBAC for datasources to apply team headers to the client requests
+	// Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagCachingOptimizeSerializationMemoryUsage
@@ -731,9 +743,9 @@ const (
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagBackgroundPluginInstaller
-	// Enable background plugin installer
-	FlagBackgroundPluginInstaller = "backgroundPluginInstaller"
+	// FlagAlertingFilterV2
+	// Enable the new alerting search experience
+	FlagAlertingFilterV2 = "alertingFilterV2"
 
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
@@ -770,4 +782,16 @@ const (
 	// FlagAppSidecar
 	// Enable the app sidecar feature that allows rendering 2 apps at the same time
 	FlagAppSidecar = "appSidecar"
+
+	// FlagGroupAttributeSync
+	// Enable the groupsync extension for managing Group Attribute Sync feature
+	FlagGroupAttributeSync = "groupAttributeSync"
+
+	// FlagImprovedExternalSessionHandling
+	// Enable improved support for external sessions in Grafana
+	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
+
+	// FlagUseSessionStorageForRedirection
+	// Use session storage for handling the redirection after login
+	FlagUseSessionStorageForRedirection = "useSessionStorageForRedirection"
 )
