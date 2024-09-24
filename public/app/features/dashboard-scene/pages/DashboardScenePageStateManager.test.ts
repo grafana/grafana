@@ -35,7 +35,7 @@ describe('DashboardScenePageStateManager', () => {
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
-      expect(loader.state.dashboard).toBeDefined();
+      expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
       expect(loader.state.loadError).toBe('Dashboard not found');
     });
@@ -107,8 +107,7 @@ describe('DashboardScenePageStateManager', () => {
         const loader = new DashboardScenePageStateManager({});
         await loader.loadDashboard({ uid: '', route: DashboardRoutes.Home });
 
-        expect(loader.state.dashboard).toBeDefined();
-        expect(loader.state.dashboard?.state.title).toEqual('Failed to load home dashboard');
+        expect(loader.state.dashboard).toBeUndefined();
         expect(loader.state.loadError).toEqual('Failed to load home dashboard');
       });
     });
