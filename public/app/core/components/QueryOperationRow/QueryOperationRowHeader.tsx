@@ -111,6 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: Column;
     display: flex;
     align-items: center;
+    overflow: hidden;
   `,
   dragIcon: css`
     cursor: grab;
