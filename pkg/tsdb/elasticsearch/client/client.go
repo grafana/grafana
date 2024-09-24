@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -202,8 +203,6 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	c.logger.Info("Response received from Elasticsearch", "status", "ok", "statusCode", res.StatusCode, "contentLength", res.ContentLength, "duration", time.Since(start), "stage", StageDatabaseRequest)
 
 	start = time.Now()
-	var msr MultiSearchResponse
-	dec := json.NewDecoder(res.Body)
 	_, resSpan := tracing.DefaultTracer().Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch.decodeResponse")
 	defer func() {
 		if err != nil {
@@ -212,7 +211,9 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		}
 		resSpan.End()
 	}()
-	err = dec.Decode(&msr)
+
+	var msr MultiSearchResponse
+	err = StreamMultiSearchResponse(res.Body, &msr)
 	if err != nil {
 		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
 		return nil, err
@@ -223,6 +224,49 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	msr.Status = res.StatusCode
 
 	return &msr, nil
+}
+
+// StreamMultiSearchResponse processes the JSON response in a streaming fashion.
+func StreamMultiSearchResponse(body io.Reader, msr *MultiSearchResponse) error {
+	dec := json.NewDecoder(body)
+
+	_, err := dec.Token() // reads the `{` opening brace
+	if err != nil {
+		return err
+	}
+
+	for dec.More() {
+		tok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+
+		if tok == "responses" {
+			_, err := dec.Token() // reads the `[` opening bracket
+			if err != nil {
+				return err
+			}
+
+			for dec.More() {
+				var sr SearchResponse
+
+				err := dec.Decode(&sr)
+				if err != nil {
+					return err
+				}
+
+				msr.Responses = append(msr.Responses, &sr)
+			}
+
+			_, err = dec.Token() // reads the `]` closing bracket
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	_, err = dec.Token() // reads the `}` closing brace
+	return err
 }
 
 func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchRequest) []*multiRequest {
