@@ -3,7 +3,7 @@ import { ReplaySubject } from 'rxjs';
 import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
-import { logWarning } from '../utils';
+import { isAddedLinkMetaInfoMissing, logWarning } from '../utils';
 import {
   extensionPointEndsWithVersion,
   isConfigureFnValid,
@@ -70,6 +70,10 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         logWarning(
           `Could not register added link with title '${title}'. Reason: The "path" is required and should start with "/a/${pluginId}/" (currently: "${path}"). Skipping the extension.`
         );
+        continue;
+      }
+
+      if (pluginId !== 'grafana' && isAddedLinkMetaInfoMissing(pluginId, config)) {
         continue;
       }
 
