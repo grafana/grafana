@@ -79,11 +79,12 @@ export const CanvasTooltip = ({ scene }: Props) => {
       : []),
   ];
 
+  // NOTE: almost identical to getDataLinks() helper
   const links: Array<LinkModel<Field>> = [];
-  const linkLookup = new Set<string>();
 
-  const elementHasLinks = (element.options.links?.length ?? 0) > 0;
-  if (elementHasLinks && element.getLinks) {
+  if ((element.options.links?.length ?? 0) > 0 && element.getLinks) {
+    const linkLookup = new Set<string>();
+
     element.getLinks({ valueRowIndex: getRowIndex(element.data.field, scene) }).forEach((link) => {
       const key = `${link.title}/${link.href}`;
       if (!linkLookup.has(key)) {
@@ -92,6 +93,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
       }
     });
   }
+  // ---------
 
   elementFields.forEach((field) => {
     links.push(...getDataLinks(field, getRowIndex(element.data.field, scene)));
