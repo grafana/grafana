@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { chain, isEmpty, truncate } from 'lodash';
 import { useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -19,7 +20,6 @@ import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
 import {
-  RulePluginOrigin,
   getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
@@ -27,6 +27,7 @@ import {
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
   isRecordingRule,
+  RulePluginOrigin,
 } from '../../utils/rules';
 import { createRelativeUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
@@ -273,6 +274,7 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
  * It will not show the warning if the rule is Grafana managed
  */
 function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
+  const [ref, { width }] = useMeasure<HTMLDivElement>();
   const { isConsistent, loading, error } = usePrometheusConsistencyCheck(ruleIdentifier);
 
   if (loading || error || isConsistent) {
@@ -280,16 +282,18 @@ function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleId
   }
 
   return (
-    <Alert
-      title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Updates in progress')}
-      severity="warning"
-    >
-      <LoadingBar width={20} />
-      <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
-        This rule has been updated recently. Updates are not yet reflected on the alert list page. It will take up to a
-        minute to propagate the changes.
-      </Trans>
-    </Alert>
+    <Stack direction="column" gap={0} ref={ref}>
+      <LoadingBar width={width} />
+      <Alert
+        title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Updates in progress')}
+        severity="info"
+      >
+        <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
+          This rule has been updated recently. Updates are not yet reflected on the alert list page. It may take up to a
+          minute to propagate the changes.
+        </Trans>
+      </Alert>
+    </Stack>
   );
 }
 
