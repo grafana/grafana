@@ -1,14 +1,7 @@
 import { nanoid } from 'nanoid';
 import { Observable, ReplaySubject } from 'rxjs';
 
-enum LogLevel {
-  info = 'info',
-  warning = 'warning',
-  error = 'error',
-  debug = 'debug',
-  trace = 'trace',
-  fatal = 'fatal',
-}
+import { LogLevel } from '@grafana/data';
 
 export type LogItem = {
   level: LogLevel;
