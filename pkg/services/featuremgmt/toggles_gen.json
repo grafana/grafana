@@ -580,7 +580,8 @@
       "metadata": {
         "name": "backgroundPluginInstaller",
         "resourceVersion": "1723202510081",
-        "creationTimestamp": "2024-08-09T11:21:50Z"
+        "creationTimestamp": "2024-08-09T11:21:50Z",
+        "deletionTimestamp": "2024-09-20T13:20:41Z"
       },
       "spec": {
         "description": "Enable background plugin installer",
@@ -594,6 +595,7 @@
         "name": "bodyScrolling",
         "resourceVersion": "1721723807004",
         "creationTimestamp": "2024-07-01T10:28:39Z",
+        "deletionTimestamp": "2024-09-24T09:17:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-23 08:36:47.004393 +0000 UTC"
         }
