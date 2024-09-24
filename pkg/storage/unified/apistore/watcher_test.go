@@ -7,7 +7,6 @@ package apistore
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 
@@ -85,7 +84,6 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 			Metadata:  fileblob.MetadataDontWrite, // skip
 		})
 		require.NoError(t, err)
-		fmt.Printf("ROOT: %s\n\n", tmp)
 	}
 	ctx := storagetesting.NewContext()
 	backend, err := resource.NewCDKBackend(ctx, resource.CDKBackendOptions{
@@ -162,7 +160,6 @@ Currently there is no way to differentiate between:
 - sendInitialEvents=false && resourceVersion=0
 The first case the legacy way to send initial events. Ignoring this scenario (for now?).
 see https://github.com/kubernetes/kubernetes/blob/37f733a657ef71d66177d00f9b7d47ec507dedd3/staging/src/k8s.io/apiserver/pkg/storage/etcd3/watcher.go#L194-L196
-
 func TestWatchFromZero(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -251,12 +248,12 @@ func TestSendInitialEventsBackwardCompatibility(t *testing.T) {
 }
 
 // TODO: This is racy. Need to fix it.
-// func TestEtcdWatchSemantics(t *testing.T) {
-// 	ctx, store, destroyFunc, err := testSetup(t)
-// 	defer destroyFunc()
-// 	assert.NoError(t, err)
-// 	storagetesting.RunWatchSemantics(ctx, t, store)
-// }
+func TestEtcdWatchSemantics(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunWatchSemantics(ctx, t, store)
+}
 
 func TestEtcdWatchSemanticInitialEventsExtended(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)

@@ -562,18 +562,22 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	since := req.Since
 
 	listRV := int64(0)
-	if req.SendInitialEvents {
+	if req.SendInitialEvents || req.Since > 0 {
 		// Backfill the stream
-		listRV, err = s.backend.ListIterator(ctx, &ListRequest{Options: req.Options}, func(iter ListIterator) error {
+		listRV, err = s.backend.ListIterator(ctx, &ListRequest{Options: req.Options, ResourceVersion: since}, func(iter ListIterator) error {
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
+				}
+				rv := iter.ResourceVersion()
+				if req.SendInitialEvents == false && rv <= req.Since {
+					continue
 				}
 				if err := srv.Send(&WatchEvent{
 					Type: WatchEvent_ADDED,
 					Resource: &WatchEvent_Resource{
 						Value:   iter.Value(),
-						Version: iter.ResourceVersion(),
+						Version: rv,
 					},
 				}); err != nil {
 					return err
