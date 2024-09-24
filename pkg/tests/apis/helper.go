@@ -190,7 +190,7 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured, replaceMe
 	copy := c.sanitizeObject(v, replaceMeta...)
 
 	out, err := json.MarshalIndent(copy, "", "  ")
-	// fmt.Printf("%s", out)
+	fmt.Printf("OUT JSON%s", out)
 	require.NoError(c.t, err)
 	return string(out)
 }

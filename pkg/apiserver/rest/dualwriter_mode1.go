@@ -270,31 +270,31 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	}
 	d.recordLegacyDuration(false, mode1Str, d.resource, method, startLegacy)
 
+
 	//nolint:errcheck
 	go d.updateOnUnifiedStorage(ctx, res, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 
-	return res, async, err
-}
+	go func(res runtime.Object) {
+		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
 
-func (d *DualWriterMode1) updateOnUnifiedStorage(ctx context.Context, res runtime.Object, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) error {
-	var method = "update"
-	log := d.Log.WithValues("name", name, "method", method, "name", name)
+		resCopy := res.DeepCopyObject()
+		// get the object to be updated
+		foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			if !apierrors.IsNotFound(err) {
+				log.WithValues("object", foundObj).Error(err, "could not get object to update")
+				cancel()
+			}
+			log.Info("object not found for update, creating one")
+		}
 
-	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
-	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage update timeout"))
-
-	resCopy := res.DeepCopyObject()
-	// get the object to be updated
-	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("object", foundObj).Error(err, "could not get object to update")
+		updated, err := objInfo.UpdatedObject(ctx, resCopy)
+		if err != nil {
+			log.WithValues("object", updated).Error(err, "could not update or create object")
 			cancel()
 		}
-		log.Info("object not found for update, creating one")
-	}
-
-	updated, err := objInfo.UpdatedObject(ctx, resCopy)
+		// if the object is found, create a new updateWrapper with the object found
+		if foundObj != nil {
 	if err != nil {
 		log.WithValues("object", updated).Error(err, "could not update or create object")
 		cancel()
