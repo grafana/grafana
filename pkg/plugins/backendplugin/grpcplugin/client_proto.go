@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	errClientNotAvailable = errors.New("plugin client is not available")
+	errClientNotAvailable = errors.New("plugin client not available")
 )
 
 var _ ProtoClient = (*protoClient)(nil)
