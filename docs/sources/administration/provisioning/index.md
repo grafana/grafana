@@ -618,12 +618,22 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `webhook`
 
-| Name       | Secure setting |
-| ---------- | -------------- |
-| url        |                |
-| httpMethod |                |
-| username   |                |
-| password   | yes            |
+| Name        | Secure setting |
+| ----------- | -------------- |
+| url         |                |
+| http_method |                |
+| username    |                |
+| password    | yes            |
+| tls_config  |                |
+
+##### TLS config
+
+| Name               | Secure setting |
+| ------------------ | -------------- |
+| insecureSkipVerify |                |
+| clientCertificate  | yes            |
+| clientKey          | yes            |
+| caCertificate      | yes            |
 
 #### Alert notification `googlechat`
 

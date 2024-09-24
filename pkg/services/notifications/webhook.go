@@ -23,6 +23,7 @@ type Webhook struct {
 	HttpMethod  string
 	HttpHeader  map[string]string
 	ContentType string
+	TLSConfig   *tls.Config
 
 	// Validation is a function that will validate the response body and statusCode of the webhook. Any returned error will cause the webhook request to be considered failed.
 	// This can be useful when a webhook service communicates failures in creative ways, such as using the response body instead of the status code.
@@ -32,21 +33,6 @@ type Webhook struct {
 // WebhookClient exists to mock the client in tests.
 type WebhookClient interface {
 	Do(req *http.Request) (*http.Response, error)
-}
-
-var netTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{
-		Renegotiation: tls.RenegotiateFreelyAsClient,
-	},
-	Proxy: http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
-		Timeout: 30 * time.Second,
-	}).Dial,
-	TLSHandshakeTimeout: 5 * time.Second,
-}
-var netClient WebhookClient = &http.Client{
-	Timeout:   time.Second * 30,
-	Transport: netTransport,
 }
 
 func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
@@ -85,7 +71,7 @@ func (ns *NotificationService) sendWebRequestSync(ctx context.Context, webhook *
 		request.Header.Set(k, v)
 	}
 
-	resp, err := netClient.Do(request)
+	resp, err := tlsClient(webhook.TLSConfig).Do(request)
 	if err != nil {
 		return redactURL(err)
 	}
@@ -124,4 +110,26 @@ func redactURL(err error) error {
 	}
 	e.URL = "<redacted>"
 	return e
+}
+
+func tlsClient(tlsConfig *tls.Config) *http.Client {
+	nc := func(tlsConfig *tls.Config) *http.Client {
+		return &http.Client{
+			Timeout: time.Second * 30,
+			Transport: &http.Transport{
+				TLSClientConfig: tlsConfig,
+				Proxy:           http.ProxyFromEnvironment,
+				Dial: (&net.Dialer{
+					Timeout: 30 * time.Second,
+				}).Dial,
+				TLSHandshakeTimeout: 5 * time.Second,
+			},
+		}
+	}
+
+	if tlsConfig == nil {
+		return nc(&tls.Config{Renegotiation: tls.RenegotiateFreelyAsClient})
+	}
+
+	return nc(tlsConfig)
 }
