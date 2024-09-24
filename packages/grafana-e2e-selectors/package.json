@@ -39,10 +39,10 @@
     "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "15.2.3",
-    "@types/node": "20.14.14",
-    "esbuild": "0.20.2",
-    "rimraf": "5.0.7",
+    "@rollup/plugin-node-resolve": "15.2.4",
+    "@types/node": "20.16.5",
+    "esbuild": "0.24.0",
+    "rimraf": "6.0.1",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@grafana/tsconfig": "^2.0.0",
-    "tslib": "2.6.3",
+    "tslib": "2.7.0",
     "typescript": "5.5.4"
   }
 }

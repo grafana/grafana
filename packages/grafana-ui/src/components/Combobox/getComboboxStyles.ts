@@ -4,12 +4,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
   return {
+    menuClosed: css({
+      display: 'none',
+    }),
     menu: css({
       label: 'grafana-select-menu',
       background: theme.components.dropdown.background,
       boxShadow: theme.shadows.z3,
-      position: 'relative',
-      zIndex: 1,
+      zIndex: theme.zIndex.dropdown,
     }),
     menuHeight: css({
       height: 400,
@@ -22,16 +24,16 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
     }),
     option: css({
       label: 'grafana-select-option',
+      padding: '8px',
       position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      flexDirection: 'row',
+      flexShrink: 0,
       whiteSpace: 'nowrap',
+      width: '100%',
+      overflow: 'hidden',
       cursor: 'pointer',
-      borderLeft: '2px solid transparent',
-      padding: theme.spacing.x1,
-      boxSizing: 'border-box',
-      height: 'auto',
       '&:hover': {
         background: theme.colors.action.hover,
         '@media (forced-colors: active), (prefers-contrast: more)': {
@@ -45,14 +47,21 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       fontWeight: theme.typography.fontWeightMedium,
       flexDirection: 'column',
       flexGrow: 1,
+      overflow: 'hidden',
+    }),
+    optionLabel: css({
+      label: 'grafana-select-option-label',
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
     }),
     optionDescription: css({
       label: 'grafana-select-option-description',
       fontWeight: 'normal',
       fontSize: theme.typography.bodySmall.fontSize,
       color: theme.colors.text.secondary,
-      whiteSpace: 'normal',
       lineHeight: theme.typography.body.lineHeight,
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
     }),
     optionFocused: css({
       label: 'grafana-select-option-focused',
@@ -71,7 +80,6 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         display: 'block',
         height: '100%',
         position: 'absolute',
-        transform: 'translateX(-50%)',
         width: theme.spacing(0.5),
         left: 0,
         top: 0,

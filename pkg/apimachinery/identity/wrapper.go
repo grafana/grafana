@@ -1,6 +1,7 @@
 package identity
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/grafana/authlib/claims"
@@ -11,6 +12,10 @@ var _ claims.AccessClaims = &IDClaimsWrapper{}
 
 type IDClaimsWrapper struct {
 	Source Requester
+}
+
+func (i *IDClaimsWrapper) IsNil() bool {
+	return i.Source.IsNil()
 }
 
 // GetAuthenticatedBy implements claims.IdentityClaims.
@@ -50,7 +55,7 @@ func (i *IDClaimsWrapper) Username() string {
 
 // GetAudience implements claims.AccessClaims.
 func (i *IDClaimsWrapper) Audience() []string {
-	return []string{}
+	return []string{fmt.Sprintf("org:%d", i.Source.GetOrgID())}
 }
 
 // GetDelegatedPermissions implements claims.AccessClaims.
@@ -100,5 +105,5 @@ func (i *IDClaimsWrapper) Scopes() []string {
 
 // GetSubject implements claims.AccessClaims.
 func (i *IDClaimsWrapper) Subject() string {
-	return ""
+	return i.Source.GetID()
 }

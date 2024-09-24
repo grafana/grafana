@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,7 +14,7 @@ const (
 	VERSION = "v0alpha1"
 )
 
-var GenericConnectionResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var GenericConnectionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"connections", "connection", "DataSourceConnection",
 	func() runtime.Object { return &DataSourceConnection{} },
 	func() runtime.Object { return &DataSourceConnectionList{} },

@@ -6,23 +6,11 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	openapi "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/utils/strings/slices"
-
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasource "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
@@ -31,13 +19,24 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds"
+	"github.com/prometheus/client_golang/prometheus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	openapi "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/utils/strings/slices"
 )
 
 var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
-	connectionResourceInfo common.ResourceInfo
+	connectionResourceInfo utils.ResourceInfo
 
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same pluginid!
@@ -45,6 +44,7 @@ type DataSourceAPIBuilder struct {
 	contextProvider PluginContextWrapper
 	accessControl   accesscontrol.AccessControl
 	queryTypes      *query.QueryTypeDefinitionList
+	log             log.Logger
 }
 
 func RegisterAPIService(
@@ -57,16 +57,17 @@ func RegisterAPIService(
 	accessControl accesscontrol.AccessControl,
 	reg prometheus.Registerer,
 ) (*DataSourceAPIBuilder, error) {
+	// We want to expose just a limited set of plugins
+	explictPluginList := features.IsEnabledGlobally(featuremgmt.FlagDatasourceAPIServers)
+
 	// This requires devmode!
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !(explictPluginList || features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs)) {
 		return nil, nil // skip registration unless opting into experimental apis
 	}
 
 	var err error
 	var builder *DataSourceAPIBuilder
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
-	// ATTENTION: Adding a datasource here requires the plugin to implement
-	// an AdmissionHandler to validate the datasource settings.
 	ids := []string{
 		"grafana-testdata-datasource",
 		"prometheus",
@@ -74,7 +75,7 @@ func RegisterAPIService(
 	}
 
 	for _, ds := range all {
-		if !slices.Contains(ids, ds.ID) {
+		if explictPluginList && !slices.Contains(ids, ds.ID) {
 			continue // skip this one
 		}
 
@@ -121,6 +122,7 @@ func NewDataSourceAPIBuilder(
 		datasources:            datasources,
 		contextProvider:        contextProvider,
 		accessControl:          accessControl,
+		log:                    log.New("grafana-apiserver.datasource"),
 	}
 	if loadQueryTypes {
 		// In the future, this will somehow come from the plugin
@@ -189,20 +191,15 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func resourceFromPluginID(pluginID string) (common.ResourceInfo, error) {
+func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
 	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
 	if err != nil {
-		return common.ResourceInfo{}, err
+		return utils.ResourceInfo{}, err
 	}
 	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
 }
 
-func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	_ generic.RESTOptionsGetter,
-	_ grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
+func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ *runtime.Scheme, _ generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
 	storage := map[string]rest.Storage{}
 
 	conn := b.connectionResourceInfo
@@ -225,13 +222,8 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	// Register hardcoded query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
 
-	// Create the group info
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
-		conn.GroupResource().Group, scheme,
-		metav1.ParameterCodec, codecs)
-
 	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
-	return &apiGroupInfo, err
+	return err
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {

@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -24,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert"
+	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -31,10 +31,11 @@ var _ builder.APIGroupBuilder = (*NotificationsAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type NotificationsAPIBuilder struct {
-	authz      accesscontrol.AccessControl
-	ng         *ngalert.AlertNG
-	namespacer request.NamespaceMapper
-	gv         schema.GroupVersion
+	authz        accesscontrol.AccessControl
+	receiverAuth receiver.AccessControlService
+	ng           *ngalert.AlertNG
+	namespacer   request.NamespaceMapper
+	gv           schema.GroupVersion
 }
 
 func RegisterAPIService(
@@ -47,10 +48,11 @@ func RegisterAPIService(
 		return nil
 	}
 	builder := &NotificationsAPIBuilder{
-		ng:         ng,
-		namespacer: request.GetNamespaceMapper(cfg),
-		gv:         notificationsModels.SchemeGroupVersion,
-		authz:      ng.Api.AccessControl,
+		ng:           ng,
+		namespacer:   request.GetNamespaceMapper(cfg),
+		gv:           notificationsModels.SchemeGroupVersion,
+		authz:        ng.Api.AccessControl,
+		receiverAuth: ac.NewReceiverAccess[*ngmodels.Receiver](ng.Api.AccessControl, false),
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -68,29 +70,22 @@ func (t *NotificationsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(notificationsModels.SchemeGroupVersion)
 }
 
-func (t *NotificationsAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
-	optsGetter generic.RESTOptionsGetter,
-	dualWriteBuilder grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(notificationsModels.GROUP, scheme, metav1.ParameterCodec, codecs)
-
+func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
 	intervals, err := timeInterval.NewStorage(t.ng.Api.MuteTimings, t.namespacer, scheme, optsGetter, dualWriteBuilder)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize time-interval storage: %w", err)
+		return fmt.Errorf("failed to initialize time-interval storage: %w", err)
 	}
 
-	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder)
+	recvStorage, err := receiver.NewStorage(t.ng.Api.ReceiverService, t.namespacer, scheme, optsGetter, dualWriteBuilder, t.ng.Api.ReceiverService)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize receiver storage: %w", err)
+		return fmt.Errorf("failed to initialize receiver storage: %w", err)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
 		notificationsModels.TimeIntervalResourceInfo.StoragePath(): intervals,
 		notificationsModels.ReceiverResourceInfo.StoragePath():     recvStorage,
 	}
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (t *NotificationsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
@@ -128,7 +123,7 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
 				return timeInterval.Authorize(ctx, t.authz, a)
 			case notificationsModels.ReceiverResourceInfo.GroupResource().Resource:
-				return receiver.Authorize(ctx, t.authz, a)
+				return receiver.Authorize(ctx, t.receiverAuth, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		})

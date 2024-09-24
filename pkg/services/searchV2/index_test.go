@@ -791,7 +791,11 @@ func TestIntegrationSoftDeletion(t *testing.T) {
 
 	// Set up dashboard store.
 	quotaService := quotatest.New(false, nil)
-	featureToggles := featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagDashboardRestore)
+	featureToggles := featuremgmt.WithFeatures(
+		featuremgmt.FlagPanelTitleSearch,
+		featuremgmt.FlagDashboardRestore,
+		featuremgmt.FlagMysqlParseTime,
+	)
 	dashboardStore, err := database.ProvideDashboardStore(replStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 

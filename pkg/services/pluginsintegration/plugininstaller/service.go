@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -35,21 +35,19 @@ var (
 
 type Service struct {
 	cfg             *setting.Cfg
-	features        featuremgmt.FeatureToggles
 	log             log.Logger
 	pluginInstaller plugins.Installer
 	pluginStore     pluginstore.Store
 	failOnErr       bool
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginStore pluginstore.Store, pluginInstaller plugins.Installer, promReg prometheus.Registerer) (*Service, error) {
+func ProvideService(cfg *setting.Cfg, pluginStore pluginstore.Store, pluginInstaller plugins.Installer, promReg prometheus.Registerer) (*Service, error) {
 	once.Do(func() {
 		promReg.MustRegister(installRequestCounter)
 		promReg.MustRegister(installRequestDuration)
 	})
 
 	s := &Service{
-		features:        features,
 		log:             log.New("plugin.backgroundinstaller"),
 		cfg:             cfg,
 		pluginInstaller: pluginInstaller,
@@ -68,8 +66,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, plugi
 
 // IsDisabled disables background installation of plugins.
 func (s *Service) IsDisabled() bool {
-	return !s.features.IsEnabled(context.Background(), featuremgmt.FlagBackgroundPluginInstaller) ||
-		len(s.cfg.PreinstallPlugins) == 0 ||
+	return len(s.cfg.PreinstallPlugins) == 0 ||
 		!s.cfg.PreinstallPluginsAsync
 }
 
@@ -107,6 +104,7 @@ func (s *Service) installPlugins(ctx context.Context) error {
 
 		s.log.Info("Installing plugin", "pluginId", installPlugin.ID, "version", installPlugin.Version)
 		start := time.Now()
+		ctx = repo.WithRequestOrigin(ctx, "preinstall")
 		err := s.pluginInstaller.Add(ctx, installPlugin.ID, installPlugin.Version, compatOpts)
 		if err != nil {
 			var dupeErr plugins.DuplicateError

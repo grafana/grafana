@@ -1,23 +1,27 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import { Link } from 'react-router-dom';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2, ScopeDashboardBinding } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectRef, SceneObjectState } from '@grafana/scenes';
-import { Button, CustomScrollbar, FilterInput, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Button, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
+import { ScopesDashboardsTree } from './ScopesDashboardsTree';
+import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 import { ScopesSelectorScene } from './ScopesSelectorScene';
-import { fetchSuggestedDashboards } from './api';
+import { fetchDashboards } from './api';
 import { DASHBOARDS_OPENED_KEY } from './const';
-import { SuggestedDashboard } from './types';
-import { getScopeNamesFromSelectedScopes } from './utils';
+import { SuggestedDashboardsFoldersMap } from './types';
+import { filterFolders, getScopeNamesFromSelectedScopes, groupDashboards } from './utils';
 
 export interface ScopesDashboardsSceneState extends SceneObjectState {
   selector: SceneObjectRef<ScopesSelectorScene> | null;
-  dashboards: SuggestedDashboard[];
-  filteredDashboards: SuggestedDashboard[];
+  // by keeping a track of the raw response, it's much easier to check if we got any dashboards for the currently selected scopes
+  dashboards: ScopeDashboardBinding[];
+  // this is a grouping in folders of the `dashboards` property. it is used for filtering the dashboards and folders when the search query changes
+  folders: SuggestedDashboardsFoldersMap;
+  // a filtered version of the `folders` property. this prevents a lot of unnecessary parsings in React renders
+  filteredFolders: SuggestedDashboardsFoldersMap;
   forScopeNames: string[];
   isLoading: boolean;
   isPanelOpened: boolean;
@@ -28,7 +32,8 @@ export interface ScopesDashboardsSceneState extends SceneObjectState {
 
 export const getInitialDashboardsState: () => Omit<ScopesDashboardsSceneState, 'selector'> = () => ({
   dashboards: [],
-  filteredDashboards: [],
+  folders: {},
+  filteredFolders: {},
   forScopeNames: [],
   isLoading: false,
   isPanelOpened: localStorage.getItem(DASHBOARDS_OPENED_KEY) === 'true',
@@ -80,7 +85,8 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
     if (scopeNames.length === 0) {
       return this.setState({
         dashboards: [],
-        filteredDashboards: [],
+        folders: {},
+        filteredFolders: {},
         forScopeNames: [],
         isLoading: false,
         scopesSelected: false,
@@ -89,11 +95,14 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
 
     this.setState({ isLoading: true });
 
-    const dashboards = await fetchSuggestedDashboards(scopeNames);
+    const dashboards = await fetchDashboards(scopeNames);
+    const folders = groupDashboards(dashboards);
+    const filteredFolders = filterFolders(folders, this.state.searchQuery);
 
     this.setState({
       dashboards,
-      filteredDashboards: this.filterDashboards(dashboards, this.state.searchQuery),
+      folders,
+      filteredFolders,
       forScopeNames: scopeNames,
       isLoading: false,
       scopesSelected: scopeNames.length > 0,
@@ -101,12 +110,33 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   }
 
   public changeSearchQuery(searchQuery: string) {
+    searchQuery = searchQuery ?? '';
+
     this.setState({
-      filteredDashboards: searchQuery
-        ? this.filterDashboards(this.state.dashboards, searchQuery)
-        : this.state.dashboards,
-      searchQuery: searchQuery ?? '',
+      filteredFolders: filterFolders(this.state.folders, searchQuery),
+      searchQuery,
     });
+  }
+
+  public updateFolder(path: string[], isExpanded: boolean) {
+    let folders = { ...this.state.folders };
+    let filteredFolders = { ...this.state.filteredFolders };
+    let currentLevelFolders: SuggestedDashboardsFoldersMap = folders;
+    let currentLevelFilteredFolders: SuggestedDashboardsFoldersMap = filteredFolders;
+
+    for (let idx = 0; idx < path.length - 1; idx++) {
+      currentLevelFolders = currentLevelFolders[path[idx]].folders;
+      currentLevelFilteredFolders = currentLevelFilteredFolders[path[idx]].folders;
+    }
+
+    const name = path[path.length - 1];
+    const currentFolder = currentLevelFolders[name];
+    const currentFilteredFolder = currentLevelFilteredFolders[name];
+
+    currentFolder.isExpanded = isExpanded;
+    currentFilteredFolder.isExpanded = isExpanded;
+
+    this.setState({ folders, filteredFolders });
   }
 
   public togglePanel() {
@@ -135,20 +165,13 @@ export class ScopesDashboardsScene extends SceneObjectBase<ScopesDashboardsScene
   public disable() {
     this.setState({ isEnabled: false });
   }
-
-  private filterDashboards(dashboards: SuggestedDashboard[], searchQuery: string): SuggestedDashboard[] {
-    const lowerCasedSearchQuery = searchQuery.toLowerCase();
-
-    return dashboards.filter(({ dashboardTitle }) => dashboardTitle.toLowerCase().includes(lowerCasedSearchQuery));
-  }
 }
 
 export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<ScopesDashboardsScene>) {
-  const { dashboards, filteredDashboards, isLoading, isPanelOpened, isEnabled, searchQuery, scopesSelected } =
+  const { dashboards, filteredFolders, isLoading, isPanelOpened, isEnabled, searchQuery, scopesSelected } =
     model.useState();
-  const styles = useStyles2(getStyles);
 
-  const [queryParams] = useQueryParams();
+  const styles = useStyles2(getStyles);
 
   if (!isEnabled || !isPanelOpened) {
     return null;
@@ -178,15 +201,11 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
 
   return (
     <div className={styles.container} data-testid="scopes-dashboards-container">
-      <div className={styles.searchInputContainer}>
-        <FilterInput
-          disabled={isLoading}
-          placeholder={t('scopes.dashboards.search', 'Search')}
-          value={searchQuery}
-          data-testid="scopes-dashboards-search"
-          onChange={(value) => model.changeSearchQuery(value)}
-        />
-      </div>
+      <ScopesDashboardsTreeSearch
+        disabled={isLoading}
+        query={searchQuery}
+        onChange={(value) => model.changeSearchQuery(value)}
+      />
 
       {isLoading ? (
         <LoadingPlaceholder
@@ -194,18 +213,13 @@ export function ScopesDashboardsSceneRenderer({ model }: SceneComponentProps<Sco
           text={t('scopes.dashboards.loading', 'Loading dashboards')}
           data-testid="scopes-dashboards-loading"
         />
-      ) : filteredDashboards.length > 0 ? (
+      ) : filteredFolders[''] ? (
         <CustomScrollbar>
-          {filteredDashboards.map(({ dashboard, dashboardTitle }) => (
-            <Link
-              key={dashboard}
-              to={urlUtil.renderUrl(`/d/${dashboard}/`, queryParams)}
-              className={styles.dashboardItem}
-              data-testid={`scopes-dashboards-${dashboard}`}
-            >
-              {dashboardTitle}
-            </Link>
-          ))}
+          <ScopesDashboardsTree
+            folders={filteredFolders}
+            folderPath={['']}
+            onFolderUpdate={(path, isExpanded) => model.updateFolder(path, isExpanded)}
+          />
         </CustomScrollbar>
       ) : (
         <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
@@ -246,19 +260,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
       textAlign: 'center',
     }),
-    searchInputContainer: css({
-      flex: '0 1 auto',
-    }),
     loadingIndicator: css({
       alignSelf: 'center',
-    }),
-    dashboardItem: css({
-      padding: theme.spacing(1, 0),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-
-      '& :is(:first-child)': {
-        paddingTop: 0,
-      },
     }),
   };
 };
