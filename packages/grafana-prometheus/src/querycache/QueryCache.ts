@@ -9,6 +9,8 @@ import {
   incrRoundDn,
   isValidDuration,
   parseDuration,
+  rangeUtil,
+  ScopedVars,
   Table,
   trimTable,
 } from '@grafana/data';
@@ -22,10 +24,9 @@ type TargetIdent = string;
 // query + template variables + interval + raw time range
 // used for full target cache busting -> full range re-query
 type TargetSig = string;
-
 type TimestampMs = number;
-
 type SupportedQueryTypes = PromQuery;
+type ApplyInterpolation = (str: string, scopedVars?: ScopedVars) => string;
 
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
@@ -58,12 +59,14 @@ export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JS
 export class QueryCache<T extends SupportedQueryTypes> {
   private overlapWindowMs: number;
   private getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
+  private applyInterpolation = (str: string, scopedVars?: ScopedVars) => str;
 
   cache = new Map<TargetIdent, TargetCache>();
 
   constructor(options: {
     getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
     overlapString: string;
+    applyInterpolation?: ApplyInterpolation;
   }) {
     const unverifiedOverlap = options.overlapString;
     if (isValidDuration(unverifiedOverlap)) {
@@ -75,6 +78,9 @@ export class QueryCache<T extends SupportedQueryTypes> {
     }
 
     this.getTargetSignature = options.getTargetSignature;
+    if (options.applyInterpolation) {
+      this.applyInterpolation = options.applyInterpolation;
+    }
   }
 
   // can be used to change full range request to partial, split into multiple requests
@@ -220,7 +226,10 @@ export class QueryCache<T extends SupportedQueryTypes> {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           let table: Table = frame.fields.map((field) => field.values) as Table;
 
-          let trimmed = trimTable(table, newFrom, newTo);
+          const dataPointStep = findDatapointStep(request, respFrames, this.applyInterpolation);
+
+          // query interval is greater than request.intervalMs, use query interval to make sure we've always got one datapoint outside the panel viewport
+          let trimmed = trimTable(table, newFrom - dataPointStep, newTo);
 
           if (trimmed[0].length > 0) {
             for (let i = 0; i < trimmed.length; i++) {
@@ -254,4 +263,26 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
     return respFrames;
   }
+}
+
+export function findDatapointStep(
+  request: DataQueryRequest<PromQuery>,
+  respFrames: DataFrame[],
+  applyInterpolation: ApplyInterpolation
+): number {
+  // Prometheus specific logic below
+  if (request.targets[0].datasource?.type !== 'prometheus') {
+    return 0;
+  }
+
+  const target = request.targets.find((t) => t.refId === respFrames[0].refId);
+
+  let dataPointStep = request.intervalMs;
+  if (target?.interval) {
+    const minStepMs = rangeUtil.intervalToMs(applyInterpolation(target.interval));
+    if (minStepMs > request.intervalMs) {
+      dataPointStep = minStepMs;
+    }
+  }
+  return dataPointStep;
 }
