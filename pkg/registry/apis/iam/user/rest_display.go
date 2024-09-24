@@ -35,7 +35,7 @@ func NewLegacyDisplayREST(store legacy.LegacyIdentityStore) *LegacyDisplayREST {
 }
 
 func (r *LegacyDisplayREST) New() runtime.Object {
-	return &iamv0.IdentityDisplayResults{}
+	return &iamv0.DisplayList{}
 }
 
 func (r *LegacyDisplayREST) Destroy() {}
@@ -45,8 +45,7 @@ func (r *LegacyDisplayREST) NamespaceScoped() bool {
 }
 
 func (r *LegacyDisplayREST) GetSingularName() string {
-	// not actually used anywhere, but required by SingularNameProvider
-	return "identitydisplay"
+	return "display"
 }
 
 func (r *LegacyDisplayREST) ProducesMIMETypes(verb string) []string {
@@ -54,11 +53,11 @@ func (r *LegacyDisplayREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *LegacyDisplayREST) ProducesObject(verb string) any {
-	return &iamv0.IdentityDisplayResults{}
+	return &iamv0.DisplayList{}
 }
 
 func (r *LegacyDisplayREST) ConnectMethods() []string {
-	return []string{"GET"}
+	return []string{http.MethodGet}
 }
 
 func (r *LegacyDisplayREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -91,13 +90,13 @@ func (r *LegacyDisplayREST) Connect(ctx context.Context, name string, _ runtime.
 			return
 		}
 
-		rsp := &iamv0.IdentityDisplayResults{
+		rsp := &iamv0.DisplayList{
 			Keys:        keys.keys,
 			InvalidKeys: keys.invalid,
-			Display:     make([]iamv0.IdentityDisplay, 0, len(users.Users)+len(keys.disp)+1),
+			Items:       make([]iamv0.Display, 0, len(users.Users)+len(keys.disp)+1),
 		}
 		for _, user := range users.Users {
-			disp := iamv0.IdentityDisplay{
+			disp := iamv0.Display{
 				Identity: iamv0.IdentityRef{
 					Type: claims.TypeUser,
 					Name: user.UID,
@@ -109,12 +108,12 @@ func (r *LegacyDisplayREST) Connect(ctx context.Context, name string, _ runtime.
 				disp.Identity.Type = claims.TypeServiceAccount
 			}
 			disp.AvatarURL = dtos.GetGravatarUrlWithDefault(fakeCfgForGravatar, user.Email, disp.DisplayName)
-			rsp.Display = append(rsp.Display, disp)
+			rsp.Items = append(rsp.Items, disp)
 		}
 
 		// Append the constants here
 		if len(keys.disp) > 0 {
-			rsp.Display = append(rsp.Display, keys.disp...)
+			rsp.Items = append(rsp.Items, keys.disp...)
 		}
 		responder.Object(200, rsp)
 	}), nil
@@ -127,7 +126,7 @@ type dispKeys struct {
 	invalid []string
 
 	// For terminal keys, this is a constant
-	disp []iamv0.IdentityDisplay
+	disp []iamv0.Display
 }
 
 func parseKeys(req []string) dispKeys {
@@ -148,7 +147,7 @@ func parseKeys(req []string) dispKeys {
 
 			switch t {
 			case claims.TypeAnonymous:
-				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
+				keys.disp = append(keys.disp, iamv0.Display{
 					Identity: iamv0.IdentityRef{
 						Type: t,
 					},
@@ -157,7 +156,7 @@ func parseKeys(req []string) dispKeys {
 				})
 				continue
 			case claims.TypeAPIKey:
-				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
+				keys.disp = append(keys.disp, iamv0.Display{
 					Identity: iamv0.IdentityRef{
 						Type: t,
 						Name: key,
@@ -167,7 +166,7 @@ func parseKeys(req []string) dispKeys {
 				})
 				continue
 			case claims.TypeProvisioning:
-				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
+				keys.disp = append(keys.disp, iamv0.Display{
 					Identity: iamv0.IdentityRef{
 						Type: t,
 					},
@@ -184,7 +183,7 @@ func parseKeys(req []string) dispKeys {
 		id, err := strconv.ParseInt(key, 10, 64)
 		if err == nil {
 			if id == 0 {
-				keys.disp = append(keys.disp, iamv0.IdentityDisplay{
+				keys.disp = append(keys.disp, iamv0.Display{
 					Identity: iamv0.IdentityRef{
 						Type: claims.TypeUser,
 						Name: key,
