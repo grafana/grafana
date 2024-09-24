@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	exp "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource"
 	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
@@ -102,11 +103,11 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 
 		timeField, ok := jsonData["timeField"].(string)
 		if !ok {
-			return nil, errors.New("timeField cannot be cast to string")
+			return nil, errorsource.DownstreamError(errors.New("timeField cannot be cast to string"), false)
 		}
 
 		if timeField == "" {
-			return nil, errors.New("elasticsearch time field name is required")
+			return nil, errorsource.DownstreamError(errors.New("elasticsearch time field name is required"), false)
 		}
 
 		logLevelField, ok := jsonData["logLevelField"].(string)
