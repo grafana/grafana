@@ -1,4 +1,4 @@
-import { cloneDeep, isNumber, omit } from 'lodash';
+import { cloneDeep, identity, isNumber, omit, pickBy } from 'lodash';
 
 import {
   convertOldAngularValueMappings,
@@ -16,7 +16,7 @@ import {
   ValueMapping,
   VizOrientation,
 } from '@grafana/data';
-import { OptionsWithTextFormatting } from '@grafana/schema';
+import { LegendDisplayMode, OptionsWithLegend, OptionsWithTextFormatting } from '@grafana/schema';
 
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   reduceOptions: ReduceDataOptions;
@@ -25,6 +25,7 @@ export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
 
 const optionsToKeep = ['reduceOptions', 'orientation'];
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function sharedSingleStatPanelChangedHandler(
   panel: PanelModel<Partial<SingleStatBaseOptions>> | any,
   prevPluginId: string,
@@ -40,11 +41,73 @@ export function sharedSingleStatPanelChangedHandler(
   // Migrating from angular singlestat
   if (prevPluginId === 'singlestat' && prevOptions.angular) {
     return migrateFromAngularSinglestat(panel, prevOptions);
+  } else if (prevPluginId === 'graph') {
+    // Migrating from Graph panel
+    return migrateFromGraphPanel(panel, prevOptions);
   }
 
   for (const k of optionsToKeep) {
     if (prevOptions.hasOwnProperty(k)) {
       options[k] = cloneDeep(prevOptions[k]);
+    }
+  }
+
+  return options;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
+  const graphOptions: GraphOptions = prevOptions.angular;
+
+  const options: SingleStatBaseOptions & OptionsWithLegend = {
+    orientation: VizOrientation.Auto,
+    reduceOptions: {
+      values: false,
+      calcs: [],
+    },
+    legend: {
+      displayMode: LegendDisplayMode.List,
+      showLegend: true,
+      placement: 'bottom',
+      calcs: [],
+    },
+  };
+
+  if (graphOptions.xaxis?.mode === 'series') {
+    panel.fieldConfig = {
+      ...panel.fieldConfig,
+      defaults: {
+        ...panel.fieldConfig.defaults,
+        color: { mode: 'palette-classic' },
+      },
+    };
+
+    // Value options calculation migration
+    if (graphOptions.xaxis.values) {
+      options.reduceOptions.calcs = getReducerForMigration(graphOptions.xaxis.values);
+    }
+
+    // Legend migration
+    const legendConfig = graphOptions.legend;
+    if (legendConfig) {
+      if (legendConfig.show) {
+        options.legend.displayMode = legendConfig.alignAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List;
+      } else {
+        options.legend.showLegend = false;
+      }
+
+      if (legendConfig.rightSide) {
+        options.legend.placement = 'right';
+      }
+
+      if (legendConfig.values) {
+        const enabledLegendValues = pickBy(legendConfig, identity);
+        options.legend.calcs = getReducersFromLegend(enabledLegendValues);
+      }
+
+      if (legendConfig.sideWidth) {
+        options.legend.width = legendConfig.sideWidth;
+      }
     }
   }
 
@@ -330,4 +393,56 @@ export function migrateOldThresholds(thresholds?: any[]): Threshold[] | undefine
  */
 export function convertOldAngularValueMapping(panel: any): ValueMapping[] {
   return convertOldAngularValueMappings(panel);
+}
+
+interface GraphOptions {
+  xaxis: {
+    mode: 'series' | 'time' | 'histogram';
+    values?: string[];
+  };
+  legend: {
+    show: boolean;
+    alignAsTable: boolean;
+    rightSide: boolean;
+    values: boolean;
+    min?: boolean;
+    max?: boolean;
+    avg?: boolean;
+    current?: boolean;
+    total?: boolean;
+    sideWidth?: number;
+  };
+}
+
+function getReducersFromLegend(obj: Record<string, unknown>): string[] {
+  const ids: string[] = [];
+  for (const key in obj) {
+    const reducer = fieldReducers.getIfExists(key);
+    if (reducer) {
+      ids.push(reducer.id);
+    }
+  }
+  return ids;
+}
+
+// same as public/app/plugins/panel/barchart/migrations.ts
+function getReducerForMigration(reducers: string[] | undefined) {
+  const transformReducers: string[] = [];
+
+  reducers?.forEach((reducer) => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    if (!Object.values(ReducerID).includes(reducer as ReducerID)) {
+      if (reducer === 'current') {
+        transformReducers.push(ReducerID.lastNotNull);
+      } else if (reducer === 'total') {
+        transformReducers.push(ReducerID.sum);
+      } else if (reducer === 'avg') {
+        transformReducers.push(ReducerID.mean);
+      }
+    } else {
+      transformReducers.push(reducer);
+    }
+  });
+
+  return reducers ? transformReducers : [ReducerID.sum];
 }
