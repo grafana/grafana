@@ -529,7 +529,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		}
 
 		// TODO: we will eventually remove this check for moving the resource to it's separate API
-		if !cmd.OnlyUpdateLBACRulesFromAPI && datasources.CheckTeamHTTPHeadersDiff(dataSource.JsonData, cmd.JsonData) {
+		if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagTeamHttpHeaders) && !cmd.OnlyUpdateLBACRulesFromAPI && datasources.CheckTeamHTTPHeadersDiff(dataSource.JsonData, cmd.JsonData) {
 			return datasources.ErrDataSourceUpdateLBACRulesForbidden
 		}
 
