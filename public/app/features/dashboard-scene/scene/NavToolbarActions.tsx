@@ -61,8 +61,8 @@ export function ToolbarActions({ dashboard }: Props) {
   const styles = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
-  const isEditedPanelDirty = useVizManagerDirty(editPanel);
-  const isEditingLibraryPanel = useEditingLibraryPanel(editPanel);
+  const isEditedPanelDirty = usePanelEditDirty(editPanel);
+  const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
@@ -422,7 +422,7 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={editPanel?.onDiscard}
         tooltip={editPanel?.state.isNewPanel ? 'Discard panel' : 'Discard panel changes'}
         size="sm"
-        disabled={!isEditedPanelDirty || !isDirty}
+        disabled={!isEditedPanelDirty}
         key="discard"
         fill="outline"
         variant="destructive"
@@ -613,41 +613,22 @@ function addDynamicActions(
   }
 }
 
-function useEditingLibraryPanel(panelEditor?: PanelEditor) {
-  const [isEditingLibraryPanel, setEditingLibraryPanel] = useState<Boolean>(false);
-
-  useEffect(() => {
-    if (panelEditor) {
-      const unsub = panelEditor.state.vizManager.subscribeToState((vizManagerState) =>
-        setEditingLibraryPanel(isLibraryPanel(vizManagerState.sourcePanel.resolve()))
-      );
-      return () => {
-        unsub.unsubscribe();
-      };
-    }
-    setEditingLibraryPanel(false);
-    return;
-  }, [panelEditor]);
-
-  return isEditingLibraryPanel;
-}
-
 // This hook handles when panelEditor is not defined to avoid conditionally hook usage
-function useVizManagerDirty(panelEditor?: PanelEditor) {
-  const [isDirty, setIsDirty] = useState<Boolean>(false);
+function usePanelEditDirty(panelEditor?: PanelEditor) {
+  const [isDirty, setIsDirty] = useState<Boolean | undefined>();
 
   useEffect(() => {
     if (panelEditor) {
-      const unsub = panelEditor.state.vizManager.subscribeToState((vizManagerState) =>
-        setIsDirty(vizManagerState.isDirty || false)
-      );
-      return () => {
-        unsub.unsubscribe();
-      };
+      const unsub = panelEditor.subscribeToState((state) => {
+        if (state.isDirty !== isDirty) {
+          setIsDirty(state.isDirty);
+        }
+      });
+
+      return () => unsub.unsubscribe();
     }
-    setIsDirty(false);
     return;
-  }, [panelEditor]);
+  }, [panelEditor, isDirty]);
 
   return isDirty;
 }

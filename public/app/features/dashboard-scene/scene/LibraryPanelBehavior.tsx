@@ -77,6 +77,16 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     }
   }
 
+  /**
+   * Removes itself from the parent panel's behaviors array
+   */
+  public unlink() {
+    const panel = this.parent;
+    if (panel instanceof VizPanel) {
+      panel.setState({ $behaviors: panel.state.$behaviors?.filter((b) => b !== this) });
+    }
+  }
+
   private async loadLibraryPanelFromPanelModel() {
     let vizPanel = this.parent;
 

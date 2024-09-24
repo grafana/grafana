@@ -40,19 +40,12 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
   }, [dashboard]);
 
   const onHistoryBlock = (location: H.Location) => {
-    const panelInEdit = dashboard.state.editPanel;
-    const vizPanelManager = panelInEdit?.state.vizManager;
-    const vizPanel = vizPanelManager?.state.panel;
+    const panelEditor = dashboard.state.editPanel;
+    const vizPanel = panelEditor?.getPanel();
     const search = new URLSearchParams(location.search);
 
     // Are we leaving panel edit & library panel?
-    if (
-      panelInEdit &&
-      vizPanel &&
-      isLibraryPanel(vizPanel) &&
-      vizPanelManager.state.isDirty &&
-      !search.has('editPanel')
-    ) {
+    if (panelEditor && vizPanel && isLibraryPanel(vizPanel) && panelEditor.state.isDirty && !search.has('editPanel')) {
       const libPanelBehavior = getLibraryPanelBehavior(vizPanel);
 
       showModal(SaveLibraryVizPanelModal, {
@@ -60,12 +53,12 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
         isUnsavedPrompt: true,
         libraryPanel: libPanelBehavior!,
         onConfirm: () => {
-          panelInEdit.onConfirmSaveLibraryPanel();
+          panelEditor.onConfirmSaveLibraryPanel();
           hideModal();
           moveToBlockedLocationAfterReactStateUpdate(location);
         },
         onDiscard: () => {
-          panelInEdit.onDiscard();
+          panelEditor.onDiscard();
           hideModal();
           moveToBlockedLocationAfterReactStateUpdate(location);
         },

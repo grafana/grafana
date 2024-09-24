@@ -1,15 +1,30 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
+import {
+  FieldConfigSource,
+  filterFieldConfigOverrides,
+  GrafanaTheme2,
+  isStandardFieldProp,
+  PanelPluginMeta,
+  restoreCustomOverrideRules,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
+import {
+  DeepPartial,
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  VizPanel,
+  sceneGraph,
+} from '@grafana/scenes';
 import { FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
+import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
-import { PanelEditor } from './PanelEditor';
 import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 
@@ -17,19 +32,46 @@ export interface PanelOptionsPaneState extends SceneObjectState {
   isVizPickerOpen?: boolean;
   searchQuery: string;
   listMode: OptionFilter;
+  panelRef: SceneObjectRef<VizPanel>;
+}
+
+interface PluginOptionsCache {
+  options: DeepPartial<{}>;
+  fieldConfig: FieldConfigSource<DeepPartial<{}>>;
 }
 
 export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
-  public constructor(state: Partial<PanelOptionsPaneState>) {
-    super({
-      searchQuery: '',
-      listMode: OptionFilter.All,
-      ...state,
-    });
-  }
+  private _cachedPluginOptions: Record<string, PluginOptionsCache | undefined> = {};
 
   onToggleVizPicker = () => {
     this.setState({ isVizPickerOpen: !this.state.isVizPickerOpen });
+  };
+
+  onChangePanelPlugin = (options: VizTypeChangeDetails) => {
+    const panel = this.state.panelRef.resolve();
+    const { options: prevOptions, fieldConfig: prevFieldConfig, pluginId: prevPluginId } = panel.state;
+    const pluginId = options.pluginId;
+
+    // clear custom options
+    let newFieldConfig: FieldConfigSource = {
+      defaults: {
+        ...prevFieldConfig.defaults,
+        custom: {},
+      },
+      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
+    };
+
+    this._cachedPluginOptions[prevPluginId] = { options: prevOptions, fieldConfig: prevFieldConfig };
+
+    const cachedOptions = this._cachedPluginOptions[pluginId]?.options;
+    const cachedFieldConfig = this._cachedPluginOptions[pluginId]?.fieldConfig;
+
+    if (cachedFieldConfig) {
+      newFieldConfig = restoreCustomOverrideRules(newFieldConfig, cachedFieldConfig);
+    }
+
+    panel.changePluginType(pluginId, cachedOptions, newFieldConfig);
+    this.onToggleVizPicker();
   };
 
   onSetSearchQuery = (searchQuery: string) => {
@@ -41,10 +83,10 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   };
 
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
-    const { isVizPickerOpen, searchQuery, listMode } = model.useState();
-    const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
-    const { pluginId } = vizManager.useState();
-    const { data } = sceneGraph.getData(vizManager.state.panel).useState();
+    const { isVizPickerOpen, searchQuery, listMode, panelRef } = model.useState();
+    const panel = panelRef.resolve();
+    const { pluginId } = panel.useState();
+    const { data } = sceneGraph.getData(panel).useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -61,12 +103,17 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
               />
             </div>
             <div className={styles.listOfOptions}>
-              <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} data={data} />
+              <PanelOptions panel={panel} searchQuery={searchQuery} listMode={listMode} data={data} />
             </div>
           </>
         )}
         {isVizPickerOpen && (
-          <PanelVizTypePicker vizManager={vizManager} onChange={model.onToggleVizPicker} data={data} />
+          <PanelVizTypePicker
+            panel={panel}
+            onChange={model.onChangePanelPlugin}
+            onClose={model.onToggleVizPicker}
+            data={data}
+          />
         )}
       </>
     );
