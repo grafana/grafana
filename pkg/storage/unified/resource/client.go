@@ -79,7 +79,7 @@ func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceClient, error) {
 		&authnlib.GrpcClientConfig{},
 		authnlib.WithDisableAccessTokenOption(),
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
-		authnlib.WithMetadataExtractorOption(orgIdExtractor),
+		authnlib.WithMetadataExtractorOption(namespaceExtractor),
 	)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceCl
 
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),
-		authnlib.WithMetadataExtractorOption(stackIdExtractor(cfg.StackID)),
+		authnlib.WithMetadataExtractorOption(namespaceCloudExtractor(cfg.StackID)),
 	}
 
 	if cfg.Env == setting.Dev {
@@ -146,18 +146,23 @@ func idTokenExtractor(ctx context.Context) (string, error) {
 	return "", fmt.Errorf("id-token not found")
 }
 
-func orgIdExtractor(ctx context.Context) (key string, values []string, err error) {
-	requester, err := identity.GetRequester(ctx)
+func namespaceExtractor(ctx context.Context) (string, []string, error) {
+	// Using identity.Requester instead of claims.AuthInfo because Namespace() relies on AllowedKubernetesNamespace, which is empty.
+	caller, err := identity.GetRequester(ctx)
 	if err != nil {
 		return "", nil, err
 	}
 
-	return authzlib.DefaultStackIDMetadataKey, []string{fmt.Sprintf("%d", requester.GetOrgID())}, nil
+	namespace := caller.GetAllowedKubernetesNamespace()
+	if namespace == "" {
+		namespace = claims.OrgNamespaceFormatter(caller.GetOrgID())
+	}
+	return authzlib.DefaultNamespaceMetadataKey, []string{namespace}, nil
 }
 
-func stackIdExtractor(stackID string) func(ctx context.Context) (key string, values []string, err error) {
+func namespaceCloudExtractor(stackID string) func(ctx context.Context) (key string, values []string, err error) {
 	return func(ctx context.Context) (key string, values []string, err error) {
-		return authzlib.DefaultStackIDMetadataKey, []string{stackID}, nil
+		return authzlib.DefaultNamespaceMetadataKey, []string{"stacks-" + stackID}, nil
 	}
 }
 

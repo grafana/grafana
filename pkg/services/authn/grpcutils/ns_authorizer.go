@@ -25,6 +25,6 @@ func NewNamespaceAuthorizer(cfg *setting.Cfg) authzlib.AuthorizeFunc {
 
 	return authzlib.NamespaceAuthorizationFunc(
 		na,
-		authzlib.MetadataStackIDExtractor(authzlib.DefaultStackIDMetadataKey),
+		authzlib.MetadataNamespaceExtractor(authzlib.DefaultNamespaceMetadataKey),
 	)
 }
