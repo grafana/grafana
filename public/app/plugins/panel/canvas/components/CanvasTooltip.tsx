@@ -54,11 +54,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const shouldDisplayTimeContentItem =
     timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
 
-  let elementFields: Field[] = [];
-  if (scene.data?.series) {
-    elementFields = getElementFields(scene.data?.series, element.options);
-  }
-
   const headerItem: VizTooltipItem | null = {
     label: element.getName(),
     value: '',
@@ -95,9 +90,11 @@ export const CanvasTooltip = ({ scene }: Props) => {
   }
   // ---------
 
-  elementFields.forEach((field) => {
-    links.push(...getDataLinks(field, getRowIndex(element.data.field, scene)));
-  });
+  if (scene.data?.series) {
+    getElementFields(scene.data?.series, element.options).forEach((field) => {
+      links.push(...getDataLinks(field, getRowIndex(element.data.field, scene)));
+    });
+  }
 
   const actions: Array<ActionModel<Field>> = [];
   const actionLookup = new Set<string>();
