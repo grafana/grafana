@@ -124,6 +124,8 @@ export interface DashboardSceneState extends SceneObjectState {
   kioskMode?: KioskMode;
   /** Share view */
   shareView?: string;
+  /** Renders panels in grid and filtered */
+  panelSearch?: string;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -916,6 +918,13 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     if (hasChanged) {
       // Temp solution for some core panels (like dashlist) to know that variables have changed
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
+    }
+
+    if (variable.state.name === '_panel_search') {
+      const str = variable.getValue();
+      if (typeof str === 'string') {
+        this._dashboard.setState({ panelSearch: str });
+      }
     }
 
     /**
