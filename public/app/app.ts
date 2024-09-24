@@ -398,6 +398,11 @@ function handleRedirectTo(): void {
     return;
   }
 
+  if (!contextSrv.user.isSignedIn) {
+    locationService.replace('/login');
+    return;
+  }
+
   const redirectTo = window.sessionStorage.getItem(RedirectToUrlKey);
   if (!redirectTo) {
     return;
