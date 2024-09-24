@@ -38,8 +38,8 @@ func LegacyUpdateCommandToUnstructured(cmd playlistsvc.UpdatePlaylistCommand) un
 	if cmd.UID == "" {
 		cmd.UID = util.GenerateShortUID()
 	}
-
 	obj.SetName(cmd.UID)
+	obj.SetUID(types.UID(cmd.UID))
 	return obj
 }
 

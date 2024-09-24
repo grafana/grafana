@@ -62,23 +62,6 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	accIn, err := meta.Accessor(in)
-	if err != nil {
-		return createdFromLegacy, err
-	}
-	if accIn.GetUID() != "" {
-		return nil, fmt.Errorf("there is an UID and it should not: %v", accIn.GetUID())
-	}
-
-	// accLegacy, err := meta.Accessor(createdFromLegacy)
-	// if err != nil {
-	// 	return createdFromLegacy, err
-	// }
-
-	// if accIn.GetName() == "" {
-	// 	accIn.SetName(accLegacy.GetName())
-	// }
-
 	startStorage := time.Now()
 	createdFromStorage, err := d.Storage.Create(ctx, in, createValidation, options)
 	if err != nil {
@@ -291,18 +274,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
-	//get foundObj and (updated) object so they can be stored in legacy store
-	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("object", foundObj).Error(err, "could not get object to update")
-			return nil, false, err
-		}
-		log.Info("object not found for update, creating one")
-	}
-
-	fmt.Printf("foundObj: %v\n", foundObj)
-
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
@@ -311,36 +282,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return objFromLegacy, created, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, "update", startLegacy)
-
-	//if the object is found, create a new updateWrapper with the object found
-	if foundObj != nil {
-		fmt.Println("FOUND!")
-		// err = addLabelsAndAnnotations(foundObj, objFromLegacy)
-		if err != nil {
-			return objFromLegacy, false, err
-		}
-		// objInfo = &updateWrapper{
-		// 	updated:  objFromLegacy,
-		// 	upstream: nil,
-		// }
-		uid := objInfo.Preconditions().UID
-		fmt.Printf("UID: %v\n", uid)
-	} else {
-		acc, err := meta.Accessor(objFromLegacy)
-		if err != nil {
-			return objFromLegacy, false, err
-		}
-		acc.SetResourceVersion("")
-		// acc.SetUID(types.UID(uuid.New().String()))
-		// enrichLegacyObject(foundObj, objFromLegacy, isCreated)
-		// objInfo = &updateWrapper{
-		// 	updated:  objFromLegacy,
-		// 	upstream: nil,
-		// }
-		forceAllowCreate = true
-	}
-
-	fmt.Printf("update wrapper:%v\n", objInfo)
 
 	startStorage := time.Now()
 	res, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
