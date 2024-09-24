@@ -9,7 +9,7 @@ import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { DataSourceInformation } from '../../../home/Insights';
 
 import { LIMIT_EVENTS } from './EventListSceneObject';
-import { historyResultToDataFrame } from './utils';
+import { getStateFilterFromInQueryParams, getStateFilterToInQueryParams, historyResultToDataFrame } from './utils';
 
 const historyDataSourceUid = '__history_api_ds_uid__';
 const historyDataSourcePluginId = '__history_api_ds_pluginId__';
@@ -47,8 +47,14 @@ class HistoryAPIDatasource extends RuntimeDataSource {
     const from = request.range.from.unix();
     const to = request.range.to.unix();
 
+    // Get the labels and states filters from the URL
+    const stateTo = getStateFilterToInQueryParams();
+    const stateFrom = getStateFilterFromInQueryParams();
+
+    const historyResult = await getHistory(from, to);
+
     return {
-      data: historyResultToDataFrame(await getHistory(from, to)),
+      data: historyResultToDataFrame(historyResult, { stateTo, stateFrom }),
     };
   }
 
