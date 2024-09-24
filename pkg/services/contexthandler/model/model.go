@@ -36,7 +36,8 @@ type ReqContext struct {
 	PerfmonTimer   prometheus.Summary
 	LookupTokenErr error
 
-	// FIXME: Remove this temporary flag after the rollout of FlagUseSessionStorageRedirect feature flag
+	// FIXME: Remove this temporary flag after the rollout of FlagUseSessionStorageForRedirection feature flag
+	// Tracking issue for cleaning up this flag: https://github.com/grafana/identity-access-team/issues/908
 	// UseSessionStorageRedirect is introduced to simplify the rollout of the new redirect logic
 	UseSessionStorageRedirect bool
 }
