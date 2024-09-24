@@ -46,7 +46,7 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       instanceState: _pluginInstanceState,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panel, options, fieldConfig, _pluginInstanceState]);
+  }, [data, panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
     if (panel instanceof VizPanel && isLibraryPanel(panel)) {

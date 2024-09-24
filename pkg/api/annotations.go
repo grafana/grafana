@@ -22,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+const defaultAnnotationsLimit = 100
+
 // swagger:route GET /annotations annotations getAnnotations
 //
 // Find Annotations.
@@ -47,6 +49,9 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		Type:         c.Query("type"),
 		MatchAny:     c.QueryBool("matchAny"),
 		SignedInUser: c.SignedInUser,
+	}
+	if query.Limit == 0 {
+		query.Limit = defaultAnnotationsLimit
 	}
 
 	// When dashboard UID present in the request, we ignore dashboard ID

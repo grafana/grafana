@@ -11,9 +11,9 @@ import { Trans } from 'app/core/internationalization';
 import { getExpireOptions } from '../../ShareSnapshotTab';
 
 const DASHBOARD_SNAPSHOT_URL =
-  'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot';
-const PANEL_SNAPSHOT_URL =
-  'https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#publish-a-snapshot-1';
+  'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/#share-a-snapshot';
+
+const PANEL_SNAPSHOT_URL = 'https://grafana.com/docs/grafana/next/dashboards/share-dashboards-panels/#panel-snapshot';
 
 interface Props {
   name: string;
