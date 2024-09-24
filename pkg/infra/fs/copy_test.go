@@ -78,11 +78,23 @@ func TestCopyFile_NonExistentDestDir(t *testing.T) {
 func TestCopyRecursive_NonExistentDest(t *testing.T) {
 	src := t.TempDir()
 
-	err := os.MkdirAll(filepath.Join(src, "data"), 0750)
+	err := os.MkdirAll(filepath.Join(src, "data", "nested"), 0750)
 	require.NoError(t, err)
 	// nolint:gosec
 	err = os.WriteFile(filepath.Join(src, "data", "file.txt"), []byte("Test"), 0644)
 	require.NoError(t, err)
+
+	linkPath := filepath.Join(src, "data", "nested", "link.txt")
+
+	err = os.Symlink(filepath.Join(src, "data", "file.txt"), linkPath)
+	require.NoError(t, err)
+
+	lstat, err := os.Lstat(linkPath)
+	require.NoError(t, err)
+	require.Equal(t, os.ModeSymlink, lstat.Mode()&os.ModeType)
+	stat, err := os.Stat(linkPath)
+	require.NoError(t, err)
+	require.NotEqual(t, os.ModeSymlink, stat.Mode()&os.ModeType)
 
 	dstParent := t.TempDir()
 
@@ -111,6 +123,12 @@ func TestCopyRecursive_ExistentDest(t *testing.T) {
 	compareDirs(t, src, dst)
 }
 
+//	func TestCopyRecursive_Permissions(t *testing.T) {
+//		dst := t.TempDir()
+//
+//		srcPath := filepath.Join("public", "app", "plugins", "mssql")
+//
+// }
 func compareDirs(t *testing.T, src, dst string) {
 	sfi, err := os.Stat(src)
 	require.NoError(t, err)
