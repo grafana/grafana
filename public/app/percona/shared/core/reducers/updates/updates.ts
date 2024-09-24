@@ -46,7 +46,20 @@ export const updatesSlice = createSlice({
     builder.addCase(checkUpdatesChangelogs.fulfilled, (state, { payload }) => ({
       ...state,
       isLoading: false,
-      changeLogs: payload,
+      changeLogs: {
+        ...payload,
+        updates: [
+          {
+            version: "PMM 3.0.1",
+            tag: "string",
+            timestamp: "2024-09-24T09:12:31.488Z",
+            releaseNotesUrl: "https://google.com",
+            releaseNotesText: "Advanced Alerts — Configure custom alerts more easily and and for more critical events.\n" +
+              "Real-time Query Insights — Gain immediate insights into query execution.\n" +
+              "Plus improvements, component updates, and bug fixes!",
+          }
+        ],
+      },
     }));
 
     builder.addCase(checkUpdatesChangelogs.rejected, (state) => ({

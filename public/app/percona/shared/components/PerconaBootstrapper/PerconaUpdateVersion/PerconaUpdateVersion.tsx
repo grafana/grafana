@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 
-import { Modal, useStyles2 } from '@grafana/ui';
+import { Modal, useStyles2, Button } from '@grafana/ui';
 import {
   checkUpdatesChangelogs,
   getSnoozeCurrentVersion,
@@ -10,6 +10,7 @@ import {
 import { getUpdatesInfo } from 'app/percona/shared/core/selectors';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
+import { dateTimeFormat } from '@grafana/data';
 
 import { Messages } from './PerconaUpdateVersion.constants';
 import { getStyles } from './PerconaUpdateVersion.styles';
@@ -24,6 +25,7 @@ const PerconaUpdateVersion: FC = () => {
 
   useEffect(() => {
     const showModal = async () => {
+      console.log('checkUpdatesChangelogs');
       await dispatch(checkUpdatesChangelogs());
       setShowUpdate(true);
     };
@@ -56,7 +58,7 @@ const PerconaUpdateVersion: FC = () => {
   }, [dispatch, updateAvailable, installed, latest, snoozeCurrentVersion, lastChecked]);
 
   // Snooze API
-  const dismissModal = async () => {
+  const snoozeUpdate = async () => {
     if (latest && latest.version) {
       const payload = {
         productTourCompleted: true, // ?
@@ -67,35 +69,34 @@ const PerconaUpdateVersion: FC = () => {
     }
   };
 
+  const onDismiss = () => {
+    setShowUpdate(false);
+  }
+
   return (
     <>
-      {showUpdate &&
-        changeLogs &&
-        (changeLogs?.updates.length > 1 ? (
-          <Modal title={Messages.titleOneUpdate}>
-            <h3 className={styles.version}>{changeLogs.updates[0].version}</h3>
-            <div className={styles.releaseNotesText}>{changeLogs.updates[0].releaseNotesText}</div>
-            <div className={styles.howToUpdateTitle}>{Messages.howToUpdate}</div>
-            <h3 className={styles.howToUpdateDescription}>{Messages.howToUpdateDescription}</h3>
+          <Modal onDismiss={onDismiss} title={Messages.titleOneUpdate} isOpen={showUpdate && changeLogs && changeLogs?.updates.length === 1 }>
+            <h5 className={styles.version}>{changeLogs?.updates[0].version}</h5>
+            <p className={styles.releaseNotesText}>{changeLogs?.updates[0].releaseNotesText}</p>
+            <h5 className={styles.howToUpdateTitle}>{Messages.howToUpdate}</h5>
+            <p className={styles.howToUpdateDescription}>{Messages.howToUpdateDescription}</p>
             <div>
-              <button onClick={dismissModal}>Snooze</button>
-              <button>Go to updates page</button>
+              <Button type="button" variant="secondary" onClick={snoozeUpdate}>Snooze</Button>
+              <Button type="button" variant="primary">Go to updates page</Button>
             </div>
           </Modal>
-        ) : (
-          <Modal title={Messages.titleMultipleUpdates}>
-            <div className={styles.newVersionsTitle}>{Messages.newVersions}</div>
+          <Modal onDismiss={onDismiss} title={Messages.titleMultipleUpdates} isOpen={showUpdate && changeLogs && changeLogs?.updates.length > 1}>
+            <h5 className={styles.newVersionsTitle}>{Messages.newVersions}</h5>
             <ul>
               {changeLogs?.updates.map((update: UpdatesChangelogs) => (
-                <li key={update.toString()}>{update.version}</li>
+                <li key={update.toString()}>{update.version}, {dateTimeFormat(update.timestamp)}</li>
               ))}
             </ul>
             <div>
-              <button onClick={dismissModal}>Snooze</button>
-              <button>Go to updates page</button>
+              <Button type="button" variant="secondary" onClick={snoozeUpdate}>Snooze</Button>
+              <Button type="button" variant="primary">Go to updates page</Button>
             </div>
           </Modal>
-        ))}
     </>
   );
 };

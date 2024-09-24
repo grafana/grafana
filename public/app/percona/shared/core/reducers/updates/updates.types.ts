@@ -33,7 +33,7 @@ export interface UpdatesChangelogs {
   version: string;
   tag: string;
   timestamp: string;
-  releaseNodesUrl: string;
+  releaseNotesUrl: string;
   releaseNotesText: string;
 }
 
