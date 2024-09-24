@@ -103,6 +103,41 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, true, ok)
 	})
+
+	t.Run("should skip authorization for configured verb", func(t *testing.T) {
+		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{
+			Resource: "dashboards",
+			Attr:     "uid",
+			Unchecked: map[string]bool{
+				"get": true,
+			},
+			Mapping: map[string]string{
+				"create": "dashboards:create",
+			},
+		})
+
+		ident := newIdent(accesscontrol.Permission{})
+
+		ok, err := a.HasAccess(context.Background(), ident, claims.AccessRequest{
+			Verb:      "get",
+			Namespace: "default",
+			Resource:  "dashboards",
+			Name:      "1",
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, true, ok)
+
+		ok, err = a.HasAccess(context.Background(), ident, claims.AccessRequest{
+			Verb:      "create",
+			Namespace: "default",
+			Resource:  "dashboards",
+			Name:      "1",
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, ok)
+	})
 }
 
 func newIdent(permissions ...accesscontrol.Permission) *identity.StaticRequester {

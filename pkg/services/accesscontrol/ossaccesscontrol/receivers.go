@@ -39,10 +39,6 @@ func ProvideReceiverPermissionsService(
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*ReceiverPermissionsService, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
-		return nil, nil
-	}
-
 	options := resourcepermissions.Options{
 		Resource:          "receivers",
 		ResourceAttribute: "uid",
@@ -66,7 +62,7 @@ func ProvideReceiverPermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &ReceiverPermissionsService{srv, service, log.New("resourcepermissions.receivers")}, nil
+	return &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}, nil
 }
 
 var _ accesscontrol.ReceiverPermissionsService = new(ReceiverPermissionsService)
@@ -79,6 +75,7 @@ type ReceiverPermissionsService struct {
 
 // SetDefaultPermissions sets the default permissions for a newly created receiver.
 func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string) {
+	r.log.Debug("Setting default permissions for receiver", "receiver_uid", uid)
 	permissions := defaultPermissions()
 	clearCache := false
 	if user != nil && user.IsIdentityType(claims.TypeUser) {
@@ -122,6 +119,7 @@ func copyPermissionUser(orgID int64) identity.Requester {
 // method to be used during receiver renaming that is necessitated by receiver uids being generated from the receiver
 // name.
 func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error) {
+	r.log.Debug("Copying permissions from receiver", "old_uid", oldUID, "new_uid", newUID)
 	currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldUID)
 	if err != nil {
 		return 0, err

@@ -20,7 +20,7 @@ func TestCorrelationModels(t *testing.T) {
 				OrgId:     1,
 				TargetUID: &targetUid,
 				Config:    *config,
-				Type:      TypeQuery,
+				Type:      query,
 			}
 
 			require.NoError(t, cmd.Validate())
@@ -30,7 +30,7 @@ func TestCorrelationModels(t *testing.T) {
 			config := &CorrelationConfig{
 				Field:  "field",
 				Target: map[string]any{},
-				Type:   TypeQuery,
+				Type:   query,
 			}
 			cmd := &CreateCorrelationCommand{
 				SourceUID: "some-uid",
