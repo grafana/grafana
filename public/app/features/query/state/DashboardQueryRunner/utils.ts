@@ -25,7 +25,7 @@ export function handleDatasourceSrvError(err: any): Observable<DataSourceApi | u
 }
 
 export const emptyResult: () => Observable<DashboardQueryRunnerWorkerResult> = () =>
-  of({ annotations: [], alertStates: [] });
+  of({ annotations: [], alertStates: [], correlations: [] });
 
 export function handleDashboardQueryRunnerWorkerError(err: any): Observable<DashboardQueryRunnerWorkerResult> {
   if (err.cancelled) {

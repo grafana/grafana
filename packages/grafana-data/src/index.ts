@@ -131,6 +131,7 @@ export {
 } from './events/common';
 
 // Field
+export { builtInVariablesGlobal, builtInVariables } from './field/correlationUtils';
 export {
   getFieldColorModeForField,
   getFieldColorMode,
@@ -596,6 +597,7 @@ export {
 } from './types/plugin';
 export {
   type InterpolateFunction,
+  type EnhancedInterpolateFunction,
   type PanelPluginMeta,
   type PanelData,
   type PanelProps,
@@ -797,6 +799,7 @@ export {
   type LinkTarget,
   type LinkModel,
   type LinkModelSupplier,
+  type VariableInterpolation,
   VariableOrigin,
   type VariableSuggestion,
   VariableSuggestionsScope,

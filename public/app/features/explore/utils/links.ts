@@ -19,8 +19,10 @@ import {
   DataLinkPostProcessor,
   ExploreUrlState,
   urlUtil,
+  builtInVariablesGlobal,
+  VariableInterpolation,
 } from '@grafana/data';
-import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
@@ -277,23 +279,6 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
   );
 }
 
-// See https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
-const builtInVariables = [
-  '__from',
-  '__to',
-  '__interval',
-  '__interval_ms',
-  '__org',
-  '__user',
-  '__range',
-  '__rate_interval',
-  '__timeFilter',
-  'timeFilter',
-  // These are only applicable in dashboards so should not affect this for Explore
-  // '__dashboard',
-  //'__name',
-];
-
 /**
  * Use variable map from templateSrv to determine if all variables have values
  * @param query
@@ -313,7 +298,7 @@ export function getVariableUsageInfo(
     allVariablesDefined: variables
       // We filter out builtin variables as they should be always defined but sometimes only later, like
       // __range_interval which is defined in prometheus at query time.
-      .filter((v) => !builtInVariables.includes(v.variableName))
+      .filter((v) => !builtInVariablesGlobal.includes(v.variableName))
       .every((variable) => variable.found),
   };
 }
