@@ -27,6 +27,13 @@ var QueryTypeDefinitionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	utils.TableColumns{}, // default table converter
 )
 
+var QueryConvertDefinitionResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"queryconvert", "queryconvert", "QueryConvertDefinition",
+	func() runtime.Object { return &QueryDataRequest{} },
+	func() runtime.Object { return &QueryDataRequest{} },
+	utils.TableColumns{}, // default table converter
+)
+
 var (
 	// SchemeGroupVersion is group version used to register these objects
 	SchemeGroupVersion = schema.GroupVersion{Group: GROUP, Version: VERSION}

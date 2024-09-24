@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/promlib/models"
+	"github.com/grafana/grafana/pkg/registry/apis/query/queryconvert"
 	"github.com/grafana/grafana/pkg/registry/apis/query/queryschema"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -221,6 +222,15 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Register hardcoded query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
+	if err != nil {
+		return nil, err
+	}
+
+	// Register query conversion
+	err = queryconvert.RegisterQueryTypes(b.client, storage, b.contextProvider)
+	if err != nil {
+		return nil, err
+	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
 	return err
