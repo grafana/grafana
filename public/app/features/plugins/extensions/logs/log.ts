@@ -75,11 +75,15 @@ export class ExtensionsLog {
   }
 
   asObservable(): Observable<LogItem> {
+    console.log('subject', this.subject);
     if (!this.subject) {
       // Lazily create the subject on first subscription to prevent
       // to create buffers when no subscribers exists
       this.subject = new ReplaySubject<LogItem>(1000, 1000 * 60 * 10);
-      this.channel.onmessage = (msg: MessageEvent<LogItem>) => this.subject?.next(msg.data);
+      this.channel.onmessage = (msg: MessageEvent<LogItem>) => {
+        console.log('emitting');
+        this.subject?.next(msg.data);
+      };
     }
 
     return this.subject.asObservable();

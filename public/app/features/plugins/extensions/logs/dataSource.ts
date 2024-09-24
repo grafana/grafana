@@ -79,12 +79,10 @@ export class ExtensionsLogDataSource extends RuntimeDataSource<LogDataQuery> {
       }),
       filter((item: LogItem, index: number) => {
         const { extensionPointIds, levels, pluginIds } = query;
-        console.log('query', query);
 
         if (extensionPointIds) {
           const pointId = item.labels['extensionPointId'];
           if (isString(pointId)) {
-            console.log('extensionPointId', pointId);
             return extensionPointIds.has(pointId);
           } else {
             return false;
@@ -105,7 +103,7 @@ export class ExtensionsLogDataSource extends RuntimeDataSource<LogDataQuery> {
 
         return true;
       }),
-      map((item: LogItem) => {
+      map((item: LogItem, index: number) => {
         frame.add({
           timestamp: item.timestamp,
           body: item.message,

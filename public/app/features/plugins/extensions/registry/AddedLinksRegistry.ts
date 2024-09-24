@@ -80,7 +80,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
 
       const extensionPointIds = Array.isArray(targets) ? targets : [targets];
       for (const extensionPointId of extensionPointIds) {
-        const pointIdLog = configLog.child({ id: extensionPointId });
+        const pointIdLog = configLog.child({ extensionPointId });
 
         if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
           pointIdLog.error(
@@ -101,7 +101,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
           registry[extensionPointId] = [];
         }
 
-        pointIdLog.debug('Successfully added link');
+        pointIdLog.debug(`Added link from '${pluginId}' to '${extensionPointId}'`);
 
         registry[extensionPointId].push({ ...registryItem, pluginId, extensionPointId });
       }

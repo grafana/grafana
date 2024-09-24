@@ -64,7 +64,7 @@ export class AddedComponentsRegistry extends Registry<
 
       const extensionPointIds = Array.isArray(config.targets) ? config.targets : [config.targets];
       for (const extensionPointId of extensionPointIds) {
-        const pointIdLog = configLog.child({ id: extensionPointId });
+        const pointIdLog = configLog.child({ extensionPointId });
 
         if (!isExtensionPointIdValid(pluginId, extensionPointId)) {
           pointIdLog.warning(
