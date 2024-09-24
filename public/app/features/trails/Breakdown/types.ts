@@ -5,7 +5,7 @@ export type BreakdownLayoutType = (typeof BREAKDOWN_LAYOUT_TYPES)[number];
 export function isBreakdownLayoutType(
   breakdownLayoutType: string | null | undefined
 ): breakdownLayoutType is BreakdownLayoutType {
-  return !!breakdownLayoutType && breakdownLayoutType in BREAKDOWN_LAYOUT_TYPES;
+  return BREAKDOWN_LAYOUT_TYPES.includes(breakdownLayoutType as BreakdownLayoutType);
 }
 
 export type BreakdownLayoutChangeCallback = (newBreakdownLayout: BreakdownLayoutType) => void;

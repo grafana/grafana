@@ -273,3 +273,8 @@ func (m *Mock) Check(ctx context.Context, in accesscontrol.CheckRequest) (bool, 
 func (m *Mock) ListObjects(ctx context.Context, in accesscontrol.ListObjectsRequest) ([]string, error) {
 	return nil, nil
 }
+
+// WithoutResolvers implements fullAccessControl.
+func (m *Mock) WithoutResolvers() accesscontrol.AccessControl {
+	return m
+}

@@ -12,7 +12,6 @@ import (
 	model "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 )
 
 func convertToK8sResources(
@@ -108,14 +107,14 @@ func convertToK8sResource(
 
 var permissionMapper = map[ngmodels.ReceiverPermission]string{
 	ngmodels.ReceiverPermissionReadSecret: "canReadSecrets",
-	//ngmodels.ReceiverPermissionAdmin:      "canAdmin", // TODO: Add when resource permissions are implemented.
-	ngmodels.ReceiverPermissionWrite:  "canWrite",
-	ngmodels.ReceiverPermissionDelete: "canDelete",
+	ngmodels.ReceiverPermissionAdmin:      "canAdmin",
+	ngmodels.ReceiverPermissionWrite:      "canWrite",
+	ngmodels.ReceiverPermissionDelete:     "canDelete",
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
 	domain := &ngmodels.Receiver{
-		UID:          legacy_storage.NameToUid(receiver.Spec.Title),
+		UID:          receiver.Name,
 		Name:         receiver.Spec.Title,
 		Integrations: make([]*ngmodels.Integration, 0, len(receiver.Spec.Integrations)),
 		Version:      receiver.ResourceVersion,

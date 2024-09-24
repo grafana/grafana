@@ -83,6 +83,10 @@ func (f FakeAccessControl) ListObjects(ctx context.Context, in accesscontrol.Lis
 	return nil, nil
 }
 
+func (f FakeAccessControl) WithoutResolvers() accesscontrol.AccessControl {
+	return f
+}
+
 type FakeStore struct {
 	ExpectedUserPermissions       []accesscontrol.Permission
 	ExpectedBasicRolesPermissions []accesscontrol.Permission

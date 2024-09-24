@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -18,10 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -351,5 +354,89 @@ func TestRemoveForceLoginparams(t *testing.T) {
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
 			require.Equal(t, tc.exp, removeForceLoginParams(tc.inp))
 		})
+	}
+}
+
+func TestCanAdminPlugin(t *testing.T) {
+	type testCase struct {
+		desc       string
+		url        string
+		isSignedIn bool
+		orgRole    org.RoleType
+		expCode    int
+		expReached bool
+	}
+
+	ac := &actest.FakeAccessControl{}
+	tests := []testCase{
+		{
+			desc:       "CanAdminPlugins should redirect to login when anonymous is enabled, no user signed in, and forceLogin is present in the query param",
+			url:        "/plugins/test-plugin?forceLogin=true",
+			isSignedIn: false,
+			orgRole:    org.RoleAdmin,
+			expCode:    http.StatusFound,
+			expReached: false,
+		},
+		{
+			desc:       "CanAdminPlugins should bypass when user is signed in",
+			url:        "/plugins/test-plugin",
+			expCode:    http.StatusOK,
+			orgRole:    org.RoleAdmin,
+			isSignedIn: true,
+			expReached: true,
+		},
+		{
+			desc:       "CanAdminPlugins should return forbidden error when role is not present",
+			url:        "/plugins/test",
+			isSignedIn: true,
+			orgRole:    org.RoleViewer,
+			expCode:    http.StatusFound, // it redirects to Home not 403 page.
+			expReached: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var reached bool
+			server := web.New()
+			server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
+			server.Use(contextProvider(func(c *contextmodel.ReqContext) {
+				c.IsSignedIn = tt.isSignedIn
+				c.OrgRole = tt.orgRole
+				c.AllowAnonymous = true
+			}))
+			server.Use(CanAdminPlugins(&setting.Cfg{PluginAdminEnabled: true}, ac))
+			server.Get("/plugins/:id", func(c *contextmodel.ReqContext) {
+				reached = true
+				c.Resp.WriteHeader(http.StatusOK)
+			})
+
+			request, err := http.NewRequest(http.MethodGet, tt.url, nil)
+			assert.NoError(t, err)
+			recorder := httptest.NewRecorder()
+
+			server.ServeHTTP(recorder, request)
+
+			res := recorder.Result()
+			assert.Equal(t, tt.expCode, res.StatusCode)
+			assert.Equal(t, tt.expReached, reached)
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
+func contextProvider(modifiers ...func(c *contextmodel.ReqContext)) web.Handler {
+	return func(c *web.Context) {
+		reqCtx := &contextmodel.ReqContext{
+			Context:      c,
+			Logger:       log.New(""),
+			SignedInUser: &user.SignedInUser{},
+			IsSignedIn:   false,
+			SkipDSCache:  true,
+		}
+		for _, modifier := range modifiers {
+			modifier(reqCtx)
+		}
+		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
 	}
 }
