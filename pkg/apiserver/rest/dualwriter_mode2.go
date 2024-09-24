@@ -92,7 +92,7 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		log.Info("object from legacy and storage are not equal")
 	}
 
-	fmt.Printf("OUT FROM LEGACY: &v\n", createdFromLegacy)
+	fmt.Printf("OUT FROM LEGACY: %v\n", createdFromLegacy)
 
 	return createdFromLegacy, err
 }
