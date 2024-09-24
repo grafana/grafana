@@ -157,7 +157,7 @@ func getVersionFolder(cfg uploadConfig, event string) (string, error) {
 }
 
 func uploadPackages(cfg uploadConfig) error {
-	log.Printf("Uploading Grafana packages, version %s, %s edition, %s mode...\n", cfg.Version, cfg.edition,
+	log.Printf("UpLoading Rubix Dashboard packages, version %s, %s edition, %s mode...\n", cfg.Version, cfg.edition,
 		cfg.versionMode)
 
 	if err := gcloud.ActivateServiceAccount(); err != nil {

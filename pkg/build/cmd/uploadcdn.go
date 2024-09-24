@@ -37,7 +37,7 @@ func UploadCDN(c *cli.Context) error {
 	}
 
 	edition := os.Getenv("EDITION")
-	log.Printf("Uploading Grafana CDN Assets, version %s, %s edition...", version, edition)
+	log.Printf("UpLoading Rubix Dashboard CDN Assets, version %s, %s edition...", version, edition)
 
 	editionPath := ""
 
