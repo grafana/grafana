@@ -75,6 +75,7 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	}
 
 	if p.client.NegotiatedVersion() < 2 {
+		p.state = pluginStateStartFail
 		return errors.New("plugin protocol version not supported")
 	}
 	p.pluginClient, err = newClientV2(p.descriptor, p.logger, rpcClient)
@@ -147,7 +148,7 @@ func (p *grpcPlugin) getPluginClient(ctx context.Context) (*ClientV2, bool) {
 	p.mutex.RLock()
 	if p.client != nil && !p.client.Exited() && p.pluginClient != nil {
 		p.mutex.RUnlock()
-		return p.pluginClient, false
+		return p.pluginClient, true
 	}
 
 	logger := p.Logger().FromContext(ctx)
