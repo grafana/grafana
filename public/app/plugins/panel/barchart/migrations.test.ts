@@ -17,7 +17,7 @@ describe('Bar chart Migrations', () => {
       angular: {
         xaxis: {
           mode: 'series',
-          values: 'avg',
+          values: ['avg'],
         },
       },
     };
@@ -29,7 +29,8 @@ describe('Bar chart Migrations', () => {
 
     const reduceTransform = transformations[0];
     expect(reduceTransform.id).toBe('reduce');
-    expect(reduceTransform.options.reducers).toBe('avg');
+    expect(reduceTransform.options.reducers).toHaveLength(1);
+    expect(reduceTransform.options.reducers[0]).toBe('mean');
 
     const transposeTransform = transformations[1];
     expect(transposeTransform.id).toBe('transpose');
