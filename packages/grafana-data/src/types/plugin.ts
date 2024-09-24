@@ -98,6 +98,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   angular?: AngularMeta;
   angularDetected?: boolean;
   loadingStrategy?: PluginLoadingStrategy;
+  extensions?: PluginExtensions;
 }
 
 interface PluginDependencyInfo {
@@ -111,6 +112,40 @@ export interface PluginDependencies {
   grafanaDependency?: string;
   grafanaVersion: string;
   plugins: PluginDependencyInfo[];
+  extensions: {
+    // A list of exposed component IDs
+    exposedComponents: string[];
+  };
+}
+
+export interface PluginExtensions {
+  // The component extensions that the plugin registers
+  addedComponents: Array<{
+    targets: string[];
+    title: string;
+    description: string;
+  }>;
+
+  // The link extensions that the plugin registers
+  addedLinks: Array<{
+    targets: string[];
+    title: string;
+    description: string;
+  }>;
+
+  // The React components that the plugin exposes
+  exposedComponents: Array<{
+    id: string;
+    title: string;
+    description: string;
+  }>;
+
+  // The extension points that the plugin provides
+  extensionPoints: Array<{
+    id: string;
+    title: string;
+    description: string;
+  }>;
 }
 
 export enum PluginIncludeType {
