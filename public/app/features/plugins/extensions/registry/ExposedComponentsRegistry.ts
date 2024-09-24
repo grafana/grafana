@@ -2,7 +2,7 @@ import { ReplaySubject } from 'rxjs';
 
 import { PluginExtensionExposedComponentConfig } from '@grafana/data';
 
-import { isExposedComponentMetaInfoMissing, logWarning } from '../utils';
+import { isExposedComponentMetaInfoMissing, isGrafanaDevMode, logWarning } from '../utils';
 import { extensionPointEndsWithVersion } from '../validators';
 
 import { Registry, RegistryType, PluginExtensionConfigs } from './Registry';
@@ -68,7 +68,7 @@ export class ExposedComponentsRegistry extends Registry<
         continue;
       }
 
-      if (pluginId !== 'grafana' && isExposedComponentMetaInfoMissing(pluginId, config)) {
+      if (pluginId !== 'grafana' && isGrafanaDevMode && isExposedComponentMetaInfoMissing(pluginId, config)) {
         continue;
       }
 

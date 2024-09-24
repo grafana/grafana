@@ -3,7 +3,7 @@ import { ReplaySubject } from 'rxjs';
 import { IconName, PluginExtensionAddedLinkConfig } from '@grafana/data';
 import { PluginAddedLinksConfigureFunc, PluginExtensionEventHelpers } from '@grafana/data/src/types/pluginExtensions';
 
-import { isAddedLinkMetaInfoMissing, logWarning } from '../utils';
+import { isAddedLinkMetaInfoMissing, isGrafanaDevMode, logWarning } from '../utils';
 import {
   extensionPointEndsWithVersion,
   isConfigureFnValid,
@@ -73,7 +73,7 @@ export class AddedLinksRegistry extends Registry<AddedLinkRegistryItem[], Plugin
         continue;
       }
 
-      if (pluginId !== 'grafana' && isAddedLinkMetaInfoMissing(pluginId, config)) {
+      if (pluginId !== 'grafana' && isGrafanaDevMode && isAddedLinkMetaInfoMissing(pluginId, config)) {
         continue;
       }
 
