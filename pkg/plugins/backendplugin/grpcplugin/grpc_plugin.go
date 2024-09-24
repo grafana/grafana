@@ -146,8 +146,8 @@ func (p *grpcPlugin) Target() backendplugin.Target {
 
 func (p *grpcPlugin) getPluginClient(ctx context.Context) (*ClientV2, bool) {
 	p.mutex.RLock()
+	defer p.mutex.RUnlock()
 	if p.client != nil && !p.client.Exited() && p.pluginClient != nil {
-		p.mutex.RUnlock()
 		return p.pluginClient, true
 	}
 
@@ -168,7 +168,6 @@ func (p *grpcPlugin) getPluginClient(ctx context.Context) (*ClientV2, bool) {
 		logger.Debug("Plugin client has stopped")
 	}
 
-	p.mutex.RUnlock()
 	return nil, false
 }
 
