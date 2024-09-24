@@ -64,7 +64,7 @@ type Plugin struct {
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
 	log            log.Logger
-	trace          tracing.Tracer
+	Trace          tracing.Tracer
 
 	SkipHostEnvVars bool
 
@@ -275,11 +275,11 @@ func (p *Plugin) Logger() log.Logger {
 }
 
 func (p *Plugin) Tracer() tracing.Tracer {
-	return p.trace
+	return p.Trace
 }
 
 func (p *Plugin) SetTracer(t tracing.Tracer) {
-	p.trace = t
+	p.Trace = t
 }
 
 func (p *Plugin) SetLogger(l log.Logger) {
