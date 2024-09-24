@@ -4,7 +4,7 @@
  */
 
 import { produce } from 'immer';
-import { remove } from 'lodash';
+import { merge, remove, set } from 'lodash';
 import { useMemo } from 'react';
 
 import { alertingApi } from 'app/features/alerting/unified/api/alertingApi';
@@ -349,9 +349,9 @@ export function useDeleteContactPoint({ alertmanager }: BaseAlertmanagerArgs) {
  * so we should not tell the API that we want to preserve it. Those values will instead be sent within `settings`
  */
 const mapIntegrationSettingsForK8s = (integration: GrafanaManagedReceiverConfig): GrafanaManagedReceiverConfig => {
-  const { secureSettings, ...restOfIntegration } = integration;
-
+  const { secureSettings, settings, ...restOfIntegration } = integration;
   const secureFields = Object.entries(secureSettings || {}).reduce((acc, [key, value]) => {
+    // If a secure field has no (changed) value, then we tell the backend to persist it
     if (value === undefined) {
       return {
         ...acc,
@@ -361,10 +361,24 @@ const mapIntegrationSettingsForK8s = (integration: GrafanaManagedReceiverConfig)
     return acc;
   }, {});
 
+  const mappedSecureSettings = Object.entries(secureSettings || {}).reduce((acc, [key, value]) => {
+    // If the value is an empty string/falsy value, then we need to omit it from the payload
+    // so the backend knows to remove it
+    if (!value) {
+      return acc;
+    }
+
+    // Otherwise, we send the value of the secure field
+    return set(acc, key, value);
+  }, {});
+
+  // Merge settings properly with lodash so we don't lose any information from nested keys/secure settings
+  const mergedSettings = merge({}, settings, mappedSecureSettings);
+
   return {
     ...restOfIntegration,
     secureFields,
-    settings: { ...restOfIntegration.settings, ...secureSettings },
+    settings: mergedSettings,
   };
 };
 const grafanaContactPointToK8sReceiver = (

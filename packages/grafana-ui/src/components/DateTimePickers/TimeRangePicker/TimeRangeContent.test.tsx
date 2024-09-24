@@ -76,6 +76,23 @@ describe('TimeRangeForm', () => {
     expect(getByLabelText('To')).toHaveValue(toValue);
   });
 
+  it('should parse UTC iso strings and render in current timezone', () => {
+    const { getByLabelText } = setup(
+      {
+        from: defaultTimeRange.from,
+        to: defaultTimeRange.to,
+        raw: {
+          from: defaultTimeRange.from.toISOString(),
+          to: defaultTimeRange.to.toISOString(),
+        },
+      },
+      'America/New_York'
+    );
+
+    expect(getByLabelText('From')).toHaveValue('2021-06-16 20:00:00');
+    expect(getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
+  });
+
   it('should close calendar when clicking the close icon', () => {
     const { queryByLabelText, getAllByRole, getByRole } = setup();
     const { TimePicker } = selectors.components;

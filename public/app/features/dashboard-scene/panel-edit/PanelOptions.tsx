@@ -13,24 +13,23 @@ import {
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
-import { VizPanelManager } from './VizPanelManager';
 import { getPanelFrameCategory2 } from './getPanelFrameOptions';
 
 interface Props {
-  vizManager: VizPanelManager;
+  panel: VizPanel;
   searchQuery: string;
   listMode: OptionFilter;
   data?: PanelData;
 }
 
-export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMode, data }) => {
-  const { panel, repeat } = vizManager.useState();
+export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
+  const layoutElement = panel.parent!;
+  const layoutElementState = layoutElement.useState();
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const panelFrameOptions = useMemo(
-    () => getPanelFrameCategory2(vizManager, panel, repeat),
-    [vizManager, panel, repeat]
+    () => getPanelFrameCategory2(panel, layoutElementState),
+    [panel, layoutElementState]
   );
 
   const visualizationOptions = useMemo(() => {
@@ -47,7 +46,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
       instanceState: _pluginInstanceState,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panel, options, fieldConfig, _pluginInstanceState]);
+  }, [data, panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
     if (panel instanceof VizPanel && isLibraryPanel(panel)) {
