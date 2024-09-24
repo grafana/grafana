@@ -161,7 +161,7 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	mg.AddMigration("add cloud_migration_resource.name column", NewAddColumnMigration(migrationResourceTable, &Column{
 		Name:     "name",
-		Type:     DB_Varchar,
+		Type:     DB_Text,
 		Nullable: true,
 	}))
 }
