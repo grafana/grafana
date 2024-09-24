@@ -36,7 +36,7 @@ export class NewFrontendAssetsChecker {
   /**
    * Tries to detect some navigation events where it's safe to trigger a reload
    */
-  private locationUpdated(location: Location) {
+  protected locationUpdated(location: Location) {
     if (this.prevLocationPath === location.pathname) {
       return;
     }
@@ -47,7 +47,7 @@ export class NewFrontendAssetsChecker {
     if (newLocationSegments[1] === '/' && this.prevLocationPath !== '/') {
       this.reloadIfUpdateDetected();
     }
-    // Moving to dashboard (or changing dashboards)
+    // Moving to dashboard (or changing dashboards, except when we're playing a playlist)
     else if (newLocationSegments[1] === 'd' && !playlistSrv.state.isPlaying) {
       this.reloadIfUpdateDetected();
     }
