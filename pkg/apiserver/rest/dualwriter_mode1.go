@@ -280,6 +280,7 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 		return objLegacy, async, err
 	}
 
+
 	//nolint:errcheck
 	go d.updateOnUnifiedStorage(ctx, objLegacy, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 
