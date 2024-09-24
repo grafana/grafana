@@ -16,13 +16,6 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var DisplayResource = utils.NewResourceInfo(GROUP, VERSION,
-	"display", "display", "Display",
-	func() runtime.Object { return &DisplayList{} },
-	func() runtime.Object { return &DisplayList{} },
-	utils.TableColumns{},
-)
-
 var UserResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"users", "user", "User",
 	func() runtime.Object { return &User{} },

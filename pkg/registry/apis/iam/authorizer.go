@@ -34,7 +34,7 @@ func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIden
 			}),
 		},
 		accesscontrol.ResourceAuthorizerOptions{
-			Resource: iamv0.DisplayResource.GetName(),
+			Resource: "display",
 			Unchecked: map[string]bool{
 				"get":  true,
 				"list": true,

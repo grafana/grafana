@@ -116,10 +116,8 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		storage[ssoResource.StoragePath()] = sso.NewLegacyStore(b.sso)
 	}
 
-	identityDisplayResource := iamv0.DisplayResource
-
 	// The display endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage[identityDisplayResource.StoragePath()] = user.NewLegacyDisplayREST(b.store)
+	storage["display"] = user.NewLegacyDisplayREST(b.store)
 
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
 	return nil

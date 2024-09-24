@@ -35,7 +35,7 @@ func NewLegacyDisplayREST(store legacy.LegacyIdentityStore) *LegacyDisplayREST {
 }
 
 func (r *LegacyDisplayREST) New() runtime.Object {
-	return iamv0.DisplayResource.NewFunc()
+	return &iamv0.DisplayList{}
 }
 
 func (r *LegacyDisplayREST) Destroy() {}
@@ -45,7 +45,7 @@ func (r *LegacyDisplayREST) NamespaceScoped() bool {
 }
 
 func (r *LegacyDisplayREST) GetSingularName() string {
-	return iamv0.DisplayResource.GetSingularName()
+	return "display"
 }
 
 func (r *LegacyDisplayREST) ProducesMIMETypes(verb string) []string {
