@@ -30,7 +30,7 @@ type searchResult struct {
 }
 
 func (dr *DashboardServiceImpl) FindDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	if dr.cfg.Zanzana.SingleRead {
+	if dr.cfg.Zanzana.ZanzanaOnlyEvaluation {
 		return dr.findDashboardsZanzanaSingleRead(ctx, query)
 	}
 	return dr.findDashboardsZanzanaCompare(ctx, query)
