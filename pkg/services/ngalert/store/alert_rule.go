@@ -46,6 +46,9 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 			return err
 		}
 		logger.Debug("Deleted alert rules", "count", rows)
+		if rows > 0 {
+			go st.Bus.Publish(ctx, &RuleChangeEvent{})
+		}
 
 		rows, err = sess.Table(alertRuleVersion{}).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
 		if err != nil {
@@ -225,7 +228,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
-			st.Bus.Publish(ctx, &RuleChangeEvent{})
+			go st.Bus.Publish(ctx, &RuleChangeEvent{})
 		}
 		return nil
 	})
@@ -275,7 +278,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
-			st.Bus.Publish(ctx, &RuleChangeEvent{})
+			go st.Bus.Publish(ctx, &RuleChangeEvent{})
 		}
 		return nil
 	})
