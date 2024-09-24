@@ -34,7 +34,6 @@ import { AlertQuery, PromRulesResponse } from 'app/types/unified-alerting-dto';
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import * as utils from '../../utils/utils';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
-import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
 
@@ -361,7 +360,7 @@ async function clickNewButton() {
 function createModel(dashboard: DashboardModel) {
   const scene = createDashboardSceneFromDashboardModel(dashboard, {} as DashboardDataDTO);
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34))!;
-  const model = new PanelDataAlertingTab(VizPanelManager.createFor(vizPanel));
+  const model = new PanelDataAlertingTab({ panelRef: vizPanel.getRef() });
   jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);
   return model;
 }
