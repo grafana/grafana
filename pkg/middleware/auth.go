@@ -98,6 +98,10 @@ func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *c
 			accessForbidden(c)
 			return
 		}
+		if c.AllowAnonymous && !c.IsSignedIn && shouldForceLogin(c) {
+			notAuthorized(c)
+			return
+		}
 	}
 }
 
@@ -127,7 +131,7 @@ func RoleAppPluginAuth(accessControl ac.AccessControl, ps pluginstore.Store, fea
 
 			if normalizeIncludePath(u.Path) == path {
 				useRBAC := features.IsEnabledGlobally(featuremgmt.FlagAccessControlOnCall) && i.RequiresRBACAction()
-				if useRBAC && !hasAccess(ac.EvalPermission(i.Action)) {
+				if useRBAC && !hasAccess(pluginaccesscontrol.GetPluginRouteEvaluator(pluginID, i.Action)) {
 					logger.Debug("Plugin include is covered by RBAC, user doesn't have access", "plugin", pluginID, "include", i.Name)
 					permitted = false
 					break

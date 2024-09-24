@@ -18,7 +18,7 @@ export function GrafanaRouteLoading() {
 const getStyles = (theme: GrafanaTheme2) => ({
   loadingPage: css({
     backgroundColor: theme.colors.background.primary,
-    height: '100%',
+    flex: 1,
     flexDrection: 'column',
     display: 'flex',
     justifyContent: 'center',

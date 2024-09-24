@@ -6,8 +6,8 @@ package v0alpha1
 
 import (
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/listers"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -24,25 +24,17 @@ type ExternalNameLister interface {
 
 // externalNameLister implements the ExternalNameLister interface.
 type externalNameLister struct {
-	indexer cache.Indexer
+	listers.ResourceIndexer[*v0alpha1.ExternalName]
 }
 
 // NewExternalNameLister returns a new ExternalNameLister.
 func NewExternalNameLister(indexer cache.Indexer) ExternalNameLister {
-	return &externalNameLister{indexer: indexer}
-}
-
-// List lists all ExternalNames in the indexer.
-func (s *externalNameLister) List(selector labels.Selector) (ret []*v0alpha1.ExternalName, err error) {
-	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
-		ret = append(ret, m.(*v0alpha1.ExternalName))
-	})
-	return ret, err
+	return &externalNameLister{listers.New[*v0alpha1.ExternalName](indexer, v0alpha1.Resource("externalname"))}
 }
 
 // ExternalNames returns an object that can list and get ExternalNames.
 func (s *externalNameLister) ExternalNames(namespace string) ExternalNameNamespaceLister {
-	return externalNameNamespaceLister{indexer: s.indexer, namespace: namespace}
+	return externalNameNamespaceLister{listers.NewNamespaced[*v0alpha1.ExternalName](s.ResourceIndexer, namespace)}
 }
 
 // ExternalNameNamespaceLister helps list and get ExternalNames.
@@ -60,26 +52,5 @@ type ExternalNameNamespaceLister interface {
 // externalNameNamespaceLister implements the ExternalNameNamespaceLister
 // interface.
 type externalNameNamespaceLister struct {
-	indexer   cache.Indexer
-	namespace string
-}
-
-// List lists all ExternalNames in the indexer for a given namespace.
-func (s externalNameNamespaceLister) List(selector labels.Selector) (ret []*v0alpha1.ExternalName, err error) {
-	err = cache.ListAllByNamespace(s.indexer, s.namespace, selector, func(m interface{}) {
-		ret = append(ret, m.(*v0alpha1.ExternalName))
-	})
-	return ret, err
-}
-
-// Get retrieves the ExternalName from the indexer for a given namespace and name.
-func (s externalNameNamespaceLister) Get(name string) (*v0alpha1.ExternalName, error) {
-	obj, exists, err := s.indexer.GetByKey(s.namespace + "/" + name)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, errors.NewNotFound(v0alpha1.Resource("externalname"), name)
-	}
-	return obj.(*v0alpha1.ExternalName), nil
+	listers.ResourceIndexer[*v0alpha1.ExternalName]
 }

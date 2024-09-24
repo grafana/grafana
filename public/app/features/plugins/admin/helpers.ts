@@ -81,6 +81,7 @@ export function mergeLocalsAndRemotes({
         }
 
         catalogPlugin.isUninstallingFromInstance = Boolean(localCounterpart) && !instancesMap.has(remotePlugin.slug);
+        catalogPlugin.isProvisioned = provisionedSet.has(remotePlugin.slug);
       }
 
       catalogPlugins.push(catalogPlugin);
@@ -141,6 +142,8 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isPublished: true,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
+    isManaged: isManagedPlugin(id),
+    isPreinstalled: isPreinstalledPlugin(id),
     isDeprecated: status === RemotePluginStatus.Deprecated,
     isCore: plugin.internal,
     isDev: false,
@@ -149,6 +152,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     error: error?.errorCode,
     angularDetected,
     isFullyInstalled: isDisabled,
+    latestVersion: plugin.version,
   };
 }
 
@@ -190,12 +194,15 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isDeprecated: false,
     isDev: Boolean(dev),
     isEnterprise: false,
+    isManaged: isManagedPlugin(id),
+    isPreinstalled: isPreinstalledPlugin(id),
     type,
     error: error?.errorCode,
     accessControl: accessControl,
     angularDetected,
     isFullyInstalled: true,
     iam: plugin.iam,
+    latestVersion: plugin.latestVersion,
   };
 }
 
@@ -237,6 +244,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isDisabled: isDisabled,
     isDeprecated: remote?.status === RemotePluginStatus.Deprecated,
     isPublished: true,
+    isManaged: isManagedPlugin(id),
+    isPreinstalled: isPreinstalledPlugin(id),
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
     // TODO<check if we would like to keep preferring the remote version>
@@ -256,6 +265,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     angularDetected: local?.angularDetected ?? remote?.angularDetected,
     isFullyInstalled: Boolean(local) || isDisabled,
     iam: local?.iam,
+    latestVersion: local?.latestVersion || remote?.version || '',
   };
 }
 
@@ -372,6 +382,19 @@ function isNotHiddenByConfig(id: string) {
   return !pluginCatalogHiddenPlugins.includes(id);
 }
 
+export function isManagedPlugin(id: string) {
+  const { pluginCatalogManagedPlugins }: { pluginCatalogManagedPlugins: string[] } = config;
+
+  return pluginCatalogManagedPlugins?.includes(id);
+}
+
+export function isPreinstalledPlugin(id: string): { found: boolean; withVersion: boolean } {
+  const { pluginCatalogPreinstalledPlugins } = config;
+
+  const plugin = pluginCatalogPreinstalledPlugins?.find((p) => p.id === id);
+  return { found: !!plugin?.id, withVersion: !!plugin?.version };
+}
+
 function isDisabledSecretsPlugin(type?: PluginType): boolean {
   return type === PluginType.secretsmanager && !config.secretsManagerPluginEnabled;
 }
@@ -401,4 +424,43 @@ export function filterByKeyword(plugins: CatalogPlugin[], query: string) {
     return null;
   }
   return idxs.map((id) => getId(dataArray[id]));
+}
+
+export function isPluginUpdateable(plugin: CatalogPlugin) {
+  // If there is no update available, the plugin cannot be updated
+  if (!plugin.hasUpdate) {
+    return false;
+  }
+
+  // Provisioned plugins cannot be updated
+  if (plugin.isProvisioned) {
+    return false;
+  }
+
+  // Core plugins cannot be updated
+  if (plugin.isCore) {
+    return false;
+  }
+
+  // Currently renderer plugins are not supported by the catalog due to complications related to installation / update / uninstall.
+  if (plugin.type === PluginType.renderer) {
+    return false;
+  }
+
+  // Preinstalled plugins (with specified version) cannot be updated
+  if (plugin.isPreinstalled.withVersion) {
+    return false;
+  }
+
+  // If the plugin is currently being updated, it should not be updated
+  if (plugin.isUpdatingFromInstance) {
+    return false;
+  }
+
+  // Managed plugins cannot be updated
+  if (plugin.isManaged) {
+    return false;
+  }
+
+  return true;
 }

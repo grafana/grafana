@@ -1,6 +1,7 @@
-import { AppEvents } from '@grafana/data';
+import { AppEvents, textUtil } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
+import { createAbsoluteUrl, RelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { HttpRequestMethod } from '../../panelcfg.gen';
@@ -10,29 +11,26 @@ import { APIEditorConfig } from './APIEditor';
 type IsLoadingCallback = (loading: boolean) => void;
 
 export const callApi = (api: APIEditorConfig, updateLoadingStateCallback?: IsLoadingCallback) => {
-  if (api && api.endpoint) {
-    // If API endpoint origin matches Grafana origin, don't call it.
-    if (requestMatchesGrafanaOrigin(api.endpoint)) {
-      appEvents.emit(AppEvents.alertError, ['Cannot call API at Grafana origin.']);
-      updateLoadingStateCallback && updateLoadingStateCallback(false);
-      return;
-    }
-    const request = getRequest(api);
-
-    getBackendSrv()
-      .fetch(request)
-      .subscribe({
-        error: (error) => {
-          appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
-          console.error('API call error: ', error);
-          updateLoadingStateCallback && updateLoadingStateCallback(false);
-        },
-        complete: () => {
-          appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
-          updateLoadingStateCallback && updateLoadingStateCallback(false);
-        },
-      });
+  if (!api.endpoint) {
+    appEvents.emit(AppEvents.alertError, ['API endpoint is not defined.']);
+    return;
   }
+
+  const request = getRequest(api);
+
+  getBackendSrv()
+    .fetch(request)
+    .subscribe({
+      error: (error) => {
+        appEvents.emit(AppEvents.alertError, ['An error has occurred. Check console output for more details.']);
+        console.error('API call error: ', error);
+        updateLoadingStateCallback && updateLoadingStateCallback(false);
+      },
+      complete: () => {
+        appEvents.emit(AppEvents.alertSuccess, ['API call was successful']);
+        updateLoadingStateCallback && updateLoadingStateCallback(false);
+      },
+    });
 };
 
 export const interpolateVariables = (text: string) => {
@@ -41,9 +39,10 @@ export const interpolateVariables = (text: string) => {
 };
 
 export const getRequest = (api: APIEditorConfig) => {
-  const requestHeaders: HeadersInit = [];
+  const endpoint = getEndpoint(interpolateVariables(api.endpoint));
+  const url = new URL(endpoint);
 
-  const url = new URL(interpolateVariables(api.endpoint!));
+  const requestHeaders: Record<string, string> = {};
 
   let request: BackendSrvRequest = {
     url: url.toString(),
@@ -53,23 +52,24 @@ export const getRequest = (api: APIEditorConfig) => {
   };
 
   if (api.headerParams) {
-    api.headerParams.forEach((param) => {
-      requestHeaders.push([interpolateVariables(param[0]), interpolateVariables(param[1])]);
+    api.headerParams.forEach(([name, value]) => {
+      requestHeaders[interpolateVariables(name)] = interpolateVariables(value);
     });
   }
 
   if (api.queryParams) {
-    api.queryParams?.forEach((param) => {
-      url.searchParams.append(interpolateVariables(param[0]), interpolateVariables(param[1]));
+    api.queryParams?.forEach(([name, value]) => {
+      url.searchParams.append(interpolateVariables(name), interpolateVariables(value));
     });
 
     request.url = url.toString();
   }
 
   if (api.method === HttpRequestMethod.POST) {
-    requestHeaders.push(['Content-Type', api.contentType!]);
+    requestHeaders['Content-Type'] = api.contentType!;
   }
 
+  requestHeaders['X-Grafana-Action'] = '1';
   request.headers = requestHeaders;
 
   return request;
@@ -84,8 +84,13 @@ const getData = (api: APIEditorConfig) => {
   return data;
 };
 
-const requestMatchesGrafanaOrigin = (requestEndpoint: string) => {
-  const requestURL = new URL(requestEndpoint);
-  const grafanaURL = new URL(window.location.origin);
-  return requestURL.origin === grafanaURL.origin;
+const getEndpoint = (endpoint: string) => {
+  const isRelativeUrl = endpoint.startsWith('/');
+  if (isRelativeUrl) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const sanitizedRelativeURL = textUtil.sanitizeUrl(endpoint) as RelativeUrl;
+    endpoint = createAbsoluteUrl(sanitizedRelativeURL, []);
+  }
+
+  return endpoint;
 };

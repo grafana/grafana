@@ -13,13 +13,12 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -43,20 +42,21 @@ type recordingRule struct {
 
 	maxAttempts int64
 
-	clock          clock.Clock
-	evalFactory    eval.EvaluatorFactory
-	featureToggles featuremgmt.FeatureToggles
-	writer         RecordingWriter
+	clock       clock.Clock
+	evalFactory eval.EvaluatorFactory
+	cfg         setting.RecordingRuleSettings
+	writer      RecordingWriter
 
 	// Event hooks that are only used in tests.
 	evalAppliedHook evalAppliedFunc
+	stopAppliedHook stopAppliedFunc
 
 	logger  log.Logger
 	metrics *metrics.Scheduler
 	tracer  tracing.Tracer
 }
 
-func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, ft featuremgmt.FeatureToggles, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter) *recordingRule {
+func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAttempts int64, clock clock.Clock, evalFactory eval.EvaluatorFactory, cfg setting.RecordingRuleSettings, logger log.Logger, metrics *metrics.Scheduler, tracer tracing.Tracer, writer RecordingWriter, evalAppliedHook evalAppliedFunc, stopAppliedHook stopAppliedFunc) *recordingRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key))
 	return &recordingRule{
 		key:                 key,
@@ -69,13 +69,19 @@ func newRecordingRule(parent context.Context, key ngmodels.AlertRuleKey, maxAtte
 		evaluationDuration:  atomic.NewDuration(0),
 		clock:               clock,
 		evalFactory:         evalFactory,
-		featureToggles:      ft,
+		cfg:                 cfg,
 		maxAttempts:         maxAttempts,
+		evalAppliedHook:     evalAppliedHook,
+		stopAppliedHook:     stopAppliedHook,
 		logger:              logger.FromContext(ctx),
 		metrics:             metrics,
 		tracer:              tracer,
 		writer:              writer,
 	}
+}
+
+func (r *recordingRule) Type() ngmodels.RuleType {
+	return ngmodels.RuleTypeRecording
 }
 
 func (r *recordingRule) Status() RuleStatus {
@@ -115,17 +121,19 @@ func (r *recordingRule) Stop(reason error) {
 
 func (r *recordingRule) Run() error {
 	ctx := r.ctx
-	logger.Debug("Recording rule routine started")
+	r.logger.Debug("Recording rule routine started")
+
+	defer r.stopApplied()
 
 	for {
 		select {
 		case eval, ok := <-r.evalCh:
 			if !ok {
-				logger.Debug("Evaluation channel has been closed. Exiting")
+				r.logger.Debug("Evaluation channel has been closed. Exiting")
 				return nil
 			}
-			if !r.featureToggles.IsEnabled(ctx, featuremgmt.FlagGrafanaManagedRecordingRules) {
-				logger.Warn("Recording rule scheduled but toggle is not enabled. Skipping")
+			if !r.cfg.Enabled {
+				r.logger.Warn("Recording rule scheduled but subsystem is not enabled. Skipping")
 				return nil
 			}
 			// TODO: Skipping the "evalRunning" guard that the alert rule routine does, because it seems to be dead code and impossible to hit.
@@ -133,7 +141,7 @@ func (r *recordingRule) Run() error {
 
 			r.doEvaluate(ctx, eval)
 		case <-ctx.Done():
-			logger.Debug("Stopping recording rule routine")
+			r.logger.Debug("Stopping recording rule routine")
 			return nil
 		}
 	}
@@ -217,11 +225,12 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 		if r.maxAttempts > 0 {
 			logger.Error("Recording rule evaluation failed after all attempts", "lastError", latestError)
 		}
-	} else {
-		logger.Debug("Recording rule evaluation succeeded")
-		r.lastError.Store(nil)
-		r.health.Store("ok")
+		return
 	}
+	logger.Debug("Recording rule evaluation succeeded")
+	span.AddEvent("rule evaluated")
+	r.lastError.Store(nil)
+	r.health.Store("ok")
 }
 
 func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logger log.Logger) error {
@@ -239,21 +248,24 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	}
 	// TODO: This is missing dedicated logic for NoData. If NoData we can skip the write.
 
-	logger.Info("Recording rule evaluated", "results", result, "duration", evalDur)
+	logger.Debug("Recording rule query completed", "resultCount", len(result.Responses), "duration", evalDur)
 	span := trace.SpanFromContext(ctx)
-	span.AddEvent("rule evaluated", trace.WithAttributes(
+	span.AddEvent("query succeeded", trace.WithAttributes(
 		attribute.Int64("results", int64(len(result.Responses))),
 	))
 
 	frames, err := r.frameRef(ev.rule.Record.From, result)
 	if err != nil {
-		span.SetStatus(codes.Error, "failed to extract frames from rule evaluation")
-		span.RecordError(err)
-		return fmt.Errorf("failed to extract frames from rule evaluation: %w", err)
+		span.AddEvent("query returned no data, nothing to write", trace.WithAttributes(
+			attribute.String("reason", err.Error()),
+		))
+		logger.Debug("Query returned no data", "reason", err)
+		r.health.Store("nodata")
+		return nil
 	}
 
 	writeStart := r.clock.Now()
-	err = r.writer.Write(ctx, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.Labels)
+	err = r.writer.Write(ctx, ev.rule.Record.Metric, ev.scheduledAt, frames, ev.rule.OrgID, ev.rule.Labels)
 	writeDur := r.clock.Now().Sub(writeStart)
 
 	if err != nil {
@@ -272,7 +284,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {
 	start := r.clock.Now()
-	evaluator, err := r.evalFactory.Create(evalCtx, ev.rule.GetEvalCondition())
+	evaluator, err := r.evalFactory.Create(evalCtx, ev.rule.GetEvalCondition().WithSource("scheduler").WithFolder(ev.folderTitle))
 	if err != nil {
 		logger.Error("Failed to build rule evaluator", "error", err)
 		return nil, err
@@ -292,16 +304,29 @@ func (r *recordingRule) evaluationDoneTestHook(ev *Evaluation) {
 	r.evalAppliedHook(r.key, ev.scheduledAt)
 }
 
+// frameRef gets frames from a QueryDataResponse for a particular refID. It returns an error if the frames do not exist or have no data.
 func (r *recordingRule) frameRef(refID string, resp *backend.QueryDataResponse) (data.Frames, error) {
 	if len(resp.Responses) == 0 {
 		return nil, fmt.Errorf("no responses returned from rule evaluation")
 	}
 
-	for ref, resp := range resp.Responses {
-		if ref == refID {
-			return resp.Frames, nil
-		}
+	targetNode, ok := resp.Responses[refID]
+	if !ok {
+		return nil, fmt.Errorf("no response with refID %s found in rule evaluation", refID)
 	}
 
-	return nil, fmt.Errorf("no response with refID %s found in rule evaluation", refID)
+	if eval.IsNoData(targetNode) {
+		return nil, fmt.Errorf("response with refID %s has no data", refID)
+	}
+
+	return targetNode.Frames, nil
+}
+
+// stopApplied is only used on tests.
+func (r *recordingRule) stopApplied() {
+	if r.stopAppliedHook == nil {
+		return
+	}
+
+	r.stopAppliedHook(r.key)
 }

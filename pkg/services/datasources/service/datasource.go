@@ -280,20 +280,24 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return err
 		}
 
-		// This belongs in Data source permissions, and we probably want
-		// to do this with a hook in the store and rollback on fail.
-		// We can't use events, because there's no way to communicate
-		// failure, and we want "not being able to set default perms"
-		// to fail the creation.
-		permissions := []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: "Viewer", Permission: "Query"},
-			{BuiltinRole: "Editor", Permission: "Query"},
+		if s.cfg.RBAC.PermissionsOnCreation("datasource") {
+			// This belongs in Data source permissions, and we probably want
+			// to do this with a hook in the store and rollback on fail.
+			// We can't use events, because there's no way to communicate
+			// failure, and we want "not being able to set default perms"
+			// to fail the creation.
+			permissions := []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: "Viewer", Permission: "Query"},
+				{BuiltinRole: "Editor", Permission: "Query"},
+			}
+			if cmd.UserID != 0 {
+				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
+			}
+			_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
+			return err
 		}
-		if cmd.UserID != 0 {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Admin"})
-		}
-		_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
-		return err
+
+		return nil
 	})
 }
 
@@ -363,6 +367,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		rsp, err := s.pluginClient.ValidateAdmission(ctx, req)
 		if err != nil {
 			if errors.Is(err, plugins.ErrMethodNotImplemented) {
+				if settings.APIVersion == "v0alpha1" {
+					// For v0alpha1 we don't require plugins to implement ValidateAdmission
+					return settings, nil
+				}
 				return nil, errutil.Internal("plugin.unimplemented").
 					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, settings.APIVersion)
 			}
@@ -384,6 +392,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			if settings.APIVersion == "v0alpha1" {
+				// For v0alpha1 we don't require plugins to implement MutateAdmission
+				return settings, nil
+			}
 			return nil, errutil.Internal("plugin.unimplemented").
 				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, settings.APIVersion)
 		}

@@ -192,6 +192,13 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 }
 
 func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+	// we look for a correlation type at the root if it is defined, if not use default
+	// we ignore the legacy config.type value - the only valid value at that version was "query"
+	var corrType = correlation["type"]
+	if corrType == nil || corrType == "" {
+		corrType = correlations.CorrelationType("query")
+	}
+
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	createCommand := correlations.CreateCorrelationCommand{
 		SourceUID:   SourceUID,
@@ -199,6 +206,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 		Description: correlation["description"].(string),
 		OrgId:       OrgId,
 		Provisioned: true,
+		Type:        corrType.(correlations.CorrelationType),
 	}
 
 	targetUID, ok := correlation["targetUID"].(string)
@@ -221,12 +229,12 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 			return correlations.CreateCorrelationCommand{}, err
 		}
 
-		createCommand.Config = config
-	} else {
-		// when provisioning correlations without config we default to type="query"
-		createCommand.Config = correlations.CorrelationConfig{
-			Type: correlations.ConfigTypeQuery,
+		// config.type is a deprecated place for this value. We will default it to "query" for legacy purposes but non-query correlations should have type outside of config
+		if config.Type != correlations.CorrelationType("query") {
+			return correlations.CreateCorrelationCommand{}, correlations.ErrInvalidConfigType
 		}
+
+		createCommand.Config = config
 	}
 	if err := createCommand.Validate(); err != nil {
 		return correlations.CreateCorrelationCommand{}, err

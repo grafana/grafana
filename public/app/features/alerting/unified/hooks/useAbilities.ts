@@ -11,7 +11,7 @@ import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
-import { isFederatedRuleGroup, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
+import { isFederatedRuleGroup, isGrafanaRecordingRule, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
 
 import { useIsRuleEditable } from './useIsRuleEditable';
 
@@ -284,6 +284,7 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
 function useCanSilence(rule: CombinedRule): [boolean, boolean] {
   const rulesSource = rule.namespace.rulesSource;
   const isGrafanaManagedRule = rulesSource === GRAFANA_RULES_SOURCE_NAME;
+  const isGrafanaRecording = isGrafanaRecordingRule(rule.rulerRule);
 
   const { currentData: amConfigStatus, isLoading } =
     alertmanagerApi.endpoints.getGrafanaAlertingConfigurationStatus.useQuery(undefined, {
@@ -293,9 +294,9 @@ function useCanSilence(rule: CombinedRule): [boolean, boolean] {
   const folderUID = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.namespace_uid : undefined;
   const { loading: folderIsLoading, folder } = useFolder(folderUID);
 
-  // we don't support silencing when the rule is not a Grafana managed rule
+  // we don't support silencing when the rule is not a Grafana managed alerting rule
   // we simply don't know what Alertmanager the ruler is sending alerts to
-  if (!isGrafanaManagedRule || isLoading || folderIsLoading || !folder) {
+  if (!isGrafanaManagedRule || isGrafanaRecording || isLoading || folderIsLoading || !folder) {
     return [false, false];
   }
 

@@ -29,6 +29,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "grafana-default-email",
       "name": "grafana-default-email",
       "policies": [
         {
@@ -38,6 +39,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -64,8 +66,10 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "lotsa-emails",
       "name": "lotsa-emails",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -78,20 +82,19 @@ exports[`useContactPoints should return contact points with status 1`] = `
           "type": "oncall",
           Symbol(receiver_status): undefined,
           Symbol(receiver_metadata): {
-            "description": undefined,
-            "name": "Oncall",
+            "description": "Sends notifications to Grafana OnCall",
+            "name": "Grafana OnCall",
           },
           Symbol(receiver_plugin_metadata): {
-            "description": "grafana-integration",
-            "externalUrl": "/a/grafana-oncall-app/integrations/ABC123",
             "icon": "public/img/alerting/oncall_logo.svg",
             "title": "Grafana OnCall",
-            "warning": undefined,
           },
         },
       ],
+      "id": "OnCall Conctact point",
       "name": "OnCall Conctact point",
       "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -119,6 +122,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "provisioned-contact-point",
       "name": "provisioned-contact-point",
       "policies": [
         {
@@ -128,6 +132,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
         },
       ],
+      "provisioned": true,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -178,13 +183,14 @@ exports[`useContactPoints should return contact points with status 1`] = `
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "Slack with multiple channels",
       "name": "Slack with multiple channels",
       "policies": [],
+      "provisioned": false,
     },
   ],
   "error": undefined,
   "isLoading": false,
-  "refetchReceivers": [Function],
 }
 `;
 
@@ -217,8 +223,17 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "grafana-default-email",
       "name": "grafana-default-email",
-      "policies": undefined,
+      "policies": [
+        {
+          "receiver": "grafana-default-email",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -245,8 +260,10 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "lotsa-emails",
       "name": "lotsa-emails",
-      "policies": undefined,
+      "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -259,17 +276,22 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           "type": "oncall",
           Symbol(receiver_status): undefined,
           Symbol(receiver_metadata): {
-            "description": undefined,
-            "name": "Oncall",
+            "description": "Sends notifications to Grafana OnCall",
+            "name": "Grafana OnCall",
           },
           Symbol(receiver_plugin_metadata): {
+            "description": "grafana-integration",
+            "externalUrl": "/a/grafana-oncall-app/integrations/ABC123",
             "icon": "public/img/alerting/oncall_logo.svg",
             "title": "Grafana OnCall",
+            "warning": undefined,
           },
         },
       ],
+      "id": "OnCall Conctact point",
       "name": "OnCall Conctact point",
-      "policies": undefined,
+      "policies": [],
+      "provisioned": false,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -297,8 +319,17 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "provisioned-contact-point",
       "name": "provisioned-contact-point",
-      "policies": undefined,
+      "policies": [
+        {
+          "receiver": "provisioned-contact-point",
+          "route": {
+            "type": "normal",
+          },
+        },
+      ],
+      "provisioned": true,
     },
     {
       "grafana_managed_receiver_configs": [
@@ -349,12 +380,13 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): undefined,
         },
       ],
+      "id": "Slack with multiple channels",
       "name": "Slack with multiple channels",
-      "policies": undefined,
+      "policies": [],
+      "provisioned": false,
     },
   ],
   "error": undefined,
   "isLoading": false,
-  "refetchReceivers": [Function],
 }
 `;

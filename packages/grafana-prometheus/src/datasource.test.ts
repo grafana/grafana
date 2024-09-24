@@ -34,7 +34,14 @@ import {
   fetchMockCalledWith,
   getMockTimeRange,
 } from './test/__mocks__/datasource';
-import { PromApplication, PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
+import {
+  PromApplication,
+  PrometheusCacheLevel,
+  PromOptions,
+  PromQuery,
+  PromQueryRequest,
+  RawRecordingRules,
+} from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -395,7 +402,7 @@ describe('PrometheusDatasource', () => {
     });
 
     it('returns a mapping for recording rules only', () => {
-      const groups = [
+      const groups: RawRecordingRules[] = [
         {
           rules: [
             {
@@ -415,7 +422,50 @@ describe('PrometheusDatasource', () => {
         },
       ];
       const mapping = extractRuleMappingFromGroups(groups);
-      expect(mapping).toEqual({ 'job:http_inprogress_requests:sum': 'sum(http_inprogress_requests) by (job)' });
+      expect(mapping).toEqual({
+        'job:http_inprogress_requests:sum': [{ query: 'sum(http_inprogress_requests) by (job)' }],
+      });
+    });
+
+    it('should extract rules with same name respecting its labels', () => {
+      const groups: RawRecordingRules[] = [
+        {
+          name: 'nameOfTheGroup:uid11',
+          file: 'the_file_123',
+          rules: [
+            {
+              name: 'metric_5m',
+              query: 'super_duper_query',
+              labels: {
+                uuid: 'uuid111',
+              },
+              type: 'recording',
+            },
+          ],
+        },
+        {
+          name: 'nameOfTheGroup:uid22',
+          file: 'the_file_456',
+          rules: [
+            {
+              name: 'metric_5m',
+              query: 'another_super_duper_query',
+              labels: {
+                uuid: 'uuid222',
+              },
+              type: 'recording',
+            },
+          ],
+        },
+      ];
+
+      const mapping = extractRuleMappingFromGroups(groups);
+      expect(mapping['metric_5m']).toBeDefined();
+      expect(mapping['metric_5m'].length).toEqual(2);
+      expect(mapping['metric_5m'][0].query).toEqual('super_duper_query');
+      expect(mapping['metric_5m'][0].labels).toEqual({ uuid: 'uuid111' });
+      expect(mapping['metric_5m'][1].query).toEqual('another_super_duper_query');
+      expect(mapping['metric_5m'][1].labels).toEqual({ uuid: 'uuid222' });
     });
   });
 
@@ -1225,6 +1275,8 @@ describe('modifyQuery', () => {
           },
           { key: 'reg', value: 'regv', operator: '=~' },
           { key: 'nreg', value: 'nregv', operator: '!~' },
+          { key: 'foo', value: 'bar', operator: '=|' },
+          { key: 'bar', value: 'baz', operator: '!=|' },
         ];
         const expectedScopeFilter: ScopeSpecFilter[] = [
           { key: 'eq', value: 'eqv', operator: 'equals' },
@@ -1235,6 +1287,8 @@ describe('modifyQuery', () => {
           },
           { key: 'reg', value: 'regv', operator: 'regex-match' },
           { key: 'nreg', value: 'nregv', operator: 'regex-not-match' },
+          { key: 'foo', value: 'bar', operator: 'one-of' },
+          { key: 'bar', value: 'baz', operator: 'not-one-of' },
         ];
         const result = ds.generateScopeFilters(adhocFilter);
         result.forEach((r, i) => {

@@ -39,9 +39,9 @@ export default class GraphiteQuery {
   checkOtherSegmentsIndex = 0;
   removeTagValue: string;
   templateSrv: any;
-  scopedVars: any;
+  scopedVars?: ScopedVars;
 
-  constructor(datasource: any, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
+  constructor(datasource: GraphiteDatasource, target: any, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.datasource = datasource;
     this.target = target;
     this.templateSrv = templateSrv;
@@ -153,7 +153,7 @@ export default class GraphiteQuery {
     }
   }
 
-  updateSegmentValue(segment: any, index: number) {
+  updateSegmentValue(segment: GraphiteSegment, index: number) {
     this.segments[index].value = segment.value;
   }
 
@@ -210,17 +210,20 @@ export default class GraphiteQuery {
     // render nested query
     const targetsByRefId = keyBy(targets, 'refId');
 
-    // no references to self
-    delete targetsByRefId[target.refId];
-
     const nestedSeriesRefRegex = /\#([A-Z])/g;
     let targetWithNestedQueries = target.target;
 
     // Use ref count to track circular references
     each(targetsByRefId, (t, id) => {
       const regex = RegExp(`\#(${id})`, 'g');
-      const refMatches = targetWithNestedQueries.match(regex);
-      t.refCount = refMatches?.length ?? 0;
+      let refCount = 0;
+      each(targetsByRefId, (t2, id2) => {
+        if (id2 !== id) {
+          const refMatches = t2.target.match(regex);
+          refCount += refMatches?.length ?? 0;
+        }
+      });
+      t.refCount = refCount;
     });
 
     // Keep interpolating until there are no query references

@@ -10,7 +10,7 @@ import (
 type FakeSigningKeysService struct {
 	ExpectedJSONWebKeySet jose.JSONWebKeySet
 	ExpectedKeyID         string
-	ExpectedSinger        crypto.Signer
+	ExpectedSigner        crypto.Signer
 	ExpectedError         error
 }
 
@@ -19,5 +19,5 @@ func (s *FakeSigningKeysService) GetJWKS(ctx context.Context) (jose.JSONWebKeySe
 }
 
 func (s *FakeSigningKeysService) GetOrCreatePrivateKey(ctx context.Context, keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error) {
-	return s.ExpectedKeyID, s.ExpectedSinger, s.ExpectedError
+	return s.ExpectedKeyID, s.ExpectedSigner, s.ExpectedError
 }

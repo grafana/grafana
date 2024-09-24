@@ -8,13 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type fullAccessControl interface {
 	accesscontrol.AccessControl
 	accesscontrol.Service
-	plugins.RoleRegistry
+	pluginaccesscontrol.RoleRegistry
 	RegisterFixedRoles(context.Context) error
 }
 
@@ -263,4 +264,9 @@ func (m *Mock) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol
 		return m.SyncUserRolesFunc(ctx, orgID, cmd)
 	}
 	return nil
+}
+
+// WithoutResolvers implements fullAccessControl.
+func (m *Mock) WithoutResolvers() accesscontrol.AccessControl {
+	return m
 }

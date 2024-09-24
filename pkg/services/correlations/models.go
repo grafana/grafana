@@ -14,12 +14,13 @@ var (
 	ErrTargetDataSourceDoesNotExists = errors.New("target data source does not exist")
 	ErrCorrelationNotFound           = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams  = errors.New("not enough parameters to edit correlation")
-	ErrInvalidConfigType             = errors.New("invalid correlation config type")
+	ErrInvalidType                   = errors.New("invalid correlation type")
 	ErrInvalidTransformationType     = errors.New("invalid transformation type")
 	ErrTransformationNotNested       = errors.New("transformations must be nested under config")
 	ErrTransformationRegexReqExp     = errors.New("regex transformations require expression")
 	ErrCorrelationsQuotaFailed       = errors.New("error getting correlations quota")
 	ErrCorrelationsQuotaReached      = errors.New("correlations quota reached")
+	ErrInvalidConfigType             = errors.New("correlation contains non default value in config.type")
 )
 
 const (
@@ -27,7 +28,14 @@ const (
 	QuotaTarget    quota.Target    = "correlations"
 )
 
-type CorrelationConfigType string
+// the type of correlation, either query for containing query information, or external for containing an external URL
+// +enum
+type CorrelationType string
+
+const (
+	query    CorrelationType = "query"
+	external CorrelationType = "external"
+)
 
 type Transformation struct {
 	//Enum: regex,logfmt
@@ -37,13 +45,9 @@ type Transformation struct {
 	MapValue   string `json:"mapValue,omitempty"`
 }
 
-const (
-	ConfigTypeQuery CorrelationConfigType = "query"
-)
-
-func (t CorrelationConfigType) Validate() error {
-	if t != ConfigTypeQuery {
-		return fmt.Errorf("%s: \"%s\"", ErrInvalidConfigType, t)
+func (t CorrelationType) Validate() error {
+	if t != query && t != external {
+		return fmt.Errorf("%s: \"%s\"", ErrInvalidType, t)
 	}
 	return nil
 }
@@ -68,8 +72,9 @@ type CorrelationConfig struct {
 	// example: message
 	Field string `json:"field" binding:"Required"`
 	// Target type
-	// required:true
-	Type CorrelationConfigType `json:"type" binding:"Required"`
+	// This is deprecated: use the type property outside of config
+	// deprecated:true
+	Type CorrelationType `json:"type"`
 	// Target data query
 	// required:true
 	// example: {"prop1":"value1","prop2":"value"}
@@ -87,12 +92,10 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 		target = map[string]any{}
 	}
 	return json.Marshal(struct {
-		Type            CorrelationConfigType `json:"type"`
-		Field           string                `json:"field"`
-		Target          map[string]any        `json:"target"`
-		Transformations Transformations       `json:"transformations,omitempty"`
+		Field           string          `json:"field"`
+		Target          map[string]any  `json:"target"`
+		Transformations Transformations `json:"transformations,omitempty"`
 	}{
-		Type:            ConfigTypeQuery,
 		Field:           c.Field,
 		Target:          target,
 		Transformations: transformations,
@@ -124,6 +127,8 @@ type Correlation struct {
 	Config CorrelationConfig `json:"config" xorm:"jsonb config"`
 	// Provisioned True if the correlation was created during provisioning
 	Provisioned bool `json:"provisioned"`
+	// The type of correlation. Currently, only valid value is "query"
+	Type CorrelationType `json:"type" binding:"Required"`
 }
 
 type GetCorrelationsResponseBody struct {
@@ -147,7 +152,7 @@ type CreateCorrelationCommand struct {
 	// UID of the data source for which correlation is created.
 	SourceUID string `json:"-"`
 	OrgId     int64  `json:"-"`
-	// Target data source UID to which the correlation is created. required if config.type = query
+	// Target data source UID to which the correlation is created. required if type = query
 	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID"`
 	// Optional label identifying the correlation
@@ -160,14 +165,16 @@ type CreateCorrelationCommand struct {
 	Config CorrelationConfig `json:"config" binding:"Required"`
 	// True if correlation was created with provisioning. This makes it read-only.
 	Provisioned bool `json:"provisioned"`
+	// correlation type
+	Type CorrelationType `json:"type" binding:"Required"`
 }
 
 func (c CreateCorrelationCommand) Validate() error {
-	if err := c.Config.Type.Validate(); err != nil {
+	if err := c.Type.Validate(); err != nil {
 		return err
 	}
-	if c.TargetUID == nil && c.Config.Type == ConfigTypeQuery {
-		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", ConfigTypeQuery)
+	if c.TargetUID == nil && c.Type == query {
+		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", query)
 	}
 
 	if err := c.Config.Transformations.Validate(); err != nil {
@@ -202,24 +209,12 @@ type CorrelationConfigUpdateDTO struct {
 	// Field used to attach the correlation link
 	// example: message
 	Field *string `json:"field"`
-	// Target type
-	Type *CorrelationConfigType `json:"type"`
 	// Target data query
 	// example: {"prop1":"value1","prop2":"value"}
 	Target *map[string]any `json:"target"`
 	// Source data transformations
 	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]
 	Transformations []Transformation `json:"transformations"`
-}
-
-func (c CorrelationConfigUpdateDTO) Validate() error {
-	if c.Type != nil {
-		if err := c.Type.Validate(); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // UpdateCorrelationCommand is the command for updating a correlation
@@ -238,16 +233,12 @@ type UpdateCorrelationCommand struct {
 	Description *string `json:"description"`
 	// Correlation Configuration
 	Config *CorrelationConfigUpdateDTO `json:"config"`
+	// correlation type
+	Type *CorrelationType `json:"type"`
 }
 
 func (c UpdateCorrelationCommand) Validate() error {
-	if c.Config != nil {
-		if err := c.Config.Validate(); err != nil {
-			return err
-		}
-	}
-
-	if c.Label == nil && c.Description == nil && (c.Config == nil || (c.Config.Field == nil && c.Config.Type == nil && c.Config.Target == nil)) {
+	if c.Label == nil && c.Description == nil && c.Type == nil && (c.Config == nil || (c.Config.Field == nil && c.Config.Target == nil)) {
 		return ErrUpdateCorrelationEmptyParams
 	}
 

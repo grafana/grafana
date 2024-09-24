@@ -1,6 +1,6 @@
 # Instrumenting Grafana
 
-Guidance, conventions and best practices for instrumenting Grafana using logs, metrics and traces.
+This guide provides conventions and best practices for instrumenting Grafana using logs, metrics, and traces.
 
 ## Logs
 
@@ -8,7 +8,7 @@ Logs are files that record events, warnings and errors as they occur within a so
 
 ### Usage
 
-Use the [pkg/infra/log](/pkg/infra/log/) package to create a named structured logger. Example:
+Use the [pkg/infra/log](/pkg/infra/log/) package to create a named, structured logger. Example:
 
 ```go
 import (
@@ -26,38 +26,38 @@ logger.Error("Error msg", "error", fmt.Errorf("BOOM"))
 
 ### Naming conventions
 
-Name the logger using lowercase characters, e.g. `log.New("my-logger")` using snake_case or kebab-case styling.
+Name the logger using lowercase characters, for example, `log.New("my-logger")` using snake_case or kebab-case styling.
 
-Prefix the logger name with an area name when using different loggers across a feature or related packages, e.g. `log.New("plugin.loader")` and `log.New("plugin.client")`.
+Prefix the logger name with an area name when using different loggers across a feature or related packages; for example, `log.New("plugin.loader")` and `log.New("plugin.client")`.
 
-Start the log message with a capital letter, e.g. `logger.Info("Hello world")` instead of `logger.Info("hello world")`. The log message should be an identifier for the log entry, avoid parameterization in favor of key-value pairs for additional data.
+Start the log message with a capital letter, for example, `logger.Info("Hello world")` instead of `logger.Info("hello world")`. The log message should be an identifier for the log entry. Avoid parameterization in favor of key-value pairs for additional data.
 
-Prefer using camelCase style when naming log keys, e.g. _remoteAddr_, to be consistent with Go identifiers.
+To be consistent with Go identifiers, prefer using camelCase style when naming log keys; for example, `remoteAddr`.
 
-Use the key _error_ when logging Go errors, e.g. `logger.Error("Something failed", "error", fmt.Errorf("BOOM"))`.
+Use the key `Error` when logging Go errors; for example, `logger.Error("Something failed", "error", fmt.Errorf("BOOM"))`.
 
 ### Validate and sanitize input coming from user input
 
-If log messages or key/value pairs originates from user input they **should** be validated and sanitized.
+If log messages or key/value pairs originate from user input they should be validated and sanitized.
 
-Be **careful** to not expose any sensitive information in log messages e.g. secrets, credentials etc. It's especially easy to do by mistake when including a struct as value.
+Be careful not to expose any sensitive information in log messages; for example, secrets and credentials. It's easy to do this by mistake if you include a struct as a value.
 
 ### Log levels
 
-When to use which log level?
+When should you use each log level?
 
-- **Debug:** Informational messages of high frequency and/or less-important messages during normal operations.
-- **Info:** Informational messages of low frequency and/or important messages.
-- **Warning:** Should in normal cases not be used/needed. If used should be actionable.
-- **Error:** Error messages indicating some operation failed (with an error) and the program didn't have a way of handle the error.
+- **Debug:** Informational messages of high frequency, less-important messages during normal operations, or both.
+- **Info:** Informational messages of low frequency, important messages, or both.
+- **Warning:** Use warning messages sparingly. If used, messages should be actionable.
+- **Error:** Error messages indicating some operation failed (with an error) and the program didn't have a way to handle the error.
 
 ### Contextual logging
 
-Use a contextual logger to include additional key/value pairs attached to `context.Context`, e.g. `traceID`, to allow correlating logs with traces and/or correlate logs with a common identifier.
+Use a contextual logger to include additional key/value pairs attached to `context.Context`. For example, a `traceID`, used to allow correlating logs with traces, correlate logs with a common identifier, either or both.
 
-You must [Enable tracing in Grafana](#2-enable-tracing-in-grafana) to get a traceID
+You must [Enable tracing in Grafana](#enable-tracing-in-grafana) to get a `traceID`.
 
-Example:
+For example:
 
 ```go
 import (
@@ -80,9 +80,9 @@ func doSomething(ctx context.Context) {
 
 ### Enable certain log levels for certain loggers
 
-During development, it's convenient to enable certain log level, e.g. debug, for certain loggers to minimize the generated log output and make it easier to find things. See [[log.filters]](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#filters) for information how to configure this.
+You can enable certain log levels during development to make logging easier. For example, you can enable `debug` to allow certain loggers to minimize the generated log output and makes it easier to find things. Refer to [[log.filters]](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#filters) for information on how to to set different levels for specific loggers.
 
-It's also possible to configure multiple loggers:
+You can also configure multiple loggers. For example:
 
 ```ini
 [log]
@@ -114,41 +114,41 @@ There are many possible types of metrics that can be tracked. One popular method
 
 ### Naming conventions
 
-Use the namespace _grafana_ as that would prefix any defined metric names with `grafana_`. This will make it clear for operators that any metric named `grafana_*` belongs to Grafana.
+Use the namespace `grafana` to prefix any defined metric names with `grafana_`. This prefix makes it clear for operators that any metric named `grafana_*` belongs to Grafana.
 
-Use snake*case style when naming metrics, e.g. \_http_request_duration_seconds* instead of _httpRequestDurationSeconds_.
+Use snake_case style when naming metrics; for example, `http_request_duration_seconds` instead of `httpRequestDurationSeconds`.
 
-Use snake*case style when naming labels, e.g. \_status_code* instead of _statusCode_.
+Use snake_case style when naming labels; for example, `status_code` instead of `statusCode`.
 
-If metric type is a _counter_, name it with a `_total` suffix, e.g. _http_requests_total_.
+If a metric type is a counter, name it with a `_total` suffix; for example, `http_requests_total`.
 
-If metric type is a _histogram_ and you're measuring duration, name it with a `_<unit>` suffix, e.g. _http_request_duration_seconds_.
+If a metric type is a histogram and you're measuring duration, name it with a `_<unit>` suffix; for example, `http_request_duration_seconds`.
 
-If metric type is a _gauge_, name it to denote it's a value that can increase and decrease , e.g. _http_request_in_flight_.
+If a metric type is a gauge, name it to denote that it's a value that can increase and decrease; for example, `http_request_in_flight`.
 
 ### Label values and high cardinality
 
-Be careful with what label values you add/accept. Using/allowing too many label values could result in [high cardinality problems](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/).
+Be careful with what label values you accept or add. Using or allowing too many label values could result in [high cardinality problems](https://grafana.com/blog/2022/02/15/what-are-cardinality-spikes-and-why-do-they-matter/).
 
-If label values originates from user input they **should** be validated. Use `metricutil.SanitizeLabelName(<label value>`) from _pkg/infra/metrics/metricutil_ package to sanitize label names. Very **important** to only allow a pre-defined set of labels to minimize the risk of high cardinality problems.
+If label values originate from user input they should be validated. Use `metricutil.SanitizeLabelName(<label value>)` from the `pkg/infra/metrics/metricutil` package to sanitize label names.
 
-Be **careful** to not expose any sensitive information in label values, e.g. secrets, credentials etc.
+> **Important:** Only allow a pre-defined set of labels to minimize the risk of high cardinality problems. Be careful not to expose any sensitive information in label values such as secrets and credentials.
 
 ### Guarantee the existence of metrics
 
-If you want to guarantee the existence of metrics before any observations has happened there's a couple of helper methods available in the _pkg/infra/metrics/metricutil_ package.
+To guarantee the existence of metrics before any observations have happened, you can use the helper methods available in the `pkg/infra/metrics/metricutil` package.
 
 ### How to collect and visualize metrics locally
 
-1. Ensure you have Docker installed and running on your machine
-1. Start Prometheus
+1. Ensure you have Docker installed and running on your machine.
+1. Start Prometheus.
 
    ```bash
    make devenv sources=prometheus
    ```
 
-1. Run Grafana, and create a Prometheus datasource if you do not have one yet. Set the server URL to `http://localhost:9090`, enable basic auth, and type in the same auth you have for local Grafana
-1. Use Grafana Explore or dashboards to query any exported Grafana metrics. You can also view them at http://localhost:3000/metrics
+1. Run Grafana, and then create a Prometheus data source if you do not have one yet. Set the server URL to `http://localhost:9090`, enable basic authentication, and enter the same authentication you have for local Grafana.
+1. Use Grafana Explore or dashboards to query any exported Grafana metrics. You can also view them at `http://localhost:3000/metrics`.
 
 ## Traces
 
@@ -156,9 +156,9 @@ A distributed trace is data that tracks an application request as it flows throu
 
 ### Usage
 
-Grafana uses [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. There's an interface `Tracer` in the _pkg/infra/tracing_ package that implements the [OpenTelemetry Tracer interface](go.opentelemetry.io/otel/trace), which you can use to create traces and spans. To get a hold of a `Tracer` you would need to get it injected as dependency into your service, see [Services](services.md) for more details. For more information, see https://opentelemetry.io/docs/instrumentation/go/manual/.
+Grafana uses [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. There's an interface `Tracer` in the `pkg/infra/tracing` package that implements the [OpenTelemetry Tracer interface](https://pkg.go.dev/go.opentelemetry.io/otel/trace), which you can use to create traces and spans. To access `Tracer` you need to get it injected as a dependency of your service. Refer to [Services](services.md) for more details. For more information, you may also refer to [The OpenTelemetry documentation](https://opentelemetry.io/docs/instrumentation/go/manual/).
 
-Example:
+For example:
 
 ```go
 import (
@@ -183,7 +183,7 @@ func (s *MyService) Hello(ctx context.Context, name string) (string, error) {
    ctx, span := s.tracer.Start(ctx, "MyService.Hello", trace.WithAttributes(
       attribute.String("my_attribute", "val"),
    ))
-   // this make sure the span is marked as finished when this
+   // make sure the span is marked as finished when this
    // method ends to allow the span to be flushed and sent to
    // storage backend.
    defer span.End()
@@ -197,7 +197,7 @@ func (s *MyService) Hello(ctx context.Context, name string) (string, error) {
       // Use the helper functions tracing.Errorf or tracing.Error
       // to set the span’s status to Error to make
       // the span tracking a failed operation as an error span and
-      // record error as an exception span event for the provided span.
+      // record the error as an exception span event for the provided span.
       return "", tracing.Errorf(span, "failed to check name: %w", err)
    }
 
@@ -219,35 +219,37 @@ func (s *MyService) Hello(ctx context.Context, name string) (string, error) {
 
 Span names should follow the [guidelines from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/trace/api/#span).
 
-| Span Name               | Guidance                                                 |
-| ----------------------- | -------------------------------------------------------- |
-| get                     | Too general                                              |
-| get_account/42          | Too specific                                             |
-| get_account             | Good, and account_id=42 would make a nice Span attribute |
-| get_account/{accountId} | Also good (using the “HTTP route”)                       |
+| Span Name                 | Guidance                                                   |
+| ------------------------- | ---------------------------------------------------------- |
+| `get`                     | Too general                                                |
+| `get_account/42`          | Too specific                                               |
+| `get_account`             | Good, and `account_id=42` would make a nice Span attribute |
+| `get_account/{accountId}` | Also good (using the “HTTP route”)                         |
 
-Span attribute and span event attributes should follow the [Attribute naming specification from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/common/attribute-naming/). Good attribute key examples:
+Span attribute and span event attributes should follow the [attribute naming specification from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/common/attribute-naming/).
 
-- service.version
-- http.status_code
+These are a few examples of good attributes:
 
-See [Trace semantic conventions from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/trace/semantic_conventions/) for additional conventions regarding well-known protocols and operations.
+- `service.version`
+- `http.status_code`
+
+Refer to [trace semantic conventions from OpenTelemetry](https://opentelemetry.io/docs/reference/specification/trace/semantic_conventions/) for additional conventions regarding well-known protocols and operations.
 
 ### Span names and high cardinality
 
-Be careful with what span names you add/accept. Using/allowing too many span names could result in high cardinality problems.
+Be careful with what span names you add or accept. Using or allowing too many span names can result in high cardinality problems.
 
 ### Validate and sanitize input coming from user input
 
-If span names, attribute or event values originates from user input they **should** be validated and sanitized. It's very **important** to only allow a pre-defined set of span names to minimize the risk of high cardinality problems.
+If span names, attribute values, or event values originate from user input, they should be validated and sanitized. It's very important to only allow a pre-defined set of span names to minimize the risk of high cardinality problems.
 
-Be **careful** to not expose any sensitive information in span names, attribute or event values, e.g. secrets, credentials etc.
+Be careful to not expose any sensitive information in span names, attribute or event values; for example, secrets, credentials, and so on.
 
 ### Span attributes
 
-Consider using `attributes.<Type>("<key>", <value>)` in favor of `attributes.Key("<key>").<Type>(<value>)` since it requires less characters and thereby reads easier.
+Consider using `attributes.<Type>("<key>", <value>)` instead of `attributes.Key("<key>").<Type>(<value>)` since it requires fewer characters and is easier to read.
 
-Example:
+For example:
 
 ```go
 attribute.String("datasource_name", proxy.ds.Name)
@@ -261,29 +263,29 @@ attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
 
 ### How to collect, visualize and query traces (and correlate logs with traces) locally
 
-#### 1. Start Jaeger
+1. Start Jaeger
 
-```bash
-make devenv sources=jaeger
-```
+   ```bash
+   make devenv sources=jaeger
+   ```
 
-#### 2. Enable tracing in Grafana
+1. Enable tracing in Grafana<a name="enable-tracing-in-grafana"></a>
 
-To enable tracing in Grafana, you must set the address in your config.ini file
+   To enable tracing in Grafana, you must set the address in your `config.ini` file:
 
-```ini
-[tracing.opentelemetry.jaeger]
-address = http://localhost:14268/api/traces
-```
+   ```ini
+   [tracing.opentelemetry.jaeger]
+   address = http://localhost:14268/api/traces
+   ```
 
-#### 3. Search/browse collected logs and traces in Grafana Explore
+1. Search/browse collected logs and traces in Grafana Explore
 
-You need provisioned gdev-jaeger and gdev-loki datasources, see [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for setup instructions.
+   You need provisioned `gdev-jaeger` and `gdev-loki` data sources. Refer to [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for set up instructions.
 
-Open Grafana explore and select gdev-loki datasource and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
+   Open Grafana explore and select the `gdev-loki` data source and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
 
-You can then inspect any log message that includes a `traceID` and from there click on `gdev-jaeger` to split view and inspect the trace in question.
+   You can then inspect any log message that includes a `traceID` and from there click `gdev-jaeger` to split the view and inspect the trace in question.
 
-#### 4. Search/browse collected traces in Jaeger UI
+1. Search or browse collected traces in Jaeger UI
 
-You can open http://localhost:16686 to use the Jaeger UI for browsing and searching traces.
+   You can open `http://localhost:16686` to use the Jaeger UI for browsing and searching traces.

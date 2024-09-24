@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import {
@@ -34,6 +35,7 @@ import {
 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
+import { LogMessages, logInfo } from '../../../Analytics';
 import { DataSourceInformation } from '../../../home/Insights';
 
 import { alertStateHistoryDatasource, useRegisterHistoryRuntimeDataSource } from './CentralHistoryRuntimeDataSource';
@@ -60,6 +62,11 @@ export const StateFilterValues = {
 } as const;
 
 export const CentralAlertHistoryScene = () => {
+  //track the loading of the central alert state history
+  useEffect(() => {
+    logInfo(LogMessages.loadedCentralAlertStateHistory);
+  }, []);
+
   // create the variables for the filters
   // textbox variable for filtering by labels
   const labelsFilterVariable = new TextBoxVariable({

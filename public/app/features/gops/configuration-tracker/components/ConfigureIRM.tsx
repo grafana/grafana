@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconName, Text, useStyles2 } from '@grafana/ui';
+import { useURLSearchParams } from 'app/features/alerting/unified/hooks/useURLSearchParams';
 import { getFirstCompatibleDataSource } from 'app/features/alerting/unified/utils/datasource';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 
@@ -58,7 +59,9 @@ export function ConfigureIRM() {
     });
   }, [dataSourceConfigurationData.dataSourceCompatibleWithAlerting]);
 
-  const [essentialsOpen, setEssentialsOpen] = useState(false);
+  // query param 'essentials' is used to open essentials drawer
+  const [queryParams, setQueryParams] = useURLSearchParams();
+  const essentialsOpen = queryParams.get('essentials') === 'open';
 
   const handleActionClick = (configID: number, isDone?: boolean) => {
     trackIrmConfigurationTrackerEvent(IRMInteractionNames.ClickDataSources, {
@@ -75,7 +78,7 @@ export function ConfigureIRM() {
         }
         break;
       case ConfigurationStepsEnum.ESSENTIALS:
-        setEssentialsOpen(true);
+        setQueryParams({ essentials: 'open' });
         trackIrmConfigurationTrackerEvent(IRMInteractionNames.OpenEssentials, {
           essentialStepsDone: essentialsConfigurationData.stepsDone,
           essentialStepsToDo: essentialsConfigurationData.totalStepsToDo,
@@ -88,7 +91,7 @@ export function ConfigureIRM() {
   };
 
   function onCloseEssentials() {
-    setEssentialsOpen(false);
+    setQueryParams({ essentials: undefined });
     trackIrmConfigurationTrackerEvent(IRMInteractionNames.CloseEssentials, {
       essentialStepsDone: essentialsConfigurationData.stepsDone,
       essentialStepsToDo: essentialsConfigurationData.totalStepsToDo,

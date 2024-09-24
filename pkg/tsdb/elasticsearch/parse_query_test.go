@@ -3,7 +3,7 @@ package elasticsearch
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -61,7 +61,7 @@ func TestParseQuery(t *testing.T) {
 			}`
 			dataQuery, err := newDataQuery(body)
 			require.NoError(t, err)
-			queries, err := parseQuery(dataQuery.Queries, log.New("test.logger"))
+			queries, err := parseQuery(dataQuery.Queries, log.New())
 			require.NoError(t, err)
 			require.Len(t, queries, 1)
 

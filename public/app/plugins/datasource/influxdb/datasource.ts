@@ -30,7 +30,6 @@ import {
   BackendDataSourceResponse,
   DataSourceWithBackend,
   FetchResponse,
-  frameToMetricFindValue,
   getBackendSrv,
   getTemplateSrv,
   TemplateSrv,
@@ -325,11 +324,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel, query?: string) {
-    // If there is no query just return the value directly
-    if (!query) {
-      return value;
-    }
-
     if (typeof value === 'string') {
       // Check the value is a number. If not run to escape special characters
       if (!isNaN(parseFloat(value))) {
@@ -359,7 +353,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // regex below checks if the variable inside /^...$/ (^ and $ is optional)
     // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
     const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
-    if (regex.test(query)) {
+    if (query && regex.test(query)) {
       if (typeof value === 'string') {
         return escapeRegex(value);
       }
@@ -414,13 +408,23 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   toMetricFindValue(rsp: DataQueryResponse): MetricFindValue[] {
-    const data = rsp.data ?? [];
+    const valueMap = new Map<string, MetricFindValue>();
     // Create MetricFindValue object for all frames
-    const values = data.map((d) => frameToMetricFindValue(d)).flat();
-    // Filter out duplicate elements
-    return values.filter((elm, idx, self) => idx === self.findIndex((t) => t.text === elm.text));
+    rsp?.data?.forEach((frame: DataFrame) => {
+      if (frame && frame.length > 0) {
+        let field = frame.fields.find((f) => f.type === FieldType.string);
+        if (!field) {
+          field = frame.fields.find((f) => f.type !== FieldType.time);
+        }
+        if (field) {
+          field.values.forEach((v) => {
+            valueMap.set(v.toString(), { text: v.toString() });
+          });
+        }
+      }
+    });
+    return Array.from(valueMap.values());
   }
-
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
   getTagKeys(options?: DataSourceGetTagKeysOptions<InfluxQuery>) {

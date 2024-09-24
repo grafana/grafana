@@ -129,12 +129,12 @@ describe('TemplatePreview component', () => {
       { wrapper: getProviderWraper() }
     );
 
+    const previews = ui.resultItems.getAll;
     await waitFor(() => {
-      const previews = ui.resultItems.getAll();
-      expect(previews).toHaveLength(2);
-      expect(previews[0]).toHaveTextContent('This is the template result bla bla bla');
-      expect(previews[1]).toHaveTextContent('This is the template2 result bla bla bla');
+      expect(previews()).toHaveLength(2);
     });
+    expect(previews()[0]).toHaveTextContent('This is the template result bla bla bla');
+    expect(previews()[1]).toHaveTextContent('This is the template2 result bla bla bla');
   });
 
   it('Should render preview response with some errors,  if payload has correct format ', async () => {
@@ -157,15 +157,14 @@ describe('TemplatePreview component', () => {
       { wrapper: getProviderWraper() }
     );
 
+    const alerts = () => screen.getAllByTestId(Components.Alert.alertV2('error'));
     await waitFor(() => {
-      const alerts = screen.getAllByTestId(Components.Alert.alertV2('error'));
-      const previewContent = screen.getByRole('listitem');
-
-      expect(alerts).toHaveLength(2);
-      expect(alerts[0]).toHaveTextContent(/Unexpected "{" in operand/i);
-      expect(alerts[1]).toHaveTextContent(/Unexpected "{" in operand/i);
-
-      expect(previewContent).toHaveTextContent('This is the template result bla bla bla');
+      expect(alerts()).toHaveLength(2);
     });
+    expect(alerts()[0]).toHaveTextContent(/Unexpected "{" in operand/i);
+    expect(alerts()[1]).toHaveTextContent(/Unexpected "{" in operand/i);
+
+    const previewContent = screen.getByRole('listitem');
+    expect(previewContent).toHaveTextContent('This is the template result bla bla bla');
   });
 });

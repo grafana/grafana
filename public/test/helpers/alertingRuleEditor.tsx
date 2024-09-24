@@ -1,12 +1,9 @@
-import { render } from '@testing-library/react';
 import { Route } from 'react-router-dom';
+import { render } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
-
-import { TestProvider } from './TestProvider';
 
 export const ui = {
   loadingIndicator: byText('Loading rule...'),
@@ -38,15 +35,11 @@ export const ui = {
 };
 
 export function renderRuleEditor(identifier?: string, recording = false) {
-  if (identifier) {
-    locationService.push(`/alerting/${identifier}/edit`);
-  } else {
-    locationService.push(`/alerting/new/${recording ? 'recording' : 'alerting'}`);
-  }
-
-  return render(
-    <TestProvider>
-      <Route path={['/alerting/new/:type', '/alerting/:id/edit']} component={RuleEditor} />
-    </TestProvider>
-  );
+  return render(<Route path={['/alerting/new/:type', '/alerting/:id/edit']} component={RuleEditor} />, {
+    historyOptions: {
+      initialEntries: [
+        identifier ? `/alerting/${identifier}/edit` : `/alerting/new/${recording ? 'recording' : 'alerting'}`,
+      ],
+    },
+  });
 }

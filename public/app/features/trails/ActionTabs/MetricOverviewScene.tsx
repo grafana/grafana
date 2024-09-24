@@ -68,6 +68,8 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
     const variable = model.getVariable();
     const { loading: labelsLoading, options: labelOptions } = variable.useState();
 
+    const { useOtelExperience } = getTrailFor(model).useState();
+
     // Get unit name from the metric name
     const metricScene = getMetricSceneFor(model);
     const metric = metricScene.state.metric;
@@ -78,45 +80,43 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
           <>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>
-                <Trans>Description</Trans>
+                <Trans i18nKey="trails.metric-overview.description-label">Description</Trans>
               </Text>
               <div style={{ maxWidth: 360 }}>
                 {metadata?.help ? (
                   <div>{metadata?.help}</div>
                 ) : (
                   <i>
-                    <Trans>No description available</Trans>
+                    <Trans i18nKey="trails.metric-overview.no-description">No description available</Trans>
                   </i>
                 )}
               </div>
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>
-                <Trans>Type</Trans>
+                <Trans i18nKey="trails.metric-overview.type-label">Type</Trans>
               </Text>
               {metadata?.type ? (
                 <div>{metadata?.type}</div>
               ) : (
                 <i>
-                  <Trans>Unknown</Trans>
+                  <Trans i18nKey="trails.metric-overview.unknown-type">Unknown</Trans>
                 </i>
               )}
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>
-                <Trans>Unit</Trans>
+                <Trans i18nKey="trails.metric-overview.unit-label">Unit</Trans>
               </Text>
-              {metadata?.unit ? (
-                <div>{metadata?.unit}</div>
-              ) : (
-                <i>
-                  <Trans>{unit}</Trans>
-                </i>
-              )}
+              {metadata?.unit ? <div>{metadata?.unit}</div> : <i>{unit}</i>}
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>
-                <Trans>Labels</Trans>
+                {useOtelExperience ? (
+                  <Trans i18nKey="trails.metric-overview.metric-attributes">Metric attributes</Trans>
+                ) : (
+                  <Trans i18nKey="trails.metric-overview.labels">Labels</Trans>
+                )}
               </Text>
               {labelOptions.length === 0 && 'Unable to fetch labels.'}
               {labelOptions.map((l) => (

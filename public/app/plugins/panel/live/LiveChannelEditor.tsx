@@ -15,7 +15,7 @@ import { getManagedChannelInfo } from 'app/features/live/info';
 
 import { LivePanelOptions } from './types';
 
-type Props = StandardEditorProps<Partial<LiveChannelAddress>, any, LivePanelOptions>;
+type Props = StandardEditorProps<Partial<LiveChannelAddress>, {}, LivePanelOptions>;
 
 const scopes: Array<SelectableValue<LiveChannelScope>> = [
   { label: 'Grafana', value: LiveChannelScope.Grafana, description: 'Core grafana live features' },

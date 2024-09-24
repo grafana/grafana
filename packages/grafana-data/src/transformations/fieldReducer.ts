@@ -14,6 +14,7 @@ export enum ReducerID {
   variance = 'variance',
   stdDev = 'stdDev',
   last = 'last',
+  median = 'median',
   first = 'first',
   count = 'count',
   range = 'range',
@@ -279,6 +280,14 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
     preservesUnits: true,
   },
   {
+    id: ReducerID.median,
+    name: 'Median',
+    description: 'Median Value',
+    standard: true,
+    aliasIds: ['median'],
+    preservesUnits: true,
+  },
+  {
     id: ReducerID.variance,
     name: 'Variance',
     description: 'Variance of all values in a field',
@@ -414,7 +423,7 @@ const buildPercentileReducers = (percentiles = [...Array.from({ length: 99 }, (_
 
   percentiles.forEach((p) => {
     const percentile = p / 100;
-    const id = `p${p}` as ReducerID;
+    const id = `p${p}`;
     const name = `${p}${nth(p)} %`;
     const description = `${p}${nth(p)} percentile value`;
 

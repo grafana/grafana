@@ -15,7 +15,6 @@ interface Props {
   data: PanelData;
   thresholds?: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
-  onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 }
 
 /** The VizWrapper is just a simple component that renders either a table or a graph based on the type of data we receive from "PanelData" */
@@ -24,10 +23,6 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
   const isTimeSeriesData = isTimeSeriesFrames(data.series);
   const statusMessage = getStatusMessage(data);
   const thresholdsStyle = thresholdsType ? { mode: thresholdsType } : undefined;
-  const timeRange = {
-    from: data.timeRange.from.valueOf(),
-    to: data.timeRange.to.valueOf(),
-  };
 
   return (
     <div className={styles.wrapper}>
@@ -41,7 +36,7 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
                 eventBus={appEvents}
                 height={300}
                 width={width}
-                absoluteRange={timeRange}
+                timeRange={data.timeRange}
                 timeZone="browser"
                 onChangeTime={() => {}}
                 splitOpenFn={() => {}}

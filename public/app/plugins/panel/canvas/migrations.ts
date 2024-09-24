@@ -1,4 +1,4 @@
-import { DataLink, DynamicConfigValue, FieldMatcherID, PanelModel } from '@grafana/data';
+import { DataLink, DynamicConfigValue, FieldMatcherID, PanelModel, OneClickMode } from '@grafana/data';
 import { CanvasElementOptions } from 'app/features/canvas/element';
 
 import { Options } from './panelcfg.gen';
@@ -43,7 +43,8 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
     }
   }
 
-  if (parseFloat(pluginVersion) <= 11.2) {
+  if (parseFloat(pluginVersion) <= 11.3) {
+    // migrate links from field name overrides to elements
     for (let idx = 0; idx < panel.fieldConfig.overrides.length; idx++) {
       const override = panel.fieldConfig.overrides[idx];
 
@@ -53,7 +54,7 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
         // append override links to elements with dimensions mapped to same field name
         for (const prop of override.properties) {
           if (prop.id === 'links') {
-            addLinks(panel.options.root.elements, prop.value, override.matcher.options);
+            addLinks(panel.options.root.elements, prop.value ?? [], override.matcher.options);
           } else {
             props.push(prop);
           }
@@ -63,6 +64,27 @@ export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
           override.properties = props;
         } else {
           panel.fieldConfig.overrides.splice(idx, 1);
+        }
+      }
+    }
+
+    const root = panel.options?.root;
+    if (root?.elements) {
+      for (const element of root.elements) {
+        // migrate oneClickLinks to oneClickMode
+        if (element.oneClickLinks) {
+          element.oneClickMode = OneClickMode.Link;
+          delete element.oneClickLinks;
+        }
+
+        // migrate action options to new format (fetch)
+        if (element.actions) {
+          for (const action of element.actions) {
+            if (action.options) {
+              action.fetch = { ...action.options };
+              delete action.options;
+            }
+          }
         }
       }
     }

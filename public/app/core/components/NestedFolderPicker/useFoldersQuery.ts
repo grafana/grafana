@@ -1,6 +1,5 @@
 import { createSelector } from '@reduxjs/toolkit';
-import { QueryDefinition, BaseQueryFn } from '@reduxjs/toolkit/dist/query';
-import { QueryActionCreatorResult } from '@reduxjs/toolkit/dist/query/core/buildInitiate';
+import { QueryDefinition, BaseQueryFn, QueryActionCreatorResult } from '@reduxjs/toolkit/query';
 import { RequestOptions } from 'http';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 

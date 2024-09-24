@@ -56,10 +56,10 @@ export function AlertInstanceModalSelector({
     const rules: Record<string, AlertmanagerAlert[]> = {};
     if (!loading && result) {
       result.forEach((instance) => {
-        if (!rules[instance.labels['alertname']]) {
-          rules[instance.labels['alertname']] = [];
+        if (!rules[instance.labels.alertname]) {
+          rules[instance.labels.alertname] = [];
         }
-        rules[instance.labels['alertname']].push(instance);
+        rules[instance.labels.alertname].push(instance);
       });
     }
     return rules;
@@ -106,7 +106,7 @@ export function AlertInstanceModalSelector({
         <div className={cx(styles.ruleTitle, styles.rowButtonTitle)}>{ruleName}</div>
         <div className={styles.alertFolder}>
           <>
-            <Icon name="folder" /> {filteredRules[ruleName][0].labels['grafana_folder'] ?? ''}
+            <Icon name="folder" /> {filteredRules[ruleName][0].labels.grafana_folder ?? ''}
           </>
         </div>
       </button>
@@ -151,7 +151,7 @@ export function AlertInstanceModalSelector({
         })}
         onClick={handleSelectInstances}
       >
-        <div className={styles.rowButtonTitle} title={alert.labels['alertname']}>
+        <div className={styles.rowButtonTitle} title={alert.labels.alertname}>
           <Tooltip placement="bottom" content={<pre>{JSON.stringify(alert, null, 2)}</pre>} theme={'info'}>
             <div>
               {tags.map((tag, index) => (

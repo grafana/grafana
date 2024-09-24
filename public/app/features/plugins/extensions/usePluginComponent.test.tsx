@@ -1,10 +1,13 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 
-import { PluginExtensionTypes } from '@grafana/data';
+import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
+import { setupPluginExtensionRegistries } from './registry/setup';
+import { PluginExtensionRegistries } from './registry/types';
+import { usePluginComponent } from './usePluginComponent';
+import * as utils from './utils';
 
-import { ReactivePluginExtensionsRegistry } from './reactivePluginExtensionRegistry';
-import { createUsePluginComponent } from './usePluginComponent';
+const wrapWithPluginContext = jest.spyOn(utils, 'wrapWithPluginContext');
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   getPluginSettings: jest.fn().mockResolvedValue({
@@ -18,39 +21,36 @@ jest.mock('app/features/plugins/pluginSettings', () => ({
 }));
 
 describe('usePluginComponent()', () => {
-  let reactiveRegistry: ReactivePluginExtensionsRegistry;
+  let registries: PluginExtensionRegistries;
+  let wrapper: ({ children }: { children: React.ReactNode }) => JSX.Element;
 
   beforeEach(() => {
-    reactiveRegistry = new ReactivePluginExtensionsRegistry();
+    registries = setupPluginExtensionRegistries();
+
+    wrapWithPluginContext.mockClear();
+
+    wrapper = ({ children }: { children: React.ReactNode }) => (
+      <ExtensionRegistriesProvider registries={registries}>{children}</ExtensionRegistriesProvider>
+    );
   });
 
   it('should return null if there are no component exposed for the id', () => {
-    const usePluginComponent = createUsePluginComponent(reactiveRegistry);
-    const { result } = renderHook(() => usePluginComponent('foo/bar'));
+    const { result } = renderHook(() => usePluginComponent('foo/bar'), { wrapper });
 
     expect(result.current.component).toEqual(null);
     expect(result.current.isLoading).toEqual(false);
   });
 
   it('should return component, that can be rendered, from the registry', async () => {
-    const id = 'my-app-plugin/foo/bar';
+    const id = 'my-app-plugin/foo/bar/v1';
     const pluginId = 'my-app-plugin';
 
-    reactiveRegistry.register({
+    registries.exposedComponentsRegistry.register({
       pluginId,
-      extensionConfigs: [
-        {
-          extensionPointId: `capabilities/${id}`,
-          type: PluginExtensionTypes.component,
-          title: 'not important',
-          description: 'not important',
-          component: () => <div>Hello World</div>,
-        },
-      ],
+      configs: [{ id, title: 'not important', description: 'not important', component: () => <div>Hello World</div> }],
     });
 
-    const usePluginComponent = createUsePluginComponent(reactiveRegistry);
-    const { result } = renderHook(() => usePluginComponent(id));
+    const { result } = renderHook(() => usePluginComponent(id), { wrapper });
     const Component = result.current.component;
 
     act(() => {
@@ -63,10 +63,9 @@ describe('usePluginComponent()', () => {
   });
 
   it('should dynamically update when component is registered to the registry', async () => {
-    const id = 'my-app-plugin/foo/bar';
+    const id = 'my-app-plugin/foo/bar/v1';
     const pluginId = 'my-app-plugin';
-    const usePluginComponent = createUsePluginComponent(reactiveRegistry);
-    const { result, rerender } = renderHook(() => usePluginComponent(id));
+    const { result, rerender } = renderHook(() => usePluginComponent(id), { wrapper });
 
     // No extensions yet
     expect(result.current.component).toBeNull();
@@ -74,12 +73,11 @@ describe('usePluginComponent()', () => {
 
     // Add extensions to the registry
     act(() => {
-      reactiveRegistry.register({
+      registries.exposedComponentsRegistry.register({
         pluginId,
-        extensionConfigs: [
+        configs: [
           {
-            extensionPointId: `capabilities/${id}`,
-            type: PluginExtensionTypes.component,
+            id,
             title: 'not important',
             description: 'not important',
             component: () => <div>Hello World</div>,
@@ -102,12 +100,27 @@ describe('usePluginComponent()', () => {
     expect(await screen.findByText('Hello World')).toBeVisible();
   });
 
-  it('should only render the hook once', () => {
-    const spy = jest.spyOn(reactiveRegistry, 'asObservable');
-    const id = 'my-app-plugin/foo/bar';
-    const usePluginComponent = createUsePluginComponent(reactiveRegistry);
+  it('should only render the hook once', async () => {
+    const pluginId = 'my-app-plugin';
+    const id = `${pluginId}/foo/v1`;
 
-    renderHook(() => usePluginComponent(id));
-    expect(spy).toHaveBeenCalledTimes(1);
+    // Add extensions to the registry
+    act(() => {
+      registries.exposedComponentsRegistry.register({
+        pluginId,
+        configs: [
+          {
+            id,
+            title: 'not important',
+            description: 'not important',
+            component: () => <div>Hello World</div>,
+          },
+        ],
+      });
+    });
+
+    expect(wrapWithPluginContext).toHaveBeenCalledTimes(0);
+    renderHook(() => usePluginComponent(id), { wrapper });
+    await waitFor(() => expect(wrapWithPluginContext).toHaveBeenCalledTimes(1));
   });
 });

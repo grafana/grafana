@@ -28,8 +28,26 @@ const config: ConfigFile = {
     '../public/app/features/alerting/unified/openapi/timeIntervalsApi.gen.ts': {
       apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
       apiImport: 'alertingApi',
-      filterEndpoints: ['listTimeIntervalForAllNamespaces'],
+      filterEndpoints: [
+        'listNamespacedTimeInterval',
+        'createNamespacedTimeInterval',
+        'deleteNamespacedTimeInterval',
+        'replaceNamespacedTimeInterval',
+      ],
       exportName: 'generatedTimeIntervalsApi',
+      flattenArg: false,
+    },
+    '../public/app/features/alerting/unified/openapi/receiversApi.gen.ts': {
+      apiFile: '../public/app/features/alerting/unified/api/alertingApi.ts',
+      apiImport: 'alertingApi',
+      filterEndpoints: [
+        'listNamespacedReceiver',
+        'createNamespacedReceiver',
+        'readNamespacedReceiver',
+        'deleteNamespacedReceiver',
+        'replaceNamespacedReceiver',
+      ],
+      exportName: 'generatedReceiversApi',
       flattenArg: false,
     },
   },

@@ -336,7 +336,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderCustom(width: number) {
-    const { timeZone, queryResponse, absoluteRange, eventBus } = this.props;
+    const { timeZone, queryResponse, eventBus } = this.props;
 
     const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
 
@@ -349,7 +349,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
             pluginId={pluginId}
             frames={frames}
             state={queryResponse.state}
-            absoluteRange={absoluteRange}
+            timeRange={queryResponse.timeRange}
             height={400}
             width={width}
             splitOpenFn={this.onSplitOpen(pluginId)}
@@ -361,7 +361,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
+    const { graphResult, timeZone, queryResponse, showFlameGraph } = this.props;
 
     return (
       <ContentOutlineItem panelId="Graph" title="Graph" icon="graph-bar">
@@ -369,7 +369,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
           data={graphResult!}
           height={showFlameGraph ? 180 : 400}
           width={width}
-          absoluteRange={absoluteRange}
+          timeRange={queryResponse.timeRange}
           timeZone={timeZone}
           onChangeTime={this.onUpdateTimeRange}
           annotations={queryResponse.annotations}
@@ -676,7 +676,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTable,
     showTrace,
     showCustom,
-    absoluteRange,
     queryResponse,
     showNodeGraph,
     showFlameGraph,
@@ -697,7 +696,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     isLive,
     graphResult,
     logsResult: logsResult ?? undefined,
-    absoluteRange,
     queryResponse,
     syncedTimes,
     timeZone,

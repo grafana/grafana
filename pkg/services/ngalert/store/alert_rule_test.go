@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -62,9 +63,9 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		dbrule := &models.AlertRule{}
+		dbrule := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbrule)
+			exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
 			return err
 		})
@@ -85,9 +86,9 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		dbrule := &models.AlertRule{}
+		dbrule := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbrule)
+			exist, err := sess.Table(alertRule{}).ID(rule.ID).Get(dbrule)
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
 			return err
 		})
@@ -156,16 +157,16 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		})
 		require.NoError(t, err)
 
-		dbrule1 := &models.AlertRule{}
-		dbrule2 := &models.AlertRule{}
+		dbrule1 := &alertRule{}
+		dbrule2 := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule1.ID).Get(dbrule1)
+			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule2.ID).Get(dbrule2)
+			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
 			if err != nil {
 				return err
 			}
@@ -203,23 +204,23 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		})
 		require.NoError(t, err)
 
-		dbrule1 := &models.AlertRule{}
-		dbrule2 := &models.AlertRule{}
-		dbrule3 := &models.AlertRule{}
+		dbrule1 := &alertRule{}
+		dbrule2 := &alertRule{}
+		dbrule3 := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule1.ID).Get(dbrule1)
+			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule2.ID).Get(dbrule2)
+			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule2.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule3.ID).Get(dbrule3)
+			exist, err = sess.Table(alertRule{}).ID(rule3.ID).Get(dbrule3)
 			if err != nil {
 				return err
 			}
@@ -252,16 +253,16 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		})
 		require.NoError(t, err)
 
-		dbrule1 := &models.AlertRule{}
-		dbrule2 := &models.AlertRule{}
+		dbrule1 := &alertRule{}
+		dbrule2 := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule1.ID).Get(dbrule1)
+			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule2.ID).Get(dbrule2)
+			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
 			if err != nil {
 				return err
 			}
@@ -305,30 +306,30 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		})
 		require.NoError(t, err)
 
-		dbrule1 := &models.AlertRule{}
-		dbrule2 := &models.AlertRule{}
-		dbrule3 := &models.AlertRule{}
-		dbrule4 := &models.AlertRule{}
+		dbrule1 := &alertRule{}
+		dbrule2 := &alertRule{}
+		dbrule3 := &alertRule{}
+		dbrule4 := &alertRule{}
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			exist, err := sess.Table(models.AlertRule{}).ID(rule1.ID).Get(dbrule1)
+			exist, err := sess.Table(alertRule{}).ID(rule1.ID).Get(dbrule1)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule1.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule2.ID).Get(dbrule2)
+			exist, err = sess.Table(alertRule{}).ID(rule2.ID).Get(dbrule2)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule2.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule3.ID).Get(dbrule3)
+			exist, err = sess.Table(alertRule{}).ID(rule3.ID).Get(dbrule3)
 			if err != nil {
 				return err
 			}
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule3.ID))
 
-			exist, err = sess.Table(models.AlertRule{}).ID(rule4.ID).Get(dbrule4)
+			exist, err = sess.Table(alertRule{}).ID(rule4.ID).Get(dbrule4)
 			if err != nil {
 				return err
 			}
@@ -378,6 +379,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	sqlStore := db.InitTestReplDB(t)
 	store := &DBstore{
+		Logger:         &logtest.Fake{},
 		SQLStore:       sqlStore,
 		Cfg:            cfg.UnifiedAlerting,
 		FolderService:  setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
@@ -745,6 +747,24 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		})
 	})
 
+	t.Run("clears fields that should not exist on recording rules", func(t *testing.T) {
+		rule := recordingRulesGen.Generate()
+		rules, err := store.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, rules, 1)
+		ruleUID := rules[0].UID
+		savedRule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: orgID,
+			UID:   ruleUID,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "", savedRule.Condition)
+		require.Equal(t, models.NoDataState(""), savedRule.NoDataState)
+		require.Equal(t, models.ExecutionErrorState(""), savedRule.ExecErrState)
+		require.Zero(t, savedRule.For)
+		require.Nil(t, savedRule.NotificationSettings)
+	})
+
 	t.Run("fail to insert rules with same ID", func(t *testing.T) {
 		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{rules[0]})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
@@ -776,6 +796,14 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
+	getKeyMap := func(r []*models.AlertRule) map[models.AlertRuleKey]struct{} {
+		result := make(map[models.AlertRuleKey]struct{}, len(r))
+		for _, rule := range r {
+			result[rule.GetKey()] = struct{}{}
+		}
+		return result
+	}
+
 	sqlStore := db.InitTestReplDB(t)
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
@@ -787,65 +815,263 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	}
 
 	receiverName := "receiver\"-" + uuid.NewString()
+	timeIntervalName := "time-" + util.GenerateShortUID()
 
 	gen := models.RuleGen
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 	rules := gen.GenerateManyRef(3)
 	receiveRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName)))).GenerateManyRef(3)
-	noise := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(receiverName)))).GenerateManyRef(3)
+	timeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	noise := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(timeIntervalName), models.NSMuts.WithMuteTimeIntervals(receiverName)))).GenerateManyRef(3)
 
-	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(noise))
-	for _, rule := range append(append(rules, receiveRules...), noise...) {
+	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(timeIntervalRules)+len(noise))
+	for _, rule := range append(append(append(rules, receiveRules...), noise...), timeIntervalRules...) {
 		r := *rule
 		r.ID = 0
 		deref = append(deref, r)
+	}
+	provenances := make(map[models.AlertRuleKey]models.Provenance, len(receiveRules)+len(timeIntervalRules))
+	for idx, rule := range append(timeIntervalRules, receiveRules...) {
+		p := models.KnownProvenances[idx%len(models.KnownProvenances)]
+		provenances[rule.GetKey()] = p
+		require.NoError(t, store.SetProvenance(context.Background(), rule, rule.OrgID, p))
 	}
 
 	_, err := store.InsertAlertRules(context.Background(), deref)
 	require.NoError(t, err)
 
 	t.Run("should find rules by receiver name", func(t *testing.T) {
-		expectedUIDs := map[string]struct{}{}
-		for _, rule := range receiveRules {
-			expectedUIDs[rule.UID] = struct{}{}
-		}
+		expected := getKeyMap(receiveRules)
 		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
 			OrgID:        1,
 			ReceiverName: receiverName,
 		})
 		require.NoError(t, err)
-		assert.Len(t, actual, len(expectedUIDs))
+		assert.Len(t, actual, len(expected))
 		for _, rule := range actual {
-			assert.Contains(t, expectedUIDs, rule.UID)
+			assert.Contains(t, expected, rule.GetKey())
 		}
 	})
 
-	t.Run("RenameReceiverInNotificationSettings should update all rules that refer to the old receiver", func(t *testing.T) {
-		newName := "new-receiver"
-		affected, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName)
+	t.Run("should find rules by time interval name", func(t *testing.T) {
+		expected := getKeyMap(timeIntervalRules)
+		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:            1,
+			TimeIntervalName: timeIntervalName,
+		})
 		require.NoError(t, err)
-		require.Equal(t, len(receiveRules), affected)
+		assert.Len(t, actual, len(expected))
+		for _, rule := range actual {
+			assert.Contains(t, expected, rule.GetKey())
+		}
+	})
 
-		expectedUIDs := map[string]struct{}{}
-		for _, rule := range receiveRules {
-			expectedUIDs[rule.UID] = struct{}{}
+	t.Run("should find rules by receiver and time-interval name", func(t *testing.T) {
+		var receiver, intervalName string
+		var expected []models.AlertRuleKey
+		rand.Shuffle(len(deref), func(i, j int) {
+			deref[i], deref[j] = deref[j], deref[i]
+		})
+		for _, rule := range deref {
+			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 {
+				continue
+			}
+			if len(expected) > 0 {
+				if rule.NotificationSettings[0].Receiver == receiver && slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, intervalName) {
+					expected = append(expected, rule.GetKey())
+				}
+			} else {
+				receiver = rule.NotificationSettings[0].Receiver
+				intervalName = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				expected = append(expected, rule.GetKey())
+			}
 		}
 		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
-			OrgID:        1,
-			ReceiverName: newName,
+			OrgID:            1,
+			ReceiverName:     receiver,
+			TimeIntervalName: intervalName,
 		})
 		require.NoError(t, err)
-		assert.Len(t, actual, len(expectedUIDs))
+		assert.Len(t, actual, len(expected))
 		for _, rule := range actual {
-			assert.Contains(t, expectedUIDs, rule.UID)
+			assert.Contains(t, expected, rule.GetKey())
+		}
+	})
+
+	t.Run("RenameReceiverInNotificationSettings", func(t *testing.T) {
+		newName := "new-receiver"
+
+		alwaysTrue := func(p models.Provenance) bool {
+			return true
 		}
 
-		actual, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
-			OrgID:        1,
-			ReceiverName: receiverName,
+		t.Run("should do nothing if no rules that match the filter", func(t *testing.T) {
+			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, "not-found", timeIntervalName, alwaysTrue, false)
+			require.NoError(t, err)
+			require.Empty(t, affected)
+			require.Empty(t, invalidProvenance)
 		})
-		require.NoError(t, err)
-		require.Empty(t, actual)
+
+		t.Run("should do nothing if at least one rule has provenance that is not allowed", func(t *testing.T) {
+			calledTimes := 0
+			alwaysFalse := func(p models.Provenance) bool {
+				calledTimes++
+				return false
+			}
+
+			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName, alwaysFalse, false)
+
+			var expected []models.AlertRuleKey
+			for _, rule := range receiveRules {
+				expected = append(expected, rule.GetKey())
+			}
+
+			require.NoError(t, err)
+			require.Empty(t, affected)
+			require.ElementsMatch(t, expected, invalidProvenance)
+			assert.Equal(t, len(expected), calledTimes)
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:        1,
+				ReceiverName: receiverName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(receiveRules))
+		})
+
+		t.Run("should do nothing if dry run is set to true", func(t *testing.T) {
+			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName, alwaysTrue, true)
+			require.NoError(t, err)
+			require.Empty(t, invalidProvenance)
+			assert.Len(t, affected, len(receiveRules))
+			expected := getKeyMap(receiveRules)
+			for _, key := range affected {
+				assert.Contains(t, expected, key)
+			}
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:        1,
+				ReceiverName: receiverName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(receiveRules))
+		})
+
+		t.Run("should update all rules that refer to the old receiver", func(t *testing.T) {
+			affected, invalidProvenance, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName, alwaysTrue, false)
+			require.NoError(t, err)
+			require.Empty(t, invalidProvenance)
+			assert.Len(t, affected, len(receiveRules))
+			expected := getKeyMap(receiveRules)
+			for _, key := range affected {
+				assert.Contains(t, expected, key)
+			}
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:        1,
+				ReceiverName: newName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(expected))
+			for _, rule := range actual {
+				assert.Contains(t, expected, rule.GetKey())
+			}
+
+			actual, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:        1,
+				ReceiverName: receiverName,
+			})
+			require.NoError(t, err)
+			require.Empty(t, actual)
+		})
+	})
+
+	t.Run("RenameTimeIntervalInNotificationSettings", func(t *testing.T) {
+		newName := "new-time-interval"
+
+		alwaysTrue := func(p models.Provenance) bool {
+			return true
+		}
+
+		t.Run("should do nothing if no rules that match the filter", func(t *testing.T) {
+			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, "not-found", timeIntervalName, alwaysTrue, false)
+			require.NoError(t, err)
+			require.Empty(t, affected)
+			require.Empty(t, invalidProvenance)
+		})
+
+		t.Run("should do nothing if at least one rule has provenance that is not allowed", func(t *testing.T) {
+			calledTimes := 0
+			alwaysFalse := func(p models.Provenance) bool {
+				calledTimes++
+				return false
+			}
+
+			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, alwaysFalse, false)
+
+			var expected []models.AlertRuleKey
+			for _, rule := range timeIntervalRules {
+				expected = append(expected, rule.GetKey())
+			}
+
+			require.NoError(t, err)
+			require.Empty(t, affected)
+			require.ElementsMatch(t, expected, invalidProvenance)
+			assert.Equal(t, len(expected), calledTimes)
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:            1,
+				TimeIntervalName: timeIntervalName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(timeIntervalRules))
+		})
+
+		t.Run("should do nothing if dry run is set to true", func(t *testing.T) {
+			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, alwaysTrue, true)
+			require.NoError(t, err)
+			require.Empty(t, invalidProvenance)
+			assert.Len(t, affected, len(timeIntervalRules))
+			expected := getKeyMap(timeIntervalRules)
+			for _, key := range affected {
+				assert.Contains(t, expected, key)
+			}
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:            1,
+				TimeIntervalName: timeIntervalName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(timeIntervalRules))
+		})
+
+		t.Run("should update all rules that refer to the old time interval", func(t *testing.T) {
+			affected, invalidProvenance, err := store.RenameTimeIntervalInNotificationSettings(context.Background(), 1, timeIntervalName, newName, alwaysTrue, false)
+			require.NoError(t, err)
+			require.Empty(t, invalidProvenance)
+			assert.Len(t, affected, len(timeIntervalRules))
+			expected := getKeyMap(timeIntervalRules)
+			for _, key := range affected {
+				assert.Contains(t, expected, key)
+			}
+
+			actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:            1,
+				TimeIntervalName: newName,
+			})
+			require.NoError(t, err)
+			assert.Len(t, actual, len(expected))
+			for _, rule := range actual {
+				assert.Contains(t, expected, rule.GetKey())
+			}
+
+			actual, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+				OrgID:            1,
+				TimeIntervalName: timeIntervalName,
+			})
+			require.NoError(t, err)
+			require.Empty(t, actual)
+		})
 	})
 }
 
@@ -864,13 +1090,17 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 		Cfg:           cfg.UnifiedAlerting,
 	}
 
-	receiverName := `receiver%"-👍'test`
+	searchName := `name-%"-👍'test`
 	gen := models.RuleGen
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 
-	rulesWithNotifications := gen.With(
-		gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))),
+	rulesWithNotificationsAndReceiver := gen.With(
+		gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(searchName))),
 	).GenerateMany(5)
+	rulesWithNotificationsAndTimeInterval := gen.With(
+		gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(searchName))),
+	).GenerateMany(5)
+
 	rulesInOtherOrg := gen.With(
 		gen.WithOrgID(2),
 		gen.WithNotificationSettingsGen(models.NotificationSettingsGen()),
@@ -878,15 +1108,18 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 
 	rulesWithNoNotifications := gen.With(gen.WithNoNotificationSettings()).GenerateMany(5)
 
-	deref := append(append(rulesWithNotifications, rulesWithNoNotifications...), rulesInOtherOrg...)
+	deref := append(append(rulesWithNotificationsAndReceiver, rulesWithNoNotifications...), rulesInOtherOrg...)
+	deref = append(deref, rulesWithNotificationsAndTimeInterval...)
+
+	orgRules := append(rulesWithNotificationsAndReceiver, rulesWithNotificationsAndTimeInterval...)
 
 	_, err := store.InsertAlertRules(context.Background(), deref)
 	require.NoError(t, err)
 
 	result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{OrgID: 1})
 	require.NoError(t, err)
-	require.Len(t, result, len(rulesWithNotifications))
-	for _, rule := range rulesWithNotifications {
+	require.Len(t, result, len(orgRules))
+	for _, rule := range rulesWithNotificationsAndReceiver {
 		if !assert.Contains(t, result, rule.GetKey()) {
 			continue
 		}
@@ -895,19 +1128,73 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 
 	t.Run("should list notification settings by receiver name", func(t *testing.T) {
 		expectedUIDs := map[models.AlertRuleKey]struct{}{}
-		for _, rule := range rulesWithNotifications {
+		for _, rule := range rulesWithNotificationsAndReceiver {
 			expectedUIDs[rule.GetKey()] = struct{}{}
 		}
 
 		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
 			OrgID:        1,
-			ReceiverName: receiverName,
+			ReceiverName: searchName,
 		})
 		require.NoError(t, err)
 		assert.Len(t, actual, len(expectedUIDs))
 		for ruleKey := range actual {
 			assert.Contains(t, expectedUIDs, ruleKey)
 		}
+	})
+	t.Run("should filter notification settings by time interval name", func(t *testing.T) {
+		expectedUIDs := map[models.AlertRuleKey]struct{}{}
+		for _, rule := range rulesWithNotificationsAndTimeInterval {
+			expectedUIDs[rule.GetKey()] = struct{}{}
+		}
+
+		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+			OrgID:            1,
+			TimeIntervalName: searchName,
+		})
+		require.NoError(t, err)
+		assert.Len(t, actual, len(expectedUIDs))
+		for ruleKey := range actual {
+			assert.Contains(t, expectedUIDs, ruleKey)
+		}
+	})
+	t.Run("should return nothing if filter does not match", func(t *testing.T) {
+		result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+			OrgID:            1,
+			ReceiverName:     "not-found-receiver",
+			TimeIntervalName: "not-found-time-interval",
+		})
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+	t.Run("should filter by time interval and receiver", func(t *testing.T) {
+		var receiver, timeInterval string
+		var expected []models.AlertRuleKey
+		rand.Shuffle(len(orgRules), func(i, j int) {
+			orgRules[i], orgRules[j] = orgRules[j], orgRules[i]
+		})
+		for _, rule := range orgRules {
+			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 {
+				continue
+			}
+			if len(expected) > 0 {
+				if rule.NotificationSettings[0].Receiver == receiver && slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, timeInterval) {
+					expected = append(expected, rule.GetKey())
+				}
+			} else {
+				receiver = rule.NotificationSettings[0].Receiver
+				timeInterval = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				expected = append(expected, rule.GetKey())
+			}
+		}
+
+		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+			OrgID:            1,
+			ReceiverName:     receiver,
+			TimeIntervalName: timeInterval,
+		})
+		require.NoError(t, err)
+		require.EqualValuesf(t, expected, maps.Keys(actual), "got more rules than expected: %#v", actual)
 	})
 }
 
@@ -1070,6 +1357,58 @@ func TestIntegrationRuleGroupsCaseSensitive(t *testing.T) {
 	})
 }
 
+func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
+	sqlStore := db.InitTestReplDB(t)
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		Cfg:           cfg.UnifiedAlerting,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        &logtest.Fake{},
+	}
+	orgID := int64(1)
+	gen := models.RuleGen
+	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval)).With(gen.WithOrgID(orgID))
+
+	alertRules := make([]*models.AlertRule, 0, 5)
+	for i := 0; i < 5; i++ {
+		alertRules = append(alertRules, createRule(t, store, gen))
+	}
+	alertRuleNamespaceUIDs := make([]string, 0, len(alertRules))
+	for _, rule := range alertRules {
+		alertRuleNamespaceUIDs = append(alertRuleNamespaceUIDs, rule.NamespaceUID)
+	}
+	alertRuleInAnotherNamespace := createRule(t, store, gen)
+
+	requireAlertRuleVersion := func(t *testing.T, ruleID int64, orgID int64, expectedVersion int64) {
+		t.Helper()
+		dbrule := &alertRule{}
+		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			exist, err := sess.Table(alertRule{}).ID(ruleID).Get(dbrule)
+			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", ruleID))
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, expectedVersion, dbrule.Version)
+	}
+
+	t.Run("should increase version for all rules", func(t *testing.T) {
+		_, err := store.IncreaseVersionForAllRulesInNamespaces(context.Background(), orgID, alertRuleNamespaceUIDs)
+		require.NoError(t, err)
+
+		for _, rule := range alertRules {
+			requireAlertRuleVersion(t, rule.ID, orgID, rule.Version+1)
+		}
+
+		// this rule's version should not be changed
+		requireAlertRuleVersion(t, alertRuleInAnotherNamespace.ID, orgID, alertRuleInAnotherNamespace.Version)
+	})
+}
+
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerator) *models.AlertRule {
@@ -1078,24 +1417,25 @@ func createRule(t *testing.T, store *DBstore, generator *models.AlertRuleGenerat
 		generator = models.RuleGen.With(models.RuleMuts.WithIntervalMatching(store.Cfg.BaseInterval))
 	}
 	rule := generator.GenerateRef()
-	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
+	converted, err := alertRuleFromModelsAlertRule(*rule)
+	require.NoError(t, err)
+	err = store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		converted.ID = 0
+		_, err := sess.Table(alertRule{}).InsertOne(&converted)
 		if err != nil {
 			return err
 		}
-		dbRule := &models.AlertRule{}
-		exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbRule)
+		dbRule := &alertRule{}
+		exist, err := sess.Table(alertRule{}).ID(converted.ID).Get(dbRule)
 		if err != nil {
 			return err
 		}
 		if !exist {
 			return errors.New("cannot read inserted record")
 		}
-		rule = dbRule
-
-		require.NoError(t, err)
-
-		return nil
+		r, err := alertRuleToModelsAlertRule(*dbRule, &logtest.Fake{})
+		rule = &r
+		return err
 	})
 	require.NoError(t, err)
 
@@ -1129,5 +1469,5 @@ func setupFolderService(t *testing.T, sqlStore db.ReplDB, cfg *setting.Cfg, feat
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore.DB())
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore.DB(), dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{})
+	return testutil.SetupFolderService(t, cfg, sqlStore.DB(), dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
 }

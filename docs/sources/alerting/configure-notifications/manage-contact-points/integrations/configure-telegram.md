@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Telegram
 title: Configure Telegram for Alerting
-weight: 300
+weight: 0
 ---
 
 # Configure Telegram for Alerting

@@ -145,6 +145,7 @@ export {
   validateFieldConfig,
   applyRawFieldOverrides,
   useFieldOverrides,
+  getFieldDataContextClone,
 } from './field/fieldOverrides';
 export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
 export {
@@ -246,7 +247,7 @@ export {
 } from './utils/csv';
 export { parseLabels, findCommonLabels, findUniqueLabels, matchAllLabels, formatLabels } from './utils/labels';
 export { roundDecimals, guessDecimals } from './utils/numbers';
-export { objRemoveUndefined, isEmptyObject, safeStringifyValue } from './utils/object';
+export { objRemoveUndefined, isEmptyObject } from './utils/object';
 export { classicColors } from './utils/namedColorsPalette';
 export { getSeriesTimeStep, hasMsResolution } from './utils/series';
 export { BinaryOperationID, type BinaryOperation, binaryOperators } from './utils/binaryOperators';
@@ -515,6 +516,7 @@ export {
   type UserVariableModel,
   type SystemVariable,
   type BaseVariableModel,
+  type SnapshotVariableModel,
 } from './types/templateVars';
 export { type Threshold, ThresholdsMode, type ThresholdsConfig } from './types/thresholds';
 export {
@@ -554,6 +556,9 @@ export {
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionCommandPaletteContext,
   type PluginExtensionOpenModalOptions,
+  type PluginExtensionExposedComponentConfig,
+  type PluginExtensionAddedComponentConfig,
+  type PluginExtensionAddedLinkConfig,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,
@@ -575,6 +580,7 @@ export {
   PluginSignatureType,
   PluginErrorCode,
   PluginIncludeType,
+  PluginLoadingStrategy,
   GrafanaPlugin,
   type PluginError,
   type AngularMeta,
@@ -793,7 +799,16 @@ export {
   VariableOrigin,
   type VariableSuggestion,
   VariableSuggestionsScope,
+  OneClickMode,
 } from './types/dataLink';
+export {
+  type Action,
+  type ActionModel,
+  HttpRequestMethod,
+  defaultActionConfig,
+  contentTypeOptions,
+  httpMethodOptions,
+} from './types/action';
 export { DataFrameType } from './types/dataFrameTypes';
 export {
   FieldType,
