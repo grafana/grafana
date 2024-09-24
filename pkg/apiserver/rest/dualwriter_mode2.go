@@ -48,13 +48,13 @@ func (d *DualWriterMode2) Mode() DualWriterMode {
 }
 
 // Create overrides the behavior of the generic DualWriter and writes to LegacyStorage and Storage.
-func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	var method = "create"
 	log := d.Log.WithValues("method", method)
 	ctx = klog.NewContext(ctx, log)
 
 	startLegacy := time.Now()
-	createdFromLegacy, err := d.Legacy.Create(ctx, original, createValidation, options)
+	createdFromLegacy, err := d.Legacy.Create(ctx, in, createValidation, options)
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
 		d.recordLegacyDuration(true, mode2Str, d.resource, method, startLegacy)
@@ -62,20 +62,25 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	// if err := enrichLegacyObject(original, createdFromLegacy, true); err != nil {
-	// 	return createdFromLegacy, err
-	// }
-
-	acc, err := meta.Accessor(original)
+	accIn, err := meta.Accessor(in)
 	if err != nil {
-		return original, err
+		return createdFromLegacy, err
 	}
-	if acc.GetUID() != "" {
-		return nil, fmt.Errorf("there is an UID and it should not: %v", acc.GetUID())
+	if accIn.GetUID() != "" {
+		return nil, fmt.Errorf("there is an UID and it should not: %v", accIn.GetUID())
+	}
+
+	accLegacy, err := meta.Accessor(createdFromLegacy)
+	if err != nil {
+		return createdFromLegacy, err
+	}
+
+	if accIn.GetName() == "" {
+		accIn.SetName(accLegacy.GetName())
 	}
 
 	startStorage := time.Now()
-	createdFromStorage, err := d.Storage.Create(ctx, original, createValidation, options)
+	createdFromStorage, err := d.Storage.Create(ctx, in, createValidation, options)
 	if err != nil {
 		log.WithValues("name").Error(err, "unable to create object in storage")
 		d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
