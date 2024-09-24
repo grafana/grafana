@@ -70,14 +70,14 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		return nil, fmt.Errorf("there is an UID and it should not: %v", accIn.GetUID())
 	}
 
-	accLegacy, err := meta.Accessor(createdFromLegacy)
-	if err != nil {
-		return createdFromLegacy, err
-	}
+	// accLegacy, err := meta.Accessor(createdFromLegacy)
+	// if err != nil {
+	// 	return createdFromLegacy, err
+	// }
 
-	if accIn.GetName() == "" {
-		accIn.SetName(accLegacy.GetName())
-	}
+	// if accIn.GetName() == "" {
+	// 	accIn.SetName(accLegacy.GetName())
+	// }
 
 	startStorage := time.Now()
 	createdFromStorage, err := d.Storage.Create(ctx, in, createValidation, options)
@@ -315,14 +315,16 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	//if the object is found, create a new updateWrapper with the object found
 	if foundObj != nil {
 		fmt.Println("FOUND!")
-		err = enrichLegacyObject(foundObj, objFromLegacy, false)
+		// err = addLabelsAndAnnotations(foundObj, objFromLegacy)
 		if err != nil {
 			return objFromLegacy, false, err
 		}
-		objInfo = &updateWrapper{
-			updated:  objFromLegacy,
-			upstream: nil,
-		}
+		// objInfo = &updateWrapper{
+		// 	updated:  objFromLegacy,
+		// 	upstream: nil,
+		// }
+		uid := objInfo.Preconditions().UID
+		fmt.Printf("UID: %v\n", uid)
 	} else {
 		acc, err := meta.Accessor(objFromLegacy)
 		if err != nil {
@@ -331,10 +333,10 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		acc.SetResourceVersion("")
 		// acc.SetUID(types.UID(uuid.New().String()))
 		// enrichLegacyObject(foundObj, objFromLegacy, isCreated)
-		objInfo = &updateWrapper{
-			updated:  objFromLegacy,
-			upstream: nil,
-		}
+		// objInfo = &updateWrapper{
+		// 	updated:  objFromLegacy,
+		// 	upstream: nil,
+		// }
 		forceAllowCreate = true
 	}
 
@@ -394,46 +396,46 @@ func parseList(legacyList []runtime.Object) (map[string]int, error) {
 	return indexMap, nil
 }
 
-func enrichLegacyObject(originalObj, returnedObj runtime.Object, isCreated bool) error {
-	accessorReturned, err := meta.Accessor(returnedObj)
+func addLabelsAndAnnotations(fromObj, toObj runtime.Object) error {
+	accToObj, err := meta.Accessor(toObj)
 	if err != nil {
 		return err
 	}
 
-	accessorOriginal, err := meta.Accessor(originalObj)
+	accFromObj, err := meta.Accessor(fromObj)
 	if err != nil {
 		return err
 	}
 
-	accessorReturned.SetLabels(accessorOriginal.GetLabels())
+	accToObj.SetLabels(accFromObj.GetLabels())
 
-	ac := accessorReturned.GetAnnotations()
+	ac := accToObj.GetAnnotations()
 	if ac == nil {
 		ac = map[string]string{}
 	}
-	for k, v := range accessorOriginal.GetAnnotations() {
+	for k, v := range accFromObj.GetAnnotations() {
 		ac[k] = v
 	}
-	accessorReturned.SetAnnotations(ac)
+	accToObj.SetAnnotations(ac)
 
-	if isCreated {
-		accessorReturned.SetResourceVersion("")
-		// accessorReturned.SetUID("")
-	} else {
-		accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
-	}
-
-	//TODO: think about this
-	// if accessorOriginal.GetUID() != "" {
-	// 	accessorReturned.SetUID(accessorOriginal.GetUID())
+	// if isCreated {
+	// 	accessorReturned.SetResourceVersion("")
+	// 	// accessorReturned.SetUID("")
+	// } else {
+	// 	accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
 	// }
 
-	fmt.Printf("OBJ RV 1: %v\n", accessorReturned.GetResourceVersion())
-	o, err := meta.Accessor(returnedObj)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("OBJ RV 2: %v\n", o.GetResourceVersion())
+	// //TODO: think about this
+	// // if accessorOriginal.GetUID() != "" {
+	// // 	accessorReturned.SetUID(accessorOriginal.GetUID())
+	// // }
+
+	// fmt.Printf("OBJ RV 1: %v\n", accessorReturned.GetResourceVersion())
+	// o, err := meta.Accessor(returnedObj)
+	// if err != nil {
+	// 	return err
+	// }
+	// fmt.Printf("OBJ RV 2: %v\n", o.GetResourceVersion())
 
 	return nil
 }
