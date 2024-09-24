@@ -17,9 +17,11 @@ import (
 )
 
 const (
+	// If search query string shorter than this value, then "List, then check" strategy will be used
 	maxListQueryLength = 8
-	maxListQueryLimit  = 50
-	defaultQueryLimit  = 1000
+	// If query limit set to value higher than this value, then "List, then check" strategy will be used
+	minListQueryLimit = 50
+	defaultQueryLimit = 1000
 )
 
 type searchResult struct {
@@ -31,12 +33,12 @@ type searchResult struct {
 
 func (dr *DashboardServiceImpl) FindDashboardsZanzana(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	if dr.cfg.Zanzana.ZanzanaOnlyEvaluation {
-		return dr.findDashboardsZanzanaSingleRead(ctx, query)
+		return dr.findDashboardsZanzanaOnly(ctx, query)
 	}
 	return dr.findDashboardsZanzanaCompare(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) findDashboardsZanzanaSingleRead(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) findDashboardsZanzanaOnly(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	timer := prometheus.NewTimer(dr.metrics.searchRequestsDuration.WithLabelValues("zanzana"))
 	defer timer.ObserveDuration()
 
@@ -74,6 +76,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCompare(ctx context.Context
 
 	if second.err != nil {
 		dr.log.Error("zanzana search failed", "error", second.err)
+		dr.metrics.searchRequestStatusTotal.WithLabelValues("error").Inc()
 	} else if len(first.result) != len(second.result) {
 		dr.metrics.searchRequestStatusTotal.WithLabelValues("error").Inc()
 		dr.log.Warn(
@@ -100,7 +103,7 @@ type findDashboardsFn func(ctx context.Context, query *dashboards.FindPersistedD
 
 // getFindDashboardsFn makes a decision which search method should be used
 func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersistedDashboardsQuery) findDashboardsFn {
-	if query.Limit > 0 && query.Limit < maxListQueryLimit && len(query.Title) > 0 {
+	if query.Limit > 0 && query.Limit < minListQueryLimit && len(query.Title) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
 	if len(query.DashboardUIDs) > 0 || len(query.DashboardIds) > 0 {
