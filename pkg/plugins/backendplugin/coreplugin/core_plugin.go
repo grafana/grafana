@@ -15,6 +15,7 @@ import (
 type corePlugin struct {
 	pluginID string
 	logger   log.Logger
+	tracer   tracing.Tracer
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
@@ -27,9 +28,9 @@ type corePlugin struct {
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, tracer tracing.Tracer, _ func() []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
-			pluginID: pluginID,
-			logger:   logger,
-			// tracer:              tracer,
+			pluginID:            pluginID,
+			logger:              logger,
+			tracer:              tracer,
 			CheckHealthHandler:  opts.CheckHealthHandler,
 			CallResourceHandler: opts.CallResourceHandler,
 			QueryDataHandler:    opts.QueryDataHandler,
