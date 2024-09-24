@@ -10,16 +10,16 @@ type ReceiverPermission string
 
 const (
 	ReceiverPermissionReadSecret ReceiverPermission = "secrets"
-	//ReceiverPermissionAdmin      ReceiverPermission = "admin" // TODO: Add when resource permissions are implemented.
-	ReceiverPermissionWrite  ReceiverPermission = "write"
-	ReceiverPermissionDelete ReceiverPermission = "delete"
+	ReceiverPermissionAdmin      ReceiverPermission = "admin"
+	ReceiverPermissionWrite      ReceiverPermission = "write"
+	ReceiverPermissionDelete     ReceiverPermission = "delete"
 )
 
 // ReceiverPermissions returns all possible silence permissions.
 func ReceiverPermissions() []ReceiverPermission {
 	return []ReceiverPermission{
 		ReceiverPermissionReadSecret,
-		//ReceiverPermissionAdmin, // TODO: Add when resource permissions are implemented.
+		ReceiverPermissionAdmin,
 		ReceiverPermissionWrite,
 		ReceiverPermissionDelete,
 	}
