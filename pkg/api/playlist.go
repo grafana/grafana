@@ -416,13 +416,12 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 		return // error is already sent
 	}
 	uid := web.Params(c.Req)[":uid"]
-	cmd := playlist.UpdatePlaylistCommand{}
+	cmd := playlist.UpdatePlaylistCommand{UID: uid}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
 	}
 	obj := internalplaylist.LegacyUpdateCommandToUnstructured(cmd)
-	obj.SetName(uid)
 	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
 	if err != nil {
 		pk8s.writeError(c, err)
