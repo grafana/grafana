@@ -104,7 +104,7 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 		assert.Equal(t, true, ok)
 	})
 
-	t.Run("should skip authorizaton for configured verb", func(t *testing.T) {
+	t.Run("should skip authorization for configured verb", func(t *testing.T) {
 		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{
 			Resource: "dashboards",
 			Attr:     "uid",
