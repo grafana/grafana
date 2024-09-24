@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
@@ -75,6 +73,18 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		return createdFromLegacy, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
+
+	// if err := enrichLegacyObject(original, createdFromLegacy, true); err != nil {
+	// 	return createdFromLegacy, err
+	// }
+
+	acc, err := meta.Accessor(original)
+	if err != nil {
+		return original, err
+	}
+	if acc.GetUID() != "" {
+		return nil, fmt.Errorf("there is an UID and it should not: %v", acc.GetUID())
+	}
 
 	startStorage := time.Now()
 	createdFromStorage, err := d.Storage.Create(ctx, in, createValidation, options)
