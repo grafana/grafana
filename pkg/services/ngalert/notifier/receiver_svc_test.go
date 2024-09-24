@@ -1483,6 +1483,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService) *ReceiverS
 		encryptSvc,
 		xact,
 		log.NewNopLogger(),
+		fakes.NewFakeReceiverPermissionsService(),
 	)
 }
 
