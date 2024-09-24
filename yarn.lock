@@ -3317,10 +3317,10 @@ __metadata:
   resolution: "@grafana-plugins/mssql@workspace:public/app/plugins/datasource/mssql"
   dependencies:
     "@emotion/css": "npm:11.11.2"
-    "@grafana/data": "workspace:*"
-    "@grafana/e2e-selectors": "workspace:*"
+    "@grafana/data": "npm:11.3.0-pre"
+    "@grafana/e2e-selectors": "npm:11.3.0-pre"
     "@grafana/experimental": "npm:1.8.0"
-    "@grafana/plugin-configs": "workspace:*"
+    "@grafana/plugin-configs": "npm:11.3.0-pre"
     "@grafana/runtime": "npm:11.3.0-pre"
     "@grafana/sql": "npm:11.3.0-pre"
     "@grafana/ui": "npm:11.3.0-pre"
@@ -3336,7 +3336,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.7.0"
-    typescript: "npm:5.4.5"
+    typescript: "npm:5.5.4"
     webpack: "npm:5.94.0"
   peerDependencies:
     "@grafana/runtime": "*"
