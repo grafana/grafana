@@ -189,13 +189,13 @@ const ModalBody = ({
           {numberInstalled > 0 && installationFinished && (
             <div className={styles.pluginsInstalled}>
               <Icon className={styles.successIcon} size="lg" name="check" />
-              {`${numberInstalled || 8} ${t('plugins.catalog.update-all.update-status-text', 'plugins updated')}`}
+              {`${numberInstalled} ${t('plugins.catalog.update-all.update-status-text', 'plugins updated')}`}
             </div>
           )}
-          {numberInstalled > 0 && installationFinished && (
+          {errorMap.size > 0 && installationFinished && (
             <div className={styles.pluginsInstalled}>
               <Icon className={styles.errorIcon} size="lg" name="exclamation-triangle" />
-              {`${errorMap.size || 2} ${t('plugins.catalog.update-all.error-status-text', 'failed - see error messages')}`}
+              {`${errorMap.size} ${t('plugins.catalog.update-all.error-status-text', 'failed - see error messages')}`}
             </div>
           )}
           {config.pluginAdminExternalManageEnabled && config.featureToggles.managedPluginsInstall && (
