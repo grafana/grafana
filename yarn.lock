@@ -12425,16 +12425,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"babel-loader@npm:9.1.3":
-  version: 9.1.3
-  resolution: "babel-loader@npm:9.1.3"
+"babel-loader@npm:9.2.1":
+  version: 9.2.1
+  resolution: "babel-loader@npm:9.2.1"
   dependencies:
     find-cache-dir: "npm:^4.0.0"
     schema-utils: "npm:^4.0.0"
   peerDependencies:
     "@babel/core": ^7.12.0
     webpack: ">=5"
-  checksum: 10/7086e678273b5d1261141dca84ed784caab9f7921c8c24d7278c8ee3088235a9a9fd85caac9f0fa687336cb3c27248ca22dbf431469769b1b995d55aec606992
+  checksum: 10/f1f24ae3c22d488630629240b0eba9c935545f82ff843c214e8f8df66e266492b7a3d4cb34ef9c9721fb174ca222e900799951c3fd82199473bc6bac52ec03a3
   languageName: node
   linkType: hard
 
@@ -18937,7 +18937,7 @@ __metadata:
     angular-sanitize: "npm:1.8.3"
     ansicolor: "npm:1.1.100"
     autoprefixer: "npm:10.4.20"
-    babel-loader: "npm:9.1.3"
+    babel-loader: "npm:9.2.1"
     baron: "npm:3.0.3"
     blob-polyfill: "npm:9.0.20240710"
     brace: "npm:0.11.1"
