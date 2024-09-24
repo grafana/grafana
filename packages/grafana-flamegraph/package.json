@@ -76,7 +76,7 @@
     "esbuild": "0.24.0",
     "jest": "^29.6.4",
     "jest-canvas-mock": "2.5.2",
-    "rollup": "2.79.1",
+    "rollup": "3.29.5",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
