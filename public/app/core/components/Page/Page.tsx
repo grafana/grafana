@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -94,24 +93,13 @@ Page.Contents = PageContents;
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css(
-      config.featureToggles.bodyScrolling
-        ? {
-            label: 'page-wrapper',
-            display: 'flex',
-            flex: '1 1 0',
-            flexDirection: 'column',
-            position: 'relative',
-          }
-        : {
-            label: 'page-wrapper',
-            height: '100%',
-            display: 'flex',
-            flex: '1 1 0',
-            flexDirection: 'column',
-            minHeight: 0,
-          }
-    ),
+    wrapper: css({
+      label: 'page-wrapper',
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      position: 'relative',
+    }),
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,

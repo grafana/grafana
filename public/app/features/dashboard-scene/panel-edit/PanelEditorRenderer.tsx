@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
@@ -35,9 +34,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       <NavToolbarActions dashboard={dashboard} />
       <div
         {...containerProps}
-        className={cx(containerProps.className, {
-          [styles.content]: config.featureToggles.bodyScrolling,
-        })}
+        className={cx(containerProps.className, styles.content)}
         data-testid={selectors.components.PanelEditor.General.content}
       >
         <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
