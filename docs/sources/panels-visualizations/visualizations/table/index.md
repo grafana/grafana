@@ -132,7 +132,7 @@ The table visualization helps with debugging when you need to know exactly what 
 1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
 1. On the table panel you want to filter, open the panel editor.
 1. Expand the the **Table** options section.
-1. Toggle on the **Column filter** switch.
+1. Toggle on the [**Column filter** switch](#table-options).
 
 A filter icon appears next to each column title.
 
@@ -192,7 +192,7 @@ If you are using a table created before Grafana 7.0, then you need to migrate to
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, and **Large**.                                                                                                                                                                                                                 |
 | Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries.                                                                                                   |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as smartphones or tablets, reduce the default `150` pixel value to `50` to allow table-based panels to render correctly in dashboards. |
-| [Column width]       | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width.                                                                                               |
+| Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width.                                                                                               |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, and **Right**.                                                                                                                                                                             |
 | Column filter        | Temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns](#filter-table-columns).                                                                              |
 
@@ -204,10 +204,7 @@ After you activate the table footer, make selections in the following options:
 
 - **Calculation** - The calculation that you want to apply.
 - **Fields** - The fields to which you want to apply the calculations. The system applies the calculation to all numeric fields if you do not select a field.
-
-#### Count rows calculation
-
-If you want to show the number of rows in the dataset instead of the number of values in the selected fields, select the **Count** calculation and toggle on the **Count rows** switch.
+- **Count rows** - This options is displayed if you select the **Count** calculation. If you want to show the number of rows in the dataset instead of the number of values in the selected fields, toggle on the **Count rows** switch.
 
 ### Cell options
 
@@ -306,7 +303,7 @@ Labels displayed alongside of the gauges can be set to be colored by value, matc
 
 Shows value formatted as code. If a value is an object the JSON view allowing browsing the JSON object will appear on hover.
 
-{{< figure src="/static/img/docs/tables/json-view.png" max-width="400px" alt="JSON view" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/json-view.png" max-width="350px" alt="JSON view" class="docs-image--no-shadow" >}}
 
 ##### Image
 
