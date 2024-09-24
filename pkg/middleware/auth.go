@@ -44,14 +44,26 @@ func notAuthorized(c *contextmodel.ReqContext) {
 		return
 	}
 
-	writeRedirectCookie(c)
+	if !c.UseSessionStorageRedirect {
+		writeRedirectCookie(c)
+	}
 
 	if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedsRotation) {
-		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
+		if !c.UseSessionStorageRedirect {
+			c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate")
+			return
+		}
+
+		c.Redirect(setting.AppSubUrl + "/user/auth-tokens/rotate" + getRedirectToQueryParam(c))
 		return
 	}
 
-	c.Redirect(setting.AppSubUrl + "/login")
+	if !c.UseSessionStorageRedirect {
+		c.Redirect(setting.AppSubUrl + "/login")
+		return
+	}
+
+	c.Redirect(setting.AppSubUrl + "/login" + getRedirectToQueryParam(c))
 }
 
 func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
@@ -66,8 +78,13 @@ func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
 		return
 	}
 
-	writeRedirectCookie(c)
-	c.Redirect(setting.AppSubUrl + "/login")
+	if !c.UseSessionStorageRedirect {
+		writeRedirectCookie(c)
+		c.Redirect(setting.AppSubUrl + "/login")
+		return
+	}
+
+	c.Redirect(setting.AppSubUrl + "/login" + getRedirectToQueryParam(c))
 }
 
 func writeRedirectCookie(c *contextmodel.ReqContext) {
@@ -83,6 +100,21 @@ func writeRedirectCookie(c *contextmodel.ReqContext) {
 	// remove any forceLogin=true params
 	redirectTo = removeForceLoginParams(redirectTo)
 	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
+}
+
+func getRedirectToQueryParam(c *contextmodel.ReqContext) string {
+	redirectTo := c.Req.RequestURI
+	if setting.AppSubUrl != "" && strings.HasPrefix(redirectTo, setting.AppSubUrl) {
+		redirectTo = strings.TrimPrefix(redirectTo, setting.AppSubUrl)
+	}
+
+	if redirectTo == "/" {
+		return ""
+	}
+
+	// remove any forceLogin=true params
+	redirectTo = removeForceLoginParams(redirectTo)
+	return "?redirectTo=" + url.QueryEscape(redirectTo)
 }
 
 var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
