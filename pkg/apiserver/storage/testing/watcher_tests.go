@@ -127,7 +127,6 @@ func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recur
 
 			// Get the current RV from which we can start watching.
 			out := &example.PodList{}
-			t.Log("Listing pods")
 			if err := store.GetList(ctx, watchKey, storage.ListOptions{ResourceVersion: "", Predicate: tt.pred, Recursive: recursive}, out); err != nil {
 				t.Fatalf("List failed: %v", err)
 			}
@@ -141,7 +140,6 @@ func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recur
 			// that its corresponding event will not be propagated.
 			badKey := KeyFunc(fmt.Sprintf("%s-bad", tt.namespace), "foo")
 			badOut := &example.Pod{}
-
 			err = store.GuaranteedUpdate(ctx, badKey, badOut, true, nil, storage.SimpleUpdate(
 				func(runtime.Object) (runtime.Object, error) {
 					obj := basePod.DeepCopy()

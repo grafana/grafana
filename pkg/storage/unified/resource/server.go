@@ -570,7 +570,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 					return err
 				}
 				rv := iter.ResourceVersion()
-				if req.SendInitialEvents == false && rv <= req.Since {
+				if !req.SendInitialEvents && rv <= req.Since {
 					continue
 				}
 				if err := srv.Send(&WatchEvent{
