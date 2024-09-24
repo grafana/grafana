@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/klog/v2"
@@ -56,34 +54,42 @@ func (d *DualWriterMode2) Create(ctx context.Context, original runtime.Object, c
 	ctx = klog.NewContext(ctx, log)
 
 	startLegacy := time.Now()
-	created, err := d.Legacy.Create(ctx, original, createValidation, options)
+	createdFromLegacy, err := d.Legacy.Create(ctx, original, createValidation, options)
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
 		d.recordLegacyDuration(true, mode2Str, d.resource, method, startLegacy)
-		return created, err
+		return createdFromLegacy, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
+	// if err := enrichLegacyObject(original, createdFromLegacy, true); err != nil {
+	// 	return createdFromLegacy, err
+	// }
+
+	acc, err := meta.Accessor(original)
+	if err != nil {
+		return original, err
+	}
+	if acc.GetUID() != "" {
+		return nil, fmt.Errorf("there is an UID and it should not: %v", acc.GetUID())
+	}
+
 	startStorage := time.Now()
-	rsp, err := d.Storage.Create(ctx, created, createValidation, options)
+	createdFromStorage, err := d.Storage.Create(ctx, original, createValidation, options)
 	if err != nil {
 		log.WithValues("name").Error(err, "unable to create object in storage")
 		d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
-		return rsp, err
+		return createdFromStorage, err
 	}
 	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
-	if err := enrichLegacyObject(original, created, true); err != nil {
-		return created, err
-	}
-
-	areEqual := Compare(rsp, created)
-	d.recordOutcome(mode2Str, getName(rsp), areEqual, method)
+	areEqual := Compare(createdFromStorage, createdFromLegacy)
+	d.recordOutcome(mode2Str, getName(createdFromStorage), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
 	}
 
-	return rsp, err
+	return createdFromLegacy, err
 }
 
 // It retrieves an object from Storage if possible, and if not it falls back to LegacyStorage.
@@ -123,7 +129,7 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	if objStorage == nil {
 		return objLegacy, nil
 	}
-	return objStorage, err
+	return objLegacy, err
 }
 
 // List overrides the behavior of the generic DualWriter.
@@ -291,32 +297,37 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	fmt.Printf("foundObj: %v\n", foundObj)
 
 	startLegacy := time.Now()
-	obj, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
-		log.WithValues("object", obj).Error(err, "could not update in legacy storage")
+		log.WithValues("object", objFromLegacy).Error(err, "could not update in legacy storage")
 		d.recordLegacyDuration(true, mode2Str, d.resource, "update", startLegacy)
-		return obj, created, err
+		return objFromLegacy, created, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, "update", startLegacy)
 
 	//if the object is found, create a new updateWrapper with the object found
 	if foundObj != nil {
 		fmt.Println("FOUND!")
-		err = enrichLegacyObject(foundObj, obj, false)
+		err = enrichLegacyObject(foundObj, objFromLegacy, false)
 		if err != nil {
-			return obj, false, err
+			return objFromLegacy, false, err
 		}
 		objInfo = &updateWrapper{
-			updated:  obj,
+			updated:  objFromLegacy,
 			upstream: nil,
 		}
 	} else {
-		acc, err := meta.Accessor(obj)
+		acc, err := meta.Accessor(objFromLegacy)
 		if err != nil {
-			return obj, false, err
+			return objFromLegacy, false, err
 		}
 		acc.SetResourceVersion("")
-		acc.SetUID(types.UID(uuid.New().String()))
+		// acc.SetUID(types.UID(uuid.New().String()))
+		// enrichLegacyObject(foundObj, objFromLegacy, isCreated)
+		objInfo = &updateWrapper{
+			updated:  objFromLegacy,
+			upstream: nil,
+		}
 		forceAllowCreate = true
 	}
 
@@ -330,7 +341,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return res, created, err
 	}
 
-	areEqual := Compare(res, obj)
+	areEqual := Compare(res, objFromLegacy)
 	d.recordOutcome(mode2Str, name, areEqual, method)
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
@@ -404,7 +415,18 @@ func enrichLegacyObject(originalObj, returnedObj runtime.Object, isCreated bool)
 	} else {
 		accessorReturned.SetResourceVersion(accessorOriginal.GetResourceVersion())
 	}
-	accessorReturned.SetUID(accessorOriginal.GetUID())
+
+	//TODO: think about this
+	// if accessorOriginal.GetUID() != "" {
+	// 	accessorReturned.SetUID(accessorOriginal.GetUID())
+	// }
+
+	fmt.Printf("OBJ RV 1: %v\n", accessorReturned.GetResourceVersion())
+	o, err := meta.Accessor(returnedObj)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("OBJ RV 2: %v\n", o.GetResourceVersion())
 
 	return nil
 }
