@@ -2,13 +2,10 @@ package resource
 
 import (
 	"context"
-	"fmt"
-	"time"
-
-	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -23,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // TODO(drclau): decide on the audience for the resource store
@@ -40,15 +37,6 @@ type resourceClient struct {
 	ResourceStoreClient
 	ResourceIndexClient
 	DiagnosticsClient
-}
-
-func NewResourceClient(channel *grpc.ClientConn) ResourceClient {
-	cc := grpchan.InterceptClientConn(channel, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
-	return &resourceClient{
-		ResourceStoreClient: NewResourceStoreClient(cc),
-		ResourceIndexClient: NewResourceIndexClient(cc),
-		DiagnosticsClient:   NewDiagnosticsClient(cc),
-	}
 }
 
 func NewLocalResourceClient(server ResourceServer) ResourceClient {
@@ -85,7 +73,7 @@ func NewLocalResourceClient(server ResourceServer) ResourceClient {
 	}
 }
 
-func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceStoreClient, error) {
+func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceClient, error) {
 	// scenario: remote on-prem
 	clientInt, err := authnlib.NewGrpcClientInterceptor(
 		&authnlib.GrpcClientConfig{},
@@ -97,10 +85,15 @@ func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceStoreClient, error) {
 		return nil, err
 	}
 
-	return NewResourceStoreClient(grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)), nil
+	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return &resourceClient{
+		ResourceStoreClient: NewResourceStoreClient(cc),
+		ResourceIndexClient: NewResourceIndexClient(cc),
+		DiagnosticsClient:   NewDiagnosticsClient(cc),
+	}, nil
 }
 
-func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceStoreClient, error) {
+func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceClient, error) {
 	// scenario: remote cloud
 	grpcClientConfig := clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg))
 
@@ -118,7 +111,12 @@ func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceSt
 		return nil, err
 	}
 
-	return NewResourceStoreClient(grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)), nil
+	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	return &resourceClient{
+		ResourceStoreClient: NewResourceStoreClient(cc),
+		ResourceIndexClient: NewResourceIndexClient(cc),
+		DiagnosticsClient:   NewDiagnosticsClient(cc),
+	}, nil
 }
 
 func idTokenExtractor(ctx context.Context) (string, error) {
