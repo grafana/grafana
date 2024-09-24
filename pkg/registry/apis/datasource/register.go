@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -200,12 +199,7 @@ func resourceFromPluginID(pluginID string) (utils.ResourceInfo, error) {
 	return datasource.GenericConnectionResourceInfo.WithGroupAndShortName(group, pluginID+"-connection"), nil
 }
 
-func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	_ generic.RESTOptionsGetter,
-	_ grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
+func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ *runtime.Scheme, _ generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
 	storage := map[string]rest.Storage{}
 
 	conn := b.connectionResourceInfo
@@ -228,13 +222,8 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	// Register hardcoded query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
 
-	// Create the group info
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
-		conn.GroupResource().Group, scheme,
-		metav1.ParameterCodec, codecs)
-
 	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
-	return &apiGroupInfo, err
+	return err
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {

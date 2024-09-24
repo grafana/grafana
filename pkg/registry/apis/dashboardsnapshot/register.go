@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -120,13 +119,7 @@ func (b *SnapshotsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboardsnapshot.GROUP, scheme, metav1.ParameterCodec, codecs)
+func (b *SnapshotsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ *runtime.Scheme, _ generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
 	storage := map[string]rest.Storage{}
 
 	legacyStore := &legacyStorage{
@@ -147,7 +140,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboardsnapshot.VERSION] = storage
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

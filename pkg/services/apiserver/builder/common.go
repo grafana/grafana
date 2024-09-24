@@ -5,7 +5,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -24,13 +23,19 @@ type APIGroupBuilder interface {
 	// Add the kinds to the server scheme
 	InstallSchema(scheme *runtime.Scheme) error
 
-	// Build the group+version behavior
-	GetAPIGroupInfo(
+	// UpdateAPIGroupInfo used to be a getter until we ran into the issue
+	// where separate API Group Info for the same group (different versions) aren't handled well by
+	// the InstallAPIGroup facility of genericapiserver. Also, we can only ever call InstallAPIGroup
+	// once on the genericapiserver per group, or we run into double registration startup errors.
+	//
+	// The caller should share the apiGroupInfo passed into this function across builder versions of the same group.
+	// UpdateAPIGroupInfo builds the group+version behavior updating the passed in apiGroupInfo in place
+	UpdateAPIGroupInfo(
+		apiGroupInfo *genericapiserver.APIGroupInfo,
 		scheme *runtime.Scheme,
-		codecs serializer.CodecFactory,
 		optsGetter generic.RESTOptionsGetter,
-		dualWrite grafanarest.DualWriteBuilder,
-	) (*genericapiserver.APIGroupInfo, error)
+		dualWriteBuilder grafanarest.DualWriteBuilder,
+	) error
 
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions
