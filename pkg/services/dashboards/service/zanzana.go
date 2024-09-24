@@ -121,7 +121,7 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 	ctx, span := tracer.Start(ctx, "dashboards.service.findDashboardsZanzanaCheck")
 	defer span.End()
 
-	result := make([]dashboards.DashboardSearchProjection, 0)
+	result := make([]dashboards.DashboardSearchProjection, 0, query.Limit)
 	var page int64 = 1
 	query.SkipAccessControlFilter = true
 	// Set limit to default to prevent pagination issues
@@ -136,7 +136,8 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 		}
 
 		query.Limit = limit
-		res, err := dr.checkDashboards(ctx, query, findRes)
+		remains := limit - int64(len(result))
+		res, err := dr.checkDashboards(ctx, query, findRes, remains)
 		if err != nil {
 			return nil, err
 		}
@@ -150,14 +151,10 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaCheck(ctx context.Context, 
 		}
 	}
 
-	if len(result) > int(limit) {
-		result = result[:limit]
-	}
-
 	return result, nil
 }
 
-func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, searchRes []dashboards.DashboardSearchProjection, remains int64) ([]dashboards.DashboardSearchProjection, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.service.checkDashboards")
 	defer span.End()
 
@@ -181,7 +178,7 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 		go func() {
 			defer wg.Done()
 			for d := range resToCheck {
-				if len(allowedResults) >= int(query.Limit) {
+				if int64(len(allowedResults)) >= remains {
 					return
 				}
 
@@ -215,7 +212,7 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 	close(allowedResults)
 
 	for r := range allowedResults {
-		if len(res) >= int(query.Limit) {
+		if int64(len(res)) >= remains {
 			break
 		}
 		res = append(res, r)
