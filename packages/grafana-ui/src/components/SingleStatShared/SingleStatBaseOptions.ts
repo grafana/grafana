@@ -1,4 +1,4 @@
-import { cloneDeep, isNumber, omit, pickBy, identity } from 'lodash';
+import { cloneDeep, identity, isNumber, omit, pickBy } from 'lodash';
 
 import {
   convertOldAngularValueMappings,
@@ -59,7 +59,12 @@ export function sharedSingleStatPanelChangedHandler(
 function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>> | any, prevOptions: any) {
   const graphOptions: GraphOptions = prevOptions.angular;
 
-  const options: OptionsWithLegend = {
+  const options: SingleStatBaseOptions & OptionsWithLegend = {
+    orientation: VizOrientation.Auto,
+    reduceOptions: {
+      values: false,
+      calcs: [],
+    },
     legend: {
       displayMode: LegendDisplayMode.List,
       showLegend: true,
@@ -76,6 +81,11 @@ function migrateFromGraphPanel(panel: PanelModel<Partial<SingleStatBaseOptions>>
         color: { mode: 'palette-classic' },
       },
     };
+
+    // Value options calculation migration
+    if (graphOptions.xaxis.values) {
+      options.reduceOptions.calcs = getReducerForMigration(graphOptions.xaxis.values);
+    }
 
     // Legend migration
     const legendConfig = graphOptions.legend;
@@ -413,4 +423,26 @@ function getReducersFromLegend(obj: Record<string, unknown>): string[] {
     }
   }
   return ids;
+}
+
+// same as public/app/plugins/panel/barchart/migrations.ts
+function getReducerForMigration(reducers: string[] | undefined) {
+  const transformReducers: string[] = [];
+
+  reducers?.forEach((reducer) => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    if (!Object.values(ReducerID).includes(reducer as ReducerID)) {
+      if (reducer === 'current') {
+        transformReducers.push(ReducerID.lastNotNull);
+      } else if (reducer === 'total') {
+        transformReducers.push(ReducerID.sum);
+      } else if (reducer === 'avg') {
+        transformReducers.push(ReducerID.mean);
+      }
+    } else {
+      transformReducers.push(reducer);
+    }
+  });
+
+  return reducers ? transformReducers : [ReducerID.sum];
 }

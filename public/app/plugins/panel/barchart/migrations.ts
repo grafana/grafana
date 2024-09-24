@@ -52,6 +52,7 @@ export const changeToBarChartPanelMigrationHandler: PanelTypeChangedHandler = (p
   return {};
 };
 
+// same as grafana-ui/src/components/SingleStatShared/SingleStatBaseOptions.ts
 const getReducer = (reducers: string[] | undefined) => {
   const transformReducers: string[] = [];
 
