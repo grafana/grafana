@@ -162,6 +162,8 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       const { range, newGlobalRange } = calculateRange(config, field, globalRange, options.data!);
       globalRange = newGlobalRange;
 
+      // Clear any cached displayName as it can change during field overrides process
+      field.state!.displayName = null;
       field.state!.seriesIndex = seriesIndex;
       field.state!.range = range;
       field.type = type;
