@@ -225,14 +225,14 @@ describe('AzureMonitor resourcePickerData', () => {
     it('makes 1 call to ARG with the correct path and query arguments', async () => {
       const mockResponse = createARGResourcesResponse();
       const { resourcePickerData, postResource } = createResourcePickerData([mockResponse]);
-      await resourcePickerData.getResourcesForResourceGroup('dev', 'logs');
+      await resourcePickerData.getResourcesForResourceGroup('/subscription/sub1/resourceGroups/dev', 'logs');
 
       expect(postResource).toBeCalledTimes(1);
       const firstCall = postResource.mock.calls[0];
       const [path, postBody] = firstCall;
       expect(path).toEqual('resourcegraph/providers/Microsoft.ResourceGraph/resources?api-version=2021-03-01');
       expect(postBody.query).toContain('resources');
-      expect(postBody.query).toContain('where id hasprefix "dev"');
+      expect(postBody.query).toContain('where id hasprefix "/subscription/sub1/resourceGroups/dev/"');
     });
 
     it('returns formatted resources', async () => {
