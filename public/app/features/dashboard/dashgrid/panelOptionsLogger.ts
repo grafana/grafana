@@ -1,5 +1,6 @@
 import { FieldConfigSource } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
+import { config } from 'app/core/config';
 import { FIELD_CONFIG_CUSTOM_KEY, FIELD_CONFIG_OVERRIDES_KEY, PanelLogEvents } from 'app/core/log_events';
 
 interface PanelLogInfo {
@@ -29,6 +30,9 @@ export class PanelOptionsLogger {
   };
 
   logPanelEvent = (eventName: string, newKey: string, newVal: string, oldVal?: string) => {
+    if (!config.grafanaJavascriptAgent.enabled) {
+      return;
+    }
     const logObj = {
       key: newKey,
       newValue: newVal,
