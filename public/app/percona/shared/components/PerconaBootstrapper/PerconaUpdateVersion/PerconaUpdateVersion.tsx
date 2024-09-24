@@ -1,8 +1,13 @@
 import React, { FC, useEffect, useState } from 'react';
 
 import { Modal, useStyles2 } from '@grafana/ui';
-import { checkUpdatesChangelogs, getSnoozeCurrentVersion } from 'app/percona/shared/core/reducers/updates';
-import { getChangeLogs, getUserSnoozeVersion, getUpdatesInfo } from 'app/percona/shared/core/selectors';
+import {
+  checkUpdatesChangelogs,
+  getSnoozeCurrentVersion,
+  setSnoozeCurrentUpdate,
+  UpdatesChangelogs,
+} from 'app/percona/shared/core/reducers/updates';
+import { getUpdatesInfo } from 'app/percona/shared/core/selectors';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
@@ -10,77 +15,89 @@ import { Messages } from './PerconaUpdateVersion.constants';
 import { getStyles } from './PerconaUpdateVersion.styles';
 
 const PerconaUpdateVersion: FC = () => {
-  const {
-    updateAvailable,
-    installed: { version: installedVersion },
-    latest: { version: latestVersion },
-  } = useSelector(getUpdatesInfo);
-  const { updates } = useSelector(getChangeLogs);
-  const { snoozeCurrentVersion } = useSelector(getUserSnoozeVersion);
+  const { updateAvailable, installed, latest, changeLogs, lastChecked, snoozeCurrentVersion } =
+    useSelector(getUpdatesInfo);
 
   const [showUpdate, setShowUpdate] = useState(false);
   const dispatch = useAppDispatch();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
-    if (updateAvailable) {
-      const lastCheckDate = new Date(lastCheck);
-      const currentDate = new Date();
-      const differenceInMilliseconds = currentDate - lastCheckDate;
-      const differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
+    const showModal = async () => {
+      await dispatch(checkUpdatesChangelogs());
+      setShowUpdate(true);
+    };
 
-      if (
-        installedVersion !== latestVersion &&
-        differenceInDays > 6 &&
-        snoozeCurrentVersion.snoozedPmmVersion === latestVersion
-      ) {
-        setShowUpdate(true);
-        await dispatch(checkUpdatesChangelogs());
+    const differenceInDays = async () => {
+      if (lastChecked) {
+        const lastCheckDate = new Date(lastChecked);
+        const currentDate = new Date();
+        const differenceInMilliseconds = currentDate.getTime() - lastCheckDate.getTime();
+        return Math.trunc(differenceInMilliseconds / (1000 * 60 * 60 * 24));
+      } else {
+        return 7;
       }
-    }
-  }, [dispatch, updateAvailable, installedVersion, latestVersion, snoozeCurrentVersion]);
+    };
 
-  useEffect(() => {
-    if (!snoozeCurrentVersion) {
-      dispatch(getSnoozeCurrentVersion());
+    if (updateAvailable) {
+      if (!snoozeCurrentVersion) {
+        dispatch(getSnoozeCurrentVersion());
+      }
+      differenceInDays().then((days) => {
+        if (
+          (installed?.version !== latest?.version /*days > 6 &&*/ &&
+            snoozeCurrentVersion?.snoozedPmmVersion !== latest?.version) ||
+          !lastChecked
+        ) {
+          showModal();
+        }
+      });
     }
-  }, [dispatch, snoozeCurrentVersion]);
+  }, [dispatch, updateAvailable, installed, latest, snoozeCurrentVersion, lastChecked]);
 
   // Snooze API
-  const dismissModal = () => {
-    const payload = {
-      productTourCompleted: true, // ?
-      alertingTourCompleted: true, // ?
-      snoozedPmmVersion: latestVersion,
-    };
-    dispatch(snoozeCurrentVersion(payload));
+  const dismissModal = async () => {
+    if (latest && latest.version) {
+      const payload = {
+        productTourCompleted: true, // ?
+        alertingTourCompleted: true, // ?
+        snoozedPmmVersion: latest.version,
+      };
+      await dispatch(setSnoozeCurrentUpdate(payload));
+    }
   };
-  /*
-* version: string;
-  tag: string;
-  timestamp: string;
-  releaseNodesUrl: string;
-  releaseNotesText: string,*/
+
   return (
     <>
       {showUpdate &&
-        (updates.length > 1 ? (
+        changeLogs &&
+        (changeLogs?.updates.length > 1 ? (
           <Modal title={Messages.titleOneUpdate}>
-            <h3 className={styles.version}>{updates[0].version}</h3>
-            <div className={styles.releaseNotesText}>{updates[0].releaseNotesText}</div>
+            <h3 className={styles.version}>{changeLogs.updates[0].version}</h3>
+            <div className={styles.releaseNotesText}>{changeLogs.updates[0].releaseNotesText}</div>
             <div className={styles.howToUpdateTitle}>{Messages.howToUpdate}</div>
             <h3 className={styles.howToUpdateDescription}>{Messages.howToUpdateDescription}</h3>
+            <div>
+              <button onClick={dismissModal}>Snooze</button>
+              <button>Go to updates page</button>
+            </div>
           </Modal>
         ) : (
           <Modal title={Messages.titleMultipleUpdates}>
             <div className={styles.newVersionsTitle}>{Messages.newVersions}</div>
             <ul>
-              {updates.map((update) => (
+              {changeLogs?.updates.map((update: UpdatesChangelogs) => (
                 <li key={update.toString()}>{update.version}</li>
               ))}
             </ul>
+            <div>
+              <button onClick={dismissModal}>Snooze</button>
+              <button>Go to updates page</button>
+            </div>
           </Modal>
         ))}
     </>
   );
 };
+
+export default PerconaUpdateVersion;

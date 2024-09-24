@@ -10,12 +10,12 @@ import { CheckUpdatesBody, CheckUpdatesResponse } from './Updates.types';
 
 export const UpdatesService = {
   getCurrentVersion: (body: CheckUpdatesBody = { force: false }) =>
-    api.post<CheckUpdatesResponse, CheckUpdatesBody>('/v1/server/updates', body, true),
+    api.get<CheckUpdatesResponse, CheckUpdatesBody>('/v1/server/updates', false, { params: body }),
 
-  getUpdatesChangelogs: () => api.get<CheckUpdatesChangelogsPayload>('/v1/server/updates/changelogs', false),
+  getUpdatesChangelogs: () => api.get<CheckUpdatesChangelogsPayload, void>('/v1/server/updates/changelogs', false),
 
-  snoozeCurrentVersion: (body: SnoozePayloadBody) =>
+  setSnoozeCurrentVersion: (body: SnoozePayloadBody) =>
     api.put<SnoozePayloadResponse, SnoozePayloadBody>('/v1/users/me', body, true),
 
-  getSnoozeCurrentVersion: () => api.get<SnoozePayloadResponse>('/v1/users/me', false),
+  getSnoozeCurrentVersion: () => api.get<SnoozePayloadResponse, void>('/v1/users/me', false),
 };

@@ -6,6 +6,7 @@ import { UpdatesService } from 'app/percona/shared/services/updates';
 import {
   CheckUpdatesChangelogsPayload,
   CheckUpdatesPayload,
+  SnoozePayloadBody,
   SnoozePayloadResponse,
   UpdatesState,
 } from './updates.types';
@@ -20,7 +21,7 @@ export const updatesSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(checkUpdatesAction.pending, () => ({
+    builder.addCase(checkUpdatesAction.pending, (state) => ({
       ...initialState,
       isLoading: true,
     }));
@@ -28,14 +29,16 @@ export const updatesSlice = createSlice({
     builder.addCase(checkUpdatesAction.fulfilled, (state, { payload }) => ({
       ...state,
       ...payload,
+      updateAvailable: true, // to remove
+      latest: { version: '3.0.1' }, // to remove
       isLoading: false,
     }));
 
-    builder.addCase(checkUpdatesAction.rejected, () => ({
+    builder.addCase(checkUpdatesAction.rejected, (state) => ({
       ...initialState,
       isLoading: false,
     }));
-    builder.addCase(checkUpdatesChangelogs.pending, () => ({
+    builder.addCase(checkUpdatesChangelogs.pending, (state) => ({
       ...initialState,
       isLoading: true,
     }));
@@ -46,38 +49,38 @@ export const updatesSlice = createSlice({
       changeLogs: payload,
     }));
 
-    builder.addCase(checkUpdatesChangelogs.rejected, () => ({
-      ...initialState,
+    builder.addCase(checkUpdatesChangelogs.rejected, (state) => ({
+      ...state,
       isLoading: false,
     }));
-    builder.addCase(getSnoozeCurrentUpdate.pending, () => ({
-      ...initialState,
+    builder.addCase(getSnoozeCurrentVersion.pending, (state) => ({
+      ...state,
       isLoading: true,
     }));
 
-    builder.addCase(getSnoozeCurrentUpdate.fulfilled, (state, { payload }) => ({
+    builder.addCase(getSnoozeCurrentVersion.fulfilled, (state, { payload }) => ({
       ...state,
       snoozeCurrentVersion: payload,
       isLoading: false,
     }));
 
-    builder.addCase(getSnoozeCurrentUpdate.rejected, () => ({
-      ...initialState,
+    builder.addCase(getSnoozeCurrentVersion.rejected, (state) => ({
+      ...state,
       isLoading: false,
     }));
-    builder.addCase(snoozeCurrentUpdate.pending, () => ({
-      ...initialState,
+    builder.addCase(setSnoozeCurrentUpdate.pending, (state) => ({
+      ...state,
       isLoading: true,
     }));
 
-    builder.addCase(snoozeCurrentUpdate.fulfilled, (state, { payload }) => ({
+    builder.addCase(setSnoozeCurrentUpdate.fulfilled, (state, { payload }) => ({
       ...state,
       snoozeCurrentVersion: payload,
       isLoading: false,
     }));
 
-    builder.addCase(snoozeCurrentUpdate.rejected, () => ({
-      ...initialState,
+    builder.addCase(setSnoozeCurrentUpdate.rejected, (state) => ({
+      ...state,
       isLoading: false,
     }));
   },
@@ -103,19 +106,19 @@ export const checkUpdatesChangelogs = createAsyncThunk(
     )
 );
 
-export const snoozeCurrentUpdate = createAsyncThunk(
-  'percona/checkUpdatesChangelogs',
-  async (body): Promise<SnoozePayloadResponse> =>
+export const setSnoozeCurrentUpdate = createAsyncThunk(
+  'percona/setSnoozeCurrentUpdate',
+  async (body: SnoozePayloadBody): Promise<SnoozePayloadResponse> =>
     withSerializedError(
       (async () => {
-        return await UpdatesService.snoozeCurrentVersion(body);
+        return await UpdatesService.setSnoozeCurrentVersion(body);
       })()
     )
 );
 
 export const getSnoozeCurrentVersion = createAsyncThunk(
-  'percona/checkUpdatesChangelogs',
-  async (body): Promise<SnoozePayloadResponse> =>
+  'percona/getSnoozeCurrentVersion',
+  async (): Promise<SnoozePayloadResponse> =>
     withSerializedError(
       (async () => {
         return await UpdatesService.getSnoozeCurrentVersion();
