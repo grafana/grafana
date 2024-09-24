@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	authnClients "github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -25,12 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, authenticator authn.Authenticator, features featuremgmt.FeatureToggles,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:           cfg,
 		tracer:        tracer,
 		authenticator: authenticator,
+		features:      features,
 	}
 }
 
@@ -39,6 +41,7 @@ type ContextHandler struct {
 	Cfg           *setting.Cfg
 	tracer        tracing.Tracer
 	authenticator authn.Authenticator
+	features      featuremgmt.FeatureToggles
 }
 
 type reqContextKey = ctxkey.Key
@@ -92,10 +95,11 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			SignedInUser: &user.SignedInUser{
 				Permissions: map[int64]map[string][]string{},
 			},
-			IsSignedIn:     false,
-			AllowAnonymous: false,
-			SkipDSCache:    false,
-			Logger:         log.New("context"),
+			IsSignedIn:                false,
+			AllowAnonymous:            false,
+			SkipDSCache:               false,
+			Logger:                    log.New("context"),
+			UseSessionStorageRedirect: h.features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection),
 		}
 
 		// inject ReqContext in the context
