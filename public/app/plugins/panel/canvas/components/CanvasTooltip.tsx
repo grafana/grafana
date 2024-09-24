@@ -23,7 +23,7 @@ import { CloseButton } from '@grafana/ui/src/components/uPlot/plugins/CloseButto
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { getRowIndex } from '../utils';
+import { getElementFields, getRowIndex } from '../utils';
 
 interface Props {
   scene: Scene;
@@ -52,6 +52,11 @@ export const CanvasTooltip = ({ scene }: Props) => {
   const lastTimeValue = timeField?.values[timeField.values.length - 1];
   const shouldDisplayTimeContentItem =
     timeField && lastTimeValue && element.data.field && getFieldDisplayName(timeField) !== element.data.field;
+
+  let elementFields: Field[] = [];
+  if (scene.data?.series) {
+    elementFields = getElementFields(scene.data?.series, element.options);
+  }
 
   const headerItem: VizTooltipItem | null = {
     label: element.getName(),
@@ -86,6 +91,18 @@ export const CanvasTooltip = ({ scene }: Props) => {
       }
     });
   }
+
+  elementFields.forEach((field) => {
+    if (field.config.links && field.config.links.length > 0 && field.getLinks) {
+      field.getLinks({}).forEach((link) => {
+        const key = `${link.title}/${link.href}`;
+        if (!linkLookup.has(key)) {
+          links.push(link);
+          linkLookup.add(key);
+        }
+      });
+    }
+  });
 
   const actions: Array<ActionModel<Field>> = [];
   const actionLookup = new Set<string>();
