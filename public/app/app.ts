@@ -387,12 +387,12 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
 }
 
 function handleRedirectTo(): void {
-  const queryParams = new URLSearchParams(window.location.search);
+  const queryParams = locationService.getSearch();
   const redirectToParamKey = 'redirectTo';
 
   if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
     const rawRedirectTo = queryParams.get(redirectToParamKey)!;
-    window.sessionStorage.setItem(RedirectToUrlKey, decodeURIComponent(rawRedirectTo));
+    window.sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent(rawRedirectTo));
     queryParams.delete(redirectToParamKey);
     window.history.replaceState({}, '', `${window.location.pathname}${queryParams.size > 0 ? `?${queryParams}` : ''}`);
     return;
@@ -409,7 +409,7 @@ function handleRedirectTo(): void {
   }
 
   window.sessionStorage.removeItem(RedirectToUrlKey);
-  locationService.replace(redirectTo);
+  locationService.replace(decodeURIComponent(redirectTo));
 }
 
 export default new GrafanaApp();

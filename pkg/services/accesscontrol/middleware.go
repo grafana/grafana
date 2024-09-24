@@ -186,8 +186,8 @@ func writeRedirectCookie(c *contextmodel.ReqContext) {
 
 func getRedirectToQueryParam(c *contextmodel.ReqContext) string {
 	redirectTo := c.Req.RequestURI
-	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
-		redirectTo = setting.AppSubUrl + c.Req.RequestURI
+	if setting.AppSubUrl != "" && strings.HasPrefix(redirectTo, setting.AppSubUrl) {
+		redirectTo = strings.TrimPrefix(redirectTo, setting.AppSubUrl)
 	}
 
 	if redirectTo == "/" {
