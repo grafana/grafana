@@ -32,7 +32,7 @@ type APIServerFactory interface {
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
 	// Optional override for apiserver's BuildHandlerChainFunc, return nil if you want to use the grafana's default chain func defined in pkg/services/apiserver/builder/helper.go
-	GetBuildHandlerChainFunc(tracer tracing.Tracer, builders []builder.APIGroupBuilder) builder.BuildHandlerChainFunc
+	GetBuildHandlerChainFunc(builders []builder.APIGroupBuilder) builder.BuildHandlerChainFunc
 
 	// Make an API server for a given group+version
 	MakeAPIServer(ctx context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
@@ -51,7 +51,7 @@ func (p *DummyAPIFactory) GetOptions() options.OptionsProvider {
 	return nil
 }
 
-func (p *DummyAPIFactory) GetBuildHandlerChainFunc(_ tracing.Tracer, builders []builder.APIGroupBuilder) builder.BuildHandlerChainFunc {
+func (p *DummyAPIFactory) GetBuildHandlerChainFunc(builders []builder.APIGroupBuilder) builder.BuildHandlerChainFunc {
 	return nil
 }
 
