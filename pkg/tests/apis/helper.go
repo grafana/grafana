@@ -185,9 +185,10 @@ func (c *K8sResourceClient) SpecJSON(v *unstructured.UnstructuredList) string {
 func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured, replaceMeta ...string) string {
 	c.t.Helper()
 	copy := c.sanitizeObject(v)
+	copy.SetManagedFields([]metav1.ManagedFieldsEntry{})
 
 	out, err := json.MarshalIndent(copy, "", "  ")
-	// fmt.Printf("%s", out)
+	fmt.Printf("OUT JSON%s", out)
 	require.NoError(c.t, err)
 	return string(out)
 }

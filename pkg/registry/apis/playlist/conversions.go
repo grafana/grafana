@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func LegacyUpdateCommandToUnstructured(cmd playlistsvc.UpdatePlaylistCommand) unstructured.Unstructured {
@@ -34,6 +35,10 @@ func LegacyUpdateCommandToUnstructured(cmd playlistsvc.UpdatePlaylistCommand) un
 			},
 		},
 	}
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
+	}
+
 	obj.SetName(cmd.UID)
 	return obj
 }

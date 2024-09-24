@@ -21,16 +21,16 @@ var _ store = &sqlStore{}
 
 func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	p := playlist.Playlist{}
-	if cmd.UID == "" {
-		cmd.UID = util.GenerateShortUID()
-	} else {
-		err := util.ValidateUID(cmd.UID)
-		if err != nil {
-			return nil, err
-		}
+	// if cmd.UID == "" {
+	// cmd.UID = util.GenerateShortUID()
+	// } else {
+	err := util.ValidateUID(cmd.UID)
+	if err != nil {
+		return nil, err
 	}
+	// }
 
-	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	err = s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		count, err := sess.SQL("SELECT COUNT(*) FROM playlist WHERE playlist.org_id = ?", cmd.OrgId).Count()
 		if err != nil {
 			return err
