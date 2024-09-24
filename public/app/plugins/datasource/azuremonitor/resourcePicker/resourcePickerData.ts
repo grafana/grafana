@@ -91,7 +91,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     const nestedRows =
       parentRow.type === ResourceRowType.Subscription
         ? await this.getResourceGroupsBySubscriptionId(parentRow.id, type)
-        : await this.getResourcesForResourceGroup(parentRow.id, type);
+        : await this.getResourcesForResourceGroup(parentRow.uri, type);
 
     return addResources(rows, parentRow.uri, nestedRows);
   }
@@ -183,6 +183,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     subscriptionId: string,
     type: ResourcePickerQueryType
   ): Promise<ResourceRowGroup> {
+    // We can use subscription ID for the filtering here as they're unique
     const query = `
     resources
      | join kind=inner (
@@ -230,12 +231,15 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
   }
 
   async getResourcesForResourceGroup(
-    resourceGroupId: string,
+    resourceGroupUri: string,
     type: ResourcePickerQueryType
   ): Promise<ResourceRowGroup> {
+    // We use resource group URI for the filtering here because resource group names are not unique across subscriptions
+    // We also add a slash at the end of the resource group URI to ensure we do not pull resources from a resource group
+    // that has a similar naming prefix e.g. resourceGroup1 and resourceGroup10
     const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
-      | where id hasprefix "${resourceGroupId}"
+      | where id hasprefix "${resourceGroupUri}/"
       ${await this.filterByType(type)}
     `);
 
