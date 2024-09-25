@@ -29,6 +29,8 @@ func MapTeamPermission(p team.PermissionType) iamv0.TeamPermission {
 	}
 }
 
+// Resource is required to be implemented for list return types so we can
+// perform authorization.
 type Resource interface {
 	AuthID() string
 }
@@ -41,7 +43,9 @@ type ListResponse[T Resource] struct {
 
 type ListFunc[T Resource] func(ctx context.Context, ns claims.NamespaceInfo, p Pagination) (*ListResponse[T], error)
 
-func ListWithChecker[T Resource](
+// List is a helper function that will perform access check on resources if
+// prvovided with a claims.AccessClient.
+func List[T Resource](
 	ctx context.Context,
 	resourceName string,
 	ac claims.AccessClient,
@@ -58,14 +62,18 @@ func ListWithChecker[T Resource](
 		return nil, err
 	}
 
-	check, err := ac.Compile(ctx, ident, claims.AccessRequest{
-		Verb:      utils.VerbList,
-		Resource:  resourceName,
-		Namespace: ns.Value,
-	})
+	check := func(_ string, _ string) bool { return true }
+	if ac != nil {
+		var err error
+		check, err = ac.Compile(ctx, ident, claims.AccessRequest{
+			Verb:      utils.VerbList,
+			Resource:  resourceName,
+			Namespace: ns.Value,
+		})
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	res := &ListResponse[T]{Items: make([]T, 0, p.Limit)}

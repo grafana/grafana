@@ -61,17 +61,8 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-
-	if s.ac != nil {
-		return s.listWithCheck(ctx, common.PaginationFromListOptions(options))
-	}
-
-	return s.listWithoutCheck(ctx, common.PaginationFromListOptions(options))
-}
-
-func (s *LegacyStore) listWithCheck(ctx context.Context, p common.Pagination) (runtime.Object, error) {
-	res, err := common.ListWithChecker(
-		ctx, resource.GetName(), s.ac, p,
+	res, err := common.List(
+		ctx, resource.GetName(), s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0.User], error) {
 			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
 				Pagination: p,
@@ -102,34 +93,6 @@ func (s *LegacyStore) listWithCheck(ctx context.Context, p common.Pagination) (r
 	obj.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
 	obj.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
 	return obj, nil
-}
-
-func (s *LegacyStore) listWithoutCheck(ctx context.Context, p common.Pagination) (runtime.Object, error) {
-	ns, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
-		Pagination: p,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	list := &iamv0.UserList{}
-	for _, item := range found.Users {
-		list.Items = append(list.Items, toUserItem(&item, ns.Value))
-	}
-
-	list.ListMeta.Continue = common.OptionalFormatInt(found.Continue)
-	list.ListMeta.ResourceVersion = common.OptionalFormatInt(found.RV)
-	return list, nil
 }
 
 func (s *LegacyStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
