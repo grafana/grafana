@@ -109,3 +109,7 @@ func (b *SearchAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 func (b *SearchAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return oas, nil
 }
+
+func (b *SearchAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
+	return nil
+}
