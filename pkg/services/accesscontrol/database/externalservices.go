@@ -240,16 +240,20 @@ func (*AccessControlStore) saveUserAssignment(ctx context.Context, sess *db.Sess
 		return errGetAssigns
 	}
 
+	// Revoke assignment if it's assigned to another user or service account
+	if len(assignments) > 0 && assignments[0].UserID != assignment.UserID {
+		if _, errDel := sess.Where("role_id = ?", assignment.RoleID).Delete(&accesscontrol.UserRole{}); errDel != nil {
+			return errDel
+		}
+		assignments = nil
+	}
+
+	// If no assignment exists, insert a new one.
 	if len(assignments) == 0 {
 		if _, errInsert := sess.Insert(&assignment); errInsert != nil {
 			return errInsert
 		}
 		return nil
-	}
-
-	// Ensure the role was assigned only to this service account
-	if len(assignments) > 1 || assignments[0].UserID != assignment.UserID {
-		return errors.New("external service role assigned to another user or service account")
 	}
 
 	// Ensure the assignment is in the correct organization

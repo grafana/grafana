@@ -716,6 +716,83 @@ func TestSchedule_updateRulesMetrics(t *testing.T) {
 		})
 	})
 
+	t.Run("simplified_editor_rules metric should reflect the current state", func(t *testing.T) {
+		const firstOrgID int64 = 1
+		const secondOrgID int64 = 2
+
+		alertRuleWithAdvancedSettings := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(false),
+		).GenerateRef()
+
+		// The rule does not have simplified editor enabled, should not be in the metrics
+		t.Run("it should not show metrics", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithAdvancedSettings})
+
+			expectedMetric := ""
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simplified_editor_rules]")
+		})
+
+		alertRule1 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(firstOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+		).GenerateRef()
+
+		t.Run("it should show one rule in a single org", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithAdvancedSettings, alertRule1})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
+								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_query_and_expressions_section"} 1
+				`, alertRule1.OrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.NoError(t, err)
+		})
+
+		alertRule2 := models.RuleGen.With(
+			models.RuleGen.WithOrgID(secondOrgID),
+			models.RuleGen.WithEditorSettingsSimplifiedQueryAndExpressionsSection(true),
+		).GenerateRef()
+
+		t.Run("it should show two rules in two orgs", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithAdvancedSettings, alertRule1, alertRule2})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
+								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%[1]d",setting="simplified_query_and_expressions_section"} 1
+								grafana_alerting_simplified_editor_rules{org="%[2]d",setting="simplified_query_and_expressions_section"} 1
+				`, alertRule1.OrgID, alertRule2.OrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.NoError(t, err)
+		})
+
+		t.Run("after removing one of the rules it should show one present rule and one org", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{alertRuleWithAdvancedSettings, alertRule2})
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_simplified_editor_rules The number of alert rules using simplified editor settings.
+								# TYPE grafana_alerting_simplified_editor_rules gauge
+								grafana_alerting_simplified_editor_rules{org="%d",setting="simplified_query_and_expressions_section"} 1
+				`, alertRule2.OrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.NoError(t, err)
+		})
+
+		t.Run("after removing all rules it should not show any metrics", func(t *testing.T) {
+			sch.updateRulesMetrics([]*models.AlertRule{})
+
+			expectedMetric := ""
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_simplified_editor_rules")
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_simplified_editor_rules]")
+		})
+	})
+
 	t.Run("rule_groups metric should reflect the current state", func(t *testing.T) {
 		const firstOrgID int64 = 1
 		const secondOrgID int64 = 2

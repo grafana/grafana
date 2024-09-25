@@ -111,61 +111,6 @@ func Test_DeleteMigrationSession(t *testing.T) {
 }
 */
 
-func Test_CreateMigrationRun(t *testing.T) {
-	_, s := setUpTest(t)
-	ctx := context.Background()
-
-	t.Run("creates a session run and retrieves it from db", func(t *testing.T) {
-		cmr := cloudmigration.CloudMigrationSnapshot{
-			SessionUID: "asdfg",
-			Status:     cloudmigration.SnapshotStatusFinished,
-		}
-
-		createResp, err := s.CreateMigrationRun(ctx, cmr)
-		require.NoError(t, err)
-		require.NotEmpty(t, createResp)
-
-		getMRResp, err := s.GetMigrationStatus(ctx, createResp)
-		require.NoError(t, err)
-		require.Equal(t, cmr.Status, getMRResp.Status)
-	})
-}
-
-func Test_GetMigrationStatus(t *testing.T) {
-	_, s := setUpTest(t)
-	ctx := context.Background()
-
-	t.Run("gets a migration status by uid", func(t *testing.T) {
-		getMRResp, err := s.GetMigrationStatus(ctx, "poiuy")
-		require.NoError(t, err)
-		require.Equal(t, "poiuy", getMRResp.UID)
-	})
-
-	t.Run("returns error if migration run was not found", func(t *testing.T) {
-		getMRResp, err := s.GetMigrationStatus(ctx, "fake_uid")
-		require.ErrorIs(t, cloudmigration.ErrMigrationRunNotFound, err)
-		require.Equal(t, int64(0), getMRResp.ID)
-		require.Equal(t, "", getMRResp.UID)
-	})
-}
-
-func Test_GetMigrationStatusList(t *testing.T) {
-	_, s := setUpTest(t)
-	ctx := context.Background()
-
-	t.Run("gets migration status list from db", func(t *testing.T) {
-		list, err := s.GetMigrationStatusList(ctx, "qwerty")
-		require.NoError(t, err)
-		require.Equal(t, 2, len(list))
-	})
-
-	t.Run("returns no error if migration was not found, just empty list", func(t *testing.T) {
-		list, err := s.GetMigrationStatusList(ctx, "fake_migration")
-		require.NoError(t, err)
-		require.Equal(t, 0, len(list))
-	})
-}
-
 func Test_SnapshotManagement(t *testing.T) {
 	_, s := setUpTest(t)
 	ctx := context.Background()

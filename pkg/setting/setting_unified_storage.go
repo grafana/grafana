@@ -25,7 +25,14 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 		// parse dualWriter modes from the section
 		dualWriterMode := section.Key("dualWriterMode").MustInt(0)
-		storageConfig[resourceName] = UnifiedStorageConfig{DualWriterMode: rest.DualWriterMode(dualWriterMode)}
+
+		// parse dualWriter periodic data syncer config
+		dualWriterPeriodicDataSyncJobEnabled := section.Key("dualWriterPeriodicDataSyncJobEnabled").MustBool(false)
+
+		storageConfig[resourceName] = UnifiedStorageConfig{
+			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
+			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
+		}
 	}
 	cfg.UnifiedStorage = storageConfig
 }

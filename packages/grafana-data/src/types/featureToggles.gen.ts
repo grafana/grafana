@@ -199,11 +199,9 @@ export interface FeatureToggles {
   alertingApiServer?: boolean;
   dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
-  bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   alertingFilterV2?: boolean;
-  backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
@@ -211,9 +209,11 @@ export interface FeatureToggles {
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
+  homeSetupGuide?: boolean;
   appPlatformAccessTokens?: boolean;
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
   improvedExternalSessionHandling?: boolean;
+  useSessionStorageForRedirection?: boolean;
   unifiedStorageSearch?: boolean;
 }

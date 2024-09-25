@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { DataFrame, FieldType, getFieldSeriesColor } from '@grafana/data';
+import { cacheFieldDisplayNames, DataFrame, FieldType, getFieldSeriesColor } from '@grafana/data';
 import { Field } from '@grafana/data/';
 import { AxisPlacement, VizLegendOptions } from '@grafana/schema';
 import { useTheme2, VizLayout, VizLayoutLegendProps, VizLegend, VizLegendItem } from '@grafana/ui';
@@ -15,6 +15,8 @@ export const BarGaugeLegend = memo(
   ({ data, placement, calcs, displayMode, ...vizLayoutLegendProps }: BarGaugeLegendProps) => {
     const theme = useTheme2();
     let legendItems: VizLegendItem[] = [];
+
+    cacheFieldDisplayNames(data);
 
     data.forEach((series, frameIndex) => {
       series.fields.forEach((field, i) => {
