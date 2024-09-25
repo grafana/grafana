@@ -9,18 +9,20 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
-	store store
-	cfg   *setting.Cfg
-	log   log.Logger
+	store               store
+	cfg                 *setting.Cfg
+	log                 log.Logger
+	orgUserSearchFilter org.SearchOrgUserFilter
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (org.Service, error) {
+func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service, orgUserSearchFilter *filters.OSSOrgUserSearchFilter) (org.Service, error) {
 	log := log.New("org service")
 	s := &Service{
 		store: &sqlStore{
@@ -28,8 +30,9 @@ func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (org
 			dialect: db.GetDialect(),
 			log:     log,
 		},
-		cfg: cfg,
-		log: log,
+		cfg:                 cfg,
+		log:                 log,
+		orgUserSearchFilter: orgUserSearchFilter,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)

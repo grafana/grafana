@@ -4,7 +4,7 @@ import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 import { config } from 'app/core/config';
 
 import { Props, UsersActionBarUnconnected } from './UsersActionBar';
-import { searchQueryChanged } from './state/reducers';
+import { filterChanged, searchQueryChanged } from './state/reducers';
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
@@ -21,6 +21,8 @@ const setup = (propOverrides?: object) => {
     externalUserMngLinkUrl: '',
     externalUserMngLinkName: '',
     showInvites: false,
+    changeFilter: mockToolkitActionCreator(filterChanged),
+    filters: [],
   };
 
   Object.assign(props, propOverrides);

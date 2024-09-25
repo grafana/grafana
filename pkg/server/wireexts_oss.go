@@ -34,6 +34,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
+	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -78,6 +80,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(encryption.Provider), new(encryptionprovider.Provider)),
 	filters.ProvideOSSSearchUserFilter,
 	wire.Bind(new(user.SearchUserFilter), new(*filters.OSSSearchUserFilter)),
+	orgfilters.ProvideOSSOrgUserSearchFilter,
+	wire.Bind(new(org.SearchOrgUserFilter), new(*orgfilters.OSSOrgUserSearchFilter)),
 	searchusers.ProvideUsersService,
 	wire.Bind(new(searchusers.Service), new(*searchusers.OSSService)),
 	osskmsproviders.ProvideService,

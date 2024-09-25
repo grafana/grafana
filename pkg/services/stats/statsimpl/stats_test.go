@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -86,7 +87,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) {
 	t.Helper()
 
-	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
+	orgService, _ := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil), orgfilters.ProvideOSSOrgUserSearchFilter())
 	userSvc, _ := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
 		&quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService(),

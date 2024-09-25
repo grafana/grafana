@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import config from 'app/core/config';
-import { OrgUser, UsersState } from 'app/types';
+import { OrgUser, OrgUserFilter, UsersState } from 'app/types';
 
 export const initialState: UsersState = {
   users: [],
@@ -12,6 +12,7 @@ export const initialState: UsersState = {
   externalUserMngInfo: config.externalUserMngInfo,
   externalUserMngLinkName: config.externalUserMngLinkName,
   externalUserMngLinkUrl: config.externalUserMngLinkUrl,
+  filters: [],
   isLoading: false,
   rolesLoading: false,
 };
@@ -74,6 +75,17 @@ const usersSlice = createSlice({
     rolesFetchEnd: (state) => {
       return { ...state, rolesLoading: false };
     },
+    filterChanged: (state, action: PayloadAction<OrgUserFilter>): UsersState => {
+      const existingFilterIndex = state.filters.findIndex((f) => f.name === action.payload.name);
+      let updatedFilters;
+      if (existingFilterIndex >= 0) {
+        updatedFilters = [...state.filters];
+        updatedFilters[existingFilterIndex] = action.payload;
+      } else {
+        updatedFilters = [...state.filters, action.payload];
+      }
+      return { ...state, filters: updatedFilters, page: 0 };
+    },
   },
 });
 
@@ -87,6 +99,7 @@ export const {
   sortChanged,
   rolesFetchBegin,
   rolesFetchEnd,
+  filterChanged,
 } = usersSlice.actions;
 
 export const usersReducer = usersSlice.reducer;

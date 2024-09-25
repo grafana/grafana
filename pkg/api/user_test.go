@@ -51,6 +51,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
+
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 )
 
 const newEmail = "newemail@localhost"
@@ -81,7 +83,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		srv := authinfoimpl.ProvideService(
 			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
 		hs.authInfoService = srv
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil), orgfilters.ProvideOSSOrgUserSearchFilter())
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -150,11 +152,11 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/users/lookup", "/api/users/lookup", func(sc *scenarioContext) {
 		createUserCmd := user.CreateUserCommand{
 			Email:   fmt.Sprint("admin", "@test.com"),
-			Name:    "admin",
+			Name:    "admiearch",
 			Login:   "admin",
 			IsAdmin: true,
 		}
-		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sc.cfg, quotatest.New(false, nil), orgfilters.ProvideOSSOrgUserSearchFilter())
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, sc.cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -391,7 +393,7 @@ func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPSer
 	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
 
 	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
-	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
+	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil), orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(
 		sqlStore, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -620,7 +622,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
 
 		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil), orgfilters.ProvideOSSOrgUserSearchFilter())
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, settings, nil, nil, tracing.InitializeTracerForTest(),

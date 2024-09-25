@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -496,7 +497,7 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	teamSvc, err := teamimpl.ProvideService(db.FakeReplDBFromDB(sql), cfg, tracer)
 	require.NoError(t, err)
 
-	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	orgSvc, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil), orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 
 	userSvc, err := userimpl.ProvideService(

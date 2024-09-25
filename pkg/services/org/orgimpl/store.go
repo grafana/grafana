@@ -593,6 +593,18 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 		}
 
+		for _, filter := range query.Filters {
+			if jc := filter.JoinCondition(); jc != nil {
+				sess.Join(jc.Operator, jc.Table, jc.Params)
+			}
+			if ic := filter.InCondition(); ic != nil {
+				sess.In(ic.Condition, ic.Params)
+			}
+			if wc := filter.WhereCondition(); wc != nil {
+				sess.Where(wc.Condition, wc.Params)
+			}
+		}
+
 		if query.Limit > 0 {
 			offset := query.Limit * (query.Page - 1)
 			sess.Limit(query.Limit, offset)

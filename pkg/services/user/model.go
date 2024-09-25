@@ -124,14 +124,6 @@ type SearchUserQueryResult struct {
 	PerPage    int                 `json:"perPage"`
 }
 
-type Org struct {
-	ID int64 `json:"orgId" xorm:"id"`
-}
-
-type OrgUser struct {
-	Role string `json:"orgRole" xorm:"role"`
-}
-
 type UserSearchHitDTO struct {
 	ID            int64                `json:"id" xorm:"id"`
 	UID           string               `json:"uid" xorm:"uid"`
@@ -145,9 +137,6 @@ type UserSearchHitDTO struct {
 	LastSeenAtAge string               `json:"lastSeenAtAge"`
 	AuthLabels    []string             `json:"authLabels"`
 	AuthModule    AuthModuleConversion `json:"-"`
-
-	Org     `xorm:"extends"`
-	OrgUser `xorm:"extends"`
 }
 
 type GetUserProfileQuery struct {

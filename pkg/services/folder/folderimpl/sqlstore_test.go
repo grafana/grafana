@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -955,7 +956,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	t.Helper()
 
-	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(db, cfg, quotatest.New(false, nil), orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 	orgID, err := orgService.GetOrCreate(context.Background(), "test-org")
 	require.NoError(t, err)

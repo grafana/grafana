@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -146,7 +147,7 @@ func (c TestContext) createOrg(name string) int64 {
 	store := c.env.SQLStore
 	c.env.Cfg.AutoAssignOrg = false
 	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), c.env.Cfg)
-	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(c.t, err)
 	orgId, err := orgService.GetOrCreate(context.Background(), name)
 	require.NoError(c.t, err)
@@ -160,7 +161,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	c.env.Cfg.AutoAssignOrgId = 1
 
 	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), c.env.Cfg)
-	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(c.t, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgService, c.env.Cfg, nil, nil, tracing.InitializeTracerForTest(),

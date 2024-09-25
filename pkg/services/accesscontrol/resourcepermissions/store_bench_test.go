@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -145,7 +146,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
 	qs := quotatest.New(false, nil)
-	orgSvc, err := orgimpl.ProvideService(store, cfg, qs)
+	orgSvc, err := orgimpl.ProvideService(store, cfg, qs, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),

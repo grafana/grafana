@@ -7,7 +7,6 @@ import (
 
 const (
 	activeLast30Days = "activeLast30Days"
-	roleFilter       = "role"
 )
 
 type OSSSearchUserFilter struct {
@@ -19,7 +18,6 @@ var fltlog = log.New("filters")
 func ProvideOSSSearchUserFilter() *OSSSearchUserFilter {
 	filters := make(map[string]user.FilterHandler)
 	filters[activeLast30Days] = NewActiveLast30DaysFilter
-	filters[roleFilter] = NewRoleFilter
 	return &OSSSearchUserFilter{
 		filters: filters,
 	}

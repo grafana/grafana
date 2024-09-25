@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -49,7 +50,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			},
 		}
 		quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(sqlStore.SQLStore), cfg)
-		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
@@ -436,7 +437,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			t.Run("Should be able to exclude service accounts from teamembers", func(t *testing.T) {
 				sqlStore = db.InitTestReplDB(t)
 				quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(sqlStore.SQLStore), cfg)
-				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
 					sqlStore, orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),
@@ -574,7 +575,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 		team2, errCreateTeam := teamSvc.CreateTeam(context.Background(), "group2 name", "test2@example.org", testOrgID)
 		require.NoError(t, errCreateTeam)
 		quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store.DB()), cfg)
-		orgSvc, err := orgimpl.ProvideService(store.DB(), cfg, quotaService)
+		orgSvc, err := orgimpl.ProvideService(store.DB(), cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
 			store.DB(), orgSvc, cfg, teamSvc, nil, tracing.InitializeTracerForTest(),

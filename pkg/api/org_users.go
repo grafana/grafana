@@ -275,6 +275,14 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 		return response.Err(err)
 	}
 
+	var filters []org.Filter
+	for filterName := range hs.orgUserSearchFilter.GetFilterList() {
+		filter := hs.orgUserSearchFilter.GetFilter(filterName, c.QueryStrings(filterName))
+		if filter != nil {
+			filters = append(filters, filter)
+		}
+	}
+
 	query := &org.SearchOrgUsersQuery{
 		OrgID:    c.SignedInUser.GetOrgID(),
 		Query:    c.Query("query"),
@@ -282,6 +290,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 		Limit:    perPage,
 		User:     c.SignedInUser,
 		SortOpts: sortOpts,
+		Filters:  filters,
 	}
 
 	result, err := hs.searchOrgUsersHelper(c, query)

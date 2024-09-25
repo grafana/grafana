@@ -46,7 +46,6 @@ export interface UserDTO extends WithAccessControlMetadata {
   theme?: string;
   avatarUrl?: string;
   orgId?: number;
-  orgRole?: string;
   lastSeenAt?: string;
   lastSeenAtAge?: string;
   licensedRole?: string;
@@ -74,12 +73,14 @@ export interface Invitee {
   url: string;
 }
 
+export type OrgUserFilter = Record<string, string | SelectableValue[]>;
 export interface UsersState {
   users: OrgUser[];
   searchQuery: string;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
+  filters: OrgUserFilter[];
   isLoading: boolean;
   rolesLoading?: boolean;
   page: number;

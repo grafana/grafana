@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -443,7 +444,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 
 	quotaService := quotaimpl.ProvideService(replStore, c.env.Cfg)
 
-	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(store, c.env.Cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(c.t, err)
 
 	orgId := int64(1)
