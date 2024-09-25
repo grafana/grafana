@@ -22,6 +22,8 @@ import {
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
 
+import { applySearchFilterToQuery, RulesFilter } from '../search/rulesSearchParser';
+
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName, isCloudRulesSource } from './datasource';
 import { getMatcherQueryParams } from './matchers';
@@ -42,6 +44,11 @@ export function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnT
   const paramSource = encodeURIComponent(identifier.ruleSourceName);
 
   return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+}
+
+export function createRulesListLink(filters: Partial<RulesFilter> = {}) {
+  const searchQuery = applySearchFilterToQuery('', { freeFormWords: [], dataSourceNames: [], labels: [], ...filters });
+  return createRelativeUrl('/alerting/list', { search: searchQuery });
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {

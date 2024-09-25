@@ -57,8 +57,6 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   const { namespace, group, rulerRule } = rule;
   const { hasActiveFilters } = useRulesFilter();
 
-  const returnTo = location.pathname + location.search;
-
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   const [editRuleSupported, editRuleAllowed] = useAlertRuleAbility(rule, AlertRuleAction.Update);
@@ -85,7 +83,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
         key="view"
         variant="secondary"
         icon="eye"
-        href={createViewLink(rulesSource, rule, returnTo)}
+        href={createViewLink(rulesSource, rule)}
       >
         {!compact && 'View'}
       </LinkButton>
@@ -95,9 +93,7 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   if (rulerRule && canEditRule) {
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-    const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
-      returnTo,
-    });
+    const editURL = createRelativeUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`);
 
     buttons.push(
       <LinkButton
