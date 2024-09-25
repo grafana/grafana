@@ -7,23 +7,24 @@ import (
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type IdentityDisplayResults struct {
+type DisplayList struct {
 	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 
 	// Request keys used to lookup the display value
 	// +listType=set
 	Keys []string `json:"keys"`
 
-	// Matching items (the caller may need to remap from keys to results)
-	// +listType=atomic
-	Display []IdentityDisplay `json:"display"`
-
 	// Input keys that were not useable
 	// +listType=set
 	InvalidKeys []string `json:"invalidKeys,omitempty"`
+
+	// Matching items (the caller may need to remap from keys to results)
+	// +listType=atomic
+	Items []Display `json:"display"`
 }
 
-type IdentityDisplay struct {
+type Display struct {
 	Identity IdentityRef `json:"identity"`
 
 	// Display name for identity.

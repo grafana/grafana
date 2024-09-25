@@ -3,7 +3,6 @@ package grpcplugin
 import (
 	"context"
 	"errors"
-	"sync"
 
 	"google.golang.org/grpc"
 
@@ -15,7 +14,7 @@ import (
 )
 
 var (
-	errClientNotAvailable = errors.New("plugin client is not available")
+	errClientNotAvailable = errors.New("plugin client not available")
 )
 
 var _ ProtoClient = (*protoClient)(nil)
@@ -31,31 +30,13 @@ type ProtoClient interface {
 	PID(context.Context) (string, error)
 	PluginID() string
 	PluginVersion() string
-	PluginJSON() plugins.JSONData
 	Backend() backendplugin.Plugin
-	Logger() log.Logger
-	Start(context.Context) error
-	Stop(context.Context) error
 }
 
 type protoClient struct {
-	plugin        *grpcPlugin
-	pluginVersion string
-	pluginJSON    plugins.JSONData
-
-	state pluginState
-
-	mu sync.RWMutex
+	plugin     *grpcPlugin
+	pluginJSON plugins.JSONData
 }
-
-type pluginState int
-
-const (
-	pluginStateNotStarted pluginState = iota
-	pluginStateStartSuccess
-	pluginStateStartFail
-	pluginStateStopped
-)
 
 type ProtoClientOpts struct {
 	PluginJSON     plugins.JSONData
@@ -78,7 +59,7 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 		func() []string { return opts.Env },
 	)
 
-	return &protoClient{plugin: p, pluginVersion: opts.PluginJSON.Info.Version, pluginJSON: opts.PluginJSON, state: pluginStateNotStarted}, nil
+	return &protoClient{plugin: p, pluginJSON: opts.PluginJSON}, nil
 }
 
 func (r *protoClient) PID(ctx context.Context) (string, error) {
@@ -93,11 +74,7 @@ func (r *protoClient) PluginID() string {
 }
 
 func (r *protoClient) PluginVersion() string {
-	return r.pluginVersion
-}
-
-func (r *protoClient) PluginJSON() plugins.JSONData {
-	return r.pluginJSON
+	return r.pluginJSON.Info.Version
 }
 
 func (r *protoClient) Backend() backendplugin.Plugin {
@@ -108,57 +85,8 @@ func (r *protoClient) Logger() log.Logger {
 	return r.plugin.logger
 }
 
-func (r *protoClient) Start(ctx context.Context) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	err := r.plugin.Start(ctx)
-	if err != nil {
-		r.state = pluginStateStartFail
-		return err
-	}
-
-	r.state = pluginStateStartSuccess
-	return nil
-}
-
-func (r *protoClient) Stop(ctx context.Context) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.state = pluginStateStopped
-	return r.plugin.Stop(ctx)
-}
-
 func (r *protoClient) client(ctx context.Context) (*ClientV2, bool) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	logger := r.Logger().FromContext(ctx)
-	if r.state == pluginStateNotStarted {
-		logger.Debug("Plugin client has not been started yet")
-		return nil, false
-	}
-
-	if r.state == pluginStateStartFail {
-		logger.Debug("Plugin client failed to start")
-		return nil, false
-	}
-
-	if r.state == pluginStateStopped {
-		logger.Debug("Plugin client has stopped")
-		return nil, false
-	}
-
-	if r.plugin.Exited() {
-		logger.Debug("Plugin client has exited")
-		return nil, false
-	}
-
-	if r.plugin.pluginClient == nil {
-		return nil, false
-	}
-	pc := r.plugin.pluginClient
-	return pc, true
+	return r.plugin.getPluginClient(ctx)
 }
 
 func (r *protoClient) QueryData(ctx context.Context, in *pluginv2.QueryDataRequest, opts ...grpc.CallOption) (*pluginv2.QueryDataResponse, error) {

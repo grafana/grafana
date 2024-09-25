@@ -39,7 +39,7 @@ On Windows, the `sample.ini` file is located in the same directory as `defaults.
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/opt/homebrew/etc/grafana/grafana.ini` or `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override the settings defined in `conf/defaults.ini`.
 
 ## Remove comments in the .ini files
 
@@ -700,6 +700,18 @@ You can enable both policies simultaneously.
 ### content_security_policy_template
 
 Set the policy template that will be used when adding the `Content-Security-Policy-Report-Only` header to your requests. `$NONCE` in the template includes a random nonce.
+
+### actions_allow_post_url
+
+Sets API paths to be accessible between plugins using the POST verb. This is a comma separated list, and uses glob matching.
+
+This will allow access to all plugins that have a backend:
+
+`actions_allow_post_url=/api/plugins/*`
+
+This will limit access to the backend of a single plugin:
+
+`actions_allow_post_url=/api/plugins/grafana-special-app`
 
 <hr />
 
@@ -2601,8 +2613,8 @@ Format: `<pageUrl> = <sectionId> <sortWeight>`
 
 ## [public_dashboards]
 
-This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
+This section configures the [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/) feature.
 
 ### enabled
 
-Set this to `false` to disable the public dashboards feature. This prevents users from creating new public dashboards and disables existing ones.
+Set this to `false` to disable the shared dashboards feature. This prevents users from creating new shared dashboards and disables existing ones.

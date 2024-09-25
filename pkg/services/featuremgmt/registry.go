@@ -1218,9 +1218,10 @@ var (
 		{
 			Name:         "newDashboardSharingComponent",
 			Description:  "Enables the new sharing drawer design",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
+			Expression:   "false", // disabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
@@ -1364,17 +1365,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:              "bodyScrolling",
-			Description:       "Adjusts Page to make body the scrollable element",
-			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaFrontendPlatformSquad,
-			Expression:        "false", // enabled by default
-			FrontendOnly:      true,
-			AllowSelfServe:    true,
-			HideFromDocs:      true,
-			HideFromAdminPage: false,
-		},
-		{
 			Name:         "cloudwatchMetricInsightsCrossAccount",
 			Description:  "Enables cross account observability for Cloudwatch Metric Insights query builder",
 			Stage:        FeatureStagePublicPreview,
@@ -1393,13 +1383,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-		},
-		{
-			Name:            "backgroundPluginInstaller",
-			Description:     "Enable background plugin installer",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
 		},
 		{
 			Name:            "dataplaneAggregator",
@@ -1449,6 +1432,13 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:         "homeSetupGuide",
+			Description:  "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        growthAndOnboarding,
+		},
+		{
 			Name:              "appPlatformAccessTokens",
 			Description:       "Enables the use of access tokens for the App Platform",
 			Stage:             FeatureStageExperimental,
@@ -1476,6 +1466,12 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:        "useSessionStorageForRedirection",
+			Description: "Use session storage for handling the redirection after login",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
 		},
 	}
 )
