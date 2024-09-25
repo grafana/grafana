@@ -2613,8 +2613,8 @@ Format: `<pageUrl> = <sectionId> <sortWeight>`
 
 ## [public_dashboards]
 
-This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
+This section configures the [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/) feature.
 
 ### enabled
 
-Set this to `false` to disable the public dashboards feature. This prevents users from creating new public dashboards and disables existing ones.
+Set this to `false` to disable the shared dashboards feature. This prevents users from creating new shared dashboards and disables existing ones.

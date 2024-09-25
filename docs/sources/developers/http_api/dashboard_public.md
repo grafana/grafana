@@ -2,7 +2,7 @@
 aliases:
   - ../../http_api/dashboard_public/
 canonical: /docs/grafana/latest/developers/http_api/dashboard_public/
-description: Grafana Public Dashboard HTTP API
+description: Grafana Shared Dashboards HTTP API
 keywords:
   - grafana
   - http
@@ -13,7 +13,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Public Dashboard HTTP API
+title: Shared Dashboards HTTP API
 refs:
   role-based-access-control-permissions:
     - pattern: /docs/grafana/
@@ -22,7 +22,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
 ---
 
-# Public Dashboard API
+# Shared Dashboards API
 
 {{% admonition type="note" %}}
 
@@ -30,21 +30,21 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 {{% /admonition %}}
 
-## Create a public dashboard
+## Create a shared dashboard
 
 `POST /api/dashboards/uid/:uid/public-dashboards/`
 
-Creates a new public dashboard.
+Creates a new shared dashboard.
 
 **Required permissions**
 
-See note in the [introduction](#public-dashboard-api) for an explanation.
+See note in the [introduction](#shared-dashboards-api) for an explanation.
 
 | Action                    | Scope                            |
 | ------------------------- | -------------------------------- |
 | `dashboards.public:write` | `dashboards:uid:<dashboard UID>` |
 
-**Example Request for new public dashboard**:
+**Example Request for new shared dashboard**:
 
 ```http
 POST /api/dashboards/uid/xCpsVuc4z/public-dashboards/ HTTP/1.1
@@ -64,10 +64,10 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Optional. Unique identifier when creating a public dashboard. If it's null, it will generate a new uid.
+- **uid** – Optional. Unique identifier when creating a shared dashboard. If it's null, it will generate a new uid.
 - **accessToken** – Optional. Unique access token. If it's null, it will generate a new access token.
-- **timeSelectionEnabled** – Optional. Set to `true` to enable the time picker in the public dashboard. The default value is `false`.
-- **isEnabled** – Optional. Set to `true` to enable the public dashboard. The default value is `false`.
+- **timeSelectionEnabled** – Optional. Set to `true` to enable the time picker in the shared dashboard. The default value is `false`.
+- **isEnabled** – Optional. Set to `true` to enable the shared dashboard. The default value is `false`.
 - **annotationsEnabled** – Optional. Set to `true` to show annotations. The default value is `false`.
 - **share** – Optional. Set the share mode. The default value is `public`.
 
@@ -96,7 +96,7 @@ Content-Length: 78
 Status Codes:
 
 - **200** – Created
-- **400** – Errors (such as invalid json, missing or invalid fields, or dashboard is public)
+- **400** – Errors (such as invalid json, missing or invalid fields, or dashboard is shared)
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Dashboard not found
@@ -115,21 +115,21 @@ Content-Length: 107
 }
 ```
 
-## Update a public dashboard
+## Update a shared dashboard
 
 `PATCH /api/dashboards/uid/:uid/public-dashboards/:publicDashboardUid`
 
-Will update the public dashboard given the specified unique identifier (uid).
+Will update the shared dashboard given the specified unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction](#public-dashboard-api) for an explanation.
+See note in the [introduction](#shared-dashboard-api) for an explanation.
 
 | Action                    | Scope                            |
 | ------------------------- | -------------------------------- |
 | `dashboards.public:write` | `dashboards:uid:<dashboard UID>` |
 
-**Example Request for updating a public dashboard**:
+**Example Request for updating a shared dashboard**:
 
 ```http
 PATCH /api/dashboards/uid/xCpsVuc4z/public-dashboards/cd56d9fd-f3d4-486d-afba-a21760e2acbe HTTP/1.1
@@ -147,8 +147,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **timeSelectionEnabled** – Optional. Set to `true` to enable the time picker in the public dashboard. The default value is `false`.
-- **isEnabled** – Optional. Set to `true` to enable the public dashboard. The default value is `false`.
+- **timeSelectionEnabled** – Optional. Set to `true` to enable the time picker in the shared dashboard. The default value is `false`.
+- **isEnabled** – Optional. Set to `true` to enable the shared dashboard. The default value is `false`.
 - **annotationsEnabled** – Optional. Set to `true` to show annotations. The default value is `false`.
 - **share** – Optional. Set the share mode. The default value is `public`.
 
@@ -180,7 +180,7 @@ Status Codes:
 - **400** – Errors (such as invalid json, missing or invalid fields)
 - **401** – Unauthorized
 - **403** – Access denied
-- **404** – Public dashboard not found
+- **404** – Dashboard not found
 
 The error response body will have the following properties:
 
@@ -196,15 +196,15 @@ Content-Length: 107
 }
 ```
 
-## Get public dashboard by dashboard uid
+## Get shared dashboard by dashboard uid
 
 `GET /api/dashboards/uid/:uid/public-dashboards/`
 
-Will return the public dashboard given the dashboard unique identifier (uid).
+Will return the shared dashboard given the dashboard unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction](#public-dashboard-api) for an explanation.
+See note in the [introduction](#shared-dashboard-api) for an explanation.
 
 | Action            | Scope                            |
 | ----------------- | -------------------------------- |
@@ -245,17 +245,17 @@ Status Codes:
 - **200** – Found
 - **401** – Unauthorized
 - **403** – Access denied
-- **404** – Not found
+- **404** – Dashboard not found
 
-## Delete public dashboard by dashboard uid and public dashboard uid
+## Delete shared dashboard by dashboard uid and shared dashboard uid
 
 `DELETE /api/dashboards/uid/:uid/public-dashboards/:publicDashboardUid`
 
-Will delete the public dashboard given the specified unique identifier (uid).
+Will delete the shared dashboard given the specified unique identifier (uid).
 
 **Required permissions**
 
-See note in the [introduction](#public-dashboard-api) for an explanation.
+See note in the [introduction](#shared-dashboard-api) for an explanation.
 
 | Action                    | Scope                            |
 | ------------------------- | -------------------------------- |
@@ -276,13 +276,13 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access denied
 
-## Get a list of all public dashboards with pagination
+## Get a list of all shared dashboards with pagination
 
 `GET /api/dashboards/public-dashboards`
 
 **Required permissions**
 
-See note in the [introduction](#public-dashboard-api) for an explanation.
+See note in the [introduction](#shared-dashboard-api) for an explanation.
 
 | Action            | Scope                            |
 | ----------------- | -------------------------------- |
