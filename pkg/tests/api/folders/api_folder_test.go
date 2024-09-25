@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -215,7 +216,7 @@ func createUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	cfg.AutoAssignOrgId = orgID
 
 	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(store, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),

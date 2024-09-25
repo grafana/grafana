@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -35,7 +36,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	ss, cfg := db.InitTestDBWithCfg(t)
 	quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(ss), cfg)
-	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	usrSvc, err := ProvideService(
@@ -547,7 +548,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		query5 := &user.SearchUsersQuery{IsDisabled: &isDisabled, SignedInUser: usr}
 		query5Result, err := userStore.Search(context.Background(), query5)
 		require.Nil(t, err)
-		require.EqualValues(t, query5Result.TotalCount, 5)
+		require.EqualValues(t, 5, query5Result.TotalCount)
 
 		// the user is deleted
 		err = userStore.Delete(context.Background(), users[1].ID)
@@ -556,7 +557,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
+		orgService, err := orgimpl.ProvideService(ss, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 		require.NoError(t, err)
 		usrSvc, err := ProvideService(
 			ss, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
@@ -904,7 +905,7 @@ func TestMetricsUsage(t *testing.T) {
 	ss, cfg := db.InitTestDBWithCfg(t)
 	userStore := ProvideStore(ss, setting.NewCfg())
 	quotaService := quotaimpl.ProvideService(sqlstore.FakeReplStoreFromStore(ss), cfg)
-	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 
 	_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
@@ -963,7 +964,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	t.Helper()
 
 	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
-	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(store, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(
 		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),

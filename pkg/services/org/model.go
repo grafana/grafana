@@ -177,6 +177,35 @@ type GetOrgUsersQuery struct {
 	User identity.Requester
 }
 
+type Filter interface {
+	WhereCondition() *WhereCondition
+	JoinCondition() *JoinCondition
+	InCondition() *InCondition
+}
+
+type WhereCondition struct {
+	Condition string
+	Params    any
+}
+
+type InCondition struct {
+	Condition string
+	Params    any
+}
+
+type JoinCondition struct {
+	Operator string
+	Table    string
+	Params   string
+}
+
+type SearchOrgUserFilter interface {
+	GetFilter(filterName string, params []string) Filter
+	GetFilterList() map[string]FilterHandler
+}
+
+type FilterHandler func(params []string) Filter
+
 type SearchOrgUsersQuery struct {
 	UserID   int64 `xorm:"user_id"`
 	OrgID    int64 `xorm:"org_id"`
@@ -184,6 +213,7 @@ type SearchOrgUsersQuery struct {
 	Page     int
 	Limit    int
 	SortOpts []model.SortOption
+	Filters  []Filter
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
 

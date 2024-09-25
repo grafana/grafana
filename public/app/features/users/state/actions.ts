@@ -3,8 +3,7 @@ import { debounce } from 'lodash';
 import { getBackendSrv } from '@grafana/runtime';
 import { FetchDataArgs } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { OrgUser } from 'app/types';
+import { OrgUser, OrgUserFilter } from 'app/types';
 
 import { AccessControlAction, ThunkResult } from '../../../types';
 
@@ -17,17 +16,32 @@ import {
   sortChanged,
   rolesFetchBegin,
   rolesFetchEnd,
+  filterChanged,
 } from './reducers';
+
+const getFilters = (filters: OrgUserFilter[]) => {
+  return filters
+    .map((filter) => {
+      if (Array.isArray(filter.value)) {
+        return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
+      }
+      return `${filter.name}=${filter.value}`;
+    })
+    .join('&');
+};
 
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
       dispatch(usersFetchBegin());
-      const { perPage, page, searchQuery, sort } = getState().users;
-      const users = await getBackendSrv().get(
-        `/api/org/users/search`,
-        accessControlQueryParam({ perpage: perPage, page, query: searchQuery, sort })
-      );
+      const { perPage, page, searchQuery, filters, sort } = getState().users;
+
+      let url = `/api/org/users/search?perpage=${perPage}&page=${page}&query=${searchQuery}&${getFilters(filters)}`;
+      if (sort) {
+        url += `&sort=${sort}`;
+      }
+
+      const users = await getBackendSrv().get(url);
 
       if (
         contextSrv.licensedAccessControlEnabled() &&
@@ -37,14 +51,18 @@ export function loadUsers(): ThunkResult<void> {
         const orgId = contextSrv.user.orgId;
         const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);
         const roles = await getBackendSrv().post(`/api/access-control/users/roles/search`, { userIds, orgId });
+
         users.orgUsers.forEach((u: OrgUser) => {
           u.roles = roles ? roles[u.userId] || [] : [];
         });
+
         dispatch(rolesFetchEnd());
       }
+
       dispatch(usersLoaded(users));
     } catch (error) {
-      usersFetchEnd();
+      dispatch(usersFetchEnd());
+      console.error(error);
     }
   };
 }
@@ -84,5 +102,12 @@ export function changeSearchQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(searchQueryChanged(query));
     fetchUsersWithDebounce(dispatch);
+  };
+}
+
+export function changeFilter(filter: OrgUserFilter): ThunkResult<void> {
+  return async (dispatch) => {
+    dispatch(filterChanged(filter));
+    dispatch(loadUsers());
   };
 }

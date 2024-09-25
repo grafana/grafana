@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -471,7 +472,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			store, sql, cfg := setupTestEnv(t)
-			orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+			orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil), orgfilters.ProvideOSSOrgUserSearchFilter())
 			require.NoError(t, err)
 
 			err = sql.WithDbSession(context.Background(), func(sess *db.Session) error {

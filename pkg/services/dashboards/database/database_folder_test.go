@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
@@ -265,7 +266,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore.DB()), quotaService)
 		require.NoError(t, err)
 
-		orgService, err := orgimpl.ProvideService(sqlStore.DB(), cfg, quotaService)
+		orgService, err := orgimpl.ProvideService(sqlStore.DB(), cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
 			sqlStore.DB(), orgService, cfg, nil, nil, tracer,

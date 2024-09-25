@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -840,6 +841,34 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 			},
 			expectedNumUsers: 3,
 		},
+		{
+			desc: "should return users with Viewer role",
+			query: &org.SearchOrgUsersQuery{
+				OrgID: o.ID,
+				User: &user.SignedInUser{
+					OrgID:       o.ID,
+					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+				Filters: []org.Filter{
+					orgfilters.NewOrgRoleFilter([]string{"Viewer"}),
+				},
+			},
+			expectedNumUsers: 9,
+		},
+		{
+			desc: "should return users with Admin role",
+			query: &org.SearchOrgUsersQuery{
+				OrgID: o.ID,
+				User: &user.SignedInUser{
+					OrgID:       o.ID,
+					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+				Filters: []org.Filter{
+					orgfilters.NewOrgRoleFilter([]string{"Admin"}),
+				},
+			},
+			expectedNumUsers: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -907,7 +936,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	t.Helper()
 
 	quotaService := quotaimpl.ProvideService(db.FakeReplDBFromDB(store), cfg)
-	orgService, err := ProvideService(store, cfg, quotaService)
+	orgService, err := ProvideService(store, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		store, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),

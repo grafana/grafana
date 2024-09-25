@@ -35,6 +35,7 @@ import (
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -97,7 +98,7 @@ func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	quotaService := ProvideService(sqlStore, cfg)
-	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 	userService, err := userimpl.ProvideService(
 		sqlStore, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),

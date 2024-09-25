@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -211,7 +212,7 @@ func setupDB(b testing.TB) benchScenario {
 
 	teamSvc, err := teamimpl.ProvideService(db, cfg, tracing.InitializeTracerForTest())
 	require.NoError(b, err)
-	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
+	orgService, err := orgimpl.ProvideService(db, cfg, quotaService, orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(b, err)
 
 	cache := localcache.ProvideService()

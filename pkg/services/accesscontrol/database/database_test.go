@@ -19,6 +19,7 @@ import (
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	orgfilters "github.com/grafana/grafana/pkg/services/org/filters"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -479,7 +480,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
 	teamService, err := teamimpl.ProvideService(sql, cfg, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
-	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
+	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil), orgfilters.ProvideOSSOrgUserSearchFilter())
 	require.NoError(t, err)
 
 	orgID, err := orgService.GetOrCreate(context.Background(), "test")
