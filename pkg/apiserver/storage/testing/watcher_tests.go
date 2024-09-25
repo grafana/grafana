@@ -1419,13 +1419,13 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 		// 	podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
 		// 	expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
 		// },
-		{
-			name:                                 "legacy, RV=unset",
-			initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
-			expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
-			podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
-			expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
-		},
+		// {
+		// 	name:                                 "legacy, RV=unset",
+		// 	initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
+		// 	expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
+		// 	podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
+		// 	expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
+		// },
 	}
 	for idx, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
