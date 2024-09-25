@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { SceneCanvasText, SceneDataTransformer, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneCanvasText, SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import * as libpanels from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 

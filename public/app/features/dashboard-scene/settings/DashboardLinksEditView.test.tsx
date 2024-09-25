@@ -2,7 +2,7 @@ import { render as RTLRender } from '@testing-library/react';
 import * as React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { SceneGridLayout, SceneTimeRange, behaviors } from '@grafana/scenes';
+import { SceneTimeRange, behaviors } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
@@ -212,9 +212,6 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
-    body: new SceneGridLayout({
-      children: [],
-    }),
     editview: settings,
   });
 

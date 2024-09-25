@@ -11,7 +11,7 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
-import { SceneGridLayout, SceneTimeRange, dataLayers } from '@grafana/scenes';
+import { SceneTimeRange, dataLayers } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -220,9 +220,6 @@ async function buildTestScene() {
           isHidden: false,
         }),
       ],
-    }),
-    body: new SceneGridLayout({
-      children: [],
     }),
     editview: annotationsView,
   });

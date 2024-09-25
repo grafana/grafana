@@ -1,8 +1,7 @@
-import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
+import { SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';

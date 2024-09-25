@@ -11,7 +11,6 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { getPluginLinkExtensions, locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
-  SceneGridLayout,
   SceneQueryRunner,
   SceneTimeRange,
   SceneVariableSet,
@@ -23,10 +22,10 @@ import { GetExploreUrlArguments } from 'app/core/utils/explore';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 
-import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
   contextSrv: jest.mocked(contextSrv),
@@ -588,18 +587,7 @@ async function buildTestScene(options: SceneOptions) {
       canEdit: true,
       isEmbedded: options.isEmbedded ?? false,
     },
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: panel,
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
 
   await new Promise((r) => setTimeout(r, 1));
