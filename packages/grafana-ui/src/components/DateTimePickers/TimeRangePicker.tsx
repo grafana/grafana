@@ -9,6 +9,7 @@ import {
   GrafanaTheme2,
   dateTimeFormat,
   timeZoneFormatUserFriendly,
+  TimeOption,
   TimeRange,
   TimeZone,
   dateMath,
@@ -54,6 +55,7 @@ export interface TimeRangePickerProps {
   onZoom: () => void;
   onError?: (error?: string) => void;
   history?: TimeRange[];
+  quickRanges?: TimeOption[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
   isOnCanvas?: boolean;
@@ -80,6 +82,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     history,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
+    quickRanges,
     hideQuickRanges,
     widthOverride,
     isOnCanvas,
@@ -183,7 +186,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 fiscalYearStartMonth={fiscalYearStartMonth}
                 value={value}
                 onChange={onChange}
-                quickOptions={quickOptions}
+                quickOptions={quickRanges || quickOptions}
                 history={history}
                 showHistory
                 widthOverride={widthOverride}
