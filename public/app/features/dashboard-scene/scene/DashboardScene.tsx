@@ -508,6 +508,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const panel = gridItem.state.body;
 
     panel.setState({ key: getVizPanelKeyForPanelId(panelId) });
+    panel.clearParent();
 
     this.state.body.addPanel(panel);
 

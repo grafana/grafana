@@ -581,11 +581,7 @@ describe('DashboardScene', () => {
 
         const grid = new SceneGridLayout({ children: [gridItem] });
         const scene = buildTestScene({
-          body: new DefaultGridLayoutManager({
-            grid: new SceneGridLayout({
-              children: [gridItem],
-            }),
-          }),
+          body: new DefaultGridLayoutManager({ grid }),
         });
 
         const libPanel = {
