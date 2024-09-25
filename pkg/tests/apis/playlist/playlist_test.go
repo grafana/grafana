@@ -460,6 +460,9 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.NotEmpty(t, uid)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> d4a9a5bed2e (Fix list test)
 		expectedResult := `{
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
@@ -468,7 +471,12 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			  "name": "` + uid + `",
 			  "namespace": "default",
 			  "resourceVersion": "${resourceVersion}",
+<<<<<<< HEAD
 			  "uid": "${uid}"
+=======
+			  "uid": "${uid}",
+			  "managedFields": []
+>>>>>>> d4a9a5bed2e (Fix list test)
 			},
 			"spec": {
 			  "interval": "20s",
@@ -486,6 +494,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			},
 			"status": {}
 		  }`
+<<<<<<< HEAD
 =======
 		// expectedResult := unstructured.Unstructured{
 		// 	Object: map[string]interface{
@@ -515,17 +524,15 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		// 	},
 		// }
 >>>>>>> a4cab0d6527 (Populate UID in legacy)
+=======
+>>>>>>> d4a9a5bed2e (Fix list test)
 
 		// List includes the expected result
 		k8sList, err := client.Resource.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Equal(t, 1, len(k8sList.Items))
-		// var defaultConverter = runtime.UnstructuredConverter(runtime.DefaultUnstructuredConverter)
-		// var p *playlist.Playlist
-		// err = json.Unmarshal([]byte(expectedResult), p)
-		// expected, err := defaultConverter.ToUnstructured(expectedResult)
 		require.NoError(t, err)
-		// require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0]))
+		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0]))
 
 		// Get should return the same result
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
