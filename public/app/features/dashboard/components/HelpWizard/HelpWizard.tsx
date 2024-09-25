@@ -20,6 +20,7 @@ import {
   Icon,
   Stack,
 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { AccessControlAction } from 'app/types';
@@ -84,13 +85,17 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             </a>
           </Stack>
           <span className="muted">
-            To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
-            snapshot contains query response data and panel settings.
+            <Trans i18nKey="help-wizard.troubleshooting-help">
+              To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
+              snapshot contains query response data and panel settings.
+            </Trans>
           </span>
           {hasSupportBundleAccess && (
             <span className="muted">
-              You can also retrieve a support bundle containing information concerning your Grafana instance and
-              configured datasources in the <a href="/support-bundles">support bundles section</a>.
+              <Trans i18nKey="help-wizard.support-bundle">
+                You can also retrieve a support bundle containing information concerning your Grafana instance and
+                configured datasources in the <a href="/support-bundles">support bundles section</a>.
+              </Trans>
             </span>
           )}
         </Stack>
@@ -178,21 +183,21 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
           <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
             <Stack>
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                Download snapshot ({snapshotSize})
+                <Trans i18nKey="help-wizard.download-snapshot">Download snapshot</Trans> ({snapshotSize})
               </Button>
               <ClipboardButton
                 icon="github"
                 getText={service.onGetMarkdownForClipboard}
                 title="Copy a complete GitHub comment to the clipboard"
               >
-                Copy Github comment
+                <Trans i18nKey="help-wizard.github-comment">Copy Github comment</Trans>
               </ClipboardButton>
               <Button
                 icon="eye"
                 onClick={service.onPreviewDashboard}
                 title="Open support snapshot dashboard in a new tab"
               >
-                Preview snapshot
+                <Trans i18nKey="help-wizard.preview-snapshot">Preview snapshot</Trans>
               </Button>
             </Stack>
           </Field>
