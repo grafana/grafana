@@ -71,29 +71,27 @@ You can use a combination of Alertmanagers. The decision often depends on your a
 
 From Grafana, you can configure and administer your own Alertmanager to receive Grafana alerts.
 
-{{% admonition type="note" %}}
-Grafana Alerting does not support sending alerts to the AWS Managed Service for Prometheus due to the lack of sigv4 support in Prometheus.
-{{% /admonition %}}
+After adding the Alertmanager, you can use the Grafana Alerting UI to manage notification policies, contact points, and other alerting resources for external Alertmanagers from within Grafana, with support for HTTP basic authentication credentials.
 
-After adding the Alertmanager, you can use the Grafana Alerting UI to manage its alerting resources, such as notification policies, contact points, and more.
-
-Alertmanagers should now be configured as data sources using Grafana Configuration from the main Grafana navigation menu. This enables you to manage the contact points and notification policies of external Alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials.
-
-To add an Alertmanager, complete the following steps.
+Alertmanagers should be configured as data sources using Grafana Configuration from the main Grafana navigation menu. To add an Alertmanager, complete the following steps.
 
 1. Click **Connections** in the left-side menu.
-2. On the Connections page, search for `Alertmanager`.
-3. Click the **Create a new data source** button.
+1. On the Connections page, search for `Alertmanager`.
+1. Click the **Create a new data source** button.
 
    If you don't see this button, you may need to install the plugin, relaunch your Cloud instance, and then repeat steps 1 and 2.
 
-4. Fill out the fields on the page, as required.
+1. Fill out the fields on the page, as required.
 
    If you are provisioning your data source, set the flag `handleGrafanaManagedAlerts` in the `jsonData` field to `true` to send Grafana-managed alerts to this Alertmanager.
 
    **Note:** Prometheus, Grafana Mimir, and Cortex implementations of Alertmanager are supported. For Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI.
 
-5. Click **Save & test**.
+1. Click **Save & test**.
+
+{{% admonition type="note" %}}
+Grafana Alerting does not support sending alerts to the AWS Managed Service for Prometheus due to the lack of sigv4 support in Prometheus.
+{{% /admonition %}}
 
 ## Manage Alertmanager configurations
 
