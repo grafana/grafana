@@ -1,6 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
+import { DataQueryRequest } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -327,4 +328,53 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
   }
 
   return query;
+};
+
+export function requestSupportsSharding(request: DataQueryRequest<LokiQuery>) {
+  for (let i = 0; i < request.targets.length; i++) {
+    if (request.targets[i].expr?.includes('avg_over_time')) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const SHARDING_PLACEHOLDER = '__stream_shard_number__';
+export const addShardingPlaceholderSelector = (query: string) => {
+  return query.replace('}', `, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`);
+};
+
+export const interpolateShardingSelector = (queries: LokiQuery[], shards?: number[][], i?: number) => {
+  if (shards === undefined || i === undefined) {
+    return queries.map((query) => ({
+      ...query,
+      expr: query.expr.replace(`, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`, '}'),
+    }));
+  }
+
+  let shardValue = shards[i].join('|');
+
+  // -1 means empty shard value
+  if (shardValue === '-1' || shards[i].length === 1) {
+    shardValue = shardValue === '-1' ? '' : shardValue;
+    return queries.map((query) => ({
+      ...query,
+      expr: query.expr.replace(`, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`, `, __stream_shard__="${shardValue}"}`),
+    }));
+  }
+
+  return queries.map((query) => ({
+    ...query,
+    expr: query.expr.replace(new RegExp(`${SHARDING_PLACEHOLDER}`, 'g'), shardValue),
+  }));
+};
+
+export const getSelectorForShardValues = (query: string) => {
+  const selector = getNodesFromQuery(query, [Selector]);
+  if (selector.length > 0) {
+    return query
+      .substring(selector[0].from, selector[0].to)
+      .replace(`, __stream_shard__=~"${SHARDING_PLACEHOLDER}"}`, '}');
+  }
+  return '';
 };
