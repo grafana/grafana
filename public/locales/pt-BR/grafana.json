@@ -1141,9 +1141,7 @@
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
-      "edit": {
-        "button": ""
-      },
+      "edit-button": "",
       "subtitle": "",
       "title": ""
     },
@@ -1164,15 +1162,15 @@
       "label": ""
     },
     "buttons-section": {
-      "discard": {
-        "button": ""
-      },
-      "save": {
-        "button": ""
-      },
-      "save-and-enable": {
-        "button": ""
-      }
+      "discard-button": "",
+      "save-and-enable-button": "",
+      "save-button": ""
+    },
+    "discard-modal": {
+      "cancel-button": "",
+      "description": "",
+      "discard-button": "",
+      "title": ""
     },
     "documentation": "",
     "host": {
