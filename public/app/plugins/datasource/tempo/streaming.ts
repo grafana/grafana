@@ -85,8 +85,8 @@ export function doTempoChannelStream(
           }
 
           frames = [
-            metricsDataFrame(metrics, frameState, elapsedTime),
             ...formatTraceQLResponse(traces, instanceSettings, query.tableType),
+            metricsDataFrame(metrics, frameState, elapsedTime),
           ];
         }
         return {
