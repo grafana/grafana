@@ -51,9 +51,11 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 			for _, uid := range ruleUID {
 				keys = append(keys, ngmodels.AlertRuleKey{OrgID: orgID, UID: uid})
 			}
-			go st.Bus.Publish(ctx, &RuleChangeEvent{
-				RuleKeys: keys,
-			})
+			go func() {
+				_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+					RuleKeys: keys,
+				})
+			}()
 		}
 
 		rows, err = sess.Table(alertRuleVersion{}).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
@@ -235,9 +237,11 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 		}
 
 		if len(keys) > 0 {
-			go st.Bus.Publish(ctx, &RuleChangeEvent{
-				RuleKeys: keys,
-			})
+			go func() {
+				_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+					RuleKeys: keys,
+				})
+			}()
 		}
 		return nil
 	})
@@ -291,9 +295,11 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			}
 		}
 		if len(keys) > 0 {
-			go st.Bus.Publish(ctx, &RuleChangeEvent{
-				RuleKeys: keys,
-			})
+			go func() {
+				_ = st.Bus.Publish(ctx, &RuleChangeEvent{
+					RuleKeys: keys,
+				})
+			}()
 		}
 		return nil
 	})
