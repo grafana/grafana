@@ -4,7 +4,7 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { connect } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { getBackendSrv, getAppEvents } from '@grafana/runtime';
+import { getBackendSrv, getAppEvents, reportInteraction } from '@grafana/runtime';
 import {
   useStyles2,
   Alert,
@@ -22,6 +22,7 @@ import {
   Dropdown,
   MultiSelect,
 } from '@grafana/ui';
+import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { Page } from 'app/core/components/Page/Page';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
@@ -109,7 +110,7 @@ export const LdapSettingsPage = () => {
   });
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
-  const { control, getValues, handleSubmit, register, reset, watch } = methods;
+  const { control, formState: { isDirty }, getValues, handleSubmit, register, reset, watch } = methods;
 
   const styles = useStyles2(getStyles);
 
@@ -208,12 +209,14 @@ export const LdapSettingsPage = () => {
   /**
    * Button's Actions
    */
-  const submitAndEnableLdapSettings = (payload: LdapPayload) => {
+  const submitAndEnableLdapSettings = async (payload: LdapPayload) => {
     payload.settings.enabled = true;
-    putPayload(payload);
+    await putPayload(payload);
+    reportInteraction('authentication_ldap_enabled');
   };
-  const saveForm = () => {
-    putPayload(getValues());
+  const saveForm = async () => {
+    await putPayload(getValues());
+    reportInteraction('authentication_ldap_saved');
   };
   const deleteLDAPConfig = async () => {
     try {
@@ -225,6 +228,7 @@ export const LdapSettingsPage = () => {
         payload: [t('ldap-settings-page.alert.discard-success', 'LDAP settings discarded')],
       });
       reset(payload);
+      reportInteraction('authentication_ldap_deleted');
     } catch (error) {
       appEvents.publish({
         type: AppEvents.alertError.name,
@@ -233,6 +237,10 @@ export const LdapSettingsPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const onDiscard = () => {
+    reportInteraction('authentication_ldap_abandoned');
   };
 
   const subTitle = (
@@ -263,7 +271,8 @@ export const LdapSettingsPage = () => {
       <Page.Contents>
         {config.disableLoginForm && disabledFormAlert}
         <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)}>
+          <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)} >
+            <FormPrompt confirmRedirect={isDirty} onDiscard={onDiscard}/>
             {isLoading && <Loader />}
             {!isLoading && (
               <section className={styles.form}>
@@ -365,9 +374,9 @@ export const LdapSettingsPage = () => {
                     <Button variant="secondary" onClick={saveForm}>
                       <Trans i18nKey="ldap-settings-page.buttons-section.save-button">Save</Trans>
                     </Button>
-                    <Button onClick={() => setIsModalOpen(true)} variant="secondary">
+                    <LinkButton href="/admin/authentication" variant="secondary">
                       <Trans i18nKey="ldap-settings-page.buttons-section.discard-button">Discard</Trans>
-                    </Button>
+                    </LinkButton>
                     <Dropdown
                       overlay={
                         <Menu>
@@ -410,12 +419,12 @@ export const LdapSettingsPage = () => {
             be lost.
           </Trans>
           <Stack direction="row" gap={2} justifyContent="flex-end">
-            <Button onClick={() => setIsModalOpen(false)} variant="secondary">
+            <Button variant="secondary">
               <Trans i18nKey="ldap-settings-page.discard-modal.cancel-button">Back to editing</Trans>
             </Button>
-            <LinkButton href="/admin/authentication" variant="destructive">
+            <Button variant="destructive">
               <Trans i18nKey="ldap-settings-page.discard-modal.discard-button">Abandon LDAP</Trans>
-            </LinkButton>
+            </Button>
           </Stack>
         </Stack>
       </Modal>
