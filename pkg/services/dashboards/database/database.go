@@ -98,6 +98,24 @@ func (d *dashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashbo
 	return isParentFolderChanged, nil
 }
 
+func (d *dashboardStore) CountProvisionedDataByDashboardIDs(ctx context.Context, dashboardIDs []int64) (int64, error) {
+	if len(dashboardIDs) == 0 {
+		return 0, nil
+	}
+	var count int64
+	var err error
+	err = d.store.DB().WithDbSession(ctx, func(sess *db.Session) error {
+		args := make([]any, 0, len(dashboardIDs))
+		for _, dashID := range dashboardIDs {
+			args = append(args, dashID)
+		}
+		q := sess.Table("dashboard_provisioning").Where(fmt.Sprintf("dashboard_id IN (%s)", strings.Repeat("?,", len(dashboardIDs)-1)+"?"), args...)
+		count, err = q.Count()
+		return err
+	})
+	return count, err
+}
+
 func (d *dashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioning, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.database.GetProvisionedDataByDashboardID")
 	defer span.End()
@@ -629,11 +647,11 @@ func (d *dashboardStore) DeleteDashboard(ctx context.Context, cmd *dashboards.De
 	defer span.End()
 
 	return d.store.DB().WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		return d.deleteDashboard(cmd, sess, d.emitEntityEvent())
+		return d.deleteDashboard(ctx, cmd, sess, d.emitEntityEvent())
 	})
 }
 
-func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand, sess *db.Session, emitEntityEvent bool) error {
+func (d *dashboardStore) deleteDashboard(ctx context.Context, cmd *dashboards.DeleteDashboardCommand, sess *db.Session, emitEntityEvent bool) error {
 	dashboard := dashboards.Dashboard{OrgID: cmd.OrgID}
 	if cmd.UID != "" {
 		dashboard.UID = cmd.UID
@@ -666,7 +684,7 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		if !d.features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
 			sqlStatements = append(sqlStatements, statement{SQL: "DELETE FROM dashboard WHERE org_id = ? AND folder_uid = ? AND is_folder = ? AND deleted IS NULL", args: []any{dashboard.OrgID, dashboard.UID, d.store.DB().GetDialect().BooleanStr(false)}})
 
-			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
+			if err := d.deleteChildrenDashboardAssociations(ctx, sess, &dashboard); err != nil {
 				return err
 			}
 		} else {
@@ -724,7 +742,7 @@ func (d *dashboardStore) deleteResourcePermissions(sess *db.Session, orgID int64
 	return err
 }
 
-func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, dashboard *dashboards.Dashboard) error {
+func (d *dashboardStore) deleteChildrenDashboardAssociations(ctx context.Context, sess *db.Session, dashboard *dashboards.Dashboard) error {
 	var dashIds []struct {
 		Id  int64
 		Uid string
@@ -733,33 +751,47 @@ func (d *dashboardStore) deleteChildrenDashboardAssociations(sess *db.Session, d
 	if err != nil {
 		return err
 	}
+	if len(dashIds) < 1 {
+		return nil
+	}
 
-	if len(dashIds) > 0 {
-		for _, dash := range dashIds {
-			// remove all access control permission with child dashboard scopes
-			if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dash.Uid)); err != nil {
-				return err
-			}
-		}
+	// check if any dashboards are provisioned
+	args := make([]int64, 0, len(dashIds))
+	for _, entry := range dashIds {
+		args = append(args, entry.Id)
+	}
+	count, err := d.CountProvisionedDataByDashboardIDs(ctx, args)
+	if err != nil {
+		return err
+	}
+	if count != 0 {
+		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+	}
 
-		childrenDeletes := []string{
-			"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-			"DELETE FROM star WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-			"DELETE FROM dashboard_version WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-			"DELETE FROM dashboard_provisioning WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-			"DELETE FROM dashboard_acl WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-		}
-
-		_, err = sess.Exec("DELETE FROM annotation WHERE org_id = ? AND dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)", dashboard.OrgID, dashboard.OrgID, dashboard.ID)
-		if err != nil {
+	for _, dash := range dashIds {
+		// remove all access control permission with child dashboard scopes
+		if err := d.deleteResourcePermissions(sess, dashboard.OrgID, ac.GetResourceScopeUID("dashboards", dash.Uid)); err != nil {
 			return err
 		}
+	}
 
-		for _, sql := range childrenDeletes {
-			_, err := sess.Exec(sql, dashboard.OrgID, dashboard.ID)
-			if err != nil {
-				return err
-			}
+	childrenDeletes := []string{
+		"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+		"DELETE FROM star WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+		"DELETE FROM dashboard_version WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+		"DELETE FROM dashboard_provisioning WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+		"DELETE FROM dashboard_acl WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+	}
+
+	_, err = sess.Exec("DELETE FROM annotation WHERE org_id = ? AND dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)", dashboard.OrgID, dashboard.OrgID, dashboard.ID)
+	if err != nil {
+		return err
+	}
+
+	for _, sql := range childrenDeletes {
+		_, err := sess.Exec(sql, dashboard.OrgID, dashboard.ID)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -1048,7 +1080,7 @@ func (d *dashboardStore) DeleteDashboardsInFolders(
 				return dashboards.ErrFolderNotFound
 			}
 
-			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
+			if err := d.deleteChildrenDashboardAssociations(ctx, sess, &dashboard); err != nil {
 				return err
 			}
 

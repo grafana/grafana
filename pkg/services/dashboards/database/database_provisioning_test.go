@@ -33,13 +33,14 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		}),
 	}
 
-	dash, err := dashboardStore.SaveDashboard(context.Background(), folderCmd)
+	folder, err := dashboardStore.SaveDashboard(context.Background(), folderCmd)
 	require.Nil(t, err)
 
 	saveDashboardCmd := dashboards.SaveDashboardCommand{
 		OrgID:     1,
 		IsFolder:  false,
-		FolderUID: dash.UID,
+		FolderUID: folder.UID,
+		FolderID:  folder.ID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test dashboard 2",
@@ -117,17 +118,19 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, data)
 		})
 
-		t.Run("Deleting folder should delete provision meta data", func(t *testing.T) {
+		t.Run("Deleting folder should fail when it contains provisioned dashboards", func(t *testing.T) {
 			deleteCmd := &dashboards.DeleteDashboardCommand{
-				ID:    dash.ID,
+				ID:    folder.ID,
+				UID:   folder.UID,
 				OrgID: 1,
 			}
 
-			require.Nil(t, dashboardStore.DeleteDashboard(context.Background(), deleteCmd))
+			err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
+			require.Equal(t, dashboards.ErrDashboardCannotDeleteProvisionedDashboard, err)
 
 			data, err := dashboardStore.GetProvisionedDataByDashboardID(context.Background(), dash.ID)
 			require.Nil(t, err)
-			require.Nil(t, data)
+			require.NotNil(t, data)
 		})
 
 		t.Run("UnprovisionDashboard should delete provisioning metadata", func(t *testing.T) {
