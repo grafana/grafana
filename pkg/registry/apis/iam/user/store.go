@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/claims"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
@@ -62,81 +61,59 @@ func (s *LegacyStore) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+
+	if s.ac != nil {
+		return s.listWithCheck(ctx, common.PaginationFromListOptions(options))
+	}
+
+	return s.listWithoutCheck(ctx, common.PaginationFromListOptions(options))
+}
+
+func (s *LegacyStore) listWithCheck(ctx context.Context, p common.Pagination) (runtime.Object, error) {
+	res, err := common.ListWithChecker(
+		ctx, resource.GetName(), s.ac, p,
+		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[iamv0.User], error) {
+			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
+				Pagination: p,
+			})
+
+			if err != nil {
+				return nil, err
+			}
+
+			users := make([]iamv0.User, 0, len(found.Users))
+			for _, u := range found.Users {
+				users = append(users, toUserItem(&u, ns.Value))
+			}
+
+			return &common.ListResponse[iamv0.User]{
+				Items:    users,
+				RV:       found.RV,
+				Continue: found.Continue,
+			}, nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	obj := &iamv0.UserList{Items: res.Items}
+	obj.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
+	obj.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
+	return obj, nil
+}
+
+func (s *LegacyStore) listWithoutCheck(ctx context.Context, p common.Pagination) (runtime.Object, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
 
-	if s.ac != nil {
-		return s.listWithCheck(ctx, ns, common.PaginationFromListOptions(options))
-	}
-
-	return s.listWithoutCheck(ctx, ns, common.PaginationFromListOptions(options))
-}
-
-func (s *LegacyStore) listWithCheck(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (runtime.Object, error) {
-	ident, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	check, err := s.ac.Compile(ctx, ident, claims.AccessRequest{
-		Verb:      "list",
-		Resource:  resource.GetName(),
-		Namespace: ns.Value,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	list := func(p common.Pagination) ([]iamv0.User, int64, int64, error) {
-		found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
-			Pagination: p,
-		})
-
-		if err != nil {
-			return nil, 0, 0, err
-		}
-
-		out := make([]iamv0.User, 0, len(found.Users))
-		for _, u := range found.Users {
-			if check(ns.Value, strconv.FormatInt(u.ID, 10)) {
-				out = append(out, toUserItem(&u, ns.Value))
-			}
-		}
-
-		return out, found.Continue, found.RV, nil
-	}
-
-	items, c, rv, err := list(p)
-	if err != nil {
-		return nil, err
-	}
-
-outer:
-	for len(items) < int(p.Limit) && c != 0 {
-		var more []iamv0.User
-		more, c, _, err = list(common.Pagination{Limit: p.Limit, Continue: c})
-		if err != nil {
-			return nil, err
-		}
-
-		for _, u := range more {
-			if len(items) == int(p.Limit) {
-				break outer
-			}
-			items = append(items, u)
-		}
-	}
-
-	obj := &iamv0.UserList{Items: items}
-	obj.ListMeta.Continue = common.OptionalFormatInt(c)
-	obj.ListMeta.ResourceVersion = common.OptionalFormatInt(rv)
-	return obj, nil
-}
-
-func (s *LegacyStore) listWithoutCheck(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (runtime.Object, error) {
 	found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
 		Pagination: p,
 	})
@@ -191,6 +168,7 @@ func toUserItem(u *user.User, ns string) iamv0.User {
 			Email:         u.Email,
 			EmailVerified: u.EmailVerified,
 			Disabled:      u.IsDisabled,
+			InternalID:    u.ID,
 		},
 	}
 	obj, _ := utils.MetaAccessor(item)
