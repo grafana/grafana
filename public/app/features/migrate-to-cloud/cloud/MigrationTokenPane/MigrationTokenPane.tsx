@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { isFetchError } from '@grafana/runtime';
+import { isFetchError, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Text } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -51,6 +51,8 @@ export const MigrationTokenPane = () => {
   const isLoading = getTokenQuery.isFetching || createTokenResponse.isLoading;
 
   const handleGenerateToken = useCallback(async () => {
+    reportInteraction('grafana_e2c_generate_token_clicked');
+
     const resp = await createTokenMutation();
 
     if (!('error' in resp)) {
@@ -63,6 +65,7 @@ export const MigrationTokenPane = () => {
       return;
     }
 
+    reportInteraction('grafana_e2c_delete_token_clicked');
     const resp = await deleteTokenMutation({ uid: getTokenQuery.data.id });
     if (!('error' in resp)) {
       setShowDeleteModal(false);
@@ -98,7 +101,10 @@ export const MigrationTokenPane = () => {
 
       <CreateTokenModal
         isOpen={showCreateModal}
-        hideModal={() => setShowCreateModal(false)}
+        hideModal={() => {
+          reportInteraction('grafana_e2c_generated_token_modal_dismissed');
+          setShowCreateModal(false);
+        }}
         migrationToken={createTokenResponse.data?.token}
       />
 
