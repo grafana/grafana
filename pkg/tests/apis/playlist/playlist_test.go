@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/setting"
@@ -246,117 +247,117 @@ func TestIntegrationPlaylist(t *testing.T) {
 		// NOTE: running local etcd, that will be wiped clean!
 		t.Skip("local etcd testing")
 
-	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction:    true,
-	// 		DisableAnonymous:     true,
-	// 		APIServerStorageType: "etcd", // requires etcd running on localhost:2379
-	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-	// 			RESOURCEGROUP: {
-	// 				DualWriterMode: grafanarest.Mode0,
-	// 			},
-	// 		},
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-	// 		},
-	// 	})
+		// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		// 		AppModeProduction:    true,
+		// 		DisableAnonymous:     true,
+		// 		APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+		// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+		// 			RESOURCEGROUP: {
+		// 				DualWriterMode: grafanarest.Mode0,
+		// 			},
+		// 		},
+		// 		EnableFeatureToggles: []string{
+		// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+		// 		},
+		// 	})
 
-	// 	// Clear the collection before starting (etcd)
-	// 	client := helper.GetResourceClient(apis.ResourceClientArgs{
-	// 		User: helper.Org1.Admin,
-	// 		GVR:  gvr,
-	// 	})
-	// 	err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
-	// 	require.NoError(t, err)
+		// 	// Clear the collection before starting (etcd)
+		// 	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		// 		User: helper.Org1.Admin,
+		// 		GVR:  gvr,
+		// 	})
+		// 	err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		// 	require.NoError(t, err)
 
-	// 	doPlaylistTests(t, helper)
-	// })
+		// 	doPlaylistTests(t, helper)
+		// })
 
-	// t.Run("with dual write (etcd, mode 1)", func(t *testing.T) {
-	// 	// NOTE: running local etcd, that will be wiped clean!
-	// 	t.Skip("local etcd testing")
+		// t.Run("with dual write (etcd, mode 1)", func(t *testing.T) {
+		// 	// NOTE: running local etcd, that will be wiped clean!
+		// 	t.Skip("local etcd testing")
 
-	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction:    true,
-	// 		DisableAnonymous:     true,
-	// 		APIServerStorageType: "etcd", // requires etcd running on localhost:2379
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-	// 		},
-	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-	// 			RESOURCEGROUP: {
-	// 				DualWriterMode: grafanarest.Mode1,
-	// 			},
-	// 		},
-	// 	})
+		// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		// 		AppModeProduction:    true,
+		// 		DisableAnonymous:     true,
+		// 		APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+		// 		EnableFeatureToggles: []string{
+		// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+		// 		},
+		// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+		// 			RESOURCEGROUP: {
+		// 				DualWriterMode: grafanarest.Mode1,
+		// 			},
+		// 		},
+		// 	})
 
-	// 	// Clear the collection before starting (etcd)
-	// 	client := helper.GetResourceClient(apis.ResourceClientArgs{
-	// 		User: helper.Org1.Admin,
-	// 		GVR:  gvr,
-	// 	})
-	// 	err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
-	// 	require.NoError(t, err)
+		// 	// Clear the collection before starting (etcd)
+		// 	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		// 		User: helper.Org1.Admin,
+		// 		GVR:  gvr,
+		// 	})
+		// 	err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		// 	require.NoError(t, err)
 
-	// 	doPlaylistTests(t, helper)
-	// })
+		// 	doPlaylistTests(t, helper)
+		// })
 
-	// t.Run("with dual write (etcd, mode 2)", func(t *testing.T) {
-	// 	// NOTE: running local etcd, that will be wiped clean!
-	// 	t.Skip("local etcd testing")
+		// t.Run("with dual write (etcd, mode 2)", func(t *testing.T) {
+		// 	// NOTE: running local etcd, that will be wiped clean!
+		// 	t.Skip("local etcd testing")
 
-	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction:    true,
-	// 		DisableAnonymous:     true,
-	// 		APIServerStorageType: "etcd", // requires etcd running on localhost:2379
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-	// 		},
-	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-	// 			RESOURCEGROUP: {
-	// 				DualWriterMode: grafanarest.Mode2,
-	// 			},
-	// 		},
-	// 	})
+		// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		// 		AppModeProduction:    true,
+		// 		DisableAnonymous:     true,
+		// 		APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+		// 		EnableFeatureToggles: []string{
+		// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+		// 		},
+		// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+		// 			RESOURCEGROUP: {
+		// 				DualWriterMode: grafanarest.Mode2,
+		// 			},
+		// 		},
+		// 	})
 
-	// 	// Clear the collection before starting (etcd)
-	// 	client := helper.GetResourceClient(apis.ResourceClientArgs{
-	// 		User: helper.Org1.Admin,
-	// 		GVR:  gvr,
-	// 	})
-	// 	err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
-	// 	require.NoError(t, err)
+		// 	// Clear the collection before starting (etcd)
+		// 	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		// 		User: helper.Org1.Admin,
+		// 		GVR:  gvr,
+		// 	})
+		// 	err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		// 	require.NoError(t, err)
 
-	// 	doPlaylistTests(t, helper)
-	// })
+		// 	doPlaylistTests(t, helper)
+		// })
 
-	// t.Run("with dual write (etcd, mode 3)", func(t *testing.T) {
-	// 	// NOTE: running local etcd, that will be wiped clean!
-	// 	t.Skip("local etcd testing")
+		// t.Run("with dual write (etcd, mode 3)", func(t *testing.T) {
+		// 	// NOTE: running local etcd, that will be wiped clean!
+		// 	t.Skip("local etcd testing")
 
-	// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-	// 		AppModeProduction:    true,
-	// 		DisableAnonymous:     true,
-	// 		APIServerStorageType: "etcd", // requires etcd running on localhost:2379
-	// 		EnableFeatureToggles: []string{
-	// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
-	// 		},
-	// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-	// 			RESOURCEGROUP: {
-	// 				DualWriterMode: grafanarest.Mode3,
-	// 			},
-	// 		},
-	// 	})
+		// 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		// 		AppModeProduction:    true,
+		// 		DisableAnonymous:     true,
+		// 		APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+		// 		EnableFeatureToggles: []string{
+		// 			featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+		// 		},
+		// 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+		// 			RESOURCEGROUP: {
+		// 				DualWriterMode: grafanarest.Mode3,
+		// 			},
+		// 		},
+		// 	})
 
-	// 	// Clear the collection before starting (etcd)
-	// 	client := helper.GetResourceClient(apis.ResourceClientArgs{
-	// 		User: helper.Org1.Admin,
-	// 		GVR:  gvr,
-	// 	})
-	// 	err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
-	// 	require.NoError(t, err)
+		// 	// Clear the collection before starting (etcd)
+		// 	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		// 		User: helper.Org1.Admin,
+		// 		GVR:  gvr,
+		// 	})
+		// 	err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		// 	require.NoError(t, err)
 
-	// 	doPlaylistTests(t, helper)
-	// })
+		// 	doPlaylistTests(t, helper)
+	})
 }
 
 func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
@@ -458,11 +459,6 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.Equal(t, 200, legacyCreate.Response.StatusCode)
 		uid := legacyCreate.Result.UID
 		require.NotEmpty(t, uid)
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> d4a9a5bed2e (Fix list test)
 		expectedResult := `{
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
@@ -471,12 +467,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			  "name": "` + uid + `",
 			  "namespace": "default",
 			  "resourceVersion": "${resourceVersion}",
-<<<<<<< HEAD
 			  "uid": "${uid}"
-=======
-			  "uid": "${uid}",
-			  "managedFields": []
->>>>>>> d4a9a5bed2e (Fix list test)
 			},
 			"spec": {
 			  "interval": "20s",
@@ -494,38 +485,6 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			},
 			"status": {}
 		  }`
-<<<<<<< HEAD
-=======
-		// expectedResult := unstructured.Unstructured{
-		// 	Object: map[string]interface{
-		// 	"apiVersion": "playlist.grafana.app/v0alpha1",
-		// 	"kind":       "Playlist",
-		// 	"metadata": map[string]interface{}{
-		// 		"annotations":       map[string]interface{}{},
-		// 		"creationTimestamp": "${creationTimestamp}",
-		// 		"name":              uid,
-		// 		"namespace":         "default",
-		// 		"resourceVersion":   "${resourceVersion}",
-		// 		"uid":               "${uid}",
-		// 	},
-		// 	"spec": map[string]interface{}{
-		// 		"interval": "20s",
-		// 		"items": []interface{}{
-		// 			map[string]interface{}{
-		// 				"type":  "dashboard_by_uid",
-		// 				"value": "xCmMwXdVz",
-		// 			}, map[string]interface{}{
-		// 				"type":  "dashboard_by_tag",
-		// 				"value": "graph-ng",
-		// 			},
-		// 		},
-		// 		"title": "Test",
-		// 	},
-		// 	},
-		// }
->>>>>>> a4cab0d6527 (Populate UID in legacy)
-=======
->>>>>>> d4a9a5bed2e (Fix list test)
 
 		// List includes the expected result
 		k8sList, err := client.Resource.List(context.Background(), metav1.ListOptions{})
