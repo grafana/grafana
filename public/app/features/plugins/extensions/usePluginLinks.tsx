@@ -18,6 +18,7 @@ import {
   isExtensionPointIdInvalid,
   isExtensionPointMetaInfoMissing,
   isGrafanaDevMode,
+  logWarning,
 } from './utils';
 
 // Returns an array of component extensions for the given extension point
@@ -32,10 +33,10 @@ export function usePluginLinks({
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
-    const enableRestrictions = isGrafanaDevMode && pluginContext;
+    const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
 
     if (enableRestrictions && isExtensionPointIdInvalid(extensionPointId, pluginContext)) {
-      console.error(`usePluginLinks("${extensionPointId}") - The extension point ID "${extensionPointId}" is invalid.`);
+      logWarning(`usePluginLinks("${extensionPointId}") - The extension point ID "${extensionPointId}" is invalid.`);
       return {
         isLoading: false,
         links: [],
@@ -43,9 +44,7 @@ export function usePluginLinks({
     }
 
     if (enableRestrictions && isExtensionPointMetaInfoMissing(extensionPointId, pluginContext)) {
-      console.error(
-        `usePluginLinks("${extensionPointId}") - The extension point is missing from the "plugin.json" file.`
-      );
+      logWarning(`usePluginLinks("${extensionPointId}") - The extension point is missing from the "plugin.json" file.`);
       return {
         isLoading: false,
         links: [],

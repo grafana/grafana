@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useObservable } from 'react-use';
 
 import { usePluginContext } from '@grafana/data';
-import { UsePluginComponentResult } from '@grafana/runtime';
+import { logWarning, UsePluginComponentResult } from '@grafana/runtime';
 
 import { useExposedComponentsRegistry } from './ExtensionRegistriesContext';
 import { isExposedComponentDependencyMissing, isGrafanaDevMode, wrapWithPluginContext } from './utils';
@@ -16,10 +16,10 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
 
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
-    const enableRestrictions = isGrafanaDevMode && pluginContext;
+    const enableRestrictions = isGrafanaDevMode() && pluginContext;
 
     if (enableRestrictions && isExposedComponentDependencyMissing(id, pluginContext)) {
-      console.error(
+      logWarning(
         `usePluginComponent("${id}") - The exposed component ("${id}") is missing from the dependencies[] in the "plugin.json" file.`
       );
       return {

@@ -68,7 +68,7 @@ export class ExposedComponentsRegistry extends Registry<
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode && isExposedComponentMetaInfoMissing(pluginId, config)) {
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isExposedComponentMetaInfoMissing(pluginId, config)) {
         continue;
       }
 

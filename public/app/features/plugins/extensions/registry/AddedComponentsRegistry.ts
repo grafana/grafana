@@ -56,7 +56,7 @@ export class AddedComponentsRegistry extends Registry<
         continue;
       }
 
-      if (pluginId !== 'grafana' && isGrafanaDevMode && isAddedComponentMetaInfoMissing(pluginId, config)) {
+      if (pluginId !== 'grafana' && isGrafanaDevMode() && isAddedComponentMetaInfoMissing(pluginId, config)) {
         continue;
       }
 

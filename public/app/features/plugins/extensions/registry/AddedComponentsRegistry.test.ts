@@ -1,15 +1,62 @@
 import React from 'react';
 import { firstValueFrom } from 'rxjs';
 
+import { PluginLoadingStrategy } from '@grafana/data';
+import { config } from '@grafana/runtime';
+
+import { isGrafanaDevMode } from '../utils';
+
 import { AddedComponentsRegistry } from './AddedComponentsRegistry';
 import { MSG_CANNOT_REGISTER_READ_ONLY } from './Registry';
 
+jest.mock('../utils', () => ({
+  ...jest.requireActual('../utils'),
+
+  // Manually set the dev mode to false
+  // (to make sure that by default we are testing a production scneario)
+  isGrafanaDevMode: jest.fn().mockReturnValue(false),
+}));
+
 describe('AddedComponentsRegistry', () => {
   const consoleWarn = jest.fn();
+  const originalApps = config.apps;
+  const pluginId = 'grafana-basic-app';
+  const appPluginConfig = {
+    id: pluginId,
+    path: '',
+    version: '',
+    preload: false,
+    angular: {
+      detected: false,
+      hideDeprecation: false,
+    },
+    loadingStrategy: PluginLoadingStrategy.fetch,
+    dependencies: {
+      grafanaVersion: '8.0.0',
+      plugins: [],
+      extensions: {
+        exposedComponents: [],
+      },
+    },
+    extensions: {
+      addedLinks: [],
+      addedComponents: [],
+      exposedComponents: [],
+      extensionPoints: [],
+    },
+  };
 
   beforeEach(() => {
     global.console.warn = consoleWarn;
     consoleWarn.mockReset();
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+    config.apps = {
+      [pluginId]: appPluginConfig,
+    };
+  });
+
+  afterEach(() => {
+    config.apps = originalApps;
   });
 
   it('should return empty registry when no extensions registered', async () => {
@@ -20,7 +67,6 @@ describe('AddedComponentsRegistry', () => {
   });
 
   it('should be possible to register added components in the registry', async () => {
-    const pluginId = 'grafana-basic-app';
     const id = `${pluginId}/hello-world/v1`;
     const reactiveRegistry = new AddedComponentsRegistry();
 
@@ -45,6 +91,7 @@ describe('AddedComponentsRegistry', () => {
       description: 'not important',
     });
   });
+
   it('should be possible to asynchronously register component extensions for the same extension point (different plugins)', async () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
@@ -433,5 +480,106 @@ describe('AddedComponentsRegistry', () => {
 
     expect(subscribeCallback).toHaveBeenCalledTimes(2);
     expect(Object.keys(subscribeCallback.mock.calls[1][0])).toEqual(['grafana/alerting/home']);
+  });
+
+  it('should not register a component added by a plugin in dev-mode if the meta-info is missing from the plugin.json', async () => {
+    // Enabling dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const registry = new AddedComponentsRegistry();
+    const componentConfig = {
+      title: 'Component title',
+      description: 'Component description',
+      targets: ['grafana/alerting/home'],
+      component: () => React.createElement('div', null, 'Hello World1'),
+    };
+
+    // Make sure that the meta-info is empty
+    config.apps[pluginId].extensions.addedComponents = [];
+
+    registry.register({
+      pluginId,
+      configs: [componentConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(0);
+    expect(consoleWarn).toHaveBeenCalled();
+  });
+
+  it('should register a component added by a core Grafana in dev-mode even if the meta-info is missing', async () => {
+    // Enabling dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const registry = new AddedComponentsRegistry();
+    const componentConfig = {
+      title: 'Component title',
+      description: 'Component description',
+      targets: ['grafana/alerting/home'],
+      component: () => React.createElement('div', null, 'Hello World1'),
+    };
+
+    registry.register({
+      pluginId: 'grafana',
+      configs: [componentConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(1);
+    expect(consoleWarn).not.toHaveBeenCalled();
+  });
+
+  it('should register a component added by a plugin in production mode even if the meta-info is missing', async () => {
+    // Production mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(false);
+
+    const registry = new AddedComponentsRegistry();
+    const componentConfig = {
+      title: 'Component title',
+      description: 'Component description',
+      targets: ['grafana/alerting/home'],
+      component: () => React.createElement('div', null, 'Hello World1'),
+    };
+
+    // Make sure that the meta-info is empty
+    config.apps[pluginId].extensions.addedComponents = [];
+
+    registry.register({
+      pluginId,
+      configs: [componentConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(1);
+    expect(consoleWarn).not.toHaveBeenCalled();
+  });
+
+  it('should register a component added by a plugin in dev-mode if the meta-info is present', async () => {
+    // Enabling dev mode
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+
+    const registry = new AddedComponentsRegistry();
+    const componentConfig = {
+      title: 'Component title',
+      description: 'Component description',
+      targets: ['grafana/alerting/home'],
+      component: () => React.createElement('div', null, 'Hello World1'),
+    };
+
+    // Make sure that the meta-info is empty
+    config.apps[pluginId].extensions.addedComponents = [componentConfig];
+
+    registry.register({
+      pluginId,
+      configs: [componentConfig],
+    });
+
+    const currentState = await registry.getState();
+
+    expect(Object.keys(currentState)).toHaveLength(1);
+    expect(consoleWarn).not.toHaveBeenCalled();
   });
 });
