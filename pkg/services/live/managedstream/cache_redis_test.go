@@ -2,6 +2,7 @@ package managedstream
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/go-redis/redis/v8"
@@ -30,7 +31,19 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 		Addr: addr,
 		DB:   db,
 	})
-	c := NewRedisFrameCache(redisClient)
+	c := NewRedisFrameCache(redisClient, "A")
 	require.NotNil(t, c)
 	testFrameCache(t, c)
+
+	keys, err := redisClient.Keys(redisClient.Context(), "*").Result()
+	if err != nil {
+		require.NoError(t, err)
+	}
+
+	require.NotZero(t, len(keys))
+
+	for _, key := range keys {
+		require.Equal(t, "A", key[:1])
+		require.True(t, strings.HasPrefix(key, "A"), "key", key)
+	}
 }

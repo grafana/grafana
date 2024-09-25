@@ -423,6 +423,8 @@ type Cfg struct {
 	// LiveHAEngine is a type of engine to use to achieve HA with Grafana Live.
 	// Zero value means in-memory single node setup.
 	LiveHAEngine string
+	// LiveHAPRefix is a prefix for HA engine keys.
+	LiveHAPrefix string
 	// LiveHAEngineAddress is a connection address for Live HA engine.
 	LiveHAEngineAddress  string
 	LiveHAEnginePassword string
@@ -2024,6 +2026,7 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	default:
 		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
 	}
+	cfg.LiveHAPrefix = section.Key("ha_prefix").MustString("")
 	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
 	cfg.LiveHAEnginePassword = section.Key("ha_engine_password").MustString("")
 
