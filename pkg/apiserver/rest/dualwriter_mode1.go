@@ -81,7 +81,7 @@ func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, in runtime
 	}
 
 	startStorage := time.Now()
-	storageObj, errObjectSt := d.Storage.Create(ctx, original, createValidation, options)
+	storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
 	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
 	if errObjectSt != nil {
 		log.Error(err, "unable to create object in storage")
@@ -279,7 +279,6 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 		log.Error(err, "unable to update in legacy storage")
 		return objLegacy, async, err
 	}
-
 
 	//nolint:errcheck
 	go d.updateOnUnifiedStorage(ctx, objLegacy, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
