@@ -873,6 +873,13 @@ type ThresholdsConfig struct {
 // Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
 type ThresholdsMode string
 
+// Counterpart for TypeScript's TimeOption type.
+type TimeOption struct {
+	Display string `json:"display"`
+	From    string `json:"from"`
+	To      string `json:"to"`
+}
+
 // Time picker configuration
 // It defines the default config for the time picker and the refresh picker for the specific dashboard.
 type TimePickerConfig struct {
@@ -881,6 +888,9 @@ type TimePickerConfig struct {
 
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 	NowDelay *string `json:"nowDelay,omitempty"`
+
+	// Quick ranges for time picker.
+	QuickRanges []TimeOption `json:"quick_ranges,omitempty"`
 
 	// Interval options available in the refresh picker dropdown.
 	RefreshIntervals []string `json:"refresh_intervals,omitempty"`
