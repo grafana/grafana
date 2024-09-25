@@ -151,10 +151,6 @@ func (u *updateWrapper) Preconditions() *metav1.Preconditions {
 	if u.upstream == nil {
 		return nil
 	}
-	if u.upstream.Preconditions() != nil {
-		var emptyRV string
-		u.upstream.Preconditions().ResourceVersion = &emptyRV
-	}
 	return u.upstream.Preconditions()
 }
 
