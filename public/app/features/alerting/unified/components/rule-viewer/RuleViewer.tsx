@@ -14,7 +14,7 @@ import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } fro
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
-import { alertingFeatureToggles } from '../../featureToggles';
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { usePrometheusCreationConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
@@ -55,7 +55,7 @@ export enum ActiveTab {
   Details = 'details',
 }
 
-const { prometheusRulesPrimary } = alertingFeatureToggles;
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();

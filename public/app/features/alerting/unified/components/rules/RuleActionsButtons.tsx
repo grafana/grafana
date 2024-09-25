@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
@@ -42,7 +41,6 @@ interface Props {
  */
 export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton, rule, rulesSource }: Props) => {
   const dispatch = useDispatch();
-  const location = useLocation();
   const style = useStyles2(getStyles);
 
   const redirectToListView = compact ? false : true;

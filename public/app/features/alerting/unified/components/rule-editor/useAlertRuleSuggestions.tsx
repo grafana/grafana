@@ -5,13 +5,13 @@ import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
-import { alertingFeatureToggles } from '../../featureToggles';
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { isAlertingRule, isAlertingRulerRule } from '../../utils/rules';
 
 const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery } = alertRuleApi;
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
-const { prometheusRulesPrimary } = alertingFeatureToggles;
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const emptyRulerConfig: RulerRulesConfigDTO = {};
 
 export function useAlertRuleSuggestions(rulesSourceName: string) {

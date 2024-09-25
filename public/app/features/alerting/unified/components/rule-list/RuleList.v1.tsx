@@ -9,7 +9,7 @@ import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo, trackRuleListNavigation } from '../../Analytics';
-import { alertingFeatureToggles } from '../../featureToggles';
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../../hooks/useFilteredRules';
@@ -34,7 +34,7 @@ const VIEWS = {
 // make sure we ask for 1 more so we show the "show x more" button
 const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 
-const { prometheusRulesPrimary } = alertingFeatureToggles;
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
 const RuleListV1 = () => {
   const dispatch = useDispatch();

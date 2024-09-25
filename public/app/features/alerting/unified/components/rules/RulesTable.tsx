@@ -9,7 +9,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
-import { alertingFeatureToggles } from '../../featureToggles';
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useAsync } from '../../hooks/useAsync';
 import { attachRulerRuleToCombinedRule } from '../../hooks/useCombinedRuleNamespaces';
 import { useHasRuler } from '../../hooks/useHasRuler';
@@ -44,7 +44,7 @@ interface Props {
   className?: string;
 }
 
-const { prometheusRulesPrimary } = alertingFeatureToggles;
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
 const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
 const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
