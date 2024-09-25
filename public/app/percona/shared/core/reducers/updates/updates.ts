@@ -32,6 +32,7 @@ export const updatesSlice = createSlice({
       updateAvailable: true, // to remove
       latest: { version: '3.0.1' }, // to remove
       isLoading: false,
+      lastChecked: '',
     }));
 
     builder.addCase(checkUpdatesAction.rejected, (state) => ({

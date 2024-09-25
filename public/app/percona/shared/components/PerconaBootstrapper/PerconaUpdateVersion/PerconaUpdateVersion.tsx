@@ -25,12 +25,11 @@ const PerconaUpdateVersion: FC = () => {
 
   useEffect(() => {
     const showModal = async () => {
-      console.log('checkUpdatesChangelogs');
       await dispatch(checkUpdatesChangeLogs());
       setShowUpdate(true);
     };
 
-    const differenceInDays = async () => {
+    const differenceInDays = () => {
       if (lastChecked) {
         const lastCheckDate = new Date(lastChecked);
         const currentDate = new Date();
@@ -45,19 +44,18 @@ const PerconaUpdateVersion: FC = () => {
       if (!snoozeCurrentVersion) {
         dispatch(getSnoozeCurrentVersion());
       }
-      differenceInDays().then((days) => {
-        if (
-          (installed?.version !== latest?.version /*days > 6 &&*/ &&
-            snoozeCurrentVersion?.snoozedPmmVersion !== latest?.version) ||
-          !lastChecked
-        ) {
-          showModal();
-        }
-      });
+      const days = differenceInDays();
+      if (
+        (installed?.version !== latest?.version &&
+          days > 6 &&
+          snoozeCurrentVersion?.snoozedPmmVersion !== latest?.version) ||
+        !lastChecked
+      ) {
+        showModal();
+      }
     }
   }, [dispatch, updateAvailable, installed, latest, snoozeCurrentVersion, lastChecked]);
 
-  // Snooze API
   const snoozeUpdate = async () => {
     if (latest && latest.version) {
       const payload = {
@@ -108,7 +106,7 @@ const PerconaUpdateVersion: FC = () => {
           {changeLogs?.updates.map((update: UpdatesChangelogs) => (
             <li key={update.toString()}>
               <a href={update.releaseNotesUrl}>
-                {update.version}, {dateTimeFormat(update.timestamp,  { format: 'MMM DD, YYYY' })}
+                {update.version}, {dateTimeFormat(update.timestamp, { format: 'MMM DD, YYYY' })}
               </a>
             </li>
           ))}

@@ -27,7 +27,7 @@ export const getStyles = ({ v1: { spacing, colors } }: GrafanaTheme2) => ({
   notesTitle: css`
     font-weight: 500;
     font-size: 16px;
-    margin-top: 27px
+    margin-top: 27px;
   `,
   updateButtons: css`
     margin-top: 35px;
