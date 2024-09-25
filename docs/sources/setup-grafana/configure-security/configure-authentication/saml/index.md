@@ -209,11 +209,10 @@ In order to validate Azure AD users with Grafana, you need to configure the SAML
 1. In the Set up **Single Sign-On with SAML** pane, select the pencil icon for **Basic SAML Configuration** to edit the settings.
 1. In the **Basic SAML Configuration** pane, click on the **Edit** button and update the following fields:
    - In the **Identifier (Entity ID)** field, enter `https://localhost/saml/metadata`.
-   - In the **Identifier (Entity ID)** field, remove the default value.
    - In the **Reply URL (Assertion Consumer Service URL)** field, enter `https://localhost/saml/acs`.
-   - In the **Sign on URL** field, enter `https://localhost/saml/auth`.
-   - In the **Relay State** field, enter `https://localhost/saml/slo`.
-   - In the **Logout URL** field, enter `https://localhost/logout`.
+   - In the **Sign on URL** field, enter `https://localhost`.
+   - In the **Relay State** field, enter `https://localhost`.
+   - In the **Logout URL** field, enter `https://localhost/saml/slo`.
 1. Select **Save**.
 1. At the **SAML Certificate** section, copy the **App Federation Metadata Url**.
    - Use this URL in the `idp_metadata_url` field in the `custom.ini` file.
@@ -329,7 +328,7 @@ The table below describes all SAML configuration options. Continue reading below
 | `name_id_format`                                           | No       | The Name ID Format to request within the SAML assertion                                                                                                                                                      | `urn:oasis:names:tc:SAML:2.0:nameid-format:transient` |
 | `client_id`                                                | No       | Client ID of the IdP service application used to retrieve more information about the user from the IdP.                                                                                                      |                                                       |
 | `client_secret`                                            | No       | Client secret of the IdP service application used to retrieve more information about the user from the IdP.                                                                                                  |                                                       |
-| `access_token_url`                                         | No       | URL to retrieve the access token from the IdP.                                                                                                                                                               |                                                       |
+| `token_url`                                                | No       | URL to retrieve the access token from the IdP.                                                                                                                                                               |                                                       |
 | `force_use_graph_api`                                      | No       | Whether to use the IdP service application retrieve more information about the user from the IdP.                                                                                                            | `false`                                               |
 
 ### Signature algorithm

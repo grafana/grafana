@@ -51,22 +51,6 @@ func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*
 	return &cm, err
 }
 
-func (ss *sqlStore) CreateMigrationRun(ctx context.Context, cmr cloudmigration.CloudMigrationSnapshot) (string, error) {
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		cmr.Created = time.Now()
-		cmr.Updated = time.Now()
-		cmr.Finished = time.Now()
-		cmr.UID = util.GenerateShortUID()
-
-		_, err := sess.Insert(&cmr)
-		return err
-	})
-	if err != nil {
-		return "", err
-	}
-	return cmr.UID, nil
-}
-
 func (ss *sqlStore) CreateMigrationSession(ctx context.Context, migration cloudmigration.CloudMigrationSession) (*cloudmigration.CloudMigrationSession, error) {
 	if err := ss.encryptToken(ctx, &migration); err != nil {
 		return nil, fmt.Errorf("encrypting token: %w", err)
@@ -174,34 +158,6 @@ func (ss *sqlStore) DeleteMigrationSessionByUID(ctx context.Context, uid string)
 	}
 
 	return &c, snapshots, nil
-}
-
-func (ss *sqlStore) GetMigrationStatus(ctx context.Context, cmrUID string) (*cloudmigration.CloudMigrationSnapshot, error) {
-	var c cloudmigration.CloudMigrationSnapshot
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exist, err := sess.Where("uid=?", cmrUID).Get(&c)
-		if err != nil {
-			return err
-		}
-		if !exist {
-			return cloudmigration.ErrMigrationRunNotFound
-		}
-		return nil
-	})
-	return &c, err
-}
-
-func (ss *sqlStore) GetMigrationStatusList(ctx context.Context, migrationUID string) ([]*cloudmigration.CloudMigrationSnapshot, error) {
-	var runs = make([]*cloudmigration.CloudMigrationSnapshot, 0)
-	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Find(&runs, &cloudmigration.CloudMigrationSnapshot{
-			SessionUID: migrationUID,
-		})
-	})
-	if err != nil {
-		return nil, err
-	}
-	return runs, nil
 }
 
 func (ss *sqlStore) CreateSnapshot(ctx context.Context, snapshot cloudmigration.CloudMigrationSnapshot) (string, error) {

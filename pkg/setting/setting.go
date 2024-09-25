@@ -531,7 +531,8 @@ type Cfg struct {
 }
 
 type UnifiedStorageConfig struct {
-	DualWriterMode rest.DualWriterMode
+	DualWriterMode                       rest.DualWriterMode
+	DualWriterPeriodicDataSyncJobEnabled bool
 }
 
 type InstallPlugin struct {
@@ -2050,4 +2051,11 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 func (cfg *Cfg) readPublicDashboardsSettings() {
 	publicDashboards := cfg.Raw.Section("public_dashboards")
 	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
+}
+
+func (cfg *Cfg) DefaultOrgID() int64 {
+	if cfg.AutoAssignOrg && cfg.AutoAssignOrgId > 0 {
+		return int64(cfg.AutoAssignOrgId)
+	}
+	return int64(1)
 }

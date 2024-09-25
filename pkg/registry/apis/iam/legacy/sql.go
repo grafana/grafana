@@ -14,6 +14,7 @@ import (
 type LegacyIdentityStore interface {
 	ListDisplay(ctx context.Context, ns claims.NamespaceInfo, query ListDisplayQuery) (*ListUserResult, error)
 
+	GetUserInternalID(ctx context.Context, ns claims.NamespaceInfo, query GetUserInternalIDQuery) (*GetUserInternalIDResult, error)
 	ListUsers(ctx context.Context, ns claims.NamespaceInfo, query ListUserQuery) (*ListUserResult, error)
 	ListUserTeams(ctx context.Context, ns claims.NamespaceInfo, query ListUserTeamsQuery) (*ListUserTeamsResult, error)
 
@@ -37,6 +38,11 @@ func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStor
 
 type legacySQLStore struct {
 	sql legacysql.LegacyDatabaseProvider
+	ac  claims.AccessClient
+}
+
+func (s *legacySQLStore) WithAccessClient(ac claims.AccessClient) {
+	s.ac = ac
 }
 
 // Templates setup.
