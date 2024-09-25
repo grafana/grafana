@@ -556,7 +556,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		// Make sure the changed interval is now returned from k8s
 		found, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		require.NoError(t, err)
-		// require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
+		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 
 		// Delete does not return anything
 		deleteResponse := apis.DoRequest(helper, apis.RequestParams{
