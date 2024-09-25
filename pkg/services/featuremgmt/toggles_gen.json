@@ -595,6 +595,7 @@
         "name": "bodyScrolling",
         "resourceVersion": "1721723807004",
         "creationTimestamp": "2024-07-01T10:28:39Z",
+        "deletionTimestamp": "2024-09-24T09:17:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-23 08:36:47.004393 +0000 UTC"
         }
@@ -1430,6 +1431,22 @@
         "stage": "preview",
         "codeowner": "@grafana/search-and-storage",
         "hideFromAdminPage": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "homeSetupGuide",
+        "resourceVersion": "1726258153467",
+        "creationTimestamp": "2024-09-10T15:46:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-13 20:09:13.467989 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/growth-and-onboarding",
+        "frontend": true
       }
     },
     {
