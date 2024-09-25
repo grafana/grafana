@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext } from 'react';
 
 import { GrafanaConfig } from '@grafana/data';
-import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
+import { LocationService, locationService, BackendSrv, config } from '@grafana/runtime';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
@@ -50,7 +50,7 @@ export function useChromeHeaderHeight() {
 
   if (kioskMode || chromeless) {
     return 0;
-  } else if (searchBarHidden) {
+  } else if (searchBarHidden || config.featureToggles.singleTopNav) {
     return SINGLE_HEADER_BAR_HEIGHT;
   } else {
     return SINGLE_HEADER_BAR_HEIGHT * 2;
