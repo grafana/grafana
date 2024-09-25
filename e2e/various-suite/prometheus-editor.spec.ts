@@ -43,17 +43,17 @@ function navigateToEditor(editorType: editorType, name: string): void {
 }
 
 describe('Prometheus query editor', () => {
-  xit('should have a kickstart component', () => {
+  it('should have a kickstart component', () => {
     navigateToEditor('Code', 'prometheus');
     e2e.components.QueryBuilder.queryPatterns().scrollIntoView().should('exist');
   });
 
-  xit('should have an explain component', () => {
+  it('should have an explain component', () => {
     navigateToEditor('Code', 'prometheus');
     e2e.components.DataSource.Prometheus.queryEditor.explain().scrollIntoView().should('exist');
   });
 
-  xit('should have an editor toggle component', () => {
+  it('should have an editor toggle component', () => {
     navigateToEditor('Code', 'prometheus');
     e2e.components.DataSource.Prometheus.queryEditor.editorToggle().scrollIntoView().should('exist');
   });
@@ -70,7 +70,7 @@ describe('Prometheus query editor', () => {
     cy.get(`[data-test-id="prometheus-exemplars"]`).scrollIntoView().should('exist');
   });
 
-  describe.skip('Code editor', () => {
+  describe('Code editor', () => {
     it('navigates to the code editor with editor type as code', () => {
       navigateToEditor('Code', 'prometheusCode');
     });
@@ -120,7 +120,7 @@ describe('Prometheus query editor', () => {
     });
   });
 
-  describe.skip('Query builder', () => {
+  describe('Query builder', () => {
     it('navigates to the query builder with editor type as code', () => {
       navigateToEditor('Builder', 'prometheusBuilder');
     });
