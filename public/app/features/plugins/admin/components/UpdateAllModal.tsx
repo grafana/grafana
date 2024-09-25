@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -8,6 +8,7 @@ import { useInstall, useInstallStatus } from '../state/hooks';
 import { CatalogPlugin } from '../types';
 
 import { UpdateModalBody } from './UpdateAllModalBody';
+const PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME = 'plugins_update_all_clicked';
 
 type UpdateError = {
   id: string;
@@ -86,6 +87,8 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
 
   const onConfirm = async () => {
     if (!inProgress) {
+      reportInteraction(PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME);
+
       setInProgress(true);
 
       // in cloud the requests need to be sync

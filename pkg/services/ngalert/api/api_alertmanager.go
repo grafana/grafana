@@ -65,14 +65,10 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	if err := am.SaveAndApplyDefaultConfig(c.Req.Context()); err != nil {
+	err := srv.mam.SaveAndApplyDefaultConfig(c.Req.Context(), c.SignedInUser.GetOrgID())
+	if err != nil {
 		srv.log.Error("Unable to save and apply default alertmanager configuration", "error", err)
-		return ErrResp(http.StatusInternalServerError, err, "failed to save and apply default Alertmanager configuration")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to save and apply default Alertmanager configuration", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
