@@ -203,7 +203,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
-    topNavMenuOpen: css({
+    topNavMenuDocked: css({
       left: MENU_WIDTH,
     }),
     panes: css({
