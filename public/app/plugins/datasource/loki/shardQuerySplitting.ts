@@ -5,7 +5,8 @@ import { DataQueryRequest, LoadingState, DataQueryResponse, TimeRange } from '@g
 import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { combineResponses } from './mergeResponses';
-import { addShardingPlaceholderSelector, getSelectorForShardValues, interpolateShardingSelector, isLogsQuery } from './queryUtils';
+import { adjustTargetsFromResponseState } from './querySplitting';
+import { addShardingPlaceholderSelector, getSelectorForShardValues, interpolateShardingSelector } from './queryUtils';
 import { LokiQuery } from './types';
 
 /**
@@ -244,33 +245,4 @@ function spreadSort(shards: number[]) {
     result.push(shards[shards.length - 1]);
   }
   return result;
-}
-
-/**
- * Based in the state of the current response, if any, adjust target parameters such as `maxLines`.
- * For `maxLines`, we will update it as `maxLines - current amount of lines`.
- * At the end, we will filter the targets that don't need to be executed in the next request batch,
- * because, for example, the `maxLines` have been reached.
- */
-function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQueryResponse | null): LokiQuery[] {
-  if (!response) {
-    return targets;
-  }
-
-  return targets
-    .map((target) => {
-      if (!target.maxLines || !isLogsQuery(target.expr)) {
-        return target;
-      }
-      const targetFrame = response.data.find((frame) => frame.refId === target.refId);
-      if (!targetFrame) {
-        return target;
-      }
-      const updatedMaxLines = target.maxLines - targetFrame.length;
-      return {
-        ...target,
-        maxLines: updatedMaxLines < 0 ? 0 : updatedMaxLines,
-      };
-    })
-    .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
