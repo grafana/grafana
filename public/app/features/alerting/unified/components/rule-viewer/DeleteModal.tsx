@@ -1,10 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { alertingFeatureToggles } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { usePrometheusRemovalConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
@@ -13,7 +14,7 @@ import { getRuleGroupLocationFromCombinedRule, isCloudRuleIdentifier } from '../
 
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
 
-const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary ?? false;
+const { prometheusRulesPrimary } = alertingFeatureToggles;
 
 export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();

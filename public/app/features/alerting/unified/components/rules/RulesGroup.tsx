@@ -229,7 +229,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           onToggle={setIsCollapsed}
           data-testid={selectors.components.AlertRules.groupToggle}
         />
-        <FolerIcon isCollapsed={isCollapsed} />
+        <FolderIcon isCollapsed={isCollapsed} />
         <CloudSourceLogo rulesSource={rulesSource} />
         {
           // eslint-disable-next-line
@@ -337,11 +337,11 @@ CloudSourceLogo.displayName = 'CloudSourceLogo';
 
 // We render a lot of these on the list page, and the Icon component does quite a bit of work
 // to render its contents
-const FolerIcon = React.memo(({ isCollapsed }: { isCollapsed: boolean }) => {
+const FolderIcon = React.memo(({ isCollapsed }: { isCollapsed: boolean }) => {
   return <Icon name={isCollapsed ? 'folder' : 'folder-open'} />;
 });
 
-FolerIcon.displayName = 'FolerIcon';
+FolderIcon.displayName = 'FolderIcon';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {

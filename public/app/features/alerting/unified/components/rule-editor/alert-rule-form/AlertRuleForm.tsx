@@ -29,6 +29,7 @@ import {
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
+import { alertingFeatureToggles } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
@@ -61,7 +62,7 @@ type Props = {
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
 };
 
-const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary;
+const { prometheusRulesPrimary } = alertingFeatureToggles;
 
 export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);

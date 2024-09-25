@@ -166,7 +166,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
   const canSilence = useCanSilence(rule);
 
-  const abilities = useMemo(() => {
+  const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
     const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
     const isFederated = isFederatedRuleGroup(rule.group);
     const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);

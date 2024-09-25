@@ -3,13 +3,13 @@ import { useEffect, useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { useStyles2, Tooltip, Pagination } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
+import { alertingFeatureToggles } from '../../featureToggles';
 import { useAsync } from '../../hooks/useAsync';
 import { attachRulerRuleToCombinedRule } from '../../hooks/useCombinedRuleNamespaces';
 import { useHasRuler } from '../../hooks/useHasRuler';
@@ -44,10 +44,11 @@ interface Props {
   className?: string;
 }
 
-const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary;
+const { prometheusRulesPrimary } = alertingFeatureToggles;
 
 const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
 const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
+
 export const RulesTable = ({
   rules,
   className,
@@ -90,8 +91,6 @@ export const RulesTable = ({
         isExpandable={true}
         items={items}
         renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
-        // pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
-        // paginationStyles={styles.pagination}
       />
       <Pagination
         currentPage={page}

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { t, Trans } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
@@ -15,6 +14,7 @@ import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } fro
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { alertingFeatureToggles } from '../../featureToggles';
 import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
@@ -55,7 +55,7 @@ export enum ActiveTab {
   Details = 'details',
 }
 
-const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary ?? false;
+const { prometheusRulesPrimary } = alertingFeatureToggles;
 
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();

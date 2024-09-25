@@ -1,18 +1,17 @@
 import { useEffect, useMemo } from 'react';
 
-import { config } from '@grafana/runtime';
 import { RuleNamespace } from 'app/types/unified-alerting';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
+import { alertingFeatureToggles } from '../../featureToggles';
 import { isAlertingRule, isAlertingRulerRule } from '../../utils/rules';
 
 const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery } = alertRuleApi;
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
-const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary ?? false;
-
+const { prometheusRulesPrimary } = alertingFeatureToggles;
 const emptyRulerConfig: RulerRulesConfigDTO = {};
 
 export function useAlertRuleSuggestions(rulesSourceName: string) {
@@ -90,20 +89,22 @@ function promNamespacesToLabels(promNamespace: RuleNamespace[]) {
     .filter(isAlertingRule);
 
   return rules.reduce((result, rule) => {
-    if (rule.labels) {
-      Object.entries(rule.labels).forEach(([labelKey, labelValue]) => {
-        if (!labelKey || !labelValue) {
-          return;
-        }
-
-        const labelEntry = result.get(labelKey);
-        if (labelEntry) {
-          labelEntry.add(labelValue);
-        } else {
-          result.set(labelKey, new Set([labelValue]));
-        }
-      });
+    if (!rule.labels) {
+      return result;
     }
+
+    Object.entries(rule.labels).forEach(([labelKey, labelValue]) => {
+      if (!labelKey || !labelValue) {
+        return;
+      }
+
+      const labelEntry = result.get(labelKey);
+      if (labelEntry) {
+        labelEntry.add(labelValue);
+      } else {
+        result.set(labelKey, new Set([labelValue]));
+      }
+    });
     return result;
   }, new Map<string, Set<string>>());
 }
@@ -117,20 +118,22 @@ function rulerRulesToLabels(rulerConfig: RulerRulesConfigDTO) {
     .filter(isAlertingRulerRule);
 
   return rules.reduce((result, rule) => {
-    if (rule.labels) {
-      Object.entries(rule.labels).forEach(([labelKey, labelValue]) => {
-        if (!labelKey || !labelValue) {
-          return;
-        }
-
-        const labelEntry = result.get(labelKey);
-        if (labelEntry) {
-          labelEntry.add(labelValue);
-        } else {
-          result.set(labelKey, new Set([labelValue]));
-        }
-      });
+    if (!rule.labels) {
+      return result;
     }
+
+    Object.entries(rule.labels).forEach(([labelKey, labelValue]) => {
+      if (!labelKey || !labelValue) {
+        return;
+      }
+
+      const labelEntry = result.get(labelKey);
+      if (labelEntry) {
+        labelEntry.add(labelValue);
+      } else {
+        result.set(labelKey, new Set([labelValue]));
+      }
+    });
     return result;
   }, result);
 }

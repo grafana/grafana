@@ -1,6 +1,6 @@
 import { nth } from 'lodash';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   CloudRuleIdentifier,
   CombinedRule,
@@ -11,6 +11,8 @@ import {
   RuleWithLocation,
 } from 'app/types/unified-alerting';
 import { Annotations, Labels, PromRuleType, RulerCloudRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+
+import { alertingFeatureToggles } from '../featureToggles';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
@@ -250,7 +252,7 @@ export function hashRulerRule(rule: RulerRuleDTO): string {
 }
 
 function getRulerRuleFingerprint(rule: RulerCloudRuleDTO) {
-  const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary ?? false;
+  const { prometheusRulesPrimary } = alertingFeatureToggles;
   // If the prometheusRulesPrimary feature toggle is enabled, we don't need to hash the query
   // We need to make fingerprint compatibility between Prometheus and Ruler rules
   // Query often differs between the two, so we can't use it to generate a fingerprint
@@ -272,7 +274,7 @@ export function hashRule(rule: Rule): string {
 }
 
 function getPromRuleFingerprint(rule: Rule) {
-  const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary ?? false;
+  const { prometheusRulesPrimary } = alertingFeatureToggles;
 
   const queryHash = prometheusRulesPrimary ? '' : hashQuery(rule.query);
   const labelsHash = hashLabelsOrAnnotations(rule.labels);

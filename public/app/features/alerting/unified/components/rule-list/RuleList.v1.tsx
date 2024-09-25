@@ -3,13 +3,13 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Button, LinkButton, Stack, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo, trackRuleListNavigation } from '../../Analytics';
+import { alertingFeatureToggles } from '../../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../../hooks/useFilteredRules';
@@ -34,8 +34,7 @@ const VIEWS = {
 // make sure we ask for 1 more so we show the "show x more" button
 const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 
-// TODO: Convert this to a feature toggle
-const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary;
+const { prometheusRulesPrimary } = alertingFeatureToggles;
 
 const RuleListV1 = () => {
   const dispatch = useDispatch();

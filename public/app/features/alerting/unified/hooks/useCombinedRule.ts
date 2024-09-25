@@ -159,6 +159,7 @@ export function useCombinedRule({ ruleIdentifier, limitAlerts }: Props): Request
 }
 
 export interface RuleLocation {
+  datasource: string;
   namespace: string;
   group: string;
   ruleName: string;
@@ -174,6 +175,7 @@ export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<Ru
     if (isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)) {
       return {
         result: {
+          datasource: ruleIdentifier.ruleSourceName,
           namespace: ruleIdentifier.namespace,
           group: ruleIdentifier.groupName,
           ruleName: ruleIdentifier.ruleName,
@@ -193,6 +195,7 @@ export function useRuleLocation(ruleIdentifier: RuleIdentifier): RequestState<Ru
       if (currentData) {
         return {
           result: {
+            datasource: ruleIdentifier.ruleSourceName,
             namespace: currentData.grafana_alert.namespace_uid,
             group: currentData.grafana_alert.rule_group,
             ruleName: currentData.grafana_alert.title,
