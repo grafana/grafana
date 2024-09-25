@@ -110,7 +110,15 @@ export const LdapSettingsPage = () => {
   });
 
   const methods = useForm<LdapPayload>({ defaultValues: emptySettings });
-  const { control, formState: { isDirty }, getValues, handleSubmit, register, reset, watch } = methods;
+  const {
+    control,
+    formState: { isDirty },
+    getValues,
+    handleSubmit,
+    register,
+    reset,
+    watch,
+  } = methods;
 
   const styles = useStyles2(getStyles);
 
@@ -271,8 +279,8 @@ export const LdapSettingsPage = () => {
       <Page.Contents>
         {config.disableLoginForm && disabledFormAlert}
         <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)} >
-            <FormPrompt confirmRedirect={isDirty} onDiscard={onDiscard}/>
+          <form onSubmit={handleSubmit(submitAndEnableLdapSettings, onErrors)}>
+            <FormPrompt confirmRedirect={isDirty} onDiscard={onDiscard} />
             {isLoading && <Loader />}
             {!isLoading && (
               <section className={styles.form}>
