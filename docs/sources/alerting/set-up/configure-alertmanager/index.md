@@ -34,9 +34,9 @@ Grafana Alerting is based on the architecture of the Prometheus alerting system.
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
-This architecture decouples alert rule evaluation from notification handling, allowing Grafana alerts to be forwarded to other Alertmanagers.
+This architecture decouples alert rule evaluation from notification handling, allowing alerts to be forwarded to other Alertmanagers.
 
-Grafana can be configured to forward alerts to different types of Alertmanagers. It’s important to note that each Alertmanager manages its own independent alerting resources, such as:
+Grafana can use different Alertmanagers. It’s important to note that each Alertmanager manages its own independent alerting resources, such as:
 
 - Contact points and notification templates
 - Notification policies and mute timings
@@ -49,7 +49,7 @@ Use the `Choose Alertmanager` on these pages to switch between Alertmanagers.
 
 ## Types of Alertmanagers in Grafana
 
-Grafana can be configured to forward both Grafana-managed and data source-managed alerts to various Alertmanagers, depending on your infrastructure and alerting requirements.
+Grafana can be configured to manage both Grafana-managed and data source-managed alerts using various Alertmanagers, depending on your infrastructure and alerting requirements.
 
 - **Grafana Alertmanager**: Grafana has its own built-in Alertmanager, referred to as "Grafana" in the user interface. It is the default Alertmanager and can only handle Grafana-managed alerts.
 
