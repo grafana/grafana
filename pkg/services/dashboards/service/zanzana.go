@@ -109,7 +109,7 @@ func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersis
 	if len(query.DashboardUIDs) > 0 || len(query.DashboardIds) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
-	if len(query.FolderUIDs) > 0 || len(query.FolderIds) > 0 {
+	if len(query.FolderUIDs) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
 	if len(query.Title) <= maxListQueryLength {
