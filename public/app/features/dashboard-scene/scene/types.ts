@@ -82,10 +82,6 @@ export function isLayoutParent(obj: SceneObject): obj is LayoutParent {
   return 'switchLayout' in obj;
 }
 
-export function isDashboardLayoutElement(obj: SceneObject): obj is DashboardLayoutElement {
-  return 'isDashboardLayoutElement' in obj;
-}
-
 export interface DashboardRepeatsProcessedEventPayload {
   source: SceneObject;
 }
