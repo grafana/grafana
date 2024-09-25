@@ -73,6 +73,9 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 		if empty {
 			return nil, fmt.Errorf("empty frame")
 		}
+		if fp == nil {
+			return nil, fmt.Errorf("nil frame")
+		}
 
 		metric := Metric{
 			T: t,
