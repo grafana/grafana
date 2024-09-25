@@ -40,10 +40,14 @@ class MyDataSource extends DataSourceWithBackend<MyQuery, DataSourceJsonData> {
 }
 
 const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
+let mockDatasourcePost = jest.fn();
 
 const backendSrv = {
   fetch: (options: BackendSrvRequest) => {
     return of(mockDatasourceRequest(options));
+  },
+  post<T = any>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>): Promise<T> {
+    return mockDatasourcePost({ url, data, ...options });
   },
 } as unknown as BackendSrv;
 
@@ -536,15 +540,45 @@ describe('DataSourceWithBackend', () => {
       expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
     });
   });
+
+  describe('query migration', () => {
+    // Configure config.featureToggles.grafanaAPIServerWithExperimentalAPIs
+    const originalFeatureToggles = config.featureToggles;
+    beforeEach(() => {
+      config.featureToggles = { ...originalFeatureToggles, grafanaAPIServerWithExperimentalAPIs: true };
+    });
+    afterEach(() => {
+      config.featureToggles = originalFeatureToggles;
+    });
+
+    test('check that postMigrateQuery is called when query is migrated', async () => {
+      const { ds } = createMockDatasource({
+        apiVersion: 'v0alpha1',
+      });
+
+      const originalQuery = { refId: 'A', foo: 'bar' };
+      const migratedQuery = { refId: 'A', foobar: 'barfoo' };
+      mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: any }) => {
+        expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
+        expect(args.data).toMatchObject({ queries: [originalQuery] });
+        return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
+      });
+
+      const result = await ds.postMigrateQuery(originalQuery);
+
+      expect(migratedQuery).toBe(result);
+    });
+  });
 });
 
-function createMockDatasource() {
+function createMockDatasource(otherSettings?: Partial<DataSourceInstanceSettings<DataSourceJsonData>>) {
   const settings = {
     name: 'test',
     id: 1234,
     uid: 'abc',
     type: 'dummy',
     jsonData: {},
+    ...otherSettings,
   } as DataSourceInstanceSettings<DataSourceJsonData>;
 
   mockDatasourceRequest.mockReset();

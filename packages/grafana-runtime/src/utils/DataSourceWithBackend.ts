@@ -4,7 +4,6 @@ import { catchError, switchMap } from 'rxjs/operators';
 import {
   DataFrame,
   dataFrameToJSON,
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   TestDataSourceResponse,
@@ -18,6 +17,7 @@ import {
   ScopedVars,
   AdHocVariableFilter,
 } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { config } from '../config';
 import {
@@ -378,6 +378,34 @@ class DataSourceWithBackend<
         error: new HealthCheckError(res.message, res.details),
       });
     });
+  }
+
+  /**
+   * EXPERIMENTAL. Calls migration endpoint. Requires grafanaAPIServerWithExperimentalAPIs or datasourceAPIServers feature toggle.
+   */
+  async postMigrateQuery(query: TQuery): Promise<TQuery> {
+    if (!(config.featureToggles.grafanaAPIServerWithExperimentalAPIs || config.featureToggles.datasourceAPIServers)) {
+      console.warn('migrateQuery is only available with the experimental API server');
+      return query;
+    }
+    const { apiVersion, type, uid } = this.getRef();
+    if (!apiVersion || !type || !uid) {
+      console.warn('migrateQuery called with datasource that does not have apiVersion, type or uid set');
+      return query;
+    }
+
+    const dsnameURL = type.replace(/^(grafana-)?(.*?)(-datasource)?$/, '$2');
+    const url = `/apis/${dsnameURL}.datasource.grafana.app/${apiVersion}/namespaces/${config.namespace}/queryconvert`;
+    const request = {
+      queries: [
+        {
+          ...query,
+          JSON: query, // JSON is not part of the type but it should be what holds the query
+        },
+      ],
+    };
+    const response = await getBackendSrv().post(url, request);
+    return response.queries[0].JSON;
   }
 }
 
