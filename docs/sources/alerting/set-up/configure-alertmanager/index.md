@@ -43,7 +43,7 @@ Grafana can be configured to forward alerts to different types of alertmanagers.
 - Silences
 - Active notifications
 
-The `Choose Alertmanager` menu on these pages allows you to switch between alertmanagers.
+Use the `Choose Alertmanager` on these pages to switch between Alertmanagers.
 
 {{< figure src="/media/docs/alerting/alerting-choose-alertmanager.png" max-width="750px" alt="A screenshot choosing an Alertmanager in the notification policies UI" >}}
 
