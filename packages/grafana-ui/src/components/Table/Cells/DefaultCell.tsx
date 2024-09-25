@@ -5,16 +5,15 @@ import * as React from 'react';
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
-import { getCellLinks } from '../../utils';
-import { clearLinkButtonStyles } from '../Button';
-import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
-
-import { CellActions } from './CellActions';
-import { TableCellInspectorMode } from './TableCellInspector';
-import { TableStyles } from './styles';
-import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
-import { getCellColors, getCellOptions } from './utils';
+import { useStyles2 } from '../../../themes';
+import { getCellLinks } from '../../../utils';
+import { clearLinkButtonStyles } from '../../Button';
+import { DataLinksContextMenu } from '../../DataLinks/DataLinksContextMenu';
+import { CellActions } from '../CellActions';
+import { TableCellInspectorMode } from '../TableCellInspector';
+import { TableStyles } from '../TableRT/styles';
+import { TableCellProps, CustomCellRendererProps, TableCellOptions } from '../types';
+import { getCellColors, getCellOptions } from '../utils';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;
@@ -39,6 +38,7 @@ export const DefaultCell = (props: TableCellProps) => {
     setHover(true);
   };
 
+
   if (cellOptions.type === TableCellDisplayMode.Custom) {
     const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
     value = <CustomCellComponent field={field} value={cell.value} rowIndex={row.index} frame={frame} />;
@@ -49,6 +49,7 @@ export const DefaultCell = (props: TableCellProps) => {
       value = formattedValueToString(displayValue);
     }
   }
+
 
   const isStringValue = typeof value === 'string';
 
@@ -139,7 +140,7 @@ function getCellStyle(
   let bgHoverColor: string | undefined = undefined;
 
   // Get colors
-  const colors = getCellColors(tableStyles, cellOptions, displayValue);
+  const colors = getCellColors(tableStyles.theme, cellOptions, displayValue);
   textColor = colors.textColor;
   bgColor = colors.bgColor;
   bgHoverColor = colors.bgHoverColor;

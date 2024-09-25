@@ -15,7 +15,7 @@ import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
 
-interface Props extends PanelProps<Options> {}
+interface Props extends PanelProps<Options> { }
 
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id, timeRange } = props;
@@ -29,6 +29,7 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const main = frames[currentIndex];
+  const useTableNg = config.featureToggles.tableNG;
 
   let tableHeight = height;
 
@@ -63,6 +64,7 @@ export function TablePanel(props: Props) {
       timeRange={timeRange}
       enableSharedCrosshair={config.featureToggles.tableSharedCrosshair && enableSharedCrosshair}
       fieldConfig={fieldConfig}
+      useTableNg={useTableNg}
     />
   );
 
