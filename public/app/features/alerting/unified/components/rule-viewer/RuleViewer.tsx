@@ -297,8 +297,7 @@ function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleId
         severity="info"
       >
         <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
-          This rule has been updated recently. Updates are not yet reflected on the alert list page. It may take up to a
-          minute to propagate the changes.
+          Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view. 
         </Trans>
       </Alert>
     </Stack>
