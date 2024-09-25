@@ -58,7 +58,7 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 }
 
 func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user identity.Requester, folderID int64) error {
-	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
+	if isGeneralFolder(folderID) {
 		return nil
 	}
 
