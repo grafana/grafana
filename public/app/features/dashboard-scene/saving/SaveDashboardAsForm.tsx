@@ -48,6 +48,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const [contentSent, setContentSent] = useState<{ title?: string; folderUid?: string }>({});
+  const [hasFolderChanged, setHasFolderChanged] = useState(false);
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
@@ -70,10 +71,10 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
     </Button>
   );
 
-  const saveButton = (overwrite: boolean) => (
-    <SaveButton isValid={isValid} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
-  );
-
+  const saveButton = (overwrite: boolean) => {
+    const showSaveButton = !isValid && hasFolderChanged ? true : isValid;
+    return <SaveButton isValid={showSaveButton} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />;
+  };
   function renderFooter(error?: Error) {
     const formValuesMatchContentSent =
       formValues.title.trim() === contentSent.title && formValues.folder.uid === contentSent.folderUid;
@@ -127,6 +128,8 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
         <FolderPicker
           onChange={(uid: string | undefined, title: string | undefined) => {
             setValue('folder', { uid, title });
+            const folderUid = dashboard.state.meta.folderUid;
+            setHasFolderChanged(uid !== folderUid);
           }}
           // Old folder picker fields
           value={formValues.folder?.uid}

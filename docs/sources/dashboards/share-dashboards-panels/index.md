@@ -32,7 +32,7 @@ labels:
 menuTitle: Sharing
 title: Share dashboards and panels
 description: Share Grafana dashboards and panels within your organization and publicly
-weight: 85
+weight: 700
 refs:
   image-rendering:
     - pattern: /docs/grafana/

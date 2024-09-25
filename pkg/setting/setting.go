@@ -531,7 +531,8 @@ type Cfg struct {
 }
 
 type UnifiedStorageConfig struct {
-	DualWriterMode rest.DualWriterMode
+	DualWriterMode                       rest.DualWriterMode
+	DualWriterPeriodicDataSyncJobEnabled bool
 }
 
 type InstallPlugin struct {
