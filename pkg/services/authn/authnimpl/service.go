@@ -153,12 +153,16 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		attribute.String("identity.AuthenticatedBy", identity.GetAuthenticatedBy()),
 	)
 
-	if len(identity.ClientParams.FetchPermissionsParams.ActionsLookup) > 0 {
-		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.ActionsLookup", identity.ClientParams.FetchPermissionsParams.ActionsLookup))
+	if len(identity.ClientParams.FetchPermissionsParams.RestrictedActions) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.RestrictedActions", identity.ClientParams.FetchPermissionsParams.RestrictedActions))
 	}
 
 	if len(identity.ClientParams.FetchPermissionsParams.Roles) > 0 {
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.Roles", identity.ClientParams.FetchPermissionsParams.Roles))
+	}
+
+	if len(identity.ClientParams.FetchPermissionsParams.AllowedActions) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.AllowedActions", identity.ClientParams.FetchPermissionsParams.AllowedActions))
 	}
 
 	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {
@@ -404,7 +408,8 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
-			}}, nil
+			},
+		}, nil
 	}
 
 	if claims.IsIdentityType(t, claims.TypeServiceAccount) {
@@ -416,7 +421,8 @@ func (s *Service) resolveIdenity(ctx context.Context, orgID int64, typedID strin
 				AllowGlobalOrg:  true,
 				FetchSyncedUser: true,
 				SyncPermissions: true,
-			}}, nil
+			},
+		}, nil
 	}
 
 	resolver, ok := s.idenityResolverClients[string(t)]
@@ -485,7 +491,7 @@ func orgIDFromHeader(req *http.Request) int64 {
 }
 
 func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identity *authn.Identity, userID int64) *auth.ExternalSession {
-	if identity.OAuthToken == nil && identity.SAMLSession == nil {
+	if identity.OAuthToken == nil {
 		return nil
 	}
 
@@ -499,26 +505,18 @@ func (s *Service) resolveExternalSessionFromIdentity(ctx context.Context, identi
 		UserAuthID: info.Id,
 		UserID:     userID,
 	}
+	extSession.AccessToken = identity.OAuthToken.AccessToken
+	extSession.RefreshToken = identity.OAuthToken.RefreshToken
+	extSession.ExpiresAt = identity.OAuthToken.Expiry
 
-	if identity.OAuthToken != nil {
-		extSession.AccessToken = identity.OAuthToken.AccessToken
-		extSession.RefreshToken = identity.OAuthToken.RefreshToken
-		extSession.ExpiresAt = identity.OAuthToken.Expiry
-
-		if idToken, ok := identity.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
-			extSession.IDToken = idToken
-		}
-
-		// As of https://openid.net/specs/openid-connect-session-1_0.html
-		if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
-			extSession.SessionID = sessionState
-		}
-
-		return extSession
+	if idToken, ok := identity.OAuthToken.Extra("id_token").(string); ok && idToken != "" {
+		extSession.IDToken = idToken
 	}
 
-	extSession.SessionID = identity.SAMLSession.SessionIndex
-	extSession.NameID = identity.SAMLSession.NameID
+	// As of https://openid.net/specs/openid-connect-session-1_0.html
+	if sessionState, ok := identity.OAuthToken.Extra("session_state").(string); ok && sessionState != "" {
+		extSession.SessionID = sessionState
+	}
 
 	return extSession
 }

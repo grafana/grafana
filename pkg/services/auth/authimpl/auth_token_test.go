@@ -37,7 +37,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	t.Run("When creating token", func(t *testing.T) {
 		createToken := func() *auth.UserToken {
 			userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-				net.ParseIP("192.168.10.11"), "some user agent")
+				net.ParseIP("192.168.10.11"), "some user agent", nil)
 			require.Nil(t, err)
 			require.NotNil(t, userToken)
 			require.False(t, userToken.AuthTokenSeen)
@@ -110,7 +110,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		t.Run("When creating an additional token", func(t *testing.T) {
 			userToken2, err := ctx.tokenService.CreateToken(context.Background(), usr,
-				net.ParseIP("192.168.10.11"), "some user agent")
+				net.ParseIP("192.168.10.11"), "some user agent", nil)
 			require.Nil(t, err)
 			require.NotNil(t, userToken2)
 
@@ -157,7 +157,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 					userId := usr.ID + int64(i+1)
 					userIds = append(userIds, userId)
 					_, err := ctx.tokenService.CreateToken(context.Background(), usr,
-						net.ParseIP("192.168.10.11"), "some user agent")
+						net.ParseIP("192.168.10.11"), "some user agent", nil)
 					require.Nil(t, err)
 				}
 
@@ -176,7 +176,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	t.Run("expires correctly", func(t *testing.T) {
 		ctx := createTestContext(t)
 		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-			net.ParseIP("192.168.10.11"), "some user agent")
+			net.ParseIP("192.168.10.11"), "some user agent", nil)
 		require.Nil(t, err)
 
 		userToken, err = ctx.tokenService.LookupToken(context.Background(), userToken.UnhashedToken)
@@ -262,7 +262,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	t.Run("can properly rotate tokens", func(t *testing.T) {
 		getTime = func() time.Time { return now }
 		ctx := createTestContext(t)
-		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr, net.ParseIP("192.168.10.11"), "some user agent")
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr, net.ParseIP("192.168.10.11"), "some user agent", nil)
 		require.Nil(t, err)
 
 		prevToken := userToken.AuthToken
@@ -336,7 +336,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 	t.Run("keeps prev token valid for 1 minute after it is confirmed", func(t *testing.T) {
 		getTime = func() time.Time { return now }
 		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-			net.ParseIP("192.168.10.11"), "some user agent")
+			net.ParseIP("192.168.10.11"), "some user agent", nil)
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
 
@@ -369,7 +369,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 	t.Run("will not mark token unseen when prev and current are the same", func(t *testing.T) {
 		userToken, err := ctx.tokenService.CreateToken(context.Background(), usr,
-			net.ParseIP("192.168.10.11"), "some user agent")
+			net.ParseIP("192.168.10.11"), "some user agent", nil)
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
 
@@ -389,7 +389,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 	t.Run("RotateToken", func(t *testing.T) {
 		var prev string
-		token, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
+		token, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
 		require.NoError(t, err)
 		t.Run("should rotate token when called with current auth token", func(t *testing.T) {
 			prev = token.UnhashedToken
@@ -412,7 +412,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("should return error when token is revoked", func(t *testing.T) {
-			revokedToken, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
+			revokedToken, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
 			require.NoError(t, err)
 			// mark token as revoked
 			err = ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -426,7 +426,7 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("should return error when token has expired", func(t *testing.T) {
-			expiredToken, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
+			expiredToken, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
 			require.NoError(t, err)
 			// mark token as expired
 			err = ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -441,10 +441,10 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		t.Run("should only delete revoked tokens that are outside on specified window", func(t *testing.T) {
 			usr := &user.User{ID: 100}
-			token1, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
+			token1, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
 			require.NoError(t, err)
 
-			token2, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "")
+			token2, err := ctx.tokenService.CreateToken(context.Background(), usr, nil, "", nil)
 			require.NoError(t, err)
 
 			getTime = func() time.Time {
@@ -610,7 +610,7 @@ func TestIntegrationTokenCount(t *testing.T) {
 
 	createToken := func() *auth.UserToken {
 		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
-			net.ParseIP("192.168.10.11"), "some user agent")
+			net.ParseIP("192.168.10.11"), "some user agent", nil)
 		require.Nil(t, err)
 		require.NotNil(t, userToken)
 		require.False(t, userToken.AuthTokenSeen)

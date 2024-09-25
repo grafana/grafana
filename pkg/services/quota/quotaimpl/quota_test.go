@@ -484,7 +484,7 @@ func setupEnv(t *testing.T, replStore db.ReplDB, cfg *setting.Cfg, b bus.Bus, qu
 	tracer := tracing.InitializeTracerForTest()
 	_, err := apikeyimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
-	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, cfg)
+	_, err = authimpl.ProvideUserAuthTokenService(sqlStore, nil, quotaService, fakes.NewFakeSecretsService(), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	_, err = dashboardStore.ProvideDashboardStore(replStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)

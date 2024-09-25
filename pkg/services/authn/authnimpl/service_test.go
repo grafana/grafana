@@ -399,7 +399,7 @@ func TestService_Login(t *testing.T) {
 					ExpectedIdentity: tt.expectedClientIdentity,
 				})
 				svc.sessionService = &authtest.FakeUserAuthTokenService{
-					CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
+					CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, extSession *auth.ExternalSession) (*auth.UserToken, error) {
 						if tt.expectedSessionErr != nil {
 							return nil, tt.expectedSessionErr
 						}

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/externalsessionimpl"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -33,15 +34,17 @@ var (
 func ProvideUserAuthTokenService(sqlStore db.DB,
 	serverLockService *serverlock.ServerLockService,
 	quotaService quota.Service, secretService secrets.Service,
-	cfg *setting.Cfg) (*UserAuthTokenService, error) {
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles,
+) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
 		sqlStore:          sqlStore,
 		serverLockService: serverLockService,
 		cfg:               cfg,
+		features:          features,
 		log:               log.New("auth"),
 		singleflight:      new(singleflight.Group),
 	}
-	s.externalSessions = externalsessionimpl.ProvideStore(sqlStore, secretService)
+	s.externalSessionStore = externalsessionimpl.ProvideStore(sqlStore, secretService)
 
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
@@ -60,15 +63,16 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 }
 
 type UserAuthTokenService struct {
-	sqlStore          db.DB
-	serverLockService *serverlock.ServerLockService
-	cfg               *setting.Cfg
-	log               log.Logger
-	externalSessions  auth.ExternalSessionStore
-	singleflight      *singleflight.Group
+	sqlStore             db.DB
+	serverLockService    *serverlock.ServerLockService
+	cfg                  *setting.Cfg
+	log                  log.Logger
+	externalSessionStore auth.ExternalSessionStore
+	features             featuremgmt.FeatureToggles
+	singleflight         *singleflight.Group
 }
 
-func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, externalSession *auth.ExternalSession) (*auth.UserToken, error) {
+func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, extSession *auth.ExternalSession) (*auth.UserToken, error) {
 	token, hashedToken, err := generateAndHashToken(s.cfg.SecretKey)
 	if err != nil {
 		return nil, err
@@ -94,28 +98,21 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User,
 		AuthTokenSeen: false,
 	}
 
-	if externalSession != nil {
-		// existingSession, err := s.externalSessions.LookupExternalSessionBySessionID(ctx, externalSession.SessionID)
-		// if err != nil && err != auth.ErrExternalSessionNotFound {
-		// 	return nil, err
-		// }
-
-		// if err == auth.ErrExternalSessionNotFound {
-		err = s.externalSessions.CreateExternalSession(ctx, externalSession)
-		if err != nil {
-			return nil, err
+	err = s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
+		if s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) && extSession != nil {
+			inErr := s.externalSessionStore.CreateExternalSession(ctx, extSession)
+			if inErr != nil {
+				return inErr
+			}
+			userAuthToken.ExternalSessionId = extSession.ID
 		}
-		userAuthToken.ExternalSessionId = externalSession.ID
-		// } else {
-		// 	userAuthToken.ExternalSessionId = existingSession.ID
-		// }
-	}
 
-	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		_, err = dbSession.Insert(&userAuthToken)
-		return err
+		inErr := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+			_, err := dbSession.Insert(&userAuthToken)
+			return err
+		})
+		return inErr
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +182,6 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 			return err
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -211,7 +207,6 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 			return err
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -231,7 +226,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	return &userToken, err
 }
 
-func (s *UserAuthTokenService) GetTokenForExternalSession(ctx context.Context, externalSessionID int64) (*auth.UserToken, error) {
+func (s *UserAuthTokenService) GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*auth.UserToken, error) {
 	var token userAuthToken
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		exists, err := dbSession.Where("external_session_id = ?", externalSessionID).Get(&token)
@@ -245,7 +240,6 @@ func (s *UserAuthTokenService) GetTokenForExternalSession(ctx context.Context, e
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +317,6 @@ func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.User
 		affected, err = res.RowsAffected()
 		return err
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -364,12 +357,13 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *auth.User
 			rowsAffected, err = dbSession.Delete(model)
 			return err
 		})
-
 		if err != nil {
 			return err
 		}
+	}
 
-		err = s.externalSessions.DeleteExternalSession(ctx, model.ExternalSessionId)
+	if s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) && model.ExternalSessionId != 0 {
+		err = s.externalSessionStore.DeleteExternalSession(ctx, model.ExternalSessionId)
 	}
 
 	if err != nil {
@@ -389,26 +383,34 @@ func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *auth.User
 }
 
 func (s *UserAuthTokenService) RevokeAllUserTokens(ctx context.Context, userId int64) error {
-	return s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sql := `DELETE from user_auth_token WHERE user_id = ?`
-		res, err := dbSession.Exec(sql, userId)
-		if err != nil {
+	return s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
+		err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+			sql := `DELETE from user_auth_token WHERE user_id = ?`
+			res, err := dbSession.Exec(sql, userId)
+			if err != nil {
+				return err
+			}
+
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return err
+			}
+
+			s.log.FromContext(ctx).Debug("All user tokens for user revoked", "userID", userId, "count", affected)
+
 			return err
+		})
+
+		if s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+			err = s.externalSessionStore.DeleteExternalSessionsByUserID(ctx, userId)
 		}
-
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
-
-		s.log.FromContext(ctx).Debug("All user tokens for user revoked", "userID", userId, "count", affected)
-
 		return err
 	})
 }
 
 func (s *UserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context, userIds []int64) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+	return s.sqlStore.InTransaction(ctx, func(ctx context.Context) error {
+		ctxLogger := s.log.FromContext(ctx)
 		if len(userIds) == 0 {
 			return nil
 		}
@@ -421,17 +423,28 @@ func (s *UserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context, use
 			params = append(params, v)
 		}
 
-		res, err := dbSession.Exec(params...)
-		if err != nil {
-			return err
-		}
+		var affected int64
 
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
+		err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+			res, inErr := dbSession.Exec(params...)
+			if inErr != nil {
+				return inErr
+			}
 
-		s.log.FromContext(ctx).Debug("All user tokens for given users revoked", "usersCount", len(userIds), "count", affected)
+			affected, inErr = res.RowsAffected()
+			return inErr
+		})
+
+		if s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
+			for _, userId := range userIds {
+				err = s.externalSessionStore.DeleteExternalSessionsByUserID(ctx, userId)
+				if err != nil {
+					ctxLogger.Error("Failed to delete external sessions for user", "userID", userId, "err", err)
+					return err
+				}
+			}
+		}
+		ctxLogger.Debug("All user tokens for given users revoked", "usersCount", len(userIds), "count", affected)
 
 		return err
 	})
