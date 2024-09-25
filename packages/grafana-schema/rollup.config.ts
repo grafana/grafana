@@ -4,14 +4,14 @@ import { fileURLToPath } from 'node:url';
 import path from 'path';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
-import { externals } from 'rollup-plugin-node-externals';
+import { nodeExternals } from 'rollup-plugin-node-externals';
 
 const pkg = require('./package.json');
 
 export default [
   {
     input: 'src/index.ts',
-    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
+    plugins: [nodeExternals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
     output: [
       {
         format: 'cjs',
