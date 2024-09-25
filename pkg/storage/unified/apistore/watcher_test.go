@@ -154,19 +154,16 @@ func TestDeleteTriggerWatch(t *testing.T) {
 	storagetesting.RunTestDeleteTriggerWatch(ctx, t, store)
 }
 
-/*
-Currently there is no way to differentiate between:
-- SendInitialEvents=nil && resourceVersion=0
-- sendInitialEvents=false && resourceVersion=0
-The first case the legacy way to send initial events. Ignoring this scenario (for now?).
-see https://github.com/kubernetes/kubernetes/blob/37f733a657ef71d66177d00f9b7d47ec507dedd3/staging/src/k8s.io/apiserver/pkg/storage/etcd3/watcher.go#L194-L196
-func TestWatchFromZero(t *testing.T) {
-	ctx, store, destroyFunc, err := testSetup(t)
-	defer destroyFunc()
-	assert.NoError(t, err)
-	storagetesting.RunTestWatchFromZero(ctx, t, store, nil)
-}
-*/
+// Not Supported by unistore because there is no way to differentiate between:
+// - SendInitialEvents=nil && resourceVersion=0
+// - sendInitialEvents=false && resourceVersion=0
+// This is a Legacy feature in k8s.io/apiserver/pkg/storage/etcd3/watcher_test.go#196
+// func TestWatchFromZero(t *testing.T) {
+// ctx, store, destroyFunc, err := testSetup(t)
+// defer destroyFunc()
+// assert.NoError(t, err)
+// storagetesting.RunTestWatchFromZero(ctx, t, store, nil)
+// }
 
 // TestWatchFromNonZero tests that
 // - watch from non-0 should just watch changes after given version
