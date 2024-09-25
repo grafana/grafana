@@ -113,7 +113,7 @@ export const SimpleConditionEditor = ({
             />
           </InlineField>
           <InlineField label="OF QUERY">
-            <Stack direction="row" gap={1}>
+            <Stack direction="row" gap={1} alignItems="center">
               <ButtonSelect options={thresholdFunctions} onChange={onEvalFunctionChange} value={thresholdFunction} />
               {isRange ? (
                 <>
