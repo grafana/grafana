@@ -42,7 +42,7 @@ func setupTestEnv(t testing.TB) *Service {
 		log:           log.New("accesscontrol"),
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
-		store:         database.ProvideService(db.InitTestReplDB(t)),
+		store:         database.ProvideService(db.InitTestDB(t)),
 		permRegistry:  permreg.ProvidePermissionRegistry(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
@@ -66,7 +66,7 @@ func TestUsageMetrics(t *testing.T) {
 
 			s := ProvideOSSService(
 				cfg,
-				database.ProvideService(db.InitTestReplDB(t)),
+				database.ProvideService(db.InitTestDB(t)),
 				&resourcepermissions.FakeActionSetSvc{},
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),

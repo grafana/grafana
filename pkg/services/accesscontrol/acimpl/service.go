@@ -51,11 +51,11 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 
 func ProvideService(
-	cfg *setting.Cfg, db db.ReplDB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, zclient zanzana.Client, permRegistry permreg.PermissionRegistry,
 ) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db.DB(), permRegistry)
+	service := ProvideOSSService(cfg, database.ProvideService(db), actionResolver, cache, features, tracer, zclient, db, permRegistry)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {

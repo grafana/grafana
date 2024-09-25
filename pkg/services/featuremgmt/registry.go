@@ -1325,13 +1325,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "databaseReadReplica",
-			Description: "Use a read replica for some database queries.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendServicesSquad,
-			Expression:  "false", // enabled by default
-		},
-		{
 			Name:              "zanzana",
 			Description:       "Use openFGA as authorization engine.",
 			Stage:             FeatureStageExperimental,

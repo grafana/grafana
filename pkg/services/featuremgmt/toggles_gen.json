@@ -869,6 +869,7 @@
         "name": "databaseReadReplica",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-06-18T15:07:15Z",
+        "deletionTimestamp": "2024-09-20T20:03:26Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
