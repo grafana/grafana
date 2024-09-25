@@ -1,4 +1,5 @@
 import resolve from '@rollup/plugin-node-resolve';
+import { createRequire } from 'node:module';
 import path from 'path';
 import copy from 'rollup-plugin-copy';
 import dts from 'rollup-plugin-dts';
@@ -6,9 +7,9 @@ import esbuild from 'rollup-plugin-esbuild';
 import { nodeExternals } from 'rollup-plugin-node-externals';
 import svg from 'rollup-plugin-svg-import';
 
-const icons = require('../../public/app/core/icons/cached.json');
-
-const pkg = require('./package.json');
+const rq = createRequire(import.meta.url);
+const icons = rq('../../public/app/core/icons/cached.json');
+const pkg = rq('./package.json');
 
 const iconSrcPaths = icons.map((iconSubPath) => {
   return `../../public/img/icons/${iconSubPath}.svg`;

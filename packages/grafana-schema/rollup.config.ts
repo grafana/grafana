@@ -1,12 +1,14 @@
 import resolve from '@rollup/plugin-node-resolve';
-import glob from 'glob';
+import { glob } from 'glob';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
 import { nodeExternals } from 'rollup-plugin-node-externals';
 
-const pkg = require('./package.json');
+const rq = createRequire(import.meta.url);
+const pkg = rq('./package.json');
 
 export default [
   {
