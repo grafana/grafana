@@ -1745,6 +1745,9 @@
       "subtitle": "Use service accounts to run automated workloads in Grafana",
       "title": "Service accounts"
     },
+    "setup-guide": {
+      "title": "Setup guide"
+    },
     "shared-dashboard": {
       "subtitle": "Manage your organization's externally shared dashboards",
       "title": "Shared dashboards"

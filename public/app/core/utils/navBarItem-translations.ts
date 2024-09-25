@@ -11,6 +11,8 @@ export function getNavTitle(navId: string | undefined) {
   switch (navId) {
     case 'home':
       return t('nav.home.title', 'Home');
+    case 'home-setup-guide':
+      return t('nav.setup-guide.title', 'Setup guide');
     case 'new':
       return t('nav.new.title', 'New');
     case 'create':

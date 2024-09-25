@@ -123,7 +123,7 @@ export const MegaMenu = memo(
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
-                <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="center">
+                <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="start">
                   {index === 0 && (
                     <IconButton
                       id="dock-menu-button"
@@ -187,6 +187,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   dockMenuButton: css({
     display: 'none',
+    position: 'relative',
+    top: theme.spacing(1),
 
     [theme.breakpoints.up('xl')]: {
       display: 'inline-flex',

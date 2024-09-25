@@ -1435,6 +1435,22 @@
     },
     {
       "metadata": {
+        "name": "homeSetupGuide",
+        "resourceVersion": "1726258153467",
+        "creationTimestamp": "2024-09-10T15:46:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-13 20:09:13.467989 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/growth-and-onboarding",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "idForwarding",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-09-25T15:21:28Z",
