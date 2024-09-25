@@ -85,9 +85,8 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   // Do not render anything when transitioning from one dashboard to another
   if (
     match.params.type !== 'snapshot' &&
-    match.params.uid &&
-    dashboard.state.uid !== match.params.uid &&
-    route.routeName !== DashboardRoutes.Home
+    (match.params.uid || dashboard.state.uid) &&
+    dashboard.state.uid !== match.params.uid
   ) {
     return null;
   }
