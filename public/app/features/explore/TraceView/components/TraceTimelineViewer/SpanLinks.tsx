@@ -42,6 +42,7 @@ const renderMenuItems = (
           : undefined
       }
       url={link.href}
+      target={link.target}
       className={styles.menuItem}
     />
   ));
