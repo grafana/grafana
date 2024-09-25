@@ -82,15 +82,6 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		return nil, fmt.Errorf("there is an UID and it should not: %v", accIn.GetUID())
 	}
 
-	// accLegacy, err := meta.Accessor(createdFromLegacy)
-	// if err != nil {
-	// 	return createdFromLegacy, err
-	// }
-
-	// if accIn.GetName() == "" {
-	// 	accIn.SetName(accLegacy.GetName())
-	// }
-
 	startStorage := time.Now()
 	createdFromStorage, err := d.Storage.Create(ctx, in, createValidation, options)
 	if err != nil {
