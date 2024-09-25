@@ -17,12 +17,10 @@ const (
 func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 	name := web.Params(reqCtx.Req)[":name"]
 
-	hs.redirectWithError(reqCtx, errutil.Unauthorized("oauth.login", errutil.WithPublicMessage("TEST123")))
-
 	if errorParam := reqCtx.Query("error"); errorParam != "" {
 		errorDesc := reqCtx.Query("error_description")
 		hs.log.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
-		hs.redirectWithError(reqCtx, errutil.Unauthorized("oauth.login", errutil.WithPublicMessage(hs.Cfg.OAuthLoginErrorMessage)))
+		hs.redirectWithError(reqCtx, errutil.Unauthorized("oauth.login", errutil.WithPublicMessage(hs.Cfg.OAuthLoginErrorMessage)).Errorf("Login provider denied login request"))
 		return
 	}
 
