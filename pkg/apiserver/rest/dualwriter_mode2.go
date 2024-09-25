@@ -271,16 +271,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
-	//get foundObj and (updated) object so they can be stored in legacy store
-	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("object", foundObj).Error(err, "could not get object to update")
-			return nil, false, err
-		}
-		log.Info("object not found for update, creating one")
-	}
-
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
@@ -289,15 +279,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return objFromLegacy, created, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, "update", startLegacy)
-
-	if foundObj == nil {
-		acc, err := meta.Accessor(objFromLegacy)
-		if err != nil {
-			return objFromLegacy, false, err
-		}
-		acc.SetResourceVersion("")
-		forceAllowCreate = true
-	}
 
 	startStorage := time.Now()
 	res, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
