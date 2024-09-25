@@ -97,6 +97,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		},
 		usageStatsService: usageStatsService,
 		orgService:        orgService,
+		keyPrefix:         "gf_live",
+	}
+
+	if cfg.LiveHAPrefix != "" {
+		g.keyPrefix = cfg.LiveHAPrefix + ".gf_live"
 	}
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
@@ -152,7 +157,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		managedStreamRunner = managedstream.NewRunner(
 			g.Publish,
 			channelLocalPublisher,
-			managedstream.NewRedisFrameCache(redisClient),
+			managedstream.NewRedisFrameCache(redisClient, g.keyPrefix),
 		)
 	} else {
 		managedStreamRunner = managedstream.NewRunner(
@@ -342,7 +347,7 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	}
 
 	broker, err := centrifuge.NewRedisBroker(node, centrifuge.RedisBrokerConfig{
-		Prefix: "gf_live",
+		Prefix: g.keyPrefix,
 		Shards: redisShards,
 	})
 	if err != nil {
@@ -352,7 +357,7 @@ func setupRedisLiveEngine(g *GrafanaLive, node *centrifuge.Node) error {
 	node.SetBroker(broker)
 
 	presenceManager, err := centrifuge.NewRedisPresenceManager(node, centrifuge.RedisPresenceManagerConfig{
-		Prefix: "gf_live",
+		Prefix: g.keyPrefix,
 		Shards: redisShards,
 	})
 	if err != nil {
@@ -382,6 +387,8 @@ type GrafanaLive struct {
 	pluginClient          plugins.Client
 	queryDataService      query.Service
 	orgService            org.Service
+
+	keyPrefix string
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller
