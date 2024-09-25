@@ -59,7 +59,7 @@ Grafana can be configured to forward both Grafana-managed and data source-manage
 
   Some Grafana Cloud services, such as **Kubernetes Monitoring** and **Synthetic Monitoring** use the Cloud Alertmanager to create and manage alerts.
 
-- **Other Alertmanagers**: Grafana Alerting also supports sending alerts to other alertmanagers, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), which can handle Grafana-managed alerts and data sources-managed alerts such as alerts from Loki, Mimir, and Prometheus.
+- **Other Alertmanagers**: Grafana Alerting also supports sending alerts to other Alertmanagers, such as the [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), which can handle Grafana-managed alerts and data sources-managed alerts such as alerts from Loki, Mimir, and Prometheus.
 
 You can use a combination of Alertmanagers. The decision often depends on your alerting setup and where your alerts are being generated. Here are two examples of when you may want to add an Alertmanager and send your alerts there instead of using the built-in Grafana Alertmanager.
 
