@@ -217,7 +217,7 @@
     },
     "rule-viewer": {
       "prometheus-consistency-check": {
-        "alert-message": "This rule has been updated recently. Updates are not yet reflected on the alert list page. It will take up to a minute to propagate the changes.",
+        "alert-message": "This rule has been updated recently. Updates are not yet reflected on the alert list page. It may take up to a minute to propagate the changes.",
         "alert-title": "Updates in progress"
       }
     },
