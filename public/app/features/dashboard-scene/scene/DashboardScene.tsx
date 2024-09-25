@@ -714,11 +714,11 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
      * The first repeated row has the row repeater behavior but it also has a local SceneVariableSet with a local variable value
      */
     const layout = this._dashboard.state.body;
-    if (!(layout instanceof SceneGridLayout)) {
+    if (!(layout instanceof DefaultGridLayoutManager)) {
       return;
     }
 
-    for (const child of layout.state.children) {
+    for (const child of layout.state.grid.state.children) {
       if (!(child instanceof SceneGridRow) || !child.state.$behaviors) {
         continue;
       }
