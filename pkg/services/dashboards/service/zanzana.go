@@ -168,6 +168,8 @@ func (dr *DashboardServiceImpl) checkDashboards(ctx context.Context, query *dash
 	orgId := query.OrgId
 	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
 		orgId = query.SignedInUser.GetOrgID()
+	} else {
+		return nil, dashboards.ErrUserIsNotSignedInToOrg
 	}
 
 	concurrentRequests := dr.cfg.Zanzana.ConcurrentChecks
@@ -283,6 +285,8 @@ func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query 
 	orgId := query.OrgId
 	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
 		orgId = query.SignedInUser.GetOrgID()
+	} else {
+		return nil, dashboards.ErrUserIsNotSignedInToOrg
 	}
 	// dashboard:<orgId>-
 	prefix := fmt.Sprintf("%s:%d-", resourceType, orgId)
