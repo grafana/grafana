@@ -18,7 +18,8 @@ import { NavToolbarActions } from './NavToolbarActions';
 import { PanelSearchLayout } from './PanelSearchLayout';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, panelSearch } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, panelSearch, panelsPerRow } =
+    model.useState();
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
   const location = useLocation();
@@ -70,8 +71,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     body = [notFound];
   } else if (isEmpty) {
     body = [emptyState, withPanels];
-  } else if (panelSearch) {
-    body = <PanelSearchLayout panelSearch={panelSearch} dashboard={model} />;
+  } else if (panelSearch || panelsPerRow) {
+    body = <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
   }
 
   return (
