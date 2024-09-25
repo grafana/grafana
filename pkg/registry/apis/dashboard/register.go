@@ -5,11 +5,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
@@ -28,9 +27,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder      = (*DashboardsAPIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor = (*DashboardsAPIBuilder)(nil)
+)
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
@@ -38,6 +41,7 @@ type DashboardsAPIBuilder struct {
 
 	accessControl accesscontrol.AccessControl
 	legacy        *dashboardStorage
+	unified       resource.ResourceClient
 
 	log log.Logger
 }
@@ -51,6 +55,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	reg prometheus.Registerer,
 	sql db.DB,
 	tracing *tracing.TracingService,
+	unified resource.ResourceClient,
 ) *DashboardsAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -64,6 +69,7 @@ func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 
 		dashboardService: dashboardService,
 		accessControl:    accessControl,
+		unified:          unified,
 
 		legacy: &dashboardStorage{
 			resource:       dashboard.DashboardResourceInfo,
@@ -118,25 +124,15 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(resourceInfo.GroupVersion())
 }
 
-func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
-	dualWriteBuilder grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboard.GROUP, scheme, metav1.ParameterCodec, codecs)
-
+func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
 	dash := b.legacy.resource
 	legacyStore, err := b.legacy.newStore(scheme, optsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	storage := map[string]rest.Storage{}
 	storage[dash.StoragePath()] = legacyStore
-	storage[dash.StoragePath("dto")] = &DTOConnector{
-		builder: b,
-	}
 	storage[dash.StoragePath("history")] = apistore.NewHistoryConnector(
 		b.legacy.server, // as client???
 		dashboard.DashboardResourceInfo.GroupResource(),
@@ -146,17 +142,23 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	if optsGetter != nil && dualWriteBuilder != nil {
 		store, err := newStorage(scheme)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
 		if err := store.CompleteWithOptions(options); err != nil {
-			return nil, err
+			return err
 		}
 		storage[dash.StoragePath()], err = dualWriteBuilder(dash.GroupResource(), legacyStore, store)
 		if err != nil {
-			return nil, err
+			return err
 		}
+	}
+
+	// Register the DTO endpoint that will consolidate all dashboard bits
+	storage[dash.StoragePath("dto")], err = newDTOConnector(storage[dash.StoragePath()], b)
+	if err != nil {
+		return err
 	}
 
 	// Expose read only library panels
@@ -165,7 +167,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[dashboard.VERSION] = storage
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

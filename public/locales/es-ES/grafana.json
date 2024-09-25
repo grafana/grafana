@@ -112,6 +112,7 @@
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
       "no-delivery-attempts": "",
+      "no-integrations": "",
       "only-firing": "",
       "telegram": {
         "parse-mode-warning-body": "",
@@ -123,11 +124,23 @@
     "contactPointFilter": {
       "label": ""
     },
-    "grafana-rules": {
-      "export-rules": "",
-      "loading": "",
-      "new-recording-rule": "",
-      "title": ""
+    "list-view": {
+      "empty": {
+        "new-alert-rule": "",
+        "new-recording-rule": "",
+        "provisioning": ""
+      },
+      "section": {
+        "dataSourceManaged": {
+          "title": ""
+        },
+        "grafanaManaged": {
+          "export-rules": "",
+          "loading": "",
+          "new-recording-rule": "",
+          "title": ""
+        }
+      }
     },
     "mute_timings": {
       "error-loading": {
@@ -218,6 +231,19 @@
       "update-rule": {
         "success": ""
       }
+    },
+    "search": {
+      "property": {
+        "data-source": "",
+        "evaluation-group": "",
+        "labels": "",
+        "namespace": "",
+        "rule-health": "",
+        "rule-name": "",
+        "rule-type": "",
+        "state": ""
+      },
+      "save-query": ""
     }
   },
   "annotations": {
@@ -360,13 +386,21 @@
     }
   },
   "common": {
+    "apply": "",
     "cancel": "",
+    "clear": "",
+    "close": "",
     "locale": {
       "default": "Por defecto"
     },
-    "save": "Guardar"
+    "save": "Guardar",
+    "search": ""
   },
-  "complete": "",
+  "configuration-tracker": {
+    "config-card": {
+      "complete": ""
+    }
+  },
   "connections": {
     "connect-data": {
       "category-header-label": "Orígenes de datos",
@@ -428,23 +462,30 @@
     },
     "source-form": {
       "control-required": "Este campo es obligatorio.",
-      "description": "Ha utilizado las siguientes variables en la consulta de destino: <1></1><2></2>Un punto de datos necesita proporcionar valores a todas las variables como campos o como salida de transformaciones para hacer que el botón de correlación aparezca en la visualización. 4></4>Nota: No todas las variables deben definirse explícitamente a continuación. Una transformación como <7>logfmt</7> creará variables para cada par clave/valor.",
-      "heading": "Variables utilizadas en la consulta de destino",
+      "description": "",
+      "description-external-pre": "",
+      "description-query-pre": "",
+      "external-title": "",
+      "heading-external": "",
+      "heading-query": "",
+      "query-title": "",
       "results-description": "El enlace se mostrará junto al valor de este campo",
       "results-label": "Campo de resultados",
       "results-required": "Este campo es obligatorio.",
       "source-description": "Los resultados de la fuente de datos seleccionada tienen enlaces que se muestran en el panel",
       "source-label": "Fuente",
-      "sub-text": "<0>Defina qué fuente de datos mostrará la correlación y qué datos reemplazarán a las variables previamente definidas.</0>",
-      "title": "Configurar la fuente de datos que se vinculará a {{dataSourceName}} (paso 3 de 3)"
+      "sub-text": "<0>Defina qué fuente de datos mostrará la correlación y qué datos reemplazarán a las variables previamente definidas.</0>"
     },
     "sub-title": "Defina cómo se relacionan los datos que se encuentran en diferentes fuentes de datos. Más información en la <2>documentación<1></1></2>",
     "target-form": {
       "control-rules": "Este campo es obligatorio.",
-      "sub-text": "<0>Defina a qué fuente de datos enlazará la correlación y qué consulta se ejecutará cuando se haga clic en la correlación.</0>",
-      "target-description": "Especifique qué fuente de datos se consulta cuando se hace clic en el enlace",
+      "sub-text": "",
+      "target-description-external": "",
+      "target-description-query": "",
       "target-label": "Destino",
-      "title": "Configurar el destino de la correlación (paso 2 de 3)"
+      "target-type-description": "",
+      "title": "Configurar el destino de la correlación (paso 2 de 3)",
+      "type-label": ""
     },
     "trans-details": {
       "logfmt-description": "Analice el campo proporcionado con logfmt para obtener variables",
@@ -607,12 +648,13 @@
       "title": "Anotaciones"
     },
     "dashboard-delete-button": "",
-    "dashboard-delete-modal": {
+    "delete-modal": {
       "confirmation-text": "",
       "delete-button": "",
-      "text": "",
       "title": ""
     },
+    "delete-modal-restore-dashboards-text": "",
+    "delete-modal-text": "",
     "general": {
       "auto-refresh-description": "",
       "auto-refresh-label": "Actualización automática",
@@ -900,6 +942,11 @@
     }
   },
   "explore-metrics": {
+    "breakdown": {
+      "clearFilter": "",
+      "labelSelect": "",
+      "noMatchingValue": ""
+    },
     "viewBy": ""
   },
   "export": {
@@ -920,6 +967,11 @@
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
+  "gen-ai": {
+    "apply-suggestion": "",
+    "incomplete-request-error": "",
+    "send-custom-feedback": ""
+  },
   "grafana-ui": {
     "drawer": {
       "close": "Cerrar"
@@ -938,6 +990,9 @@
     },
     "spinner": {
       "aria-label": ""
+    },
+    "table": {
+      "copy": ""
     }
   },
   "graph": {
@@ -1003,78 +1058,84 @@
   "ldap-drawer": {
     "attributes-section": {
       "description": "",
-      "email": {
-        "label": ""
-      },
+      "email-label": "",
       "label": "",
-      "member-of": {
-        "label": ""
-      },
-      "name": {
-        "label": ""
-      },
-      "surname": {
-        "label": ""
-      },
-      "username": {
-        "label": ""
-      }
+      "member-of-label": "",
+      "name-label": "",
+      "surname-label": "",
+      "username-label": ""
     },
     "extra-security-section": {
+      "client-cert-label": "",
+      "client-cert-placeholder": "",
+      "client-cert-value-label": "",
+      "client-cert-value-placeholder": "",
+      "client-key-label": "",
+      "client-key-placeholder": "",
+      "client-key-value-label": "",
+      "client-key-value-placeholder": "",
+      "encryption-provider-base-64": "",
+      "encryption-provider-description": "",
+      "encryption-provider-file-path": "",
+      "encryption-provider-label": "",
       "label": "",
-      "min-tls-version": {
+      "min-tls-version-description": "",
+      "min-tls-version-label": "",
+      "root-ca-cert-label": "",
+      "root-ca-cert-placeholder": "",
+      "root-ca-cert-value-label": "",
+      "start-tls-description": "",
+      "start-tls-label": "",
+      "tls-ciphers-description": "",
+      "tls-ciphers-label": "",
+      "tls-ciphers-placeholder": "",
+      "use-ssl-description": "",
+      "use-ssl-label": "",
+      "use-ssl-tooltip": ""
+    },
+    "group-mapping": {
+      "grafana-admin": {
         "description": "",
         "label": ""
       },
-      "start-tls": {
+      "group-dn": {
         "description": "",
         "label": ""
       },
-      "tls-ciphers": {
+      "org-id": {
         "description": "",
-        "label": "",
-        "placeholder": ""
+        "label": ""
       },
-      "use-ssl": {
-        "description": "",
-        "label": "",
-        "tooltip": ""
+      "org-role": {
+        "label": ""
+      },
+      "remove": {
+        "button": ""
       }
     },
     "group-mapping-section": {
+      "add": {
+        "button": ""
+      },
       "description": "",
-      "group-search-base-dns": {
-        "description": "",
-        "label": ""
-      },
-      "group-search-filter": {
-        "description": "",
-        "label": ""
-      },
-      "group-search-filter-user-attribute": {
-        "description": "",
-        "label": ""
-      },
+      "group-search-base-dns-description": "",
+      "group-search-base-dns-label": "",
+      "group-search-filter-description": "",
+      "group-search-filter-label": "",
+      "group-search-filter-user-attribute-description": "",
+      "group-search-filter-user-attribute-label": "",
       "label": "",
-      "skip-org-role-sync": {
-        "description": "",
-        "label": ""
-      }
+      "skip-org-role-sync-description": "",
+      "skip-org-role-sync-label": ""
     },
     "misc-section": {
-      "allow-sign-up": {
-        "descrition": "",
-        "label": ""
-      },
+      "allow-sign-up-descrition": "",
+      "allow-sign-up-label": "",
       "label": "",
-      "port": {
-        "description": "",
-        "label": ""
-      },
-      "timeout": {
-        "description": "",
-        "label": ""
-      }
+      "port-description": "",
+      "port-label": "",
+      "timeout-description": "",
+      "timeout-label": ""
     },
     "title": ""
   },
@@ -1090,7 +1151,6 @@
       "discard-success": "",
       "error-fetching": "",
       "error-saving": "",
-      "error-update": "",
       "error-validate-form": "",
       "feature-flag-disabled": "",
       "saved": ""
@@ -1120,6 +1180,10 @@
       "label": "",
       "placeholder": ""
     },
+    "login-form-alert": {
+      "description": "",
+      "title": ""
+    },
     "search_filter": {
       "description": "",
       "label": "",
@@ -1127,8 +1191,7 @@
     },
     "search-base-dns": {
       "description": "",
-      "label": "",
-      "placeholder": ""
+      "label": ""
     },
     "subtitle": "",
     "title": ""
@@ -1154,6 +1217,7 @@
     "empty-state": {
       "message": ""
     },
+    "loading-panel-text": "",
     "modal": {
       "button-cancel": "",
       "button-view-panel1": "Ver panel en {{label}}...",
@@ -1563,6 +1627,9 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
+    "groupsync": {
+      "subtitle": ""
+    },
     "help": {
       "title": "Ayuda"
     },
@@ -1691,7 +1758,7 @@
       "title": "SLO"
     },
     "snapshots": {
-      "subtitle": "Representaciones interactivas, públicamente disponibles y puntuales de los paneles de control",
+      "subtitle": "",
       "title": "Instantáneas"
     },
     "starred": {
@@ -1863,9 +1930,11 @@
     },
     "details": {
       "labels": {
+        "contactGrafanaLabs": "",
         "dependencies": "",
         "downloads": "",
         "from": "",
+        "links": "",
         "reportAbuse": "",
         "signature": "",
         "status": "",
@@ -1925,6 +1994,7 @@
       "success-resume": "",
       "success-update": "",
       "success-update-old": "",
+      "time-range-label": "",
       "time-range-tooltip": ""
     },
     "create-page": {
@@ -2013,13 +2083,16 @@
       "copy-link-button": "",
       "email-share-type-option-description": "",
       "email-share-type-option-label": "",
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
       "pause-access-button": "",
       "pause-access-tooltip": "",
       "public-share-type-option-description": "",
       "public-share-type-option-label": "",
       "resume-access-button": "",
       "revoke-access-button": "",
-      "revoke-access-description": ""
+      "revoke-access-description": "",
+      "unsupported-data-source-alert-desc": ""
     },
     "sharing": {
       "success-creation": ""
@@ -2226,6 +2299,11 @@
       "placeholder": "Buscar paneles de control"
     }
   },
+  "select": {
+    "select-menu": {
+      "selected-count": ""
+    }
+  },
   "service-accounts": {
     "empty-state": {
       "button-title": "",
@@ -2258,8 +2336,8 @@
     "embed": {
       "copy": "Copiar al portapapeles",
       "html": "Incrustar HTML",
-      "html-description": "El código HTML a continuación se puede pegar e incluir en otra página web. A menos que se active el acceso anónimo, el usuario que vea esa página debe iniciar sesión en Grafana para que el gráfico se cargue.",
-      "info": "Genere un HTML para incrustar un iframe con este panel.",
+      "html-description": "",
+      "info": "",
       "time-range": ""
     },
     "export": {
@@ -2530,11 +2608,20 @@
   "trails": {
     "metric-overview": {
       "description-label": "",
-      "labels-label": "",
+      "labels": "",
+      "metric-attributes": "",
       "no-description": "",
       "type-label": "",
       "unit-label": "",
       "unknown-type": ""
+    },
+    "metric-select": {
+      "filter-by": "",
+      "otel-switch": ""
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "",
+      "show-previews-of-metric-graphs": ""
     }
   },
   "transformations": {

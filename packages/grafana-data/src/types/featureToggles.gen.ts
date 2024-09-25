@@ -87,6 +87,7 @@ export interface FeatureToggles {
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
+  datasourceAPIServers?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
@@ -115,6 +116,7 @@ export interface FeatureToggles {
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
   kubernetesDashboards?: boolean;
+  kubernetesFolders?: boolean;
   datasourceQueryTypes?: boolean;
   queryService?: boolean;
   queryServiceRewrite?: boolean;
@@ -197,10 +199,9 @@ export interface FeatureToggles {
   alertingApiServer?: boolean;
   dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
-  bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  backgroundPluginInstaller?: boolean;
+  alertingFilterV2?: boolean;
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
@@ -211,4 +212,6 @@ export interface FeatureToggles {
   appPlatformAccessTokens?: boolean;
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
+  improvedExternalSessionHandling?: boolean;
+  useSessionStorageForRedirection?: boolean;
 }

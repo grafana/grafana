@@ -17,6 +17,7 @@ import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
+import { SingleTopBar } from './TopBar/SingleTopBar';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -34,6 +35,7 @@ export function AppChrome({ children }: Props) {
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const scopesDashboardsState = useScopesDashboardsState();
   const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
@@ -92,16 +94,27 @@ export function AppChrome({ children }: Props) {
             Skip to main content
           </LinkButton>
           <header className={cx(styles.topNav)}>
-            {!searchBarHidden && <TopSearchBar />}
-            <NavToolbar
-              searchBarHidden={searchBarHidden}
-              sectionNav={state.sectionNav.node}
-              pageNav={state.pageNav}
-              actions={state.actions}
-              onToggleSearchBar={chrome.onToggleSearchBar}
-              onToggleMegaMenu={handleMegaMenu}
-              onToggleKioskMode={chrome.onToggleKioskMode}
-            />
+            {isSingleTopNav ? (
+              <SingleTopBar
+                sectionNav={state.sectionNav.node}
+                pageNav={state.pageNav}
+                onToggleMegaMenu={handleMegaMenu}
+                onToggleKioskMode={chrome.onToggleKioskMode}
+              />
+            ) : (
+              <>
+                {!searchBarHidden && <TopSearchBar />}
+                <NavToolbar
+                  searchBarHidden={searchBarHidden}
+                  sectionNav={state.sectionNav.node}
+                  pageNav={state.pageNav}
+                  actions={state.actions}
+                  onToggleSearchBar={chrome.onToggleSearchBar}
+                  onToggleMegaMenu={handleMegaMenu}
+                  onToggleKioskMode={chrome.onToggleKioskMode}
+                />
+              </>
+            )}
           </header>
         </>
       )}
@@ -121,10 +134,8 @@ export function AppChrome({ children }: Props) {
           )}
           <main
             className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]:
-                config.featureToggles.bodyScrolling && (menuDockedAndOpen || isScopesDashboardsOpen),
-              [styles.pageContainerMenuDockedScopes]:
-                config.featureToggles.bodyScrolling && menuDockedAndOpen && isScopesDashboardsOpen,
+              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
             })}
             id="pageContent"
           >
@@ -142,13 +153,14 @@ export function AppChrome({ children }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   return {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
+      paddingTop: isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2,
       flexGrow: 1,
-      height: config.featureToggles.bodyScrolling ? 'auto' : '100%',
+      height: 'auto',
     }),
     contentNoSearchBar: css({
       paddingTop: TOP_BAR_LEVEL_HEIGHT,
@@ -167,27 +179,17 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
           display: 'block',
         },
       },
-      config.featureToggles.bodyScrolling
-        ? {
-            position: 'fixed',
-            height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
-            zIndex: 2,
-          }
-        : {
-            zIndex: theme.zIndex.navbarFixed,
-          }
+      {
+        position: 'fixed',
+        height: `calc(100% - ${searchBarHidden || isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+        zIndex: 2,
+      }
     ),
-    scopesDashboardsContainer: css(
-      config.featureToggles.bodyScrolling
-        ? {
-            position: 'fixed',
-            height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
-            zIndex: 1,
-          }
-        : {
-            zIndex: theme.zIndex.navbarFixed,
-          }
-    ),
+    scopesDashboardsContainer: css({
+      position: 'fixed',
+      height: `calc(100% - ${searchBarHidden || isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+      zIndex: 1,
+    }),
     scopesDashboardsContainerDocked: css({
       left: MENU_WIDTH,
     }),
@@ -200,49 +202,24 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
-    panes: css(
-      {
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-        label: 'page-panes',
-      },
-      !config.featureToggles.bodyScrolling && {
-        height: '100%',
-        minHeight: 0,
-        width: '100%',
-        [theme.breakpoints.up('md')]: {
-          flexDirection: 'row',
-        },
-      }
-    ),
+    panes: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      label: 'page-panes',
+    }),
     pageContainerMenuDocked: css({
       paddingLeft: MENU_WIDTH,
     }),
     pageContainerMenuDockedScopes: css({
       paddingLeft: `calc(${MENU_WIDTH} * 2)`,
     }),
-    pageContainer: css(
-      {
-        label: 'page-container',
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-      },
-      !config.featureToggles.bodyScrolling && {
-        minHeight: 0,
-        minWidth: 0,
-        overflow: 'auto',
-        '@media print': {
-          overflow: 'visible',
-        },
-        '@page': {
-          margin: 0,
-          size: 'auto',
-          padding: 0,
-        },
-      }
-    ),
+    pageContainer: css({
+      label: 'page-container',
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+    }),
     skipLink: css({
       position: 'fixed',
       top: -1000,

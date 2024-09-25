@@ -62,7 +62,7 @@ import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
-import { contextSrv } from './core/services/context_srv';
+import { contextSrv, RedirectToUrlKey } from './core/services/context_srv';
 import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
@@ -84,10 +84,11 @@ import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { setupPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
-import { createUsePluginComponent } from './features/plugins/extensions/usePluginComponent';
-import { createUsePluginComponents } from './features/plugins/extensions/usePluginComponents';
+import { PluginExtensionRegistries } from './features/plugins/extensions/registry/types';
+import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
+import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
 import { createUsePluginExtensions } from './features/plugins/extensions/usePluginExtensions';
-import { createUsePluginLinks } from './features/plugins/extensions/usePluginLinks';
+import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -124,6 +125,7 @@ if (process.env.NODE_ENV === 'development') {
 
 export class GrafanaApp {
   context!: GrafanaContextType;
+  pluginExtensionsRegistries!: PluginExtensionRegistries;
 
   async init() {
     try {
@@ -194,6 +196,10 @@ export class GrafanaApp {
         getPanelPluginFromCache: syncGetPanelPlugin,
       });
 
+      if (config.featureToggles.useSessionStorageForRedirection) {
+        handleRedirectTo();
+      }
+
       locationUtil.initialize({
         config,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
@@ -210,7 +216,7 @@ export class GrafanaApp {
       initWindowRuntime();
 
       // Initialize plugin extensions
-      const pluginExtensionsRegistries = setupPluginExtensionRegistries();
+      this.pluginExtensionsRegistries = setupPluginExtensionRegistries();
 
       if (contextSrv.user.orgRole !== '') {
         // The "cloud-home-app" is registering banners once it's loaded, and this can cause a rerender in the AppChrome if it's loaded after the Grafana app init.
@@ -219,15 +225,15 @@ export class GrafanaApp {
         const awaitedAppPlugins = Object.values(config.apps).filter((app) => awaitedAppPluginIds.includes(app.id));
         const appPlugins = Object.values(config.apps).filter((app) => !awaitedAppPluginIds.includes(app.id));
 
-        preloadPlugins(appPlugins, pluginExtensionsRegistries);
-        await preloadPlugins(awaitedAppPlugins, pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
+        preloadPlugins(appPlugins, this.pluginExtensionsRegistries);
+        await preloadPlugins(awaitedAppPlugins, this.pluginExtensionsRegistries, 'frontend_awaited_plugins_preload');
       }
 
-      setPluginLinksHook(createUsePluginLinks(pluginExtensionsRegistries.addedLinksRegistry));
-      setPluginExtensionGetter(createPluginExtensionsGetter(pluginExtensionsRegistries));
-      setPluginExtensionsHook(createUsePluginExtensions(pluginExtensionsRegistries));
-      setPluginComponentHook(createUsePluginComponent(pluginExtensionsRegistries.exposedComponentsRegistry));
-      setPluginComponentsHook(createUsePluginComponents(pluginExtensionsRegistries.addedComponentsRegistry));
+      setPluginExtensionGetter(createPluginExtensionsGetter(this.pluginExtensionsRegistries));
+      setPluginExtensionsHook(createUsePluginExtensions(this.pluginExtensionsRegistries));
+      setPluginLinksHook(usePluginLinks);
+      setPluginComponentHook(usePluginComponent);
+      setPluginComponentsHook(usePluginComponents);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -378,6 +384,32 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
     const metricName = metric.name.replace(/-/g, '_');
     reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
   }
+}
+
+function handleRedirectTo(): void {
+  const queryParams = locationService.getSearch();
+  const redirectToParamKey = 'redirectTo';
+
+  if (queryParams.has(redirectToParamKey) && window.location.pathname !== '/') {
+    const rawRedirectTo = queryParams.get(redirectToParamKey)!;
+    window.sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent(rawRedirectTo));
+    queryParams.delete(redirectToParamKey);
+    window.history.replaceState({}, '', `${window.location.pathname}${queryParams.size > 0 ? `?${queryParams}` : ''}`);
+    return;
+  }
+
+  if (!contextSrv.user.isSignedIn) {
+    locationService.replace('/login');
+    return;
+  }
+
+  const redirectTo = window.sessionStorage.getItem(RedirectToUrlKey);
+  if (!redirectTo) {
+    return;
+  }
+
+  window.sessionStorage.removeItem(RedirectToUrlKey);
+  locationService.replace(decodeURIComponent(redirectTo));
 }
 
 export default new GrafanaApp();

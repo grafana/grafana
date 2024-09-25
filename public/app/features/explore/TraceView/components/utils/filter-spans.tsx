@@ -14,9 +14,11 @@
 
 import { SpanStatusCode } from '@opentelemetry/api';
 
+import { TraceKeyValuePair } from '@grafana/data';
+
 import { SearchProps, Tag } from '../../useSearch';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../constants/span';
-import { TNil, TraceKeyValuePair, TraceSpan } from '../types';
+import { TNil, TraceSpan } from '../types';
 
 // filter spans where all filters added need to be true for each individual span that is returned
 // i.e. the more filters added -> the more specific that the returned results are
@@ -76,7 +78,7 @@ export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
   const isTextInKeyValues = (kvs: TraceKeyValuePair[]) =>
     kvs
       ? kvs.some((kv) => {
-          return isTextInQuery(queryParts, kv.key) || isTextInQuery(queryParts, kv.value.toString());
+          return isTextInQuery(queryParts, kv.key) || isTextInQuery(queryParts, getStringValue(kv.value));
         })
       : false;
 
@@ -188,11 +190,15 @@ const checkKeyForMatch = (tagKey: string, key: string) => {
 };
 
 const checkKeyAndValueForMatch = (tag: Tag, kv: TraceKeyValuePair) => {
-  return tag.key === kv.key.toString() && tag.value === kv.value.toString();
+  return tag.key === kv.key && tag.value === getStringValue(kv.value);
 };
 
 const checkKeyAndValueForRegex = (tag: Tag, kv: TraceKeyValuePair) => {
-  return kv.key.toString().includes(tag.key || '') && kv.value.toString().includes(tag.value || '');
+  return kv.key.includes(tag.key || '') && getStringValue(kv.value).includes(tag.value || '');
+};
+
+const getStringValue = (value: string | number | boolean | undefined) => {
+  return value ? value.toString() : '';
 };
 
 const getServiceNameMatches = (spans: TraceSpan[], searchProps: SearchProps) => {

@@ -73,6 +73,7 @@
 /hack/ @grafana/grafana-app-platform-squad
 
 /apps/alerting/ @grafana/alerting-backend
+/apps/playlist/ @grafana/grafana-app-platform-squad
 /pkg/api/ @grafana/grafana-backend-group
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/apis/alerting_notifications @grafana/grafana-app-platform-squad @grafana/alerting-backend @grafana/alerting-frontend
@@ -133,6 +134,7 @@
 /pkg/services/playlist/ @grafana/grafana-app-platform-squad
 /pkg/services/preference/ @grafana/grafana-backend-group
 /pkg/services/provisioning/ @grafana/grafana-search-and-storage
+/pkg/services/provisioning/alerting/ @grafana/alerting-backend
 /pkg/services/query/ @grafana/grafana-app-platform-squad
 /pkg/services/queryhistory/ @grafana/explore-squad
 /pkg/services/quota/ @grafana/grafana-search-and-storage
@@ -197,6 +199,7 @@
 /devenv/docker/blocks/mariadb/ @grafana/oss-big-tent
 /devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
 /devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend
+/devenv/docker/blocks/mqtt/ @grafana/alerting-backend
 /devenv/docker/blocks/mssql/ @grafana/partner-datasources
 /devenv/docker/blocks/mssql_arm64/ @grafana/partner-datasources
 /devenv/docker/blocks/mssql_tests/ @grafana/partner-datasources
@@ -507,7 +510,6 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/lib/ @grafana/grafana-frontend-platform
 /public/lib/monaco-languages/kusto.ts @grafana/partner-datasources
 /public/maps/ @ryantxu
-/public/mockServiceWorker.js @grafana/frontend-ops
 /public/robots.txt @grafana/frontend-ops
 /public/fonts/ @grafana/grafana-frontend-platform
 /public/sass/ @grafana/grafana-frontend-platform
