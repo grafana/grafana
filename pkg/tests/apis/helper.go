@@ -533,7 +533,7 @@ func (c *K8sTestHelper) SetPermissions(user User, permissions []resourcepermissi
 }
 
 func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permission team.PermissionType) {
-	teamSvc, err := teamimpl.ProvideService(c.env.ReadReplStore, c.env.Cfg, tracing.InitializeTracerForTest())
+	teamSvc, err := teamimpl.ProvideService(c.env.SQLStore, c.env.Cfg, tracing.InitializeTracerForTest())
 	require.NoError(c.t, err)
 
 	orgService, err := orgimpl.ProvideService(c.env.SQLStore, c.env.Cfg, c.env.Server.HTTPServer.QuotaService)
