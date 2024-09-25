@@ -15,10 +15,10 @@ import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-
 
 import { defaultPageNav } from '../../RuleViewer';
 import { alertingFeatureToggles } from '../../featureToggles';
-import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
+import { usePrometheusCreationConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
-import { makeDashboardLink, makePanelLink } from '../../utils/misc';
+import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import {
   getRulePluginOrigin,
   isAlertingRule,
@@ -275,10 +275,18 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
  */
 function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
   const [ref, { width }] = useMeasure<HTMLDivElement>();
-  const { isConsistent, loading, error } = usePrometheusConsistencyCheck(ruleIdentifier);
+  const { isConsistent, error } = usePrometheusCreationConsistencyCheck(ruleIdentifier);
 
-  if (loading || error || isConsistent) {
+  if (isConsistent) {
     return null;
+  }
+
+  if (error) {
+    return (
+      <Alert title="Unable to check the rule status" bottomSpacing={0} topSpacing={2}>
+        {stringifyErrorLike(error)}
+      </Alert>
+    );
   }
 
   return (

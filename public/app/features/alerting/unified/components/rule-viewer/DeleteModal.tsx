@@ -7,7 +7,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 
 import { alertingFeatureToggles } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
-import { usePrometheusRemovalConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
+import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
 import { getRuleGroupLocationFromCombinedRule, isCloudRuleIdentifier } from '../../utils/rules';
@@ -19,7 +19,7 @@ const { prometheusRulesPrimary } = alertingFeatureToggles;
 export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
-  const { waitForConsistency } = usePrometheusRemovalConsistencyCheck();
+  const { waitForRemoval: waitForConsistency } = usePrometheusConsistencyCheck();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);

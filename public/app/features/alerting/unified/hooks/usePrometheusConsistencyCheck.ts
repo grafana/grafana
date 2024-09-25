@@ -1,99 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useInterval } from 'react-use';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { CloudRuleIdentifier, RuleIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../api/alertRuleApi';
 import * as ruleId from '../utils/rule-id';
-import { isGrafanaRuleIdentifier } from '../utils/rules';
+import { isCloudRuleIdentifier } from '../utils/rules';
 
-import { RuleLocation, useRuleLocation } from './useCombinedRule';
+import { useAsync } from './useAsync';
 
 const { useLazyPrometheusRuleNamespacesQuery } = alertRuleApi;
 
-const CONSISTENCY_CHECK_POOL_INTERVAL = 3000;
-
-export function usePrometheusConsistencyCheck(ruleIdentifier: RuleIdentifier) {
-  const [fetchPrometheusNamespaces] = useLazyPrometheusRuleNamespacesQuery();
-
-  // We expect the rule to be consistent more often than not, so we start with true.
-  const [isConsistent, setIsConsistent] = useState(true);
-
-  const { result: ruleLocation, loading, error } = useRuleLocation(ruleIdentifier);
-
-  const isPrometheusConsistent = useCallback(
-    async (ruleSourceName: string, ruleLocation: RuleLocation) => {
-      const { namespace, group, ruleName } = ruleLocation;
-      const namespaces = await fetchPrometheusNamespaces({
-        ruleSourceName,
-        namespace,
-        groupName: group,
-        ruleName,
-      }).unwrap();
-      const matchingGroup = namespaces.find((ns) => ns.name === namespace)?.groups.find((g) => g.name === group);
-
-      const hasMatchingRule = matchingGroup?.rules.some((r) => {
-        const currentRuleIdentifier = ruleId.fromRule(ruleSourceName, namespace, group, r);
-        return ruleId.equal(currentRuleIdentifier, ruleIdentifier);
-      });
-
-      return hasMatchingRule ?? false;
-    },
-    [fetchPrometheusNamespaces, ruleIdentifier]
-  );
-
-  const checkConsistency = useCallback(
-    async (location: RuleLocation) => {
-      const isConsistent = await isPrometheusConsistent(ruleIdentifier.ruleSourceName, location);
-      setIsConsistent(isConsistent);
-    },
-    [ruleIdentifier.ruleSourceName, isPrometheusConsistent]
-  );
-
-  useInterval(
-    async () => {
-      if (!ruleLocation) {
-        return;
-      }
-
-      await checkConsistency(ruleLocation);
-    },
-    isConsistent ? null : CONSISTENCY_CHECK_POOL_INTERVAL // Null stops the interval
-  );
-
-  // By default the isConsistent is true as this should be the case most of the time.
-  // We only want to run interval check if the rule is actually inconsistent.
-  // GMA rules use the Ruler API so no need to check consistency.
-  useEffect(() => {
-    if (!ruleLocation || isGrafanaRuleIdentifier(ruleIdentifier)) {
-      return;
-    }
-
-    checkConsistency(ruleLocation);
-  }, [ruleLocation, checkConsistency, ruleIdentifier]);
-
-  return { isConsistent, loading, error };
-}
+const CONSISTENCY_CHECK_POOL_INTERVAL = 3 * 1000; // 3 seconds;
+const CONSISTENCY_CHECK_TIMEOUT = 90 * 1000; // 90 seconds
 
 const { setInterval, clearInterval } = window;
 
-export function usePrometheusRemovalConsistencyCheck() {
+function useMatchingPromRuleExists() {
   const [fetchPrometheusNamespaces] = useLazyPrometheusRuleNamespacesQuery();
-  const consistencyInterval = useRef<number | undefined>();
 
-  useEffect(() => {
-    return () => {
-      if (consistencyInterval.current) {
-        clearInterval(consistencyInterval.current);
-      }
-    };
-  }, []);
-
-  // TODO Need to add support for GMA
-  const isPrometheusConsistent = useCallback(
-    async (ruleSourceName: string, ruleIdentifier: CloudRuleIdentifier) => {
-      const { namespace, groupName, ruleName } = ruleIdentifier;
-
+  const matchingPromRuleExists = useCallback(
+    async (ruleIdentifier: CloudRuleIdentifier) => {
+      const { ruleSourceName, namespace, groupName, ruleName } = ruleIdentifier;
       const namespaces = await fetchPrometheusNamespaces({
         ruleSourceName,
         namespace,
@@ -101,41 +28,135 @@ export function usePrometheusRemovalConsistencyCheck() {
         ruleName,
       }).unwrap();
 
-      // If there is no matching group, the whole group has been deleted.
       const matchingGroup = namespaces.find((ns) => ns.name === namespace)?.groups.find((g) => g.name === groupName);
-      if (!matchingGroup) {
-        return true;
-      }
 
-      // If there is no matching rule, the rule has been deleted.
-      const hasNoMatchingRule = matchingGroup.rules.every((r) => {
+      const hasMatchingRule = matchingGroup?.rules.some((r) => {
         const currentRuleIdentifier = ruleId.fromRule(ruleSourceName, namespace, groupName, r);
-        return ruleId.equal(currentRuleIdentifier, ruleIdentifier) === false;
+        return ruleId.equal(currentRuleIdentifier, ruleIdentifier);
       });
 
-      return hasNoMatchingRule;
+      return hasMatchingRule ?? false;
     },
     [fetchPrometheusNamespaces]
   );
 
-  async function waitForConsistency(ruleIdentifier: CloudRuleIdentifier) {
-    // We can wait only for one rule at a time
-    if (consistencyInterval.current) {
-      clearInterval(consistencyInterval.current);
-    }
+  return { matchingPromRuleExists };
+}
 
-    return new Promise((resolve) => {
-      consistencyInterval.current = setInterval(() => {
-        isPrometheusConsistent(ruleIdentifier.ruleSourceName, ruleIdentifier).then((isConsistent) => {
-          if (isConsistent) {
-            clearInterval(consistencyInterval.current);
-            consistencyInterval.current = undefined;
-            resolve(true);
-          }
-        });
+export function usePrometheusConsistencyCheck() {
+  const { matchingPromRuleExists } = useMatchingPromRuleExists();
+
+  const removalConsistencyInterval = useRef<number | undefined>();
+  const creationConsistencyInterval = useRef<number | undefined>();
+
+  useEffect(() => {
+    return () => {
+      clearRemovalInterval();
+      clearCreationInterval();
+    };
+  }, []);
+
+  const clearRemovalInterval = () => {
+    if (removalConsistencyInterval.current) {
+      clearInterval(removalConsistencyInterval.current);
+      removalConsistencyInterval.current = undefined;
+    }
+  };
+
+  const clearCreationInterval = () => {
+    if (creationConsistencyInterval.current) {
+      clearInterval(creationConsistencyInterval.current);
+      creationConsistencyInterval.current = undefined;
+    }
+  };
+
+  async function waitForRemoval(ruleIdentifier: CloudRuleIdentifier) {
+    // We can wait only for one rule at a time
+    clearRemovalInterval();
+
+    const timeoutPromise = new Promise<void>((_, reject) => {
+      setTimeout(() => {
+        clearRemovalInterval();
+        reject(new Error('Timeout while waiting for rule removal'));
+      }, CONSISTENCY_CHECK_TIMEOUT);
+    });
+
+    const waitPromise = new Promise<void>((resolve, reject) => {
+      removalConsistencyInterval.current = setInterval(() => {
+        matchingPromRuleExists(ruleIdentifier)
+          .then((ruleExists) => {
+            if (ruleExists === false) {
+              clearRemovalInterval();
+              resolve();
+            }
+          })
+          .catch((error) => {
+            clearRemovalInterval();
+            reject(error);
+          });
       }, CONSISTENCY_CHECK_POOL_INTERVAL);
     });
+
+    return Promise.race([timeoutPromise, waitPromise]);
   }
 
-  return { waitForConsistency };
+  async function waitForCreation(ruleIdentifier: CloudRuleIdentifier) {
+    // We can wait only for one rule at a time
+    clearCreationInterval();
+
+    const timeoutPromise = new Promise<void>((_, reject) => {
+      setTimeout(() => {
+        clearCreationInterval();
+        reject(new Error('Timeout while waiting for rule creation'));
+      }, CONSISTENCY_CHECK_TIMEOUT);
+    });
+
+    const waitPromise = new Promise<void>((resolve, reject) => {
+      creationConsistencyInterval.current = setInterval(() => {
+        matchingPromRuleExists(ruleIdentifier)
+          .then((ruleExists) => {
+            if (ruleExists === true) {
+              clearCreationInterval();
+              resolve();
+            }
+          })
+          .catch((error) => {
+            clearCreationInterval();
+            reject(error);
+          });
+      }, CONSISTENCY_CHECK_POOL_INTERVAL);
+    });
+
+    return Promise.race([timeoutPromise, waitPromise]);
+  }
+
+  return { waitForRemoval, waitForCreation };
+}
+
+export function usePrometheusCreationConsistencyCheck(ruleIdentifier: RuleIdentifier) {
+  const { matchingPromRuleExists } = useMatchingPromRuleExists();
+  const { waitForCreation } = usePrometheusConsistencyCheck();
+
+  const [actions, state] = useAsync(async (identifier: RuleIdentifier) => {
+    if (isCloudRuleIdentifier(identifier)) {
+      return waitForCreation(identifier);
+    } else {
+      // GMA rules are not supported yet
+      return Promise.resolve();
+    }
+  });
+
+  useEffect(() => {
+    if (isCloudRuleIdentifier(ruleIdentifier)) {
+      // We need to check if the rule exists first, because most of the times it does,
+      // and wait for the consistency only if the rule does not exist.
+      matchingPromRuleExists(ruleIdentifier).then((ruleExists) => {
+        if (!ruleExists) {
+          actions.execute(ruleIdentifier);
+        }
+      });
+    }
+  }, [actions, ruleIdentifier, matchingPromRuleExists]);
+
+  return { isConsistent: state.status === 'success' || state.status === 'not-executed', error: state.error };
 }
