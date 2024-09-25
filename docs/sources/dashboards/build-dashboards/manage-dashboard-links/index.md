@@ -148,7 +148,7 @@ Each panel can have its own set of links that are shown in the upper left of the
 
 Click the icon next to the panel title to see available panel links.
 
-{{< figure src="/media/docs/grafana/screenshot-panel-links.png" width="200px" alt="List of panel links displayed" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-links-v11.3.png" max-width="550px" alt="List of panel links displayed" >}}
 
 ### Add a panel link
 

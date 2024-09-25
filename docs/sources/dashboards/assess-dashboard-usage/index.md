@@ -34,7 +34,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/export-logs/
-  enabled:
+  dashboard-sharing:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#public_dashboards
     - pattern: /docs/grafana-cloud/
@@ -79,7 +79,7 @@ For every dashboard and data source, you can access usage information.
 
 To see dashboard usage information, click the dashboard insights icon in the header.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-insights-11.2.png" alt="Dashboard insights icon" >}}
+![Dashboard insights icon](/media/docs/grafana/dashboards/screenshot-dashboard-insights-icon-11.2.png)
 
 Dashboard insights show the following information:
 
@@ -88,7 +88,7 @@ Dashboard insights show the following information:
 
 {{< figure src="/static/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" alt="Stats tab" >}}{{< figure src="/static/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" alt="Users and activity tab" >}}
 
-If public dashboards are [enabled](ref:enabled), you'll also see a **Public dashboards** tab in your analytics.
+If [dashboard sharing](ref:dashboard-sharing) is enabled, you'll also see a **Shared dashboards** tab in your analytics.
 
 ### Data source insights
 
