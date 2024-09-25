@@ -103,7 +103,7 @@ export function areQueriesTransformableToSimpleCondition(
   const reduceExpressionIndex = expressionQueries.findIndex(
     (query) => query.model.type === ExpressionQueryType.reduce && query.refId === SIMPLE_CONDITION_REDUCER_ID
   );
-  const reduceExpression = expressionQueries[reduceExpressionIndex];
+  const reduceExpression = expressionQueries.at(reduceExpressionIndex);
   const reduceOk =
     reduceExpression &&
     reduceExpressionIndex === 0 &&
@@ -113,12 +113,11 @@ export function areQueriesTransformableToSimpleCondition(
   const thresholdExpressionIndex = expressionQueries.findIndex(
     (query) => query.model.type === ExpressionQueryType.threshold && query.refId === SIMPLE_CONDITION_THRESHOLD_ID
   );
-  const thresholdExpression = expressionQueries[thresholdExpressionIndex];
+  const thresholdExpression = expressionQueries.at(thresholdExpressionIndex);
   const conditions = thresholdExpression?.model.conditions ?? [];
   const thresholdOk =
     thresholdExpression && thresholdExpressionIndex === 1 && conditions[0]?.unloadEvaluator === undefined;
-
-  return reduceOk && thresholdOk;
+  return Boolean(reduceOk) && Boolean(thresholdOk);
 }
 
 interface Props {
