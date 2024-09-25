@@ -76,7 +76,7 @@ export function getQueryMatches(query: string, spans: TraceSpan[] | TNil) {
   const isTextInKeyValues = (kvs: TraceKeyValuePair[]) =>
     kvs
       ? kvs.some((kv) => {
-          return isTextInQuery(queryParts, kv.key) || isTextInQuery(queryParts, kv.value.toString());
+          return isTextInQuery(queryParts, kv.key) || isTextInQuery(queryParts, getStringValue(kv.value));
         })
       : false;
 
@@ -188,11 +188,15 @@ const checkKeyForMatch = (tagKey: string, key: string) => {
 };
 
 const checkKeyAndValueForMatch = (tag: Tag, kv: TraceKeyValuePair) => {
-  return tag.key === kv.key.toString() && tag.value === kv.value.toString() ? true : false;
+  return tag.key === kv.key && tag.value === getStringValue(kv.value);
 };
 
 const checkKeyAndValueForRegex = (tag: Tag, kv: TraceKeyValuePair) => {
-  return kv.key.toString().includes(tag.key || '') && kv.value.toString().includes(tag.value || '') ? true : false;
+  return kv.key.includes(tag.key || '') && getStringValue(kv.value).includes(tag.value || '');
+};
+
+const getStringValue = (value: string | number | boolean | undefined) => {
+  return value ? value.toString() : '';
 };
 
 const getReturnValue = (operator: string, found: boolean) => {
