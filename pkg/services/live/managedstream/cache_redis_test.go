@@ -35,7 +35,7 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 	require.NotNil(t, c)
 	testFrameCache(t, c)
 
-	keys, err := redisClient.Keys(redisClient.Context(), "").Result()
+	keys, err := redisClient.Keys(redisClient.Context(), "*").Result()
 	if err != nil {
 		require.NoError(t, err)
 	}
@@ -43,6 +43,7 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 	require.NotZero(t, len(keys))
 
 	for _, key := range keys {
-		require.True(t, strings.HasPrefix(key, "A"))
+		require.Equal(t, "A", key[:1])
+		require.True(t, strings.HasPrefix(key, "A"), "key", key)
 	}
 }
