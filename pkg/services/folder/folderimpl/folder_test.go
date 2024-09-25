@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
@@ -418,6 +419,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	db, cfg := sqlstore.InitTestDB(t)
+	cfg.UnifiedAlerting.BaseInterval = time.Second
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
