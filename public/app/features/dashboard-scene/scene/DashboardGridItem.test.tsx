@@ -143,8 +143,8 @@ describe('PanelRepeaterGridItem', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     vizPanel.setState({ title: 'Changed' });
-    //mimic returning to dashboard from panel edit cloning panel
-    panel.setState({ body: vizPanel.clone() });
+
+    panel.editingCompleted(true);
 
     // mimic returning to dashboard
     activateFullSceneTree(scene);
@@ -214,10 +214,11 @@ describe('PanelRepeaterGridItem', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     vizPanel.setState({ title: 'Changed' });
-    //mimic returning to dashboard from panel edit cloning panel
-    panel.setState({ body: vizPanel.clone() });
+
+    panel.editingCompleted(true);
 
     const performRepeatMock = jest.spyOn(panel, 'performRepeat');
+
     // mimic returning to dashboard
     activateFullSceneTree(scene);
 
