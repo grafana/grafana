@@ -609,7 +609,20 @@ func createMultiOrgAlertmanager(t *testing.T, configs map[int64]*ngmodels.AlertC
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, featuremgmt.WithManager(featuremgmt.FlagAlertingSimplifiedRouting))
+	mam, err := notifier.NewMultiOrgAlertmanager(
+		cfg,
+		configStore,
+		orgStore,
+		kvStore,
+		provStore,
+		decryptFn,
+		m.GetMultiOrgAlertmanagerMetrics(),
+		nil,
+		ngfakes.NewFakeReceiverPermissionsService(),
+		log.New("testlogger"),
+		secretsService,
+		featuremgmt.WithManager(featuremgmt.FlagAlertingSimplifiedRouting),
+	)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
