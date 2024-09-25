@@ -72,7 +72,7 @@ func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, original r
 	defer cancel()
 
 	startStorage := time.Now()
-	storageObj, errObjectSt := d.Storage.Create(ctx, original, createValidation, options)
+	storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
 	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
 	if errObjectSt != nil {
 		cancel()
@@ -270,31 +270,31 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	}
 	d.recordLegacyDuration(false, mode1Str, d.resource, method, startLegacy)
 
-
 	//nolint:errcheck
 	go d.updateOnUnifiedStorage(ctx, res, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 
-	go func(res runtime.Object) {
-		ctx, cancel := context.WithTimeoutCause(ctx, time.Second*10, errors.New("storage update timeout"))
+	return res, async, err
+}
 
-		resCopy := res.DeepCopyObject()
-		// get the object to be updated
-		foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
-			if !apierrors.IsNotFound(err) {
-				log.WithValues("object", foundObj).Error(err, "could not get object to update")
-				cancel()
-			}
-			log.Info("object not found for update, creating one")
-		}
+func (d *DualWriterMode1) updateOnUnifiedStorage(ctx context.Context, res runtime.Object, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) error {
+	var method = "update"
+	log := d.Log.WithValues("name", name, "method", method, "name", name)
 
-		updated, err := objInfo.UpdatedObject(ctx, resCopy)
-		if err != nil {
-			log.WithValues("object", updated).Error(err, "could not update or create object")
+	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage update timeout"))
+
+	resCopy := res.DeepCopyObject()
+	// get the object to be updated
+	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.WithValues("object", foundObj).Error(err, "could not get object to update")
 			cancel()
 		}
-		// if the object is found, create a new updateWrapper with the object found
-		if foundObj != nil {
+		log.Info("object not found for update, creating one")
+	}
+
+	updated, err := objInfo.UpdatedObject(ctx, resCopy)
 	if err != nil {
 		log.WithValues("object", updated).Error(err, "could not update or create object")
 		cancel()
