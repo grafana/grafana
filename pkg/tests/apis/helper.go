@@ -25,7 +25,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
@@ -187,7 +186,7 @@ func (c *K8sResourceClient) SpecJSON(v *unstructured.UnstructuredList) string {
 // remove the meta keys that are expected to change each time
 func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured, replaceMeta ...string) string {
 	c.t.Helper()
-	copy := c.sanitizeObject(v)
+	copy := c.sanitizeObject(v, replaceMeta...)
 
 	out, err := json.MarshalIndent(copy, "", "  ")
 	// fmt.Printf("%s", out)
@@ -200,20 +199,8 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 	c.t.Helper()
 
 	deep := v.DeepCopy()
-	anno := deep.GetAnnotations()
-	if anno["grafana.app/originPath"] != "" {
-		anno["grafana.app/originPath"] = "${originPath}"
-	}
-	if anno["grafana.app/originHash"] != "" {
-		anno["grafana.app/originHash"] = "${originHash}"
-	}
-	// Remove annotations that are not added by legacy storage
-	delete(anno, utils.AnnoKeyOriginTimestamp)
-	delete(anno, utils.AnnoKeyCreatedBy)
-	delete(anno, utils.AnnoKeyUpdatedBy)
-	delete(anno, utils.AnnoKeyUpdatedTimestamp)
-
-	deep.SetAnnotations(anno)
+	deep.SetAnnotations(nil)
+	deep.SetManagedFields(nil)
 	copy := deep.Object
 	meta, ok := copy["metadata"].(map[string]any)
 	require.True(c.t, ok)
@@ -226,6 +213,7 @@ func (c *K8sResourceClient) sanitizeObject(v *unstructured.Unstructured, replace
 			meta[key] = fmt.Sprintf("${%s}", key)
 		}
 	}
+	deep.Object["metadata"] = meta
 	return deep
 }
 

@@ -423,6 +423,12 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 	}
 	obj := internalplaylist.LegacyUpdateCommandToUnstructured(cmd)
 	obj.SetName(uid)
+	existing, err := client.Get(c.Req.Context(), uid, v1.GetOptions{})
+	if err != nil {
+		pk8s.writeError(c, err)
+		return
+	}
+	obj.SetResourceVersion(existing.GetResourceVersion())
 	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
 	if err != nil {
 		pk8s.writeError(c, err)
