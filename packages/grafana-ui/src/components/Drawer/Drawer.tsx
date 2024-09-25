@@ -256,17 +256,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     drawer: css({
-      '.main-view &': {
-        top: 80,
-      },
-
-      '.main-view--search-bar-hidden &': {
-        top: 40,
-      },
-
-      '.main-view--chrome-hidden &': {
-        top: 0,
-      },
+      top: 0,
 
       '.rc-drawer-content-wrapper': {
         boxShadow: theme.shadows.z3,
@@ -307,18 +297,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         left: 0,
         position: 'fixed',
         right: 0,
-
-        '.main-view &': {
-          top: 80,
-        },
-
-        '.main-view--search-bar-hidden &': {
-          top: 40,
-        },
-
-        '.main-view--chrome-hidden &': {
-          top: 0,
-        },
+        top: 0,
       },
     }),
     maskMotion: css({
