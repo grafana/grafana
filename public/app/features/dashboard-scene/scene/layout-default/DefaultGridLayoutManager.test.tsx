@@ -183,17 +183,19 @@ describe('DefaultGridLayoutManager', () => {
       const newGridItem = grid.state.children[3];
 
       expect(grid.state.children.length).toBe(4);
-      expect(newGridItem.state.key).toBe('panel-7');
+      expect(newGridItem.state.key).toBe('grid-item-4');
     });
 
     it('Should maintain size of duplicated panel', () => {
       const { manager, grid } = setup();
+
       const gItem = grid.state.children[0] as DashboardGridItem;
       gItem.setState({ height: 1 });
-      const vizPanel = gItem.state.body;
-      manager.duplicatePanel(vizPanel as VizPanel);
 
-      const newGridItem = grid.state.children[4] as DashboardGridItem;
+      const vizPanel = gItem.state.body;
+      manager.duplicatePanel(vizPanel);
+
+      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
 
       expect(newGridItem.state.height).toBe(1);
     });
@@ -205,7 +207,7 @@ describe('DefaultGridLayoutManager', () => {
       const vizPanel = gItem.state.body;
       manager.duplicatePanel(vizPanel as VizPanel);
 
-      const newGridItem = grid.state.children[4] as DashboardGridItem;
+      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
 
       expect(newGridItem.state.variableName).toBe('server');
       expect(newGridItem.state.repeatDirection).toBe('v');

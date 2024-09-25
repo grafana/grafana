@@ -272,7 +272,8 @@ describe('PanelRepeaterGridItem', () => {
     const { scene, repeater } = buildPanelRepeaterScene({ variableQueryTime: 0, maxPerRow: 2, itemHeight: 10 });
 
     const layoutForceRender = jest.fn();
-    (scene.state.body as SceneGridLayout).forceRender = layoutForceRender;
+    const layout = scene.state.body as DefaultGridLayoutManager;
+    layout.state.grid.forceRender = layoutForceRender;
 
     activateFullSceneTree(scene);
 

@@ -176,6 +176,7 @@ export class DefaultGridLayoutManager
       variableName: gridItem.state.variableName,
       repeatDirection: gridItem.state.repeatDirection,
       maxPerRow: gridItem.state.maxPerRow,
+      key: `grid-item-${newPanelId}`,
       body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
     });
 
