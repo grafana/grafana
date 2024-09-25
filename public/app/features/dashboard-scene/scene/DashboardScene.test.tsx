@@ -18,7 +18,7 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
-import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
@@ -197,18 +197,16 @@ describe('DashboardScene', () => {
         expect(resoredLayout.state.children.map((c) => c.state.key)).toEqual(originalPanelOrder);
       });
 
-      it('Should exit edit mode and discard panel changes if leaving the dashboard while in panel edit', () => {
-        const panel = findVizPanelByKey(scene, 'panel-1');
+      it('Should exit edit mode and discard panel changes if leaving the dashboard while in panel edit', async () => {
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
         const editPanel = buildPanelEditScene(panel!);
-        scene.setState({
-          editPanel,
-        });
+        scene.setState({ editPanel });
 
-        expect(scene.state.editPanel!['_discardChanges']).toBe(false);
-
+        panel.setState({ title: 'new title' });
         scene.exitEditMode({ skipConfirm: true });
 
-        expect(scene.state.editPanel!['_discardChanges']).toBe(true);
+        const discardPanel = findVizPanelByKey(scene, panel.state.key)!;
+        expect(discardPanel.state.title).toBe('Panel A');
       });
 
       it.each`
@@ -1023,14 +1021,14 @@ describe('DashboardScene', () => {
           panelPluginId: 'table',
         });
       });
+
       test('when editing', () => {
         const panel = findVizPanelByKey(scene, 'panel-1');
         const editPanel = buildPanelEditScene(panel!);
-        scene.setState({
-          editPanel,
-        });
+        scene.setState({ editPanel });
 
-        const queryRunner = (scene.state.editPanel as PanelEditor).state.vizManager.queryRunner;
+        const queryRunner = editPanel.getPanel().state.$data!;
+
         expect(scene.enrichDataRequest(queryRunner)).toEqual({
           app: CoreApp.Dashboard,
           dashboardUID: 'dash-1',
