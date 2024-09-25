@@ -41,6 +41,7 @@ export class TrailStore {
     this.load();
 
     const doSave = () => {
+      console.log('calling doSave!');
       const serializedRecent = this._recent
         .slice(0, MAX_RECENT_TRAILS)
         .map((trail) => this._serializeTrail(trail.resolve()));
@@ -52,6 +53,7 @@ export class TrailStore {
     this._save = debounce(doSave, 1000);
 
     window.addEventListener('beforeunload', (ev) => {
+      console.log('removing debounce (eventlistener)!');
       // Before closing or reloading the page, we want to remove the debounce from `_save` so that
       // any calls to is on event `unload` are actualized. Debouncing would cause a delay until after the page has been unloaded.
       this._save = doSave;
@@ -175,6 +177,7 @@ export class TrailStore {
   }
 
   setRecentTrail(recentTrail: DataTrail) {
+    console.log('setting recent trail!');
     const { steps } = recentTrail.state.history.state;
     if (steps.length === 0 || (steps.length === 1 && steps[0].type === 'start')) {
       // We do not set an uninitialized trail, or a single node "start" trail as recent

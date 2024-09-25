@@ -159,22 +159,27 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
         </div>
         {/* separate recent metircs + bookmarks code into separate components, then can conditionally render based on if there's a length */}
         {/* <Stack gap={5}> */}
-        <div className={styles.column}>
-          <Text variant="h4">Or view a recent exploration</Text>
-          <div className={styles.trailList}>
-            {recentExplorations &&
-              recentExplorations.map((recent, index) => {
-                return (
-                  <recent.Component model={recent} key={recent.state.key} /> // how we mount a scene inside of react
-                  // <DataTrailCard
-                  //   key={(resolvedTrail.state.key || '') + index}
-                  //   trail={resolvedTrail}
-                  //   onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
-                  // />
-                );
-              })}
-          </div>
+        {/* <div className={styles.column}> */}
+        <Text variant="h4" textAlignment="center">
+          Or view a recent exploration
+        </Text>
+        <div className={styles.trailList}>
+          {recentExplorations &&
+            recentExplorations.map((recent, index) => {
+              return (
+                <div key={index} className={styles.trailCard}>
+                  <recent.Component model={recent} key={recent.state.key} />{' '}
+                  {/* how we mount a scene inside of react */}
+                </div>
+                // <DataTrailCard
+                //   key={(resolvedTrail.state.key || '') + index}
+                //   trail={resolvedTrail}
+                //   onSelect={() => model.onSelectRecentTrail(resolvedTrail)}
+                // />
+              );
+            })}
         </div>
+        {/* </div> */}
         <div className={styles.verticalLine} />
         {/* <DataTrailsBookmarks /> */}
         {/* <div className={styles.column}>
@@ -232,17 +237,29 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexGrow: 1,
       flexDirection: 'column',
+      textAlign: 'center',
+      marginBottom: '20px', // Add 20px space below the text, currently not working/being applied
     }),
     newTrail: css({
       height: 'auto',
       justifyContent: 'center',
       fontSize: theme.typography.h5.fontSize,
     }),
-    trailCard: css({}),
+    trailCard: css({
+      display: 'flex',
+      height: '151px',
+      padding: '12px 16px 8px 16px',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      // gap: "var(--spacing - x0_5, 4px)",
+      flex: '1 0 0',
+    }),
     trailList: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(2),
+      alignItems: 'center',
+      gap: '20px',
+      alignSelf: 'stretch',
     }),
     verticalLine: css({
       borderLeft: `1px solid ${theme.colors.border.weak}`,
