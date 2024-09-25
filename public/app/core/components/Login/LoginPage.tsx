@@ -40,7 +40,9 @@ const LoginPage = () => {
             <InnerBox>
               {loginErrorMessage && (
                 <Alert className={styles.alert} severity="error" title={t('login.error.title', 'Login failed')}>
-                  {loginErrorMessage}
+                  {loginErrorMessage.includes('oauth.login.error')
+                    ? t('oauth.login.error', 'Login provider denied login request')
+                    : loginErrorMessage}
                 </Alert>
               )}
 
