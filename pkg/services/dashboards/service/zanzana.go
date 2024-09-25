@@ -18,10 +18,10 @@ import (
 
 const (
 	// If search query string shorter than this value, then "List, then check" strategy will be used
-	maxListQueryLength = 8
+	listQueryLengthThreshold = 8
 	// If query limit set to value higher than this value, then "List, then check" strategy will be used
-	minListQueryLimit = 50
-	defaultQueryLimit = 1000
+	listQueryLimitThreshold = 50
+	defaultQueryLimit       = 1000
 )
 
 type searchResult struct {
@@ -103,7 +103,7 @@ type findDashboardsFn func(ctx context.Context, query *dashboards.FindPersistedD
 
 // getFindDashboardsFn makes a decision which search method should be used
 func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersistedDashboardsQuery) findDashboardsFn {
-	if query.Limit > 0 && query.Limit < minListQueryLimit && len(query.Title) > 0 {
+	if query.Limit > 0 && query.Limit < listQueryLimitThreshold && len(query.Title) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
 	if len(query.DashboardUIDs) > 0 || len(query.DashboardIds) > 0 {
@@ -112,7 +112,7 @@ func (dr *DashboardServiceImpl) getFindDashboardsFn(query *dashboards.FindPersis
 	if len(query.FolderUIDs) > 0 {
 		return dr.findDashboardsZanzanaCheck
 	}
-	if len(query.Title) <= maxListQueryLength {
+	if len(query.Title) <= listQueryLengthThreshold {
 		return dr.findDashboardsZanzanaList
 	}
 	return dr.findDashboardsZanzanaCheck
@@ -252,13 +252,13 @@ func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query *da
 	// For some search types we need dashboards or folders only
 	if query.Type != searchstore.TypeFolder && query.Type != searchstore.TypeAlertFolder {
 		tasks = append(tasks, func() ([]string, error) {
-			return dr.listResources(ctx, query, zanzana.TypeDashboard)
+			return dr.listAllowedResources(ctx, query, zanzana.TypeDashboard)
 		})
 	}
 
 	if query.Type != searchstore.TypeDashboard {
 		tasks = append(tasks, func() ([]string, error) {
-			return dr.listResources(ctx, query, zanzana.TypeFolder)
+			return dr.listAllowedResources(ctx, query, zanzana.TypeFolder)
 		})
 	}
 
@@ -268,6 +268,33 @@ func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query *da
 	}
 
 	return uids, nil
+}
+
+func (dr *DashboardServiceImpl) listAllowedResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
+	res, err := dr.ac.ListObjects(ctx, accesscontrol.ListObjectsRequest{
+		User:     query.SignedInUser.GetUID(),
+		Type:     resourceType,
+		Relation: "read",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	orgId := query.OrgId
+	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
+		orgId = query.SignedInUser.GetOrgID()
+	}
+	// dashboard:<orgId>-
+	prefix := fmt.Sprintf("%s:%d-", resourceType, orgId)
+
+	resourceUIDs := make([]string, 0)
+	for _, d := range res {
+		if uid, found := strings.CutPrefix(d, prefix); found {
+			resourceUIDs = append(resourceUIDs, uid)
+		}
+	}
+
+	return resourceUIDs, nil
 }
 
 func runBatch(tasks []func() ([]string, error)) ([]string, error) {
@@ -301,31 +328,4 @@ func runBatch(tasks []func() ([]string, error)) ([]string, error) {
 		result = append(result, res...)
 	}
 	return result, nil
-}
-
-func (dr *DashboardServiceImpl) listResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, resourceType string) ([]string, error) {
-	res, err := dr.ac.ListObjects(ctx, accesscontrol.ListObjectsRequest{
-		User:     query.SignedInUser.GetUID(),
-		Type:     resourceType,
-		Relation: "read",
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	orgId := query.OrgId
-	if orgId == 0 && query.SignedInUser.GetOrgID() != 0 {
-		orgId = query.SignedInUser.GetOrgID()
-	}
-	// dashboard:<orgId>-
-	prefix := fmt.Sprintf("%s:%d-", resourceType, orgId)
-
-	resourceUIDs := make([]string, 0)
-	for _, d := range res {
-		if uid, found := strings.CutPrefix(d, prefix); found {
-			resourceUIDs = append(resourceUIDs, uid)
-		}
-	}
-
-	return resourceUIDs, nil
 }
