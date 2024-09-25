@@ -71,7 +71,7 @@ You can use a combination of Alertmanagers. The decision often depends on your a
 
 From Grafana, you can configure and administer your own Alertmanager to receive Grafana alerts.
 
-After adding the Alertmanager, you can use the Grafana Alerting UI to manage notification policies, contact points, and other alerting resources for external Alertmanagers from within Grafana, with support for HTTP basic authentication credentials.
+After adding an Alertmanager, you can use the Grafana Alerting UI to manage notification policies, contact points, and other alerting resources from within Grafana, with support for HTTP basic authentication credentials.
 
 Alertmanagers should be configured as data sources using Grafana Configuration from the main Grafana navigation menu. To add an Alertmanager, complete the following steps.
 
