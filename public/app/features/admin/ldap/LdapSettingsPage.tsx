@@ -306,7 +306,7 @@ export const LdapSettingsPage = () => {
                   />
                 </Field>
                 <Field
-                  label={t('ldap-settings-page.search_filter.label', 'Search filter*')}
+                  label={t('ldap-settings-page.search_filter.label', 'Search filter *')}
                   description={t(
                     'ldap-settings-page.search_filter.description',
                     'LDAP search filter used to locate specific entries within the directory.'

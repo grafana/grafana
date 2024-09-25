@@ -1172,7 +1172,7 @@
     },
     "search_filter": {
       "description": "LDAP search filter used to locate specific entries within the directory.",
-      "label": "Search filter*",
+      "label": "Search filter *",
       "placeholder": "example: cn=%s"
     },
     "search-base-dns": {
