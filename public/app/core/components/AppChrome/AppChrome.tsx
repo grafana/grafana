@@ -93,7 +93,7 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <header className={cx(styles.topNav, isSingleTopNavAndDocked && styles.topNavMenuDocked)}>
+          <header className={cx(styles.topNav, isSingleTopNav && menuDockedAndOpen && styles.topNavMenuDocked)}>
             {isSingleTopNav ? (
               <SingleTopBar
                 sectionNav={state.sectionNav.node}
