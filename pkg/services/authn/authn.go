@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -230,24 +231,30 @@ func ClientWithPrefix(name string) string {
 type RedirectValidator func(url string) error
 
 // HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
-func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.NormalResponse {
+func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) *response.NormalResponse {
 	result := map[string]any{"message": "Logged in"}
-	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator)
+	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator, features)
 	return response.JSON(http.StatusOK, result)
 }
 
 // HandleLoginRedirect is a utility function to perform common operations after a successful login and redirects
-func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) {
-	redirectURL := handleLogin(r, w, cfg, identity, validator)
+func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) {
+	redirectURL := handleLogin(r, w, cfg, identity, validator, features)
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 // HandleLoginRedirectResponse is a utility function to perform common operations after a successful login and return a response.RedirectResponse
-func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.RedirectResponse {
-	return response.Redirect(handleLogin(r, w, cfg, identity, validator))
+func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) *response.RedirectResponse {
+	return response.Redirect(handleLogin(r, w, cfg, identity, validator, features))
 }
 
-func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) string {
+func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator, features featuremgmt.FeatureToggles) string {
+	WriteSessionCookie(w, cfg, identity.SessionToken)
+
+	if features.IsEnabledGlobally(featuremgmt.FlagUseSessionStorageForRedirection) {
+		return cfg.AppSubURL + "/"
+	}
+
 	redirectURL := cfg.AppSubURL + "/"
 	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 {
 		if validator(redirectTo) == nil {
@@ -256,7 +263,6 @@ func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, ident
 		cookies.DeleteCookie(w, "redirect_to", cookieOptions(cfg))
 	}
 
-	WriteSessionCookie(w, cfg, identity.SessionToken)
 	return redirectURL
 }
 

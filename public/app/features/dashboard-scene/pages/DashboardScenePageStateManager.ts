@@ -1,13 +1,11 @@
 import { locationUtil } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
-import { defaultDashboard } from '@grafana/schema';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { default as localStorageStore } from 'app/core/store';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { DashboardModel } from 'app/features/dashboard/state';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import {
   DASHBOARD_FROM_LS_KEY,
@@ -20,10 +18,7 @@ import { DashboardDTO, DashboardRoutes } from 'app/types';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
-import {
-  createDashboardSceneFromDashboardModel,
-  transformSaveModelToScene,
-} from '../serialization/transformSaveModelToScene';
+import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
 import { updateNavModel } from './utils';
@@ -203,11 +198,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
     } catch (err) {
       const msg = getMessageFromError(err);
-      this.setState({
-        isLoading: false,
-        loadError: msg,
-        dashboard: getErrorScene(msg),
-      });
+      this.setState({ isLoading: false, loadError: msg });
     }
   }
 
@@ -317,60 +308,4 @@ export function getDashboardScenePageStateManager(): DashboardScenePageStateMana
   }
 
   return stateManager;
-}
-
-function getErrorScene(msg: string) {
-  const dto: DashboardDTO = {
-    dashboard: {
-      ...defaultDashboard,
-      uid: 'error-dash',
-      title: msg,
-      annotations: {
-        list: [
-          {
-            builtIn: 1,
-            datasource: {
-              type: 'grafana',
-              uid: '-- Grafana --',
-            },
-            enable: false,
-            hide: true,
-            iconColor: 'rgba(0, 211, 255, 1)',
-            name: 'Annotations & Alerts',
-            type: 'dashboard',
-          },
-        ],
-      },
-
-      panels: [
-        {
-          fieldConfig: {
-            defaults: {},
-            overrides: [],
-          },
-          gridPos: {
-            h: 6,
-            w: 12,
-            x: 7,
-            y: 0,
-          },
-          id: 1,
-          options: {
-            code: {
-              language: 'plaintext',
-              showLineNumbers: false,
-              showMiniMap: false,
-            },
-            content: `<br/><br/><center><h1>${msg}</h1></center>`,
-            mode: 'html',
-          },
-          title: '',
-          transparent: true,
-          type: 'text',
-        },
-      ],
-    },
-    meta: { canSave: false, canEdit: false },
-  };
-  return createDashboardSceneFromDashboardModel(new DashboardModel(dto.dashboard, dto.meta), dto.dashboard);
 }
