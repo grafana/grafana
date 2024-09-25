@@ -63,7 +63,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 	return created, err
 }
 
-func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, original runtime.Object, createValidation rest.ValidateObjectFunc, createdCopy runtime.Object, options *metav1.CreateOptions) error {
+func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, _ runtime.Object, createValidation rest.ValidateObjectFunc, createdCopy runtime.Object, options *metav1.CreateOptions) error {
 	var method = "create"
 	log := d.Log.WithValues("method", method)
 
