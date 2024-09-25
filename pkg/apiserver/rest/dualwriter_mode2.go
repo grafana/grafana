@@ -280,6 +280,35 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
+	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.WithValues("object", foundObj).Error(err, "could not get object to update")
+			return nil, false, err
+		}
+		log.Info("object not found for update, creating one")
+	}
+
+	if foundObj != nil {
+		new, err := objInfo.UpdatedObject(ctx, foundObj)
+		if err != nil {
+			return nil, false, err
+		}
+		accOld, err := meta.Accessor(foundObj)
+		if err != nil {
+			return nil, false, err
+		}
+		accNew, err := utils.MetaAccessor(new)
+		if err != nil {
+			return nil, false, err
+		}
+		accNew.SetResourceVersion(accOld.GetResourceVersion())
+		objInfo = &updateWrapper{
+			upstream: objInfo,
+			updated:  new,
+		}
+	}
+
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
