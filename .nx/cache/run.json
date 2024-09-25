@@ -1,0 +1,153 @@
+{
+  "run": {
+    "command": "nx run grafana:\"start\"",
+    "startTime": "2024-09-23T17:59:32.295Z",
+    "endTime": "2024-09-23T18:12:17.943Z",
+    "inner": false
+  },
+  "tasks": [
+    {
+      "taskId": "@grafana-plugins/tempo:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/tempo",
+      "hash": "17191264849782043620",
+      "startTime": "2024-09-23T17:59:32.313Z",
+      "endTime": "2024-09-23T17:59:32.345Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/grafana-postgresql-datasource:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/grafana-postgresql-datasource",
+      "hash": "11580687549172248592",
+      "startTime": "2024-09-23T17:59:32.313Z",
+      "endTime": "2024-09-23T17:59:32.348Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/mssql:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/mssql",
+      "hash": "6735973710534707213",
+      "startTime": "2024-09-23T17:59:32.312Z",
+      "endTime": "2024-09-23T17:59:32.351Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/mysql:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/mysql",
+      "hash": "10057847697378533645",
+      "startTime": "2024-09-23T17:59:32.353Z",
+      "endTime": "2024-09-23T17:59:32.360Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/grafana-azure-monitor-datasource:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/grafana-azure-monitor-datasource",
+      "hash": "6647020301832560572",
+      "startTime": "2024-09-23T17:59:32.356Z",
+      "endTime": "2024-09-23T17:59:32.363Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/grafana-testdata-datasource:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/grafana-testdata-datasource",
+      "hash": "5945536242202093567",
+      "startTime": "2024-09-23T17:59:32.359Z",
+      "endTime": "2024-09-23T17:59:32.367Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/jaeger:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/jaeger",
+      "hash": "11429387974838328960",
+      "startTime": "2024-09-23T17:59:32.371Z",
+      "endTime": "2024-09-23T17:59:32.379Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/zipkin:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/zipkin",
+      "hash": "16264855500344367806",
+      "startTime": "2024-09-23T17:59:32.374Z",
+      "endTime": "2024-09-23T17:59:32.381Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/stackdriver:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/stackdriver",
+      "hash": "9209503953508917882",
+      "startTime": "2024-09-23T17:59:32.377Z",
+      "endTime": "2024-09-23T17:59:32.384Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/grafana-pyroscope-datasource:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/grafana-pyroscope-datasource",
+      "hash": "9630206922955830850",
+      "startTime": "2024-09-23T17:59:32.388Z",
+      "endTime": "2024-09-23T17:59:32.398Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "@grafana-plugins/parca:build",
+      "target": "build",
+      "projectName": "@grafana-plugins/parca",
+      "hash": "5955878928273932548",
+      "startTime": "2024-09-23T17:59:32.391Z",
+      "endTime": "2024-09-23T17:59:32.401Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "grafana:themes-generate",
+      "target": "themes-generate",
+      "projectName": "grafana",
+      "hash": "16972726359795710768",
+      "startTime": "2024-09-23T17:59:32.395Z",
+      "endTime": "2024-09-23T17:59:32.401Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "grafana:start",
+      "target": "start",
+      "projectName": "grafana",
+      "hash": "16762794301324599695",
+      "startTime": "2024-09-23T17:59:32.407Z",
+      "endTime": "2024-09-23T18:12:17.940Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 1
+    }
+  ]
+}
