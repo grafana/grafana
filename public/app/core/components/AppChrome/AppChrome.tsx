@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { locationSearchToObject, locationService } from '@grafana/runtime';
+import { config, locationSearchToObject, locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
@@ -17,6 +17,7 @@ import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
+import { SingleTopBar } from './TopBar/SingleTopBar';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -34,6 +35,7 @@ export function AppChrome({ children }: Props) {
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const scopesDashboardsState = useScopesDashboardsState();
   const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
@@ -92,16 +94,27 @@ export function AppChrome({ children }: Props) {
             Skip to main content
           </LinkButton>
           <header className={cx(styles.topNav)}>
-            {!searchBarHidden && <TopSearchBar />}
-            <NavToolbar
-              searchBarHidden={searchBarHidden}
-              sectionNav={state.sectionNav.node}
-              pageNav={state.pageNav}
-              actions={state.actions}
-              onToggleSearchBar={chrome.onToggleSearchBar}
-              onToggleMegaMenu={handleMegaMenu}
-              onToggleKioskMode={chrome.onToggleKioskMode}
-            />
+            {isSingleTopNav ? (
+              <SingleTopBar
+                sectionNav={state.sectionNav.node}
+                pageNav={state.pageNav}
+                onToggleMegaMenu={handleMegaMenu}
+                onToggleKioskMode={chrome.onToggleKioskMode}
+              />
+            ) : (
+              <>
+                {!searchBarHidden && <TopSearchBar />}
+                <NavToolbar
+                  searchBarHidden={searchBarHidden}
+                  sectionNav={state.sectionNav.node}
+                  pageNav={state.pageNav}
+                  actions={state.actions}
+                  onToggleSearchBar={chrome.onToggleSearchBar}
+                  onToggleMegaMenu={handleMegaMenu}
+                  onToggleKioskMode={chrome.onToggleKioskMode}
+                />
+              </>
+            )}
           </header>
         </>
       )}
@@ -140,11 +153,12 @@ export function AppChrome({ children }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
+  const isSingleTopNav = config.featureToggles.singleTopNav;
   return {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
+      paddingTop: isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2,
       flexGrow: 1,
       height: 'auto',
     }),
@@ -167,13 +181,13 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       },
       {
         position: 'fixed',
-        height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+        height: `calc(100% - ${searchBarHidden || isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
         zIndex: 2,
       }
     ),
     scopesDashboardsContainer: css({
       position: 'fixed',
-      height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+      height: `calc(100% - ${searchBarHidden || isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
       zIndex: 1,
     }),
     scopesDashboardsContainerDocked: css({
