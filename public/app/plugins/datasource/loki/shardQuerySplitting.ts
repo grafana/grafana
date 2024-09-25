@@ -2,8 +2,8 @@ import { Observable, Subscriber, Subscription } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import { DataQueryRequest, LoadingState, DataQueryResponse, TimeRange } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
 
+import { LokiDatasource } from './datasource';
 import { combineResponses } from './mergeResponses';
 import { addShardingPlaceholderSelector, getSelectorForShardValues, interpolateShardingSelector } from './queryUtils';
 import { LokiQuery } from './types';
@@ -39,7 +39,7 @@ import { LokiQuery } from './types';
  * - Once all request groups have been executed, it will be done()
  */
 
-export function runShardSplitQuery(datasource: DataSourceWithBackend<LokiQuery>, request: DataQueryRequest<LokiQuery>) {
+export function runShardSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = datasource
     .interpolateVariablesInQueries(request.targets, request.scopedVars)
     .filter((query) => query.expr)
@@ -52,7 +52,7 @@ export function runShardSplitQuery(datasource: DataSourceWithBackend<LokiQuery>,
 }
 
 function splitQueriesByStreamShard(
-  datasource: DataSourceWithBackend<LokiQuery>,
+  datasource: LokiDatasource,
   request: DataQueryRequest<LokiQuery>,
   splittingTargets: LokiQuery[]
 ) {
@@ -113,7 +113,6 @@ function splitQueriesByStreamShard(
       subRequest.requestId = `${request.requestId}_shard_${cycle}`;
     }
 
-    // @ts-expect-error
     subquerySubscription = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
@@ -145,7 +144,7 @@ function splitQueriesByStreamShard(
   };
 
   const runNonSplitRequest = (subscriber: Subscriber<DataQueryResponse>) => {
-    subquerySubscription = datasource.query(request).subscribe({
+    subquerySubscription = datasource.runQuery(request).subscribe({
       next: (partialResponse: DataQueryResponse) => {
         mergedResponse = partialResponse;
       },
