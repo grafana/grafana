@@ -34,9 +34,9 @@ Grafana Alerting is based on the architecture of the Prometheus alerting system.
 
 {{< figure src="/media/docs/alerting/alerting-alertmanager-architecture.png" max-width="750px" alt="A diagram with the alert generator and alert manager architecture" >}}
 
-This architecture decouples alert rule evaluation from notification handling, allowing Grafana alerts to be forwarded to other alertmanagers.
+This architecture decouples alert rule evaluation from notification handling, allowing Grafana alerts to be forwarded to other Alertmanagers.
 
-Grafana can be configured to forward alerts to different types of alertmanagers. It’s important to note that each alertmanager manages its own independent alerting resources, such as:
+Grafana can be configured to forward alerts to different types of Alertmanagers. It’s important to note that each Alertmanager manages its own independent alerting resources, such as:
 
 - Contact points and notification templates
 - Notification policies and mute timings
@@ -49,11 +49,11 @@ Use the `Choose Alertmanager` on these pages to switch between Alertmanagers.
 
 ## Types of Alertmanagers in Grafana
 
-Grafana can be configured to forward both Grafana-managed and data source-managed alerts to various alertmanagers, depending on your infrastructure and alerting requirements.
+Grafana can be configured to forward both Grafana-managed and data source-managed alerts to various Alertmanagers, depending on your infrastructure and alerting requirements.
 
 - **Grafana Alertmanager**: Grafana has its own built-in Alertmanager, referred to as "Grafana" in the user interface. It is the default Alertmanager and can only handle Grafana-managed alerts.
 
-- **Cloud Alertmanager**: Each Grafana Cloud instance comes preconfigured with an additional alertmanager (`grafanacloud-STACK_NAME-ngalertmanager`) from the Mimir (Prometheus) instance running in the Grafana Cloud Stack.
+- **Cloud Alertmanager**: Each Grafana Cloud instance comes preconfigured with an additional Alertmanager (`grafanacloud-STACK_NAME-ngalertmanager`) from the Mimir (Prometheus) instance running in the Grafana Cloud Stack.
 
   The Cloud Alertmanager is available exclusively in Grafana Cloud and can handle both Grafana-managed and data source-managed alerts.
 
@@ -77,7 +77,7 @@ Grafana Alerting does not support sending alerts to the AWS Managed Service for 
 
 After adding the Alertmanager, you can use the Grafana Alerting UI to manage its alerting resources, such as notification policies, contact points, and more.
 
-Alertmanagers should now be configured as data sources using Grafana Configuration from the main Grafana navigation menu. This enables you to manage the contact points and notification policies of external alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials.
+Alertmanagers should now be configured as data sources using Grafana Configuration from the main Grafana navigation menu. This enables you to manage the contact points and notification policies of external Alertmanagers from within Grafana and also encrypts HTTP basic authentication credentials.
 
 To add an Alertmanager, complete the following steps.
 
