@@ -271,14 +271,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
-	startStorage := time.Now()
-	objFromStorage, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if err != nil {
-		log.WithValues("object", objFromStorage).Error(err, "could not update in storage")
-		d.recordStorageDuration(true, mode2Str, d.resource, "update", startStorage)
-		return objFromStorage, created, err
-	}
-
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
@@ -287,6 +279,14 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 		return objFromLegacy, created, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, "update", startLegacy)
+
+	startStorage := time.Now()
+	objFromStorage, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		log.WithValues("object", objFromStorage).Error(err, "could not update in storage")
+		d.recordStorageDuration(true, mode2Str, d.resource, "update", startStorage)
+		return objFromStorage, created, err
+	}
 
 	areEqual := Compare(objFromStorage, objFromLegacy)
 	d.recordOutcome(mode2Str, name, areEqual, method)
