@@ -75,9 +75,6 @@ export interface GetDataSourceListFilters {
 
   /** Only returns datasources matching the specified types (ie. Loki, Prometheus) */
   type?: string | string[];
-
-  /** Set to false to avoid returning '-- Grafana --' datasource */
-  grafana?: boolean;
 }
 
 let singletonInstance: DataSourceSrv;
