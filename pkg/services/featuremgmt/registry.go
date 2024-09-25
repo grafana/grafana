@@ -1439,6 +1439,13 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:         "homeSetupGuide",
+			Description:  "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        growthAndOnboarding,
+		},
+		{
 			Name:              "appPlatformAccessTokens",
 			Description:       "Enables the use of access tokens for the App Platform",
 			Stage:             FeatureStageExperimental,

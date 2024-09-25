@@ -190,6 +190,7 @@ singleTopNav,experimental,@grafana/grafana-frontend-platform,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
 exploreLogsLimitedTimeRange,experimental,@grafana/observability-logs,false,false,true
+homeSetupGuide,experimental,@grafana/growth-and-onboarding,false,false,true
 appPlatformAccessTokens,experimental,@grafana/identity-access-team,false,false,false
 appSidecar,experimental,@grafana/explore-squad,false,false,false
 groupAttributeSync,experimental,@grafana/identity-access-team,false,false,false
