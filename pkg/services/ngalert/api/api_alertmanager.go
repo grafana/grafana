@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -28,11 +29,12 @@ const (
 )
 
 type AlertmanagerSrv struct {
-	log        log.Logger
-	ac         accesscontrol.AccessControl
-	mam        *notifier.MultiOrgAlertmanager
-	crypto     notifier.Crypto
-	silenceSvc SilenceService
+	log            log.Logger
+	ac             accesscontrol.AccessControl
+	mam            *notifier.MultiOrgAlertmanager
+	crypto         notifier.Crypto
+	silenceSvc     SilenceService
+	featureManager featuremgmt.FeatureToggles
 }
 
 type UnknownReceiverError struct {
@@ -63,14 +65,10 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 }
 
 func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	am, errResp := srv.AlertmanagerFor(c.SignedInUser.GetOrgID())
-	if errResp != nil {
-		return errResp
-	}
-
-	if err := am.SaveAndApplyDefaultConfig(c.Req.Context()); err != nil {
+	err := srv.mam.SaveAndApplyDefaultConfig(c.Req.Context(), c.SignedInUser.GetOrgID())
+	if err != nil {
 		srv.log.Error("Unable to save and apply default alertmanager configuration", "error", err)
-		return ErrResp(http.StatusInternalServerError, err, "failed to save and apply default Alertmanager configuration")
+		return response.ErrOrFallback(http.StatusInternalServerError, "failed to save and apply default Alertmanager configuration", err)
 	}
 
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
@@ -192,6 +190,18 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 	// just bypass the guard which is okay as we are anyway in an invalid state.
 	if err == nil {
 		if err := srv.provenanceGuard(currentConfig, body); err != nil {
+			return ErrResp(http.StatusBadRequest, err, "")
+		}
+	}
+	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
+		if err != nil {
+			// Unclear if returning an error here is the right thing to do, preventing the user from posting a new config
+			// when the current one is legitimately invalid is not optimal, but we need to ensure receiver
+			// permissions are maintained and prevent potential access control bypasses. The workaround is to use the
+			// various new k8s API endpoints to fix the configuration.
+			return ErrResp(http.StatusInternalServerError, err, "")
+		}
+		if err := srv.k8sApiServiceGuard(currentConfig, body); err != nil {
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 	}

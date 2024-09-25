@@ -7,7 +7,6 @@ import {
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
@@ -18,6 +17,7 @@ import { useDispatch } from 'app/types';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
+import { shouldUseK8sApi } from '../../../utils/k8s/utils';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -151,7 +151,6 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
     return { dto: n };
   });
-  const disableEditTitle = editMode && shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
   return (
     <>
       {hasOnCallError && (
@@ -164,7 +163,6 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       {contactPoint?.provisioned && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
 
       <ReceiverForm<GrafanaChannelValues>
-        disableEditTitle={disableEditTitle}
         isEditable={isEditable}
         isTestable={isTestable}
         onSubmit={onSubmit}

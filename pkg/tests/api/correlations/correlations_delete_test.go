@@ -135,6 +135,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 			TargetUID:   &writableDs,
 			OrgId:       writableDsOrgId,
 			Provisioned: true,
+			Type:        correlations.CorrelationType("query"),
 		})
 
 		res := ctx.Delete(DeleteParams{
@@ -160,6 +161,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 			SourceUID: writableDs,
 			TargetUID: &writableDs,
 			OrgId:     writableDsOrgId,
+			Type:      correlations.CorrelationType("query"),
 		})
 
 		res := ctx.Delete(DeleteParams{
@@ -192,6 +194,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 			SourceUID: writableDs,
 			TargetUID: &readOnlyDS,
 			OrgId:     writableDsOrgId,
+			Type:      correlations.CorrelationType("query"),
 		})
 
 		res := ctx.Delete(DeleteParams{
@@ -225,6 +228,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 			TargetUID:   &readOnlyDS,
 			OrgId:       writableDsOrgId,
 			Provisioned: false,
+			Type:        correlations.CorrelationType("query"),
 		})
 
 		ctx.createCorrelation(correlations.CreateCorrelationCommand{
@@ -232,6 +236,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 			TargetUID:   &readOnlyDS,
 			OrgId:       writableDsOrgId,
 			Provisioned: true,
+			Type:        correlations.CorrelationType("query"),
 		})
 
 		res := ctx.Delete(DeleteParams{
