@@ -77,8 +77,11 @@ export function AppChromeMenu({}: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
-  const topPosition =
-    searchBarHidden || config.featureToggles.singleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2;
+  const topPosition = config.featureToggles.singleTopNav
+    ? 0
+    : searchBarHidden
+      ? TOP_BAR_LEVEL_HEIGHT
+      : TOP_BAR_LEVEL_HEIGHT * 2;
 
   return {
     backdrop: css({
