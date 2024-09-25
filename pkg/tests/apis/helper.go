@@ -191,9 +191,12 @@ func (c *K8sResourceClient) SanitizeJSON(v *unstructured.Unstructured, replaceMe
 
 	out, err := json.MarshalIndent(copy, "", "  ")
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 	fmt.Printf("OUT JSON%s", out)
 >>>>>>> 32c1f71dcc4 (Populate UID in legacy)
+=======
+>>>>>>> 8838aa9b49f (Remove logs and commented code)
 	require.NoError(c.t, err)
 	return string(out)
 }
