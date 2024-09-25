@@ -12,6 +12,22 @@ labels:
 menutitle: Search dashboards
 title: Search dashboards and folders
 weight: 400
+refs:
+  service-accounts:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/
+  config-file:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+  feature-toggles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
 ---
 
 # Search dashboards and folders
@@ -58,7 +74,7 @@ You can search for a dashboard by the title of a panel that appears in a dashboa
 If a panel's title matches your search query, the dashboard appears in the search results.
 
 This feature is available by default in Grafana Cloud and in Grafana OSS v9.1 and higher, you access this feature by enabling the `panelTitleSearch` feature toggle.
-For more information about enabling panel title search, refer to [Enable the panelTitleSearch feature toggle.](#enable-panelTitleSearch-feature-toggle)
+For more information about enabling panel title search, refer to [Enable the panelTitleSearch feature toggle.](#enable-the-paneltitlesearch-feature-toggle)
 
 The following image shows the search results when you search using panel title.
 
@@ -70,13 +86,13 @@ Complete the following steps to enable the `panelTitleSearch` feature toggle.
 
 **Before you begin:**
 
-- If you are running Grafana Enterprise with RBAC, enable [service accounts]({{< relref "../administration/service-accounts/" >}}).
+- If you are running Grafana Enterprise with RBAC, enable [service accounts](ref:service-accounts).
 
 **To enable the panelTitleSearch feature toggle:**
 
-1. Open the Grafana [configuration file]({{< relref "../setup-grafana/configure-grafana/#configuration-file-location" >}}).
+1. Open the Grafana [configuration file](ref:config-file).
 
-1. Locate the [feature_toggles]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) section.
+1. Locate the [feature_toggles](ref:feature-toggles) section.
 
 1. Add the following parameter to the `feature_toggles` section:
 
