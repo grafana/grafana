@@ -136,7 +136,7 @@
     "style-loader": "4.0.0",
     "testing-library-selector": "0.3.1",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4",
+    "typescript": "5.6.2",
     "webpack": "5.94.0",
     "webpack-cli": "5.1.4"
   },

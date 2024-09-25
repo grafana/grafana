@@ -21,7 +21,7 @@ export const Selector = ({ refId, query, templateVariableOptions, onChange, data
         inputId={`${refId}-slo-selector`}
         width="auto"
         allowCustomValue
-        value={[...SELECTORS, ...templateVariableOptions].find((s) => s.value === query?.selectorName ?? '')}
+        value={[...SELECTORS, ...templateVariableOptions].find((s) => s.value === query?.selectorName)}
         options={[
           {
             label: 'Template Variables',

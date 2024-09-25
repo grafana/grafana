@@ -184,7 +184,7 @@
     "storybook": "^8.1.6",
     "storybook-dark-mode": "^4.0.1",
     "style-loader": "4.0.0",
-    "typescript": "5.5.4",
+    "typescript": "5.6.2",
     "webpack": "5.94.0"
   },
   "peerDependencies": {

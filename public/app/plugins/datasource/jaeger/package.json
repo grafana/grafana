@@ -37,7 +37,7 @@
     "@types/react-window": "1.8.8",
     "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4",
+    "typescript": "5.6.2",
     "webpack": "5.94.0"
   },
   "peerDependencies": {

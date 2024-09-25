@@ -43,7 +43,7 @@
     "react-select-event": "5.5.1",
     "react-test-renderer": "18.2.0",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4",
+    "typescript": "5.6.2",
     "webpack": "5.94.0"
   },
   "peerDependencies": {

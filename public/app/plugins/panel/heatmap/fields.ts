@@ -102,8 +102,8 @@ export function prepareHeatmapData({
       const optionsCopy = {
         ...options,
         calculation: {
-          xBuckets: { ...options.calculation?.xBuckets } ?? undefined,
-          yBuckets: { ...options.calculation?.yBuckets } ?? undefined,
+          xBuckets: { ...options.calculation?.xBuckets },
+          yBuckets: { ...options.calculation?.yBuckets },
         },
       };
 
