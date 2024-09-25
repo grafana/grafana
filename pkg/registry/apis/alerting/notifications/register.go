@@ -16,6 +16,7 @@ import (
 	notificationsModels "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	receiver "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
+	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/template_group"
 	timeInterval "github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/timeinterval"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -81,9 +82,15 @@ func (t *NotificationsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiser
 		return fmt.Errorf("failed to initialize receiver storage: %w", err)
 	}
 
+	templ, err := template_group.NewStorage(t.ng.Api.Templates, t.namespacer, scheme, optsGetter, dualWriteBuilder)
+	if err != nil {
+		return fmt.Errorf("failed to initialize templates group storage: %w", err)
+	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[notificationsModels.VERSION] = map[string]rest.Storage{
-		notificationsModels.TimeIntervalResourceInfo.StoragePath(): intervals,
-		notificationsModels.ReceiverResourceInfo.StoragePath():     recvStorage,
+		notificationsModels.TimeIntervalResourceInfo.StoragePath():  intervals,
+		notificationsModels.ReceiverResourceInfo.StoragePath():      recvStorage,
+		notificationsModels.TemplateGroupResourceInfo.StoragePath(): templ,
 	}
 	return nil
 }
@@ -107,6 +114,7 @@ func (t *NotificationsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3
 	// Hide the ability to list or watch across all tenants
 	delete(oas.Paths.Paths, root+notificationsModels.ReceiverResourceInfo.GroupResource().Resource)
 	delete(oas.Paths.Paths, root+notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource)
+	delete(oas.Paths.Paths, root+notificationsModels.TemplateGroupResourceInfo.GroupResource().Resource)
 
 	// The root API discovery list
 	sub := oas.Paths.Paths[root]
@@ -120,6 +128,8 @@ func (t *NotificationsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 			switch a.GetResource() {
+			case notificationsModels.TemplateGroupResourceInfo.GroupResource().Resource:
+				return template_group.Authorize(ctx, t.authz, a)
 			case notificationsModels.TimeIntervalResourceInfo.GroupResource().Resource:
 				return timeInterval.Authorize(ctx, t.authz, a)
 			case notificationsModels.ReceiverResourceInfo.GroupResource().Resource:

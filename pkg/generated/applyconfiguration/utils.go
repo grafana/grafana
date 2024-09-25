@@ -28,6 +28,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &alertingnotificationsv0alpha1.ReceiverApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("ReceiverSpec"):
 		return &alertingnotificationsv0alpha1.ReceiverSpecApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("TemplateGroup"):
+		return &alertingnotificationsv0alpha1.TemplateGroupApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("TemplateGroupSpec"):
+		return &alertingnotificationsv0alpha1.TemplateGroupSpecApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TimeInterval"):
 		return &alertingnotificationsv0alpha1.TimeIntervalApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("TimeIntervalSpec"):
