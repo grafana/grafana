@@ -5,7 +5,6 @@ import { DataQueryRequest, LoadingState, DataQueryResponse, TimeRange } from '@g
 import { DataSourceWithBackend } from '@grafana/runtime';
 
 import { combineResponses } from './mergeResponses';
-import { adjustTargetsFromResponseState } from './querySplitting';
 import { addShardingPlaceholderSelector, getSelectorForShardValues, interpolateShardingSelector } from './queryUtils';
 import { LokiQuery } from './types';
 
@@ -108,13 +107,7 @@ function splitQueriesByStreamShard(
       return true;
     };
 
-    const targets = adjustTargetsFromResponseState(splittingTargets, mergedResponse);
-    if (!targets.length) {
-      nextRequest();
-      return;
-    }
-
-    const subRequest = { ...request, targets: interpolateShardingSelector(targets, shardRequests, cycle) };
+    const subRequest = { ...request, targets: interpolateShardingSelector(splittingTargets, shardRequests, cycle) };
     // Request may not have a request id
     if (request.requestId) {
       subRequest.requestId = `${request.requestId}_shard_${cycle}`;
