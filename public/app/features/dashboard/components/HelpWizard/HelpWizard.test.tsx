@@ -25,11 +25,11 @@ function setup() {
   });
   panel.getQueryRunner().resendLastResult();
 
-  return render(<HelpWizard panel={panel} onClose={() => {}} plugin={panel.plugin} />);
+  return render(<HelpWizard panel={panel} onClose={() => { }} plugin={panel.plugin} />);
 }
 describe('SupportSnapshot', () => {
   it('Can render', async () => {
     setup();
-    expect(await screen.findByRole('button', { name: /Dashboard \([\d\.]+ KiB\)/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Download snapshot \([\d\.]+ KiB\)/ })).toBeInTheDocument();
   });
 });
