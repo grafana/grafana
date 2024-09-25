@@ -227,7 +227,7 @@ export class PrometheusDatasource
    */
   _request<T = unknown>(
     url: string,
-    data: Record<string, string> | null,
+    data: Record<string, string | string[]> | null,
     overrides: Partial<BackendSrvRequest> = {}
   ): Observable<FetchResponse<T>> {
     if (this.access === 'direct') {
@@ -259,7 +259,15 @@ export class PrometheusDatasource
           options.url +
           (options.url.search(/\?/) >= 0 ? '&' : '?') +
           Object.entries(data)
-            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+            .map(([k, v]) => {
+              k = encodeURIComponent(k);
+
+              if (Array.isArray(v)) {
+                return v.map((vv) => `${k}=${encodeURIComponent(vv)}`).join('&');
+              }
+
+              return `${k}=${encodeURIComponent(v)}`;
+            })
             .join('&');
       }
     } else {
@@ -287,7 +295,11 @@ export class PrometheusDatasource
   }
 
   // Use this for tab completion features, wont publish response to other components
-  async metadataRequest<T = any>(url: string, params = {}, options?: Partial<BackendSrvRequest>) {
+  async metadataRequest<T = any>(
+    url: string,
+    params: Record<string, string | string[]> | null = {},
+    options?: Partial<BackendSrvRequest>
+  ) {
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
@@ -599,8 +611,10 @@ export class PrometheusDatasource
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+    const scopes = config.featureToggles.promQLScope ? (options.scopes ?? []) : [];
+
     if (!options || options.filters.length === 0) {
-      await this.languageProvider.fetchLabels(options.timeRange, options.queries);
+      await this.languageProvider.fetchLabels(options.timeRange, options.queries, scopes);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
 
@@ -611,7 +625,11 @@ export class PrometheusDatasource
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
 
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(
+      expr,
+      undefined,
+      scopes
+    );
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -621,6 +639,8 @@ export class PrometheusDatasource
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
+    const scopes = config.featureToggles.promQLScope ? (options.scopes ?? []) : [];
+
     const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
       label: f.key,
       value: f.value,
@@ -632,14 +652,19 @@ export class PrometheusDatasource
     if (this.hasLabelsMatchAPISupport()) {
       const requestId = `[${this.uid}][${options.key}]`;
       return (
-        await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange)
+        await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange, scopes)
       ).map((v) => ({
         value: v,
         text: v,
       }));
     }
 
-    const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());
+    const params: Record<string, string | string[]> = this.getTimeRangeParams(
+      options.timeRange ?? getDefaultTimeRange()
+    );
+
+    params['scopes'] = scopes?.map((scope) => scope.metadata.name);
+
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
