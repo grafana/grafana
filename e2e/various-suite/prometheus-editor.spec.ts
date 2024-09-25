@@ -1,5 +1,3 @@
-import { selectors } from '@grafana/e2e-selectors';
-
 import { e2e } from '../utils';
 
 import { getResources } from './helpers/prometheus-helpers';
@@ -67,9 +65,9 @@ describe('Prometheus query editor', () => {
     // check options
     e2e.components.DataSource.Prometheus.queryEditor.legend().scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.format().scrollIntoView().should('exist');
-    cy.get(`#${selectors.components.DataSource.Prometheus.queryEditor.step}`).scrollIntoView().should('exist');
+    cy.get(`[data-test-id="prometheus-step"]`).scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.type().scrollIntoView().should('exist');
-    cy.get(`#${selectors.components.DataSource.Prometheus.queryEditor.exemplars}`).scrollIntoView().should('exist');
+    cy.get(`[data-test-id="prometheus-exemplars"]`).scrollIntoView().should('exist');
   });
 
   describe('Code editor', () => {
