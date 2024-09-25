@@ -7,7 +7,6 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	playlist "github.com/grafana/grafana/apps/playlist/apis/playlist/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
@@ -27,7 +26,11 @@ func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*
 		Group:    "search.grafana.app",
 		Resource: "search",
 	}
-	strategy := grafanaregistry.NewStrategy(scheme, gr.WithVersion(playlist.PlaylistKind().Version()).GroupVersion())
+	groupVersion := schema.GroupVersion{
+		Group:   "search.grafana.app",
+		Version: "v0alpha1",
+	}
+	strategy := grafanaregistry.NewStrategy(scheme, groupVersion)
 	store := &genericregistry.Store{
 		//NewFunc:                   resourceInfo.NewFunc,
 		//NewListFunc:               resourceInfo.NewListFunc,
