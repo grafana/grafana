@@ -67,14 +67,11 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 	points := make([]Point, 0, len(col.Refs))
 	for _, ref := range col.Refs {
 		fp, empty, err := ref.NullableFloat64Value()
-		if empty {
-			return nil, fmt.Errorf("empty frame")
-		}
-		if fp == nil {
-			return nil, fmt.Errorf("nil frame")
-		}
 		if err != nil {
 			return nil, fmt.Errorf("unable to read float64 value: %w", err)
+		}
+		if empty {
+			return nil, fmt.Errorf("empty frame")
 		}
 
 		metric := Metric{
