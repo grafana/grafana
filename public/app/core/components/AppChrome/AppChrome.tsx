@@ -36,7 +36,7 @@ export function AppChrome({ children }: Props) {
   const scopesDashboardsState = useScopesDashboardsState();
   const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
   const isSingleTopNav = config.featureToggles.singleTopNav;
-
+  const isSingleTopNavAndDocked = isSingleTopNav && state.megaMenuDocked && state.megaMenuOpen;
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -93,7 +93,7 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <header className={cx(styles.topNav, isSingleTopNav && state.megaMenuOpen && styles.topNavMenuDocked)}>
+          <header className={cx(styles.topNav, isSingleTopNavAndDocked && styles.topNavMenuDocked)}>
             {isSingleTopNav ? (
               <SingleTopBar
                 sectionNav={state.sectionNav.node}
