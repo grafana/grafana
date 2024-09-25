@@ -674,8 +674,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       <ConfirmModal
         isOpen={showResetModeModal}
         title="Switching to simple mode"
-        body="Is not possible to convert the existing query and expressions to simple mode. 
-          If you continue, the current queries and expressions will be lost. Are you sure you want to switch to simple mode?"
+        body="The selected queries and expressions cannot be converted to simple mode. Switching will remove them. Do you want to proceed?"
         confirmText="Yes"
         icon="exclamation-triangle"
         onConfirm={() => {
