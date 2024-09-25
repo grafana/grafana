@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -44,7 +45,7 @@ type DBstore struct {
 }
 
 func ProvideDBStore(
-	cfg *setting.Cfg, featureToggles featuremgmt.FeatureToggles, sqlstore db.DB, folderService folder.Service, dashboards dashboards.DashboardService, ac accesscontrol.AccessControl) (*DBstore, error) {
+	cfg *setting.Cfg, featureToggles featuremgmt.FeatureToggles, sqlstore *sqlstore.SQLStore, folderService folder.Service, dashboards dashboards.DashboardService, ac accesscontrol.AccessControl) (*DBstore, error) {
 	store := DBstore{
 		Cfg:              cfg.UnifiedAlerting,
 		FeatureToggles:   featureToggles,

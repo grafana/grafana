@@ -29,9 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 
-	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/rand"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -1367,7 +1364,7 @@ func TestIncreaseVersionForAllRulesInNamespaces(t *testing.T) {
 	}
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second}
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
 		SQLStore:      sqlStore,
 		Cfg:           cfg.UnifiedAlerting,

@@ -134,7 +134,7 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 	return nil
 }
 
-func SetupStoreForTesting(t *testing.T, db *sqlstore.ReplStore) *DBstore {
+func SetupStoreForTesting(t *testing.T, db *sqlstore.SQLStore) *DBstore {
 	t.Helper()
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: 1 * time.Second}

@@ -33,8 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -606,7 +604,7 @@ func TestBuildTransition(t *testing.T) {
 	})
 }
 
-func createTestLokiStore(t *testing.T, sql *sqlstore.ReplStore, client lokiQueryClient) *LokiHistorianStore {
+func createTestLokiStore(t *testing.T, sql *sqlstore.SQLStore, client lokiQueryClient) *LokiHistorianStore {
 	t.Helper()
 	ruleStore := store.SetupStoreForTesting(t, sql)
 
@@ -620,7 +618,7 @@ func createTestLokiStore(t *testing.T, sql *sqlstore.ReplStore, client lokiQuery
 
 // createAlertRule creates an alert rule in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRule(t *testing.T, sql *sqlstore.ReplStore, title string, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
+func createAlertRule(t *testing.T, sql *sqlstore.SQLStore, title string, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	if generator == nil {
@@ -647,7 +645,7 @@ func createAlertRule(t *testing.T, sql *sqlstore.ReplStore, title string, genera
 
 // createAlertRuleFromDashboard creates an alert rule with a linked dashboard and panel in the database and returns it.
 // If a generator is not specified, uniqueness of primary key is not guaranteed.
-func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.ReplStore, title string, dashboard dashboards.Dashboard, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
+func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.SQLStore, title string, dashboard dashboards.Dashboard, generator *ngmodels.AlertRuleGenerator) *ngmodels.AlertRule {
 	t.Helper()
 
 	panelID := new(int64)
