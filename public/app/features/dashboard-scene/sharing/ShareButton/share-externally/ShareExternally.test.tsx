@@ -7,18 +7,17 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import {
   CustomVariable,
-  SceneGridLayout,
   SceneQueryRunner,
   SceneTimeRange,
   SceneVariableSet,
   VizPanel,
   VizPanelState,
 } from '@grafana/scenes';
+import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 
 import { contextSrv } from '../../../../../core/services/context_srv';
 import * as sharePublicDashboardUtils from '../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { shareDashboardType } from '../../../../dashboard/components/ShareModal/utils';
-import { DashboardGridItem } from '../../../scene/DashboardGridItem';
 import { DashboardScene, DashboardSceneState } from '../../../scene/DashboardScene';
 import { activateFullSceneTree } from '../../../utils/test-utils';
 import { ShareDrawer } from '../../ShareDrawer/ShareDrawer';
@@ -67,6 +66,7 @@ describe('Alerts', () => {
     });
     expect(screen.queryByTestId(selectors.TemplateVariablesWarningAlert)).toBeInTheDocument();
   });
+
   it('when dashboard has unsupported datasources, warning is shown', async () => {
     await buildAndRenderScenario({
       panelOverrides: {
@@ -101,23 +101,14 @@ async function buildAndRenderScenario({
       canEdit: true,
     },
     $timeRange: new SceneTimeRange({}),
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: new VizPanel({
-            title: 'Panel A',
-            pluginId: 'table',
-            key: 'panel-12',
-            ...panelOverrides,
-          }),
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([
+      new VizPanel({
+        title: 'Panel A',
+        pluginId: 'table',
+        key: 'panel-12',
+        ...panelOverrides,
+      }),
+    ]),
     overlay: drawer,
     ...overrides,
   });

@@ -54,7 +54,6 @@ import {
   getDashboardSceneFor,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
-  getQueryRunnerFor,
   getVizPanelKeyForPanelId,
   isPanelClone,
 } from '../utils/utils';
@@ -341,11 +340,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._initialSaveModel.panels = this._initialSaveModel.panels.slice(1);
     }
 
-    if (this._initialState && this._initialState.body instanceof DefaultGridLayoutManager) {
-      const grid = this._initialState.body.state.grid;
-      grid.setState({
-        children: grid.state.children.slice(1),
-      });
+    if (this._initialState) {
+      this._initialState.body.cleanUpStateFromExplore?.();
     }
   }
 
@@ -458,6 +454,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public addPanel(vizPanel: VizPanel): void {
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
+    }
+
     this.state.body.addPanel(vizPanel);
   }
 
@@ -573,10 +573,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewPanel(): VizPanel {
-    if (!this.state.isEditing) {
-      this.onEnterEditMode();
-    }
-
     const vizPanel = getDefaultVizPanel(this);
 
     this.addPanel(vizPanel);

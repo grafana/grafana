@@ -162,9 +162,6 @@ async function buildTestScene() {
     meta: {
       canEdit: true,
     },
-    body: new SceneGridLayout({
-      children: [],
-    }),
     editview: versionsView,
   });
 
