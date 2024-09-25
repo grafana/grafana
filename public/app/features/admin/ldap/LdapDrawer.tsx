@@ -60,7 +60,7 @@ export const LdapDrawerComponent = ({
   useEffect(() => {
     const { client_cert, client_key, root_ca_cert } = getValues(serverConfig);
     setEncryptionProvider(
-      !client_cert.length && !client_key.length && !root_ca_cert?.length
+      !client_cert?.length && !client_key?.length && !root_ca_cert?.length
         ? EncryptionProvider.Base64
         : EncryptionProvider.FilePath
     );
@@ -83,19 +83,21 @@ export const LdapDrawerComponent = ({
   );
 
   const useTlsDescription = (
-    <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl-tooltip">
-      For a complete list of supported ciphers and TLS versions, refer to:{' '}
-      {
-        <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
-          https://go.dev/src/crypto/tls/cipher_suites.go
-        </TextLink>
-      }
-    </Trans>
+    <>
+      <Trans i18nKey="ldap-drawer.extra-security-section.use-ssl-tooltip">
+        For a complete list of supported ciphers and TLS versions, refer to:
+      </Trans>{' '}
+      {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
+      <TextLink style={{ fontSize: 'inherit' }} href="https://go.dev/src/crypto/tls/cipher_suites.go" external>
+        https://go.dev/src/crypto/tls/cipher_suites.go
+      </TextLink>
+    </>
   );
 
   const onAddGroupMapping = () => {
+    const groupMappings = getValues(`${serverConfig}.group_mappings`) || [];
     setValue(`${serverConfig}.group_mappings`, [
-      ...getValues(`${serverConfig}.group_mappings`),
+      ...groupMappings,
       {
         group_dn: '',
         org_id: 1,
@@ -338,10 +340,12 @@ export const LdapDrawerComponent = ({
                   <Controller
                     name={`${serverConfig}.root_ca_cert_value`}
                     control={control}
-                    render={({ field: { onChange, value, ...field } }) => (
+                    render={({ field: { onChange, ref, value, ...field } }) => (
                       <MultiSelect
                         {...field}
                         allowCustomValue
+                        className={styles.multiSelect}
+                        noOptionsMessage={''}
                         onChange={(v) => onChange(v.map(({ value }) => String(value)))}
                         value={value?.map((v) => ({ label: renderMultiSelectLabel(v), value: v }))}
                       />
@@ -446,6 +450,11 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     button: css({
       marginBottom: theme.spacing(4),
+    }),
+    multiSelect: css({
+      svg: {
+        display: 'none',
+      },
     }),
   };
 }
