@@ -1,4 +1,4 @@
-package queryconvert
+package datasource
 
 import (
 	"bytes"
@@ -87,11 +87,4 @@ func (m mockResponderConvert) Error(err error) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-type mockContextProvider struct {
-}
-
-func (m mockContextProvider) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
-	return backend.PluginContext{}, nil
 }

@@ -1,4 +1,4 @@
-package queryconvert
+package datasource
 
 import (
 	"context"
@@ -17,17 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// PluginContext requires adding system settings (feature flags, etc) to the datasource config
-type PluginContextWrapper interface {
-	PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error)
-}
-
-type PluginClientConversion interface {
+type pluginClientConversion interface {
 	backend.ConversionHandler
 }
 
 type queryConvertREST struct {
-	client          PluginClientConversion
+	client          pluginClientConversion
 	contextProvider PluginContextWrapper
 }
 
@@ -38,7 +33,7 @@ var (
 	_ rest.SingularNameProvider = (*queryConvertREST)(nil)
 )
 
-func RegisterQueryConvert(client PluginClientConversion, contextProvider PluginContextWrapper, storage map[string]rest.Storage) {
+func registerQueryConvert(client pluginClientConversion, contextProvider PluginContextWrapper, storage map[string]rest.Storage) {
 	store := &queryConvertREST{
 		client:          client,
 		contextProvider: contextProvider,
