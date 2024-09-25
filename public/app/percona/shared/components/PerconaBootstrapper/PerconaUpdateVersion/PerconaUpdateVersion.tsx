@@ -1,8 +1,9 @@
 import React, { FC, useEffect, useState } from 'react';
 
+import { dateTimeFormat } from '@grafana/data';
 import { Modal, useStyles2, Button } from '@grafana/ui';
 import {
-  checkUpdatesChangelogs,
+  checkUpdatesChangeLogs,
   getSnoozeCurrentVersion,
   setSnoozeCurrentUpdate,
   UpdatesChangelogs,
@@ -10,7 +11,6 @@ import {
 import { getUpdatesInfo } from 'app/percona/shared/core/selectors';
 import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
-import { dateTimeFormat } from '@grafana/data';
 
 import { Messages } from './PerconaUpdateVersion.constants';
 import { getStyles } from './PerconaUpdateVersion.styles';
@@ -26,7 +26,7 @@ const PerconaUpdateVersion: FC = () => {
   useEffect(() => {
     const showModal = async () => {
       console.log('checkUpdatesChangelogs');
-      await dispatch(checkUpdatesChangelogs());
+      await dispatch(checkUpdatesChangeLogs());
       setShowUpdate(true);
     };
 
@@ -67,36 +67,63 @@ const PerconaUpdateVersion: FC = () => {
       };
       await dispatch(setSnoozeCurrentUpdate(payload));
     }
+    setShowUpdate(false);
   };
 
   const onDismiss = () => {
     setShowUpdate(false);
-  }
+  };
 
   return (
     <>
-          <Modal onDismiss={onDismiss} title={Messages.titleOneUpdate} isOpen={showUpdate && changeLogs && changeLogs?.updates.length === 1 }>
-            <h5 className={styles.version}>{changeLogs?.updates[0].version}</h5>
-            <p className={styles.releaseNotesText}>{changeLogs?.updates[0].releaseNotesText}</p>
-            <h5 className={styles.howToUpdateTitle}>{Messages.howToUpdate}</h5>
-            <p className={styles.howToUpdateDescription}>{Messages.howToUpdateDescription}</p>
-            <div>
-              <Button type="button" variant="secondary" onClick={snoozeUpdate}>Snooze</Button>
-              <Button type="button" variant="primary">Go to updates page</Button>
-            </div>
-          </Modal>
-          <Modal onDismiss={onDismiss} title={Messages.titleMultipleUpdates} isOpen={showUpdate && changeLogs && changeLogs?.updates.length > 1}>
-            <h5 className={styles.newVersionsTitle}>{Messages.newVersions}</h5>
-            <ul>
-              {changeLogs?.updates.map((update: UpdatesChangelogs) => (
-                <li key={update.toString()}>{update.version}, {dateTimeFormat(update.timestamp)}</li>
-              ))}
-            </ul>
-            <div>
-              <Button type="button" variant="secondary" onClick={snoozeUpdate}>Snooze</Button>
-              <Button type="button" variant="primary">Go to updates page</Button>
-            </div>
-          </Modal>
+      <Modal
+        onDismiss={onDismiss}
+        title={Messages.titleOneUpdate}
+        isOpen={showUpdate && changeLogs && changeLogs?.updates.length === 1}
+        className={styles.updateVersionModal}
+      >
+        <h5 className={styles.version}>{changeLogs?.updates[0].version}</h5>
+        <p className={styles.releaseNotesText}>
+          <a href={changeLogs?.updates[0].releaseNotesUrl}>{Messages.fullReleaseNotes}</a>
+        </p>
+        <h5 className={styles.howToUpdateTitle}>{Messages.howToUpdate}</h5>
+        <p className={styles.howToUpdateDescription}>{Messages.howToUpdateDescription}</p>
+        <div className={styles.updateButtons}>
+          <Button type="button" variant="secondary" onClick={snoozeUpdate} className={styles.snoozeButton}>
+            {Messages.snooze}
+          </Button>
+          <Button type="button" variant="primary">
+            <a href="/pmm-ui/updates">{Messages.goToUpdatesPage}</a>
+          </Button>
+        </div>
+      </Modal>
+      <Modal
+        onDismiss={onDismiss}
+        title={Messages.titleMultipleUpdates}
+        isOpen={showUpdate && changeLogs && changeLogs?.updates.length > 1}
+        className={styles.updateVersionModal}
+      >
+        <h5 className={styles.newVersionsTitle}>{Messages.newVersions}</h5>
+        <ul className={styles.listOfReleaseNotes}>
+          {changeLogs?.updates.map((update: UpdatesChangelogs) => (
+            <li key={update.toString()}>
+              <a href={update.releaseNotesUrl}>
+                {update.version}, {dateTimeFormat(update.timestamp,  { format: 'MMM DD, YYYY' })}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <h5 className={styles.notesTitle}>{Messages.notes}</h5>
+        <p>{Messages.notesDescription}</p>
+        <div className={styles.updateButtons}>
+          <Button type="button" variant="secondary" onClick={snoozeUpdate} className={styles.snoozeButton}>
+            {Messages.snooze}
+          </Button>
+          <Button type="button" variant="primary">
+            <a href="/pmm-ui/updates">{Messages.goToUpdatesPage}</a>
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 };

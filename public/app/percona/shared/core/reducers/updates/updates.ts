@@ -4,7 +4,7 @@ import { withSerializedError } from 'app/features/alerting/unified/utils/redux';
 import { UpdatesService } from 'app/percona/shared/services/updates';
 
 import {
-  CheckUpdatesChangelogsPayload,
+  CheckUpdatesChangeLogsResponse,
   CheckUpdatesPayload,
   SnoozePayloadBody,
   SnoozePayloadResponse,
@@ -38,31 +38,36 @@ export const updatesSlice = createSlice({
       ...initialState,
       isLoading: false,
     }));
-    builder.addCase(checkUpdatesChangelogs.pending, (state) => ({
+    builder.addCase(checkUpdatesChangeLogs.pending, (state) => ({
       ...initialState,
       isLoading: true,
     }));
 
-    builder.addCase(checkUpdatesChangelogs.fulfilled, (state, { payload }) => ({
+    builder.addCase(checkUpdatesChangeLogs.fulfilled, (state, { payload }) => ({
       ...state,
       isLoading: false,
       changeLogs: {
         ...payload,
         updates: [
           {
-            version: "PMM 3.0.1",
-            tag: "string",
-            timestamp: "2024-09-24T09:12:31.488Z",
-            releaseNotesUrl: "https://google.com",
-            releaseNotesText: "Advanced Alerts — Configure custom alerts more easily and and for more critical events.\n" +
-              "Real-time Query Insights — Gain immediate insights into query execution.\n" +
-              "Plus improvements, component updates, and bug fixes!",
-          }
+            version: 'PMM 3.0.1',
+            tag: 'string',
+            timestamp: '2024-09-24T09:12:31.488Z',
+            releaseNotesUrl: 'https://google.com',
+            releaseNotesText: 'asdasd',
+          },
+          {
+            version: 'PMM 3.0.1',
+            tag: 'string',
+            timestamp: '2024-09-24T09:12:31.488Z',
+            releaseNotesUrl: 'https://google.com',
+            releaseNotesText: 'asdasd',
+          },
         ],
       },
     }));
 
-    builder.addCase(checkUpdatesChangelogs.rejected, (state) => ({
+    builder.addCase(checkUpdatesChangeLogs.rejected, (state) => ({
       ...state,
       isLoading: false,
     }));
@@ -109,9 +114,9 @@ export const checkUpdatesAction = createAsyncThunk('percona/checkUpdates', async
   }
 });
 
-export const checkUpdatesChangelogs = createAsyncThunk(
+export const checkUpdatesChangeLogs = createAsyncThunk(
   'percona/checkUpdatesChangelogs',
-  async (): Promise<CheckUpdatesChangelogsPayload> =>
+  async (): Promise<CheckUpdatesChangeLogsResponse> =>
     withSerializedError(
       (async () => {
         return await UpdatesService.getUpdatesChangelogs();

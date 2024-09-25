@@ -17,7 +17,7 @@ export interface UpdatesState {
   latest?: LatestInformation;
   latestNewsUrl?: string;
   lastChecked?: string;
-  changeLogs?: CheckUpdatesChangelogsPayload;
+  changeLogs?: CheckUpdatesChangeLogsResponse;
   snoozeCurrentVersion?: SnoozePayloadResponse;
 }
 
@@ -37,7 +37,7 @@ export interface UpdatesChangelogs {
   releaseNotesText: string;
 }
 
-export interface CheckUpdatesChangelogsPayload {
+export interface CheckUpdatesChangeLogsResponse {
   updates: UpdatesChangelogs[];
   lastCheck: string;
 }
