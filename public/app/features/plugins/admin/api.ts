@@ -120,8 +120,8 @@ async function getLocalPluginReadme(id: string): Promise<string> {
 
 async function getLocalPluginChangelog(id: string): Promise<string> {
   try {
-    const markdown: string = await getBackendSrv().get(`${API_ROOT}/${id}/markdown/CHANGELOG`);
-    const markdownAsHtml = markdown ? renderMarkdown(markdown) : '';
+    const pluginFromGcom = await getBackendSrv().get(`api/gnet/plugins/${id}?version=latest`);
+    const markdownAsHtml = pluginFromGcom ? renderMarkdown(pluginFromGcom.changelog) : '';
 
     return markdownAsHtml;
   } catch (error) {
