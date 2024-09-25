@@ -103,7 +103,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
         }
       })
       .catch((err) => {
-        console.log(err);
         const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
         this.setState({
           isLoggingIn: false,
@@ -137,8 +136,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
     const { isLoggingIn, isChangingPassword, showDefaultPasswordWarning, loginErrorMessage } = this.state;
     const { login, toGrafana, changePassword } = this;
     const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
-
-    console.log(loginErrorMessage);
 
     return (
       <>
