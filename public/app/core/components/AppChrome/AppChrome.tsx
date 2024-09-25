@@ -36,7 +36,6 @@ export function AppChrome({ children }: Props) {
   const scopesDashboardsState = useScopesDashboardsState();
   const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
   const isSingleTopNav = config.featureToggles.singleTopNav;
-  const isSingleTopNavAndDocked = isSingleTopNav && state.megaMenuDocked && state.megaMenuOpen;
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
