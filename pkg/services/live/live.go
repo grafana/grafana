@@ -105,9 +105,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	// things. For example Node allows to publish messages to channels from server
 	// side with its Publish method.
 	node, err := centrifuge.New(centrifuge.Config{
-		LogHandler:       handleLog,
-		LogLevel:         centrifuge.LogLevelError,
-		MetricsNamespace: "grafana_live",
+		LogHandler:         handleLog,
+		LogLevel:           centrifuge.LogLevelError,
+		MetricsNamespace:   "grafana_live",
+		ClientQueueMaxSize: 4194304, // 4MB
 		// Use reasonably large expiration interval for stream meta key,
 		// much bigger than maximum HistoryLifetime value in Node config.
 		// This way stream meta data will expire, in some cases you may want

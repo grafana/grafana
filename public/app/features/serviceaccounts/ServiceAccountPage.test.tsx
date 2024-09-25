@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { History, Location } from 'history';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { RouteDescriptor } from 'app/core/navigation/types';
@@ -24,6 +23,12 @@ const setup = (propOverrides: Partial<Props>) => {
   const loadServiceAccountTokensMock = jest.fn();
   const updateServiceAccountMock = jest.fn();
 
+  const mockLocation = {
+    search: '',
+    pathname: '',
+    state: undefined,
+    hash: '',
+  };
   const props: Props = {
     serviceAccount: {} as ServiceAccountDTO,
     tokens: [],
@@ -34,8 +39,20 @@ const setup = (propOverrides: Partial<Props>) => {
       path: '/org/serviceaccounts/1',
       url: 'http://localhost:3000/org/serviceaccounts/1',
     },
-    history: {} as History,
-    location: {} as Location,
+    history: {
+      length: 0,
+      action: 'PUSH',
+      location: mockLocation,
+      push: jest.fn(),
+      replace: jest.fn(),
+      go: jest.fn(),
+      goBack: jest.fn(),
+      goForward: jest.fn(),
+      block: jest.fn(),
+      listen: jest.fn(),
+      createHref: jest.fn(),
+    },
+    location: mockLocation,
     queryParams: {},
     route: {} as RouteDescriptor,
     timezone: '',

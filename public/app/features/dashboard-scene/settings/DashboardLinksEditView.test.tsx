@@ -12,17 +12,6 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { DashboardLinksEditView } from './DashboardLinksEditView';
 import { NEW_LINK } from './links/utils';
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useLocation: jest.fn().mockReturnValue({
-    pathname: '/d/dash-1/settings/links',
-    search: '',
-    hash: '',
-    state: null,
-    key: '5nvxpbdafa',
-  }),
-}));
-
 function render(component: React.ReactNode) {
   return RTLRender(<TestProvider>{component}</TestProvider>);
 }

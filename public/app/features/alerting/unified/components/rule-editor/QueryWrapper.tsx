@@ -15,8 +15,9 @@ import {
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import { GraphThresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
@@ -82,6 +83,19 @@ export const QueryWrapper = ({
     ...cloneDeep(query.model),
   };
 
+  if (queryWithDefaults.datasource && queryWithDefaults.datasource?.uid !== query.datasourceUid) {
+    logInfo('rule query datasource and datasourceUid mismatch', {
+      queryModelDatasourceUid: queryWithDefaults.datasource?.uid || '',
+      queryDatasourceUid: query.datasourceUid,
+      datasourceType: query.model.datasource?.type || 'unknown type',
+    });
+    // There are occasions when the rule query model datasource UID and the datasourceUid do not match
+    // It's unclear as to why this happens, but we need better visibility on why this happens,
+    // so we log when it does, and make the query model datasource UID match the datasource UID
+    // We already elsewhere work under the assumption that the datasource settings are fetched from the datasourceUid property
+    queryWithDefaults.datasource.uid = query.datasourceUid;
+  }
+
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
     return (
@@ -109,7 +123,7 @@ export const QueryWrapper = ({
   }
 
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
-  function HeaderExtras({ query, error, index }: { query: AlertQuery; error?: Error; index: number }) {
+  function HeaderExtras({ query, error, index }: { query: AlertQuery<AlertDataQuery>; error?: Error; index: number }) {
     const queryOptions: AlertQueryOptions = {
       maxDataPoints: query.model.maxDataPoints,
       minInterval: query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined,
@@ -144,7 +158,7 @@ export const QueryWrapper = ({
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
-        <QueryEditorRow<DataQuery>
+        <QueryEditorRow<AlertDataQuery>
           alerting
           collapsable={false}
           dataSource={dsSettings}

@@ -913,13 +913,13 @@ describe('Plugin details page', () => {
       config.featureToggles.pluginsDetailsRightPanel = false;
     });
 
-    it('should display Last updated and report abuse information', async () => {
+    it('should display Last updated and report a concern information', async () => {
       const id = 'right-panel-test-plugin';
       const updatedAt = '2023-10-26T16:54:55.000Z';
       const { queryByText } = renderPluginDetails({ id, updatedAt });
       expect(queryByText('Last updated:')).toBeVisible();
       expect(queryByText('10/26/2023')).toBeVisible();
-      expect(queryByText('Report Abuse')).toBeVisible();
+      expect(queryByText('Report a concern')).toBeVisible();
     });
 
     it('should not display Last updated if there is no updated At data', async () => {

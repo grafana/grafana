@@ -6,15 +6,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/grafana/authlib/claims"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
+
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboardsV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -22,8 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 var (
@@ -46,43 +48,35 @@ type dashboardRow struct {
 }
 
 type dashboardSqlAccess struct {
-	sql          legacysql.NamespacedDBProvider
-	dialect      sqltemplate.Dialect
+	sql          legacysql.LegacyDatabaseProvider
 	namespacer   request.NamespaceMapper
-	dashStore    dashboards.Store
 	provisioning provisioning.ProvisioningService
-	currentRV    legacysql.ResourceVersionLookup
+
+	// Use for writing (not reading)
+	dashStore  dashboards.Store
+	softDelete bool
 
 	// Typically one... the server wrapper
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func NewDashboardAccess(sql db.DB,
+func NewDashboardAccess(sql legacysql.LegacyDatabaseProvider,
 	namespacer request.NamespaceMapper,
 	dashStore dashboards.Store,
 	provisioning provisioning.ProvisioningService,
+	softDelete bool,
 ) DashboardAccess {
-	dialect := sqltemplate.DialectForDriver(string(sql.GetDBType()))
-	if dialect == nil {
-		// panic?
-		// fmt.Errorf("no dialect for driver %q", driverName)
-		fmt.Printf("ERROR: NO DIALECT")
-	}
-
-	nssql := func(ctx context.Context) (db.DB, error) { return sql, nil }
-
 	return &dashboardSqlAccess{
-		sql:          nssql,
-		dialect:      dialect,
+		sql:          sql,
 		namespacer:   namespacer,
 		dashStore:    dashStore,
 		provisioning: provisioning,
-		currentRV:    legacysql.GetResourceVersionLookup(nssql, "dashboard", "updated"),
+		softDelete:   softDelete,
 	}
 }
 
-func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery) (*rowsWrapper, error) {
+func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, query *DashboardQuery) (*rowsWrapper, error) {
 	if len(query.Labels) > 0 {
 		return nil, fmt.Errorf("labels not yet supported")
 		// if query.Requirements.Folder != nil {
@@ -91,10 +85,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 		// }
 	}
 
-	req := sqlQuery{
-		SQLTemplate: sqltemplate.New(a.dialect),
-		Query:       query,
-	}
+	req := newQueryReq(sql, query)
 
 	tmpl := sqlQueryDashboards
 	if query.UseHistoryTable() && query.GetTrash {
@@ -109,11 +100,7 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, query *DashboardQuery)
 	// q = sqltemplate.RemoveEmptyLines(rawQuery)
 	// fmt.Printf(">>%s [%+v]", q, req.GetArgs())
 
-	db, err := a.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		if rows != nil {
 			_ = rows.Close()
@@ -333,6 +320,16 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 		return nil, false, err
 	}
 
+	if a.softDelete {
+		err = a.dashStore.SoftDeleteDashboard(ctx, orgId, uid)
+		if err == nil && dash != nil {
+			now := metav1.NewTime(time.Now())
+			dash.DeletionTimestamp = &now
+			return dash, true, err
+		}
+		return dash, false, err
+	}
+
 	id := dash.Spec.GetNestedInt64("id")
 	if id == 0 {
 		return nil, false, fmt.Errorf("could not find id in saved body")
@@ -351,10 +348,11 @@ func (a *dashboardSqlAccess) DeleteDashboard(ctx context.Context, orgId int64, u
 // SaveDashboard implements DashboardAccess.
 func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, dash *dashboardsV0.Dashboard) (*dashboardsV0.Dashboard, bool, error) {
 	created := false
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, created, err
+	user, ok := claims.From(ctx)
+	if !ok || user == nil {
+		return nil, created, fmt.Errorf("no user found in context")
 	}
+
 	if dash.Name != "" {
 		dash.Spec.Set("uid", dash.Name)
 
@@ -375,8 +373,10 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 
 	var userID int64
-	if user.IsIdentityType(claims.TypeUser) {
-		userID, err = user.GetInternalID()
+	idClaims := user.GetIdentity()
+	if claims.IsIdentityType(idClaims.IdentityType(), claims.TypeUser) {
+		var err error
+		userID, err = identity.UserIdentifier(idClaims.Subject())
 		if err != nil {
 			return nil, false, err
 		}
@@ -401,4 +401,129 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 	}
 	dash, _, err = a.GetDashboard(ctx, orgId, out.UID, 0)
 	return dash, created, err
+}
+
+func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardsV0.LibraryPanelList, error) {
+	limit := int(query.Limit)
+	query.Limit += 1 // for continue
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero orgID")
+	}
+
+	sql, err := a.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newLibraryQueryReq(sql, &query)
+	rawQuery, err := sqltemplate.Execute(sqlQueryPanels, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPanels.Name(), err)
+	}
+	q := rawQuery
+
+	res := &dashboardsV0.LibraryPanelList{}
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	type panel struct {
+		ID        int64
+		UID       string
+		FolderUID string
+
+		Created   time.Time
+		CreatedBy string
+
+		Updated   time.Time
+		UpdatedBy string
+
+		Name        string
+		Type        string
+		Description string
+		Model       []byte
+	}
+
+	var lastID int64
+	for rows.Next() {
+		p := panel{}
+		err = rows.Scan(&p.ID, &p.UID, &p.FolderUID,
+			&p.Created, &p.CreatedBy,
+			&p.Updated, &p.UpdatedBy,
+			&p.Name, &p.Type, &p.Description, &p.Model,
+		)
+		if err != nil {
+			return res, err
+		}
+		lastID = p.ID
+
+		item := dashboardsV0.LibraryPanel{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              p.UID,
+				CreationTimestamp: metav1.NewTime(p.Created),
+				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
+			},
+			Spec: dashboardsV0.LibraryPanelSpec{},
+		}
+
+		status := &dashboardsV0.LibraryPanelStatus{
+			Missing: v0alpha1.Unstructured{},
+		}
+		err = json.Unmarshal(p.Model, &item.Spec)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(p.Model, &status.Missing.Object)
+		if err != nil {
+			return nil, err
+		}
+
+		if item.Spec.Title != p.Name {
+			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("title mismatch (expected: %s)", p.Name))
+		}
+		if item.Spec.Description != p.Description {
+			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("description mismatch (expected: %s)", p.Description))
+		}
+		if item.Spec.Type != p.Type {
+			status.Warnings = append(item.Status.Warnings, fmt.Sprintf("type mismatch (expected: %s)", p.Type))
+		}
+		item.Status = status
+
+		// Remove the properties we are already showing
+		for _, k := range []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "libraryPanel"} {
+			delete(status.Missing.Object, k)
+		}
+
+		meta, err := utils.MetaAccessor(&item)
+		if err != nil {
+			return nil, err
+		}
+		meta.SetFolder(p.FolderUID)
+		meta.SetCreatedBy(p.CreatedBy)
+		meta.SetUpdatedBy(p.UpdatedBy)
+		meta.SetUpdatedTimestamp(&p.Updated)
+		meta.SetOriginInfo(&utils.ResourceOriginInfo{
+			Name: "SQL",
+			Path: strconv.FormatInt(p.ID, 10),
+		})
+
+		res.Items = append(res.Items, item)
+		if len(res.Items) > limit {
+			res.Continue = strconv.FormatInt(lastID, 10)
+			break
+		}
+	}
+	if query.UID == "" {
+		rv, err := sql.GetResourceVersion(ctx, "library_element", "updated")
+		if err == nil {
+			res.ResourceVersion = strconv.FormatInt(rv, 10)
+		}
+	}
+	return res, err
 }

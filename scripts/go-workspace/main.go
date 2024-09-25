@@ -19,6 +19,8 @@ func main() {
 	switch os.Args[1] {
 	case "list-submodules":
 		err = listSubmodules()
+	case "validate-dockerfile":
+		err = validateDockerfile()
 	default:
 		printUsage()
 	}
@@ -40,7 +42,9 @@ func listSubmodules() error {
 	delimiter := fs.String("delimiter", "\n", "Delimiter to use when printing paths")
 	skip := fs.String("skip", "", "Skip submodules with this comment tag")
 	help := fs.Bool("help", false, "Print help message")
-	fs.Parse(os.Args[2:])
+	if err := fs.Parse(os.Args[2:]); err != nil {
+		return err
+	}
 
 	if *help {
 		fs.Usage()
@@ -57,6 +61,41 @@ func listSubmodules() error {
 		fmt.Printf("%s%s", p, *delimiter)
 	}
 
+	return nil
+}
+
+func validateDockerfile() error {
+	fs := flag.NewFlagSet("validate-dockerfile", flag.ExitOnError)
+	workPath := fs.String("path", "go.work", "Path to go.work")
+	dockerfilePath := fs.String("dockerfile-path", "Dockerfile", "Path to Dockerfile")
+	skip := fs.String("skip", "", "Skip submodules with this comment tag")
+	if err := fs.Parse(os.Args[2:]); err != nil {
+		return err
+	}
+
+	dockerFileRaw, err := os.ReadFile(*dockerfilePath)
+	if err != nil {
+		return err
+	}
+	dockerFile := string(dockerFileRaw)
+
+	workfile, err := parseGoWork(*workPath)
+	if err != nil {
+		return err
+	}
+
+	paths := getSubmodulePaths(workfile, *skip)
+	for _, p := range paths {
+		path := strings.TrimPrefix(p, "./")
+		if path == "" || path == "." {
+			continue
+		}
+		if !strings.Contains(dockerFile, path) {
+			return fmt.Errorf("the Dockerfile is missing `COPY %s/go.* %s` for the related module. Please add it and commit the change.", path, path)
+		}
+	}
+
+	fmt.Println("All submodules are included in the Dockerfile.")
 	return nil
 }
 

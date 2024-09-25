@@ -78,7 +78,6 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
 		)
 	case http.MethodGet + "/api/v1/notifications/receivers/{Name}":
-		// TODO: scope to :Name
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingReceiversRead),
 			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),

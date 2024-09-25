@@ -419,6 +419,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	db, cfg := sqlstore.InitTestReplDB(t)
+	cfg.UnifiedAlerting.BaseInterval = time.Second
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -2538,24 +2539,19 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 
 func createRule(t *testing.T, store *ngstore.DBstore, folderUID, title string) *models.AlertRule {
 	t.Helper()
-
-	rule := models.AlertRule{
-		OrgID:        orgID,
-		NamespaceUID: folderUID,
-		Title:        title,
-		Updated:      time.Now(),
-		UID:          util.GenerateShortUID(),
-	}
-	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	gen := models.RuleGen
+	rule := gen.With(
+		gen.WithOrgID(orgID),
+		gen.WithTitle(title),
+		gen.WithNamespaceUID(folderUID),
+		gen.WithIntervalSeconds(10),
+	).Generate()
+	ids, err := store.InsertAlertRules(context.Background(), []models.AlertRule{rule})
 	require.NoError(t, err)
 
-	return &rule
+	result, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{OrgID: orgID, UID: ids[0].UID})
+	require.NoError(t, err)
+	return result
 }
 
 func TestSplitFullpath(t *testing.T) {

@@ -28,7 +28,7 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
 }));
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual<Record<string, any>>('@grafana/runtime'),
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
     get: jest.fn(),
     getInstanceSettings: jest.fn().mockReturnValue({

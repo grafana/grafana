@@ -21,7 +21,7 @@ labels:
     - oss
 menuTitle: Webhook notifier
 title: Configure the webhook notifier for Alerting
-weight: 100
+weight: 0
 ---
 
 # Configure the webhook notifier for Alerting

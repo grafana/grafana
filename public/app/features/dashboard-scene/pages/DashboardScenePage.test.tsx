@@ -25,6 +25,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   setPluginExtensionGetter: jest.fn(),
   getPluginLinkExtensions: jest.fn(),
+  useChromeHeaderHeight: jest.fn().mockReturnValue(80),
   getBackendSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({ dashboard: simpleDashboard, meta: { url: '' } }),
@@ -219,7 +220,7 @@ describe('DashboardScenePage', () => {
 
   describe('empty state', () => {
     it('Shows empty state when dashboard is empty', async () => {
-      loadDashboardMock.mockResolvedValue({ dashboard: { panels: [] }, meta: {} });
+      loadDashboardMock.mockResolvedValue({ dashboard: { uid: 'my-dash-uid', panels: [] }, meta: {} });
       setup();
 
       expect(await screen.findByText('Start your new dashboard by adding a visualization')).toBeInTheDocument();
@@ -298,7 +299,7 @@ describe('DashboardScenePage', () => {
     it('should show controls', async () => {
       getDashboardScenePageStateManager().clearDashboardCache();
       loadDashboardMock.mockClear();
-      loadDashboardMock.mockResolvedValue({ dashboard: { panels: [] }, meta: {} });
+      loadDashboardMock.mockResolvedValue({ dashboard: { uid: 'my-dash-uid', panels: [] }, meta: {} });
 
       setup();
 

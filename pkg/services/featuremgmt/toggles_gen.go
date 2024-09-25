@@ -87,6 +87,10 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
+	// FlagVizActions
+	// Allow actions in visualizations
+	FlagVizActions = "vizActions"
+
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -103,10 +107,6 @@ const (
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagUnifiedStorage
-	// SQL-based k8s storage
-	FlagUnifiedStorage = "unifiedStorage"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -118,6 +118,10 @@ const (
 	// FlagMysqlAnsiQuotes
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
+
+	// FlagMysqlParseTime
+	// Ensure the parseTime flag is set for MySQL driver
+	FlagMysqlParseTime = "mysqlParseTime"
 
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
@@ -174,10 +178,6 @@ const (
 	// FlagPrometheusRunQueriesInParallel
 	// Enables running Prometheus queries in parallel
 	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
-
-	// FlagPrometheusDataplane
-	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
-	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagLokiMetricDataplane
 	// Changes metric responses from Loki to be compliant with the dataplane specification.
@@ -283,8 +283,12 @@ const (
 	// Enables metrics summary queries in the Tempo data source
 	FlagMetricsSummary = "metricsSummary"
 
+	// FlagDatasourceAPIServers
+	// Expose some datasources as apiservers.
+	FlagDatasourceAPIServers = "datasourceAPIServers"
+
 	// FlagGrafanaAPIServerWithExperimentalAPIs
-	// Register experimental APIs with the k8s API server
+	// Register experimental APIs with the k8s API server, including all datasources
 	FlagGrafanaAPIServerWithExperimentalAPIs = "grafanaAPIServerWithExperimentalAPIs"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
@@ -359,10 +363,6 @@ const (
 	// Sends metrics of public grafana packages usage by plugins
 	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
 
-	// FlagIdForwarding
-	// Generate signed id token for identity that can be forwarded to plugins and external services
-	FlagIdForwarding = "idForwarding"
-
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
@@ -399,6 +399,10 @@ const (
 	// Use the kubernetes API in the frontend for dashboards
 	FlagKubernetesDashboards = "kubernetesDashboards"
 
+	// FlagKubernetesFolders
+	// Use the kubernetes API in the frontend for folders, and route /api/folders requests to k8s
+	FlagKubernetesFolders = "kubernetesFolders"
+
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
 	FlagDatasourceQueryTypes = "datasourceQueryTypes"
@@ -428,7 +432,7 @@ const (
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"
 
 	// FlagTeamHttpHeaders
-	// Enables Team LBAC for datasources to apply team headers to the client requests
+	// Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams
 	FlagTeamHttpHeaders = "teamHttpHeaders"
 
 	// FlagCachingOptimizeSerializationMemoryUsage
@@ -624,7 +628,7 @@ const (
 	FlagCloudWatchNewLabelParsing = "cloudWatchNewLabelParsing"
 
 	// FlagAccessActionSets
-	// Introduces action sets for resource permissions
+	// Introduces action sets for resource permissions. Also ensures that all folder editors and admins can create subfolders without needing any additional permissions.
 	FlagAccessActionSets = "accessActionSets"
 
 	// FlagDisableNumericMetricsSortingInExpressions
@@ -727,10 +731,6 @@ const (
 	// Round up end time for metric queries to the next minute to avoid missing data
 	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
 
-	// FlagBodyScrolling
-	// Adjusts Page to make body the scrollable element
-	FlagBodyScrolling = "bodyScrolling"
-
 	// FlagCloudwatchMetricInsightsCrossAccount
 	// Enables cross account observability for Cloudwatch Metric Insights query builder
 	FlagCloudwatchMetricInsightsCrossAccount = "cloudwatchMetricInsightsCrossAccount"
@@ -739,9 +739,9 @@ const (
 	// Deprecated. Allow override default AAD audience for Azure Prometheus endpoint. Enabled by default. This feature should no longer be used and will be removed in the future.
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagBackgroundPluginInstaller
-	// Enable background plugin installer
-	FlagBackgroundPluginInstaller = "backgroundPluginInstaller"
+	// FlagAlertingFilterV2
+	// Enable the new alerting search experience
+	FlagAlertingFilterV2 = "alertingFilterV2"
 
 	// FlagDataplaneAggregator
 	// Enable grafana dataplane aggregator
@@ -754,4 +754,47 @@ const (
 	// FlagTableNG
 	// Allows access to the new react-data-grid based table component.
 	FlagTableNG = "tableNG"
+	// FlagNewFiltersUI
+	// Enables new combobox style UI for the Ad hoc filters variable in scenes architecture
+	FlagNewFiltersUI = "newFiltersUI"
+
+	// FlagLokiSendDashboardPanelNames
+	// Send dashboard and panel names to Loki when querying
+	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
+
+	// FlagSingleTopNav
+	// Unifies the top search bar and breadcrumb bar into one
+	FlagSingleTopNav = "singleTopNav"
+
+	// FlagExploreLogsShardSplitting
+	// Used in Explore Logs to split queries into multiple queries based on the number of shards
+	FlagExploreLogsShardSplitting = "exploreLogsShardSplitting"
+
+	// FlagExploreLogsAggregatedMetrics
+	// Used in Explore Logs to query by aggregated metrics
+	FlagExploreLogsAggregatedMetrics = "exploreLogsAggregatedMetrics"
+
+	// FlagExploreLogsLimitedTimeRange
+	// Used in Explore Logs to limit the time range
+	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
+
+	// FlagAppPlatformAccessTokens
+	// Enables the use of access tokens for the App Platform
+	FlagAppPlatformAccessTokens = "appPlatformAccessTokens"
+
+	// FlagAppSidecar
+	// Enable the app sidecar feature that allows rendering 2 apps at the same time
+	FlagAppSidecar = "appSidecar"
+
+	// FlagGroupAttributeSync
+	// Enable the groupsync extension for managing Group Attribute Sync feature
+	FlagGroupAttributeSync = "groupAttributeSync"
+
+	// FlagImprovedExternalSessionHandling
+	// Enable improved support for external sessions in Grafana
+	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
+
+	// FlagUseSessionStorageForRedirection
+	// Use session storage for handling the redirection after login
+	FlagUseSessionStorageForRedirection = "useSessionStorageForRedirection"
 )

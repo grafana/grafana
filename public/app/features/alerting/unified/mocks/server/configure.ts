@@ -4,9 +4,11 @@ import { config } from '@grafana/runtime';
 import server, { mockFeatureDiscoveryApi } from 'app/features/alerting/unified/mockApi';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
+  ALERTMANAGER_UPDATE_ERROR_RESPONSE,
   getAlertmanagerConfigHandler,
   getGrafanaAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
+  updateGrafanaAlertmanagerConfigHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
@@ -15,6 +17,7 @@ import {
   getPluginMissingHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
@@ -124,5 +127,11 @@ export const removePlugin = (pluginId: string) => {
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
+  clearPluginSettingsCache(pluginId);
   server.use(getDisabledPluginHandler(pluginId));
+};
+
+/** Make alertmanager config update fail */
+export const makeGrafanaAlertmanagerConfigUpdateFail = () => {
+  server.use(updateGrafanaAlertmanagerConfigHandler(ALERTMANAGER_UPDATE_ERROR_RESPONSE));
 };

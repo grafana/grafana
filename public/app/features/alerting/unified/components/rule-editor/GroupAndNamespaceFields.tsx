@@ -10,8 +10,6 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesAction } from '../../state/actions';
 import { RuleFormValues } from '../../types/rule-form';
 
-import { checkForPathSeparator } from './util';
-
 interface Props {
   rulesSourceName: string;
 }
@@ -74,9 +72,6 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
-            validate: {
-              pathSeparator: checkForPathSeparator,
-            },
           }}
         />
       </Field>
@@ -98,9 +93,6 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           control={control}
           rules={{
             required: { value: true, message: 'Required.' },
-            validate: {
-              pathSeparator: checkForPathSeparator,
-            },
           }}
         />
       </Field>

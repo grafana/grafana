@@ -150,12 +150,16 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		attribute.String("identity.AuthenticatedBy", identity.GetAuthenticatedBy()),
 	)
 
-	if len(identity.ClientParams.FetchPermissionsParams.ActionsLookup) > 0 {
-		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.ActionsLookup", identity.ClientParams.FetchPermissionsParams.ActionsLookup))
+	if len(identity.ClientParams.FetchPermissionsParams.RestrictedActions) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.RestrictedActions", identity.ClientParams.FetchPermissionsParams.RestrictedActions))
 	}
 
 	if len(identity.ClientParams.FetchPermissionsParams.Roles) > 0 {
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.Roles", identity.ClientParams.FetchPermissionsParams.Roles))
+	}
+
+	if len(identity.ClientParams.FetchPermissionsParams.AllowedActions) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.AllowedActions", identity.ClientParams.FetchPermissionsParams.AllowedActions))
 	}
 
 	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {

@@ -188,23 +188,6 @@ func convertSessionListToDTO(sl cloudmigration.CloudMigrationSessionListResponse
 	}
 }
 
-func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) MigrateDataResponseDTO {
-	items := make([]MigrateDataResponseItemDTO, len(r.Items))
-	for i := 0; i < len(r.Items); i++ {
-		item := r.Items[i]
-		items[i] = MigrateDataResponseItemDTO{
-			Type:    MigrateDataType(item.Type),
-			RefID:   item.RefID,
-			Status:  ItemStatus(item.Status),
-			Message: item.Error,
-		}
-	}
-	return MigrateDataResponseDTO{
-		RunUID: r.RunUID,
-		Items:  items,
-	}
-}
-
 // Base snapshot without results
 type SnapshotDTO struct {
 	SnapshotUID string         `json:"uid"`

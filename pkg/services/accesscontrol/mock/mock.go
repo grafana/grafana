@@ -265,3 +265,8 @@ func (m *Mock) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol
 	}
 	return nil
 }
+
+// WithoutResolvers implements fullAccessControl.
+func (m *Mock) WithoutResolvers() accesscontrol.AccessControl {
+	return m
+}

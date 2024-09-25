@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LinkButton, Stack, useStyles2 } from '@grafana/ui';

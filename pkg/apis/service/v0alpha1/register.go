@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,7 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var ExternalNameResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+var ExternalNameResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"externalnames", "externalname", "ExternalName",
 	func() runtime.Object { return &ExternalName{} },
 	func() runtime.Object { return &ExternalNameList{} },

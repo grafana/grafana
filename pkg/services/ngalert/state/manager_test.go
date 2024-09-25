@@ -1592,8 +1592,10 @@ func TestProcessEvalResults(t *testing.T) {
         	            grafana_alerting_state_calculation_duration_seconds_sum 0
         	            grafana_alerting_state_calculation_duration_seconds_count %[1]d
 						`, results)
-			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds", "grafana_alerting_state_calculation_total")
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds")
 			require.NoError(t, err)
+			err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_state_calculation_total")
+			require.ErrorContains(t, err, "expected metric name(s) not found: [grafana_alerting_state_calculation_total]")
 		})
 	}
 

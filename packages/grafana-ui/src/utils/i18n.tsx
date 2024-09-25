@@ -1,4 +1,5 @@
 import i18next from 'i18next';
+import { ReactElement } from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
 // We want to translate grafana-ui without introducing any breaking changes for consumers
@@ -23,7 +24,14 @@ function initI18n() {
   }
 }
 
-export const Trans: typeof I18NextTrans = (props) => {
+type I18NextTransType = typeof I18NextTrans;
+type I18NextTransProps = Parameters<I18NextTransType>[0];
+
+interface TransProps extends I18NextTransProps {
+  i18nKey: string;
+}
+
+export const Trans = (props: TransProps): ReactElement => {
   initI18n();
   return <I18NextTrans {...props} />;
 };

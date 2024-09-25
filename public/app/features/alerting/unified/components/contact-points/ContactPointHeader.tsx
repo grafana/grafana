@@ -6,6 +6,7 @@ import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 
 import { t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
+import { PROVENANCE_ANNOTATION } from 'app/features/alerting/unified/utils/k8s/constants';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { createRelativeUrl } from '../../utils/url';
@@ -14,18 +15,16 @@ import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 
 import { UnusedContactPointBadge } from './components/UnusedBadge';
-import { RouteReference } from './utils';
+import { ContactPointWithMetadata } from './utils';
 
 interface ContactPointHeaderProps {
-  name: string;
+  contactPoint: ContactPointWithMetadata;
   disabled?: boolean;
-  provisioned?: boolean;
-  policies?: RouteReference[];
-  onDelete: (name: string) => void;
+  onDelete: (contactPoint: ContactPointWithMetadata) => void;
 }
 
-export const ContactPointHeader = (props: ContactPointHeaderProps) => {
-  const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
+export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }: ContactPointHeaderProps) => {
+  const { name, id, provisioned, policies = [] } = contactPoint;
   const styles = useStyles2(getStyles);
 
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
@@ -76,7 +75,7 @@ export const ContactPointHeader = (props: ContactPointHeaderProps) => {
           icon="trash-alt"
           destructive
           disabled={disabled || !canDelete}
-          onClick={() => onDelete(name)}
+          onClick={() => onDelete(contactPoint)}
         />
       </ConditionalWrap>
     );
@@ -85,6 +84,10 @@ export const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const referencedByPoliciesText = t('alerting.contact-points.used-by', 'Used by {{ count }} notification policy', {
     count: numberOfPolicies,
   });
+
+  // TOOD: Tidy up/consolidate logic for working out id for contact point. This requires some unravelling of
+  // existing types so its clearer where the ID has come from
+  const urlId = id || name;
 
   return (
     <div className={styles.headerWrapper}>
@@ -104,7 +107,9 @@ export const ContactPointHeader = (props: ContactPointHeaderProps) => {
             {referencedByPoliciesText}
           </TextLink>
         )}
-        {provisioned && <ProvisioningBadge />}
+        {provisioned && (
+          <ProvisioningBadge tooltip provenance={contactPoint.metadata?.annotations?.[PROVENANCE_ANNOTATION]} />
+        )}
         {!isReferencedByAnyPolicy && <UnusedContactPointBadge />}
         <Spacer />
         <LinkButton
@@ -117,13 +122,13 @@ export const ContactPointHeader = (props: ContactPointHeaderProps) => {
           disabled={disabled}
           aria-label={`${canEdit ? 'edit' : 'view'}-action`}
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
-          href={`/alerting/notifications/receivers/${encodeURIComponent(name)}/edit`}
+          href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
         >
           {canEdit ? 'Edit' : 'View'}
         </LinkButton>
         {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>
-            <MoreButton />
+            <MoreButton aria-label={`More actions for contact point "${contactPoint.name}"`} />
           </Dropdown>
         )}
       </Stack>

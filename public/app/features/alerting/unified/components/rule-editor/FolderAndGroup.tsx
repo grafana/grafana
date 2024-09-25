@@ -14,7 +14,7 @@ import { AccessControlAction } from 'app/types';
 import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
-import { grafanaRulerConfig } from '../../hooks/useCombinedRule';
+import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
@@ -23,7 +23,6 @@ import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
-import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
 
@@ -34,7 +33,7 @@ export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups
     alertRuleApi.endpoints.rulerNamespace.useQuery(
       {
         namespace: folderUid,
-        rulerConfig: grafanaRulerConfig,
+        rulerConfig: GRAFANA_RULER_CONFIG,
       },
       {
         skip: !folderUid,
@@ -175,9 +174,6 @@ export function FolderAndGroup({
                     name="folder"
                     rules={{
                       required: { value: true, message: 'Select a folder' },
-                      validate: {
-                        pathSeparator: (folder: Folder) => checkForPathSeparator(folder.uid),
-                      },
                     }}
                   />
                   <Text color="secondary">or</Text>
@@ -251,9 +247,6 @@ export function FolderAndGroup({
               control={control}
               rules={{
                 required: { value: true, message: 'Must enter a group name' },
-                validate: {
-                  pathSeparator: (group_: string) => checkForPathSeparator(group_),
-                },
               }}
             />
           </Field>

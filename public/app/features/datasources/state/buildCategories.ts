@@ -257,6 +257,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Atlassian Statuspage',
       imgUrl: 'public/img/plugins/atlassian-statuspage.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-aurora-datasource',
+      description: 'Aurora data source',
+      name: 'Aurora',
+      imgUrl: 'public/img/plugins/aurora.svg',
+    }),
   ];
 }
 

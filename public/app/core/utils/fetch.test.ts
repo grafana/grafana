@@ -52,7 +52,6 @@ describe('parseInitFromOptions', () => {
 describe('parseHeaders', () => {
   it.each`
     options                                                                                 | expected
-    ${undefined}                                                                            | ${{ map: { accept: 'application/json, text/plain, */*' } }}
     ${{ propKey: 'some prop value' }}                                                       | ${{ map: { accept: 'application/json, text/plain, */*' } }}
     ${{ method: 'GET' }}                                                                    | ${{ map: { accept: 'application/json, text/plain, */*' } }}
     ${{ method: 'POST' }}                                                                   | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json' } }}
@@ -70,6 +69,8 @@ describe('parseHeaders', () => {
     ${{ method: 'PUT', headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }}  | ${{ map: { accept: 'application/json, text/plain, */*', 'content-type': 'application/x-www-form-urlencoded' } }}
     ${{ headers: { Accept: 'text/plain' } }}                                                | ${{ map: { accept: 'text/plain' } }}
     ${{ headers: { Auth: 'Basic asdasdasd' } }}                                             | ${{ map: { accept: 'application/json, text/plain, */*', auth: 'Basic asdasdasd' } }}
+    ${{ headers: { Key: '🚀' } }}                                                           | ${{ map: { key: '%F0%9F%9A%80', accept: 'application/json, text/plain, */*' } }}
+    ${{ headers: { '🚀': 'value' } }}                                                       | ${{ map: { '%f0%9f%9a%80': 'value', accept: 'application/json, text/plain, */*' } }}
   `("when called with options: '$options' then the result should be '$expected'", ({ options, expected }) => {
     expect(parseHeaders(options)).toEqual(expected);
   });

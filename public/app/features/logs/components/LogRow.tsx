@@ -149,9 +149,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   onMouseLeave = () => {
     this.setState({ mouseIsOver: false });
-    if (this.props.onLogRowHover) {
-      this.props.onLogRowHover(undefined);
-    }
   };
 
   componentDidMount() {

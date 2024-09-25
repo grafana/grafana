@@ -65,71 +65,6 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func Test_CreateGetRunMigrationsAndRuns(t *testing.T) {
-	s := setUpServiceTest(t, true)
-
-	createTokenResp, err := s.CreateToken(context.Background())
-	assert.NoError(t, err)
-	assert.NotEmpty(t, createTokenResp.Token)
-
-	cmd := cloudmigration.CloudMigrationSessionRequest{
-		AuthToken: createTokenResp.Token,
-	}
-
-	createResp, err := s.CreateSession(context.Background(), cmd)
-	require.NoError(t, err)
-	require.NotEmpty(t, createResp.UID)
-	require.NotEmpty(t, createResp.Slug)
-
-	getMigResp, err := s.GetSession(context.Background(), createResp.UID)
-	require.NoError(t, err)
-	require.NotNil(t, getMigResp)
-	require.Equal(t, createResp.UID, getMigResp.UID)
-	require.Equal(t, createResp.Slug, getMigResp.Slug)
-
-	listResp, err := s.GetSessionList(context.Background())
-	require.NoError(t, err)
-	require.NotNil(t, listResp)
-	require.Equal(t, 1, len(listResp.Sessions))
-	require.Equal(t, createResp.UID, listResp.Sessions[0].UID)
-	require.Equal(t, createResp.Slug, listResp.Sessions[0].Slug)
-
-	runResp, err := s.RunMigration(ctxWithSignedInUser(), createResp.UID)
-	require.NoError(t, err)
-	require.NotNil(t, runResp)
-	resultItemsByType := make(map[string]int)
-	for _, item := range runResp.Items {
-		resultItemsByType[string(item.Type)] = resultItemsByType[string(item.Type)] + 1
-	}
-	require.Equal(t, 1, resultItemsByType["DASHBOARD"])
-	require.Equal(t, 2, resultItemsByType["DATASOURCE"])
-	require.Equal(t, 2, len(resultItemsByType))
-
-	runStatusResp, err := s.GetMigrationStatus(context.Background(), runResp.RunUID)
-	require.NoError(t, err)
-	require.Equal(t, runResp.RunUID, runStatusResp.UID)
-
-	listRunResp, err := s.GetMigrationRunList(context.Background(), createResp.UID)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(listRunResp.Runs))
-	require.Equal(t, runResp.RunUID, listRunResp.Runs[0].RunUID)
-
-	/**
-	-- This is not working at the moment since it is a mix of old and new methods
-	will be fixed later when we clean the old functions and stick to the new ones.
-
-	delMigResp, err := s.DeleteSession(context.Background(), createResp.UID)
-	require.NoError(t, err)
-	require.NotNil(t, createResp.UID, delMigResp.UID)
-
-	// after deleting the session, the snapshots and resources should not exist anymore.
-	// we check the snapshot for now
-	listRunResp2, err := s.GetMigrationRunList(context.Background(), createResp.UID)
-	require.NoError(t, err)
-	require.Equal(t, 0, len(listRunResp2.Runs))
-	*/
-}
-
 func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
 
@@ -137,8 +72,15 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 	s.gmsClient = gmsClientMock
 
 	// Insert a session and snapshot into the database before we start
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{})
+	createTokenResp, err := s.CreateToken(context.Background())
+	assert.NoError(t, err)
+	assert.NotEmpty(t, createTokenResp.Token)
+
+	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
+		AuthToken: createTokenResp.Token,
+	})
 	require.NoError(t, err)
+
 	uid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 		UID:            "test uid",
 		SessionUID:     sess.UID,
@@ -306,8 +248,15 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	s.gmsClient = gmsClientMock
 
 	// Insert a snapshot into the database before we start
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{})
+	createTokenResp, err := s.CreateToken(context.Background())
+	assert.NoError(t, err)
+	assert.NotEmpty(t, createTokenResp.Token)
+
+	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
+		AuthToken: createTokenResp.Token,
+	})
 	require.NoError(t, err)
+
 	uid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 		UID:            uuid.NewString(),
 		SessionUID:     sess.UID,
@@ -416,7 +365,13 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 	s := setUpServiceTest(t, false).(*Service)
 
 	// Insert a processing snapshot into the database before we start so we query GMS
-	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{})
+	createTokenResp, err := s.CreateToken(context.Background())
+	assert.NoError(t, err)
+	assert.NotEmpty(t, createTokenResp.Token)
+
+	sess, err := s.store.CreateMigrationSession(context.Background(), cloudmigration.CloudMigrationSession{
+		AuthToken: createTokenResp.Token,
+	})
 	require.NoError(t, err)
 	snapshotUid, err := s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 		UID:            uuid.NewString(),
@@ -526,6 +481,80 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 	uninstalledAltered := findRef("4")
 	assert.Equal(t, cloudmigration.ItemStatusWarning, uninstalledAltered.Status)
 	assert.Equal(t, uninstalledAltered.Error, "Only core data sources are supported. Please ensure the plugin is installed on the cloud stack.")
+}
+
+func TestDeleteSession(t *testing.T) {
+	s := setUpServiceTest(t, false).(*Service)
+
+	t.Run("when deleting a session that does not exist in the database, it returns an error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		session, err := s.DeleteSession(ctx, "invalid-session-uid")
+		require.Nil(t, session)
+		require.Error(t, err)
+	})
+
+	t.Run("when deleting an existing session, it returns the deleted session and no error", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		createTokenResp, err := s.CreateToken(ctx)
+		require.NoError(t, err)
+		require.NotEmpty(t, createTokenResp.Token)
+
+		cmd := cloudmigration.CloudMigrationSessionRequest{
+			AuthToken: createTokenResp.Token,
+		}
+
+		createResp, err := s.CreateSession(ctx, cmd)
+		require.NoError(t, err)
+		require.NotEmpty(t, createResp.UID)
+		require.NotEmpty(t, createResp.Slug)
+
+		deletedSession, err := s.DeleteSession(ctx, createResp.UID)
+		require.NoError(t, err)
+		require.NotNil(t, deletedSession)
+		require.Equal(t, deletedSession.UID, createResp.UID)
+
+		notFoundSession, err := s.GetSession(ctx, deletedSession.UID)
+		require.ErrorIs(t, err, cloudmigration.ErrMigrationNotFound)
+		require.Nil(t, notFoundSession)
+	})
+}
+
+func TestReportEvent(t *testing.T) {
+	t.Run("when the session is nil, it does not report the event", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		gmsMock := &gmsClientMock{}
+
+		s := setUpServiceTest(t, false).(*Service)
+		s.gmsClient = gmsMock
+
+		require.NotPanics(t, func() {
+			s.report(ctx, nil, gmsclient.EventConnect, time.Minute, nil)
+		})
+
+		require.Zero(t, gmsMock.reportEventCalled)
+	})
+
+	t.Run("when the session is not nil, it reports the event", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		t.Cleanup(cancel)
+
+		gmsMock := &gmsClientMock{}
+
+		s := setUpServiceTest(t, false).(*Service)
+		s.gmsClient = gmsMock
+
+		require.NotPanics(t, func() {
+			s.report(ctx, &cloudmigration.CloudMigrationSession{}, gmsclient.EventConnect, time.Minute, nil)
+		})
+
+		require.Equal(t, 1, gmsMock.reportEventCalled)
+	})
 }
 
 func ctxWithSignedInUser() context.Context {

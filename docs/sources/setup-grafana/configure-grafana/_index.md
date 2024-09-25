@@ -39,7 +39,7 @@ On Windows, the `sample.ini` file is located in the same directory as `defaults.
 
 ### macOS
 
-By default, the configuration file is located at `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override the settings defined in `conf/defaults.ini`.
+By default, the configuration file is located at `/opt/homebrew/etc/grafana/grafana.ini` or `/usr/local/etc/grafana/grafana.ini`. For a Grafana instance installed using Homebrew, edit the `grafana.ini` file directly. Otherwise, add a configuration file named `custom.ini` to the `conf` folder to override the settings defined in `conf/defaults.ini`.
 
 ## Remove comments in the .ini files
 
@@ -701,6 +701,18 @@ You can enable both policies simultaneously.
 
 Set the policy template that will be used when adding the `Content-Security-Policy-Report-Only` header to your requests. `$NONCE` in the template includes a random nonce.
 
+### actions_allow_post_url
+
+Sets API paths to be accessible between plugins using the POST verb. This is a comma separated list, and uses glob matching.
+
+This will allow access to all plugins that have a backend:
+
+`actions_allow_post_url=/api/plugins/*`
+
+This will limit access to the backend of a single plugin:
+
+`actions_allow_post_url=/api/plugins/grafana-special-app`
+
 <hr />
 
 ### angular_support_enabled
@@ -951,6 +963,14 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 
 How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
+
+### oauth_refresh_token_server_lock_min_wait_ms
+
+Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.
+
+There are five retries in total, so with the default value, the total wait time (for acquiring the lock) is at least 5 seconds (the wait time between retries is calculated as random(n, n + 500)), which means that the maximum token refresh duration must be less than 5-6 seconds.
+
+If you experience issues with the OAuth token refresh mechanism, you can increase this value to allow more time for the token refresh to complete.
 
 ### oauth_skip_org_role_update_sync
 
@@ -1333,7 +1353,7 @@ Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `e
 
 ### enable_tracing
 
-Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.oentelemetry.*` sections.
+Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.opentelemetry.*` sections.
 
 <hr>
 
@@ -1893,9 +1913,8 @@ Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
 ## [grafana_net]
 
-### url
-
-Default is https://grafana.com.
+Refer to [grafana_com] config as that is the new and preferred config name.
+The grafana_net config is still accepted and parsed to grafana_com config.
 
 <hr>
 
@@ -1904,6 +1923,7 @@ Default is https://grafana.com.
 ### url
 
 Default is https://grafana.com.
+The default authentication identity provider for Grafana Cloud.
 
 <hr>
 
@@ -2593,8 +2613,8 @@ Format: `<pageUrl> = <sectionId> <sortWeight>`
 
 ## [public_dashboards]
 
-This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
+This section configures the [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/) feature.
 
 ### enabled
 
-Set this to `false` to disable the public dashboards feature. This prevents users from creating new public dashboards and disables existing ones.
+Set this to `false` to disable the shared dashboards feature. This prevents users from creating new shared dashboards and disables existing ones.

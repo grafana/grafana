@@ -108,7 +108,7 @@ async function setup(panelState?: Partial<VizPanelState>, dashboardState?: Parti
 
   await act(async () =>
     render(
-      <ShareDrawerContext.Provider value={{ dashboard }}>
+      <ShareDrawerContext.Provider value={{ dashboard, onDismiss: () => {} }}>
         <ShareAlerts />
       </ShareDrawerContext.Provider>
     )

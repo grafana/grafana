@@ -22,6 +22,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
+import { GRAFANA_RULER_CONFIG } from '../api/featureDiscoveryApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import {
   getAllRulesSources,
@@ -30,6 +31,7 @@ import {
   isCloudRulesSource,
   isGrafanaRulesSource,
 } from '../utils/datasource';
+import { hashQuery } from '../utils/rule-id';
 import {
   isAlertingRule,
   isAlertingRulerRule,
@@ -38,7 +40,6 @@ import {
   isRecordingRulerRule,
 } from '../utils/rules';
 
-import { grafanaRulerConfig } from './useCombinedRule';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export interface CacheValue {
@@ -452,18 +453,6 @@ function isCombinedRuleEqualToPromRule(combinedRule: CombinedRule, rule: Rule, c
   return false;
 }
 
-// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
-function hashQuery(query: string) {
-  // one of them might be wrapped in parens
-  if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
-    query = query.slice(1, -1);
-  }
-  // whitespace could be added or removed
-  query = query.replace(/\s|\n/g, '');
-  // labels matchers can be reordered, so sort the enitre string, esentially comparing just the character counts
-  return query.split('').sort().join('');
-}
-
 /*
   This hook returns combined Grafana rules. Optionally, it can filter rules by dashboard UID and panel ID.
 */
@@ -499,7 +488,7 @@ export function useCombinedRules(
     error: rulerRulesError,
   } = alertRuleApi.endpoints.rulerRules.useQuery(
     {
-      rulerConfig: grafanaRulerConfig,
+      rulerConfig: GRAFANA_RULER_CONFIG,
       filter: { dashboardUID: dashboardUID ?? undefined, panelId },
     },
     {

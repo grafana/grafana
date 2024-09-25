@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -32,8 +31,8 @@ type APIServerFactory interface {
 	// Given the flags, what can we produce
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
 
-	// Any optional middlewares this factory wants configured via apiserver's BuildHandlerChain facility
-	GetOptionalMiddlewares(tracer tracing.Tracer) []web.Middleware
+	// Optional override for apiserver's BuildHandlerChainFunc, return nil if you want to use the grafana's default chain func defined in pkg/services/apiserver/builder/helper.go
+	GetBuildHandlerChainFunc(tracer tracing.Tracer, builders []builder.APIGroupBuilder) builder.BuildHandlerChainFunc
 
 	// Make an API server for a given group+version
 	MakeAPIServer(ctx context.Context, tracer tracing.Tracer, gv schema.GroupVersion) (builder.APIGroupBuilder, error)
@@ -52,8 +51,8 @@ func (p *DummyAPIFactory) GetOptions() options.OptionsProvider {
 	return nil
 }
 
-func (p *DummyAPIFactory) GetOptionalMiddlewares(_ tracing.Tracer) []web.Middleware {
-	return []web.Middleware{}
+func (p *DummyAPIFactory) GetBuildHandlerChainFunc(_ tracing.Tracer, builders []builder.APIGroupBuilder) builder.BuildHandlerChainFunc {
+	return nil
 }
 
 func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error) {

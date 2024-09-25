@@ -19,7 +19,7 @@ interface XYInfo {
   yFields: Array<SelectableValue<boolean>>;
 }
 
-export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYDimensionConfig, any, Options>) => {
+export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYDimensionConfig, {}, Options>) => {
   const frameNames = useMemo(() => {
     if (context?.data?.length) {
       return context.data.map((f, idx) => ({

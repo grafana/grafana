@@ -50,6 +50,11 @@ export interface AlertingRule extends RuleBase {
   };
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
+
+  /**
+   * Pending period in seconds, aka for. 0 or undefined means no pending period
+   */
+  duration?: number;
   totals?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   totalsFiltered?: Partial<Record<Lowercase<GrafanaAlertState>, number>>;
   activeAt?: string; // ISO timestamp
@@ -182,7 +187,15 @@ export interface PrometheusRuleIdentifier {
   ruleHash: string;
 }
 
-export type RuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier | PrometheusRuleIdentifier;
+export type RuleIdentifier = EditableRuleIdentifier | PrometheusRuleIdentifier;
+
+/**
+ * This type is a union of all rule identifiers that should have a ruler API
+ *
+ * We do not support PrometheusRuleIdentifier because vanilla Prometheus has no ruler API
+ */
+export type EditableRuleIdentifier = CloudRuleIdentifier | GrafanaRuleIdentifier;
+
 export interface FilterState {
   queryString?: string;
   dataSource?: string;

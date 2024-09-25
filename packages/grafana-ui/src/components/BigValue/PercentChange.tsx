@@ -1,3 +1,5 @@
+import { IconName } from '@grafana/data';
+
 import { Icon } from '../Icon/Icon';
 
 import { PercentChangeStyles } from './BigValueLayout';
@@ -8,8 +10,12 @@ export interface Props {
 }
 
 export const PercentChange = ({ percentChange, styles }: Props) => {
-  const percentChangeIcon =
-    percentChange && (percentChange > 0 ? 'arrow-up' : percentChange < 0 ? 'arrow-down' : undefined);
+  let percentChangeIcon: IconName | undefined = undefined;
+  if (percentChange > 0) {
+    percentChangeIcon = 'arrow-up';
+  } else if (percentChange < 0) {
+    percentChangeIcon = 'arrow-down';
+  }
 
   return (
     <div style={styles.containerStyles}>
@@ -22,5 +28,5 @@ export const PercentChange = ({ percentChange, styles }: Props) => {
 };
 
 export const percentChangeString = (percentChange: number) => {
-  return percentChange?.toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 }) ?? '';
+  return percentChange.toLocaleString(undefined, { style: 'percent', maximumSignificantDigits: 3 });
 };

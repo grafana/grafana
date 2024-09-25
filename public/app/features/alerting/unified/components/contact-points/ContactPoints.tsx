@@ -25,11 +25,10 @@ import { ContactPoint } from './ContactPoint';
 import { NotificationTemplates } from './NotificationTemplates';
 import { ContactPointsFilter } from './components/ContactPointsFilter';
 import { GlobalConfigAlert } from './components/GlobalConfigAlert';
-import { useDeleteContactPointModal } from './components/Modals';
-import { useContactPointsWithStatus, useDeleteContactPoint } from './useContactPoints';
+import { useContactPointsWithStatus } from './useContactPoints';
 import { useContactPointsSearch } from './useContactPointsSearch';
 import { ALL_CONTACT_POINTS, useExportContactPoint } from './useExportContactPoint';
-import { ContactPointWithMetadata, isProvisioned } from './utils';
+import { ContactPointWithMetadata } from './utils';
 
 export enum ActiveTab {
   ContactPoints = 'contact_points',
@@ -48,7 +47,6 @@ const ContactPointsTab = () => {
     fetchStatuses: true,
   });
 
-  const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
   const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateContactPoint
   );
@@ -56,7 +54,6 @@ const ContactPointsTab = () => {
     AlertmanagerAction.ExportContactPoint
   );
 
-  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
   const [ExportDrawer, showExportDrawer] = useExportContactPoint();
 
   const search = queryParams.get('search');
@@ -102,16 +99,9 @@ const ContactPointsTab = () => {
           )}
         </Stack>
       </Stack>
-      <ContactPointsList
-        contactPoints={contactPoints}
-        search={search}
-        pageSize={DEFAULT_PAGE_SIZE}
-        onDelete={(name) => showDeleteModal(name)}
-        disabled={updateAlertmanagerState.isLoading}
-      />
+      <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
-      {DeleteModal}
       {ExportDrawer}
     </>
   );
@@ -204,7 +194,6 @@ interface ContactPointsListProps {
   contactPoints: ContactPointWithMetadata[];
   search?: string | null;
   disabled?: boolean;
-  onDelete: (name: string) => void;
   pageSize?: number;
 }
 
@@ -213,7 +202,6 @@ const ContactPointsList = ({
   disabled = false,
   search,
   pageSize = DEFAULT_PAGE_SIZE,
-  onDelete,
 }: ContactPointsListProps) => {
   const searchResults = useContactPointsSearch(contactPoints, search);
   const { page, pageItems, numberOfPages, onPageChange } = usePagination(searchResults, 1, pageSize);
@@ -221,21 +209,8 @@ const ContactPointsList = ({
   return (
     <>
       {pageItems.map((contactPoint, index) => {
-        const provisioned = isProvisioned(contactPoint);
-        const policies = contactPoint.policies ?? [];
         const key = `${contactPoint.name}-${index}`;
-
-        return (
-          <ContactPoint
-            key={key}
-            name={contactPoint.name}
-            disabled={disabled}
-            onDelete={onDelete}
-            receivers={contactPoint.grafana_managed_receiver_configs}
-            provisioned={provisioned}
-            policies={policies}
-          />
-        );
+        return <ContactPoint key={key} contactPoint={contactPoint} disabled={disabled} />;
       })}
       <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>
