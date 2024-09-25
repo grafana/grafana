@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { ConfirmModal, } from '@grafana/ui';
+import { ConfirmModal } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { useInstall, useInstallStatus } from '../state/hooks';
