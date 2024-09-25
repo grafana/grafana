@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
@@ -152,6 +153,7 @@ type server struct {
 	access      WriteAccessHooks
 	lifecycle   LifecycleHooks
 	now         func() int64
+	latestRV    int64
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -537,12 +539,18 @@ func (s *server) initWatcher() error {
 			for {
 				// pipe all events
 				v := <-events
+				atomic.StoreInt64(&s.latestRV, v.ResourceVersion)
 				out <- v
 			}
 		}()
 		return nil
 	})
 	return err
+}
+
+// getCurrentResourceVersion returns the last resource version that was returned by the backend.
+func (s *server) mostRecentRV() int64 {
+	return atomic.LoadInt64(&s.latestRV)
 }
 
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
@@ -552,32 +560,30 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 		return err
 	}
 
-	// Start listening -- this will buffer any changes that happen while we backfill
+	// Start listening -- this will buffer any changes that happen while we backfill.
+	// If events are generated faster than we can process them, then some events will be dropped.
+	// TODO: Think of a way to allow the client to catch up.
 	stream, err := s.broadcaster.Subscribe(ctx)
 	if err != nil {
 		return err
 	}
 	defer s.broadcaster.Unsubscribe(stream)
 
-	since := req.Since
-
-	listRV := int64(0)
-	if req.SendInitialEvents || req.Since > 0 {
-		// Backfill the stream
-		listRV, err = s.backend.ListIterator(ctx, &ListRequest{Options: req.Options, ResourceVersion: since}, func(iter ListIterator) error {
+	mostRecentRV := s.mostRecentRV() // get the latest resource version
+	var initialEventsRV int64        // resource version coming from the initial events
+	if req.SendInitialEvents {
+		// Backfill the stream by adding every existing entities.
+		// todo ? I don't think we need to send since here , ResourceVersion: since
+		initialEventsRV, err = s.backend.ListIterator(ctx, &ListRequest{Options: req.Options}, func(iter ListIterator) error {
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
-				}
-				rv := iter.ResourceVersion()
-				if !req.SendInitialEvents && rv <= req.Since {
-					continue
 				}
 				if err := srv.Send(&WatchEvent{
 					Type: WatchEvent_ADDED,
 					Resource: &WatchEvent_Resource{
 						Value:   iter.Value(),
-						Version: rv,
+						Version: iter.ResourceVersion(),
 					},
 				}); err != nil {
 					return err
@@ -589,18 +595,26 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			return err
 		}
 	}
-
 	if req.SendInitialEvents && req.AllowWatchBookmarks {
 		if err := srv.Send(&WatchEvent{
 			Type: WatchEvent_BOOKMARK,
 			Resource: &WatchEvent_Resource{
-				Version: listRV,
+				Version: initialEventsRV,
 			},
 		}); err != nil {
 			return err
 		}
 	}
 
+	var since int64 // resource version to start watching from
+	switch {
+	case req.SendInitialEvents:
+		since = initialEventsRV
+	case req.Since == 0:
+		since = mostRecentRV
+	default:
+		since = req.Since
+	}
 	for {
 		select {
 		case <-ctx.Done():
