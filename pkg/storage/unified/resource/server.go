@@ -145,15 +145,15 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 var _ ResourceServer = &server{}
 
 type server struct {
-	tracer      trace.Tracer
-	log         *slog.Logger
-	backend     StorageBackend
-	index       ResourceIndexServer
-	diagnostics DiagnosticsServer
-	access      WriteAccessHooks
-	lifecycle   LifecycleHooks
-	now         func() int64
-	latestRV    int64
+	tracer       trace.Tracer
+	log          *slog.Logger
+	backend      StorageBackend
+	index        ResourceIndexServer
+	diagnostics  DiagnosticsServer
+	access       WriteAccessHooks
+	lifecycle    LifecycleHooks
+	now          func() int64
+	mostRecentRV atomic.Int64 // The most recent resource version seen by the server
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
@@ -539,18 +539,13 @@ func (s *server) initWatcher() error {
 			for {
 				// pipe all events
 				v := <-events
-				atomic.StoreInt64(&s.latestRV, v.ResourceVersion)
+				s.mostRecentRV.Store(v.ResourceVersion)
 				out <- v
 			}
 		}()
 		return nil
 	})
 	return err
-}
-
-// getCurrentResourceVersion returns the last resource version that was returned by the backend.
-func (s *server) mostRecentRV() int64 {
-	return atomic.LoadInt64(&s.latestRV)
 }
 
 func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
@@ -569,8 +564,8 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	}
 	defer s.broadcaster.Unsubscribe(stream)
 
-	mostRecentRV := s.mostRecentRV() // get the latest resource version
-	var initialEventsRV int64        // resource version coming from the initial events
+	mostRecentRV := s.mostRecentRV.Load() // get the latest resource version
+	var initialEventsRV int64             // resource version coming from the initial events
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		// todo ? I don't think we need to send since here , ResourceVersion: since
