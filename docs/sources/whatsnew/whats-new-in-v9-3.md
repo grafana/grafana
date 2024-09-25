@@ -87,7 +87,7 @@ Annotations are now supported in public dashboards, with the exception of query 
 
 Note that because Public Dashboards is an experimental feature, you need to enable it in Grafana using the `publicDashboards` [feature toggle]({{< relref "../setup-grafana/configure-grafana#feature_toggles" >}}), or open a support ticket requesting public dashboards if you are a Cloud Advanced customer.
 
-To learn more about public dashboards, refer to [Public dashboards]({{< relref "../dashboards/dashboard-public" >}}).
+To learn more about public dashboards, refer to [Public dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
 
 ## New transformation: Partition by values
 

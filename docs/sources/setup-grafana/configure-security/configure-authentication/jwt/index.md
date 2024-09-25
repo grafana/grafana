@@ -94,7 +94,7 @@ you can use JWT authentication to authenticate the iframe.
 
 {{% admonition type="note" %}}
 For Grafana Cloud, or scenarios where verifying viewer identity is not required,
-embed [public dashboards]({{< relref "../../../../dashboards/dashboard-public" >}}).
+embed [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/).
 {{% /admonition %}}
 
 In this scenario, you will need to configure Grafana to accept a JWT

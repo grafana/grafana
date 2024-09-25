@@ -41,8 +41,6 @@ export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
   private _prevRepeatValues?: VariableValueSingle[];
-  private _prevPanelState: VizPanelState | undefined;
-  private _prevGridItemState: DashboardGridItemState | undefined;
 
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
@@ -55,14 +53,7 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   private _activationHandler() {
     if (this.state.variableName) {
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
-      this.clearCachedStateIfBodyOrOptionsChanged();
       this.performRepeat();
-    }
-  }
-
-  private clearCachedStateIfBodyOrOptionsChanged() {
-    if (this._prevGridItemState !== this.state || this._prevPanelState !== this.state.body.state) {
-      this._prevRepeatValues = undefined;
     }
   }
 
@@ -179,8 +170,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       }
     }
 
-    this._prevGridItemState = this.state;
-    this._prevPanelState = this.state.body.state;
     this._prevRepeatValues = values;
 
     // Used from dashboard url sync
@@ -214,14 +203,18 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
         $variables: this.state.repeatedPanels![0].state.$variables?.clone(),
         $data: this.state.repeatedPanels![0].state.$data?.clone(),
       });
-      this._prevPanelState = this.state.body.state;
     }
   }
 
   /**
    * Going back to dashboards logic
+   * withChanges true if there where changes made while in panel edit
    */
-  public editingCompleted() {
+  public editingCompleted(withChanges: boolean) {
+    if (withChanges) {
+      this._prevRepeatValues = undefined;
+    }
+
     if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
       this.setState({ width: GRID_COLUMN_COUNT });
     }

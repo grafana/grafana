@@ -66,7 +66,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 - [Other API]({{< relref "other/" >}})
 - [Playlists API]({{< relref "playlist/" >}})
 - [Preferences API]({{< relref "preferences/" >}})
-- [Public dashboard API]({{< relref "dashboard_public/" >}})
+- [Shared dashboards API]({{< relref "dashboard_public/" >}})
 - [Query history API]({{< relref "query_history/" >}})
 - [Service account API]({{< relref "serviceaccount/" >}})
 - [Short URL API]({{< relref "short_url/" >}})
