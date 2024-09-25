@@ -250,17 +250,21 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 
 func (dr *DashboardServiceImpl) listUserResources(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]string, error) {
 	tasks := make([]func() ([]string, error), 0)
+	var resourceTypes []string
 
 	// For some search types we need dashboards or folders only
-	if query.Type != searchstore.TypeFolder && query.Type != searchstore.TypeAlertFolder {
-		tasks = append(tasks, func() ([]string, error) {
-			return dr.listAllowedResources(ctx, query, zanzana.TypeDashboard)
-		})
+	switch query.Type {
+	case searchstore.TypeDashboard:
+		resourceTypes = []string{zanzana.TypeDashboard}
+	case searchstore.TypeFolder, searchstore.TypeAlertFolder:
+		resourceTypes = []string{zanzana.TypeFolder}
+	default:
+		resourceTypes = []string{zanzana.TypeDashboard, zanzana.TypeFolder}
 	}
 
-	if query.Type != searchstore.TypeDashboard {
+	for _, resourceType := range resourceTypes {
 		tasks = append(tasks, func() ([]string, error) {
-			return dr.listAllowedResources(ctx, query, zanzana.TypeFolder)
+			return dr.listAllowedResources(ctx, query, resourceType)
 		})
 	}
 
