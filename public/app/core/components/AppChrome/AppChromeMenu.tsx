@@ -6,6 +6,7 @@ import { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types';
@@ -76,7 +77,8 @@ export function AppChromeMenu({}: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
-  const topPosition = searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2;
+  const topPosition =
+    searchBarHidden || config.featureToggles.singleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2;
 
   return {
     backdrop: css({

@@ -224,6 +224,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
     }),
     content: css({
+      display: 'flex',
       flexGrow: 1,
     }),
     contentWithIcon: css({
