@@ -190,15 +190,15 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	ctx = klog.NewContext(ctx, log)
 
 	startLegacy := time.Now()
-	deleted, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	deletedLegacy, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
-		log.WithValues("deleted", deleted).Error(err, "failed to delete collection successfully from legacy storage")
+		log.WithValues("deleted", deletedLegacy).Error(err, "failed to delete collection successfully from legacy storage")
 		d.recordLegacyDuration(true, mode2Str, d.resource, method, startLegacy)
-		return deleted, err
+		return deletedLegacy, err
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	legacyList, err := meta.ExtractList(deleted)
+	legacyList, err := meta.ExtractList(deletedLegacy)
 	if err != nil {
 		log.Error(err, "unable to extract list from legacy storage")
 		return nil, err
@@ -211,27 +211,38 @@ func (d *DualWriterMode2) DeleteCollection(ctx context.Context, deleteValidation
 	}
 
 	startStorage := time.Now()
-	res, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	deletedStorage, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
-		log.WithValues("deleted", res).Error(err, "failed to delete collection successfully from Storage")
+		log.WithValues("deleted", deletedStorage).Error(err, "failed to delete collection successfully from Storage")
 		d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
-		return res, err
+		return deletedStorage, err
 	}
 	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
-	areEqual := Compare(res, deleted)
-	d.recordOutcome(mode2Str, getName(res), areEqual, method)
+	areEqual := Compare(deletedStorage, deletedLegacy)
+	d.recordOutcome(mode2Str, getName(deletedStorage), areEqual, method)
 	if !areEqual {
 		log.Info("object from legacy and storage are not equal")
 	}
 
-	return res, err
+	return deletedLegacy, err
 }
 
 func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	var method = "delete"
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
+	deletedS, async, err := d.Storage.Delete(ctx, name, deleteValidation, options)
+	if err != nil {
+		if !apierrors.IsNotFound(err) {
+			log.WithValues("objectList", deletedS).Error(err, "could not delete from duplicate storage")
+			d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
+		}
+		return deletedS, async, err
+	}
+	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
 
 	startLegacy := time.Now()
 	deletedLS, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
@@ -245,24 +256,13 @@ func (d *DualWriterMode2) Delete(ctx context.Context, name string, deleteValidat
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	startStorage := time.Now()
-	deletedS, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("objectList", deletedS).Error(err, "could not delete from duplicate storage")
-			d.recordStorageDuration(true, mode2Str, d.resource, method, startStorage)
-		}
-		return deletedS, async, err
-	}
-	d.recordStorageDuration(false, mode2Str, d.resource, method, startStorage)
-
 	areEqual := Compare(deletedS, deletedLS)
 	d.recordOutcome(mode2Str, name, areEqual, method)
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
 	}
 
-	return deletedS, async, err
+	return deletedLS, async, err
 }
 
 // Update overrides the generic behavior of the Storage and writes first to the legacy storage and then to storage.
@@ -270,6 +270,14 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	var method = "update"
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
+
+	startStorage := time.Now()
+	objFromStorage, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	if err != nil {
+		log.WithValues("object", objFromStorage).Error(err, "could not update in storage")
+		d.recordStorageDuration(true, mode2Str, d.resource, "update", startStorage)
+		return objFromStorage, created, err
+	}
 
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
@@ -280,20 +288,12 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, "update", startLegacy)
 
-	startStorage := time.Now()
-	res, created, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if err != nil {
-		log.WithValues("object", res).Error(err, "could not update in storage")
-		d.recordStorageDuration(true, mode2Str, d.resource, "update", startStorage)
-		return res, created, err
-	}
-
-	areEqual := Compare(res, objFromLegacy)
+	areEqual := Compare(objFromStorage, objFromLegacy)
 	d.recordOutcome(mode2Str, name, areEqual, method)
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
 	}
-	return res, created, err
+	return objFromLegacy, created, err
 }
 
 func (d *DualWriterMode2) Destroy() {

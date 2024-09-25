@@ -537,7 +537,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		// Get should return the same result
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		require.NoError(t, err)
-		// require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
+		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
 
 		// Now modify the interval
 		updatedInterval := `"interval": "10m"`
