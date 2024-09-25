@@ -106,8 +106,6 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		log.Info("object from legacy and storage are not equal")
 	}
 
-	fmt.Printf("OUT FROM LEGACY: %v\n", createdFromLegacy)
-
 	return createdFromLegacy, err
 }
 
@@ -315,8 +313,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	if accIn.GetName() == "" && accIn.GetGenerateName() == "" {
 		return nil, false, fmt.Errorf("name is empty")
 	}
-
-	fmt.Printf("foundObj: %v\n", foundObj)
 
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)

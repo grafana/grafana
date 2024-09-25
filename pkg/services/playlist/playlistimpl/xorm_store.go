@@ -21,9 +21,6 @@ var _ store = &sqlStore{}
 
 func (s *sqlStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	p := playlist.Playlist{}
-	// if cmd.UID == "" {
-	// cmd.UID = util.GenerateShortUID()
-	// } else {
 	err := util.ValidateUID(cmd.UID)
 	if err != nil {
 		return nil, err
