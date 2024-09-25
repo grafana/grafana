@@ -478,7 +478,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const switchMode =
     isGrafanaAlertingType && isSwitchModeEnabled
       ? {
-          isModeAdvanced: isAdvancedMode,
+          isAdvancedMode,
           setAdvancedMode: (isAdvanced: boolean) => {
             if (!isAdvanced) {
               if (!areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)) {
