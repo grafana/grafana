@@ -2,28 +2,49 @@ package dashboard
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
+	"strconv"
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	dashboard "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/rest"
 )
 
 // The DTO returns everything the UI needs in a single request
 type DTOConnector struct {
-	builder *DashboardsAPIBuilder
+	getter        rest.Getter
+	legacy        legacy.DashboardAccess
+	unified       resource.ResourceClient
+	accessControl accesscontrol.AccessControl
+	log           log.Logger
+}
+
+func newDTOConnector(dash rest.Storage, builder *DashboardsAPIBuilder) (rest.Storage, error) {
+	ok := false
+	v := &DTOConnector{
+		legacy:        builder.legacy.access,
+		accessControl: builder.accessControl,
+		unified:       builder.unified,
+		log:           builder.log,
+	}
+	v.getter, ok = dash.(rest.Getter)
+	if !ok {
+		return nil, fmt.Errorf("dashboard storage must implement getter")
+	}
+	return v, nil
 }
 
 var (
@@ -65,12 +86,33 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 		return nil, err
 	}
 
-	dto, err := r.builder.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		UID:   name,
-		OrgID: info.OrgID,
-	})
+	rawobj, err := r.getter.Get(ctx, name, &v1.GetOptions{})
 	if err != nil {
 		return nil, err
+	}
+
+	dash, ok := rawobj.(*dashboard.Dashboard)
+	if !ok {
+		return nil, fmt.Errorf("expecting dashboard, not %t", rawobj)
+	}
+	obj, err := utils.MetaAccessor(dash)
+	if err != nil {
+		return nil, err
+	}
+
+	dto := &dashboards.Dashboard{
+		UID:   name,
+		OrgID: info.OrgID,
+	}
+	origin, err := obj.GetOriginInfo()
+	if err != nil {
+		return nil, err
+	}
+	if origin != nil && origin.Name == "SQL" {
+		dto.ID, err = strconv.ParseInt(origin.Path, 10, 64)
+		if err == nil {
+			return nil, err
+		}
 	}
 
 	guardian, err := guardian.NewByDashboard(ctx, dto, info.OrgID, user)
@@ -93,27 +135,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
 	r.getAnnotationPermissionsByScope(ctx, user, &access.AnnotationsPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
-	key := &resource.ResourceKey{
-		Namespace: info.Value,
-		Group:     dashboard.GROUP,
-		Resource:  dashboard.DashboardResourceInfo.GroupResource().Resource,
-		Name:      name,
-	}
-	store := r.builder.legacy.access
-	rsp := store.ReadResource(ctx, &resource.ReadRequest{Key: key})
-	if rsp.Error != nil {
-		return nil, resource.GetError(rsp.Error)
-	}
-	dash := &dashboard.Dashboard{}
-	err = json.Unmarshal(rsp.Value, dash)
-	if err != nil {
-		return nil, err
-	}
-
-	obj, err := utils.MetaAccessor(dash)
-	if err != nil {
-		return nil, err
-	}
+	// Check for blob info
 	blobInfo := obj.GetBlob()
 	if blobInfo != nil {
 		fmt.Printf("TODO, load full blob from storage %+v\n", blobInfo)
@@ -134,20 +156,20 @@ func (r *DTOConnector) getAnnotationPermissionsByScope(ctx context.Context, user
 	var err error
 
 	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)
-	actions.CanAdd, err = r.builder.accessControl.Evaluate(ctx, user, evaluate)
+	actions.CanAdd, err = r.accessControl.Evaluate(ctx, user, evaluate)
 	if err != nil {
-		r.builder.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsCreate, "scope", scope)
+		r.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsCreate, "scope", scope)
 	}
 
 	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsDelete, scope)
-	actions.CanDelete, err = r.builder.accessControl.Evaluate(ctx, user, evaluate)
+	actions.CanDelete, err = r.accessControl.Evaluate(ctx, user, evaluate)
 	if err != nil {
-		r.builder.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsDelete, "scope", scope)
+		r.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsDelete, "scope", scope)
 	}
 
 	evaluate = accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsWrite, scope)
-	actions.CanEdit, err = r.builder.accessControl.Evaluate(ctx, user, evaluate)
+	actions.CanEdit, err = r.accessControl.Evaluate(ctx, user, evaluate)
 	if err != nil {
-		r.builder.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsWrite, "scope", scope)
+		r.log.Warn("Failed to evaluate permission", "err", err, "action", accesscontrol.ActionAnnotationsWrite, "scope", scope)
 	}
 }

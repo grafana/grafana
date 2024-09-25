@@ -76,6 +76,9 @@ func (u *StaticRequester) IsIdentityType(expected ...claims.IdentityType) bool {
 
 // GetExtra implements Requester.
 func (u *StaticRequester) GetExtra() map[string][]string {
+	if u.IDToken != "" {
+		return map[string][]string{"id-token": {u.IDToken}}
+	}
 	return map[string][]string{}
 }
 

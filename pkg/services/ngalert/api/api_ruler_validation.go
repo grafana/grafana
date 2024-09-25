@@ -144,6 +144,12 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 		}
 	}
 
+	if in.GrafanaManagedAlert.Metadata != nil {
+		newRule.Metadata.EditorSettings = ngmodels.EditorSettings{
+			SimplifiedQueryAndExpressionsSection: in.GrafanaManagedAlert.Metadata.EditorSettings.SimplifiedQueryAndExpressionsSection,
+		}
+	}
+
 	newRule.For, err = validateForInterval(in)
 	if err != nil {
 		return ngmodels.AlertRule{}, err

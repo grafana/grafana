@@ -12,7 +12,7 @@ describe('Dashboards', () => {
     e2e.components.Panels.Panel.title('Panel #1').should('be.visible');
 
     // scroll to the bottom
-    cy.get('#page-scrollbar').scrollTo('bottom', {
+    cy.scrollTo('bottom', {
       timeout: 5 * 1000,
     });
 

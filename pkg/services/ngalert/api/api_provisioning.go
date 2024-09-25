@@ -38,7 +38,7 @@ type ProvisioningSrv struct {
 
 type ContactPointService interface {
 	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user identity.Requester) ([]definitions.EmbeddedContactPoint, error)
-	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
+	CreateContactPoint(ctx context.Context, orgID int64, user identity.Requester, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
 }
@@ -165,7 +165,7 @@ func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqConte
 
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
 	provenance := determineProvenance(c)
-	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.SignedInUser.GetOrgID(), cp, alerting_models.Provenance(provenance))
+	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser, cp, alerting_models.Provenance(provenance))
 	if errors.Is(err, provisioning.ErrValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}

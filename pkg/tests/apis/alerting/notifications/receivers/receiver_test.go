@@ -24,15 +24,19 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/generated/clientset/versioned"
+	notificationsv0alpha1 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/alerting_notifications/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -102,24 +106,308 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.Equal(t, newResource.Spec, actual.Spec)
 	})
 
-	// TODO uncomment when renaming is supported
-	// t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
-	// 	existing, err := client.Get(ctx, resourceID, v1.GetOptions{})
-	// 	require.NoError(t, err)
-	//
-	// 	updated := existing.DeepCopy()
-	// 	updated.Spec.Title = "another-newReceiver"
-	//
-	// 	actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
-	// 	require.NoError(t, err)
-	// 	require.Equal(t, updated.Spec, actual.Spec)
-	// 	require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
-	// 	require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
-	//
-	// 	resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
-	// 	require.NoError(t, err)
-	// 	require.Equal(t, actual, resource)
-	// })
+	t.Run("update should rename receiver if name in the specification changes", func(t *testing.T) {
+		existing, err := client.Get(ctx, resourceID, v1.GetOptions{})
+		require.NoError(t, err)
+
+		updated := existing.DeepCopy()
+		updated.Spec.Title = "another-newReceiver"
+
+		actual, err := client.Update(ctx, updated, v1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, updated.Spec, actual.Spec)
+		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
+
+		resource, err := client.Get(ctx, actual.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, actual.Spec, resource.Spec)
+		require.Equal(t, actual.Name, resource.Name)
+		require.Equal(t, actual.ResourceVersion, resource.ResourceVersion)
+	})
+}
+
+// TestIntegrationResourcePermissions focuses on testing resource permissions for the alerting receiver resource. It
+// verifies that access is correctly set when creating resources and assigning permissions to users, teams, and roles.
+func TestIntegrationResourcePermissions(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+
+	org1 := helper.Org1
+
+	noneUser := helper.CreateUser("none", apis.Org1, org.RoleNone, nil)
+
+	creator := helper.CreateUser("creator", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(
+			accesscontrol.ActionAlertingReceiversCreate,
+		),
+	})
+
+	newClient := func(t *testing.T, user apis.User) notificationsv0alpha1.ReceiverInterface {
+		k8sClient, err := versioned.NewForConfig(user.NewRestConfig())
+		require.NoError(t, err)
+		return k8sClient.NotificationsV0alpha1().Receivers("default")
+	}
+
+	admin := org1.Admin
+	viewer := org1.Viewer
+	editor := org1.Editor
+	adminClient := newClient(t, admin)
+
+	writeACMetadata := []string{"canWrite", "canDelete"}
+	allACMetadata := []string{"canWrite", "canDelete", "canReadSecrets", "canAdmin"}
+
+	mustID := func(user apis.User) int64 {
+		id, err := user.Identity.GetInternalID()
+		require.NoError(t, err)
+		return id
+	}
+
+	for _, tc := range []struct {
+		name          string
+		creatingUser  apis.User
+		testUser      apis.User
+		assignments   []accesscontrol.SetResourcePermissionCommand
+		expACMetadata []string
+		expRead       bool
+	}{
+		// Basic access.
+		{
+			name:          "Admin creates and has all metadata and access",
+			creatingUser:  admin,
+			testUser:      admin,
+			assignments:   nil,
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Creator creates and has all metadata and access",
+			creatingUser:  creator,
+			testUser:      creator,
+			assignments:   nil,
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, noneUser has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   nil,
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		{
+			name:          "Admin creates, viewer has no metadata but has access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, editor has write metadata and access",
+			creatingUser:  admin,
+			testUser:      editor,
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+		},
+		// User-based assignments.
+		{
+			name:          "Admin creates, assigns read, noneUser has no metadata but has access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionView)}},
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns write, noneUser has write metadata and access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionEdit)}},
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin, noneUser has all metadata and access",
+			creatingUser:  admin,
+			testUser:      noneUser,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		// Other users don't get assignments.
+		{
+			name:          "Admin creates, assigns read to noneUser, creator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionView)}},
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		{
+			name:          "Admin creates, assigns write to noneUser, creator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionEdit)}},
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		{
+			name:          "Admin creates, assigns admin to noneUser, creator has no metadata and no access",
+			creatingUser:  admin,
+			testUser:      creator,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(noneUser), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: nil,
+			expRead:       false,
+		},
+		// Role-based access.
+		{
+			name:          "Admin creates, assigns editor, viewer has write metadata and access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(alertingac.ReceiverPermissionEdit)}},
+			expACMetadata: writeACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin, viewer has all metadata and access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(viewer), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin, editor has all metadata and access",
+			creatingUser:  admin,
+			testUser:      editor,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{UserID: mustID(editor), Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+		// Team-based access. Staff team has editor+admin but not viewer in it.
+		{
+			name:          "Admin creates, assigns admin to staff, viewer has no metadata and access",
+			creatingUser:  admin,
+			testUser:      viewer,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: nil,
+			expRead:       true,
+		},
+		{
+			name:          "Admin creates, assigns admin to staff, editor has all metadata and access",
+			creatingUser:  admin,
+			testUser:      editor,
+			assignments:   []accesscontrol.SetResourcePermissionCommand{{TeamID: org1.Staff.ID, Permission: string(alertingac.ReceiverPermissionAdmin)}},
+			expACMetadata: allACMetadata,
+			expRead:       true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			createClient := newClient(t, tc.creatingUser)
+			client := newClient(t, tc.testUser)
+
+			var created = &v0alpha1.Receiver{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: v0alpha1.ReceiverSpec{
+					Title:        "receiver-1",
+					Integrations: nil,
+				},
+			}
+			d, err := json.Marshal(created)
+			require.NoError(t, err)
+
+			// Create receiver with creatingUser
+			created, err = createClient.Create(ctx, created, v1.CreateOptions{})
+			require.NoErrorf(t, err, "Payload %s", string(d))
+			require.NotNil(t, created)
+
+			defer func() {
+				_ = adminClient.Delete(ctx, created.Name, v1.DeleteOptions{})
+			}()
+
+			// Assign resource permissions
+			cliCfg := helper.Org1.Admin.NewRestConfig()
+			alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+			for _, permission := range tc.assignments {
+				status, body := alertingApi.AssignReceiverPermission(t, created.Name, permission)
+				require.Equalf(t, http.StatusOK, status, "Expected status 200 but got %d: %s", status, body)
+			}
+
+			// Test read
+			if tc.expRead {
+				// Helper methods.
+				extractReceiverFromList := func(list *v0alpha1.ReceiverList, name string) *v0alpha1.Receiver {
+					for i := range list.Items {
+						if list.Items[i].Name == name {
+							return list.Items[i].DeepCopy()
+						}
+					}
+					return nil
+				}
+
+				// Obtain expected responses using admin client as source of truth.
+				expectedGetWithMetadata, expectedListWithMetadata := func() (*v0alpha1.Receiver, *v0alpha1.Receiver) {
+					expectedGet, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+					require.NoError(t, err)
+					require.NotNil(t, expectedGet)
+
+					// Set expected metadata.
+					expectedGetWithMetadata := expectedGet.DeepCopy()
+					// Clear any existing access control metadata.
+					for _, k := range allACMetadata {
+						delete(expectedGetWithMetadata.Annotations, v0alpha1.AccessControlAnnotation(k))
+					}
+					for _, ac := range tc.expACMetadata {
+						expectedGetWithMetadata.SetAccessControl(ac)
+					}
+
+					expectedList, err := adminClient.List(ctx, v1.ListOptions{})
+					require.NoError(t, err)
+					expectedListWithMetadata := extractReceiverFromList(expectedList, created.Name)
+					require.NotNil(t, expectedListWithMetadata)
+					expectedListWithMetadata = expectedListWithMetadata.DeepCopy()
+					// Clear any existing access control metadata.
+					for _, k := range allACMetadata {
+						delete(expectedListWithMetadata.Annotations, v0alpha1.AccessControlAnnotation(k))
+					}
+					for _, ac := range tc.expACMetadata {
+						expectedListWithMetadata.SetAccessControl(ac)
+					}
+					return expectedGetWithMetadata, expectedListWithMetadata
+				}()
+
+				t.Run("should be able to list receivers", func(t *testing.T) {
+					list, err := client.List(ctx, v1.ListOptions{})
+					require.NoError(t, err)
+					listedReceiver := extractReceiverFromList(list, created.Name)
+					assert.Equalf(t, expectedListWithMetadata, listedReceiver, "Expected %v but got %v", expectedListWithMetadata, listedReceiver)
+				})
+
+				t.Run("should be able to read receiver by resource identifier", func(t *testing.T) {
+					got, err := client.Get(ctx, expectedGetWithMetadata.Name, v1.GetOptions{})
+					require.NoError(t, err)
+					assert.Equalf(t, expectedGetWithMetadata, got, "Expected %v but got %v", expectedGetWithMetadata, got)
+				})
+			} else {
+				t.Run("should be forbidden to list receivers", func(t *testing.T) {
+					_, err := client.List(ctx, v1.ListOptions{})
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				})
+
+				t.Run("should be forbidden to read receiver by name", func(t *testing.T) {
+					_, err := client.Get(ctx, created.Name, v1.GetOptions{})
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				})
+			}
+		})
+	}
 }
 
 func TestIntegrationAccessControl(t *testing.T) {
@@ -139,6 +427,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 		canCreate      bool
 		canDelete      bool
 		canReadSecrets bool
+		canAdmin       bool
 	}
 	// region users
 	unauthorized := helper.CreateUser("unauthorized", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
@@ -182,6 +471,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 			},
 		},
 	})
+	adminLikeUser := helper.CreateUser("adminLikeUser", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(append(
+			[]string{accesscontrol.ActionAlertingReceiversCreate},
+			ossaccesscontrol.ReceiversAdminActions...,
+		)...),
+	})
 
 	// endregion
 
@@ -194,11 +489,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canDelete: false,
 		},
 		{
-			user:      org1.Admin,
-			canRead:   true,
-			canUpdate: true,
-			canCreate: true,
-			canDelete: true,
+			user:           org1.Admin,
+			canRead:        true,
+			canCreate:      true,
+			canUpdate:      true,
+			canDelete:      true,
+			canAdmin:       true,
+			canReadSecrets: true,
 		},
 		{
 			user:      org1.Editor,
@@ -246,6 +543,15 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canUpdate: true,
 			canDelete: true,
 		},
+		{
+			user:           adminLikeUser,
+			canRead:        true,
+			canCreate:      true,
+			canUpdate:      true,
+			canDelete:      true,
+			canAdmin:       true,
+			canReadSecrets: true,
+		},
 	}
 
 	admin := org1.Admin
@@ -271,33 +577,35 @@ func TestIntegrationAccessControl(t *testing.T) {
 			d, err := json.Marshal(expected)
 			require.NoError(t, err)
 
+			newReceiver := expected.DeepCopy()
+			newReceiver.Spec.Title = fmt.Sprintf("receiver-2-%s", tc.user.Identity.GetLogin())
 			if tc.canCreate {
 				t.Run("should be able to create receiver", func(t *testing.T) {
-					newReceiver := expected
-
 					actual, err := client.Create(ctx, newReceiver, v1.CreateOptions{})
 					require.NoErrorf(t, err, "Payload %s", string(d))
 
-					require.Equal(t, expected.Spec, actual.Spec)
+					require.Equal(t, newReceiver.Spec, actual.Spec)
 
 					t.Run("should fail if already exists", func(t *testing.T) {
 						_, err := client.Create(ctx, newReceiver, v1.CreateOptions{})
 						require.Truef(t, errors.IsConflict(err), "expected  bad request but got %s", err)
 					})
 
-					expected = actual
+					// Cleanup.
+					require.NoError(t, adminClient.Delete(ctx, actual.Name, v1.DeleteOptions{}))
 				})
 			} else {
 				t.Run("should be forbidden to create", func(t *testing.T) {
-					_, err := client.Create(ctx, expected, v1.CreateOptions{})
+					_, err := client.Create(ctx, newReceiver, v1.CreateOptions{})
 					require.Truef(t, errors.IsForbidden(err), "Payload %s", string(d))
 				})
-
-				// create resource to proceed with other tests
-				expected, err = adminClient.Create(ctx, expected, v1.CreateOptions{})
-				require.NoErrorf(t, err, "Payload %s", string(d))
-				require.NotNil(t, expected)
 			}
+
+			// create resource to proceed with other tests. We don't use the one created above because the user will always
+			// have admin permissions on it.
+			expected, err = adminClient.Create(ctx, expected, v1.CreateOptions{})
+			require.NoErrorf(t, err, "Payload %s", string(d))
+			require.NotNil(t, expected)
 
 			if tc.canRead {
 				// Set expected metadata.
@@ -311,6 +619,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 				}
 				if tc.canReadSecrets {
 					expectedWithMetadata.SetAccessControl("canReadSecrets")
+				}
+				if tc.canAdmin {
+					expectedWithMetadata.SetAccessControl("canAdmin")
 				}
 				t.Run("should be able to list receivers", func(t *testing.T) {
 					list, err := client.List(ctx, v1.ListOptions{})
@@ -426,6 +737,10 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
+
 	// Prepare environment and create notification policy and rule that use receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
@@ -440,8 +755,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	parentRoute.Routes = []*definitions.Route{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	persistInitialConfig(t, amConfig, adminClient, legacyCli)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -470,10 +784,6 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	legacyCli.CreateFolder(t, folderUID, "TEST")
 	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
-
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
 
 	requestReceivers := func(t *testing.T, title string) (v0alpha1.Receiver, v0alpha1.Receiver) {
 		t.Helper()
@@ -508,7 +818,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 
 	// Removing the new extra route should leave only 1.
 	amConfig.AlertmanagerConfig.Route.Routes = amConfig.AlertmanagerConfig.Route.Routes[:1]
-	success, err = legacyCli.PostConfiguration(t, amConfig)
+	success, err := legacyCli.PostConfiguration(t, amConfig)
 	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
 
 	receiverListed, receiverGet = requestReceivers(t, "user-defined")
@@ -786,6 +1096,26 @@ func TestIntegrationPatch(t *testing.T) {
 	})
 }
 
+func TestIntegrationRejectConfigApiReceiverModification(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	helper := getTestHelper(t)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	// This config has new and modified receivers.
+	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
+	require.NoError(t, err)
+	var amConfig definitions.PostableUserConfig
+	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Falsef(t, success, "Expected receiver modification to be rejected, but got %s", err)
+}
+
 func TestIntegrationReferentialIntegrity(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -793,14 +1123,18 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	// env := helper.GetEnv()
-	// ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
-	// db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
-	// require.NoError(t, err)
-	// orgID := helper.Org1.Admin.Identity.GetOrgID()
+	env := helper.GetEnv()
+	ac := acimpl.ProvideAccessControl(env.FeatureToggles, zanzana.NewNoopClient())
+	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac)
+	require.NoError(t, err)
+	orgID := helper.Org1.Admin.Identity.GetOrgID()
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	adminK8sClient, err := versioned.NewForConfig(cliCfg)
+	require.NoError(t, err)
+	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
 
 	// Prepare environment and create notification policy and rule that use time receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
@@ -808,8 +1142,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	var amConfig definitions.PostableUserConfig
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
-	success, err := legacyCli.PostConfiguration(t, amConfig)
-	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+	persistInitialConfig(t, amConfig, adminClient, legacyCli)
 
 	postGroupRaw, err := testData.ReadFile(path.Join("test-data", "rulegroup-1.json"))
 	require.NoError(t, err)
@@ -821,10 +1154,6 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	_, status, data := legacyCli.PostRulesGroupWithStatus(t, folderUID, &ruleGroup)
 	require.Equalf(t, http.StatusAccepted, status, "Failed to post Rule: %s", data)
 
-	adminK8sClient, err := versioned.NewForConfig(cliCfg)
-	require.NoError(t, err)
-	adminClient := adminK8sClient.NotificationsV0alpha1().Receivers("default")
-
 	receivers, err := adminClient.List(ctx, v1.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, receivers.Items, 2)
@@ -833,71 +1162,63 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	})
 	receiver := receivers.Items[idx]
 
-	// TODO uncomment when renaming is enabled
-	// currentRoute := legacyCli.GetRoute(t)
-	// currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
-	// replace := func(input []string, oldName, newName string) []string {
-	// 	result := make([]string, 0, len(input))
-	// 	for _, s := range input {
-	// 		if s == oldName {
-	// 			result = append(result, newName)
-	// 			continue
-	// 		}
-	// 		result = append(result, s)
-	// 	}
-	// 	return result
-	// }
-	//
-	// t.Run("Update", func(t *testing.T) {
-	// 	t.Run("should rename all references if name changes", func(t *testing.T) {
-	// 		renamed := receiver.DeepCopy()
-	// 		expectedTitle := renamed.Spec.Title + "-new"
-	// 		renamed.Spec.Title += expectedTitle
-	//
-	// 		actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
-	// 		require.NoError(t, err)
-	//
-	// 		updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
-	// 		for idx, rule := range updatedRuleGroup.Rules {
-	// 			assert.Equalf(t, expectedTitle, rule.GrafanaManagedAlert.NotificationSettings.Receiver, "receiver in rule %d should have been renamed but it did not", idx)
-	// 		}
-	//
-	// 		updatedRoute := legacyCli.GetRoute(t)
-	// 		for _, route := range updatedRoute.Routes {
-	// 			assert.Equalf(t, expectedTitle, route.Receiver, "time receiver in routes should have been renamed but it did not")
-	// 		}
-	// 		receiver = *actual
-	// 	})
-	//
-	// 	t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
-	// 		require.NoError(t, err)
-	// 		renamed := receiver.DeepCopy()
-	// 		renamed.Spec.Title += util.GenerateShortUID()
-	//
-	// 		t.Run("provisioned route", func(t *testing.T) {
-	// 			require.NoError(t, db.SetProvenance(ctx, &currentRoute, orgID, "API"))
-	// 			t.Cleanup(func() {
-	// 				require.NoError(t, db.DeleteProvenance(ctx, &currentRoute, orgID))
-	// 			})
-	// 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
-	// 			require.Errorf(t, err, "Expected error but got successful result: %v", actual)
-	// 			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
-	// 		})
-	//
-	// 		t.Run("provisioned rules", func(t *testing.T) {
-	// 			ruleUid := currentRuleGroup.Rules[0].GrafanaManagedAlert.UID
-	// 			resource := &ngmodels.AlertRule{UID: ruleUid}
-	// 			require.NoError(t, db.SetProvenance(ctx, resource, orgID, "API"))
-	// 			t.Cleanup(func() {
-	// 				require.NoError(t, db.DeleteProvenance(ctx, resource, orgID))
-	// 			})
-	//
-	// 			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
-	// 			require.Errorf(t, err, "Expected error but got successful result: %v", actual)
-	// 			require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
-	// 		})
-	// 	})
-	// })
+	currentRoute := legacyCli.GetRoute(t)
+	currentRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+
+	t.Run("Update", func(t *testing.T) {
+		t.Run("should rename all references if name changes", func(t *testing.T) {
+			renamed := receiver.DeepCopy()
+			expectedTitle := renamed.Spec.Title + "-new"
+			renamed.Spec.Title = expectedTitle
+
+			actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+			require.NoError(t, err)
+
+			updatedRuleGroup := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
+			for idx, rule := range updatedRuleGroup.Rules {
+				assert.Equalf(t, expectedTitle, rule.GrafanaManagedAlert.NotificationSettings.Receiver, "receiver in rule %d should have been renamed but it did not", idx)
+			}
+
+			updatedRoute := legacyCli.GetRoute(t)
+			for _, route := range updatedRoute.Routes {
+				assert.Equalf(t, expectedTitle, route.Receiver, "time receiver in routes should have been renamed but it did not")
+			}
+
+			actual, err = adminClient.Get(ctx, actual.Name, v1.GetOptions{})
+			require.NoError(t, err)
+
+			receiver = *actual
+		})
+
+		t.Run("should fail if at least one resource is provisioned", func(t *testing.T) {
+			require.NoError(t, err)
+			renamed := receiver.DeepCopy()
+			renamed.Spec.Title += util.GenerateShortUID()
+
+			t.Run("provisioned route", func(t *testing.T) {
+				require.NoError(t, db.SetProvenance(ctx, &currentRoute, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, &currentRoute, orgID))
+				})
+				actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+
+			t.Run("provisioned rules", func(t *testing.T) {
+				ruleUid := currentRuleGroup.Rules[0].GrafanaManagedAlert.UID
+				resource := &ngmodels.AlertRule{UID: ruleUid}
+				require.NoError(t, db.SetProvenance(ctx, resource, orgID, "API"))
+				t.Cleanup(func() {
+					require.NoError(t, db.DeleteProvenance(ctx, resource, orgID))
+				})
+
+				actual, err := adminClient.Update(ctx, renamed, v1.UpdateOptions{})
+				require.Errorf(t, err, "Expected error but got successful result: %v", actual)
+				require.Truef(t, errors.IsConflict(err), "Expected Conflict, got: %s", err)
+			})
+		})
+	})
 
 	t.Run("Delete", func(t *testing.T) {
 		t.Run("should fail to delete if receiver is used in rule and routes", func(t *testing.T) {
@@ -1014,6 +1335,8 @@ func TestIntegrationCRUD(t *testing.T) {
 		// Set expected metadata
 		receiver.SetAccessControl("canWrite")
 		receiver.SetAccessControl("canDelete")
+		receiver.SetAccessControl("canReadSecrets")
+		receiver.SetAccessControl("canAdmin")
 		receiver.SetInUse(0, nil)
 
 		// Use export endpoint because it's the only way to get decrypted secrets fast.
@@ -1171,14 +1494,72 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	})
 }
 
+// persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
+// modifications, so we need to use k8s API to create new receivers before posting the config.
+func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, adminClient notificationsv0alpha1.ReceiverInterface, legacyCli alerting.LegacyApiClient) {
+	ctx := context.Background()
+
+	var defaultReceiver *definitions.PostableApiReceiver
+	for _, receiver := range amConfig.AlertmanagerConfig.Receivers {
+		if receiver.Name == "grafana-default-email" {
+			defaultReceiver = receiver
+			continue
+		}
+
+		toCreate := v0alpha1.Receiver{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ReceiverSpec{
+				Title:        receiver.Name,
+				Integrations: []v0alpha1.Integration{},
+			},
+		}
+
+		for _, integration := range receiver.GrafanaManagedReceivers {
+			settings := common.Unstructured{}
+			require.NoError(t, settings.UnmarshalJSON(integration.Settings))
+			toCreate.Spec.Integrations = append(toCreate.Spec.Integrations, v0alpha1.Integration{
+				Settings:              settings,
+				Type:                  integration.Type,
+				DisableResolveMessage: util.Pointer(false),
+			})
+		}
+
+		created, err := adminClient.Create(ctx, &toCreate, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		for i, integration := range created.Spec.Integrations {
+			receiver.GrafanaManagedReceivers[i].UID = *integration.Uid
+		}
+	}
+
+	success, err := legacyCli.PostConfiguration(t, amConfig)
+	require.Truef(t, success, "Failed to post Alertmanager configuration: %s", err)
+
+	gettable, status, body := legacyCli.GetAlertmanagerConfigWithStatus(t)
+	require.Equalf(t, http.StatusOK, status, body)
+
+	idx := slices.IndexFunc(gettable.AlertmanagerConfig.Receivers, func(recv *definitions.GettableApiReceiver) bool {
+		return recv.Name == "grafana-default-email"
+	})
+	gettableDefault := gettable.AlertmanagerConfig.Receivers[idx]
+
+	// Assign uid of default receiver as well.
+	defaultReceiver.GrafanaManagedReceivers[0].UID = gettableDefault.GrafanaManagedReceivers[0].UID
+}
+
 func createIntegration(t *testing.T, integrationType string) v0alpha1.Integration {
 	cfg, ok := notify.AllKnownConfigsForTesting[integrationType]
 	require.Truef(t, ok, "no known config for integration type %s", integrationType)
+	return createIntegrationWithSettings(t, integrationType, cfg.Config)
+}
+func createIntegrationWithSettings(t *testing.T, integrationType string, settingsJson string) v0alpha1.Integration {
 	settings := common.Unstructured{}
-	require.NoError(t, settings.UnmarshalJSON([]byte(cfg.Config)))
+	require.NoError(t, settings.UnmarshalJSON([]byte(settingsJson)))
 	return v0alpha1.Integration{
 		Settings:              settings,
-		Type:                  cfg.NotifierType,
+		Type:                  integrationType,
 		DisableResolveMessage: util.Pointer(false),
 	}
 }
