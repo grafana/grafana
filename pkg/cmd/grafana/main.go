@@ -9,7 +9,6 @@ import (
 
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
-	gsrv "github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 )
@@ -45,7 +44,7 @@ func MainApp() *cli.App {
 		Version: version,
 		Commands: []*cli.Command{
 			gcli.CLICommand(version),
-			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
+			commands.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,
