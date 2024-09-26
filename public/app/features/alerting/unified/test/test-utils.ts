@@ -1,5 +1,17 @@
+import { act } from '@testing-library/react';
+
 import { FeatureToggles } from '@grafana/data';
 import { config } from '@grafana/runtime';
+
+/**
+ * Flushes out microtasks so we don't get warnings from `@floating-ui/react`
+ * as per https://floating-ui.com/docs/react#testing
+ */
+export const flushMicrotasks = async () => {
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+};
 
 /**
  * Enables feature toggles `beforeEach` test, and sets back to original settings `afterEach` test

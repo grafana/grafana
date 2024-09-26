@@ -5,12 +5,12 @@ import { byLabelText, byPlaceholderText, byRole, byTestId } from 'testing-librar
 
 import { makeGrafanaAlertmanagerConfigUpdateFail } from 'app/features/alerting/unified/mocks/server/configure';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/utils/alerting-test-utils';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { testWithFeatureToggles } from '../../test/test-utils';
 
 import NewReceiverView from './NewReceiverView';
 

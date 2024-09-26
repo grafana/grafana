@@ -1,12 +1,13 @@
 import { MemoryHistoryBuildOptions } from 'history';
 import { ComponentProps, ReactNode } from 'react';
-import { act, render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import {
   testWithFeatureToggles,
   testWithLicenseFeatures,
-} from 'app/features/alerting/unified/utils/alerting-test-utils';
+  flushMicrotasks,
+} from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -25,16 +26,6 @@ import setupVanillaAlertmanagerFlavoredServer, {
 } from './__mocks__/vanillaAlertmanagerServer';
 import { RECEIVER_META_KEY } from './constants';
 import { ContactPointWithMetadata, ReceiverConfigWithMetadata, RouteReference } from './utils';
-
-/**
- * Flushes out microtasks so we don't get warnings from @floating-ui/react
- * as per https://floating-ui.com/docs/react#testing
- */
-const flushMicrotasks = async () => {
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  });
-};
 
 /**
  * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
