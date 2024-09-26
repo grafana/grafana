@@ -141,5 +141,5 @@ var wireExtsModuleServerSet = wire.NewSet(
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
-	standalone.EmptyCommandFactory,
+	standalone.NoOpAPIServerFactory,
 )

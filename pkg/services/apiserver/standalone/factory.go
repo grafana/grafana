@@ -16,8 +16,8 @@ type APIServerFactory interface {
 	GetCLICommand(info BuildInfo) *cli.Command
 }
 
-type EmptyCommandFactory struct{}
+type NoOpAPIServerFactory struct{}
 
-func (f *EmptyCommandFactory) GetCLICommand(info BuildInfo) *cli.Command {
+func (f *NoOpAPIServerFactory) GetCLICommand(info BuildInfo) *cli.Command {
 	return nil
 }
