@@ -3,9 +3,10 @@ package rest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,12 +49,11 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 
 	startLegacy := time.Now()
 	created, err := d.Legacy.Create(ctx, original, createValidation, options)
+	d.recordLegacyDuration(err != nil, mode1Str, d.resource, method, startLegacy)
 	if err != nil {
 		log.Error(err, "unable to create object in legacy storage")
-		d.recordLegacyDuration(true, mode1Str, d.resource, method, startLegacy)
 		return created, err
 	}
-	d.recordLegacyDuration(false, mode1Str, d.resource, method, startLegacy)
 
 	createdCopy := created.DeepCopyObject()
 
@@ -63,7 +63,7 @@ func (d *DualWriterMode1) Create(ctx context.Context, original runtime.Object, c
 	return created, err
 }
 
-func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, _ runtime.Object, createValidation rest.ValidateObjectFunc, createdCopy runtime.Object, options *metav1.CreateOptions) error {
+func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, in runtime.Object, createValidation rest.ValidateObjectFunc, createdCopy runtime.Object, options *metav1.CreateOptions) error {
 	var method = "create"
 	log := d.Log.WithValues("method", method)
 
@@ -71,10 +71,20 @@ func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, _ runtime.
 	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage create timeout"))
 	defer cancel()
 
+	accIn, err := meta.Accessor(in)
+	if err != nil {
+		return err
+	}
+
+	if accIn.GetUID() != "" {
+		return fmt.Errorf("there is an UID and it should not: %v", accIn.GetUID())
+	}
+
 	startStorage := time.Now()
 	storageObj, errObjectSt := d.Storage.Create(ctx, createdCopy, createValidation, options)
 	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
 	if errObjectSt != nil {
+		log.Error(err, "unable to create object in storage")
 		cancel()
 	}
 	areEqual := Compare(storageObj, createdCopy)
@@ -105,7 +115,7 @@ func (d *DualWriterMode1) Get(ctx context.Context, name string, options *metav1.
 	return res, errLegacy
 }
 
-func (d *DualWriterMode1) getFromUnifiedStorage(ctx context.Context, res runtime.Object, name string, options *metav1.GetOptions) error {
+func (d *DualWriterMode1) getFromUnifiedStorage(ctx context.Context, objFromLegacy runtime.Object, name string, options *metav1.GetOptions) error {
 	var method = "get"
 	log := d.Log.WithValues("method", method, "name", name)
 
@@ -120,7 +130,7 @@ func (d *DualWriterMode1) getFromUnifiedStorage(ctx context.Context, res runtime
 		cancel()
 	}
 
-	areEqual := Compare(storageObj, res)
+	areEqual := Compare(storageObj, objFromLegacy)
 	d.recordOutcome(mode1Str, name, areEqual, method)
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
@@ -136,16 +146,16 @@ func (d *DualWriterMode1) List(ctx context.Context, options *metainternalversion
 	ctx = klog.NewContext(ctx, log)
 
 	startLegacy := time.Now()
-	res, errLegacy := d.Legacy.List(ctx, options)
-	if errLegacy != nil {
-		log.Error(errLegacy, "unable to list object in legacy storage")
+	res, err := d.Legacy.List(ctx, options)
+	d.recordLegacyDuration(err != nil, mode1Str, d.resource, method, startLegacy)
+	if err != nil {
+		log.Error(err, "unable to list object in legacy storage")
 	}
-	d.recordLegacyDuration(errLegacy != nil, mode1Str, d.resource, method, startLegacy)
 
 	//nolint:errcheck
 	go d.listFromUnifiedStorage(ctx, options, res)
 
-	return res, errLegacy
+	return res, err
 }
 
 func (d *DualWriterMode1) listFromUnifiedStorage(ctx context.Context, options *metainternalversion.ListOptions, res runtime.Object) error {
@@ -156,6 +166,7 @@ func (d *DualWriterMode1) listFromUnifiedStorage(ctx context.Context, options *m
 	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
 	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage list timeout"))
 	defer cancel()
+
 	storageObj, err := d.Storage.List(ctx, options)
 	d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
 	if err != nil {
@@ -178,12 +189,11 @@ func (d *DualWriterMode1) Delete(ctx context.Context, name string, deleteValidat
 
 	startLegacy := time.Now()
 	res, async, err := d.Legacy.Delete(ctx, name, deleteValidation, options)
+	d.recordLegacyDuration(err != nil, mode1Str, name, method, startLegacy)
 	if err != nil {
 		log.Error(err, "unable to delete object in legacy storage")
-		d.recordLegacyDuration(true, mode1Str, d.resource, method, startLegacy)
 		return res, async, err
 	}
-	d.recordLegacyDuration(false, mode1Str, name, method, startLegacy)
 
 	//nolint:errcheck
 	go d.deleteFromUnifiedStorage(ctx, res, name, deleteValidation, options)
@@ -202,6 +212,7 @@ func (d *DualWriterMode1) deleteFromUnifiedStorage(ctx context.Context, res runt
 	storageObj, _, err := d.Storage.Delete(ctx, name, deleteValidation, options)
 	d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
 	if err != nil {
+		log.Error(err, "unable to delete object from unified storage")
 		cancel()
 	}
 	areEqual := Compare(storageObj, res)
@@ -221,12 +232,11 @@ func (d *DualWriterMode1) DeleteCollection(ctx context.Context, deleteValidation
 
 	startLegacy := time.Now()
 	res, err := d.Legacy.DeleteCollection(ctx, deleteValidation, options, listOptions)
+	d.recordLegacyDuration(err != nil, mode1Str, d.resource, method, startLegacy)
 	if err != nil {
 		log.Error(err, "unable to delete collection in legacy storage")
-		d.recordLegacyDuration(true, mode1Str, d.resource, method, startLegacy)
 		return res, err
 	}
-	d.recordLegacyDuration(false, mode1Str, d.resource, method, startLegacy)
 
 	//nolint:errcheck
 	go d.deleteCollectionFromUnifiedStorage(ctx, res, deleteValidation, options, listOptions)
@@ -245,6 +255,7 @@ func (d *DualWriterMode1) deleteCollectionFromUnifiedStorage(ctx context.Context
 	storageObj, err := d.Storage.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
 	if err != nil {
+		log.Error(err, "unable to delete collection object from unified storage")
 		cancel()
 	}
 	areEqual := Compare(storageObj, res)
@@ -262,58 +273,41 @@ func (d *DualWriterMode1) Update(ctx context.Context, name string, objInfo rest.
 	ctx = klog.NewContext(ctx, log)
 
 	startLegacy := time.Now()
-	res, async, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	objLegacy, async, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	d.recordLegacyDuration(err != nil, mode1Str, d.resource, method, startLegacy)
 	if err != nil {
 		log.Error(err, "unable to update in legacy storage")
-		d.recordLegacyDuration(true, mode1Str, d.resource, method, startLegacy)
-		return res, async, err
+		return objLegacy, async, err
 	}
-	d.recordLegacyDuration(false, mode1Str, d.resource, method, startLegacy)
 
 	//nolint:errcheck
-	go d.updateOnUnifiedStorage(ctx, res, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	go d.updateOnUnifiedStorage(ctx, objLegacy, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 
-	return res, async, err
+	return objLegacy, async, err
 }
 
-func (d *DualWriterMode1) updateOnUnifiedStorage(ctx context.Context, res runtime.Object, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) error {
+func (d *DualWriterMode1) updateOnUnifiedStorage(ctx context.Context, objLegacy runtime.Object, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) error {
 	var method = "update"
 	log := d.Log.WithValues("name", name, "method", method, "name", name)
 
 	// Ignores cancellation signals from parent context. Will automatically be canceled after 10 seconds.
 	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(ctx), time.Second*10, errors.New("storage update timeout"))
 
-	resCopy := res.DeepCopyObject()
-	// get the object to be updated
-	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("object", foundObj).Error(err, "could not get object to update")
-			cancel()
-		}
-		log.Info("object not found for update, creating one")
-	}
-
-	updated, err := objInfo.UpdatedObject(ctx, resCopy)
-	if err != nil {
-		log.WithValues("object", updated).Error(err, "could not update or create object")
-		cancel()
-	}
-
 	startStorage := time.Now()
 	defer cancel()
-	storageObj, _, errObjectSt := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	d.recordStorageDuration(errObjectSt != nil, mode1Str, d.resource, method, startStorage)
+	storageObj, _, err := d.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+	d.recordStorageDuration(err != nil, mode1Str, d.resource, method, startStorage)
 	if err != nil {
+		log.Error(err, "unable to update object from unified storage")
 		cancel()
 	}
-	areEqual := Compare(storageObj, res)
+	areEqual := Compare(storageObj, objLegacy)
 	d.recordOutcome(mode1Str, name, areEqual, method)
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
 	}
 
-	return errObjectSt
+	return err
 }
 
 func (d *DualWriterMode1) Destroy() {

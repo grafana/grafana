@@ -113,10 +113,10 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	}
 
 	if objStorage != nil {
-		updateRV(objStorage, objLegacy)
+		updateRVOnLegacyObj(objStorage, objLegacy)
 	}
 	if objStorage != nil {
-		if err := updateRV(objStorage, objLegacy); err != nil {
+		if err := updateRVOnLegacyObj(objStorage, objLegacy); err != nil {
 			log.WithValues("storageObject", objStorage, "legacyObject", objLegacy).Error(err, "could not update resource version")
 		}
 	}
@@ -300,7 +300,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	}
 
 	if objFromStorage != nil {
-		if err := updateRV(objFromStorage, objFromLegacy); err != nil {
+		if err := updateRVOnLegacyObj(objFromStorage, objFromLegacy); err != nil {
 			log.WithValues("storageObject", objFromStorage, "legacyObject", objFromLegacy).Error(err, "could not update resource version")
 		}
 	}
@@ -308,7 +308,7 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	return objFromLegacy, created, err
 }
 
-func updateRV(storageObj runtime.Object, legacyObj runtime.Object) error {
+func updateRVOnLegacyObj(storageObj runtime.Object, legacyObj runtime.Object) error {
 	storageAccessor, err := utils.MetaAccessor(storageObj)
 	if err != nil {
 		return err
