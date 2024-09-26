@@ -4,6 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { config } from '@grafana/runtime';
 import { BackendSrvRequest, getBackendSrv, isFetchError } from '@grafana/runtime/src/services/backendSrv';
 
+import { logQueryLibrary } from './logQueryLibrary';
 import { DataQuerySpecResponse } from './types';
 
 /**
@@ -37,6 +38,7 @@ interface QueryLibraryBackendRequest extends Pick<BackendSrvRequest, 'data' | 'm
 export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecResponse, Error> = async (
   requestOptions
 ) => {
+  const start = performance.now();
   try {
     const responseObservable = getBackendSrv().fetch<DataQuerySpecResponse>({
       url: `${BASE_URL}${requestOptions.url ?? ''}`,
@@ -45,7 +47,17 @@ export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecRes
       data: requestOptions.data,
       headers: { ...requestOptions.headers },
     });
-    return await lastValueFrom(responseObservable);
+
+    const response = await lastValueFrom(responseObservable);
+
+    const recordCount = response.data.items.length || 0;
+
+    const end = performance.now();
+    const timeTaken = end - start;
+    console.log({ type: 'backend fetch', recordCount, timeTaken: `${timeTaken} ms` });
+    // log to a log file
+    logQueryLibrary('backend fetch', recordCount, timeTaken);
+    return response;
   } catch (error) {
     if (isFetchError(error)) {
       return { error: new Error(error.data.message) };
