@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
 import { withErrorBoundary } from '@grafana/ui';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
@@ -16,11 +16,6 @@ import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchRulesSourceBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import * as ruleId from './utils/rule-id';
-
-type RuleEditorProps = GrafanaRouteComponentProps<{
-  id?: string;
-  type?: 'recording' | 'alerting' | 'grafana-recording';
-}>;
 
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'bell',
@@ -46,12 +41,12 @@ const getPageNav = (identifier?: RuleIdentifier, type?: 'recording' | 'alerting'
   }
 };
 
-const RuleEditor = ({ match }: RuleEditorProps) => {
+const RuleEditor = () => {
   const dispatch = useDispatch();
   const [searchParams] = useURLSearchParams();
-
-  const { type } = match.params;
-  const id = ruleId.getRuleIdFromPathname(match.params);
+  const params = useParams<{ type?: 'recording' | 'alerting' | 'grafana-recording'; id?: string }>();
+  const { type } = params;
+  const id = ruleId.getRuleIdFromPathname(params);
   const identifier = ruleId.tryParse(id, true);
 
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
