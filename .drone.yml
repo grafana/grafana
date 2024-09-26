@@ -4167,6 +4167,41 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on: []
+image_pull_secrets:
+- gcr
+- gar
+kind: pipeline
+name: publish-grafanacom
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - ./bin/build publish grafana-com --edition oss $${TAG}
+  depends_on: []
+  environment:
+    GCP_KEY:
+      from_secret: gcp_grafanauploads_base64
+    GRAFANA_COM_API_KEY:
+      from_secret: grafana_api_key
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-grafanacom
+trigger:
+  event:
+  - promote
+  target: publish-grafanacom
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
 depends_on:
 - main-test-backend
 - main-test-frontend
@@ -6108,6 +6143,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7335b2e56769f72716f5dac524741e423abb99eacf775fa635e59c2d658c8aee
+hmac: f74e86b614b2cd05587c3d40eb523e5e694bc311519aaf81832b85784b9912a3
 
 ...

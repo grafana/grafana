@@ -727,6 +727,7 @@ def frontend_metrics_step(trigger = None):
     Returns:
       Drone step.
     """
+
     step = {
         "name": "publish-frontend-metrics",
         "image": images["node"],
@@ -1178,7 +1179,7 @@ def upload_packages_step(ver_mode, trigger = None):
         step = dict(step, when = trigger)
     return step
 
-def publish_grafanacom_step(ver_mode):
+def publish_grafanacom_step(ver_mode, version = "${DRONE_TAG}", depends_on = ["publish-linux-packages-deb", "publish-linux-packages-rpm"]):
     """Publishes Grafana packages to grafana.com.
 
     Args:
@@ -1191,7 +1192,7 @@ def publish_grafanacom_step(ver_mode):
       Drone step.
     """
     if ver_mode == "release":
-        cmd = "./bin/build publish grafana-com --edition oss ${DRONE_TAG}"
+        cmd = "./bin/build publish grafana-com --edition oss {}".format(version)
     elif ver_mode == "main":
         build_no = "${DRONE_BUILD_NUMBER}"
         cmd = "./bin/build publish grafana-com --edition oss --build-id {}".format(
@@ -1203,10 +1204,7 @@ def publish_grafanacom_step(ver_mode):
     return {
         "name": "publish-grafanacom",
         "image": images["publish"],
-        "depends_on": [
-            "publish-linux-packages-deb",
-            "publish-linux-packages-rpm",
-        ],
+        "depends_on": depends_on,
         "environment": {
             "GRAFANA_COM_API_KEY": from_secret("grafana_api_key"),
             "GCP_KEY": from_secret(gcp_grafanauploads_base64),
