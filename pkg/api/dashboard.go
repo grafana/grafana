@@ -717,7 +717,6 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 
 	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
 
-	dash.Dashboard.Set("uid", "")
 	return response.JSON(http.StatusOK, &dash)
 }
 
