@@ -1325,13 +1325,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "databaseReadReplica",
-			Description: "Use a read replica for some database queries.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendServicesSquad,
-			Expression:  "false", // enabled by default
-		},
-		{
 			Name:              "zanzana",
 			Description:       "Use openFGA as authorization engine.",
 			Stage:             FeatureStageExperimental,
@@ -1370,17 +1363,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       awsDatasourcesSquad,
 			Expression:  "true",
-		},
-		{
-			Name:              "bodyScrolling",
-			Description:       "Adjusts Page to make body the scrollable element",
-			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaFrontendPlatformSquad,
-			Expression:        "false", // enabled by default
-			FrontendOnly:      true,
-			AllowSelfServe:    true,
-			HideFromDocs:      true,
-			HideFromAdminPage: false,
 		},
 		{
 			Name:         "cloudwatchMetricInsightsCrossAccount",
@@ -1450,6 +1432,13 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:         "homeSetupGuide",
+			Description:  "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        growthAndOnboarding,
+		},
+		{
 			Name:              "appPlatformAccessTokens",
 			Description:       "Enables the use of access tokens for the App Platform",
 			Stage:             FeatureStageExperimental,
@@ -1471,6 +1460,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "alertingQueryAndExpressionsStepMode",
+			Description:  "Enables step mode for alerting queries and expressions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:              "improvedExternalSessionHandling",
 			Description:       "Enable improved support for external sessions in Grafana",
 			Stage:             FeatureStageExperimental,
@@ -1482,6 +1478,12 @@ var (
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
 			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
+		},
+		{
+			Name:        "rolePickerDrawer",
+			Description: "Enables the new role picker drawer design",
+			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
 		},
 	}

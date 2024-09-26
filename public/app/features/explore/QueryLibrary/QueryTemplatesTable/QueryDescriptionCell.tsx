@@ -23,7 +23,6 @@ export function QueryDescriptionCell(props: CellProps<QueryTemplateRow>) {
   }
   const query = props.row.original.query;
   const queryDisplayText = createQueryText(query, datasourceApi);
-
   const description = props.row.original.description;
   const dsName = datasourceApi?.name || '';
 

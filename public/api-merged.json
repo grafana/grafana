@@ -13793,6 +13793,7 @@
       }
     },
     "CorrelationType": {
+      "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
       "type": "string"
     },
     "CounterResetHint": {
@@ -16867,6 +16868,9 @@
         "message": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
         "refId": {
           "type": "string"
         },
@@ -16885,7 +16889,8 @@
           "enum": [
             "DASHBOARD",
             "DATASOURCE",
-            "FOLDER"
+            "FOLDER",
+            "LIBRARY_ELEMENT"
           ]
         }
       }

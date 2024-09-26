@@ -68,6 +68,7 @@ type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
+	Name   string          `xorm:"name" json:"name"`
 	Type   MigrateDataType `xorm:"resource_type" json:"type"`
 	RefID  string          `xorm:"resource_uid" json:"refId"`
 	Status ItemStatus      `xorm:"status" json:"status"`
@@ -79,9 +80,10 @@ type CloudMigrationResource struct {
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType      MigrateDataType = "DASHBOARD"
+	DatasourceDataType     MigrateDataType = "DATASOURCE"
+	FolderDataType         MigrateDataType = "FOLDER"
+	LibraryElementDataType MigrateDataType = "LIBRARY_ELEMENT"
 )
 
 type ItemStatus string

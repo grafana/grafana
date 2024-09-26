@@ -6,7 +6,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -25,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -43,17 +41,11 @@ type IdentityAccessManagementAPIBuilder struct {
 }
 
 func RegisterAPIService(
-	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
 	ac accesscontrol.AccessControl,
 ) (*IdentityAccessManagementAPIBuilder, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		// skip registration unless opting into experimental apis
-		return nil, nil
-	}
-
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
 	authorizer, client := newLegacyAuthorizer(ac, store)
 
@@ -101,13 +93,7 @@ func (b *IdentityAccessManagementAPIBuilder) InstallSchema(scheme *runtime.Schem
 	return scheme.SetVersionPriority(iamv0.SchemeGroupVersion)
 }
 
-func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
-	dualWriteBuilder grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(iamv0.GROUP, scheme, metav1.ParameterCodec, codecs)
+func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, _ *runtime.Scheme, _ generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
 	storage := map[string]rest.Storage{}
 
 	teamResource := iamv0.TeamResourceInfo
@@ -121,9 +107,9 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
 	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.accessClient)
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
-	serviceaccountResource := iamv0.ServiceAccountResourceInfo
-	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store)
-	storage[serviceaccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
+	serviceAccountResource := iamv0.ServiceAccountResourceInfo
+	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store)
+	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.sso != nil {
 		ssoResource := iamv0.SSOSettingResourceInfo
@@ -134,7 +120,7 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIGroupInfo(
 	storage["display"] = user.NewLegacyDisplayREST(b.store)
 
 	apiGroupInfo.VersionedResourcesStorageMap[iamv0.VERSION] = storage
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (b *IdentityAccessManagementAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

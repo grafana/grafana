@@ -55,13 +55,14 @@ describe('Stats Calculators', () => {
   it('should calculate basic stats', () => {
     const stats = reduceField({
       field: basicTable.fields[0],
-      reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count],
+      reducers: [ReducerID.first, ReducerID.last, ReducerID.mean, ReducerID.count, ReducerID.diffperc],
     });
 
     expect(stats.first).toEqual(10);
     expect(stats.last).toEqual(20);
     expect(stats.mean).toEqual(15);
     expect(stats.count).toEqual(2);
+    expect(stats.diffperc).toEqual(100);
   });
 
   it('should handle undefined field data without crashing', () => {

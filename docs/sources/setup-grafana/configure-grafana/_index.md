@@ -701,6 +701,18 @@ You can enable both policies simultaneously.
 
 Set the policy template that will be used when adding the `Content-Security-Policy-Report-Only` header to your requests. `$NONCE` in the template includes a random nonce.
 
+### actions_allow_post_url
+
+Sets API paths to be accessible between plugins using the POST verb. This is a comma separated list, and uses glob matching.
+
+This will allow access to all plugins that have a backend:
+
+`actions_allow_post_url=/api/plugins/*`
+
+This will limit access to the backend of a single plugin:
+
+`actions_allow_post_url=/api/plugins/grafana-special-app`
+
 <hr />
 
 ### angular_support_enabled
@@ -2601,8 +2613,8 @@ Format: `<pageUrl> = <sectionId> <sortWeight>`
 
 ## [public_dashboards]
 
-This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
+This section configures the [shared dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/) feature.
 
 ### enabled
 
-Set this to `false` to disable the public dashboards feature. This prevents users from creating new public dashboards and disables existing ones.
+Set this to `false` to disable the shared dashboards feature. This prevents users from creating new shared dashboards and disables existing ones.

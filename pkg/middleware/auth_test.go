@@ -33,7 +33,7 @@ func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr err
 	return contexthandler.ProvideService(setting.NewCfg(), tracing.InitializeTracerForTest(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
-	})
+	}, featuremgmt.WithFeatures())
 }
 
 func TestAuth_Middleware(t *testing.T) {
