@@ -434,9 +434,9 @@ function EvaluationGroupCreationModal({
               )}
             />
           </Field>
-          <Stack direction="row" alignItems="flex-end">
-            <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setEvaluationInterval} />
-          </Stack>
+
+          <EvaluationGroupQuickPick currentInterval={evaluationInterval} onSelect={setEvaluationInterval} />
+
           <Modal.ButtonRow>
             <Button variant="secondary" type="button" onClick={onCancel}>
               Cancel
