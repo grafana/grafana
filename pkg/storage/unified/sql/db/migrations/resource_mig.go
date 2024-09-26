@@ -35,7 +35,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	})
 
-	tables = append(tables, migrator.Table{
+	resource_history_table := migrator.Table{
 		Name: "resource_history",
 		Columns: []*migrator.Column{
 			// primary identifier
@@ -49,7 +49,6 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "value", Type: migrator.DB_LongText, Nullable: true},
 			{Name: "action", Type: migrator.DB_Int, Nullable: false}, // 1: create, 2: update, 3: delete
-			{Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: true},
 
 			// Hashed label set
 			{Name: "label_set", Type: migrator.DB_NVarchar, Length: 64, Nullable: true}, // null is no labels
@@ -63,7 +62,8 @@ func initResourceTables(mg *migrator.Migrator) string {
 			// index to support watch poller
 			{Cols: []string{"resource_version"}, Type: migrator.IndexType},
 		},
-	})
+	}
+	tables = append(tables, resource_history_table)
 
 	// tables = append(tables, migrator.Table{
 	// 	Name: "resource_label_set",
@@ -97,6 +97,12 @@ func initResourceTables(mg *migrator.Migrator) string {
 			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
+
+	// Add
+	// add column to store creator of a dashboard
+	mg.AddMigration("Add column previous_resource_version in resource_history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
+		Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: true,
+	}))
 
 	return marker
 }
