@@ -127,7 +127,10 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingNotificationsExternalWrite,
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...PERMISSIONS_CONTACT_POINTS_MODIFY,
+        // We check any contact point permission here because a user without edit permissions
+        // still has to be able to visit the "edit" page, because we don't have a separate view for edit vs view
+        // (we just disable the form instead)
+        ...PERMISSIONS_CONTACT_POINTS,
       ]),
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
