@@ -48,6 +48,8 @@ done
 # Check if any files in packages/grafana-e2e-selectors were changed. If so, add a 'modified' tag to the package
 COUNT=$(git diff HEAD~1..HEAD --name-only -- packages/grafana-e2e-selectors | awk 'END{print NR}')
 if (( $COUNT > 0 )); then
+    # Wait a little bit to allow the package to be published to the registry
+    sleep 5s
     regex_pattern="canary: ([0-9.-]+)"
     TAGS=$(npm dist-tag ls @grafana/e2e-selectors)
     if [[ $TAGS =~ $regex_pattern ]]; then
