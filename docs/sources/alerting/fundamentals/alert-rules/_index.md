@@ -69,9 +69,7 @@ Grafana supports two different alert rule types: Grafana-managed alert rules and
 
 ## Grafana-managed alert rules
 
-Grafana-managed alert rules are the most flexible alert rule type. They allow you to create alert rules that can act on data from any of the [supported data sources](#supported-data-sources), and use multiple data sources in a single alert rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported.
-
-Additionally, you can also add [expressions to transform your data](ref:expression-queries), set custom alert conditions, and include [images in alert notifications](ref:notification-images).
+Grafana-managed alert rules are the most flexible alert rule type. They allow you to create alert rules that can act on data from any of the [supported data sources](#supported-data-sources), and use multiple data sources in a single alert rule. You can add [expressions to transform your data](ref:expression-queries) and set custom alert conditions. Using [images in alert notifications](ref:notification-images). is also supported.
 
 {{< figure src="/media/docs/alerting/grafana-managed-alerting-architecture.png" max-width="750px" caption="How Grafana-managed alerting works by default" >}}
 

@@ -35,13 +35,14 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
   MANUAL_ROUTING_KEY,
+  SIMPLIFIED_QUERY_EDITOR_KEY,
   formValuesFromExistingRule,
+  formValuesToRulerGrafanaRuleDTO,
+  formValuesToRulerRuleDTO,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
   normalizeDefaultAnnotations,
-  formValuesToRulerGrafanaRuleDTO,
-  formValuesToRulerRuleDTO,
 } from '../../../utils/rule-form';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
@@ -135,15 +136,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
     trackAlertRuleFormSaved({ formAction: existing ? 'update' : 'create', ruleType: values.type });
 
-    // when creating a new rule, we save the manual routing setting in local storage
-    if (!existing) {
-      if (values.manualRouting) {
-        localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
-      } else {
-        localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
-      }
-    }
-
     const ruleDefinition = grafanaTypeRule ? formValuesToRulerGrafanaRuleDTO(values) : formValuesToRulerRuleDTO(values);
 
     const ruleGroupIdentifier = existing
@@ -153,6 +145,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     // @TODO what is "evaluateEvery" being used for?
     // @TODO move this to a hook too to make sure the logic here is tested for regressions?
     if (!existing) {
+      // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
+      storeInLocalStorageValues(values);
       await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, values.evaluateEvery);
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
@@ -351,6 +345,21 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
     ...getDefaultFormValues(),
     ...rule,
   });
+}
+
+function storeInLocalStorageValues(values: RuleFormValues) {
+  if (values.manualRouting) {
+    localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+  } else {
+    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+  }
+  if (values.editorSettings) {
+    if (values.editorSettings.simplifiedQueryEditor) {
+      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'true');
+    } else {
+      localStorage.setItem(SIMPLIFIED_QUERY_EDITOR_KEY, 'false');
+    }
+  }
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
