@@ -4,12 +4,6 @@ import "time"
 
 type MigrateDataType string
 
-const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
-)
-
 type MigrateDataRequestDTO struct {
 	Items []MigrateDataRequestItemDTO `json:"items"`
 }

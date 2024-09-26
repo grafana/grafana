@@ -35,6 +35,8 @@ function ResourceInfo({ data }: { data: ResourceTableItem }) {
       return <DatasourceInfo data={data} />;
     case 'FOLDER':
       return <FolderInfo data={data} />;
+    case 'LIBRARY_ELEMENT':
+      return null;
   }
 }
 
