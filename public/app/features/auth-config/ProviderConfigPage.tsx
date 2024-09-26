@@ -38,8 +38,7 @@ const getPageNav = (config?: SSOProvider): NavModelItem => {
 export const ProviderConfigPage = () => {
   const dispatch = useDispatch();
   const { isLoading, providers } = useSelector((store) => store.authConfig);
-  const params = useParams();
-  const { provider = '' } = params;
+  const { provider = '' } = useParams();
   const config = providers.find((config) => config.provider === provider);
 
   useEffect(() => {

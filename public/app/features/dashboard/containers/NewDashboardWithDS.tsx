@@ -9,8 +9,7 @@ import { setInitialDatasource } from '../state/reducers';
 
 export default function NewDashboardWithDS() {
   const [error, setError] = useState<string | null>(null);
-  const params = useParams();
-  const { datasourceUid } = params;
+  const { datasourceUid } = useParams();
   const dispatch = useDispatch();
 
   useEffect(() => {
