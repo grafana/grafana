@@ -159,7 +159,7 @@ func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion
 	return objFromStorage, err
 }
 
-func (d *DualWriterMode3) listFromLegacyStorage(ctx context.Context, options *metainternalversion.ListOptions, objFromLegacy runtime.Object) error {
+func (d *DualWriterMode3) listFromLegacyStorage(ctx context.Context, options *metainternalversion.ListOptions, objFromStorage runtime.Object) error {
 	var method = "list"
 	log := d.Log.WithValues("resourceVersion", options.ResourceVersion, "method", method)
 	startLegacy := time.Now()
@@ -168,11 +168,17 @@ func (d *DualWriterMode3) listFromLegacyStorage(ctx context.Context, options *me
 	defer cancel()
 
 	objFromLegacy, err := d.Legacy.List(ctx, options)
+	d.recordLegacyDuration(err != nil, mode3Str, d.resource, method, startLegacy)
 	if err != nil {
 		log.Error(err, "unable to list object in legacy storage")
 		cancel()
 	}
-	d.recordLegacyDuration(err != nil, mode3Str, d.resource, method, startLegacy)
+
+	areEqual := Compare(objFromStorage, objFromLegacy)
+	d.recordOutcome(mode3Str, getName(objFromStorage), areEqual, method)
+	if !areEqual {
+		log.WithValues("name", getName(objFromStorage)).Info("object from legacy and storage are not equal")
+	}
 
 	return err
 }
