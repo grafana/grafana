@@ -4,8 +4,8 @@ import * as React from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
-import { Button, ClickOutsideWrapper, IconButton, Label, Stack } from '..';
-import { useStyles2, useTheme2 } from '../../themes';
+import { Button, ClickOutsideWrapper, Stack } from '..';
+import { useStyles2 } from '../../themes';
 
 import { FilterList } from './FilterList';
 import { TableStyles } from './styles';
@@ -31,12 +31,10 @@ export const FilterPopup = ({
   operator,
   setOperator,
 }: Props) => {
-  const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
-  const [matchCase, setMatchCase] = useState(false);
 
   const onCancel = useCallback((event?: React.MouseEvent) => onClose(), [onClose]);
 
@@ -66,26 +64,13 @@ export const FilterPopup = ({
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
       <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
-        <Stack direction="column" gap={3}>
-          <Stack direction="column" gap={0.5}>
-            <Stack justifyContent="space-between" alignItems="center">
-              <Label className={styles.label}>Filter by values:</Label>
-              <IconButton
-                name="text-fields"
-                tooltip="Match case"
-                style={{ color: matchCase ? theme.colors.text.link : theme.colors.text.disabled }}
-                onClick={() => {
-                  setMatchCase((s) => !s);
-                }}
-              />
-            </Stack>
-            <div className={cx(styles.listDivider)} />
+        <Stack direction="column" gap={1.5}>
+          <Stack direction="column" gap={0}>
+
             <FilterList
               onChange={setValues}
               values={values}
               options={options}
-              caseSensitive={matchCase}
-              showOperators={true}
               searchFilter={searchFilter}
               setSearchFilter={setSearchFilter}
               operator={operator}
@@ -95,7 +80,7 @@ export const FilterPopup = ({
           <Stack gap={3}>
             <Stack>
               <Button size="sm" onClick={onFilter}>
-                Ok
+                Filter
               </Button>
               <Button size="sm" variant="secondary" onClick={onCancel}>
                 Cancel
@@ -127,15 +112,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(2),
     boxShadow: theme.shadows.z3,
     borderRadius: theme.shape.radius.default,
-  }),
-  listDivider: css({
-    label: 'listDivider',
-    width: '100%',
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(0.5, 2),
-  }),
-  label: css({
-    marginBottom: 0,
   }),
 });
 
