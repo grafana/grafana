@@ -99,25 +99,6 @@ type ResourceServerOptions struct {
 	Now func() int64
 }
 
-type indexServer struct{}
-
-func (s indexServer) Search(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
-	res := &SearchResponse{}
-	return res, nil
-}
-
-func (s indexServer) History(ctx context.Context, req *HistoryRequest) (*HistoryResponse, error) {
-	return nil, nil
-}
-
-func (s indexServer) Origin(ctx context.Context, req *OriginRequest) (*OriginResponse, error) {
-	return nil, nil
-}
-
-func NewResourceIndexServer() ResourceIndexServer {
-	return indexServer{}
-}
-
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	if opts.Tracer == nil {
 		opts.Tracer = noop.NewTracerProvider().Tracer("resource-server")
@@ -641,6 +622,18 @@ func (s *server) Origin(ctx context.Context, req *OriginRequest) (*OriginRespons
 		return nil, err
 	}
 	return s.index.Origin(ctx, req)
+}
+
+func (s *server) Index(ctx context.Context, req *IndexRequest) (*IndexResponse, error) {
+	if err := s.Init(ctx); err != nil {
+		return nil, err
+	}
+	indexer, ok := s.index.(ResourceIndexer)
+	if !ok {
+		return nil, fmt.Errorf("indexer not initializable - doeesn't implement ResourceIndexer interface")
+	}
+	indexer.Init(s)
+	return s.index.Index(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.

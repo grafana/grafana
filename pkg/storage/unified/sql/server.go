@@ -1,6 +1,8 @@
 package sql
 
 import (
+	"context"
+
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,6 +31,14 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.Fea
 
 	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
 		opts.Index = resource.NewResourceIndexServer()
+		server, err := resource.NewResourceServer(opts)
+		if err != nil {
+			return nil, err
+		}
+		// initialze the search index
+		// TODO: pass context to NewRsouceServer function
+		_, err = server.Index(context.Background(), &resource.IndexRequest{})
+		return server, err
 	}
 
 	return resource.NewResourceServer(opts)

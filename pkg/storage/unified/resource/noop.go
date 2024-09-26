@@ -46,3 +46,7 @@ func (n *noopService) History(context.Context, *HistoryRequest) (*HistoryRespons
 func (n *noopService) Origin(context.Context, *OriginRequest) (*OriginResponse, error) {
 	return nil, ErrNotImplementedYet
 }
+
+func (n *noopService) Index(context.Context, *IndexRequest) (*IndexResponse, error) {
+	return nil, ErrNotImplementedYet
+}

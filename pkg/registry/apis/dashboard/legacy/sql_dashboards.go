@@ -523,3 +523,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	}
 	return res, err
 }
+
+func (a *dashboardSqlAccess) Index(ctx context.Context, req *resource.IndexRequest) (*resource.IndexResponse, error) {
+	return nil, nil
+}
