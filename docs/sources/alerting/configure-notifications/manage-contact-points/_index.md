@@ -162,6 +162,7 @@ The following table lists the contact point integrations supported by Grafana.
 | Name                         | Type                      |
 | ---------------------------- | ------------------------- |
 | Alertmanager                 | `prometheus-alertmanager` |
+| Amazon SNS                   | `sns`                     |
 | Cisco Webex Teams            | `webex`                   |
 | DingDing                     | `dingding`                |
 | [Discord](ref:discord)       | `discord`                 |
