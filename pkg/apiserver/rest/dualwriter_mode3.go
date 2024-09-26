@@ -69,6 +69,7 @@ func (d *DualWriterMode3) Create(ctx context.Context, in runtime.Object, createV
 
 	createdCopy := storageObj.DeepCopyObject()
 
+	//nolint:errcheck
 	go d.createOnLegacyStorage(ctx, createdCopy, createValidation, options)
 
 	return storageObj, errObjectSt
@@ -109,6 +110,7 @@ func (d *DualWriterMode3) Get(ctx context.Context, name string, options *metav1.
 		log.Error(err, "unable to get object in storage")
 	}
 
+	//nolint:errcheck
 	go d.getFromLegacyStorage(ctx, storageObj, name, options)
 
 	return storageObj, err
@@ -151,6 +153,7 @@ func (d *DualWriterMode3) List(ctx context.Context, options *metainternalversion
 		log.Error(err, "unable to list object in storage")
 	}
 
+	//nolint:errcheck
 	go d.listFromLegacyStorage(ctx, options, objFromStorage)
 
 	return objFromStorage, err
@@ -187,6 +190,7 @@ func (d *DualWriterMode3) Delete(ctx context.Context, name string, deleteValidat
 		return objFromStorage, async, err
 	}
 
+	//nolint:errcheck
 	go d.deleteFromLegacyStorage(ctx, objFromStorage, name, deleteValidation, options)
 
 	return objFromStorage, async, err
@@ -229,6 +233,7 @@ func (d *DualWriterMode3) Update(ctx context.Context, name string, objInfo rest.
 		return objFromStorage, async, err
 	}
 
+	//nolint:errcheck
 	go d.updateOnLegacyStorage(ctx, objFromStorage, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 
 	return objFromStorage, async, err
@@ -271,6 +276,7 @@ func (d *DualWriterMode3) DeleteCollection(ctx context.Context, deleteValidation
 		return storageObj, err
 	}
 
+	//nolint:errcheck
 	go d.deleteCollectionFromLegacyStorage(ctx, storageObj, deleteValidation, options, listOptions)
 
 	return storageObj, err
