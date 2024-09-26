@@ -147,16 +147,16 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
       storeInLocalStorageValues(values);
-      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, values.evaluateEvery);
+      await addRuleToRuleGroup.execute(ruleGroupIdentifier, ruleDefinition, evaluateEvery);
     } else {
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
       const targetRuleGroupIdentifier = getRuleGroupLocationFromFormValues(values);
-
       await updateRuleInRuleGroup.execute(
         ruleGroupIdentifier,
         ruleIdentifier,
         ruleDefinition,
-        targetRuleGroupIdentifier
+        targetRuleGroupIdentifier,
+        evaluateEvery
       );
     }
 

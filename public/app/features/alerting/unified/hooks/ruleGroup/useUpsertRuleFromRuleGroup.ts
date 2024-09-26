@@ -60,7 +60,8 @@ export function useUpdateRuleInRuleGroup() {
       ruleGroup: RuleGroupIdentifier,
       ruleIdentifier: EditableRuleIdentifier,
       ruleDefinition: PostableRuleDTO,
-      targetRuleGroup?: RuleGroupIdentifier
+      targetRuleGroup?: RuleGroupIdentifier,
+      interval?: string
     ) => {
       const { namespaceName } = ruleGroup;
       const finalRuleDefinition = copyGrafanaUID(ruleIdentifier, ruleDefinition);
@@ -68,7 +69,7 @@ export function useUpdateRuleInRuleGroup() {
       // check if the existing rule and the form values have the same rule group identifier
       const sameTargetRuleGroup = isEqual(ruleGroup, targetRuleGroup);
       if (targetRuleGroup && !sameTargetRuleGroup) {
-        const result = moveRuleToGroup.execute(ruleGroup, targetRuleGroup, ruleIdentifier, ruleDefinition);
+        const result = moveRuleToGroup.execute(ruleGroup, targetRuleGroup, ruleIdentifier, ruleDefinition, interval);
         return result;
       }
 
@@ -101,12 +102,13 @@ export function useMoveRuleToRuleGroup() {
       currentRuleGroup: RuleGroupIdentifier,
       targetRuleGroup: RuleGroupIdentifier,
       ruleIdentifier: EditableRuleIdentifier,
-      ruleDefinition: PostableRuleDTO
+      ruleDefinition: PostableRuleDTO,
+      interval?: string
     ) => {
       const finalRuleDefinition = copyGrafanaUID(ruleIdentifier, ruleDefinition);
 
       // 1. add the rule to the new namespace / group / ruler target
-      const addRuleToGroup = addRuleAction({ rule: finalRuleDefinition });
+      const addRuleToGroup = addRuleAction({ rule: finalRuleDefinition, interval });
       const { newRuleGroupDefinition: newTargetGroup, rulerConfig: targetGroupRulerConfig } = await produceNewRuleGroup(
         targetRuleGroup,
         addRuleToGroup
