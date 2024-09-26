@@ -44,11 +44,11 @@ func RunTestWatch(ctx context.Context, t *testing.T, store storage.Interface) {
 // - update that gets filtered should trigger Deleted event
 func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recursive bool) {
 	basePod := &example.Pod{
-		ObjectMeta: metav1.ObjectMeta{Name: "foo"},
+		ObjectMeta: metav1.ObjectMeta{Name: "foo", UID: "123"},
 		Spec:       example.PodSpec{NodeName: ""},
 	}
 	basePodAssigned := &example.Pod{
-		ObjectMeta: metav1.ObjectMeta{Name: "foo"},
+		ObjectMeta: metav1.ObjectMeta{Name: "foo", UID: "123"},
 		Spec:       example.PodSpec{NodeName: "bar"},
 	}
 
@@ -1604,13 +1604,13 @@ func basePodAssigned(podName, nodeName string) *example.Pod {
 
 func baseNamespacedPod(podName, namespace string) *example.Pod {
 	return &example.Pod{
-		ObjectMeta: metav1.ObjectMeta{Name: podName, Namespace: namespace},
+		ObjectMeta: metav1.ObjectMeta{Name: podName, Namespace: namespace, UID: "123"},
 	}
 }
 
 func baseNamespacedPodUpdated(podName, namespace string) *example.Pod {
 	return &example.Pod{
-		ObjectMeta: metav1.ObjectMeta{Name: podName, Namespace: namespace},
+		ObjectMeta: metav1.ObjectMeta{Name: podName, Namespace: namespace, UID: "123"},
 		Status:     example.PodStatus{Phase: "Running"},
 	}
 }
