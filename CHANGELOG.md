@@ -1,3 +1,32 @@
+<!-- 11.2.1 START -->
+
+# 11.2.1 (2024-09-26)
+
+### Features and enhancements
+
+- **Alerting:** Support for optimistic concurrency in priovisioning Tempate API [#92251](https://github.com/grafana/grafana/pull/92251), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Logs panel:** Enable displayedFields in dashboards and apps [#92675](https://github.com/grafana/grafana/pull/92675), [@matyax](https://github.com/matyax)
+- **State timeline:** Add pagination support [#92257](https://github.com/grafana/grafana/pull/92257), [@kevinputera](https://github.com/kevinputera)
+
+### Bug fixes
+
+- **Authn:** No longer hash service account token twice during authentication [#92639](https://github.com/grafana/grafana/pull/92639), [@kalleep](https://github.com/kalleep)
+- **CloudMigrations:** Fix snapshot creation on Windows systems [#92981](https://github.com/grafana/grafana/pull/92981), [@macabu](https://github.com/macabu)
+- **DashGPT:** Fixes issue with generation on Safari [#92952](https://github.com/grafana/grafana/pull/92952), [@kaydelaney](https://github.com/kaydelaney)
+- **Dashboard:** Fix Annotation runtime error when a data source does not support annotations [#92830](https://github.com/grafana/grafana/pull/92830), [@axelavargas](https://github.com/axelavargas)
+- **Grafana SQL:** Fix broken import in NumberInput component [#92808](https://github.com/grafana/grafana/pull/92808), [@chessman](https://github.com/chessman)
+- **Logs:** Show older logs button when infinite scroll is enabled and sort order is descending [#92867](https://github.com/grafana/grafana/pull/92867), [@matyax](https://github.com/matyax)
+- **RBAC:** Fix an issue with server admins not being able to manage users in orgs that they don't belong to [#92274](https://github.com/grafana/grafana/pull/92274), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
+- **RBAC:** Fix an issue with server admins not being able to manage users in orgs that they don't belong to (Enterprise)
+- **Reporting:** Disable dashboardSceneSolo when rendering PDFs the old way (Enterprise)
+- **Templating:** Fix searching non-latin template variables [#92893](https://github.com/grafana/grafana/pull/92893), [@leeoniya](https://github.com/leeoniya)
+- **TutorialCard:** Fix link to tutorial not opening [#92647](https://github.com/grafana/grafana/pull/92647), [@eledobleefe](https://github.com/eledobleefe)
+
+### Plugin development fixes & changes
+
+- **AutoSizeInput:** Allow to be controlled by value [#92999](https://github.com/grafana/grafana/pull/92999), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+<!-- 11.2.1 END -->
 <!-- 11.1.6 START -->
 
 # 11.1.6 (2024-09-26)
