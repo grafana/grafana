@@ -22,7 +22,7 @@ func TestNotificationPolicyService(t *testing.T) {
 	t.Run("service gets policy tree from org's AM config", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 
-		tree, err := sut.GetPolicyTree(context.Background(), 1)
+		tree, _, err := sut.GetPolicyTree(context.Background(), 1)
 		require.NoError(t, err)
 
 		require.Equal(t, "grafana-default-email", tree.Receiver)
@@ -51,7 +51,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			MuteTimeIntervals: []string{"not-existing"},
 		})
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone, "")
 		require.Error(t, err)
 	})
 
@@ -84,7 +84,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			MuteTimeIntervals: []string{"existing", "existing-ti"},
 		})
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone, "")
 		require.NoError(t, err)
 	})
 
@@ -93,10 +93,10 @@ func TestNotificationPolicyService(t *testing.T) {
 
 		newRoute := createTestRoutingTree()
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone, "")
 		require.NoError(t, err)
 
-		updated, err := sut.GetPolicyTree(context.Background(), 1)
+		updated, _, err := sut.GetPolicyTree(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, "slack receiver", updated.Receiver)
 	})
@@ -110,7 +110,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			Receiver: "",
 		})
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone, "")
 		require.EqualError(t, err, "invalid object specification: root route must specify a default receiver")
 	})
 
@@ -122,7 +122,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			Receiver: "",
 		})
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone, "")
 		require.NoError(t, err)
 	})
 
@@ -134,7 +134,7 @@ func TestNotificationPolicyService(t *testing.T) {
 			Receiver: "not-existing",
 		})
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone, "")
 		require.Error(t, err)
 	})
 
@@ -154,14 +154,14 @@ func TestNotificationPolicyService(t *testing.T) {
 			Receiver: "existing",
 		})
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceNone, "")
 		require.NoError(t, err)
 	})
 
 	t.Run("default provenance of records is none", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 
-		tree, err := sut.GetPolicyTree(context.Background(), 1)
+		tree, _, err := sut.GetPolicyTree(context.Background(), 1)
 		require.NoError(t, err)
 
 		require.Equal(t, models.ProvenanceNone, models.Provenance(tree.Provenance))
@@ -171,10 +171,10 @@ func TestNotificationPolicyService(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 		newRoute := createTestRoutingTree()
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
+		err := sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI, "")
 		require.NoError(t, err)
 
-		updated, err := sut.GetPolicyTree(context.Background(), 1)
+		updated, _, err := sut.GetPolicyTree(context.Background(), 1)
 		require.NoError(t, err)
 		require.Equal(t, models.ProvenanceAPI, models.Provenance(updated.Provenance))
 	})
@@ -188,7 +188,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		require.NoError(t, err)
 		expectedConcurrencyToken := config.ConcurrencyToken
 
-		err = sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI)
+		err = sut.UpdatePolicyTree(context.Background(), 1, newRoute, models.ProvenanceAPI, "")
 		require.NoError(t, err)
 
 		intercepted := fake.LastSaveCommand
@@ -201,7 +201,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		repeat := model.Duration(0)
 		invalid.RepeatInterval = &repeat
 
-		err := sut.UpdatePolicyTree(context.Background(), 1, invalid, models.ProvenanceNone)
+		err := sut.UpdatePolicyTree(context.Background(), 1, invalid, models.ProvenanceNone, "")
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrValidation)
@@ -210,7 +210,7 @@ func TestNotificationPolicyService(t *testing.T) {
 	t.Run("deleting route replaces with default", func(t *testing.T) {
 		sut := createNotificationPolicyServiceSut()
 
-		tree, err := sut.ResetPolicyTree(context.Background(), 1)
+		tree, _, err := sut.ResetPolicyTree(context.Background(), 1)
 
 		require.NoError(t, err)
 		require.Equal(t, "grafana-default-email", tree.Receiver)
@@ -240,7 +240,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		var interceptedSave = models.SaveAlertmanagerConfigurationCmd{}
 		mockStore.EXPECT().SaveSucceedsIntercept(&interceptedSave)
 
-		tree, err := sut.ResetPolicyTree(context.Background(), 1)
+		tree, _, err := sut.ResetPolicyTree(context.Background(), 1)
 
 		require.NoError(t, err)
 		require.Equal(t, "grafana-default-email", tree.Receiver)
