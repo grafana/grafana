@@ -113,9 +113,6 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 	}
 
 	if objStorage != nil {
-		updateRVOnLegacyObj(objStorage, objLegacy)
-	}
-	if objStorage != nil {
 		if err := updateRVOnLegacyObj(objStorage, objLegacy); err != nil {
 			log.WithValues("storageObject", objStorage, "legacyObject", objLegacy).Error(err, "could not update resource version")
 		}
