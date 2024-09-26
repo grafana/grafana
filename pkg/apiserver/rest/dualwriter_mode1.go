@@ -77,7 +77,7 @@ func (d *DualWriterMode1) createOnUnifiedStorage(ctx context.Context, in runtime
 	}
 
 	if accIn.GetUID() != "" {
-		return fmt.Errorf("there is an UID and it should not: %v", accIn.GetUID())
+		return fmt.Errorf("a UID is present, but it should not be: %v", accIn.GetUID())
 	}
 
 	startStorage := time.Now()
