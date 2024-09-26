@@ -1,4 +1,5 @@
 import { Route } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { render, screen } from 'test/test-utils';
 
@@ -35,6 +36,10 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
   QueryEditorRow: () => <p>hi</p>,
 }));
 
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn(),
+}));
 jest.setTimeout(60 * 1000);
 
 const mocks = {
@@ -106,7 +111,7 @@ describe('RuleEditor grafana managed rules', () => {
 
     // mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     mocks.searchFolders.mockResolvedValue([folder, slashedFolder] as DashboardSearchHit[]);
-
+    (useParams as jest.Mock).mockReturnValue({ id: grafanaRulerRule.grafana_alert.uid });
     const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
     // check that it's filled in
