@@ -3,6 +3,7 @@ export const receiverTypeNames: Record<string, string> = {
   pushover: 'Pushover',
   slack: 'Slack',
   opsgenie: 'OpsGenie',
+  logzio_opsgenie: 'LogzioOpsGenie',  // LOGZ.IO GRAFANA CHANGE :: DEV-46341 - Add Logz.io OpsGenie integration
   webhook: 'Webhook',
   victorops: 'VictorOps',
   wechat: 'WeChat',

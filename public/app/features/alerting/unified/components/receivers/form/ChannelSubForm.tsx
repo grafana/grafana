@@ -15,7 +15,6 @@ import { CollapsibleSection } from './CollapsibleSection';
 import { Notifier } from './notifiers';
 
 // LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Filter out logzio opsgenie type from creation
-const INTERNAL_CHANNEL_TYPE_PREFIX = 'logzio_';
 // LOGZ.IO GRAFANA CHANGE :: end
 
 interface Props<R extends FieldValues> {
@@ -147,7 +146,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                   inputId={contactPointTypeInputId}
                   {...field}
                   width={37}
-                  options={typeOptions.filter((o) => !o.value.startsWith(INTERNAL_CHANNEL_TYPE_PREFIX))} // LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Filter out logzio opsgenie type from creation                  
+                  options={typeOptions}
                   onChange={(value) => onChange(value?.value)}
                 />
               )}

@@ -1339,6 +1339,37 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 			},
 		},
+		// LOGZ.IO GRAFANA CHANGE :: DEV-46341 - Add support for logzio opsgenie integration
+		{
+			Type:        "logzio_opsgenie",
+			Name:        "LogzioOpsGenie",
+			Description: "Sends notifications to OpsGenie with Logz.io integration",
+			Heading:     "LogzioOpsGenie settings",
+			Options: []NotifierOption{
+				{
+					Label:        "API Key",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "LogzioOpsGenie API Key",
+					PropertyName: "apiKey",
+					Required:     true,
+					Secure:       true,
+				},
+				{
+					Label:        "Description",
+					Description:  "A description of the incident.",
+					Element:      ElementTypeTextArea,
+					PropertyName: "description",
+				},
+				{
+					Label:        "Auto close incidents",
+					Element:      ElementTypeCheckbox,
+					Description:  "Automatically close alerts in LogzioOpsGenie once the alert goes back to ok.",
+					PropertyName: "autoClose",
+				},
+			},
+		},
+		// LOGZ.IO GRAFANA CHANGE :: end
 		{
 			Type:        "webex",
 			Name:        "Cisco Webex Teams",

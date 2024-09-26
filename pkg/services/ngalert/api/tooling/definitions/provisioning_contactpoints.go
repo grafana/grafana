@@ -99,7 +99,7 @@ type EmbeddedContactPoint struct {
 	Name string `json:"name" binding:"required"`
 	// required: true
 	// example: webhook
-	// enum: alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, pagerduty, pushover, sensugo, slack, teams, telegram, threema, victorops, webhook, wecom
+	// enum: alertmanager, dingding, discord, email, googlechat, kafka, line, opsgenie, logzio_opsgenie, pagerduty, pushover, sensugo, slack, teams, telegram, threema, victorops, webhook, wecom	// LOGZ.IO GRAFANA CHANGE :: DEV-46341 - Add support for logzio opsgenie integration
 	Type string `json:"type" binding:"required"`
 	// required: true
 	Settings *simplejson.Json `json:"settings" binding:"required"`

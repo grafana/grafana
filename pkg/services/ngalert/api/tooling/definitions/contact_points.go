@@ -121,6 +121,22 @@ type OpsgenieIntegration struct {
 	Responders       []OpsgenieIntegrationResponder `json:"responders,omitempty" yaml:"responders,omitempty" hcl:"responders,block"`
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-46341: Add Logzio Opsgenie Integration
+type LogzioOpsgenieIntegration struct {
+	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
+
+	APIKey Secret `json:"apiKey" yaml:"apiKey" hcl:"api_key"`
+
+	APIUrl           *string `json:"apiUrl,omitempty" yaml:"apiUrl,omitempty" hcl:"url"`
+	Message          *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	Description      *string `json:"description,omitempty" yaml:"description,omitempty" hcl:"description"`
+	AutoClose        *bool   `json:"autoClose,omitempty" yaml:"autoClose,omitempty" hcl:"auto_close"`
+	OverridePriority *bool   `json:"overridePriority,omitempty" yaml:"overridePriority,omitempty" hcl:"override_priority"`
+	SendTagsAs       *string `json:"sendTagsAs,omitempty" yaml:"sendTagsAs,omitempty" hcl:"send_tags_as"`
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
+
 type PagerdutyIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
@@ -269,25 +285,26 @@ type WecomIntegration struct {
 }
 
 type ContactPoint struct {
-	Name         string                    `json:"name" yaml:"name" hcl:"name"`
-	Alertmanager []AlertmanagerIntegration `json:"alertmanager" yaml:"alertmanager" hcl:"alertmanager,block"`
-	Dingding     []DingdingIntegration     `json:"dingding" yaml:"dingding" hcl:"dingding,block"`
-	Discord      []DiscordIntegration      `json:"discord" yaml:"discord" hcl:"discord,block"`
-	Email        []EmailIntegration        `json:"email" yaml:"email" hcl:"email,block"`
-	Googlechat   []GooglechatIntegration   `json:"googlechat" yaml:"googlechat" hcl:"googlechat,block"`
-	Kafka        []KafkaIntegration        `json:"kafka" yaml:"kafka" hcl:"kafka,block"`
-	Line         []LineIntegration         `json:"line" yaml:"line" hcl:"line,block"`
-	Opsgenie     []OpsgenieIntegration     `json:"opsgenie" yaml:"opsgenie" hcl:"opsgenie,block"`
-	Pagerduty    []PagerdutyIntegration    `json:"pagerduty" yaml:"pagerduty" hcl:"pagerduty,block"`
-	OnCall       []OnCallIntegration       `json:"oncall" yaml:"oncall" hcl:"oncall,block"`
-	Pushover     []PushoverIntegration     `json:"pushover" yaml:"pushover" hcl:"pushover,block"`
-	Sensugo      []SensugoIntegration      `json:"sensugo" yaml:"sensugo" hcl:"sensugo,block"`
-	Slack        []SlackIntegration        `json:"slack" yaml:"slack" hcl:"slack,block"`
-	Teams        []TeamsIntegration        `json:"teams" yaml:"teams" hcl:"teams,block"`
-	Telegram     []TelegramIntegration     `json:"telegram" yaml:"telegram" hcl:"telegram,block"`
-	Threema      []ThreemaIntegration      `json:"threema" yaml:"threema" hcl:"threema,block"`
-	Victorops    []VictoropsIntegration    `json:"victorops" yaml:"victorops" hcl:"victorops,block"`
-	Webhook      []WebhookIntegration      `json:"webhook" yaml:"webhook" hcl:"webhook,block"`
-	Wecom        []WecomIntegration        `json:"wecom" yaml:"wecom" hcl:"wecom,block"`
-	Webex        []WebexIntegration        `json:"webex" yaml:"webex" hcl:"webex,block"`
+	Name           string                      `json:"name" yaml:"name" hcl:"name"`
+	Alertmanager   []AlertmanagerIntegration   `json:"alertmanager" yaml:"alertmanager" hcl:"alertmanager,block"`
+	Dingding       []DingdingIntegration       `json:"dingding" yaml:"dingding" hcl:"dingding,block"`
+	Discord        []DiscordIntegration        `json:"discord" yaml:"discord" hcl:"discord,block"`
+	Email          []EmailIntegration          `json:"email" yaml:"email" hcl:"email,block"`
+	Googlechat     []GooglechatIntegration     `json:"googlechat" yaml:"googlechat" hcl:"googlechat,block"`
+	Kafka          []KafkaIntegration          `json:"kafka" yaml:"kafka" hcl:"kafka,block"`
+	Line           []LineIntegration           `json:"line" yaml:"line" hcl:"line,block"`
+	Opsgenie       []OpsgenieIntegration       `json:"opsgenie" yaml:"opsgenie" hcl:"opsgenie,block"`
+	LogzioOpsgenie []LogzioOpsgenieIntegration `json:"logzio_opsgenie" yaml:"logzio_opsgenie" hcl:"logzio_opsgenie,block"` // LOGZ.IO GRAFANA CHANGE :: DEV-46341: Add Logzio Opsgenie Integration
+	Pagerduty      []PagerdutyIntegration      `json:"pagerduty" yaml:"pagerduty" hcl:"pagerduty,block"`
+	OnCall         []OnCallIntegration         `json:"oncall" yaml:"oncall" hcl:"oncall,block"`
+	Pushover       []PushoverIntegration       `json:"pushover" yaml:"pushover" hcl:"pushover,block"`
+	Sensugo        []SensugoIntegration        `json:"sensugo" yaml:"sensugo" hcl:"sensugo,block"`
+	Slack          []SlackIntegration          `json:"slack" yaml:"slack" hcl:"slack,block"`
+	Teams          []TeamsIntegration          `json:"teams" yaml:"teams" hcl:"teams,block"`
+	Telegram       []TelegramIntegration       `json:"telegram" yaml:"telegram" hcl:"telegram,block"`
+	Threema        []ThreemaIntegration        `json:"threema" yaml:"threema" hcl:"threema,block"`
+	Victorops      []VictoropsIntegration      `json:"victorops" yaml:"victorops" hcl:"victorops,block"`
+	Webhook        []WebhookIntegration        `json:"webhook" yaml:"webhook" hcl:"webhook,block"`
+	Wecom          []WecomIntegration          `json:"wecom" yaml:"wecom" hcl:"wecom,block"`
+	Webex          []WebexIntegration          `json:"webex" yaml:"webex" hcl:"webex,block"`
 }

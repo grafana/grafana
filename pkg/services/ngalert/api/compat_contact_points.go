@@ -105,6 +105,16 @@ func ContactPointToContactPointExport(cp definitions.ContactPoint) (notify.APIRe
 			errs = append(errs, err)
 		}
 	}
+
+	// LOGZ.IO GRAFANA CHANGE :: DEV-46341 - Add support for logzio opsgenie integration
+	for _, i := range cp.LogzioOpsgenie {
+		el, err := marshallIntegration(j, "logzio_opsgenie", i, i.DisableResolveMessage)
+		integration = append(integration, el)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	// LOGZ.IO GRAFANA CHANGE :: end
 	for _, i := range cp.Pagerduty {
 		el, err := marshallIntegration(j, "pagerduty", i, i.DisableResolveMessage)
 		integration = append(integration, el)
@@ -264,6 +274,13 @@ func parseIntegration(json jsoniter.API, result *definitions.ContactPoint, recei
 		if err = json.Unmarshal(data, &integration); err == nil {
 			result.Opsgenie = append(result.Opsgenie, integration)
 		}
+	// LOGZ.IO GRAFANA CHANGE :: DEV-46341 - Add support for logzio opsgenie integration
+	case "logzio_opsgenie":
+		integration := definitions.LogzioOpsgenieIntegration{DisableResolveMessage: disable}
+		if err = json.Unmarshal(data, &integration); err == nil {
+			result.LogzioOpsgenie = append(result.LogzioOpsgenie, integration)
+		}
+	// LOGZ.IO GRAFANA CHANGE :: end
 	case "pagerduty":
 		integration := definitions.PagerdutyIntegration{DisableResolveMessage: disable}
 		if err = json.Unmarshal(data, &integration); err == nil {
