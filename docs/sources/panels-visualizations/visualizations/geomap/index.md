@@ -560,9 +560,9 @@ Basemap layer types can also be added as layers. You can specify an opacity.
 There are four basemap layer types to choose from in a geomap.
 
 - [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
-- [CARTO](#carto-layer) adds a layer from CARTO Raster basemaps.
-- [ArcGIS](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
-- [XYZ](#xyz-tile-layer) adds a map from a generic tile layer.
+- [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
+- [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
+- [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 
