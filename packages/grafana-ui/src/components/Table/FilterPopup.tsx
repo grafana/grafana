@@ -66,7 +66,6 @@ export const FilterPopup = ({
       <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <Stack direction="column" gap={1.5}>
           <Stack direction="column" gap={0}>
-
             <FilterList
               onChange={setValues}
               values={values}

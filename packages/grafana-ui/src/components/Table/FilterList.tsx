@@ -92,7 +92,7 @@ export const FilterList = ({
             const fnc = new Function('$', `'use strict'; return ${xpr};`);
             const val = comparableValue(option.value);
             return fnc(val);
-          } catch (_) { }
+          } catch (_) {}
           return false;
         } else {
           if (option.value === undefined) {
@@ -197,7 +197,10 @@ export const FilterList = ({
               <IconButton
                 name="text-fields"
                 tooltip="Match case"
-                style={{ color: caseSensitive ? theme.colors.text.link : theme.colors.text.disabled, marginLeft: theme.spacing(1) }}
+                style={{
+                  color: caseSensitive ? theme.colors.text.link : theme.colors.text.disabled,
+                  marginLeft: theme.spacing(1),
+                }}
                 onClick={() => {
                   setCaseSensitive((s) => !s);
                 }}
