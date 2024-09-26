@@ -59,7 +59,7 @@ type Service struct {
 }
 
 func ProvideService(
-	store *sqlStore,
+	store *FolderStoreImpl,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
 	dashboardStore dashboards.Store,

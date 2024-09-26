@@ -967,7 +967,7 @@ func CreateOrg(t *testing.T, db db.DB, cfg *setting.Cfg) int64 {
 	return orgID
 }
 
-func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
+func CreateSubtree(t *testing.T, store *FolderStoreImpl, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()
 
 	ancestorUIDs := []string{}
@@ -1006,7 +1006,7 @@ func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 	return ancestorUIDs
 }
 
-func CreateLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int) []string {
+func CreateLeaves(t *testing.T, store *FolderStoreImpl, parent *folder.Folder, num int) []string {
 	t.Helper()
 
 	leaves := make([]string, 0)
@@ -1024,7 +1024,7 @@ func CreateLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int)
 	return leaves
 }
 
-func assertAncestorUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expected []string) {
+func assertAncestorUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, expected []string) {
 	t.Helper()
 
 	ancestors, err := store.GetParents(context.Background(), folder.GetParentsQuery{
@@ -1039,7 +1039,7 @@ func assertAncestorUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expecte
 	assert.Equal(t, expected, actualAncestorsUIDs)
 }
 
-func assertChildrenUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expected []string) {
+func assertChildrenUIDs(t *testing.T, store *FolderStoreImpl, f *folder.Folder, expected []string) {
 	t.Helper()
 
 	ancestors, err := store.GetChildren(context.Background(), folder.GetChildrenQuery{
