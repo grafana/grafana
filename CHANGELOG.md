@@ -11,6 +11,11 @@
 - **Provisioning:** Prevent provisioning folder errors from failing startup [#92591](https://github.com/grafana/grafana/pull/92591), [@suntala](https://github.com/suntala)
 
 <!-- 10.4.9 END -->
+<!-- 10.3.10 START -->
+
+# 10.3.10 (2024-09-26)
+
+<!-- 10.3.10 END -->
 <!-- 11.2.0 START -->
 
 # 11.2.0 (2024-08-27)
