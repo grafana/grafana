@@ -227,8 +227,10 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.ViewContactPoint]: toAbility(AlwaysSupported, notificationsPermissions.read),
     [AlertmanagerAction.UpdateContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.update),
     [AlertmanagerAction.DeleteContactPoint]: toAbility(hasConfigurationAPI, notificationsPermissions.delete),
-    // only Grafana flavored alertmanager supports exporting
-    [AlertmanagerAction.ExportContactPoint]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
+    // At the time of writing, only Grafana flavored alertmanager supports exporting,
+    // and if a user can view the contact point, then they can also export it
+    // So the only check we make is if the alertmanager is Grafana flavored
+    [AlertmanagerAction.ExportContactPoint]: [isGrafanaFlavoredAlertmanager, isGrafanaFlavoredAlertmanager],
     // -- notification templates --
     [AlertmanagerAction.CreateNotificationTemplate]: toAbility(hasConfigurationAPI, notificationsPermissions.create),
     [AlertmanagerAction.ViewNotificationTemplate]: toAbility(AlwaysSupported, notificationsPermissions.read),
