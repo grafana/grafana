@@ -28,7 +28,7 @@ type sqlStore struct {
 }
 
 // sqlStore implements the store interface.
-var _ store = (*sqlStore)(nil)
+var _ folder.StoreTempRename = (*sqlStore)(nil)
 
 func ProvideStore(db db.DB) *sqlStore {
 	return &sqlStore{db: db, log: log.New("folder-store")}
@@ -445,7 +445,7 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 // The full path UIDs of C is "uid1/uid2/uid3".
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
-func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folder.Folder, error) {
+func (ss *sqlStore) GetFolders(ctx context.Context, q folder.GetFoldersQueryTempRename) ([]*folder.Folder, error) {
 	if q.BatchSize == 0 {
 		q.BatchSize = DEFAULT_BATCH_SIZE
 	}
@@ -467,7 +467,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			}
 			s.WriteString(` FROM folder f0`)
 			// join the same table multiple times to compute the full path of a folder
-			if q.WithFullpath || q.WithFullpathUIDs || len(q.ancestorUIDs) > 0 {
+			if q.WithFullpath || q.WithFullpathUIDs || len(q.AncestorUIDs) > 0 {
 				s.WriteString(getFullpathJoinsSQL())
 			}
 			// covered by UQE_folder_org_id_uid
@@ -489,7 +489,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 				args = append(args, accesscontrol.K6FolderUID, accesscontrol.K6FolderUID)
 			}
 
-			if len(q.ancestorUIDs) == 0 {
+			if len(q.AncestorUIDs) == 0 {
 				if q.OrderByTitle {
 					s.WriteString(` ORDER BY f0.title ASC`)
 				}
@@ -503,8 +503,8 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			}
 
 			// filter out folders if they are not in the subtree of the given ancestor folders
-			if err := batch(len(q.ancestorUIDs), int(q.BatchSize), func(start2, end2 int) error {
-				s2, args2 := getAncestorsSQL(ss.db.GetDialect(), q.ancestorUIDs, start2, end2, s.String(), args)
+			if err := batch(len(q.AncestorUIDs), int(q.BatchSize), func(start2, end2 int) error {
+				s2, args2 := getAncestorsSQL(ss.db.GetDialect(), q.AncestorUIDs, start2, end2, s.String(), args)
 				if q.OrderByTitle {
 					s2 += " ORDER BY f0.title ASC"
 				}
