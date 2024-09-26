@@ -63,7 +63,7 @@
     "@react-aria/overlays": "3.23.2",
     "@react-aria/utils": "3.25.2",
     "@tanstack/react-virtual": "^3.5.1",
-    "@types/jquery": "3.5.30",
+    "@types/jquery": "3.5.31",
     "@types/lodash": "4.17.9",
     "@types/react-table": "7.7.20",
     "ansicolor": "1.1.100",
