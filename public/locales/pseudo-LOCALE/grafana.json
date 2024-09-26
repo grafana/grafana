@@ -244,6 +244,12 @@
         "state": "Ŝŧäŧę"
       },
       "save-query": "Ŝävę čūřřęŉŧ şęäřčĥ"
+    },
+    "simpleCondition": {
+      "alertCondition": "Åľęřŧ čőŉđįŧįőŉ",
+      "ofQuery": {
+        "To": "ŦØ"
+      }
     }
   },
   "annotations": {
@@ -1091,7 +1097,7 @@
       "tls-ciphers-placeholder": "ę.ģ. [\"ŦĿŜ_ÅĒŜ_256_ĞCM_ŜĦÅ384\"]",
       "use-ssl-description": "Ŝęŧ ŧő ŧřūę įƒ ĿĐÅP şęřvęř şĥőūľđ ūşę ŦĿŜ čőŉŉęčŧįőŉ (ęįŧĥęř ŵįŧĥ ŜŦÅŖŦŦĿŜ őř ĿĐÅPŜ)",
       "use-ssl-label": "Ůşę ŜŜĿ",
-      "use-ssl-tooltip": "Főř ä čőmpľęŧę ľįşŧ őƒ şūppőřŧęđ čįpĥęřş äŉđ ŦĿŜ vęřşįőŉş, řęƒęř ŧő: {\n        <ŦęχŧĿįŉĸ şŧyľę={{ fontSize: 'inherit' }} ĥřęƒ=\"ĥŧŧpş://ģő.đęv/şřč/čřypŧő/ŧľş/čįpĥęř_şūįŧęş.ģő\" ęχŧęřŉäľ>\n          ĥŧŧpş://ģő.đęv/şřč/čřypŧő/ŧľş/čįpĥęř_şūįŧęş.ģő\n        </ŦęχŧĿįŉĸ>}"
+      "use-ssl-tooltip": "Főř ä čőmpľęŧę ľįşŧ őƒ şūppőřŧęđ čįpĥęřş äŉđ ŦĿŜ vęřşįőŉş, řęƒęř ŧő:"
     },
     "group-mapping": {
       "grafana-admin": {
@@ -1141,9 +1147,7 @@
   },
   "ldap-settings-page": {
     "advanced-settings-section": {
-      "edit": {
-        "button": "Ēđįŧ"
-      },
+      "edit-button": "Ēđįŧ",
       "subtitle": "Mäppįŉģş, ęχŧřä şęčūřįŧy męäşūřęş, äŉđ mőřę.",
       "title": "Åđväŉčęđ Ŝęŧŧįŉģş"
     },
@@ -1164,20 +1168,20 @@
       "label": "ßįŉđ päşşŵőřđ"
     },
     "buttons-section": {
-      "discard": {
-        "button": "Đįşčäřđ"
-      },
-      "save": {
-        "button": "Ŝävę"
-      },
-      "save-and-enable": {
-        "button": "Ŝävę äŉđ ęŉäþľę"
-      }
+      "discard-button": "Đįşčäřđ",
+      "save-and-enable-button": "Ŝävę äŉđ ęŉäþľę",
+      "save-button": "Ŝävę"
+    },
+    "discard-modal": {
+      "cancel-button": "ßäčĸ ŧő ęđįŧįŉģ",
+      "description": "Åřę yőū şūřę yőū ŵäŉŧ ŧő äþäŉđőŉ ŧĥę čĥäŉģęş yőū&ľşqūő;vę mäđę ŧő ŧĥę ĿĐÅP čőŉƒįģūřäŧįőŉ? Åľľ čĥäŉģęş ŵįľľ þę ľőşŧ.",
+      "discard-button": "Åþäŉđőŉ ĿĐÅP",
+      "title": "Ŀęävę ĿĐÅP čőŉƒįģūřäŧįőŉ?"
     },
     "documentation": "đőčūmęŉŧäŧįőŉ",
     "host": {
       "description": "Ħőşŧŉämę őř ĨP äđđřęşş őƒ ŧĥę ĿĐÅP şęřvęř yőū ŵįşĥ ŧő čőŉŉęčŧ ŧő.",
-      "label": "Ŝęřvęř ĥőşŧ",
+      "label": "Ŝęřvęř ĥőşŧ *",
       "placeholder": "ęχämpľę: 127.0.0.1"
     },
     "login-form-alert": {
@@ -1186,7 +1190,7 @@
     },
     "search_filter": {
       "description": "ĿĐÅP şęäřčĥ ƒįľŧęř ūşęđ ŧő ľőčäŧę şpęčįƒįč ęŉŧřįęş ŵįŧĥįŉ ŧĥę đįřęčŧőřy.",
-      "label": "Ŝęäřčĥ ƒįľŧęř*",
+      "label": "Ŝęäřčĥ ƒįľŧęř *",
       "placeholder": "ęχämpľę: čŉ=%ş"
     },
     "search-base-dns": {
@@ -1747,6 +1751,9 @@
       "subtitle": "Ůşę şęřvįčę äččőūŉŧş ŧő řūŉ äūŧőmäŧęđ ŵőřĸľőäđş įŉ Ğřäƒäŉä",
       "title": "Ŝęřvįčę äččőūŉŧş"
     },
+    "setup-guide": {
+      "title": "Ŝęŧūp ģūįđę"
+    },
     "shared-dashboard": {
       "subtitle": "Mäŉäģę yőūř őřģäŉįžäŧįőŉ'ş ęχŧęřŉäľľy şĥäřęđ đäşĥþőäřđş",
       "title": "Ŝĥäřęđ đäşĥþőäřđş"
@@ -1919,13 +1926,16 @@
         "button": "Ůpđäŧę äľľ",
         "cloud-update-message": "* Ĩŧ mäy ŧäĸę ä ƒęŵ mįŉūŧęş ƒőř ŧĥę pľūģįŉş ŧő þę äväįľäþľę ƒőř ūşäģę.",
         "error": "Ēřřőř ūpđäŧįŉģ pľūģįŉ:",
+        "error-status-text": "ƒäįľęđ - şęę ęřřőř męşşäģęş",
         "header": "Ŧĥę ƒőľľőŵįŉģ pľūģįŉş ĥävę ūpđäŧę äväįľäþľę",
         "installed-header": "Ĩŉşŧäľľęđ",
         "modal-confirmation": "Ůpđäŧę",
         "modal-dismiss": "Cľőşę",
+        "modal-in-progress": "Ůpđäŧįŉģ...",
         "modal-title": "Ůpđäŧę Pľūģįŉş",
         "name-header": "Ńämę",
-        "update-header": "Ůpđäŧę"
+        "update-header": "Ůpđäŧę",
+        "update-status-text": "pľūģįŉş ūpđäŧęđ"
       }
     },
     "details": {

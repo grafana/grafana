@@ -52,6 +52,12 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
+	{
+		Pattern: regexp.MustCompile(`(/apis/.*/v0alpha1/namespaces/.*/queryconvert$)`),
+		ReplaceFunc: func(matches []string) string {
+			return matches[1] + "/name" // connector requires a name
+		},
+	},
 }
 
 func getDefaultBuildHandlerChainFunc(builders []APIGroupBuilder) BuildHandlerChainFunc {
