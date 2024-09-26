@@ -191,7 +191,7 @@ func testWatch(ctx context.Context, t *testing.T, store storage.Interface, recur
 //     whose previous version has been compacted. If testing with cacher, we
 //     expect compaction to be nil.
 func RunTestWatchFromZero(ctx context.Context, t *testing.T, store storage.Interface, compaction Compaction) {
-	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}})
+	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns", UID: "123"}})
 
 	w, err := store.Watch(ctx, key, storage.ListOptions{ResourceVersion: "0", Predicate: storage.Everything})
 	if err != nil {
@@ -276,7 +276,7 @@ func RunTestWatchFromZero(ctx context.Context, t *testing.T, store storage.Inter
 }
 
 func RunTestDeleteTriggerWatch(ctx context.Context, t *testing.T, store storage.Interface) {
-	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}})
+	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns", UID: "123"}})
 	w, err := store.Watch(ctx, key, storage.ListOptions{ResourceVersion: storedObj.ResourceVersion, Predicate: storage.Everything})
 	if err != nil {
 		t.Fatalf("Watch failed: %v", err)
@@ -288,7 +288,7 @@ func RunTestDeleteTriggerWatch(ctx context.Context, t *testing.T, store storage.
 }
 
 func RunTestWatchFromNonZero(ctx context.Context, t *testing.T, store storage.Interface) {
-	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}})
+	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns", UID: "123"}})
 
 	w, err := store.Watch(ctx, key, storage.ListOptions{ResourceVersion: storedObj.ResourceVersion, Predicate: storage.Everything})
 	if err != nil {
@@ -305,7 +305,7 @@ func RunTestWatchFromNonZero(ctx context.Context, t *testing.T, store storage.In
 }
 
 func RunTestDelayedWatchDelivery(ctx context.Context, t *testing.T, store storage.Interface) {
-	_, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}})
+	_, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns", UID: "123"}})
 	startRV := storedObj.ResourceVersion
 
 	watcher, err := store.Watch(ctx, KeyFunc("test-ns", ""), storage.ListOptions{ResourceVersion: startRV, Predicate: storage.Everything, Recursive: true})
@@ -322,7 +322,7 @@ func RunTestDelayedWatchDelivery(ctx context.Context, t *testing.T, store storag
 	for i := 0; i < totalPods; i++ {
 		out := &example.Pod{}
 		pod := &example.Pod{
-			ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns"},
+			ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns", UID: "123"},
 		}
 		err := store.GuaranteedUpdate(ctx, computePodKey(pod), out, true, nil, storage.SimpleUpdate(
 			func(runtime.Object) (runtime.Object, error) {
@@ -359,7 +359,7 @@ func RunTestDelayedWatchDelivery(ctx context.Context, t *testing.T, store storag
 }
 
 func RunTestWatchError(ctx context.Context, t *testing.T, store InterfaceWithPrefixTransformer) {
-	obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}
+	obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns", UID: "123"}}
 	key := computePodKey(obj)
 
 	// Compute the initial resource version from which we can start watching later.
@@ -463,7 +463,7 @@ func RunTestWatcherTimeout(ctx context.Context, t *testing.T, store storage.Inte
 	startTime := time.Now()
 	for i := 0; i < 22; i++ {
 		out := &example.Pod{}
-		pod := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns"}}
+		pod := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("foo-%d", i), Namespace: "test-ns", UID: "123"}}
 		if err := store.Create(ctx, computePodKey(pod), pod, out, 0); err != nil {
 			t.Fatalf("Create failed: %v", err)
 		}
@@ -475,7 +475,7 @@ func RunTestWatcherTimeout(ctx context.Context, t *testing.T, store storage.Inte
 }
 
 func RunTestWatchDeleteEventObjectHaveLatestRV(ctx context.Context, t *testing.T, store storage.Interface) {
-	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}})
+	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns", UID: "123"}})
 
 	watchCtx, cancel := context.WithTimeout(ctx, wait.ForeverTestTimeout)
 	t.Cleanup(cancel)
@@ -517,7 +517,7 @@ func RunTestWatchInitializationSignal(ctx context.Context, t *testing.T, store s
 // (it rather is used by wrappers of storage.Interface to implement its functionalities)
 // this test is currently considered optional.
 func RunOptionalTestProgressNotify(ctx context.Context, t *testing.T, store storage.Interface) {
-	input := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "name", Namespace: "test-ns"}}
+	input := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "name", Namespace: "test-ns", UID: "123"}}
 	key := computePodKey(input)
 	out := &example.Pod{}
 	if err := store.Create(ctx, key, input, out, 0); err != nil {
@@ -1025,7 +1025,7 @@ func RunTestNamespaceScopedWatch(ctx context.Context, t *testing.T, store storag
 //
 //	functionality, so we should refactor this functionality to share the same input.
 func RunTestWatchDispatchBookmarkEvents(ctx context.Context, t *testing.T, store storage.Interface, expectedWatchBookmarks bool) {
-	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}})
+	key, storedObj := testPropagateStore(ctx, t, store, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns", UID: "123"}})
 	startRV := storedObj.ResourceVersion
 
 	tests := []struct {
@@ -1063,7 +1063,7 @@ func RunTestWatchDispatchBookmarkEvents(ctx context.Context, t *testing.T, store
 
 			// Create events of pods in a different namespace
 			out := &example.Pod{}
-			obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: fmt.Sprintf("other-ns-%d", i)}}
+			obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: fmt.Sprintf("other-ns-%d", i), UID: "123"}}
 			objKey := computePodKey(obj)
 
 			if err := store.Create(ctx, objKey, obj, out, 0); err != nil {
@@ -1230,6 +1230,7 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 				ObjectMeta: metav1.ObjectMeta{
 					ResourceVersion: createdInitialPods[len(createdInitialPods)-1].ResourceVersion,
 					Annotations:     map[string]string{"k8s.io/initial-events-end": "true"},
+					UID:             "123",
 				},
 			},
 		}
@@ -1538,6 +1539,7 @@ func makePod(namePrefix string) *example.Pod {
 	return &example.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("pod-%s", namePrefix),
+			UID:  "123",
 		},
 	}
 }
@@ -1614,7 +1616,7 @@ func baseNamespacedPodUpdated(podName, namespace string) *example.Pod {
 
 func baseNamespacedPodAssigned(podName, namespace, nodeName string) *example.Pod {
 	return &example.Pod{
-		ObjectMeta: metav1.ObjectMeta{Name: podName, Namespace: namespace},
+		ObjectMeta: metav1.ObjectMeta{Name: podName, Namespace: namespace, UID: "123"},
 		Spec:       example.PodSpec{NodeName: nodeName},
 	}
 }
