@@ -1,6 +1,12 @@
 package peakq
 
 import (
+	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,13 +17,6 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
-
-	"github.com/prometheus/client_golang/prometheus"
-
-	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ builder.APIGroupBuilder = (*PeakQAPIBuilder)(nil)
@@ -68,10 +67,12 @@ func (b *PeakQAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *PeakQAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
 	resourceInfo := peakq.QueryTemplateResourceInfo
 	storage := map[string]rest.Storage{}
-	peakqStorage, err := newStorage(scheme, optsGetter)
+
+	peakqStorage, err := grafanaregistry.NewRegistryStore(scheme, resourceInfo, optsGetter)
 	if err != nil {
 		return err
 	}
+
 	storage[resourceInfo.StoragePath()] = peakqStorage
 	storage[resourceInfo.StoragePath("render")] = &renderREST{
 		getter: peakqStorage,
