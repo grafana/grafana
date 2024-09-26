@@ -1311,10 +1311,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "items": {
-                "$ref": "#/components/schemas/TeamLBACRules"
-              },
-              "type": "array"
+              "$ref": "#/components/schemas/TeamLBACRules"
             }
           }
         },

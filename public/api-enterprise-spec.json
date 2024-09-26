@@ -9397,10 +9397,7 @@
     "getTeamLBACRulesResponse": {
       "description": "",
       "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/TeamLBACRules"
-        }
+        "$ref": "#/definitions/TeamLBACRules"
       }
     },
     "getTeamMembersResponse": {
