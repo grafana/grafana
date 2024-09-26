@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { ChangeEvent, useState } from 'react';
 import * as React from 'react';
+import { ChangeEvent, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import {
   CoreApp,
@@ -14,11 +15,12 @@ import {
   ThresholdsConfig,
 } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { GraphThresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2, Stack } from '@grafana/ui';
+import { GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { RuleFormValues } from '../../types/rule-form';
 import { msToSingleUnitDuration } from '../../utils/time';
 import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
 
@@ -78,6 +80,9 @@ export const QueryWrapper = ({
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
+  const { getValues } = useFormContext<RuleFormValues>();
+  const isAdvancedMode = getValues('editorSettings.simplifiedQueryEditor') !== true;
+
   const queryWithDefaults = {
     ...defaults,
     ...cloneDeep(query.model),
@@ -123,7 +128,17 @@ export const QueryWrapper = ({
   }
 
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
-  function HeaderExtras({ query, error, index }: { query: AlertQuery<AlertDataQuery>; error?: Error; index: number }) {
+  function HeaderExtras({
+    query,
+    error,
+    index,
+    isAdvancedMode = true,
+  }: {
+    query: AlertQuery<AlertDataQuery>;
+    error?: Error;
+    index: number;
+    isAdvancedMode?: boolean;
+  }) {
     const queryOptions: AlertQueryOptions = {
       maxDataPoints: query.model.maxDataPoints,
       minInterval: query.model.intervalMs ? msToSingleUnitDuration(query.model.intervalMs) : undefined,
@@ -145,7 +160,12 @@ export const QueryWrapper = ({
           onChangeQueryOptions={onChangeQueryOptions}
           index={index}
         />
-        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={isAlertCondition} />
+        {isAdvancedMode && (
+          <ExpressionStatusIndicator
+            onSetCondition={() => onSetCondition(query.refId)}
+            isCondition={isAlertCondition}
+          />
+        )}
       </Stack>
     );
   }
@@ -160,6 +180,7 @@ export const QueryWrapper = ({
       <div className={styles.wrapper}>
         <QueryEditorRow<AlertDataQuery>
           alerting
+          hideActionButtons={!isAdvancedMode}
           collapsable={false}
           dataSource={dsSettings}
           onDataSourceLoaded={setDsInstance}
@@ -174,7 +195,9 @@ export const QueryWrapper = ({
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
           onRunQuery={onRunQueries}
           queries={editorQueries}
-          renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
+          renderHeaderExtras={() => (
+            <HeaderExtras query={query} index={index} error={error} isAdvancedMode={isAdvancedMode} />
+          )}
           app={CoreApp.UnifiedAlerting}
           hideHideQueryButton={true}
         />

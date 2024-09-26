@@ -16,6 +16,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../../../Analytics';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { getDefaultQueries } from '../../../utils/rule-form';
 import { createDagFromQueries, getOriginOfRefId } from '../dag';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
@@ -58,6 +59,8 @@ export const updateExpressionTimeRange = createAction('updateExpressionTimeRange
 export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
 export const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
 
+export const resetToSimpleCondition = createAction('resetToSimpleCondition');
+
 export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
   'setRecordingRulesQueries'
 );
@@ -65,6 +68,10 @@ export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: Ale
 export const queriesAndExpressionsReducer = createReducer(initialState, (builder) => {
   // data queries actions
   builder
+    // simple condition actions
+    .addCase(resetToSimpleCondition, (state) => {
+      state.queries = getDefaultQueries();
+    })
     .addCase(duplicateQuery, (state, { payload }) => {
       state.queries = addQuery(state.queries, payload);
     })

@@ -51,7 +51,7 @@ export const Expression: FC<ExpressionProps> = ({
   onSetCondition,
   onUpdateRefId,
   onRemoveExpression,
-  onUpdateExpressionType,
+  onUpdateExpressionType, // this method is not used? maybe we should remove it
   onChangeQuery,
 }) => {
   const styles = useStyles2(getStyles);

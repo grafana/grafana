@@ -43,7 +43,13 @@ import {
 type KVObject = { key: string; value: string };
 
 import { EvalFunction } from '../../state/alertDef';
-import { AlertManagerManualRouting, ContactPoint, RuleFormType, RuleFormValues } from '../types/rule-form';
+import {
+  AlertManagerManualRouting,
+  ContactPoint,
+  RuleFormType,
+  RuleFormValues,
+  SimplifiedEditor,
+} from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
@@ -62,6 +68,7 @@ import { formatPrometheusDuration, parseInterval, safeParsePrometheusDuration } 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
 
 export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
+export const SIMPLIFIED_QUERY_EDITOR_KEY = 'grafana.alerting.simplifiedQueryEditor';
 
 // even if the min interval is < 1m we should default to 1m, but allow arbitrary values for minInterval > 1m
 const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting?.minInterval ?? '10s');
@@ -98,6 +105,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     overrideGrouping: false,
     overrideTimings: false,
     muteTimeIntervals: [],
+    editorSettings: getDefaultEditorSettings(),
 
     // cortex / loki
     namespace: '',
@@ -118,6 +126,18 @@ export const getDefautManualRouting = () => {
   const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
   return manualRouting !== 'false';
 };
+
+function getDefaultEditorSettings() {
+  const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
+  if (!editorSettingsEnabled) {
+    return undefined;
+  }
+  //then, check in local storage if the user has saved last rule with simplified query editor
+  const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
+  return {
+    simplifiedQueryEditor: queryEditorSettings !== 'false',
+  };
+}
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   const { name, expression, forTime, forTimeUnit, keepFiringForTime, keepFiringForTimeUnit, type } = values;
@@ -202,7 +222,11 @@ export function getNotificationSettingsForDTO(
   }
   return undefined;
 }
-
+function getEditorSettingsForDTO(simplifiedEditor: SimplifiedEditor) {
+  return {
+    simplified_query_and_expressions_section: simplifiedEditor.simplifiedQueryEditor,
+  };
+}
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
   const {
     name,
@@ -222,6 +246,9 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
   }
 
   const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
+  const metadata = values.editorSettings
+    ? { editor_settings: getEditorSettingsForDTO(values.editorSettings) }
+    : undefined;
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   const labels = arrayToRecord(cleanLabels(values.labels));
@@ -241,6 +268,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         no_data_state: noDataState,
         exec_err_state: execErrState,
         notification_settings: notificationSettings,
+        metadata,
       },
       annotations,
       labels,
@@ -307,6 +335,23 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
   return routingSettings;
 }
 
+function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
+  // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
+  if (!config.featureToggles.alertingQueryAndExpressionsStepMode) {
+    return undefined;
+  }
+
+  if (ga.metadata?.editor_settings) {
+    return {
+      simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,
+    };
+  }
+
+  return {
+    simplifiedQueryEditor: false,
+  };
+}
+
 export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleFormValues {
   const { ruleSourceName, namespace, group, rule } = ruleWithLocation;
 
@@ -353,6 +398,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
           contactPoints: routingSettings,
           manualRouting: Boolean(routingSettings),
+
+          editorSettings: getEditorSettingsFromDTO(ga),
         };
       } else {
         throw new Error('Unexpected type of rule for grafana rules source');

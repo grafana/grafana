@@ -783,6 +783,10 @@ const (
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
 
+	// FlagAlertingQueryAndExpressionsStepMode
+	// Enables step mode for alerting queries and expressions
+	FlagAlertingQueryAndExpressionsStepMode = "alertingQueryAndExpressionsStepMode"
+
 	// FlagImprovedExternalSessionHandling
 	// Enable improved support for external sessions in Grafana
 	FlagImprovedExternalSessionHandling = "improvedExternalSessionHandling"
