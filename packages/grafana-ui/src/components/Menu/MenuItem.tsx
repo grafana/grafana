@@ -108,7 +108,8 @@ export const MenuItem = React.memo(
         [styles.disabled]: disabled,
         [styles.destructive]: destructive && !disabled,
       },
-      className
+      className,
+      hasSubMenu ? 'hasSubmenu' : 'noSubmenu'
     );
 
     const disabledProps = {
@@ -152,7 +153,13 @@ export const MenuItem = React.memo(
         className={itemStyle}
         rel={target === '_blank' ? 'noopener noreferrer' : undefined}
         href={url}
-        onClick={onClick}
+        onClick={(event) => {
+          if (hasSubMenu && !(event.target as HTMLElement).closest('.noSubmenu')) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          onClick?.(event);
+        }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}

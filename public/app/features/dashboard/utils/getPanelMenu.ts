@@ -73,11 +73,6 @@ export function getPanelMenu(
     });
   };
 
-  const onMore = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
   const onDuplicatePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     duplicatePanel(dashboard, panel);
@@ -177,17 +172,6 @@ export function getPanelMenu(
     type: 'submenu',
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
-    onClick: (e: React.MouseEvent<HTMLElement>) => {
-      const currentTarget = e.currentTarget;
-      const target = e.target;
-
-      if (
-        target === currentTarget ||
-        (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
-      ) {
-        onInspectPanel();
-      }
-    },
     shortcut: 'i',
     subMenu: inspectMenu,
   });
@@ -324,7 +308,6 @@ export function getPanelMenu(
       text: t('panel.header-menu.more', `More...`),
       iconClassName: 'cube',
       subMenu,
-      onClick: onMore,
     });
   }
 
