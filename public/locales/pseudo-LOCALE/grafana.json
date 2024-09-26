@@ -2542,6 +2542,10 @@
     "url-column-header": "Ŝŉäpşĥőŧ ūřľ",
     "view-button": "Vįęŵ"
   },
+  "table-filter": {
+    "no-values": "Ńő väľūęş",
+    "select-filter-values": "Ŝęľęčŧ väľūęş ŧő ƒįľŧęř þy:"
+  },
   "tag-filter": {
     "loading": "Ŀőäđįŉģ...",
     "no-tags": "Ńő ŧäģş ƒőūŉđ",

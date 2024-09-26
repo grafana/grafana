@@ -2542,6 +2542,10 @@
     "url-column-header": "Snapshot url",
     "view-button": "View"
   },
+  "table-filter": {
+    "no-values": "No values",
+    "select-filter-values": "Select values to filter by:"
+  },
   "tag-filter": {
     "loading": "Loading...",
     "no-tags": "No tags found",
