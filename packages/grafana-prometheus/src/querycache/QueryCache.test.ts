@@ -7,7 +7,11 @@ import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
 import { CacheRequestInfo, findDatapointStep, QueryCache } from './QueryCache';
-import { differentDisplayNameFromDS, trimmedFirstPointInPromFrames, IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
+import {
+  differentDisplayNameFromDS,
+  trimmedFirstPointInPromFrames,
+  IncrementalStorageDataFrameScenarios,
+} from './QueryCacheTestData';
 
 // Will not interpolate vars!
 const interpolateStringTest = (query: PromQuery) => {
