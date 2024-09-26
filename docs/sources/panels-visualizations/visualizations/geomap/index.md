@@ -226,8 +226,8 @@ There are seven map layer types to choose from in a geomap.
 - [Photos (Beta)](#photos-layer-beta) renders a photo at each data point.
 - [Network (Beta)](#network-layer-beta) visualizes a network graph from the data.
 - [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
-- [CARTO basemap](#carto-layer) adds a layer from CARTO Raster basemaps.
-- [ArcGIS MapServer](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
+- [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
+- [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
 
 {{% admonition type="note" %}}
@@ -359,7 +359,7 @@ Styles can be set within the "properties" object of the GeoJSON with support for
 
 The Night / Day layer displays night and day regions based on the current time range.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" alt="Geomap panel Night / Day" >}}
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -372,7 +372,7 @@ The Night / Day layer displays night and day regions based on the current time r
 | Display tooltip | allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
-[**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
+[Extensions for OpenLayers - DayNight](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
 
 #### Route layer (Beta)
 
@@ -382,7 +382,11 @@ The Route layer is currently in [public preview](/docs/release-life-cycle/). Gra
 
 The Route layer renders data points as a route.
 
-{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
+{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" alt="Geomap panel Route" >}}
+
+The layer can also render a route with arrows.
+
+{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" alt="Geomap panel Route arrows with size" >}}
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -397,9 +401,7 @@ The Route layer renders data points as a route.
 | Display tooltip | allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
-{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
-
-[**Extensions for OpenLayers - Flow Line Style**](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
+[Extensions for OpenLayers - Flow Line Style](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
 
 #### Photos layer (Beta)
 
@@ -409,7 +411,7 @@ The Photos layer is currently in [public preview](/docs/release-life-cycle/). Gr
 
 The Photos layer renders a photo at each data point.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" alt="Geomap panel Photos" >}}
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -426,7 +428,7 @@ The Photos layer renders a photo at each data point.
 | Display tooltip | allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
-[**Extensions for OpenLayers - Image Photo Style**](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
+[Extensions for OpenLayers - Image Photo Style](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
 
 #### Network layer (Beta)
 
@@ -436,8 +438,10 @@ The Network layer is currently in [public preview](/docs/release-life-cycle/). G
 
 The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization](ref:data-format) with the addition of [geospatial data](#location-mode) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
 
-{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
-{{< video-embed src="/media/docs/grafana/screen-recording-10-1-geomap-network-layer-from-node-graph.mp4" max-width="750px" caption="Node graph to Geomap network layer" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" alt="Geomap network layer" >}}
+
+You can convert node graph data to a network layer:
+{{< video-embed src="/media/docs/grafana/screen-recording-10-1-geomap-network-layer-from-node-graph.mp4" max-width="750px" alt="Node graph to Geomap network layer" >}}
 
 <!-- prettier-ignore-start -->
 | Option | Description |
@@ -477,11 +481,12 @@ The Network layer renders a network graph. This layer supports the same [data fo
 
 A map from a collaborative free geographic world database.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="1200px" caption="Geomap panel Open Street Map" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="1200px" alt="Geomap panel Open Street Map" >}}
 
-**Opacity** from 0 (transparent) to 1 (opaque)
+- **Opacity** from 0 (transparent) to 1 (opaque)
+- **Display tooltip** - allows you to toggle tooltips for the layer.
 
-[**About Open Street Map**](https://www.openstreetmap.org/about)
+[About Open Street Map](https://www.openstreetmap.org/about)
 
 #### CARTO basemap layer
 
@@ -495,8 +500,9 @@ A CARTO layer is from CARTO Raster basemaps.
     {{< figure src="/static/img/docs/geomap-panel/geomap-carto-dark-9-1-0.png" max-width="1200px" caption="Geomap panel CARTO dark example" >}}
 - **Show labels** shows the Country details on top of the map.
 - **Opacity** from 0 (transparent) to 1 (opaque)
+- **Display tooltip** - allows you to toggle tooltips for the layer.
 
-[**About CARTO**](https://carto.com/about-us/)
+[About CARTO](https://carto.com/about-us/)
 
 #### ArcGIS MapServer layer
 
@@ -519,6 +525,7 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
     - URL template
     - Attribution
 - **Opacity** from 0 (transparent) to 1 (opaque)
+- **Display tooltip** - allows you to toggle tooltips for the layer.
 
 ##### More Information
 
