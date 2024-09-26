@@ -1,4 +1,4 @@
-import { first, uniqBy } from 'lodash';
+import { first } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -19,13 +19,13 @@ import {
   DataLinkPostProcessor,
   ExploreUrlState,
   urlUtil,
-  builtInVariablesGlobal,
   VariableInterpolation,
+  getTransformationVars,
+  getVariableUsageInfo,
 } from '@grafana/data';
 import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getTransformationVars } from 'app/features/correlations/transformations';
 import { ExploreItemState } from 'app/types/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
@@ -179,8 +179,9 @@ export const getFieldLinksForExplore = (options: {
         });
       }
 
+      const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
       const allVars = { ...scopedVars, ...internalLinkSpecificVars };
-      const variableData = getVariableUsageInfo(link, allVars);
+      const variableData = getVariableUsageInfo(link, allVars, replaceFn);
       let variables: VariableInterpolation[] = [];
 
       // if the link has no variables (static link), add it with the right key but an empty value so we know what field the static link is associated with
@@ -193,7 +194,7 @@ export const getFieldLinksForExplore = (options: {
       if (variableData.allVariablesDefined) {
         if (!link.internal) {
           const replace: InterpolateFunction = (value, vars) =>
-            getTemplateSrv().replace(value, { ...vars, ...allVars, ...scopedVars });
+            replaceFn(value, { ...vars, ...allVars, ...scopedVars });
 
           const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
           if (!linkModel.title) {
@@ -277,45 +278,6 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
     },
     [range, splitOpenFn]
   );
-}
-
-/**
- * Use variable map from templateSrv to determine if all variables have values
- * @param query
- * @param scopedVars
- */
-export function getVariableUsageInfo(
-  query: object,
-  scopedVars: ScopedVars
-): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
-  let variables: VariableInterpolation[] = [];
-  const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
-  // This adds info to the variables array while interpolating
-  replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
-  variables = uniqBy(variables, 'variableName');
-  return {
-    variables: variables,
-    allVariablesDefined: variables
-      // We filter out builtin variables as they should be always defined but sometimes only later, like
-      // __range_interval which is defined in prometheus at query time.
-      .filter((v) => !builtInVariablesGlobal.includes(v.variableName))
-      .every((variable) => variable.found),
-  };
-}
-
-// Recursively get all strings from an object into a simple list with space as separator.
-function getStringsFromObject(obj: Object): string {
-  let acc = '';
-  let k: keyof typeof obj;
-
-  for (k in obj) {
-    if (typeof obj[k] === 'string') {
-      acc += ' ' + obj[k];
-    } else if (typeof obj[k] === 'object') {
-      acc += ' ' + getStringsFromObject(obj[k]);
-    }
-  }
-  return acc;
 }
 
 type StateEntry = [string, ExploreItemState];

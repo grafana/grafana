@@ -17,7 +17,7 @@ import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
 import { ContextSrv, setContextSrv } from '../../../core/services/context_srv';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 
-import { getFieldLinksForExplore, getVariableUsageInfo } from './links';
+import { getFieldLinksForExplore } from './links';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -658,56 +658,6 @@ describe('explore links utils', () => {
           '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=test}"}]}'
         )}`
       );
-    });
-  });
-
-  describe('getVariableUsageInfo', () => {
-    function makeDataLinkWithQuery(query: string): DataLink {
-      return {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query },
-        },
-      };
-    }
-
-    function allVariablesDefinedInQuery(query: string) {
-      const scopedVars = {
-        testVal: { text: '', value: 'val1' },
-      };
-      return getVariableUsageInfo(makeDataLinkWithQuery(query), scopedVars).allVariablesDefined;
-    }
-
-    it('returns true when query contains variables and all variables are used', () => {
-      expect(allVariablesDefinedInQuery('test ${testVal}')).toBe(true);
-    });
-
-    it('ignores global variables', () => {
-      expect(allVariablesDefinedInQuery('test ${__rate_interval} $__from $__to')).toBe(true);
-    });
-
-    it('returns false when query contains variables and no variables are used', () => {
-      expect(allVariablesDefinedInQuery('test ${diffVar}')).toBe(false);
-    });
-
-    it('returns false when query contains variables and some variables are used', () => {
-      expect(allVariablesDefinedInQuery('test ${testVal} ${diffVar}')).toBe(false);
-    });
-
-    it('returns true when query contains no variables', () => {
-      expect(allVariablesDefinedInQuery('test')).toBe(true);
-    });
-
-    it('returns deduplicated list of variables', () => {
-      const dataLink = makeDataLinkWithQuery('test ${test} ${foo} ${test:raw} $test');
-      const scopedVars = {
-        testVal: { text: '', value: 'val1' },
-      };
-      const variables = getVariableUsageInfo(dataLink, scopedVars).variables;
-      expect(variables).toHaveLength(2);
     });
   });
 });

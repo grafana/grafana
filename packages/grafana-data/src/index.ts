@@ -131,7 +131,13 @@ export {
 } from './events/common';
 
 // Field
-export { builtInVariablesGlobal, builtInVariables } from './field/correlationUtils';
+export {
+  builtInVariablesGlobal,
+  builtInVariables,
+  safeStringifyValue,
+  getTransformationVars,
+  getVariableUsageInfo,
+} from './field/correlationUtils';
 export {
   getFieldColorModeForField,
   getFieldColorMode,
