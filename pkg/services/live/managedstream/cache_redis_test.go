@@ -43,7 +43,7 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 	require.NotZero(t, len(keys))
 
 	for _, key := range keys {
-		require.Equal(t, "A", key[:1])
+		require.Equal(t, "A", key[:1], "got key %v instead", key)
 		require.True(t, strings.HasPrefix(key, "A"), "key", key)
 	}
 }
