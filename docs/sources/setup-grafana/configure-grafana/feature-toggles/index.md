@@ -202,6 +202,7 @@ Experimental features might be changed or removed without prior notice.
 | `exploreLogsLimitedTimeRange`               | Used in Explore Logs to limit the time range                                                                                                                                                                                                                                      |
 | `homeSetupGuide`                            | Used in Home for users who want to return to the onboarding flow or quickly find popular config pages                                                                                                                                                                             |
 | `appSidecar`                                | Enable the app sidecar feature that allows rendering 2 apps at the same time                                                                                                                                                                                                      |
+| `alertingQueryAndExpressionsStepMode`       | Enables step mode for alerting queries and expressions                                                                                                                                                                                                                            |
 
 ## Development feature toggles
 

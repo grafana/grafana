@@ -244,6 +244,12 @@
         "state": "State"
       },
       "save-query": "Save current search"
+    },
+    "simpleCondition": {
+      "alertCondition": "Alert condition",
+      "ofQuery": {
+        "To": "TO"
+      }
     }
   },
   "annotations": {
