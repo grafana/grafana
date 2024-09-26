@@ -644,8 +644,8 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
 					}
 					if prevObj.ResourceVersion != event.PreviousRV {
-						s.log.Error("resource version missmatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
-						return fmt.Errorf("resource version missmatch")
+						s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
+						return fmt.Errorf("resource version mismatch")
 					}
 					resp.Previous = &WatchEvent_Resource{
 						Value:   prevObj.Value,
