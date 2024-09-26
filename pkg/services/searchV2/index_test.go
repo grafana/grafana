@@ -773,8 +773,7 @@ func TestIntegrationSoftDeletion(t *testing.T) {
 	// Set up search v2.
 	folderCount := 1
 	dashboardsPerFolder := 1
-	replStore, cfg := db.InitTestReplDBWithCfg(t)
-	sqlStore := replStore.DB()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
 	searchService, testUser, err := setupIntegrationEnv(t, folderCount, dashboardsPerFolder, sqlStore)
 	require.NoError(t, err)
 
@@ -796,7 +795,7 @@ func TestIntegrationSoftDeletion(t *testing.T) {
 		featuremgmt.FlagDashboardRestore,
 		featuremgmt.FlagMysqlParseTime,
 	)
-	dashboardStore, err := database.ProvideDashboardStore(replStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 
 	// Soft delete "dashboard2".

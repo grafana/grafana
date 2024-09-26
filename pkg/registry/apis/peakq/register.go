@@ -4,7 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -66,19 +65,12 @@ func (b *PeakQAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(gv)
 }
 
-func (b *PeakQAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
-	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(peakq.GROUP, scheme, metav1.ParameterCodec, codecs)
-
+func (b *PeakQAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, _ grafanarest.DualWriteBuilder) error {
 	resourceInfo := peakq.QueryTemplateResourceInfo
 	storage := map[string]rest.Storage{}
 	peakqStorage, err := newStorage(scheme, optsGetter)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	storage[resourceInfo.StoragePath()] = peakqStorage
 	storage[resourceInfo.StoragePath("render")] = &renderREST{
@@ -86,7 +78,7 @@ func (b *PeakQAPIBuilder) GetAPIGroupInfo(
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[peakq.VERSION] = storage
-	return &apiGroupInfo, nil
+	return nil
 }
 
 func (b *PeakQAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

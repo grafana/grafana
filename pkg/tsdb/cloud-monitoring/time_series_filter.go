@@ -21,7 +21,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, 
 }
 
 func parseTimeSeriesResponse(queryRes *backend.DataResponse,
-	response cloudMonitoringResponse, executedQueryString string, query cloudMonitoringQueryExecutor, params url.Values, groupBys []string, _ log.Logger) error {
+	response cloudMonitoringResponse, executedQueryString string, query cloudMonitoringQueryExecutor, params url.Values, groupBys []string, logger log.Logger) error {
 	frames := data.Frames{}
 
 	for _, series := range response.TimeSeries {
@@ -47,7 +47,7 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 	if len(response.TimeSeries) > 0 {
 		dl := query.buildDeepLink()
 		aggregationAlignmentString := params.Get("aggregation.alignmentPeriod")
-		frames = addConfigData(frames, dl, response.Unit, &aggregationAlignmentString)
+		frames = addConfigData(frames, dl, response.Unit, &aggregationAlignmentString, logger)
 	}
 
 	queryRes.Frames = frames
@@ -93,6 +93,7 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) buildDeepLink() string {
 			"Failed to generate deep link: unable to parse metrics explorer URL",
 			"ProjectName", timeSeriesFilter.parameters.ProjectName,
 			"error", err,
+			"statusSource", backend.ErrorSourcePlugin,
 		)
 	}
 

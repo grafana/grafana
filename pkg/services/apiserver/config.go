@@ -60,11 +60,6 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	unifiedStorageCfg := cfg.UnifiedStorage
 	o.StorageOptions.UnifiedStorageConfig = unifiedStorageCfg
 
-	o.StorageOptions.DualWriterDataSyncJobEnabled = map[string]bool{
-		// TODO: This will be enabled later, when we get a dedicated config section for unified_storage
-		// playlist.RESOURCE + "." + playlist.GROUP: true,
-	}
-
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL

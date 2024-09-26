@@ -49,8 +49,8 @@ jobs:
           fi
 
           # set environment for next steps
-          echo "CHANNEL=${CHANNEL}" >> $GITHUB_ENV
-          echo "TEAM=${TEAM}" >> $GITHUB_ENV
+          echo "CHANNEL=${CHANNEL}" >> "$GITHUB_ENV"
+          echo "TEAM=${TEAM}" >> "$GITHUB_ENV"
 
       - name: "Prepare payload"
         uses: frabert/replace-string-action@v2.5
@@ -64,22 +64,22 @@ jobs:
 
       - name: Get Token
         id: get_workflow_token
-        uses: peter-murray/workflow-application-token-action@v3
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         with:
-          application_id: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_ID }}
-          application_private_key: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_KEY }}
+          app_id: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_ID }}
+          private_key: ${{ secrets.APP_GRAFANA_TEAM_CHECKER_KEY }}
 
       - name: "Check that issue author is not part of the team"
         if: ${{ env.TEAM != 'null' }}
         run: |
           response=$(gh api /orgs/grafana/teams/${{ env.TEAM }}/memberships/${{ github.event.issue.user.login }} -i -H "Accept: application/vnd.github.v3+json")
           STATUS_CODE=$(echo "$response" | head -n 1 | cut -d' ' -f2)
-          if [ "$status_code" -eq 404 ]; then
+          if [ "$STATUS_CODE" -eq "404" ]; then
             echo "The user was not found in the team."
-            echo "USER_FOUND=false" >> $GITHUB_ENV
+            echo "USER_FOUND=false" >> "$GITHUB_ENV"
           else
             echo "The user was potentially found in the team"
-            echo "USER_FOUND=maybe" >> $GITHUB_ENV
+            echo "USER_FOUND=maybe" >> "$GITHUB_ENV"
           fi
         env:
           GITHUB_TOKEN: ${{ steps.get_workflow_token.outputs.token }}
