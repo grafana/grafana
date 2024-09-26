@@ -752,7 +752,7 @@ const (
 	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
 
 	// FlagAlertingPrometheusRulesPrimary
-	// Uses Prometheus rules as primary source of truth for Grafana for Ruler-enabled datasources
+	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
 	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
 
 	// FlagSingleTopNav
