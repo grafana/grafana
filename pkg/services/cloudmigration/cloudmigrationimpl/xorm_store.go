@@ -432,16 +432,16 @@ func (ss *sqlStore) encryptToken(ctx context.Context, cm *cloudmigration.CloudMi
 
 func (ss *sqlStore) decryptToken(ctx context.Context, cm *cloudmigration.CloudMigrationSession) error {
 	if cm == nil {
-		return cloudmigration.ErrMigrationNotFound
+		return fmt.Errorf("unable to decypt token because migration session was not found: %w", cloudmigration.ErrMigrationNotFound)
 	}
 
 	if len(cm.AuthToken) == 0 {
-		return cloudmigration.ErrTokenNotFound
+		return fmt.Errorf("unable to decrypt token because token is empty: %w", cloudmigration.ErrTokenNotFound)
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(cm.AuthToken)
 	if err != nil {
-		return fmt.Errorf("token could not be decoded")
+		return fmt.Errorf("unable to base64 decode token: %w", err)
 	}
 
 	t, err := ss.secretsService.Decrypt(ctx, decoded)
