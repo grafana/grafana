@@ -46,7 +46,7 @@ const backendSrv = {
   fetch: (options: BackendSrvRequest) => {
     return of(mockDatasourceRequest(options));
   },
-  post<T = any>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>): Promise<T> {
+  post<T = unknown>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>): Promise<T> {
     return mockDatasourcePost({ url, data, ...options });
   },
 } as unknown as BackendSrv;
@@ -558,7 +558,7 @@ describe('DataSourceWithBackend', () => {
 
       const originalQuery = { refId: 'A', foo: 'bar' };
       const migratedQuery = { refId: 'A', foobar: 'barfoo' };
-      mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: any }) => {
+      mockDatasourcePost = jest.fn().mockImplementation((args: { url: string; data: unknown }) => {
         expect(args.url).toBe('/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/queryconvert');
         expect(args.data).toMatchObject({ queries: [originalQuery] });
         return Promise.resolve({ queries: [{ JSON: migratedQuery }] });
