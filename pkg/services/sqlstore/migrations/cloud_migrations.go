@@ -158,4 +158,10 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 
 	// -- delete the snapshot result column while still in the experimental phase
 	mg.AddMigration("delete cloud_migration_snapshot.result column", NewRawSQLMigration("ALTER TABLE cloud_migration_snapshot DROP COLUMN result"))
+
+	mg.AddMigration("add cloud_migration_resource.name column", NewAddColumnMigration(migrationResourceTable, &Column{
+		Name:     "name",
+		Type:     DB_Text,
+		Nullable: true,
+	}))
 }
