@@ -6,7 +6,7 @@ import { AccessControlAction } from 'app/types';
 import {
   PERMISSIONS_CONTACT_POINTS,
   PERMISSIONS_CONTACT_POINTS_MODIFY,
-} from './unified/components/contact-points/constants';
+} from './unified/components/contact-points/permissions';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {

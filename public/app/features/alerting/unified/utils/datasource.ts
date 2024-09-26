@@ -11,7 +11,7 @@ import { RulesSource } from 'app/types/unified-alerting';
 import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { alertmanagerApi } from '../api/alertmanagerApi';
-import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/constants';
+import { PERMISSIONS_CONTACT_POINTS } from '../components/contact-points/permissions';
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
