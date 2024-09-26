@@ -83,7 +83,6 @@ func NewCache(cfg *setting.Cfg, reg prometheus.Registerer, provider grpcserver.P
 
 	c.backends[c.lfc.GetInstanceID()] = newLocalBackend()
 	c.mux = buildMux(c)
-
 	RegisterDispatcherServer(c.provider.GetServer(), c)
 	return c, nil
 }
