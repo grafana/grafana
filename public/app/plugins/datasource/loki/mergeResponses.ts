@@ -58,7 +58,7 @@ export function mergeFrames(dest: DataFrame, source: DataFrame) {
   const destTimeField = dest.fields.find((field) => field.type === FieldType.time);
   const destIdField = dest.fields.find((field) => field.type === FieldType.string && field.name === 'id');
   const sourceTimeField = source.fields.find((field) => field.type === FieldType.time);
-  const sourceIdField = dest.fields.find((field) => field.type === FieldType.string && field.name === 'id');
+  const sourceIdField = source.fields.find((field) => field.type === FieldType.string && field.name === 'id');
 
   if (!destTimeField || !sourceTimeField) {
     console.error(new Error(`Time fields not found in the data frames`));
@@ -71,11 +71,12 @@ export function mergeFrames(dest: DataFrame, source: DataFrame) {
   for (let i = 0; i < sourceTimeValues.length; i++) {
     const destTimeValues = destTimeField.values.slice(0) ?? [];
     const destNanosValues = destTimeField.nanos?.slice(0);
+    const destIdValues = destIdField?.values.slice(0) ?? [];
     const destIdx = resolveIdx(destTimeField, sourceTimeField, i);
 
-    const entryExistsInDest = compareTimestamps(
+    const entryExistsInDest = compareEntries(
       { ...destTimeField, values: destTimeValues, nanos: destNanosValues },
-      destIdField,
+      destIdField ? { ...destIdField, values: destIdValues } : destIdField,
       destIdx,
       sourceTimeField,
       sourceIdField,
@@ -136,18 +137,19 @@ export function mergeFrames(dest: DataFrame, source: DataFrame) {
 
 function resolveIdx(destField: Field, sourceField: Field, index: number) {
   const idx = closestIdx(sourceField.values[index], destField.values);
-
+  if (idx < 0) {
+    return 0;
+  }
   if (sourceField.values[index] === destField.values[idx] && sourceField.nanos && destField.nanos) {
     return sourceField.nanos[index] > destField.nanos[idx] ? idx + 1 : idx;
   }
-
   if (sourceField.values[index] > destField.values[idx]) {
     return idx + 1;
   }
   return idx;
 }
 
-function compareTimestamps(
+function compareEntries(
   destTimeField: Field,
   destIdField: Field | undefined,
   destIndex: number,
@@ -162,19 +164,18 @@ function compareTimestamps(
   if (!destIdField || !sourceIdField) {
     return true;
   }
-
   // Log frames, check indexes
-  return destIdField.values[destIndex] === sourceIdField.values[sourceIndex];
+  return destIdField.values[destIndex] !== undefined && destIdField.values[destIndex] === sourceIdField.values[sourceIndex];
 }
 
 function compareNsTimestamps(destField: Field, destIndex: number, sourceField: Field, sourceIndex: number) {
   if (destField.nanos && sourceField.nanos) {
     return (
-      destField.values[destIndex] === sourceField.values[sourceIndex] &&
-      destField.nanos[destIndex] === sourceField.nanos[sourceIndex]
+      destField.values[destIndex] !== undefined && destField.values[destIndex] === sourceField.values[sourceIndex] &&
+      destField.nanos[destIndex] !== undefined && destField.nanos[destIndex] === sourceField.nanos[sourceIndex]
     );
   }
-  return destField.values[destIndex] === sourceField.values[sourceIndex];
+  return destField.values[destIndex] !== undefined && destField.values[destIndex] === sourceField.values[sourceIndex];
 }
 
 function findSourceField(referenceField: Field, sourceFields: Field[], index: number) {
