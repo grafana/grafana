@@ -123,6 +123,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
     let fieldVars: ScopedVars = {};
 
+    // add all fields in frame as variables
     originalFrame.fields.forEach((f) => {
       if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
         fieldVars[f.name] = {

@@ -117,7 +117,10 @@ export interface LinkModel<T = any> {
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any, origin?: any) => void;
 
-  // TODO, see if necessary outside of Explore
+  /*
+  We keep what variables were interpolated for visualizations that want to show variables instead of the whole replaced string
+  Logs is an example of this
+  */
   variables?: VariableInterpolation[];
 }
 

@@ -31,14 +31,6 @@ export const createLogLineLinks = (hiddenFieldsWithLinks: FieldDef[]): FieldDef[
   hiddenFieldsWithLinks.forEach((linkField) => {
     linkField.links?.forEach((link: LinkModel | LinkModel) => {
       if ('variables' in link && link.variables!.length > 0) {
-        // convert ExploreFieldLinkModel to LinkModel by omitting variables field
-        const fieldDefFromLink: LinkModel = {
-          href: link.href,
-          title: link.title,
-          origin: link.origin,
-          onClick: link.onClick,
-          target: link.target,
-        };
         const variableKeys = link.variables!.map((variable) => {
           const varName = variable.variableName;
           const fieldPath = variable.fieldPath ? `.${variable.fieldPath}` : '';
@@ -48,7 +40,7 @@ export const createLogLineLinks = (hiddenFieldsWithLinks: FieldDef[]): FieldDef[
         fieldsWithLinksFromVariableMap.push({
           keys: variableKeys,
           values: variableValues,
-          links: [fieldDefFromLink],
+          links: [link],
           fieldIndex: linkField.fieldIndex,
         });
       }

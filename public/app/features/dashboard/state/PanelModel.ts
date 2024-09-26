@@ -65,6 +65,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   plugin: true,
   queryRunner: true,
   replaceVariables: true,
+  enhancedReplaceVariables: true,
   configRev: true,
   hasSavedPanelEditChange: true,
   getDisplayTitle: true,
@@ -72,7 +73,6 @@ const notPersistedProperties: { [str: string]: boolean } = {
   key: true,
   isNew: true,
   refreshWhenInView: true,
-  enhancedReplaceVariables: true,
 };
 
 // For angular panels we need to clean up properties when changing type
@@ -115,6 +115,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   maxDataPoints: true,
   interval: true,
   replaceVariables: true,
+  enhancedReplaceVariables: true,
   libraryPanel: true,
   getDisplayTitle: true,
   configRev: true,
@@ -232,9 +233,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
-    if (typeof this.enhancedReplaceVariables === 'function') {
-      this.enhancedReplaceVariables = this.enhancedReplaceVariables.bind(this);
-    }
+    this.enhancedReplaceVariables = this.enhancedReplaceVariables.bind(this);
     this.key = uuidv4();
   }
 

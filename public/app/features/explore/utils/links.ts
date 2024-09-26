@@ -43,17 +43,6 @@ const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
  */
 const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilter];
 
-/**
- * This extension of the LinkModel was done to support correlations, which need the variables' names
- * and values split out for display purposes
- *
- * Correlations are internal links only so the variables property will always be defined (but possibly empty)
- * for internal links and undefined for non-internal links
- */
-export interface ExploreFieldLinkModel extends LinkModel<Field> {
-  variables: VariableInterpolation[];
-}
-
 const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
 
 /**
@@ -111,7 +100,7 @@ export const getFieldLinksForExplore = (options: {
   dataFrame?: DataFrame;
   // if not provided, field.config.links are used
   linksToProcess?: DataLink[];
-}): ExploreFieldLinkModel[] => {
+}): LinkModel[] => {
   const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
   const scopedVars: ScopedVars = { ...(vars || {}) };
   scopedVars['__value'] = {
@@ -160,7 +149,7 @@ export const getFieldLinksForExplore = (options: {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });
 
-    const fieldLinks = links.map((link) => {
+    const fieldLinks: Array<LinkModel | undefined> = links.map((link) => {
       let internalLinkSpecificVars: ScopedVars = {};
       if (link.meta?.transformations) {
         link.meta?.transformations.forEach((transformation) => {
@@ -229,7 +218,7 @@ export const getFieldLinksForExplore = (options: {
         return undefined;
       }
     });
-    return fieldLinks.filter((link): link is ExploreFieldLinkModel => !!link);
+    return fieldLinks.filter((link): link is LinkModel => !!link);
   }
   return [];
 };
