@@ -184,7 +184,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   };
 
   return (
-    <Stack direction="row" justify-content="flex-start" align-items="flex-start">
+    <Stack direction="column" justify-content="flex-start" align-items="flex-start">
       <Field
         label={
           <Label
@@ -199,21 +199,13 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
         validationMessageHorizontalOverflow={true}
       >
-        {/*
-          For now, we need to wrap this in a fragment so that the Field component doesn't try to spread all props
-          onto the child components - this otherwise results in a console.error about `invalid` being passed `true`
-        */}
-        <>
-          <Stack direction="row" alignItems="center">
-            <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
-            <PendingPeriodQuickPick
-              selectedPendingPeriod={currentPendingPeriod}
-              groupEvaluationInterval={evaluateEvery}
-              onSelect={setPendingPeriod}
-            />
-          </Stack>
-        </>
+        <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
       </Field>
+      <PendingPeriodQuickPick
+        selectedPendingPeriod={currentPendingPeriod}
+        groupEvaluationInterval={evaluateEvery}
+        onSelect={setPendingPeriod}
+      />
     </Stack>
   );
 }
