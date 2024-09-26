@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -55,17 +53,6 @@ func (b *SearchAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	return nil
 }
 
-func (b *SearchAPIBuilder) GetAPIGroupInfo(
-	scheme *runtime.Scheme,
-	codecs serializer.CodecFactory,
-	optsGetter generic.RESTOptionsGetter,
-	_ grafanarest.DualWriteBuilder,
-) (*genericapiserver.APIGroupInfo, error) {
-	gv := b.GetGroupVersion()
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
-	return &apiGroupInfo, nil
-}
-
 func (b *SearchAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		return map[string]common.OpenAPIDefinition{}
@@ -111,14 +98,6 @@ func (b *SearchAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 }
 
 func (b *SearchAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter, dualWriteBuilder grafanarest.DualWriteBuilder) error {
-	//storage := map[string]rest.Storage{}
-	//store, err := newStorage(scheme, optsGetter)
-	//if err != nil {
-	//	return err
-	//}
-	//storage["search"] = store
-	//apiGroupInfo.VersionedResourcesStorageMap["v0alpha1"] = storage
-	//apiGroupInfo.PrioritizedVersions = []schema.GroupVersion{b.GetGroupVersion()}
-
+	apiGroupInfo.PrioritizedVersions = []schema.GroupVersion{b.GetGroupVersion()}
 	return nil
 }
