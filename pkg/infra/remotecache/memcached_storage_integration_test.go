@@ -18,6 +18,6 @@ func TestIntegrationMemcachedCacheStorage(t *testing.T) {
 	}
 
 	opts := &setting.RemoteCacheSettings{Name: memcachedCacheType, ConnStr: u}
-	client := createTestClient(t, &setting.Cfg{RemoteCache: opts}, nil)
+	client := createTestClient(t, &setting.Cfg{RemoteCache: opts}, nil, nil)
 	runTestsForClient(t, client)
 }

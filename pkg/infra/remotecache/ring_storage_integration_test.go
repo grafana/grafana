@@ -1,13 +1,24 @@
 package remotecache
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache/ring"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
 )
 
-func TestRingCacheStorage(t *testing.T) {
+func TestIntegrationRingCacheStorage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	opts := &setting.RemoteCacheSettings{
 		Name:       ring.CacheType,
 		Prefix:     "",
@@ -24,6 +35,32 @@ func TestRingCacheStorage(t *testing.T) {
 		GRPCServerNetwork: "tcp",
 	}
 
-	client := createTestClient(t, cfg, nil)
+	testTracer := tracing.InitializeTracerForTest()
+	grpcServer, err := grpcserver.ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrpcServer), noopAuthenticator{},
+		testTracer, prometheus.DefaultRegisterer)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	t.Cleanup(cancel)
+
+	client := createTestClient(t, cfg, nil, grpcServer)
+
+	go func(ctx context.Context) {
+		err := client.Run(ctx)
+		require.NoError(t, err)
+	}(ctx)
+
+	// Wait for the server to start
+	time.Sleep(100 * time.Millisecond)
+
+	go func(ctx context.Context) {
+		err := grpcServer.Run(ctx)
+		require.NoError(t, err)
+	}(ctx)
+
+	// Wait for the server to start
+	time.Sleep(100 * time.Millisecond)
+
 	runTestsForClient(t, client)
 }

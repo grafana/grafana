@@ -5,14 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -31,22 +28,8 @@ func (n noopAuthenticator) Authenticate(ctx context.Context) (context.Context, e
 	return ctx, nil
 }
 
-func createTestClient(t *testing.T, cfg *setting.Cfg, sqlstore db.DB) CacheStorage {
+func createTestClient(t *testing.T, cfg *setting.Cfg, sqlstore db.DB, grpcServer grpcserver.Provider) *RemoteCache {
 	t.Helper()
-
-	testTracer := tracing.InitializeTracerForTest()
-	grpcServer, err := grpcserver.ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrpcServer), noopAuthenticator{},
-		testTracer, prometheus.DefaultRegisterer)
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func(ctx context.Context) {
-		err := grpcServer.Run(ctx)
-		require.NoError(t, err)
-	}(ctx)
-
-	t.Cleanup(cancel)
 
 	dc, err := ProvideService(cfg, sqlstore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService(), grpcServer, nil)
 	require.Nil(t, err, "Failed to init client for test")
@@ -61,7 +44,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 	})
 	require.Nil(t, err, "Failed to load config")
 
-	client := createTestClient(t, cfg, db)
+	client := createTestClient(t, cfg, db, nil)
 	runTestsForClient(t, client)
 }
 
