@@ -6,7 +6,6 @@ import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
-import { isAlertingRule, isAlertingRulerRule } from '../../utils/rules';
 
 const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery } = alertRuleApi;
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -83,10 +82,7 @@ function rulerRulesToNamespaceGroups(rulerConfig: RulerRulesConfigDTO) {
 }
 
 function promNamespacesToLabels(promNamespace: RuleNamespace[]) {
-  const rules = promNamespace
-    .flatMap((namespace) => namespace.groups)
-    .flatMap((group) => group.rules)
-    .filter(isAlertingRule);
+  const rules = promNamespace.flatMap((namespace) => namespace.groups).flatMap((group) => group.rules);
 
   return rules.reduce((result, rule) => {
     if (!rule.labels) {
@@ -114,8 +110,7 @@ function rulerRulesToLabels(rulerConfig: RulerRulesConfigDTO) {
 
   const rules = Object.entries(rulerConfig)
     .flatMap(([_, groups]) => groups)
-    .flatMap((group) => group.rules)
-    .filter(isAlertingRulerRule);
+    .flatMap((group) => group.rules);
 
   return rules.reduce((result, rule) => {
     if (!rule.labels) {

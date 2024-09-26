@@ -8,7 +8,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
-import { fetchPromAndRulerRulesAction } from '../../state/actions';
+import { fetchPromAndRulerRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
 import { getRuleGroupLocationFromCombinedRule, isCloudRuleIdentifier } from '../../utils/rules';
 
@@ -46,6 +46,9 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
 
       if (prometheusRulesPrimary && isCloudRuleIdentifier(ruleIdentifier)) {
         await waitForConsistency(ruleIdentifier);
+      } else {
+        // Without this the delete popup will close and the user will still see the deleted rule
+        await dispatch(fetchRulerRulesAction({ rulesSourceName: ruleGroupIdentifier.dataSourceName }));
       }
 
       dismissModal();

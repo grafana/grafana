@@ -146,6 +146,10 @@ function useLazyLoadRulerRules(rules: CombinedRule[]) {
   useEffect(() => {
     if (prometheusRulesPrimary) {
       actions.execute();
+    } else {
+      // We need to reset the actions to update the rules if they changed
+      // Otherwise useAsync acts like a cache and always return the first rules passed to it
+      actions.reset();
     }
   }, [rules, actions]);
 
