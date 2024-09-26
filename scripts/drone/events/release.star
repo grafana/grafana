@@ -242,6 +242,17 @@ def publish_packages_pipeline():
             depends_on = deps,
             environment = {"EDITION": "oss"},
         ),
+        pipeline(
+            name = "publish-grafanacom",
+            trigger = {
+                "event": ["promote"],
+                "target": "publish-grafanacom",
+            },
+            steps = [
+                compile_build_cmd(),
+                publish_grafanacom_step(ver_mode = "release", depends_on = ["compile-build-cmd"]),
+            ],
+        ),
     ]
 
 def publish_npm_pipelines():
