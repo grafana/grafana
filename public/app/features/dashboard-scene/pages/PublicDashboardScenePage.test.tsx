@@ -6,7 +6,14 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { getDefaultTimeRange, LoadingState, PanelData, PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, getPluginLinkExtensions, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import {
+  config,
+  getPluginLinkExtensions,
+  locationService,
+  LocationServiceProvider,
+  setPluginImportUtils,
+  setRunRequest,
+} from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -47,7 +54,9 @@ function setup(props?: Partial<PublicDashboardSceneProps>) {
 
   return render(
     <TestProvider grafanaContext={context}>
-      <PublicDashboardScenePage {...pubdashProps} />
+      <LocationServiceProvider service={locationService}>
+        <PublicDashboardScenePage {...pubdashProps} />
+      </LocationServiceProvider>
     </TestProvider>
   );
 }

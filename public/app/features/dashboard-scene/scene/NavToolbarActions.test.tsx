@@ -4,7 +4,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DashboardMeta } from 'app/types';
@@ -236,9 +236,11 @@ function setup(meta?: DashboardMeta) {
 
   render(
     <TestProvider grafanaContext={context}>
-      <UrlSyncContextProvider scene={dashboard}>
-        <ToolbarActions dashboard={dashboard} />
-      </UrlSyncContextProvider>
+      <LocationServiceProvider service={locationService}>
+        <UrlSyncContextProvider scene={dashboard}>
+          <ToolbarActions dashboard={dashboard} />
+        </UrlSyncContextProvider>
+      </LocationServiceProvider>
     </TestProvider>
   );
 

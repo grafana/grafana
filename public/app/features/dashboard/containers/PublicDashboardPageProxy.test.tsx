@@ -4,7 +4,7 @@ import { Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -32,16 +32,18 @@ function setup(props: Partial<PublicDashboardPageProxyProps>) {
   return render(
     <GrafanaContext.Provider value={context}>
       <Provider store={store}>
-        <Router history={locationService.getHistory()}>
-          <PublicDashboardPageProxy
-            location={locationService.getLocation()}
-            history={locationService.getHistory()}
-            queryParams={{}}
-            route={{ routeName: DashboardRoutes.Public, component: () => null, path: '/:accessToken' }}
-            match={{ params: { accessToken: 'an-access-token' }, isExact: true, path: '/', url: '/' }}
-            {...props}
-          />
-        </Router>
+        <LocationServiceProvider service={locationService}>
+          <Router history={locationService.getHistory()}>
+            <PublicDashboardPageProxy
+              location={locationService.getLocation()}
+              history={locationService.getHistory()}
+              queryParams={{}}
+              route={{ routeName: DashboardRoutes.Public, component: () => null, path: '/:accessToken' }}
+              match={{ params: { accessToken: 'an-access-token' }, isExact: true, path: '/', url: '/' }}
+              {...props}
+            />
+          </Router>
+        </LocationServiceProvider>
       </Provider>
     </GrafanaContext.Provider>
   );
