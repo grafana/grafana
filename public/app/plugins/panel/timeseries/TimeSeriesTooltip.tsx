@@ -3,13 +3,13 @@ import { ReactNode } from 'react';
 
 import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
-import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 
+import { VizTooltipWrapper } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipWrapper';
 import { getDataLinks } from '../status-history/utils';
 import { fmt } from '../xychart/utils';
 
@@ -49,8 +49,6 @@ export const TimeSeriesTooltip = ({
   annotate,
   maxHeight,
 }: TimeSeriesTooltipProps) => {
-  const styles = useStyles2(getStyles);
-
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
 
@@ -91,7 +89,7 @@ export const TimeSeriesTooltip = ({
       };
 
   return (
-    <div className={styles.wrapper}>
+    <VizTooltipWrapper>
       {headerItem != null && <VizTooltipHeader item={headerItem} isPinned={isPinned} />}
       <VizTooltipContent
         items={contentItems}
@@ -100,7 +98,7 @@ export const TimeSeriesTooltip = ({
         maxHeight={maxHeight}
       />
       {footer}
-    </div>
+    </VizTooltipWrapper>
   );
 };
 

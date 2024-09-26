@@ -1325,13 +1325,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "databaseReadReplica",
-			Description: "Use a read replica for some database queries.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendServicesSquad,
-			Expression:  "false", // enabled by default
-		},
-		{
 			Name:              "zanzana",
 			Description:       "Use openFGA as authorization engine.",
 			Stage:             FeatureStageExperimental,
@@ -1467,6 +1460,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "alertingQueryAndExpressionsStepMode",
+			Description:  "Enables step mode for alerting queries and expressions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:              "improvedExternalSessionHandling",
 			Description:       "Enable improved support for external sessions in Grafana",
 			Stage:             FeatureStageExperimental,
@@ -1478,6 +1478,12 @@ var (
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
 			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
+		},
+		{
+			Name:        "rolePickerDrawer",
+			Description: "Enables the new role picker drawer design",
+			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
 		},
 		{
