@@ -1,6 +1,7 @@
 import { merge } from 'lodash';
 
 import {
+  AngularMeta,
   AuthSettings,
   BootData,
   BuildInfo,
@@ -13,12 +14,12 @@ import {
   MapLayerOptions,
   OAuthSettings,
   PanelPluginMeta,
-  systemDateFormats,
+  PluginLoadingStrategy,
   SystemDateFormatSettings,
   getThemeById,
-  AngularMeta,
-  PluginLoadingStrategy,
+  systemDateFormats,
 } from '@grafana/data';
+
 
 export interface AzureSettings {
   cloud?: string;
@@ -149,6 +150,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   geomapDefaultBaseLayerConfig?: MapLayerOptions;
   geomapDisableCustomBaseLayer?: boolean;
+  datasourceLBACEnabled?: boolean;
   unifiedAlertingEnabled = false;
   unifiedAlerting = {
     minInterval: '',
