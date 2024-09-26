@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { IconButton, Stack, Text, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 
@@ -22,11 +22,11 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
 
   return (
     <div className={styles.header}>
-      <Stack alignItems="center">
+      <Stack alignItems="center" minWidth={0}>
         <ToolbarButton narrow onClick={handleMegaMenu}>
           <Branding.MenuLogo className={styles.img} />
         </ToolbarButton>
-        {Branding.AppTitle}
+        <Text truncate>{Branding.AppTitle}</Text>
       </Stack>
       <IconButton
         id="dock-menu-button"
@@ -66,6 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     display: 'flex',
+    gap: theme.spacing(1),
     justifyContent: 'space-between',
     padding: theme.spacing(0, 1, 0, 0.5),
     height: TOP_BAR_LEVEL_HEIGHT,
