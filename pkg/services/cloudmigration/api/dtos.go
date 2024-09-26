@@ -106,6 +106,7 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
+	Name string `json:"name"`
 	// required:true
 	Type MigrateDataType `json:"type"`
 	// required:true
