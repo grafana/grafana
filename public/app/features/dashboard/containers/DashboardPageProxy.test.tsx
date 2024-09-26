@@ -61,6 +61,7 @@ jest.mock('@grafana/runtime', () => ({
     },
     get: jest.fn().mockResolvedValue({}),
   }),
+  useChromeHeaderHeight: jest.fn(),
 }));
 
 jest.mock('react-virtualized-auto-sizer', () => {
