@@ -1467,6 +1467,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "alertingQueryAndExpressionsStepMode",
+			Description:  "Enables step mode for alerting queries and expressions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:              "improvedExternalSessionHandling",
 			Description:       "Enable improved support for external sessions in Grafana",
 			Stage:             FeatureStageExperimental,
