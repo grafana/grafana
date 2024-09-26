@@ -834,7 +834,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		folderStore, sqlStore, features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		folderStore, sqlStore, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,
@@ -955,7 +955,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	folderPermissions := mock.NewMockedPermissionsService()
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		folderStore, sqlStore, features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		folderStore, sqlStore, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
 		OrgID: 1,

@@ -231,7 +231,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		folderPermissions := acmock.NewMockedPermissionsService()
 		fStore := folderimpl.ProvideStore(sql)
 		folderSvc := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-			folderimpl.ProvideDashboardFolderStore(sql), sql, features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+			folderimpl.ProvideDashboardFolderStore(sql), sql, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		cfg.AnnotationMaximumTagsLength = 60
 

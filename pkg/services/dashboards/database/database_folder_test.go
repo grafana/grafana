@@ -305,7 +305,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 		folderPermissions := mock.NewMockedPermissionsService()
 		folderStore := folderimpl.ProvideStore(sqlStore)
-		folderSvc := folderimpl.ProvideService(folderStore, mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		folderSvc := folderimpl.ProvideService(folderStore, mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		parentUID := ""
 		for i := 0; ; i++ {

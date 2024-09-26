@@ -468,7 +468,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			features: featuremgmt.WithFeatures(),
 			SQLStore: sqlStore,
 			folderService: folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore,
-				features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest()),
+				features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest()),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear

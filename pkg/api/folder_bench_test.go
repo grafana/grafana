@@ -460,10 +460,10 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 	fPermissions := acmock.NewMockedPermissionsService()
 	fStore := folderimpl.ProvideStore(sc.db)
-	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
-		folderStore, sc.db, features, fPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
-
 	cfg := setting.NewCfg()
+	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
+		folderStore, sc.db, features, cfg, fPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+
 	actionSets := resourcepermissions.NewActionSetService(features)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),

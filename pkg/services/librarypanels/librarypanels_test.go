@@ -755,7 +755,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
 	fStore := folderimpl.ProvideStore(sc.sqlStore)
 	s := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
-		features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := identity.WithRequester(context.Background(), sc.user)
@@ -827,20 +827,20 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		dashPermissionService := acmock.NewMockedPermissionsService()
 		dashService, err := dashboardservice.ProvideDashboardServiceImpl(
-			setting.NewCfg(), dashStore, folderStore,
+			cfg, dashStore, folderStore,
 			featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
 			foldertest.NewFakeService(), folder.NewFakeStore(),
 			nil,
 		)
 		require.NoError(t, err)
-		guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashService)
+		guardian.InitAccessControlGuardian(cfg, ac, dashService)
 
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		features := featuremgmt.WithFeatures()
 		fStore := folderimpl.ProvideStore(sqlStore)
 		folderService := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
-			features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+			features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, fStore, featuremgmt.WithFeatures(), ac)
 		service := LibraryPanelService{

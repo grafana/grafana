@@ -62,11 +62,11 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	}
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		ac := acmock.New()
-		db := db.InitTestDB(t)
+		db, cfg := db.InitTestDBWithCfg(t)
 		folderPermissions := acmock.NewMockedPermissionsService()
 		store := ProvideStore(db)
 		ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db,
-			featuremgmt.WithFeatures(), folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+			featuremgmt.WithFeatures(), cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
