@@ -3,6 +3,7 @@ import saveAs from 'file-saver';
 import {
   CSVConfig,
   DataFrame,
+  DataFrameView,
   DataTransformerID,
   dateTimeFormat,
   LogsModel,
@@ -112,4 +113,55 @@ export function downloadTraceAsJson(frame: DataFrame, title: string): string {
     }
   }
   return traceFormat;
+}
+
+interface Span {
+  startTime: number;
+  duration: number;
+  spanID: string;
+  operationName: string;
+  serviceName: string;
+}
+
+export function exportTraceAsMermaid(frame: DataFrame, title: string, highlights: string[]): string {
+  const view = new DataFrameView(frame);
+  const spans: Span[] = view.toArray(); // Convert DataFrameView to an array of spans directly
+
+  const sortedSpans = spans.sort((a, b) => a.startTime - b.startTime);
+  const timeDelta = sortedSpans[0].startTime;
+
+  let currentSection = '';
+  let output = `gantt
+title Trace ${title}
+dateFormat x
+axisFormat %S.%L
+`;
+
+  // Working around unique section names by using non-breaking spaces to keep spans in visual sequence
+  const nbsp = ' ';
+  let sectionIndex = 0;
+
+  for (const span of sortedSpans) {
+    if (isNaN(span.startTime)) {
+      throw new Error(`Invalid startTime: ${span.startTime} for spanID: ${span.spanID}`);
+    }
+
+    if (span.serviceName !== currentSection) {
+      output += `section ${span.serviceName}${nbsp.repeat(sectionIndex)}\n`;
+      currentSection = span.serviceName;
+      sectionIndex += 1;
+    }
+
+    output += formatSpan(span, timeDelta, highlights);
+  }
+
+  return output;
+}
+
+function formatSpan(span: Span, timeDelta: number, highlights: string[]): string {
+  const startTime = Math.round(span.startTime - timeDelta);
+  const roundedDuration = Math.max(Math.round(span.duration), 1);
+  const isActive = highlights.includes(span.spanID) ? 'active,' : '';
+
+  return `${span.operationName} [${span.duration}ms] :${isActive}${span.spanID},${startTime},${roundedDuration}ms\n`;
 }

@@ -341,6 +341,7 @@
     "lucene": "^2.1.1",
     "marked": "12.0.2",
     "memoize-one": "6.0.0",
+    "mermaid": "^10.9.1",
     "micro-memoize": "^4.1.2",
     "ml-regression-polynomial": "^3.0.0",
     "ml-regression-simple-linear": "^3.0.0",

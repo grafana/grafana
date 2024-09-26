@@ -3,10 +3,11 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, CoreApp, DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, useTheme2 } from '@grafana/ui';
+import { Button, Dropdown, Icon, Menu, useTheme2 } from '@grafana/ui';
 
 import { config } from '../../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../../inspector/utils/download';
+import { MermaidExportModal } from '../../MermaidExportModal';
 
 import ActionButton from './ActionButton';
 
@@ -45,6 +46,7 @@ export default function TracePageActions(props: TracePageActionsProps) {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
 
   const copyTraceId = () => {
     navigator.clipboard.writeText(traceId);
@@ -63,6 +65,16 @@ export default function TracePageActions(props: TracePageActionsProps) {
       location: 'trace-view',
     });
   };
+
+  const exportMermaid = () => {
+    setExportModalOpen(true);
+  };
+  const exportMenu = (
+    <Menu>
+      <Menu.Item label="Native Download" onClick={exportTrace} />
+      <Menu.Item label="Mermaid" onClick={exportMermaid} />
+    </Menu>
+  );
 
   return (
     <div className={styles.TracePageActions}>
@@ -85,7 +97,17 @@ export default function TracePageActions(props: TracePageActionsProps) {
         label={copyTraceIdClicked ? 'Copied!' : 'Trace ID'}
         icon={'copy'}
       />
-      <ActionButton onClick={exportTrace} ariaLabel={'Export Trace'} label={'Export'} icon={'save'} />
+      <Dropdown overlay={exportMenu}>
+        <Button size="sm" variant="secondary" fill={'outline'} type="button" icon={'save'}>
+          Export
+        </Button>
+      </Dropdown>
+      <MermaidExportModal
+        isOpen={exportModalOpen}
+        onDismiss={() => setExportModalOpen(false)}
+        data={data}
+        traceId={traceId}
+      />
     </div>
   );
 }
