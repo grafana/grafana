@@ -225,26 +225,14 @@ There are seven map layer types to choose from in a geomap.
 - [Route (Beta)](#route-layer-beta) render data points as a route.
 - [Photos (Beta)](#photos-layer-beta) renders a photo at each data point.
 - [Network (Beta)](#network-layer-beta) visualizes a network graph from the data.
-
-{{% admonition type="note" %}}
-Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
-{{% /admonition %}}
-
-A basemap layer provides the visual foundation for a mapping application. It typically contains data with global coverage. Several base layer options
-are available each with specific configuration options to style the base map.
-
-Basemap layer types can also be added as layers. You can specify an opacity.
-
-There are four basemap layer types to choose from in a geomap.
-
 - [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
 - [CARTO](#carto-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ](#xyz-tile-layer) adds a map from a generic tile layer.
 
-The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
-
-![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
+{{% admonition type="note" %}}
+Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
+{{% /admonition %}}
 
 There are also two experimental (or alpha) layer types.
 
@@ -273,69 +261,6 @@ The layer controls allow you to create layers, change their name, reorder and de
   - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The visualization will update the layer order as you drag and drop to help simplify choosing a layer order.
 
 You can add multiple layers of data to a single geomap in order to create rich, detailed visualizations.
-
-##### Configure the default base layer with provisioning
-
-You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page](ref:provisioning-docs-page).
-
-Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map option.
-
-- **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below. The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
-
-```ini
-geomap_default_baselayer = `{
-  "type": "carto",
-  "config": {
-    "theme": "auto",
-    "showLabels": true
-  }
-}`
-```
-
-- **esri-xyz** loads the ESRI tile server. There are already multiple server instances implemented to show the various map styles: `world-imagery`, `world-physical`, `topo`, `usa-topo`, and `ocean`. The `custom` server option allows you to configure your own ArcGIS map server. Here are some examples:
-
-```ini
-geomap_default_baselayer = `{
-  "type": "esri-xyz",
-  "config": {
-    "server": "world-imagery"
-  }
-}`
-```
-
-```ini
-geomap_default_baselayer = `{
-  "type": "esri-xyz",
-  "config": {
-    "server": "custom",
-    "url": "[tile server url]",
-    "attribution": "[tile server attribution]"
-  }
-}`
-```
-
-- **osm-standard** loads the OpenStreetMap tile server. There are no additional configurations needed and the `config` fields can be left blank. Here is an example:
-
-```ini
-default_baselayer_config = `{
-  "type": "osm-standard",
-  "config": {}
-}`
-```
-
-- **xyz** loads a custom tile server defined by the user. Set a valid tile server `url`, with {z}/{x}/{y} for this option in order to properly load a default base map. Here is an example:
-
-```ini
-default_baselayer_config = `{
-  "type": "xyz",
-  "config": {
-    "attribution": "Open street map",
-    "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-  }
-}`
-```
-
-`enable_custom_baselayers` allows you to enable or disable custom open source base maps that are already implemented. The default is `true`.
 
 #### Data
 
@@ -618,21 +543,98 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 - [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
 - [**About ESRI**](https://www.esri.com/en-us/about/about-esri/overview)
 
-### Map Controls
+### Basemap layer options
+
+A basemap layer provides the visual foundation for a mapping application. It typically contains data with global coverage. Several base layer options
+are available each with specific configuration options to style the base map.
+
+Basemap layer types can also be added as layers. You can specify an opacity.
+
+There are four basemap layer types to choose from in a geomap.
+
+- [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
+- [CARTO](#carto-layer) adds a layer from CARTO Raster basemaps.
+- [ArcGIS](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
+- [XYZ](#xyz-tile-layer) adds a map from a generic tile layer.
+
+The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
+
+![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
+
+#### Configure the default base layer with provisioning
+
+You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page](ref:provisioning-docs-page).
+
+Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map option.
+
+- **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below. The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
+
+```ini
+geomap_default_baselayer = `{
+  "type": "carto",
+  "config": {
+    "theme": "auto",
+    "showLabels": true
+  }
+}`
+```
+
+- **esri-xyz** loads the ESRI tile server. There are already multiple server instances implemented to show the various map styles: `world-imagery`, `world-physical`, `topo`, `usa-topo`, and `ocean`. The `custom` server option allows you to configure your own ArcGIS map server. Here are some examples:
+
+```ini
+geomap_default_baselayer = `{
+  "type": "esri-xyz",
+  "config": {
+    "server": "world-imagery"
+  }
+}`
+```
+
+```ini
+geomap_default_baselayer = `{
+  "type": "esri-xyz",
+  "config": {
+    "server": "custom",
+    "url": "[tile server url]",
+    "attribution": "[tile server attribution]"
+  }
+}`
+```
+
+- **osm-standard** loads the OpenStreetMap tile server. There are no additional configurations needed and the `config` fields can be left blank. Here is an example:
+
+```ini
+default_baselayer_config = `{
+  "type": "osm-standard",
+  "config": {}
+}`
+```
+
+- **xyz** loads a custom tile server defined by the user. Set a valid tile server `url`, with {z}/{x}/{y} for this option in order to properly load a default base map. Here is an example:
+
+```ini
+default_baselayer_config = `{
+  "type": "xyz",
+  "config": {
+    "attribution": "Open street map",
+    "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+  }
+}`
+```
+
+`enable_custom_baselayers` allows you to enable or disable custom open source base maps that are already implemented. The default is `true`.
+
+### Map controls options
 
 The map controls section contains various options for map information and tool overlays.
 
-#### Zoom
-
-This section describes each of the zoom controls.
-
-##### Show zoom control
+#### Show zoom control
 
 Displays zoom controls in the upper left corner. This control can be useful when using systems that don't have a mouse.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-zoom-9-1-0.png" max-width="1200px" caption="Geomap panel zoom" >}}
 
-##### Mouse wheel zoom
+#### Mouse wheel zoom
 
 Enables the mouse wheel to be used for zooming in or out.
 
