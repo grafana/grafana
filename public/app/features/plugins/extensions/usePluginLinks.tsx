@@ -15,11 +15,11 @@ import {
   getLinkExtensionOverrides,
   getLinkExtensionPathWithTracking,
   getReadOnlyProxy,
-  isExtensionPointIdInvalid,
   isExtensionPointMetaInfoMissing,
   isGrafanaDevMode,
   logWarning,
 } from './utils';
+import { isExtensionPointIdValid } from './validators';
 
 // Returns an array of component extensions for the given extension point
 export function usePluginLinks({
@@ -34,9 +34,12 @@ export function usePluginLinks({
   return useMemo(() => {
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
     const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
+    const pluginId = pluginContext?.meta.id;
 
-    if (enableRestrictions && isExtensionPointIdInvalid(extensionPointId, pluginContext)) {
-      logWarning(`usePluginLinks("${extensionPointId}") - The extension point ID "${extensionPointId}" is invalid.`);
+    if (enableRestrictions && !isExtensionPointIdValid({ extensionPointId, pluginId })) {
+      logWarning(
+        `Extension point usePluginLinks("${extensionPointId}") - the id should be prefixed with your plugin id ("${pluginId}/").`
+      );
       return {
         isLoading: false,
         links: [],

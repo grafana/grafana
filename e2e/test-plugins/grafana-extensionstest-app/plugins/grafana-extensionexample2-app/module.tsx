@@ -25,7 +25,7 @@ export const plugin = new AppPlugin<{}>()
     component: ({ name }: { name: string }) => <div data-testid={testIds.appB.reusableComponent}>Hello {name}!</div>,
   })
   .addComponent<{ name: string }>({
-    targets: 'plugins/grafana-extensionexample2-app/addComponent/v1',
+    targets: 'plugins/grafana-extensionstest-app/addComponent/v1',
     title: 'Added component from B',
     description: 'A component that can be reused by other app plugins. Shared using addComponent api',
     component: ({ name }: { name: string }) => (

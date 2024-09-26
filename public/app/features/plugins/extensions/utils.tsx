@@ -19,7 +19,6 @@ import {
   PluginContextType,
   PluginExtensionExposedComponentConfig,
   PluginExtensionAddedComponentConfig,
-  compareArrayValues,
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
@@ -417,17 +416,6 @@ export const isAppOpened = (pluginId: string) => sidecarService.isAppOpened(plug
 // Can be set with the `GF_DEFAULT_APP_MODE` environment variable
 export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 
-export const isExtensionPointIdInvalid = (extensionPointId: string, pluginContext: PluginContextType) => {
-  const { id } = pluginContext.meta;
-
-  if (!extensionPointId.startsWith(`${id}/`)) {
-    logWarning(`Extension point "${extensionPointId}" - the id should be prefixed with your plugin id ("${id}/").`);
-    return true;
-  }
-
-  return false;
-};
-
 // Checks if the meta information is missing from the plugin's plugin.json file
 export const isExtensionPointMetaInfoMissing = (extensionPointId: string, pluginContext: PluginContextType) => {
   const pluginId = pluginContext.meta?.id;
@@ -475,7 +463,7 @@ export const isAddedLinkMetaInfoMissing = (pluginId: string, metaInfo: PluginExt
   }
 
   const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
-  if (!compareArrayValues(pluginJsonMetaInfo.targets, targets, (a, b) => a === b)) {
+  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
     logWarning(`${logPrefix} the "targets" don't match with ones in the plugin.json under "extensions.addedLinks[]".`);
 
     return true;
@@ -509,7 +497,7 @@ export const isAddedComponentMetaInfoMissing = (pluginId: string, metaInfo: Plug
   }
 
   const targets = Array.isArray(metaInfo.targets) ? metaInfo.targets : [metaInfo.targets];
-  if (!compareArrayValues(pluginJsonMetaInfo.targets, targets, (a, b) => a === b)) {
+  if (!targets.every((target) => pluginJsonMetaInfo.targets.includes(target))) {
     logWarning(
       `${logPrefix} the "targets" don't match with ones in the plugin.json under "extensions.addedComponents[]".`
     );

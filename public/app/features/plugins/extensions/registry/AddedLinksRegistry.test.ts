@@ -66,7 +66,6 @@ describe('AddedLinksRegistry', () => {
   });
 
   it('should be possible to register link extensions in the registry', async () => {
-    const pluginId = 'grafana-basic-app';
     const addedLinksRegistry = new AddedLinksRegistry();
 
     addedLinksRegistry.register({

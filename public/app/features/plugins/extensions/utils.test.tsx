@@ -24,7 +24,6 @@ import {
   isExposedComponentMetaInfoMissing,
   isExposedComponentDependencyMissing,
   isExtensionPointMetaInfoMissing,
-  isExtensionPointIdInvalid,
 } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
@@ -900,68 +899,6 @@ describe('Plugin Extensions / Utils', () => {
       expect(returnValue).toBe(true);
       expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
       expect(consoleWarnSpy.mock.calls[0][0]).toMatch(`Extension point "${extensionPointId}"`);
-    });
-  });
-
-  describe('isExtensionPointIdInvalid()', () => {
-    let consoleWarnSpy: jest.SpyInstance;
-    let pluginContext: PluginContextType;
-    const pluginId = 'myorg-extensions-app';
-    const extensionPointId = `${pluginId}/extension-point/v1`;
-
-    beforeEach(() => {
-      consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
-      pluginContext = {
-        meta: {
-          id: pluginId,
-          name: 'Extensions App',
-          type: PluginType.app,
-          module: '',
-          baseUrl: '',
-          info: {
-            author: {
-              name: 'MyOrg',
-            },
-            description: 'App for testing extensions',
-            links: [],
-            logos: {
-              large: '',
-              small: '',
-            },
-            screenshots: [],
-            updated: '2023-10-26T18:25:01Z',
-            version: '1.0.0',
-          },
-          extensions: {
-            addedLinks: [],
-            addedComponents: [],
-            exposedComponents: [],
-            extensionPoints: [],
-          },
-          dependencies: {
-            grafanaVersion: '8.0.0',
-            plugins: [],
-            extensions: {
-              exposedComponents: [],
-            },
-          },
-        },
-      };
-    });
-
-    it('should return TRUE if extension point id is valid', () => {
-      const returnValue = isExtensionPointIdInvalid(extensionPointId, pluginContext);
-
-      expect(returnValue).toBe(false);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(0);
-    });
-
-    it('should return FALSE if the extension point id starts with a different plugin id', () => {
-      const returnValue = isExtensionPointIdInvalid('otherorg-extensions-app/extension-point/v1', pluginContext);
-
-      expect(returnValue).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
-      expect(consoleWarnSpy.mock.calls[0][0]).toMatch('the id should be prefixed with');
     });
   });
 });

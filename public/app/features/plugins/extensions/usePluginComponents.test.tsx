@@ -99,9 +99,6 @@ describe('usePluginComponents()', () => {
   });
 
   it('should only return the plugin extension components for the given extension point ids', async () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const pluginId = 'my-app-plugin';
-
     registries.addedComponentsRegistry.register({
       pluginId,
       configs: [
@@ -140,8 +137,6 @@ describe('usePluginComponents()', () => {
   });
 
   it('should dynamically update the extensions registered for a certain extension point', () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const pluginId = 'my-app-plugin';
     let { result, rerender } = renderHook(() => usePluginComponents({ extensionPointId }), { wrapper });
 
     // No extensions yet
@@ -181,8 +176,7 @@ describe('usePluginComponents()', () => {
   });
 
   it('should honour the limitPerPlugin arg if its set', () => {
-    const extensionPointId = 'plugins/foo/bar/v1';
-    const plugins = ['my-app-plugin1', 'my-app-plugin2', 'my-app-plugin3'];
+    const plugins = ['my-awesome1-app', 'my-awesome2-app', 'my-awesome3-app'];
     let { result, rerender } = renderHook(() => usePluginComponents({ extensionPointId, limitPerPlugin: 2 }), {
       wrapper,
     });
@@ -197,19 +191,19 @@ describe('usePluginComponents()', () => {
           pluginId,
           configs: [
             {
-              targets: extensionPointId,
+              targets: [extensionPointId],
               title: '1',
               description: '1',
               component: () => <div>Hello World1</div>,
             },
             {
-              targets: extensionPointId,
+              targets: [extensionPointId],
               title: '2',
               description: '2',
               component: () => <div>Hello World2</div>,
             },
             {
-              targets: extensionPointId,
+              targets: [extensionPointId],
               title: '3',
               description: '3',
               component: () => <div>Hello World3</div>,

@@ -53,12 +53,31 @@ export function isLinkPathValid(pluginId: string, path: string) {
   return Boolean(typeof path === 'string' && path.length > 0 && path.startsWith(`/a/${pluginId}/`));
 }
 
-export function isExtensionPointIdValid(pluginId: string, extensionPointId: string) {
-  return Boolean(
-    extensionPointId.startsWith('grafana/') ||
-      extensionPointId?.startsWith('plugins/') ||
-      extensionPointId?.startsWith(pluginId)
+export function isExtensionPointIdValid({
+  extensionPointId,
+  pluginId,
+}: {
+  extensionPointId: string;
+  // Pass a `pluginId` if you would like to validate an extension point created inside a plugin
+  // with either `usePluginLinks()` or `usePluginComponents()`.
+  pluginId?: string;
+}) {
+  // We don't enforce the "/{version}" suffix here, as it's not a hard requirement for the extension point ids yet.
+  // (We do warn about it though.)
+  const regex = new RegExp(
+    '^[0-9a-z]+-([0-9a-z]+-)?(app|panel|datasource|secretsmanager)\\/[a-zA-Z0-9_-]+(\\/v[0-9_.-])?$'
   );
+
+  // If a `pluginId` is provided, the extension point should be prefixed with the plugin id.
+  if (pluginId) {
+    return Boolean(extensionPointId.startsWith(`plugins/${pluginId}/`) || extensionPointId.startsWith(`${pluginId}/`));
+  }
+
+  if (extensionPointId.startsWith('grafana/')) {
+    return true;
+  }
+
+  return Boolean(extensionPointId.replace(/^plugins\//, '').match(regex));
 }
 
 export function extensionPointEndsWithVersion(extensionPointId: string) {
