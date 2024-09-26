@@ -1230,6 +1230,7 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 				ObjectMeta: metav1.ObjectMeta{
 					ResourceVersion: createdInitialPods[len(createdInitialPods)-1].ResourceVersion,
 					Annotations:     map[string]string{"k8s.io/initial-events-end": "true"},
+					UID:             "123",
 				},
 			},
 		}
