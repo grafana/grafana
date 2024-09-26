@@ -231,9 +231,10 @@ var (
 		{
 			Name:              "accessControlOnCall",
 			Description:       "Access control primitives for OnCall",
-			Stage:             FeatureStagePublicPreview,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             identityAccessTeam,
 			HideFromAdminPage: true,
+			Expression:        "true", // enabled by default
 		},
 		{
 			Name:        "nestedFolders",
@@ -517,8 +518,15 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+			Name:            "datasourceAPIServers",
+			Description:     "Expose some datasources as apiservers.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+		},
+		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
-			Description:     "Register experimental APIs with the k8s API server",
+			Description:     "Register experimental APIs with the k8s API server, including all datasources",
 			Stage:           FeatureStageExperimental,
 			RequiresRestart: true,
 			RequiresDevMode: true,
@@ -793,11 +801,12 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:         "teamHttpHeaders",
-			Description:  "Enables Team LBAC for datasources to apply team headers to the client requests",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: false,
-			Owner:        identityAccessTeam,
+			Name:           "teamHttpHeaders",
+			Description:    "Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams",
+			Stage:          FeatureStagePublicPreview,
+			FrontendOnly:   false,
+			AllowSelfServe: true,
+			Owner:          identityAccessTeam,
 		},
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
@@ -1209,9 +1218,10 @@ var (
 		{
 			Name:         "newDashboardSharingComponent",
 			Description:  "Enables the new sharing drawer design",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
+			Expression:   "false", // disabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
@@ -1362,17 +1372,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:              "bodyScrolling",
-			Description:       "Adjusts Page to make body the scrollable element",
-			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaFrontendPlatformSquad,
-			Expression:        "false", // enabled by default
-			FrontendOnly:      true,
-			AllowSelfServe:    true,
-			HideFromDocs:      true,
-			HideFromAdminPage: false,
-		},
-		{
 			Name:         "cloudwatchMetricInsightsCrossAccount",
 			Description:  "Enables cross account observability for Cloudwatch Metric Insights query builder",
 			Stage:        FeatureStagePublicPreview,
@@ -1391,13 +1390,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-		},
-		{
-			Name:            "backgroundPluginInstaller",
-			Description:     "Enable background plugin installer",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
 		},
 		{
 			Name:            "dataplaneAggregator",
@@ -1474,6 +1466,12 @@ var (
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:        "useSessionStorageForRedirection",
+			Description: "Use session storage for handling the redirection after login",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
 		},
 	}
 )

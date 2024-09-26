@@ -21,7 +21,7 @@ import {
   SceneVariable,
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 
 import { getMultiVariableValues, getQueryRunnerFor } from '../utils/utils';
 
@@ -41,7 +41,8 @@ export type RepeatDirection = 'v' | 'h';
 
 export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> implements SceneGridItemLike {
   private _prevRepeatValues?: VariableValueSingle[];
-  private _oldBody?: VizPanel;
+  private _prevPanelState: VizPanelState | undefined;
+  private _prevGridItemState: DashboardGridItemState | undefined;
 
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
@@ -54,11 +55,14 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
   private _activationHandler() {
     if (this.state.variableName) {
       this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
-      if (this._oldBody !== this.state.body) {
-        this._prevRepeatValues = undefined;
-      }
-
+      this.clearCachedStateIfBodyOrOptionsChanged();
       this.performRepeat();
+    }
+  }
+
+  private clearCachedStateIfBodyOrOptionsChanged() {
+    if (this._prevGridItemState !== this.state || this._prevPanelState !== this.state.body.state) {
+      this._prevRepeatValues = undefined;
     }
   }
 
@@ -115,9 +119,6 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       this.notifyRepeatedPanelsWaitingForVariables(variable);
       return;
     }
-
-    this._oldBody = this.state.body;
-    this._prevRepeatValues = values;
 
     const panelToRepeat = this.state.body;
     const repeatedPanels: VizPanel[] = [];
@@ -178,8 +179,52 @@ export class DashboardGridItem extends SceneObjectBase<DashboardGridItemState> i
       }
     }
 
+    this._prevGridItemState = this.state;
+    this._prevPanelState = this.state.body.state;
+    this._prevRepeatValues = values;
+
     // Used from dashboard url sync
     this.publishEvent(new DashboardRepeatsProcessedEvent({ source: this }), true);
+  }
+
+  public setRepeatByVariable(variableName: string | undefined) {
+    const stateUpdate: Partial<DashboardGridItemState> = { variableName };
+
+    if (variableName && !this.state.repeatDirection) {
+      stateUpdate.repeatDirection = 'h';
+    }
+
+    if (this.state.body.state.$variables) {
+      this.state.body.setState({ $variables: undefined });
+    }
+
+    this.setState(stateUpdate);
+  }
+
+  /**
+   * Logic to prep panel for panel edit
+   */
+  public editingStarted() {
+    if (!this.state.variableName) {
+      return;
+    }
+
+    if (this.state.repeatedPanels?.length ?? 0 > 1) {
+      this.state.body.setState({
+        $variables: this.state.repeatedPanels![0].state.$variables?.clone(),
+        $data: this.state.repeatedPanels![0].state.$data?.clone(),
+      });
+      this._prevPanelState = this.state.body.state;
+    }
+  }
+
+  /**
+   * Going back to dashboards logic
+   */
+  public editingCompleted() {
+    if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
+      this.setState({ width: GRID_COLUMN_COUNT });
+    }
   }
 
   public notifyRepeatedPanelsWaitingForVariables(variable: SceneVariable) {

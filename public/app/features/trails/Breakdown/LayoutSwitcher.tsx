@@ -8,12 +8,13 @@ import {
   SceneObjectUrlValues,
   SceneObjectWithUrlSync,
 } from '@grafana/scenes';
-import { Field, RadioButtonGroup } from '@grafana/ui';
+import { RadioButtonGroup } from '@grafana/ui';
 
 import { reportExploreMetrics } from '../interactions';
-import { MakeOptional, TRAIL_BREAKDOWN_VIEW_KEY } from '../shared';
+import { getVewByPreference, setVewByPreference } from '../services/store';
+import { MakeOptional } from '../shared';
 
-import { isBreakdownLayoutType, BreakdownLayoutChangeCallback, BreakdownLayoutType } from './types';
+import { BreakdownLayoutChangeCallback, BreakdownLayoutType, isBreakdownLayoutType } from './types';
 
 export interface LayoutSwitcherState extends SceneObjectState {
   activeBreakdownLayout: BreakdownLayoutType;
@@ -26,7 +27,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['breakdownLayout'] });
 
   public constructor(state: MakeOptional<LayoutSwitcherState, 'activeBreakdownLayout'>) {
-    const storedBreakdownLayout = localStorage.getItem(TRAIL_BREAKDOWN_VIEW_KEY);
+    const storedBreakdownLayout = getVewByPreference();
     super({
       activeBreakdownLayout: isBreakdownLayoutType(storedBreakdownLayout) ? storedBreakdownLayout : 'grid',
       ...state,
@@ -50,13 +51,11 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
     const { activeBreakdownLayout, breakdownLayoutOptions } = model.useState();
 
     return (
-      <Field label="View">
-        <RadioButtonGroup
-          options={breakdownLayoutOptions}
-          value={activeBreakdownLayout}
-          onChange={model.onLayoutChange}
-        />
-      </Field>
+      <RadioButtonGroup
+        options={breakdownLayoutOptions}
+        value={activeBreakdownLayout}
+        onChange={model.onLayoutChange}
+      />
     );
   }
 
@@ -66,7 +65,7 @@ export class LayoutSwitcher extends SceneObjectBase<LayoutSwitcherState> impleme
     }
 
     reportExploreMetrics('breakdown_layout_changed', { layout: active });
-    localStorage.setItem(TRAIL_BREAKDOWN_VIEW_KEY, active);
+    setVewByPreference(active);
     this.setState({ activeBreakdownLayout: active });
     this.state.onBreakdownLayoutChange(active);
   };

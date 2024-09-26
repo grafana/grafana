@@ -184,4 +184,30 @@ func TestContactPointFromContactPointExports(t *testing.T) {
 		require.Nil(t, result.OnCall[1].MaxAlerts)
 		require.Nil(t, result.OnCall[2].MaxAlerts)
 	})
+
+	t.Run("mqtt with optional numbers as string", func(t *testing.T) {
+		export := definitions.ContactPointExport{
+			Name: "test",
+			Receivers: []definitions.ReceiverExport{
+				{
+					Type:     "mqtt",
+					Settings: definitions.RawMessage(`{ "qos" : "112" }`),
+				},
+				{
+					Type:     "mqtt",
+					Settings: definitions.RawMessage(`{ "qos" : "test" }`),
+				},
+				{
+					Type:     "mqtt",
+					Settings: definitions.RawMessage(`{ "qos" : null }`),
+				},
+			},
+		}
+		result, err := ContactPointFromContactPointExport(export)
+		require.NoError(t, err)
+		require.Len(t, result.Mqtt, 3)
+		require.Equal(t, int64(112), *result.Mqtt[0].QoS)
+		require.Nil(t, result.Mqtt[1].QoS)
+		require.Nil(t, result.Mqtt[2].QoS)
+	})
 }

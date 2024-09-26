@@ -64,8 +64,11 @@ type ClientParams struct {
 }
 
 type FetchPermissionsParams struct {
-	// ActionsLookup will restrict the permissions to only these actions
-	ActionsLookup []string
+	// RestrictedActions will restrict the permissions to only these actions
+	RestrictedActions []string
+	// AllowedActions will be added to the identity permissions
+	AllowedActions []string
+	// Note: Kept for backwards compatibility, use AllowedActions instead
 	// Roles permissions will be directly added to the identity permissions
 	Roles []string
 }

@@ -112,6 +112,7 @@
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
       "no-delivery-attempts": "",
+      "no-integrations": "",
       "only-firing": "",
       "telegram": {
         "parse-mode-warning-body": "",
@@ -123,6 +124,11 @@
       "label": ""
     },
     "list-view": {
+      "empty": {
+        "new-alert-rule": "",
+        "new-recording-rule": "",
+        "provisioning": ""
+      },
       "section": {
         "dataSourceManaged": {
           "title": ""
@@ -921,6 +927,11 @@
     }
   },
   "explore-metrics": {
+    "breakdown": {
+      "clearFilter": "",
+      "labelSelect": "",
+      "noMatchingValue": ""
+    },
     "viewBy": ""
   },
   "export": {
@@ -1165,8 +1176,7 @@
     },
     "search-base-dns": {
       "description": "",
-      "label": "",
-      "placeholder": ""
+      "label": ""
     },
     "subtitle": "",
     "title": ""
@@ -1600,6 +1610,9 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
+    },
+    "groupsync": {
+      "subtitle": ""
     },
     "help": {
       "title": "帮助"
@@ -2576,11 +2589,20 @@
   "trails": {
     "metric-overview": {
       "description-label": "",
-      "labels-label": "",
+      "labels": "",
+      "metric-attributes": "",
       "no-description": "",
       "type-label": "",
       "unit-label": "",
       "unknown-type": ""
+    },
+    "metric-select": {
+      "filter-by": "",
+      "otel-switch": ""
+    },
+    "settings": {
+      "always-keep-selected-metric-graph-in-view": "",
+      "show-previews-of-metric-graphs": ""
     }
   },
   "transformations": {

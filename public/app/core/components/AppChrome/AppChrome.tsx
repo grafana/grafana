@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, locationSearchToObject, locationService } from '@grafana/runtime';
+import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
@@ -121,10 +121,8 @@ export function AppChrome({ children }: Props) {
           )}
           <main
             className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]:
-                config.featureToggles.bodyScrolling && (menuDockedAndOpen || isScopesDashboardsOpen),
-              [styles.pageContainerMenuDockedScopes]:
-                config.featureToggles.bodyScrolling && menuDockedAndOpen && isScopesDashboardsOpen,
+              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
             })}
             id="pageContent"
           >
@@ -148,7 +146,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       flexDirection: 'column',
       paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
       flexGrow: 1,
-      height: config.featureToggles.bodyScrolling ? 'auto' : '100%',
+      height: 'auto',
     }),
     contentNoSearchBar: css({
       paddingTop: TOP_BAR_LEVEL_HEIGHT,
@@ -167,27 +165,17 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
           display: 'block',
         },
       },
-      config.featureToggles.bodyScrolling
-        ? {
-            position: 'fixed',
-            height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
-            zIndex: 2,
-          }
-        : {
-            zIndex: theme.zIndex.navbarFixed,
-          }
+      {
+        position: 'fixed',
+        height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+        zIndex: 2,
+      }
     ),
-    scopesDashboardsContainer: css(
-      config.featureToggles.bodyScrolling
-        ? {
-            position: 'fixed',
-            height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
-            zIndex: 1,
-          }
-        : {
-            zIndex: theme.zIndex.navbarFixed,
-          }
-    ),
+    scopesDashboardsContainer: css({
+      position: 'fixed',
+      height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+      zIndex: 1,
+    }),
     scopesDashboardsContainerDocked: css({
       left: MENU_WIDTH,
     }),
@@ -200,49 +188,24 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
     }),
-    panes: css(
-      {
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-        label: 'page-panes',
-      },
-      !config.featureToggles.bodyScrolling && {
-        height: '100%',
-        minHeight: 0,
-        width: '100%',
-        [theme.breakpoints.up('md')]: {
-          flexDirection: 'row',
-        },
-      }
-    ),
+    panes: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      label: 'page-panes',
+    }),
     pageContainerMenuDocked: css({
       paddingLeft: MENU_WIDTH,
     }),
     pageContainerMenuDockedScopes: css({
       paddingLeft: `calc(${MENU_WIDTH} * 2)`,
     }),
-    pageContainer: css(
-      {
-        label: 'page-container',
-        display: 'flex',
-        flexDirection: 'column',
-        flexGrow: 1,
-      },
-      !config.featureToggles.bodyScrolling && {
-        minHeight: 0,
-        minWidth: 0,
-        overflow: 'auto',
-        '@media print': {
-          overflow: 'visible',
-        },
-        '@page': {
-          margin: 0,
-          size: 'auto',
-          padding: 0,
-        },
-      }
-    ),
+    pageContainer: css({
+      label: 'page-container',
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+    }),
     skipLink: css({
       position: 'fixed',
       top: -1000,
