@@ -377,7 +377,6 @@ func TestMode2_Update(t *testing.T) {
 		expectedObj    runtime.Object
 		setupLegacyFn  func(m *mock.Mock, input string)
 		setupStorageFn func(m *mock.Mock, input string)
-		setupGetFn     func(m *mock.Mock, input string)
 		name           string
 		input          string
 		wantErr        bool
@@ -393,55 +392,13 @@ func TestMode2_Update(t *testing.T) {
 				setupStorageFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 				},
-				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(exampleObj, nil)
-				},
 				expectedObj: exampleObj,
-			},
-			{
-				name:  "object is not found in storage",
-				input: "not-found",
-				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
-				},
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
-				},
-				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: "pods"}, "not found"))
-				},
-				expectedObj: exampleObj,
-			},
-			{
-				name:  "error finding object storage",
-				input: "object-fail",
-				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(nil, errors.New("error"))
-				},
-				wantErr: true,
 			},
 			{
 				name:  "error updating legacy store",
 				input: "object-fail",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
-				},
-				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(exampleObjDifferentRV, nil)
-				},
-				wantErr: true,
-			},
-			{
-				name:  "error updating storage with not found object",
-				input: "not-found",
-				setupLegacyFn: func(m *mock.Mock, input string) {
-					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
-				},
-				setupStorageFn: func(m *mock.Mock, input string) {
-					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
-				},
-				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(nil, errors.New(""))
 				},
 				wantErr: true,
 			},
@@ -455,10 +412,6 @@ func TestMode2_Update(t *testing.T) {
 
 			ls := legacyStoreMock{m, l}
 			us := storageMock{m, s}
-
-			if tt.setupGetFn != nil {
-				tt.setupGetFn(m, tt.input)
-			}
 
 			if tt.setupLegacyFn != nil {
 				tt.setupLegacyFn(m, tt.input)

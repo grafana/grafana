@@ -609,7 +609,6 @@ func TestMode1_Update(t *testing.T) {
 	type testCase struct {
 		setupLegacyFn  func(m *mock.Mock, input string)
 		setupStorageFn func(m *mock.Mock, input string)
-		setupGetFn     func(m *mock.Mock, input string)
 		name           string
 		input          string
 		wantErr        bool
@@ -625,18 +624,12 @@ func TestMode1_Update(t *testing.T) {
 				setupStorageFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
 				},
-				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(exampleObj, nil)
-				},
 			},
 			{
 				name:  "error updating an object in legacy",
 				input: "object-fail",
 				setupLegacyFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, false, errors.New("error"))
-				},
-				setupGetFn: func(m *mock.Mock, input string) {
-					m.On("Get", mock.Anything, input, mock.Anything).Return(exampleObj, nil)
 				},
 				setupStorageFn: func(m *mock.Mock, input string) {
 					m.On("Update", mock.Anything, input, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(anotherObj, false, nil)
@@ -659,10 +652,6 @@ func TestMode1_Update(t *testing.T) {
 			}
 			if tt.setupStorageFn != nil {
 				tt.setupStorageFn(m, tt.input)
-			}
-
-			if tt.setupGetFn != nil {
-				tt.setupGetFn(m, tt.input)
 			}
 
 			dw := NewDualWriter(Mode1, ls, us, p, kind)
