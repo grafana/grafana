@@ -49,6 +49,7 @@ export default function QueryTemplatesTable({ queryTemplateRows }: Props) {
       columns={columns}
       data={queryTemplateRows}
       getRowId={(row: { index: string }) => row.index}
+      pageSize={20}
     />
   );
 }

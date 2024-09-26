@@ -4,6 +4,7 @@ export type QueryTemplateRow = {
   index: string;
   description?: string;
   query?: DataQuery;
+  queryText?: string;
   datasourceRef?: DataSourceRef | null;
   datasourceType?: string;
   createdAtTimestamp?: number;

@@ -5,12 +5,18 @@ import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, EditQueryTemplateC
 import { convertAddQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
 
+// Currently, we are loading all query templates
+// Organizations can have maximum of 1000 query templates
+const GET_LIMIT = 1000;
+
 export const queryLibraryApi = createApi({
   baseQuery,
   tagTypes: ['QueryTemplatesList'],
   endpoints: (builder) => ({
     allQueryTemplates: builder.query<QueryTemplate[], void>({
-      query: () => ({}),
+      query: () => ({
+        url: `?limit=${GET_LIMIT}`,
+      }),
       transformResponse: convertDataQueryResponseToQueryTemplates,
       providesTags: ['QueryTemplatesList'],
     }),
