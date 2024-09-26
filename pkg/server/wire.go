@@ -297,6 +297,8 @@ var wireBasicSet = wire.NewSet(
 	folderimpl.ProvideService,
 	folderimpl.ProvideDashboardFolderStore,
 	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
+	folderimpl.ProvideStore,
+	wire.Bind(new(folder.StoreTempRename), new(*folderimpl.FolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,
