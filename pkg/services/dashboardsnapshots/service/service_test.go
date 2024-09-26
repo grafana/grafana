@@ -92,7 +92,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 }
 
 func TestValidateDashboardExists(t *testing.T) {
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	dsStore := dashsnapdb.ProvideStore(sqlStore, cfg)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))

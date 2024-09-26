@@ -16,6 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -25,15 +31,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
-	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestAlertRuleService(t *testing.T) {
@@ -181,6 +182,74 @@ func TestAlertRuleService(t *testing.T) {
 		require.Len(t, readGroup.Rules, 1)
 		require.Equal(t, "some-other-title-asdf", readGroup.Rules[0].Title)
 		require.Equal(t, int64(2), readGroup.Rules[0].Version)
+	})
+
+	t.Run("updating a group should not override its rules editor settings", func(t *testing.T) {
+		namespaceUID := "my-namespace"
+		groupTitle := "test-group-123"
+
+		// create the rule group via the rule store, to persist the editor settings
+		rule := createTestRule(util.GenerateShortUID(), groupTitle, orgID, namespaceUID)
+		ruleMetadata := models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// clear the metadata to check that the existing metadata is not overridden
+		rule.Metadata = models.AlertRuleMetadata{}
+
+		// Now update the rule group with the rule to update its metadata
+		group := models.AlertRuleGroup{
+			Title:     groupTitle,
+			Interval:  60,
+			FolderUID: namespaceUID,
+			Rules:     []models.AlertRule{rule},
+		}
+
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
+		require.NoError(t, err)
+		require.NotEmpty(t, readGroup.Rules)
+		require.Len(t, readGroup.Rules, 1)
+
+		// check that the metadata is still there
+		require.Equal(t, ruleMetadata, readGroup.Rules[0].Metadata)
+	})
+
+	t.Run("updating a rule should not override its editor settings", func(t *testing.T) {
+		rule := createTestRule(util.GenerateShortUID(), "my-group", orgID, "my-folder")
+		ruleMetadata := models.AlertRuleMetadata{
+			EditorSettings: models.EditorSettings{
+				SimplifiedQueryAndExpressionsSection: true,
+			},
+		}
+		rule.Metadata = ruleMetadata
+		r, err := ruleService.ruleStore.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, r, 1)
+
+		// Set the UID for the rule to update it
+		rule.UID = r[0].UID
+		// clear the metadata to check that the existing metadata is not overridden
+		rule.Metadata = models.AlertRuleMetadata{}
+
+		// Update the rule
+		_, err = ruleService.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Read the rule and check that the editor settings are preserved
+		readRule, _, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
+		require.NoError(t, err)
+		require.Equal(t, ruleMetadata, readRule.Metadata)
 	})
 
 	t.Run("updating a group to temporarily overlap rule names should not throw unique constraint", func(t *testing.T) {
@@ -1473,7 +1542,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 func TestProvisiongWithFullpath(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	sqlStore := db.InitTestReplDB(t)
+	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)

@@ -153,13 +153,38 @@ var (
 		},
 	}
 
+	templatesReaderRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.templates:reader",
+			DisplayName: "Templates Reader",
+			Description: "Read all templates in Grafana alerting",
+			Group:       AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingNotificationsTemplatesRead},
+			},
+		},
+	}
+
+	templatesWriterRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.templates:writer",
+			DisplayName: "Templates Writer",
+			Description: "Create, update, and delete all templates in Grafana alerting",
+			Group:       AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(templatesReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingNotificationsTemplatesWrite},
+				{Action: accesscontrol.ActionAlertingNotificationsTemplatesDelete},
+			}),
+		},
+	}
+
 	notificationsReaderRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.notifications:reader",
 			DisplayName: "Notifications Reader",
 			Description: "Read notification policies and contact points in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: accesscontrol.ConcatPermissions(receiversReaderRole.Role.Permissions, templatesReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsRead,
 				},
@@ -180,7 +205,7 @@ var (
 			DisplayName: "Notifications Writer",
 			Description: "Add, update, and delete contact points and notification policies in Grafana and external providers",
 			Group:       AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, receiversWriterRole.Role.Permissions, []accesscontrol.Permission{
+			Permissions: accesscontrol.ConcatPermissions(notificationsReaderRole.Role.Permissions, receiversWriterRole.Role.Permissions, templatesWriterRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsWrite,
 				},
@@ -312,7 +337,7 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
-		fixedRoles = append(fixedRoles, receiversReaderRole, receiversCreatorRole, receiversWriterRole)
+		fixedRoles = append(fixedRoles, receiversReaderRole, receiversCreatorRole, receiversWriterRole, templatesReaderRole, templatesWriterRole)
 	}
 
 	return service.DeclareFixedRoles(fixedRoles...)
