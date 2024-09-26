@@ -197,9 +197,9 @@ After creating the IAM user and obtaining the necessary credentials, proceed to 
 Replace the placeholder values (`https://sns.us-east-1.amazonaws.com`, `us-east-1`, `<YOUR_ACCESS_KEY>`, `<YOUR_SECRET_ACCESS_KEY>`, `arn:aws:iam::<account_id>:role/GrafanaSNSRole`, `arn:aws:sns:<region>:<account_id>:My-Topic`) with your actual AWS credentials and ARNs.
 {{< /admonition >}}
 
-## Additional Resources
+## Additional Resources  
 
 - [Amazon SNS Documentation](https://docs.aws.amazon.com/sns/index.html)
 - [AWS IAM Documentation](https://docs.aws.amazon.com/iam/index.html)
 - [Prometheus Alertmanager SNS Integration](https://prometheus.io/docs/alerting/configuration/#sns_config)
-- [Cloudwatch AWS Authentication]({{< relref "/docs/grafana/latest/datasources/aws-cloudwatch/aws-authentication" >}})
+- [Cloudwatch AWS Authentication]({{< relref "../../../../datasources/aws-cloudwatch/aws-authentication" >}})
