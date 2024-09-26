@@ -112,10 +112,15 @@ func (d *DualWriterMode2) Get(ctx context.Context, name string, options *metav1.
 		log.Info("object from legacy and storage are not equal")
 	}
 
-	// if there is no object in storage, we return the object from legacy
-	if objStorage == nil {
-		return objLegacy, nil
+	if objStorage != nil {
+		updateRV(objStorage, objLegacy)
 	}
+	if objStorage != nil {
+		if err := updateRV(objStorage, objLegacy); err != nil {
+			log.WithValues("storageObject", objStorage, "legacyObject", objLegacy).Error(err, "could not update resource version")
+		}
+	}
+
 	return objLegacy, err
 }
 
@@ -271,35 +276,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
 
-	foundObj, err := d.Storage.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		if !apierrors.IsNotFound(err) {
-			log.WithValues("object", foundObj).Error(err, "could not get object to update")
-			return nil, false, err
-		}
-		log.Info("object not found for update, creating one")
-	}
-
-	if foundObj != nil {
-		new, err := objInfo.UpdatedObject(ctx, foundObj)
-		if err != nil {
-			return nil, false, err
-		}
-		accOld, err := meta.Accessor(foundObj)
-		if err != nil {
-			return nil, false, err
-		}
-		accNew, err := utils.MetaAccessor(new)
-		if err != nil {
-			return nil, false, err
-		}
-		accNew.SetResourceVersion(accOld.GetResourceVersion())
-		objInfo = &updateWrapper{
-			upstream: objInfo,
-			updated:  new,
-		}
-	}
-
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
@@ -322,7 +298,28 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	if !areEqual {
 		log.WithValues("name", name).Info("object from legacy and storage are not equal")
 	}
+
+	if objFromStorage != nil {
+		if err := updateRV(objFromStorage, objFromLegacy); err != nil {
+			log.WithValues("storageObject", objFromStorage, "legacyObject", objFromLegacy).Error(err, "could not update resource version")
+		}
+	}
+
 	return objFromLegacy, created, err
+}
+
+func updateRV(storageObj runtime.Object, legacyObj runtime.Object) error {
+	storageAccessor, err := utils.MetaAccessor(storageObj)
+	if err != nil {
+		return err
+	}
+	legacyAccessor, err := utils.MetaAccessor(legacyObj)
+	if err != nil {
+		return err
+	}
+
+	legacyAccessor.SetResourceVersion(storageAccessor.GetResourceVersion())
+	return nil
 }
 
 func (d *DualWriterMode2) Destroy() {
