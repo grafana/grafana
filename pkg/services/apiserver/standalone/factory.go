@@ -16,6 +16,11 @@ type APIServerFactory interface {
 	GetCLICommand(info BuildInfo) *cli.Command
 }
 
+// NOOP
+func ProvideAPIServerFactory() APIServerFactory {
+	return &NoOpAPIServerFactory{}
+}
+
 type NoOpAPIServerFactory struct{}
 
 func (f *NoOpAPIServerFactory) GetCLICommand(info BuildInfo) *cli.Command {
