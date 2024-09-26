@@ -120,7 +120,7 @@ Alternatively, you can use the `docker compose restart` command to restart Grafa
 
 Configure your `docker-compose.yml` file. For example:
 
-```bash
+```yml
 version: "3.8"
 services:
   grafana:
