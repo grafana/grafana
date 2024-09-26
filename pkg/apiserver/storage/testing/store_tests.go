@@ -117,7 +117,7 @@ func RunTestGet(ctx context.Context, t *testing.T, store storage.Interface) {
 		t.Fatalf("Update failed: %v", err)
 	}
 	// create an additional object to increment the resource version for pods above the resource version of the foo object
-	secondObj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "test-ns"}}
+	secondObj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "bar", Namespace: "test-ns", UID: "123"}}
 	lastUpdatedObj := &example.Pod{}
 	if err := store.Create(ctx, computePodKey(secondObj), secondObj, lastUpdatedObj, 0); err != nil {
 		t.Fatalf("Set failed: %v", err)
