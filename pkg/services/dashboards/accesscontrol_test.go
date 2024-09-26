@@ -49,8 +49,8 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 
 		scope := "folders:name:" + title
 
-		folderSvc := folder.NewFakeStore()
-		folderSvc.ExpectedFolders = []*folder.Folder{
+		fStore := folder.NewFakeStore()
+		fStore.ExpectedParentFolders = []*folder.Folder{
 			{
 				UID: "parent",
 			},
@@ -58,7 +58,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 				UID: "grandparent",
 			},
 		}
-		_, resolver := NewFolderNameScopeResolver(folderStore, folderSvc)
+		_, resolver := NewFolderNameScopeResolver(folderStore, fStore)
 
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.NoError(t, err)
