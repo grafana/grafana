@@ -147,7 +147,7 @@ If you want to use other codes or give the field a custom name, you can follow t
 
 ## Configuration options
 
-### Map View
+### Map view options
 
 The map view controls the initial view of the map when the dashboard loads.
 
@@ -155,13 +155,12 @@ The map view controls the initial view of the map when the dashboard loads.
 
 The initial view configures how the geomap renders when the panel is first loaded.
 
-##### View
-
-Sets the center for the map when the panel first loads.
+- **View** - Sets the center for the map when the panel first loads. Refer to the table following this list for view selections.
+- **Zoom** - Sets the initial zoom level.
+- **Use current map settings** - Use the settings of the current map to set the center.
 
 <!-- prettier-ignore-start -->
-
-| Option | Description |
+| View selection | Description |
 |---|---|
 | Fit to data | fits the map view based on the data extents of Map layers and updates when data changes.<ul><li>**Data** - option allows selection of extent based on data from "All layers", a single "Layer", or the "Last value" from a selected layer.</li><li>**Layer** - can be selected if fitting data from a single "Layer" or the "Last value" of a layer.</li><li>**Padding** - sets padding in relative percent beyond data extent (not available when looking at "Last value" only).</li><li>**Max zoom** - sets the maximum zoom level when fitting data.</li> |
 | (0°, 0°) |  |
@@ -176,8 +175,9 @@ Sets the center for the map when the panel first loads.
 | East Asia |  |
 | Australia |  |
 | Oceania |  |
-
 <!-- prettier-ignore-end -->
+
+<!--
 
 - **View** sets the center for the map when the panel first loads.
   - **Fit to data** fits the map view based on the data extents of Map layers and updates when data changes.
@@ -200,11 +200,7 @@ Sets the center for the map when the panel first loads.
     - **East Asia**
     - **Australia**
     - **Oceania**
-- **Zoom** sets the initial zoom level.
-
-##### Use current map settings
-
-Use the settings of the current map to set the center.
+-->
 
 #### Share view
 
@@ -214,11 +210,11 @@ The **Share view** option allows you to link the movement and zoom actions of mu
 You might need to reload the dashboard for this feature to work.
 {{< /admonition >}}
 
-### Map layers
+### Map layers options
 
 Geomaps support showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
 
-#### Types
+#### Layer type
 
 There are seven map layer types to choose from in a geomap.
 
@@ -234,14 +230,28 @@ There are seven map layer types to choose from in a geomap.
 Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
 {{% /admonition %}}
 
+A basemap layer provides the visual foundation for a mapping application. It typically contains data with global coverage. Several base layer options
+are available each with specific configuration options to style the base map.
+
+Basemap layer types can also be added as layers. You can specify an opacity.
+
+There are four basemap layer types to choose from in a geomap.
+
+- [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
+- [CARTO](#carto-layer) adds a layer from CARTO Raster basemaps.
+- [ArcGIS](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
+- [XYZ](#xyz-tile-layer) adds a map from a generic tile layer.
+
+The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
+
+![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
+
 There are also two experimental (or alpha) layer types.
 
 - **Icon at last point (alpha)** renders an icon at the last data point.
 - **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
 
-{{% admonition type="note" %}}
-To enable experimental layers:
-Set `enable_alpha` to `true` in your configuration file:
+To enable experimental layers. Set `enable_alpha` to `true` in your configuration file:
 
 ```
 [panels]
@@ -254,14 +264,6 @@ To enable the experimental layers using Docker, run the following command:
 docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
 ```
 
-{{% /admonition %}}
-
-{{% admonition type="note" %}}
-[Basemap layer types](#types-1) can also be added as layers. You can specify an opacity.
-{{% /admonition %}}
-
-#### Layer Controls
-
 The layer controls allow you to create layers, change their name, reorder and delete layers.
 
 - **Add layer** creates an additional, configurable data layer for the geomap. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
@@ -271,43 +273,6 @@ The layer controls allow you to create layers, change their name, reorder and de
   - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The visualization will update the layer order as you drag and drop to help simplify choosing a layer order.
 
 You can add multiple layers of data to a single geomap in order to create rich, detailed visualizations.
-
-#### Data
-
-Geomaps need a source of geographical data gathered from a data source query which can return multiple datasets. By default Grafana picks the first dataset, but this drop-down allows you to pick other datasets if the query returns more than one.
-
-#### Location mode
-
-There are four options to map the data returned by the selected query:
-
-- **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
-  - geohash: “geohash”
-  - latitude: “latitude”, “lat”
-  - longitude: “longitude”, “lng”, “lon”
-  - lookup: “lookup”
-- **Coords** specifies that your query holds coordinate data. You will get prompted to select numeric data fields for latitude and longitude from your database query.
-- **Geohash** specifies that your query holds geohash data. You will be prompted to select a string data field for the geohash from your database query.
-- **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
-
-### Basemap layer
-
-A basemap layer provides the visual foundation for a mapping application. It typically contains data with global coverage. Several base layer options
-are available each with specific configuration options to style the base map.
-
-#### Types
-
-There are four basemap layer types to choose from in a geomap.
-
-- [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
-- [CARTO](#carto-layer) adds a layer from CARTO Raster basemaps.
-- [ArcGIS](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
-- [XYZ](#xyz-tile-layer) adds a map from a generic tile layer.
-
-#### Default
-
-The default base layer uses the [CARTO](#carto-layer) map. You can define custom default base layers in the `.ini` configuration file.
-
-![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
 
 ##### Configure the default base layer with provisioning
 
@@ -371,6 +336,23 @@ default_baselayer_config = `{
 ```
 
 `enable_custom_baselayers` allows you to enable or disable custom open source base maps that are already implemented. The default is `true`.
+
+#### Data
+
+Geomaps need a source of geographical data gathered from a data source query which can return multiple datasets. By default Grafana picks the first dataset, but this drop-down allows you to pick other datasets if the query returns more than one.
+
+#### Location mode
+
+There are four options to map the data returned by the selected query:
+
+- **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
+  - geohash: “geohash”
+  - latitude: “latitude”, “lat”
+  - longitude: “longitude”, “lng”, “lon”
+  - lookup: “lookup”
+- **Coords** specifies that your query holds coordinate data. You will get prompted to select numeric data fields for latitude and longitude from your database query.
+- **Geohash** specifies that your query holds geohash data. You will be prompted to select a string data field for the geohash from your database query.
+- **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
 
 ### Markers layer
 
