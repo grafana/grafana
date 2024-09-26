@@ -23,7 +23,7 @@ export function buildNavModel(team: Team): NavModelItem {
     img: team.avatarUrl,
     id: 'team-' + team.id,
     subTitle: 'Manage members and settings',
-    url: '',
+    url: `org/teams/edit/${team.id}`,
     text: team.name,
     children: [
       // With RBAC this tab will always be available (but not always editable)
