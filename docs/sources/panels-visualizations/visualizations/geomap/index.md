@@ -226,9 +226,9 @@ There are seven map layer types to choose from in a geomap.
 - [Photos (Beta)](#photos-layer-beta) renders a photo at each data point.
 - [Network (Beta)](#network-layer-beta) visualizes a network graph from the data.
 - [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
-- [CARTO](#carto-layer) adds a layer from CARTO Raster basemaps.
-- [ArcGIS](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
-- [XYZ](#xyz-tile-layer) adds a map from a generic tile layer.
+- [CARTO basemap](#carto-layer) adds a layer from CARTO Raster basemaps.
+- [ArcGIS MapServer](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
+- [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
 
 {{% admonition type="note" %}}
 Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
@@ -473,6 +473,16 @@ The Network layer renders a network graph. This layer supports the same [data fo
 | Text label | configures a text label for each edge. |
 <!-- prettier-ignore-end -->
 
+#### Open Street Map layer
+
+A map from a collaborative free geographic world database.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="1200px" caption="Geomap panel Open Street Map" >}}
+
+**Opacity** from 0 (transparent) to 1 (opaque)
+
+[**About Open Street Map**](https://www.openstreetmap.org/about)
+
 #### CARTO basemap layer
 
 A CARTO layer is from CARTO Raster basemaps.
@@ -488,35 +498,7 @@ A CARTO layer is from CARTO Raster basemaps.
 
 [**About CARTO**](https://carto.com/about-us/)
 
-#### XYZ tile layer
-
-The XYZ tile layer is a map from a generic tile layer.
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="1200px" caption="Geomap panel xyz example" >}}
-
-- **URL template**
-
-  > **Note:** Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
-
-- **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
-- **Opacity** from 0 (transparent) to 1 (opaque)
-
-##### More information
-
-- [**Tiled Web Map Wikipedia**](https://en.wikipedia.org/wiki/Tiled_web_map)
-- [**List of Open Street Map Tile Servers**](https://wiki.openstreetmap.org/wiki/Tile_servers)
-
-#### Open Street Map layer
-
-A map from a collaborative free geographic world database.
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="1200px" caption="Geomap panel Open Street Map" >}}
-
-**Opacity** from 0 (transparent) to 1 (opaque)
-
-[**About Open Street Map**](https://www.openstreetmap.org/about)
-
-#### ArcGIS layer
+#### ArcGIS MapServer layer
 
 An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
@@ -542,6 +524,24 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
 - [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
 - [**About ESRI**](https://www.esri.com/en-us/about/about-esri/overview)
+
+#### XYZ tile layer
+
+The XYZ tile layer is a map from a generic tile layer.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="1200px" caption="Geomap panel xyz example" >}}
+
+- **URL template**
+
+  > **Note:** Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+
+- **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
+- **Opacity** from 0 (transparent) to 1 (opaque)
+
+##### More information
+
+- [**Tiled Web Map Wikipedia**](https://en.wikipedia.org/wiki/Tiled_web_map)
+- [**List of Open Street Map Tile Servers**](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
 ### Basemap layer options
 
@@ -706,22 +706,22 @@ Displays debug information in the upper right corner. This can be useful for deb
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
 
-## Standard options
+### Standard options
 
 {{< docs/shared lookup="visualizations/standard-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Data links
+### Data links
 
 {{< docs/shared lookup="visualizations/datalink-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Value mappings
+### Value mappings
 
 {{< docs/shared lookup="visualizations/value-mappings-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Thresholds
+### Thresholds
 
 {{< docs/shared lookup="visualizations/thresholds-options-2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Field overrides
+### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
