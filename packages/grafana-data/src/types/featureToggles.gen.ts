@@ -193,17 +193,14 @@ export interface FeatureToggles {
   openSearchBackendFlowEnabled?: boolean;
   ssoSettingsLDAP?: boolean;
   failWrongDSUID?: boolean;
-  databaseReadReplica?: boolean;
   zanzana?: boolean;
   passScopeToDashboardApi?: boolean;
   alertingApiServer?: boolean;
   dashboardRestoreUI?: boolean;
   cloudWatchRoundUpEndTime?: boolean;
-  bodyScrolling?: boolean;
   cloudwatchMetricInsightsCrossAccount?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   alertingFilterV2?: boolean;
-  backgroundPluginInstaller?: boolean;
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
@@ -211,8 +208,12 @@ export interface FeatureToggles {
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;
   exploreLogsLimitedTimeRange?: boolean;
+  homeSetupGuide?: boolean;
   appPlatformAccessTokens?: boolean;
   appSidecar?: boolean;
   groupAttributeSync?: boolean;
+  alertingQueryAndExpressionsStepMode?: boolean;
   improvedExternalSessionHandling?: boolean;
+  useSessionStorageForRedirection?: boolean;
+  rolePickerDrawer?: boolean;
 }

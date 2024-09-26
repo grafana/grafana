@@ -11,11 +11,10 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneDataTransformer, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneFlexLayout, SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
-import { VizPanelManager } from '../panel-edit/VizPanelManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardDatasourceBehaviour } from './DashboardDatasourceBehaviour';
@@ -275,14 +274,12 @@ describe('DashboardDatasourceBehaviour', () => {
       // spy on runQueries
       const spy = jest.spyOn(dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner, 'runQueries');
 
-      const vizPanelManager = new VizPanelManager({
-        panel: dashboardDSPanel.clone(),
+      const scene = new SceneFlexLayout({
         $data: dashboardDSPanel.state.$data?.clone(),
-        sourcePanel: dashboardDSPanel.getRef(),
-        pluginId: dashboardDSPanel.state.pluginId,
+        children: [],
       });
 
-      vizPanelManager.activate();
+      scene.activate();
 
       expect(spy).not.toHaveBeenCalled();
     });

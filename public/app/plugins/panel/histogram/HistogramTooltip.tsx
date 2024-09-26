@@ -1,15 +1,14 @@
-import { css } from '@emotion/css';
 import { ReactNode, useMemo } from 'react';
 
 import { DataFrame, formattedValueToString } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
-import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 
+import { VizTooltipWrapper } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipWrapper';
 import { getDataLinks } from '../status-history/utils';
 import { isTooltipScrollable } from '../timeseries/utils';
 
@@ -39,8 +38,6 @@ export const HistogramTooltip = ({
   isPinned,
   maxHeight,
 }: HistogramTooltipProps) => {
-  const styles = useStyles2(getStyles);
-
   const xMinField = series.fields[0];
   const xMaxField = series.fields[1];
 
@@ -74,7 +71,7 @@ export const HistogramTooltip = ({
   }
 
   return (
-    <div className={styles.wrapper}>
+    <VizTooltipWrapper>
       {headerItem != null && <VizTooltipHeader item={headerItem} isPinned={isPinned} />}
       <VizTooltipContent
         items={contentItems}
@@ -83,13 +80,6 @@ export const HistogramTooltip = ({
         maxHeight={maxHeight}
       />
       {footer}
-    </div>
+    </VizTooltipWrapper>
   );
 };
-
-export const getStyles = () => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-});
