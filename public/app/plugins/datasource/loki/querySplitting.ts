@@ -21,7 +21,7 @@ import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { trackGroupedQueries } from './tracking';
-import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
+import { LokiGroupedRequest, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export function partitionTimeRange(
   isLogsQuery: boolean,
@@ -219,23 +219,35 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
 
   request.queryGroupId = uuidv4();
   const oneDayMs = 24 * 60 * 60 * 1000;
-  const rangePartitionedLogQueries = groupBy(logQueries, (query) =>
-    query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
+  const directionPartitionedLogQueries = groupBy(logQueries, (query) =>
+    query.direction === LokiQueryDirection.Forward ? LokiQueryDirection.Forward : LokiQueryDirection.Backward
   );
+  const requests: LokiGroupedRequest[] = [];
+
+  for (const direction in directionPartitionedLogQueries) {
+    const rangePartitionedLogQueries = groupBy(directionPartitionedLogQueries[direction], (query) =>
+      query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
+    );
+    for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedLogQueries)) {
+      const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
+      for (const resolution in resolutionPartition) {
+        const groupedRequest = {
+          request: { ...request, targets: resolutionPartition[resolution] },
+          partition: partitionTimeRange(true, request.range, request.intervalMs, Number(chunkRangeMs)),
+        };
+
+        if (direction === LokiQueryDirection.Forward) {
+          groupedRequest.partition.reverse();
+        }
+
+        requests.push(groupedRequest);
+      }
+    }
+  }
+
   const rangePartitionedMetricQueries = groupBy(metricQueries, (query) =>
     query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
   );
-
-  const requests: LokiGroupedRequest[] = [];
-  for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedLogQueries)) {
-    const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
-    for (const resolution in resolutionPartition) {
-      requests.push({
-        request: { ...request, targets: resolutionPartition[resolution] },
-        partition: partitionTimeRange(true, request.range, request.intervalMs, Number(chunkRangeMs)),
-      });
-    }
-  }
 
   for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedMetricQueries)) {
     const stepMsPartition = groupBy(queries, (query) =>

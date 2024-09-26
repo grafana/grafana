@@ -104,7 +104,7 @@ func populateDB(t *testing.T, db db.DB, cfg *setting.Cfg) {
 			Config: correlations.CorrelationConfig{
 				Field:  "field",
 				Target: map[string]any{},
-				Type:   correlations.TypeQuery,
+				Type:   correlations.CorrelationType("query"),
 			},
 		}
 		correlation, err := correlationsSvc.CreateCorrelation(context.Background(), cmd)

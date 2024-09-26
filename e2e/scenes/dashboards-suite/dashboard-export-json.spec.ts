@@ -36,7 +36,7 @@ describe('Export as JSON', () => {
     // Export as JSON
     e2e.pages.ExportDashboardDrawer.ExportAsJson.container().should('be.visible');
     e2e.pages.ExportDashboardDrawer.ExportAsJson.exportExternallyToggle().should('not.be.checked');
-    e2e.pages.ExportDashboardDrawer.ExportAsJson.codeEditor().should('exist');
+    e2e.components.CodeEditor.container().should('exist');
 
     e2e.pages.ExportDashboardDrawer.ExportAsJson.saveToFileButton().should('exist');
     e2e.pages.ExportDashboardDrawer.ExportAsJson.copyToClipboardButton().should('exist');

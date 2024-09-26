@@ -269,6 +269,15 @@ type AlertRule struct {
 	Labels               map[string]string
 	IsPaused             bool
 	NotificationSettings []NotificationSettings
+	Metadata             AlertRuleMetadata
+}
+
+type AlertRuleMetadata struct {
+	EditorSettings EditorSettings `json:"editor_settings"`
+}
+
+type EditorSettings struct {
+	SimplifiedQueryAndExpressionsSection bool `json:"simplified_query_and_expressions_section"`
 }
 
 // Namespaced describes a class of resources that are stored in a specific namespace.
@@ -601,7 +610,18 @@ func validateRecordingRuleFields(rule *AlertRule) error {
 	if !prommodels.IsValidMetricName(metricName) {
 		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
 	}
+
+	clearRecordingRuleIgnoredFields(rule)
+
 	return nil
+}
+
+func clearRecordingRuleIgnoredFields(rule *AlertRule) {
+	rule.NoDataState = ""
+	rule.ExecErrState = ""
+	rule.Condition = ""
+	rule.For = 0
+	rule.NotificationSettings = nil
 }
 
 func (alertRule *AlertRule) ResourceType() string {

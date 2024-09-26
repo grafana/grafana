@@ -351,14 +351,16 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 		if err != nil {
 			return err
 		}
-		sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
-
-		if query.Limit == 0 {
-			query.Limit = 100
+		if acFilter != "" {
+			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
 		}
 
 		// order of ORDER BY arguments match the order of a sql index for performance
-		sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + r.db.GetDialect().Limit(query.Limit) + " ) dt on dt.id = annotation.id")
+		orderBy := " ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC"
+		if query.Limit > 0 {
+			orderBy += r.db.GetDialect().Limit(query.Limit)
+		}
+		sql.WriteString(orderBy + " ) dt on dt.id = annotation.id")
 
 		if err := sess.SQL(sql.String(), params...).Find(&items); err != nil {
 			items = nil
@@ -372,6 +374,10 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 }
 
 func (r *xormRepositoryImpl) getAccessControlFilter(user identity.Requester, accessResources *accesscontrol.AccessResources) (string, error) {
+	if accessResources.SkipAccessControlFilter {
+		return "", nil
+	}
+
 	var filters []string
 
 	if accessResources.CanAccessOrgAnnotations {

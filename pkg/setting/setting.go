@@ -2051,3 +2051,10 @@ func (cfg *Cfg) readPublicDashboardsSettings() {
 	publicDashboards := cfg.Raw.Section("public_dashboards")
 	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
 }
+
+func (cfg *Cfg) DefaultOrgID() int64 {
+	if cfg.AutoAssignOrg && cfg.AutoAssignOrgId > 0 {
+		return int64(cfg.AutoAssignOrgId)
+	}
+	return int64(1)
+}

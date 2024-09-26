@@ -98,6 +98,10 @@ func CanAdminPlugins(cfg *setting.Cfg, accessControl ac.AccessControl) func(c *c
 			accessForbidden(c)
 			return
 		}
+		if c.AllowAnonymous && !c.IsSignedIn && shouldForceLogin(c) {
+			notAuthorized(c)
+			return
+		}
 	}
 }
 

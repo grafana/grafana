@@ -747,6 +747,24 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		})
 	})
 
+	t.Run("clears fields that should not exist on recording rules", func(t *testing.T) {
+		rule := recordingRulesGen.Generate()
+		rules, err := store.InsertAlertRules(context.Background(), []models.AlertRule{rule})
+		require.NoError(t, err)
+		require.Len(t, rules, 1)
+		ruleUID := rules[0].UID
+		savedRule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+			OrgID: orgID,
+			UID:   ruleUID,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "", savedRule.Condition)
+		require.Equal(t, models.NoDataState(""), savedRule.NoDataState)
+		require.Equal(t, models.ExecutionErrorState(""), savedRule.ExecErrState)
+		require.Zero(t, savedRule.For)
+		require.Nil(t, savedRule.NotificationSettings)
+	})
+
 	t.Run("fail to insert rules with same ID", func(t *testing.T) {
 		_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{rules[0]})
 		require.ErrorIs(t, err, models.ErrAlertRuleConflictBase)
