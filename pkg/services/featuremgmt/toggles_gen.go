@@ -794,4 +794,8 @@ const (
 	// FlagUseSessionStorageForRedirection
 	// Use session storage for handling the redirection after login
 	FlagUseSessionStorageForRedirection = "useSessionStorageForRedirection"
+
+	// FlagRolePickerDrawer
+	// Enables the new role picker drawer design
+	FlagRolePickerDrawer = "rolePickerDrawer"
 )
