@@ -2659,6 +2659,18 @@
     },
     {
       "metadata": {
+        "name": "rolePickerDrawer",
+        "resourceVersion": "1727337187819",
+        "creationTimestamp": "2024-09-26T07:53:07Z"
+      },
+      "spec": {
+        "description": "Enables the new role picker drawer design",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
+      }
+    },
+    {
+      "metadata": {
         "name": "scenes",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2022-07-07T06:53:02Z",

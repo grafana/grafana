@@ -215,4 +215,5 @@ export interface FeatureToggles {
   alertingQueryAndExpressionsStepMode?: boolean;
   improvedExternalSessionHandling?: boolean;
   useSessionStorageForRedirection?: boolean;
+  rolePickerDrawer?: boolean;
 }
