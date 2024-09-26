@@ -82,8 +82,10 @@ AUTH_TOKEN=-
 
 ```json
 {
-  "security": {
-    "authToken": "-"
+  "service": {
+    "security": {
+      "authToken": "-"
+    }
   }
 }
 ```
