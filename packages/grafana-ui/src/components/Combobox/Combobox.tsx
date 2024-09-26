@@ -25,7 +25,10 @@ interface ComboboxProps<T extends string | number>
   options: Array<ComboboxOption<T>>;
   onChange: (option: ComboboxOption<T> | null) => void;
   value: T | null;
-  inline?: boolean;
+  /**
+   * Makes the input with correspond to its content. It is good to set minWidth and maxWidth for this.
+   */
+  autoSize?: boolean;
 }
 
 function itemToString(item: ComboboxOption<string | number> | null) {
