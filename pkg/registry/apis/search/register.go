@@ -61,7 +61,7 @@ func (b *SearchAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 func (b *SearchAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return &builder.APIRoutes{
-		Root: []builder.APIRouteHandler{
+		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "search",
 				Spec: &spec3.PathProps{
