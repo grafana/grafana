@@ -4181,8 +4181,16 @@ platform:
 services: []
 steps:
 - commands:
-  - ./bin/build publish grafana-com --edition oss $${TAG}
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.23.1-alpine
+  name: compile-build-cmd
+- commands:
+  - ./bin/build publish grafana-com --edition oss $${TAG}
+  depends_on:
+  - compile-build-cmd
   environment:
     GCP_KEY:
       from_secret: gcp_grafanauploads_base64
@@ -6143,6 +6151,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f74e86b614b2cd05587c3d40eb523e5e694bc311519aaf81832b85784b9912a3
+hmac: 96c33502d8f5020eed6b49ad91af000b53336aeefd8869be68e5bb6449d96a3d
 
 ...

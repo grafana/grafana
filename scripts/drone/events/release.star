@@ -249,7 +249,8 @@ def publish_packages_pipeline():
                 "target": "publish-grafanacom",
             },
             steps = [
-                publish_grafanacom_step(ver_mode = "release", version = "$${TAG}", depends_on = []),
+                compile_build_cmd(),
+                publish_grafanacom_step(ver_mode = "release", version = "$${TAG}", depends_on = ["compile-build-cmd"]),
             ],
         ),
     ]
