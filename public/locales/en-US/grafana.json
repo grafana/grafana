@@ -217,7 +217,7 @@
     },
     "rule-viewer": {
       "prometheus-consistency-check": {
-        "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view. ",
+        "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Updates in progress"
       }
     },
