@@ -360,17 +360,22 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer](/static/img/docs/geomap-panel/geomap-markers-8-1-0.png)
 
-- **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
-- **Size** configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range.
-- **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
-- **Symbol Vertical Align** configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol.
-- **Symbol Horizontal Align** configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol.
-- **Color** configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section.
-- **Fill opacity** configures the transparency of each marker.
-- **Rotation angle** configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field.
-- **Text label** configures a text label for each marker.
-- **Show legend** allows you to toggle the legend for the layer.
-- **Display tooltip** allows you to toggle tooltips for the layer.
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Size | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | configures the transparency of each marker. |
+| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | configures a text label for each marker. |
+| Show legend | allows you to toggle the legend for the layer. |
+| Display tooltip | allows you to toggle tooltips for the layer. |
+<!-- prettier-ignore-end -->
 
 ### Heatmap layer
 
@@ -390,6 +395,23 @@ Similar to `Markers`, you are prompted with various options to determine which d
 - **Opacity** configures the opacity of each cluster.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Weight values | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | configures the transparency of each marker. |
+| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | configures a text label for each marker. |
+| Show legend | allows you to toggle the legend for the layer. |
+| Display tooltip | allows you to toggle tooltips for the layer. |
+<!-- prettier-ignore-end -->
+
 ### GeoJSON layer
 
 The GeoJSON layer allows you to select and load a static GeoJSON file from the filesystem.
@@ -404,6 +426,23 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
   - **Opacity** configures the transparency level for the current rule
 - **Add style rule** creates additional style rules.
 - **Display tooltip** allows you to toggle tooltips for the layer.
+
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Size | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | configures the transparency of each marker. |
+| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | configures a text label for each marker. |
+| Show legend | allows you to toggle the legend for the layer. |
+| Display tooltip | allows you to toggle tooltips for the layer. |
+<!-- prettier-ignore-end -->
 
 {{% admonition type="note" %}}
 Styles can be set within the "properties" object of the GeoJSON with support for the following geometries:
@@ -440,6 +479,23 @@ The Night / Day layer displays night and day regions based on the current time r
 - **Opacity** set the opacity from `0` (transparent) to `1` (opaque).
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Size | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | configures the transparency of each marker. |
+| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | configures a text label for each marker. |
+| Show legend | allows you to toggle the legend for the layer. |
+| Display tooltip | allows you to toggle tooltips for the layer. |
+<!-- prettier-ignore-end -->
+
 #### More information
 
 - [**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
@@ -466,6 +522,23 @@ The Route layer renders data points as a route.
   - **Forward**
   - **Reverse**
 - **Display tooltip** allows you to toggle tooltips for the layer.
+
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Size | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | configures the transparency of each marker. |
+| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | configures a text label for each marker. |
+| Show legend | allows you to toggle the legend for the layer. |
+| Display tooltip | allows you to toggle tooltips for the layer. |
+<!-- prettier-ignore-end -->
 
 {{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
 
@@ -501,6 +574,23 @@ The Photos layer renders a photo at each data point.
 - **Radius** sets the overall size of images in pixels.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Size | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | configures the transparency of each marker. |
+| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | configures a text label for each marker. |
+| Show legend | allows you to toggle the legend for the layer. |
+| Display tooltip | allows you to toggle tooltips for the layer. |
+<!-- prettier-ignore-end -->
+
 #### More information
 
 - [**Extensions for OpenLayers - Image Photo Style**](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
@@ -527,6 +617,23 @@ The Network layer renders a network graph. This layer supports the same [data fo
 - **Show legend** allows you to toggle the legend for the layer. **Note:** The legend currently only supports node data.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Size | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | configures the transparency of each marker. |
+| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | configures a text label for each marker. |
+| Show legend | allows you to toggle the legend for the layer. |
+| Display tooltip | allows you to toggle tooltips for the layer. |
+<!-- prettier-ignore-end -->
+
 ##### Node styles
 
 - **Size** configures the size of the nodes. The default is `Fixed size`, which makes all node sizes the same regardless of the data; however, there is also an option to size the nodes based on data corresponding to a selected field. `Min` and `Max` node sizes have to be set such that the nodes can scale within this range.
@@ -536,12 +643,46 @@ The Network layer renders a network graph. This layer supports the same [data fo
 - **Rotation angle** configures the rotation angle of each node. The default is `Fixed value`, which makes all nodes rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the nodes based on data corresponding to a selected field.
 - **Text label** configures a text label for each node.
 
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Size | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | configures the transparency of each marker. |
+| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | configures a text label for each marker. |
+| Show legend | allows you to toggle the legend for the layer. |
+| Display tooltip | allows you to toggle tooltips for the layer. |
+<!-- prettier-ignore-end -->
+
 ##### Edge styles
 
 - **Size** configures the line width of the edges. The default is `Fixed size`, which makes all edge line widths the same regardless of the data; however, there is also an option to size the edges based on data corresponding to a selected field. `Min` and `Max` eges sizes have to be set such that the edges can scale within this range.
 - **Color** configures the color of the edges. The default `Fixed color` sets all edges to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section.
 - **Fill opacity** configures the transparency of each edge.
 - **Text label** configures a text label for each edge.
+
+<!-- prettier-ignore-start -->
+| Option | Description |
+| ------ | ----------- |
+| Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
+| Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
+| Size | configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG). |
+| Symbol Vertical Align | configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol. |
+| Symbol Horizontal Align | configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol. |
+| Color | configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section. |
+| Fill opacity | configures the transparency of each marker. |
+| Rotation angle | configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field. |
+| Text label | configures a text label for each marker. |
+| Show legend | allows you to toggle the legend for the layer. |
+| Display tooltip | allows you to toggle tooltips for the layer. |
+<!-- prettier-ignore-end -->
 
 ### CARTO layer
 
