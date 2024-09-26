@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { Counter, Stack } from '@grafana/ui';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { getFiltersFromUrlParams } from '../../utils/misc';
+import { createViewLink } from '../../utils/misc';
+import { hashRule } from '../../utils/rule-id';
 import { isAlertingRule } from '../../utils/rules';
-
-import { RuleListStateSection } from './RuleListStateSection';
+import { AlertRuleListItem, Namespace } from '../rule-list/components/components';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -16,8 +16,6 @@ interface Props {
 type GroupedRules = Record<PromAlertingRuleState, CombinedRule[]>;
 
 export const RuleListStateView = ({ namespaces }: Props) => {
-  const filters = getFiltersFromUrlParams(useQueryParams()[0]);
-
   const groupedRules = useMemo(() => {
     const result: GroupedRules = {
       [PromAlertingRuleState.Firing]: [],
@@ -42,24 +40,40 @@ export const RuleListStateView = ({ namespaces }: Props) => {
 
     return result;
   }, [namespaces]);
+
+  const titles: Record<string, string> = {
+    [PromAlertingRuleState.Firing]: 'Firing',
+    [PromAlertingRuleState.Pending]: 'Pending',
+    [PromAlertingRuleState.Inactive]: 'Normal',
+  };
+
   return (
-    <>
-      {(!filters.alertState || filters.alertState === PromAlertingRuleState.Firing) && (
-        <RuleListStateSection state={PromAlertingRuleState.Firing} rules={groupedRules[PromAlertingRuleState.Firing]} />
-      )}
-      {(!filters.alertState || filters.alertState === PromAlertingRuleState.Pending) && (
-        <RuleListStateSection
-          state={PromAlertingRuleState.Pending}
-          rules={groupedRules[PromAlertingRuleState.Pending]}
-        />
-      )}
-      {(!filters.alertState || filters.alertState === PromAlertingRuleState.Inactive) && (
-        <RuleListStateSection
-          defaultCollapsed={filters.alertState !== PromAlertingRuleState.Inactive}
-          state={PromAlertingRuleState.Inactive}
-          rules={groupedRules[PromAlertingRuleState.Inactive]}
-        />
-      )}
-    </>
+    <Stack direction="column">
+      {Object.entries(groupedRules).map(([state, rules]) => (
+        <Namespace
+          name={
+            <Stack alignItems="center" gap={-1}>
+              {titles[state] ?? 'Unknown'}
+              <Counter value={rules.length} />
+            </Stack>
+          }
+          key={state}
+          collapsed={rules.length === 0}
+        >
+          {rules.map((rule) => (
+            <AlertRuleListItem
+              key={hashRule(rule.promRule!)}
+              state={state}
+              name={rule.name}
+              error={rule.promRule?.lastError}
+              summary={rule.annotations.summary}
+              href={createViewLink(rule.namespace.rulesSource, rule)}
+              groupName={rule.group.name}
+              namespace={rule.namespace}
+            />
+          ))}
+        </Namespace>
+      ))}
+    </Stack>
   );
 };

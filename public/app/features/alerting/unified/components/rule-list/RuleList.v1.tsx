@@ -103,24 +103,26 @@ const RuleList = withErrorBoundary(
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
-        <RuleListErrors />
-        <RulesFilter onClear={onFilterCleared} />
-        {hasAlertRulesCreated && (
-          <Stack direction="row" alignItems="center">
-            {view === 'groups' && hasActiveFilters && (
-              <Button
-                icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
-                variant="secondary"
-                onClick={() => setExpandAll(!expandAll)}
-              >
-                {expandAll ? 'Collapse all' : 'Expand all'}
-              </Button>
-            )}
-            <RuleStats namespaces={filteredNamespaces} />
-          </Stack>
-        )}
-        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+        <Stack direction="column">
+          <RuleListErrors />
+          <RulesFilter onClear={onFilterCleared} />
+          {hasAlertRulesCreated && (
+            <Stack direction="row" alignItems="center">
+              {view === 'groups' && hasActiveFilters && (
+                <Button
+                  icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
+                  variant="secondary"
+                  onClick={() => setExpandAll(!expandAll)}
+                >
+                  {expandAll ? 'Collapse all' : 'Expand all'}
+                </Button>
+              )}
+            </Stack>
+          )}
+          <RuleStats namespaces={filteredNamespaces} />
+          {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+          {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
+        </Stack>
       </AlertingPageWrapper>
     );
   },
