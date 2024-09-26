@@ -145,11 +145,13 @@ If you want to use other codes or give the field a custom name, you can follow t
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Map View
+## Configuration options
+
+### Map View
 
 The map view controls the initial view of the map when the dashboard loads.
 
-### Initial View
+#### Initial View
 
 The initial view configures how the geomap renders when the panel is first loaded.
 
@@ -176,7 +178,7 @@ The initial view configures how the geomap renders when the panel is first loade
     - **Oceania**
 - **Zoom** sets the initial zoom level.
 
-### Share view
+#### Share view
 
 The **Share view** option allows you to link the movement and zoom actions of multiple map visualizations within the same dashboard. The map visualizations that have this option enabled act in tandem when one of them is moved or zoomed, leaving the other ones independent.
 
@@ -184,11 +186,11 @@ The **Share view** option allows you to link the movement and zoom actions of mu
 You might need to reload the dashboard for this feature to work.
 {{< /admonition >}}
 
-## Map layers
+### Map layers
 
 Geomaps support showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
 
-### Types
+#### Types
 
 There are seven map layer types to choose from in a geomap.
 
@@ -230,7 +232,7 @@ docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSIO
 [Basemap layer types](#types-1) can also be added as layers. You can specify an opacity.
 {{% /admonition %}}
 
-### Layer Controls
+#### Layer Controls
 
 The layer controls allow you to create layers, change their name, reorder and delete layers.
 
@@ -242,11 +244,11 @@ The layer controls allow you to create layers, change their name, reorder and de
 
 You can add multiple layers of data to a single geomap in order to create rich, detailed visualizations.
 
-### Data
+#### Data
 
 Geomaps need a source of geographical data gathered from a data source query which can return multiple datasets. By default Grafana picks the first dataset, but this drop-down allows you to pick other datasets if the query returns more than one.
 
-### Location mode
+#### Location mode
 
 There are four options to map the data returned by the selected query:
 
@@ -259,12 +261,12 @@ There are four options to map the data returned by the selected query:
 - **Geohash** specifies that your query holds geohash data. You will be prompted to select a string data field for the geohash from your database query.
 - **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
 
-## Basemap layer
+### Basemap layer
 
 A basemap layer provides the visual foundation for a mapping application. It typically contains data with global coverage. Several base layer options
 are available each with specific configuration options to style the base map.
 
-### Types
+#### Types
 
 There are four basemap layer types to choose from in a geomap.
 
@@ -273,13 +275,13 @@ There are four basemap layer types to choose from in a geomap.
 - [ArcGIS](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ](#xyz-tile-layer) adds a map from a generic tile layer.
 
-### Default
+#### Default
 
 The default base layer uses the [CARTO](#carto-layer) map. You can define custom default base layers in the `.ini` configuration file.
 
 ![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
 
-#### Configure the default base layer with provisioning
+##### Configure the default base layer with provisioning
 
 You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page](ref:provisioning-docs-page).
 
@@ -342,7 +344,7 @@ default_baselayer_config = `{
 
 `enable_custom_baselayers` allows you to enable or disable custom open source base maps that are already implemented. The default is `true`.
 
-## Markers layer
+### Markers layer
 
 The markers layer allows you to display data points as different marker shapes such as circles, squares, triangles, stars, and more.
 
@@ -362,7 +364,7 @@ The markers layer allows you to display data points as different marker shapes s
 - **Show legend** allows you to toggle the legend for the layer.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
-## Heatmap layer
+### Heatmap layer
 
 The heatmap layer clusters various data points to visualize locations with different densities.
 To add a heatmap layer:
@@ -382,7 +384,7 @@ Similar to `Markers`, you are prompted with various options to determine which d
 - **Opacity** configures the opacity of each cluster.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
-## GeoJSON layer
+### GeoJSON layer
 
 The GeoJSON layer allows you to select and load a static GeoJSON file from the filesystem.
 
@@ -417,13 +419,13 @@ Styles can be set within the "properties" object of the GeoJSON with support for
 
 {{% /admonition %}}
 
-## Night / Day layer
+### Night / Day layer
 
 The Night / Day layer displays night and day regions based on the current time range.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day" >}}
 
-### Options
+#### Options
 
 - **Data** configures the data set for the layer. For more information, refer to [Data](#data).
 - **Show** toggles the time source from panel time range.
@@ -434,11 +436,11 @@ The Night / Day layer displays night and day regions based on the current time r
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-day-night-options-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day options" >}}
 
-### More information
+#### More information
 
 - [**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
 
-## Route layer (Beta)
+### Route layer (Beta)
 
 {{% admonition type="caution" %}}
 The Route layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
@@ -448,7 +450,7 @@ The Route layer renders data points as a route.
 
 {{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
 
-### Options
+#### Options
 
 - **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Size** sets the route thickness. Fixed value by default. When field data is selected you can set the Min and Max range in which field data can scale.
@@ -463,11 +465,11 @@ The Route layer renders data points as a route.
 
 {{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
 
-### More information
+#### More information
 
 - [**Extensions for OpenLayers - Flow Line Style**](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
 
-## Photos layer (Beta)
+### Photos layer (Beta)
 
 {{% admonition type="caution" %}}
 The Photos layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
@@ -477,7 +479,7 @@ The Photos layer renders a photo at each data point.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
 
-### Options
+#### Options
 
 - **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Image Source field** allows you to select a string field containing image data in either of the following formats:
@@ -497,11 +499,11 @@ The Photos layer renders a photo at each data point.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-photos-options-9-3-0.png" max-width="1200px" caption="Geomap panel Photos options" >}}
 
-### More information
+#### More information
 
 - [**Extensions for OpenLayers - Image Photo Style**](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
 
-## Network layer (Beta)
+### Network layer (Beta)
 
 {{% admonition type="caution" %}}
 The Network layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
@@ -512,7 +514,7 @@ The Network layer renders a network graph. This layer supports the same [data fo
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
 {{< video-embed src="/media/docs/grafana/screen-recording-10-1-geomap-network-layer-from-node-graph.mp4" max-width="750px" caption="Node graph to Geomap network layer" >}}
 
-### Options
+#### Options
 
 - **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Arrow** sets the arrow direction to display for each edge, with forward meaning source to target. Choose from:
@@ -523,7 +525,7 @@ The Network layer renders a network graph. This layer supports the same [data fo
 - **Show legend** allows you to toggle the legend for the layer. **Note:** The legend currently only supports node data.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
-#### Node styles
+##### Node styles
 
 - **Size** configures the size of the nodes. The default is `Fixed size`, which makes all node sizes the same regardless of the data; however, there is also an option to size the nodes based on data corresponding to a selected field. `Min` and `Max` node sizes have to be set such that the nodes can scale within this range.
 - **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
@@ -532,18 +534,18 @@ The Network layer renders a network graph. This layer supports the same [data fo
 - **Rotation angle** configures the rotation angle of each node. The default is `Fixed value`, which makes all nodes rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the nodes based on data corresponding to a selected field.
 - **Text label** configures a text label for each node.
 
-#### Edge styles
+##### Edge styles
 
 - **Size** configures the line width of the edges. The default is `Fixed size`, which makes all edge line widths the same regardless of the data; however, there is also an option to size the edges based on data corresponding to a selected field. `Min` and `Max` eges sizes have to be set such that the edges can scale within this range.
 - **Color** configures the color of the edges. The default `Fixed color` sets all edges to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section.
 - **Fill opacity** configures the transparency of each edge.
 - **Text label** configures a text label for each edge.
 
-## CARTO layer
+### CARTO layer
 
 A CARTO layer is from CARTO Raster basemaps.
 
-### Options
+#### Options
 
 - **Theme**
   - Auto
@@ -556,17 +558,17 @@ A CARTO layer is from CARTO Raster basemaps.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-carto-options-9-1-0.png" max-width="1200px" caption="Geomap panel CARTO options" >}}
 
-### More Information
+#### More Information
 
 - [**About CARTO**](https://carto.com/about-us/)
 
-## XYZ tile layer
+### XYZ tile layer
 
 The XYZ tile layer is a map from a generic tile layer.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-xyz-9-1-0.png" max-width="1200px" caption="Geomap panel xyz example" >}}
 
-### Options
+#### Options
 
 - **URL template**
 
@@ -577,32 +579,32 @@ The XYZ tile layer is a map from a generic tile layer.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-xyz-options-9-1-0.png" max-width="1200px" caption="Geomap panel xyz options" >}}
 
-### More information
+#### More information
 
 - [**Tiled Web Map Wikipedia**](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [**List of Open Street Map Tile Servers**](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
-## Open Street Map layer
+### Open Street Map layer
 
 A map from a collaborative free geographic world database.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="1200px" caption="Geomap panel Open Street Map" >}}
 
-### Options
+#### Options
 
 - **Opacity** from 0 (transparent) to 1 (opaque)
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-osm-options-9-1-0.png" max-width="1200px" caption="Geomap panel Open Street Map options" >}}
 
-### More Information
+#### More Information
 
 - [**About Open Street Map**](https://www.openstreetmap.org/about)
 
-## ArcGIS layer
+### ArcGIS layer
 
 An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
-### Options
+#### Options
 
 - **Server Instance** to select the map type.
   - World Street Map
@@ -624,37 +626,37 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
   {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-options-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS options" >}}
 
-### More Information
+#### More Information
 
 - [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
 - [**About ESRI**](https://www.esri.com/en-us/about/about-esri/overview)
 
-## Map Controls
+### Map Controls
 
 The map controls section contains various options for map information and tool overlays.
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-9-1-0.png" max-width="1200px" caption="Geomap panel map controls" >}}
 
-### Zoom
+#### Zoom
 
 This section describes each of the zoom controls.
 
-#### Show zoom control
+##### Show zoom control
 
 Displays zoom controls in the upper left corner. This control can be useful when using systems that don't have a mouse.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-zoom-9-1-0.png" max-width="1200px" caption="Geomap panel zoom" >}}
 
-#### Mouse wheel zoom
+##### Mouse wheel zoom
 
 Enables the mouse wheel to be used for zooming in or out.
 
-### Show attribution
+#### Show attribution
 
 Displays attribution for basemap layers.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-attribution-9-1-0.png" max-width="1200px" caption="Geomap panel attribution" >}}
 
-### Show scale
+#### Show scale
 
 Displays scale information in the bottom left corner.
 
@@ -664,7 +666,7 @@ Displays scale information in the bottom left corner.
 Currently only displays units in [m]/[km].
 {{% /admonition %}}
 
-### Show measure tools
+#### Show measure tools
 
 Displays measure tools in the upper right corner. Measurements appear only when this control is open.
 
@@ -678,7 +680,7 @@ Displays measure tools in the upper right corner. Measurements appear only when 
 When you change measurement type or units, the previous measurement is removed from the map. If the control is closed and then re-opened, the most recent measurement is displayed. A measurement can be modified by clicking and dragging on it.
 {{% /admonition %}}
 
-#### Length
+##### Length
 
 Get the spherical length of a geometry. This length is the sum of the great circle distances between coordinates. For multi-part geometries, the length is the sum of the length of each part. Geometries are assumed to be in 'EPSG:3857'.
 
@@ -689,7 +691,7 @@ Get the spherical length of a geometry. This length is the sum of the great circ
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-length-9-1-0.png" max-width="1200px" caption="Geomap panel measure length" >}}
 
-#### Area
+##### Area
 
 Get the spherical area of a geometry. This area is calculated assuming that polygon edges are segments of great circles on a sphere. Geometries are assumed to be in 'EPSG:3857'.
 
@@ -702,7 +704,7 @@ Get the spherical area of a geometry. This area is calculated assuming that poly
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="1200px" caption="Geomap panel measure area" >}}
 
-### Show debug
+#### Show debug
 
 Displays debug information in the upper right corner. This can be useful for debugging or validating a data source.
 
@@ -711,7 +713,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-debug-9-1-0.png" max-width="1200px" caption="Geomap panel debug" >}}
 
-### Tooltip
+#### Tooltip
 
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
