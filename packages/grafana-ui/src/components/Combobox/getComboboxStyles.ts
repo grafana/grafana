@@ -6,6 +6,9 @@ const MAX_HEIGHT = 400;
 
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
   return {
+    input: css({
+      maxWidth: '100%',
+    }),
     menuClosed: css({
       display: 'none',
     }),

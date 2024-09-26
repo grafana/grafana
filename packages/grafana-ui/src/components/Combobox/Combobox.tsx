@@ -6,6 +6,7 @@ import { useCallback, useId, useMemo, useState } from 'react';
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Icon } from '../Icon/Icon';
+import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 
 import { getComboboxStyles } from './getComboboxStyles';
@@ -24,6 +25,7 @@ interface ComboboxProps<T extends string | number>
   options: Array<ComboboxOption<T>>;
   onChange: (option: ComboboxOption<T> | null) => void;
   value: T | null;
+  inline?: boolean;
 }
 
 function itemToString(item: ComboboxOption<string | number> | null) {
@@ -54,6 +56,7 @@ export const Combobox = <T extends string | number>({
   isClearable = false,
   createCustomValue = false,
   id,
+  inline = false,
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
@@ -158,9 +161,12 @@ export const Combobox = <T extends string | number>({
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
 
+  const InputComponent = inline ? AutoSizeInput : Input;
+
   return (
     <div>
-      <Input
+      <InputComponent
+        className={styles.input}
         suffix={
           <>
             {!!value && value === selectedItem?.value && isClearable && (
