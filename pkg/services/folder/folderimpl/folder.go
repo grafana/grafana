@@ -59,6 +59,7 @@ type Service struct {
 }
 
 func ProvideService(
+	store *sqlStore,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
 	dashboardStore dashboards.Store,
@@ -70,7 +71,6 @@ func ProvideService(
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
 ) folder.Service {
-	store := ProvideStore(db)
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
@@ -89,9 +89,9 @@ func ProvideService(
 
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv.store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv.store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv.store))
 	return srv
 }
 

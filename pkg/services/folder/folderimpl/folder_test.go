@@ -64,7 +64,8 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		ac := acmock.New()
 		db := db.InitTestDB(t)
 		folderPermissions := acmock.NewMockedPermissionsService()
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db,
+		store := ProvideStore(db)
+		ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db,
 			featuremgmt.WithFeatures(), folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
@@ -488,13 +489,13 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				CanEditValue: true,
 			})
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nil)
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac)
 			require.NoError(t, err)
 
-			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, featuresFlagOn, ac)
+			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOn, serviceWithFlagOn.store, featuresFlagOn, ac)
 			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOn)
 			require.NoError(t, err)
 
@@ -570,13 +571,13 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			})
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
-				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nil)
+				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac)
 			require.NoError(t, err)
 
-			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, featuresFlagOff, ac)
+			elementService := libraryelements.ProvideService(cfg, db, routeRegister, serviceWithFlagOff, serviceWithFlagOff.store, featuresFlagOff, ac)
 			lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, serviceWithFlagOff)
 			require.NoError(t, err)
 
@@ -705,7 +706,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 					CanEditValue: true,
 				})
 
-				elementService := libraryelements.ProvideService(cfg, db, routeRegister, tc.service, tc.featuresFlag, ac)
+				elementService := libraryelements.ProvideService(cfg, db, routeRegister, tc.service, tc.service.store, tc.featuresFlag, ac)
 				lps, err := librarypanels.ProvideService(cfg, db, routeRegister, elementService, tc.service)
 				require.NoError(t, err)
 
@@ -715,7 +716,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				tc.service.dashboardStore = dashStore
 				tc.service.store = nestedFolderStore
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, nil)
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, tc.service.store, nil)
 				require.NoError(t, err)
 				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac)
 				require.NoError(t, err)
@@ -1495,6 +1496,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		dashboardPermissions,
 		actest.FakeAccessControl{},
 		serviceWithFlagOn,
+		nestedFolderStore,
 		nil,
 	)
 	require.NoError(t, err)

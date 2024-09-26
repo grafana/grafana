@@ -832,7 +832,8 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderPermissions := mock.NewMockedPermissionsService()
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
+	fStore := folderimpl.ProvideStore(sqlStore)
+	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
 		folderStore, sqlStore, features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{
@@ -952,7 +953,8 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(features, zanzana.NewNoopClient())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	folderPermissions := mock.NewMockedPermissionsService()
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
+	fStore := folderimpl.ProvideStore(sqlStore)
+	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
 		folderStore, sqlStore, features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	user := &user.SignedInUser{

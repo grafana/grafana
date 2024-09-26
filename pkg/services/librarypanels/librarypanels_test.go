@@ -732,7 +732,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-		foldertest.NewFakeService(),
+		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil,
 	)
 	require.NoError(t, err)
@@ -753,7 +753,8 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, features, tagimpl.ProvideService(sc.sqlStore), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
+	fStore := folderimpl.ProvideStore(sc.sqlStore)
+	s := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
 		features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	t.Logf("Creating folder with title and UID %q", title)
@@ -828,7 +829,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashService, err := dashboardservice.ProvideDashboardServiceImpl(
 			setting.NewCfg(), dashStore, folderStore,
 			featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), dashPermissionService, ac,
-			foldertest.NewFakeService(),
+			foldertest.NewFakeService(), folder.NewFakeStore(),
 			nil,
 		)
 		require.NoError(t, err)
@@ -837,10 +838,11 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		features := featuremgmt.WithFeatures()
-		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
+		fStore := folderimpl.ProvideStore(sqlStore)
+		folderService := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
 			features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
-		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, featuremgmt.WithFeatures(), ac)
+		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, fStore, featuremgmt.WithFeatures(), ac)
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
