@@ -12,7 +12,7 @@ import {
   PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
@@ -22,8 +22,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
+import { VizTooltipWrapper } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipWrapper';
 import { getDataLinks } from '../status-history/utils';
-import { getStyles } from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable } from '../timeseries/utils';
 
 import { HeatmapData } from './fields';
@@ -360,10 +360,8 @@ const HeatmapHoverCell = ({
     }
   }
 
-  const styles = useStyles2(getStyles);
-
   return (
-    <div className={styles.wrapper}>
+    <VizTooltipWrapper>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
       <VizTooltipContent
         items={contentItems}
@@ -378,6 +376,6 @@ const HeatmapHoverCell = ({
         ))}
       </VizTooltipContent>
       {footer}
-    </div>
+    </VizTooltipWrapper>
   );
 };

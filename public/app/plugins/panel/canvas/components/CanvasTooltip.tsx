@@ -175,6 +175,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
     padding: 0,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
   pinned: css({
     boxShadow: theme.shadows.z3,

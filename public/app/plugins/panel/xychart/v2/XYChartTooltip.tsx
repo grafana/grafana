@@ -2,14 +2,13 @@ import { ReactNode } from 'react';
 
 import { DataFrame } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 
+import { VizTooltipWrapper } from '../../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipWrapper';
 import { getDataLinks } from '../../status-history/utils';
-import { getStyles } from '../../timeseries/TimeSeriesTooltip';
 
 import { XYSeries } from './types2';
 import { fmt } from './utils';
@@ -32,8 +31,6 @@ function stripSeriesName(fieldName: string, seriesName: string) {
 }
 
 export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, isPinned }: Props) => {
-  const styles = useStyles2(getStyles);
-
   const rowIndex = dataIdxs.find((idx) => idx !== null)!;
 
   const series = xySeries[seriesIdx! - 1];
@@ -102,10 +99,10 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, xySeries, dismiss, i
   }
 
   return (
-    <div className={styles.wrapper}>
+    <VizTooltipWrapper>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
       <VizTooltipContent items={contentItems} isPinned={isPinned} />
       {footer}
-    </div>
+    </VizTooltipWrapper>
   );
 };
