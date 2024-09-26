@@ -203,6 +203,7 @@ Experimental features might be changed or removed without prior notice.
 | `homeSetupGuide`                            | Used in Home for users who want to return to the onboarding flow or quickly find popular config pages                                                                                                                                                                             |
 | `appSidecar`                                | Enable the app sidecar feature that allows rendering 2 apps at the same time                                                                                                                                                                                                      |
 | `alertingQueryAndExpressionsStepMode`       | Enables step mode for alerting queries and expressions                                                                                                                                                                                                                            |
+| `rolePickerDrawer`                          | Enables the new role picker drawer design                                                                                                                                                                                                                                         |
 
 ## Development feature toggles
 
