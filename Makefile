@@ -146,7 +146,14 @@ gen-cue: ## Do all CUE/Thema code generation
 gen-feature-toggles:
 ## First go test run fails because it will re-generate the feature toggles.
 ## Second go test run will compare the generated files and pass.
+	# If toggles_gen.go has conflict markers, then the test won't run because of the invalid syntax
+	if git ls-files -u | grep -q "pkg/services/featuremgmt/toggles_gen.go"; then \
+		echo "File pkg/services/featuremgmt/toggles_gen.go is conflicting, checking out from origin/main"; \
+		git checkout origin/main -- pkg/services/featuremgmt/toggles_gen.go; \
+	fi
+
 	@echo "generate feature toggles"
+	# Run the tests
 	go test -v ./pkg/services/featuremgmt/... > /dev/null 2>&1; \
 	if [ $$? -eq 0 ]; then \
 		echo "feature toggles already up-to-date"; \
