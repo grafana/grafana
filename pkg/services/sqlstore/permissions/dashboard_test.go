@@ -824,7 +824,8 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	require.NoError(t, err)
 	folderPermissions := mock.NewMockedPermissionsService()
 
-	folderSvc := folderimpl.ProvideService(actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
+	fStore := folderimpl.ProvideStore(db)
+	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
 		folderimpl.ProvideDashboardFolderStore(db), db, features, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	// create parent folder
