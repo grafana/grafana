@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -822,7 +822,8 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	// dashboard store commands that should be called.
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db), quotatest.New(false, nil))
 	require.NoError(t, err)
-	folderPermissions := mock.NewMockedPermissionsService()
+	folderPermissions, err := testutil.ProvideFolderPermissionsForTests(features, cfg, db)
+	require.NoError(t, err)
 
 	fStore := folderimpl.ProvideStore(db)
 	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,

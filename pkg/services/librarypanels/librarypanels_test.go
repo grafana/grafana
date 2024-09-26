@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol/testutil"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -821,7 +822,6 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		quotaService := quotatest.New(false, nil)
 
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-		folderPermissions := acmock.NewMockedPermissionsService()
 		dashStore := &dashboards.FakeDashboardStore{}
 		dashStore.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{ID: 1}, nil)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
@@ -839,6 +839,10 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 		features := featuremgmt.WithFeatures()
 		fStore := folderimpl.ProvideStore(sqlStore)
+
+		folderPermissions, err := testutil.ProvideFolderPermissionsForTests(features, cfg, sqlStore)
+		require.NoError(t, err)
+
 		folderService := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sqlStore,
 			features, cfg, folderPermissions, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
