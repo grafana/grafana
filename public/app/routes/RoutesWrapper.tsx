@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as H from 'history';
 import { ComponentType } from 'react';
-import { Router } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
 import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data/';
@@ -23,7 +23,7 @@ type RouterWrapperProps = {
 };
 export function RouterWrapper(props: RouterWrapperProps) {
   return (
-    <Router history={locationService.getHistory()}>
+    <Router>
       <LocationServiceProvider service={locationService}>
         <CompatRouter>
           <ModalsContextProvider>
@@ -95,7 +95,7 @@ export function ExperimentalSplitPaneRouterWrapper(props: RouterWrapperProps) {
         <>
           <div {...splitterProps} />
           <div {...secondaryProps}>
-            <Router history={memoryLocationService.getHistory()}>
+            <Router>
               <LocationServiceProvider service={memoryLocationService}>
                 <CompatRouter>
                   <GlobalStyles />
