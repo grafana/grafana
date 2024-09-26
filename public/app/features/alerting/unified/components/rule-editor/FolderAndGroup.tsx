@@ -211,6 +211,7 @@ export function FolderAndGroup({
             className={styles.formInput}
             error={errors.group?.message}
             invalid={!!errors.group?.message}
+            htmlFor="group"
           >
             <Controller
               render={({ field: { ref, ...field }, fieldState }) => (
