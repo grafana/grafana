@@ -12,7 +12,7 @@ import (
 )
 
 // Creates a new ResourceServer
-func NewResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
+func NewResourceServer(ctx context.Context, db infraDB.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (resource.ResourceServer, error) {
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
 	}
@@ -36,8 +36,7 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.Fea
 			return nil, err
 		}
 		// initialze the search index
-		// TODO: pass context to NewRsouceServer function
-		_, err = server.Index(context.Background(), &resource.IndexRequest{})
+		_, err = server.Index(ctx, &resource.IndexRequest{})
 		return server, err
 	}
 

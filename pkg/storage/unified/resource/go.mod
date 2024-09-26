@@ -38,7 +38,7 @@ require (
 	github.com/blevesearch/zapx/v15 v15.3.13 // indirect
 	github.com/blevesearch/zapx/v16 v16.1.5 // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
-	github.com/golang/snappy v0.0.1 // indirect
+	github.com/golang/snappy v0.0.4 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	go.etcd.io/bbolt v1.3.9 // indirect
 )
