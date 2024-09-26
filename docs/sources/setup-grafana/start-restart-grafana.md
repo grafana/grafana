@@ -37,7 +37,7 @@ Complete the following steps to start the Grafana server using systemd and verif
 
 1. To verify that the service is running, run the following command:
 
-   ```
+   ```bash
    sudo systemctl status grafana-server
    ```
 
