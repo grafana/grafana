@@ -280,12 +280,15 @@ export function fetchAllPromAndRulerRulesAction(
   };
 }
 
-export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
+export function fetchAllPromRulesAction(
+  force = false,
+  options: FetchPromRulesRulesActionProps = {}
+): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const { promRules } = getStore().unifiedAlerting;
     getAllRulesSourceNames().map((rulesSourceName) => {
       if (force || !promRules[rulesSourceName]?.loading) {
-        dispatch(fetchPromRulesAction({ rulesSourceName }));
+        dispatch(fetchPromRulesAction({ rulesSourceName, ...options }));
       }
     });
   };

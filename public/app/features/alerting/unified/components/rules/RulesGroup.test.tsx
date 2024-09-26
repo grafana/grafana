@@ -40,8 +40,8 @@ const mocks = {
 
 function mockUseHasRuler(hasRuler: boolean, rulerRulesLoaded: boolean) {
   mocks.useHasRuler.mockReturnValue({
-    hasRuler: () => hasRuler,
-    rulerRulesLoaded: () => rulerRulesLoaded,
+    hasRuler,
+    rulerRulesLoaded,
   });
 }
 

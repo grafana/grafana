@@ -3,7 +3,9 @@ import { chain, isEmpty, truncate } from 'lodash';
 import { useState } from 'react';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
@@ -12,6 +14,7 @@ import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } fro
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { usePrometheusConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
@@ -51,8 +54,10 @@ export enum ActiveTab {
   Details = 'details',
 }
 
+const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary ?? false;
+
 const RuleViewer = () => {
-  const { rule } = useAlertRule();
+  const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
 
   // this will be used to track if we are in the process of cloning a rule
@@ -112,6 +117,7 @@ const RuleViewer = () => {
         </Stack>
       }
     >
+      {prometheusRulesPrimary && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
       <Stack direction="column" gap={2}>
         {/* tabs and tab content */}
         <TabContent>
@@ -260,6 +266,27 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
     </div>
   );
 };
+
+function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
+  const { isConsistent, loading, error } = usePrometheusConsistencyCheck(ruleIdentifier);
+
+  if (loading || error || isConsistent) {
+    return null;
+  }
+
+  return (
+    <Alert
+      title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Updates in progress')}
+      severity="warning"
+    >
+      <LoadingBar width={20} />
+      <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
+        This rule has been updated recently. Updates are not yet reflected on the alert list page. It will take up to a
+        minute to propagate the changes.
+      </Trans>
+    </Alert>
+  );
+}
 
 export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 

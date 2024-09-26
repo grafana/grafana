@@ -1,20 +1,24 @@
 import { useState, useCallback, useMemo } from 'react';
 
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { useDeleteRuleFromGroup } from '../../hooks/ruleGroup/useDeleteRuleFromGroup';
+import { usePrometheusRemovalConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { fetchPromAndRulerRulesAction } from '../../state/actions';
 import { fromRulerRuleAndRuleGroupIdentifier } from '../../utils/rule-id';
-import { getRuleGroupLocationFromCombinedRule } from '../../utils/rules';
+import { getRuleGroupLocationFromCombinedRule, isCloudRuleIdentifier } from '../../utils/rules';
 
 type DeleteModalHook = [JSX.Element, (rule: CombinedRule) => void, () => void];
+
+const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 
 export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
+  const { waitForConsistency } = usePrometheusRemovalConsistencyCheck();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);
@@ -39,13 +43,17 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
       // @TODO remove this when we moved everything to RTKQ – then the endpoint will simply invalidate the tags
       dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroupIdentifier.dataSourceName }));
 
+      if (prometheusRulesPrimary && isCloudRuleIdentifier(ruleIdentifier)) {
+        await waitForConsistency(ruleIdentifier);
+      }
+
       dismissModal();
 
       if (redirectToListView) {
         locationService.replace('/alerting/list');
       }
     },
-    [deleteRuleFromGroup, dismissModal, redirectToListView]
+    [deleteRuleFromGroup, dismissModal, redirectToListView, waitForConsistency]
   );
 
   const modal = useMemo(

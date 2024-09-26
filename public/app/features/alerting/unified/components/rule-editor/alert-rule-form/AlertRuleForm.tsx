@@ -32,6 +32,7 @@ import {
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { createViewLinkFromIdentifier } from '../../../utils/misc';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
   MANUAL_ROUTING_KEY,
@@ -59,6 +60,8 @@ type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
 };
+
+const prometheusRulesPrimary = config.featureToggles.alertingPrometheusRulesPrimary;
 
 export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
@@ -166,12 +169,24 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       );
     }
 
-    if (exitOnSave && returnTo) {
-      locationService.push(returnTo);
-    } else if (isCloudRulerRule(ruleDefinition)) {
-      const { dataSourceName, namespaceName, groupName } = getRuleGroupLocationFromFormValues(values);
-      const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
-      locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+    if (exitOnSave) {
+      if (returnTo) {
+        locationService.push(returnTo);
+      }
+      if (isCloudRulerRule(ruleDefinition) && prometheusRulesPrimary) {
+        const { dataSourceName, namespaceName, groupName } = getRuleGroupLocationFromFormValues(values);
+        const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
+        locationService.replace(createViewLinkFromIdentifier(updatedRuleIdentifier));
+      }
+      // TODO Handle GMA rules
+    } else {
+      // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
+      // After successful update we need to update the URL to avoid displaying 404 errors
+      if (isCloudRulerRule(ruleDefinition)) {
+        const { dataSourceName, namespaceName, groupName } = getRuleGroupLocationFromFormValues(values);
+        const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
+        locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
+      }
     }
   };
 
