@@ -12,7 +12,15 @@ const pkg = rq('./package.json');
 export default [
   {
     input: 'src/index.ts',
-    plugins: [nodeExternals({ deps: true, packagePath: './package.json' }), resolve(), esbuild(), image()],
+    plugins: [
+      nodeExternals({ deps: true, packagePath: './package.json' }),
+      resolve(),
+      esbuild({
+        target: 'es2018',
+        tsconfig: 'tsconfig.build.json',
+      }),
+      image(),
+    ],
     output: [
       {
         format: 'cjs',

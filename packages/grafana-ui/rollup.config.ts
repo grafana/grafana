@@ -26,7 +26,10 @@ export default [
         targets: [{ src: iconSrcPaths, dest: './dist/public/' }],
         flatten: false,
       }),
-      esbuild(),
+      esbuild({
+        target: 'es2018',
+        tsconfig: 'tsconfig.build.json',
+      }),
     ],
     output: [
       {

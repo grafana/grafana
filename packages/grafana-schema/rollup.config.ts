@@ -13,7 +13,14 @@ const pkg = rq('./package.json');
 export default [
   {
     input: 'src/index.ts',
-    plugins: [nodeExternals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
+    plugins: [
+      nodeExternals({ deps: true, packagePath: './package.json' }),
+      resolve(),
+      esbuild({
+        target: 'es2018',
+        tsconfig: 'tsconfig.build.json',
+      }),
+    ],
     output: [
       {
         format: 'cjs',
@@ -47,7 +54,13 @@ export default [
           fileURLToPath(new URL(file, import.meta.url)),
         ])
     ),
-    plugins: [resolve(), esbuild()],
+    plugins: [
+      resolve(),
+      esbuild({
+        target: 'es2018',
+        tsconfig: 'tsconfig.build.json',
+      }),
+    ],
     output: {
       format: 'esm',
       dir: path.dirname(pkg.publishConfig.module),
