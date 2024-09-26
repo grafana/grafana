@@ -64,14 +64,14 @@ func (d *DualWriterMode3) Create(ctx context.Context, in runtime.Object, createV
 	d.recordStorageDuration(errObjectSt != nil, mode3Str, d.resource, method, startStorage)
 	if errObjectSt != nil {
 		log.Error(err, "unable to create object in storage")
-		return storageObj, err
+		return storageObj, errObjectSt
 	}
 
 	createdCopy := storageObj.DeepCopyObject()
 
 	go d.createOnLegacyStorage(ctx, createdCopy, createValidation, options)
 
-	return storageObj, nil
+	return storageObj, errObjectSt
 }
 
 func (d *DualWriterMode3) createOnLegacyStorage(ctx context.Context, storageObj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) error {
