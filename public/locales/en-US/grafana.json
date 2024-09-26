@@ -1926,13 +1926,16 @@
         "button": "Update all",
         "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
         "error": "Error updating plugin:",
+        "error-status-text": "failed - see error messages",
         "header": "The following plugins have update available",
         "installed-header": "Installed",
         "modal-confirmation": "Update",
         "modal-dismiss": "Close",
+        "modal-in-progress": "Updating...",
         "modal-title": "Update Plugins",
         "name-header": "Name",
-        "update-header": "Update"
+        "update-header": "Update",
+        "update-status-text": "plugins updated"
       }
     },
     "details": {
