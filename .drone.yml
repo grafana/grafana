@@ -4188,7 +4188,7 @@ steps:
   image: golang:1.23.1-alpine
   name: compile-build-cmd
 - commands:
-  - ./bin/build publish grafana-com --edition oss $${TAG}
+  - ./bin/build publish grafana-com --edition oss ${DRONE_TAG}
   depends_on:
   - compile-build-cmd
   environment:
@@ -6151,6 +6151,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 96c33502d8f5020eed6b49ad91af000b53336aeefd8869be68e5bb6449d96a3d
+hmac: 4a043d63a119ebf5920b600fce404d98f570504e855039cc4787c2fa1ab04669
 
 ...

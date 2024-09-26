@@ -1179,7 +1179,7 @@ def upload_packages_step(ver_mode, trigger = None):
         step = dict(step, when = trigger)
     return step
 
-def publish_grafanacom_step(ver_mode, version = "${DRONE_TAG}", depends_on = ["publish-linux-packages-deb", "publish-linux-packages-rpm"]):
+def publish_grafanacom_step(ver_mode, depends_on = ["publish-linux-packages-deb", "publish-linux-packages-rpm"]):
     """Publishes Grafana packages to grafana.com.
 
     Args:
@@ -1192,7 +1192,7 @@ def publish_grafanacom_step(ver_mode, version = "${DRONE_TAG}", depends_on = ["p
       Drone step.
     """
     if ver_mode == "release":
-        cmd = "./bin/build publish grafana-com --edition oss {}".format(version)
+        cmd = "./bin/build publish grafana-com --edition oss ${DRONE_TAG}"
     elif ver_mode == "main":
         build_no = "${DRONE_BUILD_NUMBER}"
         cmd = "./bin/build publish grafana-com --edition oss --build-id {}".format(

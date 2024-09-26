@@ -250,7 +250,7 @@ def publish_packages_pipeline():
             },
             steps = [
                 compile_build_cmd(),
-                publish_grafanacom_step(ver_mode = "release", version = "$${TAG}", depends_on = ["compile-build-cmd"]),
+                publish_grafanacom_step(ver_mode = "release", depends_on = ["compile-build-cmd"]),
             ],
         ),
     ]
