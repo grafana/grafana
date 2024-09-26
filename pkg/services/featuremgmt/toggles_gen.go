@@ -707,10 +707,6 @@ const (
 	// Throws an error if a datasource has an invalid UIDs
 	FlagFailWrongDSUID = "failWrongDSUID"
 
-	// FlagDatabaseReadReplica
-	// Use a read replica for some database queries.
-	FlagDatabaseReadReplica = "databaseReadReplica"
-
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
@@ -774,6 +770,10 @@ const (
 	// FlagExploreLogsLimitedTimeRange
 	// Used in Explore Logs to limit the time range
 	FlagExploreLogsLimitedTimeRange = "exploreLogsLimitedTimeRange"
+
+	// FlagHomeSetupGuide
+	// Used in Home for users who want to return to the onboarding flow or quickly find popular config pages
+	FlagHomeSetupGuide = "homeSetupGuide"
 
 	// FlagAppPlatformAccessTokens
 	// Enables the use of access tokens for the App Platform
