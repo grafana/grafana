@@ -230,10 +230,17 @@ func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, fold
 	if folderUID == ac.GeneralFolderUID {
 		return nil, nil
 	}
-	ancestors, err := folderStore.GetParents(ctx, folder.GetParentsQuery{
-		UID:   folderUID,
-		OrgID: orgID,
-	})
+
+	var ancestors []*folder.Folder
+	var err error
+	if folderUID == folder.SharedWithMeFolderUID {
+		ancestors = []*folder.Folder{&folder.SharedWithMeFolder}
+	} else {
+		ancestors, err = folderStore.GetParents(ctx, folder.GetParentsQuery{
+			UID:   folderUID,
+			OrgID: orgID,
+		})
+	}
 
 	if err != nil {
 		if errors.Is(err, folder.ErrFolderNotFound) {
