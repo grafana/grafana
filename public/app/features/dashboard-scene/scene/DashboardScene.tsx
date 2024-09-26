@@ -252,6 +252,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     };
 
     this._changeTracker.stopTrackingChanges();
+
     this.setState({
       version: result.version,
       isDirty: false,
@@ -267,6 +268,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       },
     });
 
+    this.state.editPanel?.dashboardSaved();
     this._changeTracker.startTrackingChanges();
   }
 
@@ -801,7 +803,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     let panel = getClosestVizPanel(sceneObject);
 
     if (dashboard.state.isEditing && dashboard.state.editPanel) {
-      panel = dashboard.state.editPanel.state.vizManager.state.panel;
+      panel = dashboard.state.editPanel.state.panelRef.resolve();
     }
 
     let panelId = 0;

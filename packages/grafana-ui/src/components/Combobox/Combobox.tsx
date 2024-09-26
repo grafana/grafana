@@ -1,8 +1,7 @@
 import { cx } from '@emotion/css';
-import { autoUpdate, flip, size, useFloating } from '@floating-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { SetStateAction, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useState } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -10,6 +9,7 @@ import { Icon } from '../Icon/Icon';
 import { Input, Props as InputProps } from '../Input/Input';
 
 import { getComboboxStyles } from './getComboboxStyles';
+import { estimateSize, useComboboxFloat } from './useComboboxFloat';
 
 export type ComboboxOption<T extends string | number = string> = {
   label: string;
@@ -41,16 +41,6 @@ function itemFilter<T extends string | number>(inputValue: string) {
     );
   };
 }
-
-function estimateSize() {
-  return 45;
-}
-
-const MIN_HEIGHT = 400;
-// On every 100th index we will recalculate the width of the popover.
-const INDEX_WIDTH_CALCULATION = 100;
-// A multiplier guesstimate times the amount of characters. If any padding or image support etc. is added this will need to be updated.
-const WIDTH_MULTIPLIER = 7.3;
 
 /**
  * A performant Select replacement.
@@ -97,15 +87,10 @@ export const Combobox = <T extends string | number>({
     return null;
   }, [selectedItemIndex, options, value]);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const floatingRef = useRef<HTMLDivElement>(null);
-
   const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
   const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
 
   const styles = useStyles2(getComboboxStyles);
-  const [popoverMaxWidth, setPopoverMaxWidth] = useState<number | undefined>(undefined);
-  const [popoverWidth, setPopoverWidth] = useState<number | undefined>(undefined);
 
   const virtualizerOptions = {
     count: items.length,
@@ -167,37 +152,11 @@ export const Combobox = <T extends string | number>({
       }
     },
   });
+  const { inputRef, floatingRef, floatStyles } = useComboboxFloat(items, rowVirtualizer.range, isOpen);
 
   const onBlur = useCallback(() => {
     setInputValue(selectedItem?.label ?? value?.toString() ?? '');
   }, [selectedItem, setInputValue, value]);
-
-  // the order of middleware is important!
-  const middleware = [
-    flip({
-      // see https://floating-ui.com/docs/flip#combining-with-shift
-      crossAxis: true,
-      boundary: document.body,
-    }),
-    size({
-      apply({ availableWidth }) {
-        setPopoverMaxWidth(availableWidth);
-      },
-    }),
-  ];
-  const elements = { reference: inputRef.current, floating: floatingRef.current };
-  const { floatingStyles } = useFloating({
-    strategy: 'fixed',
-    open: isOpen,
-    placement: 'bottom-start',
-    middleware,
-    elements,
-    whileElementsMounted: autoUpdate,
-  });
-
-  const hasMinHeight = isOpen && rowVirtualizer.getTotalSize() >= MIN_HEIGHT;
-
-  useDynamicWidth(items, rowVirtualizer.range, setPopoverWidth);
 
   return (
     <div>
@@ -246,12 +205,9 @@ export const Combobox = <T extends string | number>({
         })}
       />
       <div
-        className={cx(styles.menu, hasMinHeight && styles.menuHeight, !isOpen && styles.menuClosed)}
+        className={cx(styles.menu, !isOpen && styles.menuClosed)}
         style={{
-          ...floatingStyles,
-          maxWidth: popoverMaxWidth,
-          minWidth: inputRef.current?.offsetWidth,
-          width: popoverWidth,
+          ...floatStyles,
         }}
         {...getMenuProps({
           ref: floatingRef,
@@ -293,47 +249,4 @@ export const Combobox = <T extends string | number>({
       </div>
     </div>
   );
-};
-
-const useDynamicWidth = (
-  items: Array<ComboboxOption<string | number>>,
-  range: { startIndex: number; endIndex: number } | null,
-  setPopoverWidth: { (value: SetStateAction<number | undefined>): void }
-) => {
-  useEffect(() => {
-    if (range === null) {
-      return;
-    }
-    const startVisibleIndex = range?.startIndex;
-    const endVisibleIndex = range?.endIndex;
-
-    if (typeof startVisibleIndex === 'undefined' || typeof endVisibleIndex === 'undefined') {
-      return;
-    }
-
-    // Scroll down and default case
-    if (
-      startVisibleIndex === 0 ||
-      (startVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && startVisibleIndex >= INDEX_WIDTH_CALCULATION)
-    ) {
-      let maxLength = 0;
-      const calculationEnd = Math.min(items.length, endVisibleIndex + INDEX_WIDTH_CALCULATION);
-
-      for (let i = startVisibleIndex; i < calculationEnd; i++) {
-        maxLength = Math.max(maxLength, items[i].label.length);
-      }
-
-      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
-    } else if (endVisibleIndex % INDEX_WIDTH_CALCULATION === 0 && endVisibleIndex >= INDEX_WIDTH_CALCULATION) {
-      // Scroll up case
-      let maxLength = 0;
-      const calculationStart = Math.max(0, startVisibleIndex - INDEX_WIDTH_CALCULATION);
-
-      for (let i = calculationStart; i < endVisibleIndex; i++) {
-        maxLength = Math.max(maxLength, items[i].label.length);
-      }
-
-      setPopoverWidth(maxLength * WIDTH_MULTIPLIER);
-    }
-  }, [items, range, setPopoverWidth]);
 };
