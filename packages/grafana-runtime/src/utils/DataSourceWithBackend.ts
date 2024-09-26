@@ -388,14 +388,14 @@ class DataSourceWithBackend<
       console.warn('migrateQuery is only available with the experimental API server');
       return query;
     }
-    const { apiVersion, type } = this.getRef();
-    if (!apiVersion || !type) {
-      console.warn('migrateQuery called with datasource that does not have apiVersion, type or uid set');
-      return query;
-    }
 
-    const dsnameURL = type.replace(/^(grafana-)?(.*?)(-datasource)?$/, '$2');
-    const url = `/apis/${dsnameURL}.datasource.grafana.app/${apiVersion}/namespaces/${config.namespace}/queryconvert`;
+    // Obtaining the GroupName from the plugin ID as done in the backend, this is temporary until we have a better way to obtain it
+    // https://github.com/grafana/grafana/blob/e013cd427cb0457177e11f19ebd30bc523b36c76/pkg/plugins/apiserver.go#L10
+    const dsnameURL = this.type.replace(/^(grafana-)?(.*?)(-datasource)?$/, '$2');
+    const groupName = `${dsnameURL}.datasource.grafana.app`;
+    // Asuming apiVersion is v0alpha1, we'll need to obtain it from a trusted source
+    const apiVersion = 'v0alpha1';
+    const url = `/apis/${groupName}/${apiVersion}/namespaces/${config.namespace}/queryconvert`;
     const request = {
       queries: [
         {
