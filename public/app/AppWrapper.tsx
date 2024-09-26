@@ -1,8 +1,8 @@
 import { Action, KBarProvider } from 'kbar';
 import { Component, ComponentType } from 'react';
 import { Provider } from 'react-redux';
-import { Redirect, Switch, RouteComponentProps } from 'react-router-dom';
-import { CompatRoute } from 'react-router-dom-v5-compat';
+import { Routes, Route } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, PortalContainer } from '@grafana/ui';
@@ -55,30 +55,18 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
   }
 
   renderRoute = (route: RouteDescriptor) => {
-    const roles = route.roles ? route.roles() : [];
-
     return (
-      <CompatRoute
-        exact={route.exact === undefined ? true : route.exact}
-        sensitive={route.sensitive === undefined ? false : route.sensitive}
+      <Route
+        caseSensitive={route.sensitive === undefined ? false : route.sensitive}
         path={route.path}
         key={route.path}
-        render={(props: RouteComponentProps) => {
-          // TODO[Router]: test this logic
-          if (roles?.length) {
-            if (!roles.some((r: string) => contextSrv.hasRole(r))) {
-              return <Redirect to="/" />;
-            }
-          }
-
-          return <GrafanaRoute {...props} route={route} />;
-        }}
+        element={<RouteElement route={route} />}
       />
     );
   };
 
   renderRoutes() {
-    return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
+    return <Routes>{getAppRoutes().map((r) => this.renderRoute(r))}</Routes>;
   }
 
   render() {
@@ -131,3 +119,17 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
     );
   }
 }
+
+const RouteElement = ({ route, ...props }: any) => {
+  const roles = route.roles ? route.roles() : [];
+  const navigate = useNavigate();
+  // TODO[Router]: test this logic
+  if (roles?.length) {
+    if (!roles.some((r: string) => contextSrv.hasRole(r))) {
+      navigate('/');
+      return null;
+    }
+  }
+
+  return <GrafanaRoute {...props} route={route} />;
+};
