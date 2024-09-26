@@ -282,7 +282,7 @@ describe('Table', () => {
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('1'));
-      await userEvent.click(screen.getByText('Ok'));
+      await userEvent.click(screen.getByText('Filter'));
 
       // 3 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
@@ -312,7 +312,7 @@ describe('Table', () => {
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('1'));
-      await userEvent.click(screen.getByText('Ok'));
+      await userEvent.click(screen.getByText('Filter'));
 
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('3');
     });
@@ -343,7 +343,7 @@ describe('Table', () => {
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('2'));
       await userEvent.click(screen.getByLabelText('3'));
-      await userEvent.click(screen.getByText('Ok'));
+      await userEvent.click(screen.getByText('Filter'));
 
       //4 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(5);
@@ -372,7 +372,7 @@ describe('Table', () => {
 
       await userEvent.click(within(getColumnHeader(/number/)).getByRole('button', { name: '' }));
       await userEvent.click(screen.getByLabelText('1'));
-      await userEvent.click(screen.getByText('Ok'));
+      await userEvent.click(screen.getByText('Filter'));
 
       //3 + header row
       expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
