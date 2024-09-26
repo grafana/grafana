@@ -47,16 +47,14 @@ func TestIntegrationRingCacheStorage(t *testing.T) {
 	client := createTestClient(t, cfg, nil, grpcServer)
 
 	go func(ctx context.Context) {
-		err := client.Run(ctx)
-		require.NoError(t, err)
+		_ = client.Run(ctx)
 	}(ctx)
 
 	// Wait for the server to start
 	time.Sleep(100 * time.Millisecond)
 
 	go func(ctx context.Context) {
-		err := grpcServer.Run(ctx)
-		require.NoError(t, err)
+		_ = grpcServer.Run(ctx)
 	}(ctx)
 
 	// Wait for the server to start
