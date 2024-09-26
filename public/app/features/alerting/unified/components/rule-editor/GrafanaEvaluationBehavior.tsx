@@ -115,7 +115,6 @@ function FolderGroupAndEvaluationInterval({
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
   const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !groupName;
-
   const emptyNamespace: CombinedRuleNamespace = {
     name: folderName,
     rulesSource: GRAFANA_RULES_SOURCE_NAME,
@@ -189,7 +188,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       <Field
         label={
           <Label
-            htmlFor="evaluateFor"
+            htmlFor={evaluateForId}
             description='Period the threshold condition must be met to trigger the alert. Selecting "None" triggers the alert immediately once the condition is met.'
           >
             <Trans i18nKey="alert-rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
@@ -200,14 +199,20 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
         validationMessageHorizontalOverflow={true}
       >
-        <Stack direction="row" alignItems="center">
-          <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
-          <PendingPeriodQuickPick
-            selectedPendingPeriod={currentPendingPeriod}
-            groupEvaluationInterval={evaluateEvery}
-            onSelect={setPendingPeriod}
-          />
-        </Stack>
+        {/*
+          For now, we need to wrap this in a fragment so that the Field component doesn't try to spread all props
+          onto the child components - this otherwise results in a console.error about `invalid` being passed `true`
+        */}
+        <>
+          <Stack direction="row" alignItems="center">
+            <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
+            <PendingPeriodQuickPick
+              selectedPendingPeriod={currentPendingPeriod}
+              groupEvaluationInterval={evaluateEvery}
+              onSelect={setPendingPeriod}
+            />
+          </Stack>
+        </>
       </Field>
     </Stack>
   );
