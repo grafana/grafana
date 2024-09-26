@@ -354,13 +354,11 @@ There are four options to map the data returned by the selected query:
 - **Geohash** specifies that your query holds geohash data. You will be prompted to select a string data field for the geohash from your database query.
 - **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
 
-### Markers layer
+#### Markers layer
 
 The markers layer allows you to display data points as different marker shapes such as circles, squares, triangles, stars, and more.
 
 ![Markers Layer](/static/img/docs/geomap-panel/geomap-markers-8-1-0.png)
-
-{{< figure src="/media/docs/grafana/panels-visualizations/geomap-markers-options-11-1-0.png" max-width="350px" alt="Markers layer options" >}}
 
 - **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Size** configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range.
@@ -384,8 +382,6 @@ Click on the drop-down menu under Data Layer and choose `Heatmap`.
 Similar to `Markers`, you are prompted with various options to determine which data points to visualize and how you want to visualize them.
 
 ![Heatmap Layer](/static/img/docs/geomap-panel/geomap-heatmap-8-1-0.png)
-
-{{< figure src="/media/docs/grafana/panels-visualizations/geomap-heatmap-options-11-1-0.png" max-width="350px" alt="Heatmap layer options" >}}
 
 - **Data** and **Location mode** configure the data settings for the layer. For more information, refer to [Data](#data) and [Location mode](#location-mode).
 - **Weight values** configure the intensity of the heatmap clusters. `Fixed value` keeps a constant weight value throughout all data points. This value should be in the range of 0~1. Similar to Markers, there is an alternate option in the drop-down to automatically scale the weight values depending on data values.
@@ -443,8 +439,6 @@ The Night / Day layer displays night and day regions based on the current time r
 - **Display sun** toggles the sun icon.
 - **Opacity** set the opacity from `0` (transparent) to `1` (opaque).
 - **Display tooltip** allows you to toggle tooltips for the layer.
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-options-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day options" >}}
 
 #### More information
 
@@ -507,8 +501,6 @@ The Photos layer renders a photo at each data point.
 - **Radius** sets the overall size of images in pixels.
 - **Display tooltip** allows you to toggle tooltips for the layer.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-photos-options-9-3-0.png" max-width="1200px" caption="Geomap panel Photos options" >}}
-
 #### More information
 
 - [**Extensions for OpenLayers - Image Photo Style**](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
@@ -566,8 +558,6 @@ A CARTO layer is from CARTO Raster basemaps.
 - **Show labels** shows the Country details on top of the map.
 - **Opacity** from 0 (transparent) to 1 (opaque)
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-carto-options-9-1-0.png" max-width="1200px" caption="Geomap panel CARTO options" >}}
-
 #### More Information
 
 - [**About CARTO**](https://carto.com/about-us/)
@@ -587,8 +577,6 @@ The XYZ tile layer is a map from a generic tile layer.
 - **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
 - **Opacity** from 0 (transparent) to 1 (opaque)
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-xyz-options-9-1-0.png" max-width="1200px" caption="Geomap panel xyz options" >}}
-
 #### More information
 
 - [**Tiled Web Map Wikipedia**](https://en.wikipedia.org/wiki/Tiled_web_map)
@@ -603,8 +591,6 @@ A map from a collaborative free geographic world database.
 #### Options
 
 - **Opacity** from 0 (transparent) to 1 (opaque)
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-osm-options-9-1-0.png" max-width="1200px" caption="Geomap panel Open Street Map options" >}}
 
 #### More Information
 
@@ -634,8 +620,6 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
     - Attribution
 - **Opacity** from 0 (transparent) to 1 (opaque)
 
-  {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-options-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS options" >}}
-
 #### More Information
 
 - [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
@@ -644,7 +628,6 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 ### Map Controls
 
 The map controls section contains various options for map information and tool overlays.
-{{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-9-1-0.png" max-width="1200px" caption="Geomap panel map controls" >}}
 
 #### Zoom
 
