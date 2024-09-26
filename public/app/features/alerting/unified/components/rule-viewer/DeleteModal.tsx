@@ -19,7 +19,7 @@ const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule | undefined>();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
-  const { waitForRemoval: waitForConsistency } = usePrometheusConsistencyCheck();
+  const { waitForRemoval } = usePrometheusConsistencyCheck();
 
   const dismissModal = useCallback(() => {
     setRuleToDelete(undefined);
@@ -45,7 +45,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
       dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: ruleGroupIdentifier.dataSourceName }));
 
       if (prometheusRulesPrimary && isCloudRuleIdentifier(ruleIdentifier)) {
-        await waitForConsistency(ruleIdentifier);
+        await waitForRemoval(ruleIdentifier);
       } else {
         // Without this the delete popup will close and the user will still see the deleted rule
         await dispatch(fetchRulerRulesAction({ rulesSourceName: ruleGroupIdentifier.dataSourceName }));
@@ -57,7 +57,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
         locationService.replace('/alerting/list');
       }
     },
-    [deleteRuleFromGroup, dismissModal, redirectToListView, waitForConsistency]
+    [deleteRuleFromGroup, dismissModal, redirectToListView, waitForRemoval]
   );
 
   const modal = useMemo(
