@@ -1187,6 +1187,7 @@ def publish_grafanacom_step(ver_mode, depends_on = ["publish-linux-packages-deb"
         variable as the value for the --build-id option.
         TODO: is this actually used by the grafanacom subcommand? I think it might
         just use the environment variable directly.
+      depends_on: what other steps this one depends on (strings)
 
     Returns:
       Drone step.
