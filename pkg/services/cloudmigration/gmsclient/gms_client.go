@@ -297,7 +297,7 @@ func (c *gmsClientImpl) ReportEvent(ctx context.Context, session cloudmigration.
 
 func (c *gmsClientImpl) buildBasePath(clusterSlug string) string {
 	domain := c.cfg.CloudMigration.GMSDomain
-	if strings.HasPrefix(domain, "http://localhost") {
+	if strings.HasPrefix(domain, "http://") || strings.HasPrefix(domain, "https://") {
 		return domain
 	}
 	return fmt.Sprintf("https://cms-%s.%s/cloud-migrations", clusterSlug, domain)
