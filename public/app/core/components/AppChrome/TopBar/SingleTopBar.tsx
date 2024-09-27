@@ -5,6 +5,7 @@ import { memo } from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { ScopesSelector } from 'app/features/scopes';
@@ -37,7 +38,10 @@ export const SingleTopBar = memo(function SingleTopBar({
   pageNav,
   sectionNav,
 }: Props) {
-  const styles = useStyles2(getStyles);
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
+  const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
+  const styles = useStyles2(getStyles, menuDockedAndOpen);
   const navIndex = useSelector((state) => state.navIndex);
 
   const helpNode = cloneDeep(navIndex['help']);
@@ -49,9 +53,11 @@ export const SingleTopBar = memo(function SingleTopBar({
   return (
     <div className={styles.layout}>
       <TopSearchBarSection>
-        <ToolbarButton narrow onClick={onToggleMegaMenu}>
-          <Branding.MenuLogo className={styles.img} />
-        </ToolbarButton>
+        {!menuDockedAndOpen && (
+          <ToolbarButton narrow onClick={onToggleMegaMenu}>
+            <Branding.MenuLogo className={styles.img} />
+          </ToolbarButton>
+        )}
         <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
         <OrganizationSwitcher />
         <ScopesSelector />
@@ -85,13 +91,14 @@ export const SingleTopBar = memo(function SingleTopBar({
   );
 });
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
   layout: css({
     height: TOP_BAR_LEVEL_HEIGHT,
     display: 'flex',
     gap: theme.spacing(1),
     alignItems: 'center',
     padding: theme.spacing(0, 1),
+    paddingLeft: menuDockedAndOpen ? theme.spacing(3.5) : theme.spacing(0.5),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
 
