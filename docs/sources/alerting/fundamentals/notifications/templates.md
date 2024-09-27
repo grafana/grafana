@@ -29,11 +29,26 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
+  templating-labels-annotations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations/
+  notification-message-reference:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
   notification-messages:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
+  create-notification-templates:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/create-notification-templates/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/create-notification-templates/
 ---
 
 # Templates
@@ -125,39 +140,46 @@ For more details on how to template labels, refer to [Template annotations and l
 
 ## Template notifications
 
-Notification templates represent the alternative approach to templating designed for reusing templates. Notifications are messages to inform users about events or conditions triggered by alerts. You can create reusable notification templates to customize the content and format of alert notifications. Variables, labels, or other context-specific details can be added to the templates to dynamically insert information like metric values.
+[Notification templates](ref:notification-messages) allow you to customize the content of your notifications, such as the subject of an email or the body of a Slack message.
 
-Here is an example of a notification template:
+Notification templates differ from templating annotations and labels in the following ways:
 
-```go
+- Notification templates are assigned to the **Contact point**, rather than the alert rule.
+- If not specified, the contact point uses a default template that includes relevant alert information.
+- You can create reusable notification templates and reference them in other templates.
+- The same template can be shared across multiple contact points, making it easier to maintain and ensuring consistency.
+- While both annotation/label templates and notification templates use the same templating language, the available variables and functions differ. For more details, refer to the [notification template reference](ref:notification-message-reference) and [annotation/label template reference](ref:templating-labels-annotations).
+- Notification templates should not be used to add additional information to individual alerts—use annotations for that purpose.
+
+Here is an example of a notification template that summarizes all firing and resolved alerts in a notification group:
+
+```
 {{ define "alerts.message" -}}
-{{ if .Alerts.Firing -}}
-{{ len .Alerts.Firing }} firing alert(s)
-{{ template "alerts.summarize" .Alerts.Firing }}
-{{- end }}
-{{- if .Alerts.Resolved -}}
-{{ len .Alerts.Resolved }} resolved alert(s)
-{{ template "alerts.summarize" .Alerts.Resolved }}
-{{- end }}
+  {{ if .Alerts.Firing -}}
+    {{ len .Alerts.Firing }} firing alert(s)
+    {{ template "alerts.summarize" .Alerts.Firing }}
+  {{- end }}
+  {{- if .Alerts.Resolved -}}
+    {{ len .Alerts.Resolved }} resolved alert(s)
+    {{ template "alerts.summarize" .Alerts.Resolved }}
+  {{- end }}
 {{- end }}
 
 {{ define "alerts.summarize" -}}
-{{ range . -}}
-- {{ index .Annotations "summary" }}
-{{ end }}
+  {{ range . -}}
+  - {{ index .Annotations "summary" }}
+  {{ end }}
 {{ end }}
 ```
 
-This is the message you would receive in your contact point:
+The notification message to the contact point would look like this:
 
-            1 firing alert(s)
-            - The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours
+```
+1 firing alert(s)
+- The database server db1 has exceeded 75% of available disk space. Disk space used is 76%, please resize the disk size within the next 24 hours.
 
-            1 resolved alert(s)
-            - The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes
+1 resolved alert(s)
+- The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
+```
 
-Once the template is created, you need to make reference to it in your **Contact point** (in the Optional `[contact point]` settings) .
-
-{{<admonition type="note">}}
-It's not recommended to include individual alert information within notification templates. Instead, it's more effective to incorporate such details within the rule using labels and annotations.
-{{</admonition>}}
+For instructions on creating and using notification templates, refer to [Create notification templates.](ref:create-notification-templates)
