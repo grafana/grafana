@@ -42,7 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	libraryelementsfake "github.com/grafana/grafana/pkg/services/libraryelements/fake"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -271,7 +271,7 @@ func TestHTTPServer_DeleteDashboardByUID_AccessControl(t *testing.T) {
 			hs.starService = startest.NewStarServiceFake()
 
 			hs.LibraryPanelService = &mockLibraryPanelService{}
-			hs.LibraryElementService = &mockLibraryElementService{}
+			hs.LibraryElementService = &libraryelementsfake.LibraryElementService{}
 
 			pubDashService := publicdashboards.NewFakePublicDashboardService(t)
 			pubDashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil).Maybe()
@@ -677,7 +677,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				Cfg:                          setting.NewCfg(),
 				ProvisioningService:          fakeProvisioningService,
 				LibraryPanelService:          &mockLibraryPanelService{},
-				LibraryElementService:        &mockLibraryElementService{},
+				LibraryElementService:        &libraryelementsfake.LibraryElementService{},
 				dashboardProvisioningService: mockDashboardProvisioningService{},
 				SQLStore:                     mockSQLStore,
 				AccessControl:                accesscontrolmock.New(),
@@ -827,7 +827,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	}
 
 	libraryPanelsService := mockLibraryPanelService{}
-	libraryElementsService := mockLibraryElementService{}
+	libraryElementsService := libraryelementsfake.LibraryElementService{}
 	cfg := setting.NewCfg()
 	ac := accesscontrolmock.New()
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -909,7 +909,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			QuotaService:          quotatest.New(false, nil),
 			pluginStore:           &pluginstore.FakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
-			LibraryElementService: &mockLibraryElementService{},
+			LibraryElementService: &libraryelementsfake.LibraryElementService{},
 			DashboardService:      dashboardService,
 			folderService:         folderService,
 			Features:              featuremgmt.WithFeatures(),
@@ -947,7 +947,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 			Live:                    newTestLive(t, db.InitTestDB(t)),
 			QuotaService:            quotatest.New(false, nil),
 			LibraryPanelService:     &mockLibraryPanelService{},
-			LibraryElementService:   &mockLibraryElementService{},
+			LibraryElementService:   &libraryelementsfake.LibraryElementService{},
 			SQLStore:                sqlmock,
 			dashboardVersionService: fakeDashboardVersionService,
 			Features:                featuremgmt.WithFeatures(),
@@ -990,7 +990,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 			Live:                    newTestLive(t, db.InitTestDB(t)),
 			QuotaService:            quotatest.New(false, nil),
 			LibraryPanelService:     &mockLibraryPanelService{},
-			LibraryElementService:   &mockLibraryElementService{},
+			LibraryElementService:   &libraryelementsfake.LibraryElementService{},
 			DashboardService:        mock,
 			SQLStore:                sqlStore,
 			Features:                featuremgmt.WithFeatures(),
@@ -1049,40 +1049,4 @@ func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Con
 
 func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64, folderUID string) error {
 	return nil
-}
-
-type mockLibraryElementService struct{}
-
-func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
-	return model.LibraryElementDTO{}, nil
-}
-
-// GetElement gets an element from a UID.
-func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
-	return model.LibraryElementDTO{}, nil
-}
-
-// GetElementsForDashboard gets all connected elements for a specific dashboard.
-func (l *mockLibraryElementService) GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error) {
-	return map[string]model.LibraryElementDTO{}, nil
-}
-
-// ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error {
-	return nil
-}
-
-// DisconnectElementsFromDashboard disconnects elements from a specific dashboard.
-func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error {
-	return nil
-}
-
-// DeleteLibraryElementsInFolder deletes all elements for a specific folder.
-func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {
-	return nil
-}
-
-// GetAll gets all library elements with support to query filters.
-func (l *mockLibraryElementService) GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error) {
-	return model.LibraryElementSearchResult{}, nil
 }
