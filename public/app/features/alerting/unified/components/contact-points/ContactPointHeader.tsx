@@ -9,7 +9,12 @@ import { useExportContactPoint } from 'app/features/alerting/unified/components/
 import { ManagePermissionsDrawer } from 'app/features/alerting/unified/components/permissions/ManagePermissions';
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
-import { canDeleteEntity, canEditEntity, getAnnotation } from 'app/features/alerting/unified/utils/k8s/utils';
+import {
+  canDeleteEntity,
+  canEditEntity,
+  getAnnotation,
+  shouldUseK8sApi,
+} from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { createRelativeUrl } from '../../utils/url';
@@ -32,6 +37,8 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const { selectedAlertmanager } = useAlertmanager();
 
+  const usingK8sApi = shouldUseK8sApi(selectedAlertmanager!);
+
   const [exportSupported, exportAllowed] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
   const [editSupported, editAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
   const [deleteSupported, deleteAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateContactPoint);
@@ -41,23 +48,30 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
 
   const regularPolicyReferences = policies.filter((ref) => ref.route.type !== 'auto-generated');
 
+  const k8sRoutesInUse = getAnnotation(contactPoint, K8sAnnotations.InUseRoutes);
   /**
-   * Number of (regular) policies that reference this contact point -
-   * either taken from the annotations (k8s) or from the alertmanager config
+   * Number of policies that reference this contact point
+   *
+   * When the k8s API is being used, this number will only be the regular policies
+   * (will not include the auto generated simplified routing policies in the count)
    */
-  const numberOfPolicies = Number(
-    getAnnotation(contactPoint, K8sAnnotations.InUseRoutes) ?? regularPolicyReferences.length
-  );
+  const numberOfPolicies = usingK8sApi ? Number(k8sRoutesInUse) : policies.length;
+
+  const numberOfPoliciesPreventingDeletion = usingK8sApi ? Number(k8sRoutesInUse) : regularPolicyReferences.length;
 
   /** Number of rules that use this contact point for simplified routing */
   const numberOfRules = Number(getAnnotation(contactPoint, K8sAnnotations.InUseRules)) || 0;
 
-  /** Is the contact point referenced by anything such as notification policies or as a simplified routing contact point? */
-  const isReferencedByAnything = numberOfRules + numberOfPolicies > 0;
+  /**
+   * Is the contact point referenced by anything such as notification policies or as a simplified routing contact point?
+   *
+   * Used to determine whether to show the "Unused" badge
+   */
+  const isReferencedByAnything = usingK8sApi ? Boolean(numberOfPolicies || numberOfRules) : policies.length > 0;
 
   /** Does the current user have permissions to edit the contact point? */
   const hasAbilityToEdit = canEditEntity(contactPoint) || editAllowed;
-  /** Can the contact point be edited via the UI? */
+  /** Can the contact point actually be edited via the UI? */
   const contactPointIsEditable = !provisioned;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be edited? */
   const canEdit = editSupported && hasAbilityToEdit && contactPointIsEditable;
@@ -65,7 +79,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
   /** Does the current user have permissions to delete the contact point? */
   const hasAbilityToDelete = canDeleteEntity(contactPoint) || deleteAllowed;
   /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
-  const contactPointIsDeleteable = !provisioned && !isReferencedByAnything;
+  const contactPointIsDeleteable = !provisioned && !numberOfPoliciesPreventingDeletion;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
   const canBeDeleted = deleteSupported && hasAbilityToDelete && contactPointIsDeleteable;
 
@@ -115,7 +129,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
     const reasonsDeleteIsDisabled = [
       !hasAbilityToDelete ? cannotDeleteNoPermissions : '',
       provisioned ? cannotDeleteProvisioned : '',
-      numberOfPolicies ? cannotDeletePolicies : '',
+      numberOfPoliciesPreventingDeletion > 0 ? cannotDeletePolicies : '',
       numberOfRules ? cannotDeleteRules : '',
     ].filter(Boolean);
 
