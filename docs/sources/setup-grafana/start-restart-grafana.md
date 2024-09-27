@@ -78,7 +78,7 @@ Complete the following steps to start the Grafana server using init.d and verify
 
 1. To verify that the service is running, run the following command:
 
-   ```
+   ```bash
    sudo service grafana-server status
    ```
 
