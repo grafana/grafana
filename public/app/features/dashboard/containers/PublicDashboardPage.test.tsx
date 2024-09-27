@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { useParams } from 'react-router-dom-v5-compat';
 import { useEffectOnce } from 'react-use';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -58,13 +57,13 @@ jest.mock('app/types', () => ({
 
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
-  useParams: jest.fn(),
+  useParams: jest.fn().mockReturnValue({ accessToken: 'an-access-token' }),
 }));
 
 const setup = (propOverrides?: Partial<Props>, initialState?: Partial<appTypes.StoreState>) => {
   const context = getGrafanaContextMock();
   const store = configureStore(initialState);
-  (useParams as jest.Mock).mockReturnValue({ accessToken: 'an-access-token' });
+  // (useParams as jest.Mock).mockReturnValue({ accessToken: 'an-access-token' });
   const props: Props = {
     ...getRouteComponentProps({
       route: {
@@ -255,7 +254,6 @@ describe('PublicDashboardPage', () => {
   describe('When public dashboard changes', () => {
     it('Should init again', async () => {
       const { rerender } = setup();
-      (useParams as jest.Mock).mockReturnValue({ accessToken: 'another-new-access-token' });
       rerender({});
       await waitFor(() => {
         expect(initDashboard).toHaveBeenCalledTimes(2);

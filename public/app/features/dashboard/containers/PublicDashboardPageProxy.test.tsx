@@ -1,7 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
-import { useParams } from 'react-router-dom-v5-compat';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -28,13 +27,12 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
-  useParams: jest.fn(),
+  useParams: () => ({ accessToken: 'an-access-token' }),
 }));
 
 function setup(props: Partial<PublicDashboardPageProxyProps>) {
   const context = getGrafanaContextMock();
   const store = configureStore({});
-  (useParams as jest.Mock).mockReturnValue({ accessToken: 'an-access-token' });
   return render(
     <GrafanaContext.Provider value={context}>
       <Provider store={store}>
