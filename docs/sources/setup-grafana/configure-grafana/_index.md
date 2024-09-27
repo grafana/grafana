@@ -1094,7 +1094,7 @@ Set to `true` to enable verbose request signature logging when AWS Signature Ver
 
 > Only available in Grafana 11.3+.
 
-Enables the use of managed service accounts for plugin authentication.
+Set to `true` to enable the use of managed service accounts for plugin authentication. Default is `false`.
 
 > **Limitations:**
 > This feature currently **only supports single-organization deployments**.
