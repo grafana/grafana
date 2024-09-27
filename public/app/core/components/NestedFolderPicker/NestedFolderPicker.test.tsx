@@ -266,42 +266,4 @@ describe('NestedFolderPicker', () => {
     });
   });
 
-  describe('when nestedFolders is disabled', () => {
-    let originalToggles = { ...config.featureToggles };
-
-    beforeAll(() => {
-      config.featureToggles.nestedFolders = false;
-    });
-
-    afterAll(() => {
-      config.featureToggles = originalToggles;
-    });
-
-    it('does not show an expand button', async () => {
-      render(<NestedFolderPicker onChange={mockOnChange} />);
-
-      // Open the picker and wait for children to load
-      const button = await screen.findByRole('button', { name: 'Select folder' });
-      await userEvent.click(button);
-      await screen.findByLabelText(folderA.item.title);
-
-      // There should be no expand button
-      // Note: we need to use mouseDown here because userEvent's click event doesn't get prevented correctly
-      expect(screen.queryByRole('button', { name: `Expand folder ${folderA.item.title}` })).not.toBeInTheDocument();
-    });
-
-    it('does not expand a folder with the keyboard', async () => {
-      render(<NestedFolderPicker onChange={mockOnChange} />);
-      const button = await screen.findByRole('button', { name: 'Select folder' });
-
-      await userEvent.click(button);
-
-      // try to expand Folder A
-      await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowRight}');
-
-      // Folder A's children are not visible
-      expect(screen.queryByLabelText(folderA_folderA.item.title)).not.toBeInTheDocument();
-      expect(screen.queryByLabelText(folderA_folderB.item.title)).not.toBeInTheDocument();
-    });
-  });
 });
