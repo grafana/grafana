@@ -963,7 +963,7 @@ func setupAccessControlGuardianTest(
 	fStore := folder.NewFakeStore()
 	folderStore := foldertest.NewFakeFolderStore(t)
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, fakeDashboardService, folderSvc))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, fakeDashboardService, folderSvc, fStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(folderSvc, fStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, folderSvc, fStore))
 
