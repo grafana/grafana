@@ -1,4 +1,4 @@
-import { e2e } from '../utils';
+import { e2e } from '../../utils';
 const DASHBOARD_ID = 'P2jR04WVk';
 
 describe('Geomap layer controls options', () => {

@@ -1,4 +1,4 @@
-import { e2e } from '../utils';
+import { e2e } from '../../utils';
 const PAGE_UNDER_TEST = 'a6801696-cc53-4196-b1f9-2403e3909185/panel-tests-dashlist-variables';
 
 describe('DashList panel', () => {
@@ -20,7 +20,11 @@ describe('DashList panel', () => {
       });
 
     // update variable to b
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('server').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('server')
+      .parent()
+      .within(() => {
+        cy.get('input').click();
+      });
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').click();
     // blur the dropdown
     cy.get('body').click();
