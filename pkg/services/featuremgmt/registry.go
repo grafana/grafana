@@ -1404,6 +1404,13 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:         "alertingPrometheusRulesPrimary",
+			Description:  "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "singleTopNav",
 			Description:  "Unifies the top search bar and breadcrumb bar into one",
 			Stage:        FeatureStageExperimental,
