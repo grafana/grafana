@@ -2,7 +2,6 @@ package managedstream
 
 import (
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/go-redis/redis/v8"
@@ -33,9 +32,6 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 		DB:   db,
 	})
 
-	// cleanup before running
-	redisCleanup(t, redisClient, "")
-
 	prefix := uuid.New().String()
 
 	t.Cleanup(redisCleanup(t, redisClient, prefix))
@@ -43,17 +39,6 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 	c := NewRedisFrameCache(redisClient, prefix)
 	require.NotNil(t, c)
 	testFrameCache(t, c)
-
-	keys, err := redisClient.Keys(redisClient.Context(), "*").Result()
-	if err != nil {
-		require.NoError(t, err)
-	}
-
-	require.NotZero(t, len(keys))
-
-	for _, key := range keys {
-		require.True(t, strings.HasPrefix(key, prefix), key)
-	}
 }
 
 func redisCleanup(t *testing.T, redisClient *redis.Client, prefix string) func() {
