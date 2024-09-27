@@ -6,6 +6,7 @@ import {
   getDefaultSilenceFormValues,
 } from 'app/features/alerting/unified/components/silences/utils';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
+import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
@@ -31,10 +32,12 @@ const Silences = () => {
         <Route exact path="/alerting/silence/new">
           {({ location }) => {
             const queryParams = new URLSearchParams(location.search);
-            const potentialRuleUid = queryParams
-              .getAll('matcher')
-              .find((m) => m.startsWith(MATCHER_ALERT_RULE_UID))
-              ?.split('=')[1];
+
+            const potentialAlertRuleMatcher = parseQueryParamMatchers(queryParams.getAll('matcher')).find(
+              (m) => m.name === MATCHER_ALERT_RULE_UID
+            );
+
+            const potentialRuleUid = potentialAlertRuleMatcher?.value;
 
             const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
 
