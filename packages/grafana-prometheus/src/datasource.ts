@@ -60,6 +60,7 @@ import { promQueryModeller } from './querybuilder/PromQueryModeller';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
 import { getOriginalMetricName, transformV2 } from './result_transformer';
+import { scopesToPrometheusFilters } from './scopes_utils';
 import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
@@ -227,7 +228,7 @@ export class PrometheusDatasource
    */
   _request<T = unknown>(
     url: string,
-    data: Record<string, string | string[]> | null,
+    data: Record<string, string> | null,
     overrides: Partial<BackendSrvRequest> = {}
   ): Observable<FetchResponse<T>> {
     if (this.access === 'direct') {
@@ -259,15 +260,7 @@ export class PrometheusDatasource
           options.url +
           (options.url.search(/\?/) >= 0 ? '&' : '?') +
           Object.entries(data)
-            .map(([k, v]) => {
-              k = encodeURIComponent(k);
-
-              if (Array.isArray(v)) {
-                return v.map((vv) => `${k}=${encodeURIComponent(vv)}`).join('&');
-              }
-
-              return `${k}=${encodeURIComponent(v)}`;
-            })
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
             .join('&');
       }
     } else {
@@ -295,11 +288,7 @@ export class PrometheusDatasource
   }
 
   // Use this for tab completion features, wont publish response to other components
-  async metadataRequest<T = any>(
-    url: string,
-    params: Record<string, string | string[]> | null = {},
-    options?: Partial<BackendSrvRequest>
-  ) {
+  async metadataRequest<T = any>(url: string, params = {}, options?: Partial<BackendSrvRequest>) {
     // If URL includes endpoint that supports POST and GET method, try to use configured method. This might fail as POST is supported only in v2.10+.
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
@@ -623,13 +612,10 @@ export class PrometheusDatasource
       value: f.value,
       op: f.operator,
     }));
-    const expr = promQueryModeller.renderLabels(labelFilters);
+    const scopesFilters: QueryBuilderLabelFilter[] = scopesToPrometheusFilters(scopes);
+    const expr = promQueryModeller.renderLabels([...labelFilters, ...scopesFilters]);
 
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(
-      expr,
-      undefined,
-      scopes
-    );
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr, undefined);
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -646,13 +632,13 @@ export class PrometheusDatasource
       value: f.value,
       op: f.operator,
     }));
-
-    const expr = promQueryModeller.renderLabels(labelFilters);
+    const scopesFilters: QueryBuilderLabelFilter[] = scopesToPrometheusFilters(scopes);
+    const expr = promQueryModeller.renderLabels([...labelFilters, ...scopesFilters]);
 
     if (this.hasLabelsMatchAPISupport()) {
       const requestId = `[${this.uid}][${options.key}]`;
       return (
-        await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange, scopes)
+        await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange)
       ).map((v) => ({
         value: v,
         text: v,
@@ -662,8 +648,6 @@ export class PrometheusDatasource
     const params: Record<string, string | string[]> = this.getTimeRangeParams(
       options.timeRange ?? getDefaultTimeRange()
     );
-
-    params['scopes'] = scopes?.map((scope) => scope.metadata.name);
 
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];

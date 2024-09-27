@@ -20,6 +20,33 @@ const scopesClient = new ScopedResourceClient<ScopeSpec, 'Scope'>({
 
 const scopesCache = new Map<string, Promise<Scope>>();
 
+scopesCache.set(
+  'asl',
+  Promise.resolve({
+    metadata: {
+      name: 'asl',
+    },
+    spec: {
+      title: 'ASL',
+      type: 'scope',
+      description: 'ASL',
+      category: 'ASL',
+      filters: [
+        {
+          key: 'app',
+          value: 'asserts',
+          operator: 'equals',
+        },
+        {
+          key: 'exported_namespace',
+          value: 'asserts',
+          operator: 'equals',
+        },
+      ],
+    },
+  })
+);
+
 async function fetchScopeNodes(parent: string, query: string): Promise<ScopeNode[]> {
   try {
     return (await getBackendSrv().get<{ items: ScopeNode[] }>(nodesEndpoint, { parent, query }))?.items ?? [];

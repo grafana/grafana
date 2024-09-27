@@ -8,7 +8,6 @@ import {
   AbstractQuery,
   getDefaultTimeRange,
   LanguageProvider,
-  Scope,
   TimeRange,
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
@@ -37,7 +36,6 @@ type UrlParamsType = {
   end?: string;
   'match[]'?: string;
   limit?: string;
-  scopes?: string[];
 };
 
 const buildCacheHeaders = (durationInSeconds: number) => {
@@ -218,7 +216,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Fetches all label keys
    */
-  fetchLabels = async (timeRange?: TimeRange, queries?: PromQuery[], scopes?: Scope[]): Promise<string[]> => {
+  fetchLabels = async (timeRange?: TimeRange, queries?: PromQuery[]): Promise<string[]> => {
     if (timeRange) {
       this.timeRange = timeRange;
     }
@@ -227,9 +225,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.labelFetchTs = Date.now().valueOf();
 
     const searchParams = new URLSearchParams({ ...timeParams });
-
-    scopes?.forEach((scope) => searchParams.append('scopes', scope.metadata.name));
-
     queries?.forEach((q) => {
       const visualQuery = buildVisualQueryFromString(q.expr);
       if (visualQuery.query.metric !== '') {
@@ -275,14 +270,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param match
    * @param timeRange
    * @param requestId
-   * @param scopes
    */
   fetchSeriesValuesWithMatch = async (
     name: string,
     match: string,
     requestId?: string,
-    timeRange: TimeRange = this.timeRange,
-    scopes?: Scope[]
+    timeRange: TimeRange = this.timeRange
   ): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
@@ -290,7 +283,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const urlParams = {
       ...range,
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
-      scopes: scopes?.map((scope) => scope.metadata.name),
     };
     let requestOptions: Partial<BackendSrvRequest> | undefined = {
       ...this.getDefaultCacheHeaders(),
@@ -336,17 +328,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * This is cached by its args but also by the global timeRange currently selected as they can change over requested time.
    * @param name
    * @param withName
-   * @param scopes
    */
-  fetchLabelsWithMatch = async (
-    name: string,
-    withName?: boolean,
-    scopes?: Scope[]
-  ): Promise<Record<string, string[]>> => {
+  fetchLabelsWithMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     if (this.datasource.hasLabelsMatchAPISupport()) {
-      return this.fetchSeriesLabelsMatch(name, withName, scopes);
+      return this.fetchSeriesLabelsMatch(name, withName);
     } else {
-      return this.fetchSeriesLabels(name, withName, REMOVE_SERIES_LIMIT, scopes);
+      return this.fetchSeriesLabels(name, withName, REMOVE_SERIES_LIMIT);
     }
   };
 
@@ -356,20 +343,17 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param name
    * @param withName
    * @param withLimit
-   * @param scopes
    */
   fetchSeriesLabels = async (
     name: string,
     withName?: boolean,
-    withLimit?: string,
-    scopes?: Scope[]
+    withLimit?: string
   ): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(this.timeRange);
     let urlParams: UrlParamsType = {
       ...range,
       'match[]': interpolatedName,
-      scopes: scopes?.map((scope) => scope.metadata.name),
     };
 
     if (withLimit !== 'none') {
@@ -388,19 +372,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * they can change over requested time.
    * @param name
    * @param withName
-   * @param scopes
    */
-  fetchSeriesLabelsMatch = async (
-    name: string,
-    withName?: boolean,
-    scopes?: Scope[]
-  ): Promise<Record<string, string[]>> => {
+  fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(this.timeRange);
     const urlParams = {
       ...range,
       'match[]': interpolatedName,
-      scopes: scopes?.map((scope) => scope.metadata.name),
     };
     const url = `/api/v1/labels`;
 
