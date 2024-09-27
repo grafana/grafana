@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
-import { match, Router } from 'react-router-dom';
+import { Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -34,8 +34,8 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 });
 
 jest.mock('react-virtualized-auto-sizer', () => {
-  //   //   // The size of the children need to be small enough to be outside the view.
-  //   //   // So it does not trigger the query to be run by the PanelQueryRunner.
+  // The size of the children need to be small enough to be outside the view.
+  // So it does not trigger the query to be run by the PanelQueryRunner.
   return ({ children }: AutoSizerProps) =>
     children({
       height: 1,
@@ -55,13 +55,16 @@ jest.mock('app/types', () => ({
   useDispatch: () => jest.fn(),
 }));
 
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn().mockReturnValue({ accessToken: 'an-access-token' }),
+}));
+
 const setup = (propOverrides?: Partial<Props>, initialState?: Partial<appTypes.StoreState>) => {
   const context = getGrafanaContextMock();
   const store = configureStore(initialState);
-
   const props: Props = {
     ...getRouteComponentProps({
-      match: { params: { accessToken: 'an-access-token' }, isExact: true, url: '', path: '' },
       route: {
         routeName: DashboardRoutes.Public,
         path: '/public-dashboards/:accessToken',
@@ -250,7 +253,7 @@ describe('PublicDashboardPage', () => {
   describe('When public dashboard changes', () => {
     it('Should init again', async () => {
       const { rerender } = setup();
-      rerender({ match: { params: { accessToken: 'another-new-access-token' } } as unknown as match });
+      rerender({});
       await waitFor(() => {
         expect(initDashboard).toHaveBeenCalledTimes(2);
       });
