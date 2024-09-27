@@ -293,7 +293,7 @@ function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleId
     <Stack direction="column" gap={0} ref={ref}>
       <LoadingBar width={width} />
       <Alert
-        title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Updates in progress')}
+        title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Update in progress')}
         severity="info"
       >
         <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
