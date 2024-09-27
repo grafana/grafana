@@ -14,14 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func TestResourceAuthorizer_HasAccess(t *testing.T) {
+func TestLegacyAccessClient_HasAccess(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
 
-	t.Run("should have no opinion for non resource requests", func(t *testing.T) {
-		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{
-			Resource: "dashboards",
-			Attr:     "uid",
-		})
+	t.Run("should reject when when no configuration for resource exist", func(t *testing.T) {
+		a := accesscontrol.NewLegacyAccessClient(ac)
 
 		ok, err := a.HasAccess(context.Background(), &identity.StaticRequester{}, claims.AccessRequest{
 			Verb:      "get",
@@ -29,7 +26,7 @@ func TestResourceAuthorizer_HasAccess(t *testing.T) {
 			Namespace: "default",
 			Name:      "1",
 		})
-		assert.Error(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, false, ok)
 	})
 

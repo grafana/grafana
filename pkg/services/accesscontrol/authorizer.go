@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // ResourceResolver is called before authorization is performed.
@@ -35,6 +36,7 @@ type ResourceAuthorizerOptions struct {
 	Attr string
 	// Mapping is used to translate k8s verb to rbac action.
 	// Key is the desired verb and value the rbac action it should be translated into.
+	// If no mapping is provided it will get a "default" mapping.
 	Mapping map[string]string
 	// Resolver if passed can translate into one or more scopes used to authorize resource.
 	// This is useful when stored scopes are based on something else than k8s name or
@@ -47,13 +49,28 @@ var _ claims.AccessClient = (*LegacyAccessClient)(nil)
 func NewLegacyAccessClient(ac AccessControl, opts ...ResourceAuthorizerOptions) *LegacyAccessClient {
 	stored := map[string]ResourceAuthorizerOptions{}
 
+	defaultMapping := func(r string) map[string]string {
+		return map[string]string{
+			utils.VerbGet:              fmt.Sprintf("%s:read", r),
+			utils.VerbList:             fmt.Sprintf("%s:read", r),
+			utils.VerbWatch:            fmt.Sprintf("%s:read", r),
+			utils.VerbCreate:           fmt.Sprintf("%s:create", r),
+			utils.VerbUpdate:           fmt.Sprintf("%s:write", r),
+			utils.VerbPatch:            fmt.Sprintf("%s:write", r),
+			utils.VerbDelete:           fmt.Sprintf("%s:delete", r),
+			utils.VerbDeleteCollection: fmt.Sprintf("%s:delete", r),
+		}
+	}
+
 	for _, o := range opts {
 		if o.Unchecked == nil {
 			o.Unchecked = map[string]bool{}
 		}
+
 		if o.Mapping == nil {
-			o.Mapping = map[string]string{}
+			o.Mapping = defaultMapping(o.Resource)
 		}
+
 		stored[o.Resource] = o
 	}
 
@@ -107,7 +124,7 @@ func (c *LegacyAccessClient) HasAccess(ctx context.Context, id claims.AuthInfo, 
 		} else {
 			eval = EvalPermission(action, fmt.Sprintf("%s:%s:%s", opts.Resource, opts.Attr, req.Name))
 		}
-	} else if req.Verb == "list" {
+	} else if req.Verb == utils.VerbList {
 		// For list request we need to filter out in storage layer.
 		eval = EvalPermission(action)
 	} else {
