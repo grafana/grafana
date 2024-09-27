@@ -4,6 +4,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 const MAX_HEIGHT = 400;
 
+// We need a px font size to accurately measure the width of items.
+// This should be in sync with the body font size in the theme.
+export const MENU_ITEM_FONT_SIZE = 14;
+
 export const getComboboxStyles = (theme: GrafanaTheme2) => {
   return {
     menuClosed: css({
@@ -53,6 +57,9 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       label: 'grafana-select-option-label',
       textOverflow: 'ellipsis',
       overflow: 'hidden',
+      fontSize: MENU_ITEM_FONT_SIZE,
+      fontWeight: 500,
+      letterSpacing: 0, // pr todo: text in grafana has a slightly different letter spacing, which causes measureText() to be ~5% off
     }),
     optionDescription: css({
       label: 'grafana-select-option-description',

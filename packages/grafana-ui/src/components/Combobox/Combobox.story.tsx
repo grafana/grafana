@@ -88,7 +88,6 @@ const ManyOptionsStory: StoryFn<PropsAndCustomArgs> = ({ numberOfOptions, ...arg
         setIsLoading(false);
         setOptions(options);
         setValue(options[5].value);
-        console.log("I've set stuff");
       });
     }, 1000);
   }, [numberOfOptions]);
