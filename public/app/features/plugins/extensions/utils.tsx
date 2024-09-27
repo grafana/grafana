@@ -389,6 +389,7 @@ export function getLinkExtensionOnClick(
         closeAppInSideview: () => closeAppInSideview(pluginId),
       };
 
+      log.debug(`onClick '${config.title}' at '${extensionPointId}'`);
       const result = onClick(event, helpers);
 
       if (isPromise(result)) {
