@@ -208,7 +208,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         options.keepDashboardFromExploreInLocalStorage === false
     );
 
-    this.setState({ isLoading: true });
+    this.setState({ dashboard: undefined, isLoading: true });
 
     const rsp = await this.fetchDashboard(options);
 
