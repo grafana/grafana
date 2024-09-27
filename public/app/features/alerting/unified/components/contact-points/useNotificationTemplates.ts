@@ -109,7 +109,6 @@ export function useGetNotificationTemplate({ alertmanager, uid }: GetTemplatePar
   });
   const [fetchTemplate, templateStatus] = useLazyReadNamespacedTemplateGroupQuery({
     selectFromResult: (state) => {
-      console.log('selectFromReuslt in GetNotificationTemplate');
       return {
         ...state,
         data: state.data ? templateGroupToTemplate(state.data) : undefined,
