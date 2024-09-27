@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
 
-import { e2e } from '../../utils';
+import { e2e } from '../utils';
 
 const PANEL_UNDER_TEST = 'Lines 500 data points';
 

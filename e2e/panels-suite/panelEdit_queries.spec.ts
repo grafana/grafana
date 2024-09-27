@@ -1,4 +1,4 @@
-import { e2e } from '../../utils';
+import { e2e } from '../utils';
 
 const flakyTimeout = 10000;
 

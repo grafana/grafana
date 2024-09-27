@@ -1,4 +1,4 @@
-import { e2e } from '../../utils';
+import { e2e } from '../utils';
 
 describe('Panel edit tests - transformations', () => {
   beforeEach(() => {

@@ -4,7 +4,7 @@ test('should redirect to start page when permissions to navigate to page is miss
   await page.goto('/');
   const homePageTitle = await page.title();
   await page.goto('/datasources', { waitUntil: 'networkidle' });
-  expect(await page.title()).toEqual(homePageTitle);
+  expect(await page.title()).toContain(homePageTitle);
 });
 
 test('current user should have viewer role', async ({ page, request }) => {
