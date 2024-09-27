@@ -1,7 +1,7 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
@@ -105,8 +105,11 @@ export function useRulesFilter() {
 }
 
 export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
+  const deferredNamespaces = useDeferredValue(namespaces);
+  const deferredFilterState = useDeferredValue(filterState);
+
   return useMemo(() => {
-    const filteredRules = filterRules(namespaces, filterState);
+    const filteredRules = filterRules(deferredNamespaces, deferredFilterState);
 
     // Totals recalculation is a workaround for the lack of server-side filtering
     filteredRules.forEach((namespace) => {
@@ -125,7 +128,7 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
     });
 
     return filteredRules;
-  }, [namespaces, filterState]);
+  }, [deferredNamespaces, deferredFilterState]);
 };
 
 export const filterRules = (

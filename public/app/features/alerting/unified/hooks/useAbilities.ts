@@ -9,7 +9,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions, getRulesPermissions } from '../utils/access-control';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { isAdmin } from '../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRecordingRule, isGrafanaRulerRule, isPluginProvidedRule } from '../utils/rules';
 
@@ -150,17 +150,12 @@ export function useAlertRuleAbilities(rule: CombinedRule, actions: AlertRuleActi
   }, [abilities, actions]);
 }
 
+// This hook is being called a lot in different places
+// In some cases multiple times for ~80 rules (e.g. on the list page)
+// We need to investigate further if some of these calls are redundant
+// In the meantime, memoizing the result helps
 export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRuleAction> {
-  const rulesSource = rule.namespace.rulesSource;
-  const rulesSourceName = typeof rulesSource === 'string' ? rulesSource : rulesSource.name;
-
-  const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
-  const isFederated = isFederatedRuleGroup(rule.group);
-  const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
-  const isPluginProvided = isPluginProvidedRule(rule);
-
-  // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
-  const immutableRule = isProvisioned || isFederated || isPluginProvided;
+  const rulesSourceName = getRulesSourceName(rule.namespace.rulesSource);
 
   const {
     isEditable,
@@ -169,27 +164,39 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
     loading,
   } = useIsRuleEditable(rulesSourceName, rule.rulerRule);
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
-
-  // while we gather info, pretend it's not supported
-  const MaybeSupported = loading ? NotSupported : isRulerAvailable;
-  const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
-
-  // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
-  const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
-
-  const rulesPermissions = getRulesPermissions(rulesSourceName);
   const canSilence = useCanSilence(rule);
 
-  const abilities: Abilities<AlertRuleAction> = {
-    [AlertRuleAction.Duplicate]: toAbility(duplicateSupported, rulesPermissions.create),
-    [AlertRuleAction.View]: toAbility(AlwaysSupported, rulesPermissions.read),
-    [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
-    [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
-    [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
-    [AlertRuleAction.Silence]: canSilence,
-    [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
-    [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
-  };
+  const abilities = useMemo<Abilities<AlertRuleAction>>(() => {
+    const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+    const isFederated = isFederatedRuleGroup(rule.group);
+    const isGrafanaManagedAlertRule = isGrafanaRulerRule(rule.rulerRule);
+    const isPluginProvided = isPluginProvidedRule(rule);
+
+    // if a rule is either provisioned, federated or provided by a plugin rule, we don't allow it to be removed or edited
+    const immutableRule = isProvisioned || isFederated || isPluginProvided;
+
+    // while we gather info, pretend it's not supported
+    const MaybeSupported = loading ? NotSupported : isRulerAvailable;
+    const MaybeSupportedUnlessImmutable = immutableRule ? NotSupported : MaybeSupported;
+
+    // Creating duplicates of plugin-provided rules does not seem to make a lot of sense
+    const duplicateSupported = isPluginProvided ? NotSupported : MaybeSupported;
+
+    const rulesPermissions = getRulesPermissions(rulesSourceName);
+
+    const abilities: Abilities<AlertRuleAction> = {
+      [AlertRuleAction.Duplicate]: toAbility(duplicateSupported, rulesPermissions.create),
+      [AlertRuleAction.View]: toAbility(AlwaysSupported, rulesPermissions.read),
+      [AlertRuleAction.Update]: [MaybeSupportedUnlessImmutable, isEditable ?? false],
+      [AlertRuleAction.Delete]: [MaybeSupportedUnlessImmutable, isRemovable ?? false],
+      [AlertRuleAction.Explore]: toAbility(AlwaysSupported, AccessControlAction.DataSourcesExplore),
+      [AlertRuleAction.Silence]: canSilence,
+      [AlertRuleAction.ModifyExport]: [isGrafanaManagedAlertRule, exportAllowed],
+      [AlertRuleAction.Pause]: [MaybeSupportedUnlessImmutable && isGrafanaManagedAlertRule, isEditable ?? false],
+    };
+
+    return abilities;
+  }, [rule, loading, isRulerAvailable, isEditable, isRemovable, rulesSourceName, exportAllowed, canSilence]);
 
   return abilities;
 }

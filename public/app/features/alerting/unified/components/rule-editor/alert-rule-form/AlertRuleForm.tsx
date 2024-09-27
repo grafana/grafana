@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
@@ -9,7 +9,6 @@ import { Button, ConfirmModal, CustomScrollbar, Spinner, Stack, useStyles2 } fro
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import {
   getRuleGroupLocationFromFormValues,
@@ -20,7 +19,8 @@ import {
   isGrafanaRulerRulePaused,
   isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
-import { RuleWithLocation } from 'app/types/unified-alerting';
+import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
+import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
   LogMessages,
@@ -29,8 +29,10 @@ import {
   trackAlertRuleFormError,
   trackAlertRuleFormSaved,
 } from '../../../Analytics';
+import { shouldUsePrometheusRulesPrimary } from '../../../featureToggles';
 import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFromGroup';
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
+import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
@@ -45,6 +47,8 @@ import {
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
+import * as ruleId from '../../../utils/rule-id';
+import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -61,10 +65,12 @@ type Props = {
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
 };
 
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+
 export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
-  const [queryParams] = useQueryParams();
+  const [queryParams] = useURLSearchParams();
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? DEFAULT_GROUP_EVALUATION_INTERVAL);
 
@@ -77,7 +83,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   const uidFromParams = routeParams.id;
 
-  const returnTo = !queryParams.returnTo ? '/alerting/list' : String(queryParams.returnTo);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
@@ -89,8 +94,8 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       return formValuesFromPrefill(prefill);
     }
 
-    if (typeof queryParams.defaults === 'string') {
-      return formValuesFromQueryParams(queryParams.defaults, ruleType);
+    if (queryParams.has('defaults')) {
+      return formValuesFromQueryParams(queryParams.get('defaults') ?? '', ruleType);
     }
 
     return {
@@ -160,10 +165,17 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       );
     }
 
-    if (exitOnSave && returnTo) {
+    const { dataSourceName, namespaceName, groupName } = ruleGroupIdentifier;
+    if (exitOnSave) {
+      const returnTo = queryParams.get('returnTo') || getReturnToUrl(ruleGroupIdentifier, ruleDefinition);
+
       locationService.push(returnTo);
-    } else if (isCloudRulerRule(ruleDefinition)) {
-      const { dataSourceName, namespaceName, groupName } = getRuleGroupLocationFromFormValues(values);
+      return;
+    }
+
+    // Cloud Ruler rules identifier changes on update due to containing rule name and hash components
+    // After successful update we need to update the URL to avoid displaying 404 errors
+    if (isCloudRulerRule(ruleDefinition)) {
       const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, ruleDefinition);
       locationService.replace(`/alerting/${encodeURIComponent(stringifyIdentifier(updatedRuleIdentifier))}/edit`);
     }
@@ -171,6 +183,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   const deleteRule = async () => {
     if (existing) {
+      const returnTo = queryParams.get('returnTo') || '/alerting/list';
       const ruleGroupIdentifier = getRuleGroupLocationFromRuleWithLocation(existing);
       const ruleIdentifier = fromRulerRuleAndRuleGroupIdentifier(ruleGroupIdentifier, existing.rule);
 
@@ -193,6 +206,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
     trackAlertRuleFormCancelled({ formAction: existing ? 'update' : 'create' });
+    locationService.getHistory().goBack();
   };
 
   const evaluateEveryInForm = watch('evaluateEvery');
@@ -222,11 +236,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
         Save rule and exit
       </Button>
-      <Link to={returnTo}>
-        <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
-          Cancel
-        </Button>
-      </Link>
+      <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
+        Cancel
+      </Button>
       {existing ? (
         <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
           Delete
@@ -311,6 +323,27 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     </FormProvider>
   );
 };
+
+function getReturnToUrl(groupId: RuleGroupIdentifier, rule: RulerRuleDTO | PostableRuleGrafanaRuleDTO) {
+  const { dataSourceName, namespaceName, groupName } = groupId;
+
+  if (prometheusRulesPrimary && isCloudRulerRule(rule)) {
+    const ruleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, rule);
+    return createViewLinkFromIdentifier(ruleIdentifier);
+  }
+
+  // TODO We could add namespace and group filters but for GMA the namespace = uid which doesn't work with the filters
+  return '/alerting/list';
+}
+
+// The result of this function is passed to locationService.push()
+// Hence it cannot contain the subpath prefix, so we cannot use createRelativeUrl for it
+function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
+  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(identifier.ruleSourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+}
 
 const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
   const [ruleType, dataSourceName] = watch(['type', 'dataSourceName']);

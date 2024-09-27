@@ -12,8 +12,8 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
+import { setupMswServer } from './mockApi';
 import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
-import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { DataSourceType } from './utils/datasource';
 
@@ -25,7 +25,12 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
 }));
 
 jest.mock('./api/buildInfo');
-jest.mock('./api/ruler');
+jest.mock('./api/ruler', () => ({
+  rulerUrlBuilder: jest.requireActual('./api/ruler').rulerUrlBuilder,
+  fetchRulerRules: jest.fn(),
+  fetchRulerRulesGroup: jest.fn(),
+  fetchRulerRulesNamespace: jest.fn(),
+}));
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
@@ -116,7 +121,6 @@ const mocks = {
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
     fetchRulerRules: jest.mocked(fetchRulerRules),
-    fetchRulerRulesIfNotFetchedYet: jest.mocked(fetchRulerRulesIfNotFetchedYet),
   },
 };
 
@@ -132,6 +136,8 @@ function getDiscoverFeaturesMock(application: PromApplication, features?: Partia
     },
   };
 }
+
+setupMswServer();
 
 describe('RuleEditor cloud: checking editable data sources', () => {
   beforeEach(() => {

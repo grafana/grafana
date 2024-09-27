@@ -9,13 +9,14 @@ import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo, trackRuleListNavigation } from '../../Analytics';
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from '../../hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRulesAction } from '../../state/actions';
+import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../../utils/constants';
-import { getAllRulesSourceNames } from '../../utils/datasource';
+import { getAllRulesSourceNames, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import RulesFilter from '../rules/Filter/RulesFilter';
 import { NoRulesSplash } from '../rules/NoRulesCTA';
@@ -33,101 +34,110 @@ const VIEWS = {
 // make sure we ask for 1 more so we show the "show x more" button
 const LIMIT_ALERTS = INSTANCES_DISPLAY_LIMIT + 1;
 
-const RuleList = withErrorBoundary(
-  () => {
-    const dispatch = useDispatch();
-    const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
-    const [expandAll, setExpandAll] = useState(false);
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 
-    const onFilterCleared = useCallback(() => setExpandAll(false), []);
+const RuleListV1 = () => {
+  const dispatch = useDispatch();
+  const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
+  const [expandAll, setExpandAll] = useState(false);
 
-    const [queryParams] = useQueryParams();
-    const { filterState, hasActiveFilters } = useRulesFilter();
+  const onFilterCleared = useCallback(() => setExpandAll(false), []);
 
-    const queryParamView = queryParams.view as keyof typeof VIEWS;
-    const view = VIEWS[queryParamView] ? queryParamView : 'groups';
+  const [queryParams] = useQueryParams();
+  const { filterState, hasActiveFilters } = useRulesFilter();
 
-    const ViewComponent = VIEWS[view];
+  const queryParamView = queryParams.view as keyof typeof VIEWS;
+  const view = VIEWS[queryParamView] ? queryParamView : 'groups';
 
-    const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
-    const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
+  const ViewComponent = VIEWS[view];
 
-    const loading = rulesDataSourceNames.some(
-      (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
-    );
+  const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
+  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
-    const promRequests = Object.entries(promRuleRequests);
-    const rulerRequests = Object.entries(rulerRuleRequests);
+  const loading = rulesDataSourceNames.some(
+    (name) => promRuleRequests[name]?.loading || rulerRuleRequests[name]?.loading
+  );
 
-    const allPromLoaded = promRequests.every(
-      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-    );
-    const allRulerLoaded = rulerRequests.every(
-      ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
-    );
+  const promRequests = Object.entries(promRuleRequests);
+  const rulerRequests = Object.entries(rulerRuleRequests);
 
-    const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
+  const allPromLoaded = promRequests.every(
+    ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
+  );
+  const allRulerLoaded = rulerRequests.every(
+    ([_, state]) => state.dispatched && (state?.result !== undefined || state?.error !== undefined)
+  );
 
-    const allRulerEmpty = rulerRequests.every(([_, state]) => {
-      const rulerRules = Object.entries(state?.result ?? {});
-      const noRules = rulerRules.every(([_, result]) => result?.length === 0);
-      return noRules && state.dispatched;
-    });
+  const allPromEmpty = promRequests.every(([_, state]) => state.dispatched && state?.result?.length === 0);
 
-    const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
-    // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
-    const [_, fetchRules] = useAsyncFn(async () => {
-      if (!loading) {
+  const allRulerEmpty = rulerRequests.every(([_, state]) => {
+    const rulerRules = Object.entries(state?.result ?? {});
+    const noRules = rulerRules.every(([_, result]) => result?.length === 0);
+    return noRules && state.dispatched;
+  });
+
+  const limitAlerts = hasActiveFilters ? undefined : LIMIT_ALERTS;
+  // Trigger data refresh only when the RULE_LIST_POLL_INTERVAL_MS elapsed since the previous load FINISHED
+  const [_, fetchRules] = useAsyncFn(async () => {
+    if (!loading) {
+      if (prometheusRulesPrimary) {
+        await dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+        await dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
+      } else {
         await dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
       }
-    }, [loading, limitAlerts, dispatch]);
+    }
+  }, [loading, limitAlerts, dispatch]);
 
-    useEffect(() => {
-      trackRuleListNavigation().catch(() => {});
-    }, []);
+  useEffect(() => {
+    trackRuleListNavigation().catch(() => {});
+  }, []);
 
-    // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
-    useEffect(() => {
+  // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
+  useEffect(() => {
+    if (prometheusRulesPrimary) {
+      dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+      dispatch(fetchAllPromRulesAction(false, { limitAlerts }));
+    } else {
       dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
-    }, [dispatch, limitAlerts]);
-    useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
+    }
+  }, [dispatch, limitAlerts]);
+  useInterval(fetchRules, RULE_LIST_POLL_INTERVAL_MS);
 
-    // Show splash only when we loaded all of the data sources and none of them has alerts
-    const hasNoAlertRulesCreatedYet =
-      allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
-    const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
+  // Show splash only when we loaded all of the data sources and none of them has alerts
+  const hasNoAlertRulesCreatedYet =
+    allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
+  const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
 
-    const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
-    const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
-    return (
-      // We don't want to show the Loading... indicator for the whole page.
-      // We show separate indicators for Grafana-managed and Cloud rules
-      <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
-        <RuleListErrors />
-        <RulesFilter onClear={onFilterCleared} />
-        {hasAlertRulesCreated && (
-          <Stack direction="row" alignItems="center">
-            {view === 'groups' && hasActiveFilters && (
-              <Button
-                icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
-                variant="secondary"
-                onClick={() => setExpandAll(!expandAll)}
-              >
-                {expandAll ? 'Collapse all' : 'Expand all'}
-              </Button>
-            )}
-            <RuleStats namespaces={filteredNamespaces} />
-          </Stack>
-        )}
-        {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
-      </AlertingPageWrapper>
-    );
-  },
-  { style: 'page' }
-);
+  const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
+  const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+  return (
+    // We don't want to show the Loading... indicator for the whole page.
+    // We show separate indicators for Grafana-managed and Cloud rules
+    <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
+      <RuleListErrors />
+      <RulesFilter onClear={onFilterCleared} />
+      {hasAlertRulesCreated && (
+        <Stack direction="row" alignItems="center">
+          {view === 'groups' && hasActiveFilters && (
+            <Button
+              icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
+              variant="secondary"
+              onClick={() => setExpandAll(!expandAll)}
+            >
+              {expandAll ? 'Collapse all' : 'Expand all'}
+            </Button>
+          )}
+          <RuleStats namespaces={filteredNamespaces} />
+        </Stack>
+      )}
+      {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
+      {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+    </AlertingPageWrapper>
+  );
+};
 
-export default RuleList;
+export default withErrorBoundary(RuleListV1, { style: 'page' });
 
 export function CreateAlertButton() {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);

@@ -751,6 +751,10 @@ const (
 	// Send dashboard and panel names to Loki when querying
 	FlagLokiSendDashboardPanelNames = "lokiSendDashboardPanelNames"
 
+	// FlagAlertingPrometheusRulesPrimary
+	// Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
+	FlagAlertingPrometheusRulesPrimary = "alertingPrometheusRulesPrimary"
+
 	// FlagSingleTopNav
 	// Unifies the top search bar and breadcrumb bar into one
 	FlagSingleTopNav = "singleTopNav"
