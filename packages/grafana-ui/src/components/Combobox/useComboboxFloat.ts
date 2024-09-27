@@ -9,12 +9,6 @@ import { MENU_ITEM_FONT_SIZE } from './getComboboxStyles';
 // Only consider the first n items when calculating the width of the popover.
 const WIDTH_CALCULATION_LIMIT_ITEMS = 1000;
 
-// // On every 100th index we will recalculate the width of the popover.
-// const INDEX_WIDTH_CALCULATION = 100;
-
-// // A multiplier guesstimate times the amount of characters. If any padding or image support etc. is added this will need to be updated.
-// const WIDTH_MULTIPLIER = 7.3;
-
 /**
  * Used with Downshift to get the height of each item
  */
