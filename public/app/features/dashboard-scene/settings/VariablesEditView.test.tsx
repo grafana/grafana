@@ -13,7 +13,6 @@ import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {
   SceneVariableSet,
   CustomVariable,
-  SceneGridLayout,
   VizPanel,
   AdHocFiltersVariable,
   SceneVariableState,
@@ -22,8 +21,8 @@ import {
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
@@ -288,8 +287,7 @@ describe('VariablesEditView', () => {
     it('should keep dependencies with panels when the type is changed so the variable is replaced', async () => {
       // Uses function to avoid store reference to previous existing variables
       const getSourceVariable = () => variableView.getVariables()[0] as CustomVariable;
-      const getDependantPanel = () =>
-        ((dashboard.state.body as SceneGridLayout).state.children[0] as DashboardGridItem).state.body as VizPanel;
+      const getDependantPanel = () => dashboard.state.body.getVizPanels()[0];
 
       expect(getSourceVariable().getValue()).toBe('test');
       // Using description to get the interpolated value
@@ -342,20 +340,14 @@ async function buildTestScene() {
         }),
       ],
     }),
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          body: new VizPanel({
-            title: 'Panel A',
-            description: 'Panel A depends on customVar with current value $customVar',
-            key: 'panel-1',
-            pluginId: 'table',
-          }),
-        }),
-      ],
-    }),
+    body: DefaultGridLayoutManager.fromVizPanels([
+      new VizPanel({
+        title: 'Panel A',
+        description: 'Panel A depends on customVar with current value $customVar',
+        key: 'panel-1',
+        pluginId: 'table',
+      }),
+    ]),
     editview: variableView,
   });
 

@@ -1,7 +1,6 @@
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   behaviors,
-  SceneGridLayout,
   SceneQueryRunner,
   SceneTimeRange,
   VizPanel,
@@ -14,8 +13,8 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { NEW_LINK } from '../settings/links/utils';
 
 import { DashboardModelCompatibilityWrapper } from './DashboardModelCompatibilityWrapper';
@@ -97,13 +96,13 @@ describe('DashboardModelCompatibilityWrapper', () => {
   });
 
   it('Can remove panel', () => {
-    const { wrapper, scene } = setup();
+    const { wrapper } = setup();
 
-    expect((scene.state.body as SceneGridLayout).state.children.length).toBe(5);
+    expect(wrapper.panels.length).toBe(5);
 
     wrapper.removePanel(wrapper.getPanelById(1)!);
 
-    expect((scene.state.body as SceneGridLayout).state.children.length).toBe(4);
+    expect(wrapper.panels.length).toBe(4);
   });
 
   it('Checks if annotations are editable', () => {
@@ -173,75 +172,59 @@ function setup() {
     controls: new DashboardControls({
       hideTimeControls: true,
     }),
-    body: new SceneGridLayout({
-      children: [
-        new DashboardGridItem({
-          key: 'griditem-1',
-          x: 0,
-          body: new VizPanel({
-            title: 'Panel with a regular data source query',
-            key: 'panel-1',
-            pluginId: 'table',
-            $data: new SceneQueryRunner({
-              key: 'data-query-runner',
-              queries: [{ refId: 'A' }],
-              datasource: { uid: 'gdev-testdata', type: 'grafana-testdata-datasource' },
-            }),
-          }),
+    body: DefaultGridLayoutManager.fromVizPanels([
+      new VizPanel({
+        title: 'Panel with a regular data source query',
+        key: 'panel-1',
+        pluginId: 'table',
+        $data: new SceneQueryRunner({
+          key: 'data-query-runner',
+          queries: [{ refId: 'A' }],
+          datasource: { uid: 'gdev-testdata', type: 'grafana-testdata-datasource' },
         }),
-        new DashboardGridItem({
-          body: new VizPanel({
-            title: 'Panel with no queries',
-            key: 'panel-2',
-            pluginId: 'table',
-          }),
+      }),
+      new VizPanel({
+        title: 'Panel with no queries',
+        key: 'panel-2',
+        pluginId: 'table',
+      }),
+      new VizPanel({
+        title: 'Panel with a shared query',
+        key: 'panel-3',
+        pluginId: 'table',
+        $data: new SceneQueryRunner({
+          key: 'data-query-runner',
+          queries: [{ refId: 'A', panelId: 1 }],
+          datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' },
         }),
-
-        new DashboardGridItem({
-          body: new VizPanel({
-            title: 'Panel with a shared query',
-            key: 'panel-3',
-            pluginId: 'table',
-            $data: new SceneQueryRunner({
-              key: 'data-query-runner',
-              queries: [{ refId: 'A', panelId: 1 }],
-              datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' },
-            }),
+      }),
+      new VizPanel({
+        title: 'Panel with a regular data source query and transformations',
+        key: 'panel-4',
+        pluginId: 'table',
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            key: 'data-query-runner',
+            queries: [{ refId: 'A' }],
+            datasource: { uid: 'gdev-testdata', type: 'grafana-testdata-datasource' },
           }),
+          transformations: [],
         }),
-
-        new DashboardGridItem({
-          body: new VizPanel({
-            title: 'Panel with a regular data source query and transformations',
-            key: 'panel-4',
-            pluginId: 'table',
-            $data: new SceneDataTransformer({
-              $data: new SceneQueryRunner({
-                key: 'data-query-runner',
-                queries: [{ refId: 'A' }],
-                datasource: { uid: 'gdev-testdata', type: 'grafana-testdata-datasource' },
-              }),
-              transformations: [],
-            }),
+      }),
+      new VizPanel({
+        title: 'Panel with a shared query and transformations',
+        key: 'panel-4',
+        pluginId: 'table',
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            key: 'data-query-runner',
+            queries: [{ refId: 'A', panelId: 1 }],
+            datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' },
           }),
+          transformations: [],
         }),
-        new DashboardGridItem({
-          body: new VizPanel({
-            title: 'Panel with a shared query and transformations',
-            key: 'panel-4',
-            pluginId: 'table',
-            $data: new SceneDataTransformer({
-              $data: new SceneQueryRunner({
-                key: 'data-query-runner',
-                queries: [{ refId: 'A', panelId: 1 }],
-                datasource: { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' },
-              }),
-              transformations: [],
-            }),
-          }),
-        }),
-      ],
-    }),
+      }),
+    ]),
   });
 
   const wrapper = new DashboardModelCompatibilityWrapper(scene);
