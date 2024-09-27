@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink, error) {
@@ -103,14 +104,15 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	//TODO: only add this if in development mode
-	pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
-		Text:     "Extensions",
-		Icon:     "plug",
-		SubTitle: "Extend the UI of plugins and Grafana",
-		Id:       "extensions",
-		Url:      s.cfg.AppSubURL + "/admin/extensions",
-	})
+	if s.cfg.Env == setting.Dev {
+		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
+			Text:     "Extensions",
+			Icon:     "plug",
+			SubTitle: "Extend the UI of plugins and Grafana",
+			Id:       "extensions",
+			Url:      s.cfg.AppSubURL + "/admin/extensions",
+		})
+	}
 
 	pluginsNode := &navtree.NavLink{
 		Text:     "Plugins and data",
