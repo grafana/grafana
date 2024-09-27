@@ -1,13 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { screen, waitFor } from '@testing-library/react';
+import { Routes, Route } from 'react-router-dom-v5-compat';
+import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { configureStore } from 'app/store/configureStore';
 
 import { DashboardRoutes } from '../../../types';
 
@@ -31,23 +28,23 @@ jest.mock('react-router-dom-v5-compat', () => ({
 }));
 
 function setup(props: Partial<PublicDashboardPageProxyProps>) {
-  const context = getGrafanaContextMock();
-  const store = configureStore({});
   return render(
-    <GrafanaContext.Provider value={context}>
-      <Provider store={store}>
-        <Router history={locationService.getHistory()}>
+    <Routes>
+      <Route
+        path="/public-dashboards/:accessToken"
+        element={
           <PublicDashboardPageProxy
-            location={locationService.getLocation()}
-            history={locationService.getHistory()}
             queryParams={{}}
+            location={locationService.getLocation()}
             route={{ routeName: DashboardRoutes.Public, component: () => null, path: '/:accessToken' }}
-            match={{ params: { accessToken: 'an-access-token' }, isExact: true, path: '/', url: '/' }}
             {...props}
           />
-        </Router>
-      </Provider>
-    </GrafanaContext.Provider>
+        }
+      ></Route>
+    </Routes>,
+    {
+      historyOptions: { initialEntries: [`/public-dashboards/an-access-token`] },
+    }
   );
 }
 

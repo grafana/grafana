@@ -1,4 +1,5 @@
 import { render, screen, waitForElementToBeRemoved } from '@testing-library/react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -28,6 +29,11 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn().mockReturnValue({}),
+}));
+
 const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 function setup(props?: Partial<PublicDashboardSceneProps>) {
@@ -35,7 +41,6 @@ function setup(props?: Partial<PublicDashboardSceneProps>) {
 
   const pubdashProps: PublicDashboardSceneProps = {
     ...getRouteComponentProps({
-      match: { params: { accessToken: 'an-access-token' }, isExact: true, url: '', path: '' },
       route: {
         routeName: DashboardRoutes.Public,
         path: '/public-dashboards/:accessToken',
@@ -181,9 +186,8 @@ describe('PublicDashboardScenePage', () => {
       dashboard: { ...simpleDashboard, timepicker: { hidden: true } },
       meta: {},
     });
-    setup({
-      match: { params: { accessToken }, isExact: true, url: '', path: '' },
-    });
+    (useParams as jest.Mock).mockReturnValue({ accessToken });
+    setup({});
 
     await waitForDashboardGridToRender();
 
@@ -201,7 +205,8 @@ describe('given unavailable public dashboard', () => {
       dashboard: simpleDashboard,
       meta: { publicDashboardEnabled: false, dashboardNotFound: false },
     });
-    setup({ match: { params: { accessToken }, isExact: true, url: '', path: '' } });
+    (useParams as jest.Mock).mockReturnValue({ accessToken });
+    setup({});
 
     await waitForElementToBeRemoved(screen.getByTestId(publicDashboardSceneSelector.loadingPage));
 
@@ -217,7 +222,8 @@ describe('given unavailable public dashboard', () => {
       dashboard: simpleDashboard,
       meta: { dashboardNotFound: true },
     });
-    setup({ match: { params: { accessToken }, isExact: true, url: '', path: '' } });
+    (useParams as jest.Mock).mockReturnValue({ accessToken });
+    setup({});
 
     await waitForElementToBeRemoved(screen.getByTestId(publicDashboardSceneSelector.loadingPage));
 
