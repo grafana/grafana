@@ -1303,7 +1303,7 @@ def verify_linux_DEB_packages_step(depends_on = []):
             'echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | tee -a /etc/apt/sources.list.d/grafana.list',
             'echo "Step 5: Installing Grafana..."',
             # The packages take a bit of time to propogate within the repo. This retry will check their availability within 10 minutes.
-        ] + retry_command(install_command, attempts = 10) + [
+        ] + retry_command(install_command) + [
             'echo "Step 6: Verifying Grafana installation..."',
             'if dpkg -s grafana | grep -q "Version: ${TAG}"; then',
             '    echo "Successfully verified Grafana version ${TAG}"',
@@ -1329,7 +1329,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
         "sslcacert=/etc/pki/tls/certs/ca-bundle.crt\n"
     )
 
-    repo_install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
+    install_command = "dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1"
 
     return {
         "name": "verify-linux-RPM-packages",
@@ -1348,7 +1348,7 @@ def verify_linux_RPM_packages_step(depends_on = []):
             "dnf list available grafana-${TAG}",
             "if [ $? -eq 0 ]; then",
             '    echo "Grafana package found in repository. Installing from repo..."',
-        ] + retry_command(repo_install_command, attempts = 5) + [
+        ] + retry_command(install_command) + [
             '    echo "Verifying GPG key..."',
             "    rpm --import https://rpm.grafana.com/gpg.key",
             "    rpm -qa gpg-pubkey* | xargs rpm -qi | grep -i grafana",
