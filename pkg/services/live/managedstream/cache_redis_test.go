@@ -2,7 +2,6 @@ package managedstream
 
 import (
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/go-redis/redis/v8"
