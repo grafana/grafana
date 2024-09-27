@@ -602,7 +602,7 @@ export class PrometheusDatasource
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
     const scopes = config.featureToggles.promQLScope ? (options.scopes ?? []) : [];
 
-    if (!options || options.filters.length === 0) {
+    if (!options || (options.filters.length === 0 && scopes.length === 0)) {
       await this.languageProvider.fetchLabels(options.timeRange, options.queries);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
