@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -333,6 +334,65 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			require.Equal(tt, test.expErr, err.Error())
 		})
 	}
+}
+
+func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
+	const testKey = "test-key"
+	const testValue = "test-value"
+	decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
+		if string(payload) == testValue {
+			return []byte(testValue), nil
+		}
+		return nil, errTest
+	}
+
+	var got apimodels.TestReceiversConfigBodyParams
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&got))
+		require.NoError(t, r.Body.Close())
+		_, err := w.Write([]byte(`{"status": "success"}`))
+		require.NoError(t, err)
+	}))
+
+	fstore := notifier.NewFileStore(1, ngfakes.NewFakeKVStore(t))
+	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+	cfg := AlertmanagerConfig{
+		OrgID:         1,
+		TenantID:      "test",
+		URL:           server.URL,
+		DefaultConfig: defaultGrafanaConfig,
+	}
+
+	am, err := NewAlertmanager(cfg,
+		fstore,
+		decryptFn,
+		NoopAutogenFn,
+		m,
+		tracing.InitializeTracerForTest(),
+	)
+
+	require.NoError(t, err)
+	params := apimodels.TestReceiversConfigBodyParams{
+		Alert: &apimodels.TestReceiversConfigAlertParams{},
+		Receivers: []*definition.PostableApiReceiver{
+			{
+				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+						{
+							SecureSettings: map[string]string{
+								testKey: base64.StdEncoding.EncodeToString([]byte(testValue)),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, _, err = am.TestReceivers(context.Background(), params)
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{testKey: testValue}, got.Receivers[0].PostableGrafanaReceivers.GrafanaManagedReceivers[0].SecureSettings)
 }
 
 func Test_isDefaultConfiguration(t *testing.T) {
