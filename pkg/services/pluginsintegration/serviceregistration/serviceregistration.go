@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
@@ -20,9 +21,10 @@ type Service struct {
 	settingsSvc    pluginsettings.Service
 }
 
-func ProvideService(features featuremgmt.FeatureToggles, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
+	enabled := features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) && cfg.ManagedServiceAccountsEnabled
 	s := &Service{
-		featureEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		featureEnabled: enabled,
 		log:            log.New("plugins.external.registration"),
 		reg:            reg,
 		settingsSvc:    settingsSvc,

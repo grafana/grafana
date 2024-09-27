@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/extsvcauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/extsvcaccounts"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ extsvcauth.ExternalServiceRegistry = &Registry{}
@@ -28,9 +29,9 @@ type serverLocker interface {
 }
 
 type Registry struct {
-	features featuremgmt.FeatureToggles
-	logger   log.Logger
-	saReg    extsvcauth.ExternalServiceRegistry
+	enabled bool
+	logger  log.Logger
+	saReg   extsvcauth.ExternalServiceRegistry
 
 	// FIXME (gamab): we can remove this field and use the saReg.GetExternalServiceNames directly
 	extSvcProviders map[string]extsvcauth.AuthProvider
@@ -38,10 +39,11 @@ type Registry struct {
 	serverLock      serverLocker
 }
 
-func ProvideExtSvcRegistry(saSvc *extsvcaccounts.ExtSvcAccountsService, serverLock *serverlock.ServerLockService, features featuremgmt.FeatureToggles) *Registry {
+func ProvideExtSvcRegistry(cfg *setting.Cfg, saSvc *extsvcaccounts.ExtSvcAccountsService, serverLock *serverlock.ServerLockService, features featuremgmt.FeatureToggles) *Registry {
+	enabled := features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) && cfg.ManagedServiceAccountsEnabled
 	return &Registry{
 		extSvcProviders: map[string]extsvcauth.AuthProvider{},
-		features:        features,
+		enabled:         enabled,
 		lock:            sync.Mutex{},
 		logger:          log.New("extsvcauth.registry"),
 		saReg:           saSvc,
@@ -110,8 +112,12 @@ func (r *Registry) RemoveExternalService(ctx context.Context, name string) error
 
 	switch provider {
 	case extsvcauth.ServiceAccounts:
-		if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
-			r.logger.Debug("Skipping External Service removal, flag disabled", "service", name, "flag", featuremgmt.FlagExternalServiceAccounts)
+		if !r.enabled {
+			r.logger.Warn("Skipping External Service authentication, flag or configuration option is disabled",
+				"service", name,
+				"flag", featuremgmt.FlagExternalServiceAccounts,
+				"option", "ManagedServiceAccountsEnabled",
+			)
 			return nil
 		}
 		r.logger.Debug("Routing External Service removal to the External Service Account service", "service", name)
@@ -140,8 +146,12 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 
 		switch cmd.AuthProvider {
 		case extsvcauth.ServiceAccounts:
-			if !r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
-				ctxLogger.Warn("Skipping External Service authentication, flag disabled", "service", cmd.Name, "flag", featuremgmt.FlagExternalServiceAccounts)
+			if !r.enabled {
+				ctxLogger.Warn("Skipping External Service authentication, flag or configuration option disabled",
+					"service", cmd.Name,
+					"flag", featuremgmt.FlagExternalServiceAccounts,
+					"option", "ManagedServiceAccountsEnabled",
+				)
 				return
 			}
 			ctxLogger.Debug("Routing the External Service registration to the External Service Account service", "service", cmd.Name)
@@ -160,7 +170,7 @@ func (r *Registry) SaveExternalService(ctx context.Context, cmd *extsvcauth.Exte
 // retrieveExtSvcProviders fetches external services from store and map their associated provider
 func (r *Registry) retrieveExtSvcProviders(ctx context.Context) (map[string]extsvcauth.AuthProvider, error) {
 	extsvcs := map[string]extsvcauth.AuthProvider{}
-	if r.features.IsEnabled(ctx, featuremgmt.FlagExternalServiceAccounts) {
+	if r.enabled {
 		names, err := r.saReg.GetExternalServiceNames(ctx)
 		if err != nil {
 			return nil, err

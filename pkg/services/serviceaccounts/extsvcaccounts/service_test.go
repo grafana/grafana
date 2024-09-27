@@ -41,6 +41,7 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	t.Helper()
 
 	cfg := setting.NewCfg()
+	cfg.ManagedServiceAccountsEnabled = true
 	fmgt := featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAccounts)
 
 	env := &TestEnv{
@@ -50,13 +51,13 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	}
 	logger := log.New("extsvcaccounts.test")
 	env.S = &ExtSvcAccountsService{
+		enabled: true,
 		acSvc: acimpl.ProvideOSSService(
 			cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
 			localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil, nil,
 			permreg.ProvidePermissionRegistry(),
 		),
 		defaultOrgID: autoAssignOrgID,
-		features:     fmgt,
 		logger:       logger,
 		metrics:      newMetrics(nil, autoAssignOrgID, env.SaSvc, logger),
 		saSvc:        env.SaSvc,
