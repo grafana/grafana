@@ -3,6 +3,7 @@ package cloudmigrationimpl
 import (
 	"context"
 	cryptoRand "crypto/rand"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -185,11 +186,19 @@ func (s *Service) getDashboardAndFolderCommands(ctx context.Context, signedInUse
 	return dashboardCmds, folderCmds, nil
 }
 
+type libraryElement struct {
+	FolderUID *string         `json:"folderUid"`
+	Name      string          `json:"name"`
+	UID       string          `json:"uid"`
+	Model     json.RawMessage `json:"model"`
+	Kind      int64           `json:"kind"`
+}
+
 // getLibraryElementsCommands returns the json payloads required by the library elements creation API
-func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]libraryelements.CreateLibraryElementCommand, error) {
+func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *user.SignedInUser) ([]libraryElement, error) {
 	const perPage = 100
 
-	cmds := make([]libraryelements.CreateLibraryElementCommand, 0)
+	cmds := make([]libraryElement, 0)
 
 	page := 1
 	count := 0
@@ -211,7 +220,7 @@ func (s *Service) getLibraryElementsCommands(ctx context.Context, signedInUser *
 				folderUID = &element.FolderUID
 			}
 
-			cmds = append(cmds, libraryelements.CreateLibraryElementCommand{
+			cmds = append(cmds, libraryElement{
 				FolderUID: folderUID,
 				Name:      element.Name,
 				Model:     element.Model,
