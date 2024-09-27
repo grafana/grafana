@@ -137,7 +137,10 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 		// It also clears the cache for basic roles and teams, which is required for the user to not have temporarily
 		// broken UI permissions when their source of elevated permissions comes from a cached team or basic role
 		// permission.
-		_, _ = r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
+		_, err = r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
+		if err != nil {
+			r.log.Debug("Failed to clear user permissions cache", "error", err)
+		}
 	}
 
 	return countCustomPermissions(setPermissionCommands), nil
