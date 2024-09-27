@@ -8,12 +8,15 @@ import { SceneComponentProps, UrlSyncContextProvider } from '@grafana/scenes';
 import { Icon, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { PublicDashboardFooter } from 'app/features/dashboard/components/PublicDashboard/PublicDashboardsFooter';
 import { PublicDashboardNotAvailable } from 'app/features/dashboard/components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
+import {
+  PublicDashboardPageRouteParams,
+  PublicDashboardPageRouteSearchParams,
+} from 'app/features/dashboard/containers/types';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import { GrafanaRouteComponentProps } from '../../../core/navigation/types';
-import { PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams } from '../../dashboard/containers/types';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
