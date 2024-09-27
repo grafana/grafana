@@ -125,7 +125,6 @@ func TestTraceTableToFrame(t *testing.T) {
 
 func TestLargeLogsResponse(t *testing.T) {
 	t.Run("large logs response", func(t *testing.T) {
-
 		res := AzureLogAnalyticsResponse{
 			Tables: []types.AzureResponseTable{
 				{Name: "PrimaryResult",
