@@ -34,11 +34,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
-  templating-labels-annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templating-labels-annotations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templating-labels-annotations/
 ---
 
 # Templates
@@ -55,7 +50,7 @@ In Grafana, you have various options to template your alert notification message
 1. [Alert rule labels](#template-labels)
 
    - Labels are used to differentiate an alert instance from all other alert instances.
-   - Template labels when the labels from the query are incomplete or not descriptive enough. It is generally unnecessary.
+   - Template labels to add an additional label based on a query value, or when the labels from the query are incomplete or not descriptive enough.
 
 1. [Notification templates](#template-notifications)
    - Notification templates are used by contact points for consistent messaging in notification titles and descriptions.
@@ -86,9 +81,9 @@ Annotations can contain plain text, but you should template annotations if you n
 
 - Show the query value that triggers the alert.
 - Include labels returned by the query that identify the alert.
-- Format a message depending on a query value.
+- Format the annotation message depending on a query value.
 
-Here's an example of templating the `summary` annotation in an alert rule:
+Here’s an example of templating an annotation, which explains where and why the alert was triggered. In this case, the alert triggers when CPU usage exceeds a threshold, and the `summary` annotation provides the relevant details.
 
 ```
 CPU usage for {{ index $labels "instance" }} has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
@@ -100,59 +95,33 @@ The outcome of this template would be:
 CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 ```
 
-Annotations should add meaningful information to an alert. They are displayed when viewing alerts in Grafana and can be included in notifications.
+Implement annotations that provide meaningful information to respond to your alerts. Annotations are displayed in the Grafana alert detail view and are included by default in notifications.
 
-For details on how to template annotations, refer to [Template annotations and labels](ref:templating-labels-annotations).
+For more details on how to template annotations, refer to [Template annotations and labels](ref:templating-labels-annotations).
 
 ## Template labels
 
-Label templates are applied in the alert rule itself (i.e. in the Configure labels and notifications section of an alert).
+[Labels](ref:labels) are used to differentiate one alert instance from all other alert instances, as the set of labels uniquely identifies an alert instance. Notification policies and silences use labels to handle alert instances.
 
-{{<admonition type="note">}}
-Think about templating labels when you need to improve or change how alerts are uniquely identified. This is especially helpful if the labels you get from your query aren't detailed enough. Keep in mind that it's better to keep long sentences for summaries and descriptions. Also, avoid using the query's value in labels because it may result in the creation of many alerts when you actually only need one.
-{{</admonition>}}
+Template labels when you need to improve or change how alerts are uniquely identified. This is helpful if the labels you get from your query aren't detailed enough.
 
-Templating can be applied by using variables and functions. These variables can represent dynamic values retrieved from your data queries.
+Here’s an example of templating a `severity` label based on the query value:
 
-{{<admonition type="note">}}
-In Grafana templating, the $ and . symbols are used to reference variables and their properties. You can reference variables directly in your alert rule definitions using the $ symbol followed by the variable name. Similarly, you can access properties of variables using the dot (.) notation within alert rule definitions.
-{{</admonition>}}
+```
+{{ if (gt $values.A.Value 90.0) -}}
+critical
+{{ else if (gt $values.A.Value 80.0) -}}
+high
+{{ else if (gt $values.A.Value 60.0) -}}
+medium
+{{ else -}}
+low
+{{- end }}
+```
 
-Here are some commonly used built-in [variables](ref:templating-labels-annotations) to interact with the name and value of labels in Grafana alerting:
+Avoid using query values in labels, as this may result in the creation of numerous alerts when only one is needed. Use annotation to inform about the query value instead.
 
-- The `$labels` variable, which contains all labels from the query.
-
-  For example, let's say you have an alert rule that triggers when the CPU usage exceeds a certain threshold. You want to create annotations that provide additional context when this alert is triggered, such as including the specific server that experienced the high CPU usage.
-
-        The host {{ index $labels "instance" }} has exceeded 80% CPU usage for the last 5 minutes
-
-  The outcome of this template would print:
-
-        The host instance 1 has exceeded 80% CPU usage for the last 5 minutes
-
-- The `$value` variable, which is a string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule.
-
-  In the context of the previous example, $value variable would write something like this:
-
-        CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ $value }}
-
-  The outcome of this template would print:
-
-        CPU usage for instance1 has exceeded 80% for the last 5 minutes: [ var='A' labels={instance=instance1} value=81.234 ]
-
-- The `$values` variable is a table containing the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs (i.e. the id that identifies the query or expression. By default the Red ID of the query is “A”).
-
-  Given an alert with the labels instance=server1 and an instant query with the value 81.2345, would write like this:
-
-        CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "A" }}
-
-  And it would print:
-
-        CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
-
-{{% admonition type="caution" %}}
-Extra whitespace in label templates can break matches with notification policies.
-{{% /admonition %}}
+For more details on how to template labels, refer to [Template annotations and labels](ref:templating-labels-annotations).
 
 ## Template notifications
 
