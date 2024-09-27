@@ -2,9 +2,10 @@ import { expect, test } from '@grafana/plugin-e2e';
 
 test('should redirect to start page when permissions to navigate to page is missing', async ({ page }) => {
   await page.goto('/');
-  const homePageTitle = await page.title();
+  const homePageURL = page.url();
   await page.goto('/datasources', { waitUntil: 'networkidle' });
-  expect(await page.title()).toContain(homePageTitle);
+  // Expect path to be the same as the start page
+  expect(page.url()).toBe(homePageURL);
 });
 
 test('current user should have viewer role', async ({ page, request }) => {
