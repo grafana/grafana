@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardRoutes } from '../../../types';
