@@ -66,7 +66,7 @@ export const ServiceAccountPageUnconnected = ({
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDisableModalOpen, setIsDisableModalOpen] = useState(false);
-  const { id = '0' } = useParams();
+  const { id = '' } = useParams();
 
   const serviceAccountId = parseInt(id, 10);
   const tokenActionsDisabled =
