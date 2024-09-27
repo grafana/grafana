@@ -215,6 +215,12 @@
       "paused": "Päūşęđ",
       "recording-rule": "Ŗęčőřđįŉģ řūľę"
     },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "Åľęřŧ řūľę ĥäş þęęŉ ūpđäŧęđ. Cĥäŉģęş mäy ŧäĸę ūp ŧő ä mįŉūŧę ŧő äppęäř őŉ ŧĥę Åľęřŧ řūľęş ľįşŧ vįęŵ.",
+        "alert-title": "Ůpđäŧę įŉ přőģřęşş"
+      }
+    },
     "rules": {
       "add-rule": {
         "success": "Ŗūľę äđđęđ şūččęşşƒūľľy"
@@ -1845,6 +1851,9 @@
       "server-discovery-modal-close": "Cľőşę",
       "server-discovery-modal-loading": "Ŀőäđįŉģ...",
       "server-discovery-modal-submit": "Ŝūþmįŧ"
+    },
+    "login": {
+      "error": "Ŀőģįŉ přővįđęř đęŉįęđ ľőģįŉ řęqūęşŧ"
     }
   },
   "panel": {
