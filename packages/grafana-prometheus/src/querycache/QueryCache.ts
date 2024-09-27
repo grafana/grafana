@@ -213,7 +213,9 @@ export class QueryCache<T extends SupportedQueryTypes> {
             if (amendedTable) {
               for (let i = 0; i < amendedTable.length; i++) {
                 cachedFrame.fields[i].values = amendedTable[i];
-                cachedFrame.fields[i].config = respFrame.fields[i].config;
+                if (cachedFrame.fields[i].config.displayNameFromDS !== respFrame.fields[i].config.displayNameFromDS) {
+                  cachedFrame.fields[i].config.displayNameFromDS = respFrame.fields[i].config.displayNameFromDS;
+                }
               }
               cachedFrame.length = cachedFrame.fields[0].values.length;
             }
