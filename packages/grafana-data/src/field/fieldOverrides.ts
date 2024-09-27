@@ -105,11 +105,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     // Need to define this new frame here as it's passed to the getLinkSupplier function inside the fields loop
     const newFrame: DataFrame = { ...originalFrame };
 
-    let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = getFieldDisplayValuesProxy({
-      frame: originalFrame,
-      rowIndex: index,
-    });
-
     // Copy fields
     newFrame.fields = newFrame.fields.map((field) => {
       return {
@@ -119,17 +114,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           ...field.state,
         },
       };
-    });
-
-    let fieldVars: ScopedVars = {};
-
-    // add all fields in frame as variables
-    originalFrame.fields.forEach((f) => {
-      if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
-        fieldVars[f.name] = {
-          value: fieldDisplayValuesProxy[f.name],
-        };
-      }
     });
 
     for (const field of newFrame.fields) {
@@ -145,8 +129,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           },
         },
       };
-
-      field.state!.scopedVars = { ...field.state!.scopedVars, ...fieldVars };
 
       const context = {
         field: field,
@@ -496,8 +478,26 @@ export const getLinksSupplier =
     const linkModels = field.config.links.map((link: DataLink) => {
       const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
 
-      let transformationScopedVars = {};
+      // if we have a row index, expose every field on row as a variable
+      let rowVars: ScopedVars = {};
+      if (config.valueRowIndex !== undefined) {
+        let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = getFieldDisplayValuesProxy({
+          frame,
+          rowIndex: config.valueRowIndex,
+        });
 
+        // add all fields in frame as variables
+        frame.fields.forEach((f) => {
+          if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
+            rowVars[f.name] = {
+              value: fieldDisplayValuesProxy[f.name],
+            };
+          }
+        });
+      }
+
+      // expose variables from transformations
+      let transformationScopedVars = {};
       if (link.meta?.transformations) {
         link.meta?.transformations.forEach((transformation) => {
           let fieldValue;
@@ -521,6 +521,7 @@ export const getLinksSupplier =
 
       const dataLinkScopedVars = {
         ...fieldScopedVars,
+        ...rowVars,
         ...transformationScopedVars,
         __dataContext: dataContext,
       };
