@@ -449,6 +449,8 @@ const (
 	ActionAlertingNotificationsTimeIntervalsDelete = "alert.notifications.time-intervals:delete"
 
 	// Alerting receiver actions
+
+	// Deprecated: use ActionAlertingReceiversRead instead
 	ActionAlertingReceiversList             = "alert.notifications.receivers:list"
 	ActionAlertingReceiversRead             = "alert.notifications.receivers:read"
 	ActionAlertingReceiversReadSecrets      = "alert.notifications.receivers.secrets:read"
