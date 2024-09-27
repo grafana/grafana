@@ -3139,14 +3139,14 @@ steps:
   - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
     main" | tee -a /etc/apt/sources.list.d/grafana.list
   - 'echo "Step 5: Installing Grafana..."'
-  - for i in $(seq 1 10); do
+  - for i in $(seq 1 60); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
     install -yq grafana=${TAG} >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 10 ]; then'
+  - '        if [ $i -eq 60 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3189,13 +3189,13 @@ steps:
   - dnf list available grafana-${TAG}
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
-  - for i in $(seq 1 5); do
+  - for i in $(seq 1 60); do
   - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 5 ]; then'
+  - '        if [ $i -eq 60 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3316,14 +3316,14 @@ steps:
   - echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable
     main" | tee -a /etc/apt/sources.list.d/grafana.list
   - 'echo "Step 5: Installing Grafana..."'
-  - for i in $(seq 1 10); do
+  - for i in $(seq 1 60); do
   - '    if apt-get update >/dev/null 2>&1 && DEBIAN_FRONTEND=noninteractive apt-get
     install -yq grafana=${TAG} >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 10 ]; then'
+  - '        if [ $i -eq 60 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -3367,13 +3367,13 @@ steps:
   - dnf list available grafana-${TAG}
   - if [ $? -eq 0 ]; then
   - '    echo "Grafana package found in repository. Installing from repo..."'
-  - for i in $(seq 1 5); do
+  - for i in $(seq 1 60); do
   - '    if dnf install -y --nogpgcheck grafana-${TAG} >/dev/null 2>&1; then'
   - '        echo "Command succeeded on attempt $i"'
   - '        break'
   - '    else'
   - '        echo "Attempt $i failed"'
-  - '        if [ $i -eq 5 ]; then'
+  - '        if [ $i -eq 60 ]; then'
   - '            echo ''All attempts failed'''
   - '            exit 1'
   - '        fi'
@@ -5381,6 +5381,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 680e9d206fb0ff5105e5d502792c5c52ece094dfc878e46846698460656e0136
+hmac: 3011105defeedef16426438d9d6d004dbcdc433f953b13d5534b5648b0590ded
 
 ...
