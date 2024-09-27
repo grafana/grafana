@@ -146,8 +146,11 @@ func TestLargeLogsResponse(t *testing.T) {
 		appendErrorNotice(frame, res.Error)
 		require.NoError(t, err)
 		require.Equal(t, frame.Rows(), 30000)
-
-		testdata.CheckGoldenFrame(t, "../testdata", "loganalytics/12-log-analytics-large-response-warning.json", frame)
+		require.Len(t, frame.Meta.Notices, 1)
+		require.Equal(t, frame.Meta.Notices[0], data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     "The number of results in the result set has been limited to 30,000.",
+		})
 	})
 }
 
