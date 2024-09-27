@@ -1662,13 +1662,16 @@
     {
       "metadata": {
         "name": "live-service-web-worker",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "resourceVersion": "1727432782383",
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-27 10:26:22.38366 +0000 UTC"
+        }
       },
       "spec": {
         "description": "This will use a webworker thread to processes events rather than the main thread",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
     },
@@ -2523,13 +2526,16 @@
     {
       "metadata": {
         "name": "queryOverLive",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "resourceVersion": "1727432782383",
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-27 10:26:22.38366 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use Grafana Live WebSocket to execute backend queries",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
     },
