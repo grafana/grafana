@@ -120,6 +120,14 @@ export class DashboardSceneChangeTracker {
     return false;
   }
 
+  static shouldTriggerRefreshEvent({ payload }: SceneObjectStateChangedEvent) {
+    if (isSceneVariableInstance(payload.changedObject)) {
+      return true;
+    }
+
+    return false;
+  }
+
   private onStateChanged(event: SceneObjectStateChangedEvent) {
     if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
       this.detectSaveModelChanges();

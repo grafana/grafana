@@ -10,7 +10,7 @@ import {
   DataSourceGetTagKeysOptions,
   DataSourceGetTagValuesOptions,
 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   SceneFlexLayout,
   sceneGraph,
@@ -20,6 +20,7 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneObjectStateChangedEvent,
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
@@ -46,6 +47,7 @@ import { buildGridItemForPanel, transformSaveModelToScene } from '../serializati
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
+import { isSceneVariableInstance } from '../settings/variables/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -66,6 +68,7 @@ import {
 } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -214,6 +217,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
+
+    this.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
+      const isAnnotationChange =
+        payload.changedObject instanceof DashboardAnnotationsDataLayer &&
+        !Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data');
+      const isSceneVariableChange = isSceneVariableInstance(payload.changedObject);
+
+      if (isAnnotationChange || isSceneVariableChange) {
+        // DashboardModel triggers RefreshEvent when variables change
+        // To avoid compatibility issues in plugins we need to trigger the same event
+        this.publishEvent(new RefreshEvent());
+      }
+    });
 
     // Deactivation logic
     return () => {
