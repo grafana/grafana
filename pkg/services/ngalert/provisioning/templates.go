@@ -5,7 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"sort"
 	"unsafe"
+
+	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -48,12 +51,15 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 	}
 
 	templates := make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
-	for name, tmpl := range revision.Config.TemplateFiles {
+	names := maps.Keys(revision.Config.TemplateFiles)
+	sort.Strings(names)
+	for _, name := range names {
+		content := revision.Config.TemplateFiles[name]
 		tmpl := definitions.NotificationTemplate{
 			UID:             legacy_storage.NameToUid(name),
 			Name:            name,
-			Template:        tmpl,
-			ResourceVersion: calculateTemplateFingerprint(tmpl),
+			Template:        content,
+			ResourceVersion: calculateTemplateFingerprint(content),
 		}
 		provenance, ok := provenances[tmpl.ResourceID()]
 		if !ok {
