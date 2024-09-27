@@ -1845,6 +1845,9 @@
       "server-discovery-modal-close": "Close",
       "server-discovery-modal-loading": "Loading...",
       "server-discovery-modal-submit": "Submit"
+    },
+    "login": {
+      "error": "Login provider denied login request"
     }
   },
   "panel": {
