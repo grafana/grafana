@@ -32,7 +32,11 @@ Usage insights logs are JSON objects that represent certain user activities, suc
 
 ### Scope
 
-A log is created every time a user opens a dashboard or when a query is sent to a data source in the dashboard view. A query that is performed via Explore does not generate a log.
+A log is created every time:
+
+- A user opens a dashboard.
+- A query is sent to a data source in the dashboard view.
+- A query is performed via Explore.
 
 ### Format
 
