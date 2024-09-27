@@ -97,7 +97,7 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     display: 'flex',
     gap: theme.spacing(1),
     alignItems: 'center',
-    padding: theme.spacing(0, 1, 0, 0.5),
+    padding: theme.spacing(0, 1),
     paddingLeft: menuDockedAndOpen ? theme.spacing(3.5) : theme.spacing(0.5),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
