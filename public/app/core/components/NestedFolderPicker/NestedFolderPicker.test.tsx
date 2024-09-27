@@ -265,5 +265,4 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).toHaveBeenCalledWith(folderA_folderA.item.uid, folderA_folderA.item.title);
     });
   });
-
 });
