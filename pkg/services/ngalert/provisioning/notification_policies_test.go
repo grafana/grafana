@@ -257,6 +257,7 @@ func TestResetPolicyTree(t *testing.T) {
 		expectedRev.Config.AlertmanagerConfig.Receivers = append(expectedRev.Config.AlertmanagerConfig.Receivers, getDefaultConfigRevision().Config.AlertmanagerConfig.Receivers[0])
 
 		tree, version, err := sut.ResetPolicyTree(context.Background(), orgID)
+		require.NoError(t, err)
 		assert.Equal(t, *defaultConfig.AlertmanagerConfig.Route, tree)
 		assert.Equal(t, defaultVersion, version)
 
