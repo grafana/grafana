@@ -65,12 +65,12 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 	}
 	d.recordLegacyDuration(false, mode2Str, d.resource, method, startLegacy)
 
-	accIn, err := meta.Accessor(in)
+	accIn, err = meta.Accessor(in)
 	if err != nil {
 		return createdFromLegacy, err
 	}
 	if accIn.GetUID() != "" {
-		return nil, fmt.Errorf("there is an UID and it should not: %v", accIn.GetUID())
+		return nil, fmt.Errorf("UID should be empty: %v", accIn.GetUID())
 	}
 
 	startStorage := time.Now()
