@@ -91,7 +91,21 @@ Grafana managed alert rules can only be edited or deleted by users with Edit per
 If you delete an alerting resource created in the UI, you can no longer retrieve it.
 To make a backup of your configuration and to be able to restore deleted alerting resources, create your alerting resources using file provisioning, Terraform, or the Alerting API.
 
-In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
+## Before you begin
+
+You can use Simple or Advanced modes for Grafana-managed alert rule creation. The Simple mode streamlines rule creation with a cleaner header and a single query and condition. For more complex rules, switch to Advanced mode to add multiple queries and expressions.
+
+Simple and advanced modes are enabled by default for Grafana Cloud users and this feature is being rolled out progressively.
+
+For OSS users,enable the `alertingQueryAndExpressionsStepMode` feature toggle.
+
+{{% admonition type="note" %}}
+Once you have created an alert rule using one of the modes, the system defaults to this mode for the next alert rule you create.
+
+You can toggle between the two options. However, if you want to switch from Advanced to Simple mode and you have more than one query or a custom recovery threshold, your data is removed as it's not possible to transform these queries and expressions to the Simple mode.
+{{% /admonition %}}
+
+## Steps
 
 To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps.
 
@@ -108,14 +122,26 @@ To get started quickly, refer to our [tutorial on getting started with Grafana a
 
 Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
 
+{{< collapse title="Simple mode" >}}
+
+1. Add a query.
+1. Add an alert condition.
+
+   The **When** input includes the reducer function and the last input is the threshold.
+
+1. Click **Preview** to verify.
+   {{< /collapse >}}
+
+{{< collapse title="Advanced mode" >}}
+
 1. Select a data source.
 1. From the **Options** dropdown, specify a [time range](ref:time-units-and-relative-ranges).
 
-   **Note:**
+{{% admonition type="note" %}}
+Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
 
-   Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
-
-   It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+{{% /admonition %}}
 
 1. Add a query.
 
@@ -138,6 +164,7 @@ Define a query to get the data you want to measure and a condition that needs to
    You can only add one recovery threshold in a query and it must be the alert condition.
 
 1. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
+   {{< /collapse >}}
 
 ## Set alert evaluation behavior
 
