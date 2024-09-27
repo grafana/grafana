@@ -48,7 +48,6 @@ export interface FeatureToggles {
   mysqlAnsiQuotes?: boolean;
   mysqlParseTime?: boolean;
   accessControlOnCall?: boolean;
-  nestedFolders?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
