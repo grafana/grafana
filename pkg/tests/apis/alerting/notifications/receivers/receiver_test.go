@@ -396,9 +396,10 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 					assert.Equalf(t, expectedGetWithMetadata, got, "Expected %v but got %v", expectedGetWithMetadata, got)
 				})
 			} else {
-				t.Run("should be forbidden to list receivers", func(t *testing.T) {
-					_, err := client.List(ctx, v1.ListOptions{})
-					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				t.Run("list receivers should be empty", func(t *testing.T) {
+					list, err := client.List(ctx, v1.ListOptions{})
+					require.NoError(t, err)
+					require.Emptyf(t, list.Items, "Expected no receivers but got %v", list.Items)
 				})
 
 				t.Run("should be forbidden to read receiver by name", func(t *testing.T) {
@@ -640,9 +641,10 @@ func TestIntegrationAccessControl(t *testing.T) {
 					})
 				})
 			} else {
-				t.Run("should be forbidden to list receivers", func(t *testing.T) {
-					_, err := client.List(ctx, v1.ListOptions{})
-					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				t.Run("list receivers should be empty", func(t *testing.T) {
+					list, err := client.List(ctx, v1.ListOptions{})
+					require.NoError(t, err)
+					require.Emptyf(t, list.Items, "Expected no receivers but got %v", list.Items)
 				})
 
 				t.Run("should be forbidden to read receiver by name", func(t *testing.T) {

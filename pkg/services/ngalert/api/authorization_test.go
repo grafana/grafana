@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestAuthorize(t *testing.T) {
@@ -43,7 +44,7 @@ func TestAuthorize(t *testing.T) {
 	require.Len(t, paths, 59)
 
 	ac := acmock.New()
-	api := &API{AccessControl: ac}
+	api := &API{AccessControl: ac, FeatureManager: featuremgmt.WithFeatures()}
 
 	t.Run("should not panic on known routes", func(t *testing.T) {
 		for path, methods := range paths {

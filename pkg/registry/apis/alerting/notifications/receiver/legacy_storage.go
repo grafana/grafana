@@ -2,9 +2,10 @@ package receiver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,6 +15,7 @@ import (
 	notifications "github.com/grafana/grafana/pkg/apis/alerting_notifications/v0alpha1"
 	grafanaRest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	alertingac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -88,7 +90,14 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 
 	res, err := s.service.GetReceivers(ctx, q, user)
 	if err != nil {
-		return nil, err
+		// This API should not be returning a forbidden error when the user does not have access to any resources.
+		// This can be true for a contact point creator role, for example.
+		// This should eventually be changed downstream in the auth logic but provisioning API currently relies on this
+		//  behaviour to return useful forbidden errors when exporting decrypted receivers.
+		if !errors.Is(err, alertingac.ErrAuthorizationBase) {
+			return nil, err
+		}
+		res = nil
 	}
 
 	accesses, err := s.metadata.AccessControlMetadata(ctx, user, res...)
@@ -112,7 +121,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 
 	name, err := legacy_storage.UidToName(uid)
 	if err != nil {
-		return nil, errors.NewNotFound(resourceInfo.GroupResource(), uid)
+		return nil, apierrors.NewNotFound(resourceInfo.GroupResource(), uid)
 	}
 	q := ngmodels.GetReceiverQuery{
 		OrgID:   info.OrgID,
@@ -172,7 +181,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, fmt.Errorf("expected receiver but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
 	if p.ObjectMeta.Name != "" { // TODO remove when metadata.name can be defined by user
-		return nil, errors.NewBadRequest("object's metadata.name should be empty")
+		return nil, apierrors.NewBadRequest("object's metadata.name should be empty")
 	}
 	model, _, err := convertToDomainModel(p)
 	if err != nil {
@@ -271,5 +280,5 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 }
 
 func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, errors.NewMethodNotSupported(resourceInfo.GroupResource(), "deleteCollection")
+	return nil, apierrors.NewMethodNotSupported(resourceInfo.GroupResource(), "deleteCollection")
 }

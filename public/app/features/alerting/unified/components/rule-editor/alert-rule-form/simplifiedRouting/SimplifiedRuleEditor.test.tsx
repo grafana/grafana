@@ -14,6 +14,7 @@ import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/serv
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
+import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { DataSourceType, GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
@@ -135,9 +136,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   });
 
   describe('alertingApiServer enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.alertingApiServer = true;
-    });
+    testWithFeatureToggles(['alertingApiServer']);
 
     it('allows selecting a contact point when using alerting API server', async () => {
       const user = userEvent.setup();

@@ -4,7 +4,7 @@ import { HttpResponse, http } from 'msw';
 import alertmanagerConfig from 'app/features/alerting/unified/components/contact-points/__mocks__/alertmanager.config.mock.json';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { ComGithubGrafanaGrafanaPkgApisAlertingNotificationsV0Alpha1Receiver } from 'app/features/alerting/unified/openapi/receiversApi.gen';
-import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { PROVENANCE_NONE, K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 const config: AlertManagerCortexConfig = alertmanagerConfig;
@@ -20,7 +20,12 @@ const mappedReceivers =
       metadata: {
         // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
         uid: camelCase(contactPoint.name),
-        annotations: { [PROVENANCE_ANNOTATION]: provenance },
+        annotations: {
+          [K8sAnnotations.Provenance]: provenance,
+          [K8sAnnotations.AccessAdmin]: 'true',
+          [K8sAnnotations.AccessDelete]: 'true',
+          [K8sAnnotations.AccessWrite]: 'true',
+        },
       },
       spec: {
         title: contactPoint.name,

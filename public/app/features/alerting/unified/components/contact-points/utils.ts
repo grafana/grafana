@@ -2,6 +2,8 @@ import { difference, groupBy, take, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
+import { canAdminEntity, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedContactPoint,
@@ -206,3 +208,6 @@ function getNotifierMetadata(notifiers: NotifierDTO[], receiver: GrafanaManagedR
     description: match?.description,
   };
 }
+
+export const showManageContactPointPermissions = (alertmanager: string, contactPoint: GrafanaManagedContactPoint) =>
+  shouldUseK8sApi(alertmanager) && contextSrv.licensedAccessControlEnabled() && canAdminEntity(contactPoint);
