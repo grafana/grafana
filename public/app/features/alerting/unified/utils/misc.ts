@@ -8,21 +8,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { alertInstanceKey, isGrafanaRulerRule } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
-import {
-  Alert,
-  CombinedRule,
-  FilterState,
-  RuleIdentifier,
-  RulesSource,
-  SilenceFilterState,
-} from 'app/types/unified-alerting';
+import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
 import {
   GrafanaAlertState,
   PromAlertingRuleState,
   mapStateWithReasonToBaseState,
 } from 'app/types/unified-alerting-dto';
-
-import { applySearchFilterToQuery, RulesFilter } from '../search/rulesSearchParser';
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName, isCloudRulesSource } from './datasource';
@@ -37,18 +28,6 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   const paramSource = encodeURIComponent(sourceName);
 
   return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
-}
-
-export function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
-  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
-  const paramSource = encodeURIComponent(identifier.ruleSourceName);
-
-  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
-}
-
-export function createRulesListLink(filters: Partial<RulesFilter> = {}) {
-  const searchQuery = applySearchFilterToQuery('', { freeFormWords: [], dataSourceNames: [], labels: [], ...filters });
-  return createRelativeUrl('/alerting/list', { search: searchQuery });
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {

@@ -19,7 +19,7 @@ import {
   isGrafanaRulerRulePaused,
   isRecordingRuleByType,
 } from 'app/features/alerting/unified/utils/rules';
-import { RuleGroupIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
+import { RuleGroupIdentifier, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { PostableRuleGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import {
@@ -34,7 +34,6 @@ import { useDeleteRuleFromGroup } from '../../../hooks/ruleGroup/useDeleteRuleFr
 import { useAddRuleToRuleGroup, useUpdateRuleInRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
-import { createRulesListLink, createViewLinkFromIdentifier } from '../../../utils/misc';
 import {
   DEFAULT_GROUP_EVALUATION_INTERVAL,
   MANUAL_ROUTING_KEY,
@@ -48,6 +47,8 @@ import {
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
 import { fromRulerRule, fromRulerRuleAndRuleGroupIdentifier, stringifyIdentifier } from '../../../utils/rule-id';
+import * as ruleId from '../../../utils/rule-id';
+import { createRelativeUrl } from '../../../utils/url';
 import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
 import { AlertRuleNameAndMetric } from '../AlertRuleNameInput';
 import AnnotationsStep from '../AnnotationsStep';
@@ -332,7 +333,16 @@ function getReturnToUrl(groupId: RuleGroupIdentifier, rule: RulerRuleDTO | Posta
   }
 
   // TODO We could add namespace and group filters but for GMA the namespace = uid which doesn't work with the filters
-  return createRulesListLink();
+  return '/alerting/list';
+}
+
+// The result of this function is passed to locationService.push()
+// Hence it cannot contain the subpath prefix, so we cannot use createRelativeUrl for it
+function createViewLinkFromIdentifier(identifier: RuleIdentifier, returnTo?: string) {
+  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(identifier.ruleSourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
 }
 
 const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
