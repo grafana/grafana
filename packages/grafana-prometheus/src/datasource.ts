@@ -603,7 +603,7 @@ export class PrometheusDatasource
     const scopes = config.featureToggles.promQLScope ? (options.scopes ?? []) : [];
 
     if (!options || options.filters.length === 0) {
-      await this.languageProvider.fetchLabels(options.timeRange, options.queries, scopes);
+      await this.languageProvider.fetchLabels(options.timeRange, options.queries);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
 
@@ -615,7 +615,7 @@ export class PrometheusDatasource
     const scopesFilters: QueryBuilderLabelFilter[] = scopesToPrometheusFilters(scopes);
     const expr = promQueryModeller.renderLabels([...labelFilters, ...scopesFilters]);
 
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr, undefined);
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -645,10 +645,7 @@ export class PrometheusDatasource
       }));
     }
 
-    const params: Record<string, string | string[]> = this.getTimeRangeParams(
-      options.timeRange ?? getDefaultTimeRange()
-    );
-
+    const params = this.getTimeRangeParams(options.timeRange ?? getDefaultTimeRange());
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
   }
