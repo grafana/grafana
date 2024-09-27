@@ -106,8 +106,8 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
   const isProvisioned = Boolean(originalTemplate?.provenance) && originalTemplate?.provenance !== PROVENANCE_NONE;
-  const originalTemplatePrefill = originalTemplate
-    ? { name: originalTemplate.title, content: originalTemplate.content }
+  const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
+    ? { title: originalTemplate.title, content: originalTemplate.content }
     : undefined;
 
   // splitter for template and payload editor
