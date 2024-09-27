@@ -40,6 +40,7 @@ type Service interface {
 	ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error
 	DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error
 	DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error
+	GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error)
 }
 
 // LibraryElementService is the service for the Library Element feature.
@@ -83,6 +84,11 @@ func (l *LibraryElementService) DisconnectElementsFromDashboard(c context.Contex
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return l.deleteLibraryElementsInFolderUID(c, signedInUser, folderUID)
+}
+
+// GetAll gets all library elements with support to query filters.
+func (l *LibraryElementService) GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error) {
+	return l.getAllLibraryElements(c, signedInUser, query)
 }
 
 func (l *LibraryElementService) addUidToLibraryPanel(model []byte, newUid string) (json.RawMessage, error) {
