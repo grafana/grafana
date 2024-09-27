@@ -83,6 +83,9 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
   let shouldStop = false;
   let subquerySubsciption: Subscription | null = null;
+  let retriesMap = new Map<string, number>();
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestGroup: number) => {
     if (shouldStop) {
       subscriber.complete();
@@ -104,6 +107,31 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
       done();
     };
 
+    const retry = (errorResponse?: DataQueryResponse) => {
+      if (errorResponse?.errors && errorResponse.errors[0].message?.includes('maximum of series')) {
+        console.log(`Maximum series reached, skipping retry`);
+        return false;
+      }
+
+      const key = `${requestN}-${requestGroup}`;
+      const retries = retriesMap.get(key) ?? 0;
+      if (retries > 3) {
+        return false;
+      }
+
+      retriesMap.set(key, retries + 1);
+
+      retryTimer = setTimeout(
+        () => {
+          console.log(`Retrying ${key} (${retries + 1})`);
+          runNextRequest(subscriber, requestN, requestGroup);
+        },
+        1500 * Math.pow(2, retries)
+      ); // Exponential backoff
+
+      return true;
+    };
+
     const group = requests[requestGroup];
     const range = group.partition[requestN - 1];
     const targets = adjustTargetsFromResponseState(group.request.targets, mergedResponse);
@@ -121,11 +149,14 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
-        mergedResponse = combineResponses(mergedResponse, partialResponse);
-        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
+          if (retry(partialResponse)) {
+            return;
+          }
           shouldStop = true;
         }
+        mergedResponse = combineResponses(mergedResponse, partialResponse);
+        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
       },
       complete: () => {
         subscriber.next(mergedResponse);
@@ -133,6 +164,9 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
       },
       error: (error) => {
         subscriber.error(error);
+        if (retry()) {
+          return;
+        }
       },
     });
   };
@@ -141,6 +175,10 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     runNextRequest(subscriber, totalRequests, 0);
     return () => {
       shouldStop = true;
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
       if (subquerySubsciption != null) {
         subquerySubsciption.unsubscribe();
       }
