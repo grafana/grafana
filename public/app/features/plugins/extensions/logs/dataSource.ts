@@ -56,8 +56,25 @@ export class ExtensionsLogDataSource extends RuntimeDataSource<LogDataQuery> {
 
     return this.extensionsLog.asObservable().pipe(
       tap((item: LogItem) => {
-        if (isString(item.labels['pluginId'])) {
-          this.pluginIds.add(item.labels['pluginId']);
+        const { pluginIds, extensionPointIds, levels } = query;
+
+        if (isEmpty(pluginIds) && isEmpty(levels) && !isEmpty(extensionPointIds)) {
+          if (isString(item.labels['extensionPointId'])) {
+            this.extensionPointIds.add(item.labels['extensionPointId']);
+            return;
+          }
+        }
+
+        if (!isEmpty(pluginIds) && isEmpty(levels) && isEmpty(extensionPointIds)) {
+          if (isString(item.labels['pluginId'])) {
+            this.pluginIds.add(item.labels['pluginId']);
+          }
+          return;
+        }
+
+        if (isEmpty(pluginIds) && !isEmpty(levels) && isEmpty(extensionPointIds)) {
+          this.levels.add(item.level);
+          return;
         }
       }),
       filter((item: LogItem) => {
@@ -87,11 +104,16 @@ export class ExtensionsLogDataSource extends RuntimeDataSource<LogDataQuery> {
         return true;
       }),
       tap((item: LogItem) => {
+        // This tap is adding all available options when selecting
+        // the first value to filter on.
         if (item.level) {
           this.levels.add(item.level);
         }
         if (isString(item.labels['extensionPointId'])) {
           this.extensionPointIds.add(item.labels['extensionPointId']);
+        }
+        if (isString(item.labels['pluginId'])) {
+          this.pluginIds.add(item.labels['pluginId']);
         }
       }),
       scan<LogItem, DataQueryResponse>(
@@ -142,4 +164,8 @@ function createFrame(query: LogDataQuery, item: LogItem, existing?: DataFrame): 
       { name: 'labels', type: FieldType.other, values: [item.labels, ...labels] },
     ],
   });
+}
+
+function isEmpty(values: Set<string> | undefined): boolean {
+  return !values || values.size === 0;
 }
