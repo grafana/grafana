@@ -13,6 +13,7 @@ import (
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/authn/grpcutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -92,7 +93,12 @@ func ProvideUnifiedStorageClient(
 }
 
 func newResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (resource.ResourceClient, error) {
-	if cfg.StackID != "" {
+	clientConfig, err := grpcutils.ReadGrpcClientConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if clientConfig.Mode == grpcutils.ModeCloud {
 		return resource.NewCloudResourceClient(conn, cfg)
 	}
 	return resource.NewGRPCResourceClient(conn)

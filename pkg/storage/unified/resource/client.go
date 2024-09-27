@@ -95,7 +95,11 @@ func NewGRPCResourceClient(conn *grpc.ClientConn) (ResourceClient, error) {
 
 func NewCloudResourceClient(conn *grpc.ClientConn, cfg *setting.Cfg) (ResourceClient, error) {
 	// scenario: remote cloud
-	grpcClientConfig := clientCfgMapping(grpcutils.ReadGrpcClientConfig(cfg))
+	clientConfig, err := grpcutils.ReadGrpcClientConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	grpcClientConfig := clientCfgMapping(clientConfig)
 
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithIDTokenExtractorOption(idTokenExtractor),

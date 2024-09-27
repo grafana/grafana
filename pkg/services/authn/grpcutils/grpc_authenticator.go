@@ -10,7 +10,10 @@ import (
 )
 
 func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error) {
-	authCfg := ReadGprcServerConfig(cfg)
+	authCfg, err := ReadGprcServerConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
 	grpcAuthCfg := authnlib.GrpcAuthenticatorConfig{
 		KeyRetrieverConfig: authnlib.KeyRetrieverConfig{
 			SigningKeysURL: authCfg.SigningKeysURL,
@@ -31,7 +34,7 @@ func NewGrpcAuthenticator(cfg *setting.Cfg) (*authnlib.GrpcAuthenticator, error)
 		authnlib.WithIDTokenAuthOption(true),
 		authnlib.WithKeyRetrieverOption(keyRetriever),
 	}
-	if cfg.StackID == "" {
+	if authCfg.Mode == ModeOnPrem {
 		grpcOpts = append(grpcOpts,
 			// Access token are not yet available on-prem
 			authnlib.WithDisableAccessTokenAuthOption(),
