@@ -43,6 +43,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	obj.SetCreatedBy(user.GetUID())
+	obj.SetResourceVersion("")
 
 	var buf bytes.Buffer
 	err = s.codec.Encode(newObject, &buf)
@@ -71,9 +72,15 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if err != nil {
 		return nil, err
 	}
+
+	if previous.GetUID() == "" {
+		return nil, fmt.Errorf("object is missing UID")
+	}
+
 	obj.SetUID(previous.GetUID())
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
+	obj.SetResourceVersion("")
 
 	// Read+write will verify that origin format is accurate
 	origin, err := obj.GetOriginInfo()
