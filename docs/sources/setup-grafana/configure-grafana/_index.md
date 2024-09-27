@@ -1090,6 +1090,16 @@ Set to `true` to enable verbose request signature logging when AWS Signature Ver
 
 <hr />
 
+### managed_service_accounts_enabled
+
+> Only available in Grafana 11.3+.
+
+Set to `true` to enable the use of managed service accounts for plugin authentication. Default is `false`.
+
+> **Limitations:**
+> This feature currently **only supports single-organization deployments**.
+> The plugin's service account is automatically created in the default organization. This means the plugin can only access data and resources within that specific organization.
+
 ## [auth.anonymous]
 
 Refer to [Anonymous authentication]({{< relref "../configure-security/configure-authentication/grafana#anonymous-authentication" >}}) for detailed instructions.
