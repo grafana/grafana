@@ -29,7 +29,6 @@ func (m *orphanedServiceAccountPermissions) SQL(dialect migrator.Dialect) string
 }
 
 func (m *orphanedServiceAccountPermissions) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
-
 	var idents []string
 
 	// find all permissions that are scopes directly to a service account
