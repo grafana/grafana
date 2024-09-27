@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 
-import { VizPanel, SceneObject, SceneGridRow, UrlSyncManager } from '@grafana/scenes';
+import { VizPanel, UrlSyncManager } from '@grafana/scenes';
 
-import { DashboardGridItem } from '../scene/DashboardGridItem';
 import { DashboardScene } from '../scene/DashboardScene';
-import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { DashboardRepeatsProcessedEvent } from '../scene/types';
 import { findVizPanelByKey, isPanelClone } from '../utils/utils';
 
