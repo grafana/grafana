@@ -73,6 +73,7 @@ func (api *API) authorize(method, path string) web.Handler {
 		// additional authorization is done at the service level
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			// nolint:staticcheck
 			ac.EvalPermission(ac.ActionAlertingReceiversList),
 			ac.EvalPermission(ac.ActionAlertingReceiversRead),
 			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),

@@ -1485,6 +1485,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 				if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingNotificationsRead) {
 					return true, nil
 				}
+				// nolint:staticcheck
 				if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingReceiversList) {
 					return true, nil
 				}
@@ -1587,6 +1588,7 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			env := createTestEnv(t, testConfig)
 			env.ac = &recordingAccessControlFake{
 				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					// nolint:staticcheck
 					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingReceiversList) {
 						return true, nil
 					}

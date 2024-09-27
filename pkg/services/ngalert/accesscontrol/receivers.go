@@ -67,6 +67,7 @@ var (
 
 	// Asserts read-only access to list redacted receivers. // TODO: Remove this with fgac.
 	readRedactedReceiversListEval = ac.EvalAny(
+		// nolint:staticcheck
 		ac.EvalPermission(ac.ActionAlertingReceiversList),
 	)
 
