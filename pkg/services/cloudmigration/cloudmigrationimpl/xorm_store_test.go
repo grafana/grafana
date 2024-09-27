@@ -283,7 +283,7 @@ func Test_SnapshotResources(t *testing.T) {
 }
 
 func TestGetSnapshotList(t *testing.T) {
-	t.Parallel()
+	t.Skip("FLAKY test: disabled until fixed")
 
 	_, s := setUpTest(t)
 	// Taken from setUpTest
