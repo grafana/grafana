@@ -46,7 +46,7 @@ setupMswServer();
 function renderRuleEditor(identifier: string) {
   return render(
     <Routes>
-      <Route path="/alerting/:id/edit" Component={RuleEditor} />
+      <Route path="/alerting/:id/edit" element={<RuleEditor />} />
     </Routes>,
     {
       historyOptions: { initialEntries: [`/alerting/${identifier}/edit`] },
