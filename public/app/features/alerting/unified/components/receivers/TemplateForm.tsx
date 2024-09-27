@@ -29,7 +29,6 @@ import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AppChromeUpdate } from '../../../../../core/components/AppChrome/AppChromeUpdate';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { PROVENANCE_NONE } from '../../utils/k8s/constants';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
