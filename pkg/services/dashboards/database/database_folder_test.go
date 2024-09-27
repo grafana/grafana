@@ -258,6 +258,8 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		tracer := tracing.InitializeTracerForTest()
 		quotaService := quotatest.New(false, nil)
 
+		features := featuremgmt.WithFeatures()
+
 		var err error
 		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)

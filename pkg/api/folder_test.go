@@ -40,7 +40,6 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 		expectedFolder         *folder.Folder
 		expectedFolderSvcError error
 		permissions            []accesscontrol.Permission
-		withNestedFolders      bool
 		input                  string
 	}
 	tcs := []testCase{
@@ -270,7 +269,6 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		hs.SearchService = &mockSearchService{
 			ExpectedResult: model.HitList{},
 		}
-		hs.Features = features
 	})
 
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {

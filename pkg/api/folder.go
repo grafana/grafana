@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -120,13 +119,6 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 			ParentUID: f.ParentUID,
 		})
 		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolders).Inc()
-	}
-
-	return response.JSON(http.StatusOK, hits)
-
-	hits, err := hs.searchFolders(c, permission)
-	if err != nil {
-		return apierrors.ToFolderErrorResponse(err)
 	}
 
 	return response.JSON(http.StatusOK, hits)
@@ -491,36 +483,6 @@ func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.
 		}
 	}
 	return metadata, nil
-}
-
-func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext, permission dashboardaccess.PermissionType) ([]dtos.FolderSearchHit, error) {
-	searchQuery := search.Query{
-		SignedInUser: c.SignedInUser,
-		DashboardIds: make([]int64, 0),
-		FolderIds:    make([]int64, 0), // nolint:staticcheck
-		Limit:        c.QueryInt64("limit"),
-		OrgId:        c.SignedInUser.GetOrgID(),
-		Type:         "dash-folder",
-		Permission:   permission,
-		Page:         c.QueryInt64("page"),
-	}
-
-	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	folderHits := make([]dtos.FolderSearchHit, 0)
-	for _, hit := range hits {
-		folderHits = append(folderHits, dtos.FolderSearchHit{
-			ID:    hit.ID, // nolint:staticcheck
-			UID:   hit.UID,
-			Title: hit.Title,
-		})
-		metrics.MFolderIDsAPICount.WithLabelValues(metrics.SearchFolders).Inc()
-	}
-
-	return folderHits, nil
 }
 
 // swagger:parameters getFolders
