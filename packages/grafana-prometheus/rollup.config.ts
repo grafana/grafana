@@ -9,6 +9,11 @@ import { nodeExternals } from 'rollup-plugin-node-externals';
 const rq = createRequire(import.meta.url);
 const pkg = rq('./package.json');
 
+const legacyOutputDefaults = {
+  esModule: true,
+  interop: 'compat',
+};
+
 export default [
   {
     input: 'src/index.ts',
@@ -26,6 +31,7 @@ export default [
         format: 'cjs',
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.main),
+        ...legacyOutputDefaults,
       },
       {
         format: 'esm',
@@ -34,6 +40,7 @@ export default [
         preserveModules: true,
         // @ts-expect-error (TS cannot assure that `process.env.PROJECT_CWD` is a string)
         preserveModulesRoot: path.join(process.env.PROJECT_CWD, `packages/grafana-prometheus/src`),
+        ...legacyOutputDefaults,
       },
     ],
   },

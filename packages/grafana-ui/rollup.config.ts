@@ -15,6 +15,11 @@ const iconSrcPaths = icons.map((iconSubPath) => {
   return `../../public/img/icons/${iconSubPath}.svg`;
 });
 
+const legacyOutputDefaults = {
+  esModule: true,
+  interop: 'compat',
+};
+
 export default [
   {
     input: 'src/index.ts',
@@ -36,6 +41,7 @@ export default [
         format: 'cjs',
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.main),
+        ...legacyOutputDefaults,
       },
       {
         format: 'esm',
@@ -44,6 +50,7 @@ export default [
         preserveModules: true,
         // @ts-expect-error (TS cannot assure that `process.env.PROJECT_CWD` is a string)
         preserveModulesRoot: path.join(process.env.PROJECT_CWD, `packages/grafana-ui/src`),
+        ...legacyOutputDefaults,
       },
     ],
   },
