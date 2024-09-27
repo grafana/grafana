@@ -28,13 +28,14 @@ func TestIntegrationRedisCacheStorage(t *testing.T) {
 		db = parsed.DB
 	}
 
-	// cleanup before running
-	redisCleanup(t, redisClient, "")
-
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: addr,
 		DB:   db,
 	})
+
+	// cleanup before running
+	redisCleanup(t, redisClient, "")
+
 	prefix := uuid.New().String()
 
 	t.Cleanup(redisCleanup(t, redisClient, prefix))
