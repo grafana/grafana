@@ -127,9 +127,9 @@ Define a query to get the data you want to measure and a condition that needs to
 1. Add a query.
 1. Add an alert condition.
 
-   The **When** input includes the reducer function and the last input is the threshold. The **When** input includes the reducer function.
+   The **When** input includes the reducer function and the last input is the threshold.
 
-2. Click **Preview** to verify.
+1. Click **Preview** to verify.
    {{< /collapse >}}
 
 {{< collapse title="Advanced mode" >}}
