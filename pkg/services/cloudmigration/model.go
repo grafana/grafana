@@ -79,9 +79,14 @@ type CloudMigrationResource struct {
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType        MigrateDataType = "DASHBOARD"
+	DatasourceDataType       MigrateDataType = "DATASOURCE"
+	FolderDataType           MigrateDataType = "FOLDER"
+	AlertRuleType            MigrateDataType = "ALERT_RULE"
+	ContactPointType         MigrateDataType = "CONTACT_POINT"
+	NotificationPolicyType   MigrateDataType = "NOTIFICATION_POLICY"
+	NotificationTemplateType MigrateDataType = "NOTIFICATION_TEMPLATE"
+	MuteTimingType           MigrateDataType = "MUTE_TIMING"
 )
 
 type ItemStatus string

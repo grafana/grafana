@@ -11,6 +11,14 @@ export function prettyTypeName(type: ResourceTableItem['type']) {
       return t('migrate-to-cloud.resource-type.dashboard', 'Dashboard');
     case 'FOLDER':
       return t('migrate-to-cloud.resource-type.folder', 'Folder');
+    case 'ALERT_RULE':
+      return t('migrate-to-cloud.resource-type.alert-rule', 'Alert rule');
+    case 'CONTACT_POINT':
+      return t('migrate-to-cloud.resource-type.contact-point', 'Contact point');
+    case 'NOTIFICATION_POLICY':
+      return t('migrate-to-cloud.resource-type.notification-policy', 'Notification policy');
+    case 'NOTIFICATION_TEMPLATE':
+      return t('migrate-to-cloud.resource-type.notification-template', 'Notification template');
     default:
       return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
   }

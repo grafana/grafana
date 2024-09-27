@@ -3,6 +3,7 @@ package cloudmigrationimpl
 import (
 	"context"
 	cryptoRand "crypto/rand"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,10 +19,264 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/retryer"
+	"github.com/prometheus/alertmanager/timeinterval"
 	"golang.org/x/crypto/nacl/box"
 )
+
+type alertRule struct {
+	ID                   int64                  `json:"id"`
+	OrgID                int64                  `json:"orgID"`
+	Title                string                 `json:"title"`
+	Condition            string                 `json:"condititon"`
+	Data                 []alertQuery           `json:"data"`
+	Updated              time.Time              `json:"updated"`
+	IntervalSeconds      int64                  `json:"intervalSeconds"`
+	UID                  string                 `json:"uid"`
+	NamespaceUID         string                 `json:"namespaceUID"`
+	DashboardUID         *string                `json:"dashboardUID"`
+	PanelID              *int64                 `json:"panelID"`
+	RuleGroup            string                 `json:"ruleGroup"`
+	RuleGroupIndex       int                    `json:"ruleGroupIndex"`
+	Record               *record                `json:"record"`
+	NoDataState          string                 `json:"noDataState"`
+	ExecErrState         string                 `json:"execErrState"`
+	For                  time.Duration          `json:"for"`
+	Annotations          map[string]string      `json:"annotations"`
+	Labels               map[string]string      `json:"labels"`
+	IsPaused             bool                   `json:"isPaused"`
+	NotificationSettings []notificationSettings `json:"notificationSettings"`
+}
+
+type alertQuery struct {
+	// RefID is the unique identifier of the query, set by the frontend call.
+	RefID string `json:"refId"`
+
+	// QueryType is an optional identifier for the type of query.
+	// It can be used to distinguish different types of queries.
+	QueryType string `json:"queryType"`
+
+	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
+	RelativeTimeRange relativeTimeRange `json:"relativeTimeRange"`
+
+	// Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.
+	DatasourceUID string `json:"datasourceUid"`
+
+	// JSON is the raw JSON query and includes the above properties as well as custom properties.
+	Model json.RawMessage `json:"model"`
+}
+
+func alertQueryFromModel(query models.AlertQuery) alertQuery {
+	return alertQuery{
+		RefID:     query.RefID,
+		QueryType: query.QueryType,
+		RelativeTimeRange: relativeTimeRange{
+			From: duration(query.RelativeTimeRange.From),
+			To:   duration(query.RelativeTimeRange.To),
+		},
+		DatasourceUID: query.DatasourceUID,
+		Model:         query.Model,
+	}
+}
+
+type relativeTimeRange struct {
+	From duration `json:"from"`
+	To   duration `json:"to"`
+}
+
+// duration is a type used for marshalling durations.
+type duration time.Duration
+
+func (d duration) String() string {
+	return time.Duration(d).String()
+}
+
+func (d duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d).Seconds())
+}
+
+func (d *duration) UnmarshalJSON(b []byte) error {
+	var v any
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		*d = duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
+
+func (d duration) MarshalYAML() (any, error) {
+	return time.Duration(d).Seconds(), nil
+}
+
+func (d *duration) UnmarshalYAML(unmarshal func(any) error) error {
+	var v any
+	if err := unmarshal(&v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case int:
+		*d = duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
+
+type notificationSettings struct {
+	Receiver          string   `json:"receiver"`
+	GroupBy           []string `json:"group_by,omitempty"`
+	GroupWait         duration `json:"group_wait,omitempty"`
+	GroupInterval     duration `json:"group_interval,omitempty"`
+	RepeatInterval    duration `json:"repeat_interval,omitempty"`
+	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
+}
+
+func notificationSettingsFromModel(settings models.NotificationSettings) notificationSettings {
+	var (
+		groupWait      duration
+		groupInterval  duration
+		repeatInterval duration
+	)
+	if settings.GroupWait != nil {
+		groupWait = duration(*settings.GroupWait)
+	}
+	if settings.GroupInterval != nil {
+		groupInterval = duration(*settings.GroupInterval)
+	}
+	if settings.RepeatInterval != nil {
+		repeatInterval = duration(*settings.RepeatInterval)
+	}
+
+	return notificationSettings{
+		Receiver:          settings.Receiver,
+		GroupBy:           settings.GroupBy,
+		GroupWait:         groupWait,
+		GroupInterval:     groupInterval,
+		RepeatInterval:    repeatInterval,
+		MuteTimeIntervals: settings.MuteTimeIntervals,
+	}
+}
+
+type record struct {
+	// Metric indicates a metric name to send results to.
+	Metric string `json:"metric"`
+	// From contains a query RefID, indicating which expression node is the output of the recording rule.
+	From string `json:"from"`
+}
+
+func recordFromModel(input *models.Record) *record {
+	if input == nil {
+		return nil
+	}
+
+	return &record{
+		Metric: input.Metric,
+		From:   input.From,
+	}
+}
+
+type contactPoint struct {
+	UID                   string `json:"uid"`
+	Name                  string `json:"name"`
+	Type                  string `json:"type"`
+	Settings              any    `json:"settings"`
+	DisableResolveMessage bool   `json:"disableResolveMessage"`
+	Provenance            string `json:"provenance"`
+}
+
+type notificationTemplate struct {
+	UID             string `json:"uid"`
+	Name            string `json:"name"`
+	Template        string `json:"template"`
+	Provenance      string `json:"provenance,omitempty"`
+	ResourceVersion string `json:"version,omitempty"`
+}
+
+type muteTimeInterval struct {
+	UID           string         `json:"uid"`
+	Name          string         `json:"name"`
+	TimeIntervals []timeInterval `json:"time_intervals"`
+	Version       string         `json:"version,omitempty"`
+	Provenance    string         `json:"provenance,omitempty"`
+}
+
+func muteTimeIntervalFromModel(timeInterval *definitions.MuteTimeInterval) muteTimeInterval {
+	return muteTimeInterval{
+		UID:           timeInterval.UID,
+		Name:          timeInterval.Name,
+		TimeIntervals: slicesext.Map(timeInterval.TimeIntervals, timeIntervalFromModel),
+		Version:       timeInterval.Version,
+		Provenance:    string(timeInterval.Provenance),
+	}
+}
+
+type timeInterval struct {
+	Times       []timeRange      `yaml:"times,omitempty" json:"times,omitempty"`
+	Weekdays    []inclusiveRange `yaml:"weekdays,flow,omitempty" json:"weekdays,omitempty"`
+	DaysOfMonth []inclusiveRange `yaml:"days_of_month,flow,omitempty" json:"days_of_month,omitempty"`
+	Months      []inclusiveRange `yaml:"months,flow,omitempty" json:"months,omitempty"`
+	Years       []inclusiveRange `yaml:"years,flow,omitempty" json:"years,omitempty"`
+	Location    *time.Location   `yaml:"location,flow,omitempty" json:"location,omitempty"`
+}
+
+func timeIntervalFromModel(interval timeinterval.TimeInterval) timeInterval {
+	var location *time.Location
+	if interval.Location != nil {
+		location = interval.Location.Location
+	}
+	return timeInterval{
+		Times: slicesext.Map(interval.Times, func(v timeinterval.TimeRange) timeRange {
+			return timeRange{
+				StartMinute: v.StartMinute,
+				EndMinute:   v.EndMinute,
+			}
+		}),
+		Weekdays: slicesext.Map(interval.Weekdays, func(v timeinterval.WeekdayRange) inclusiveRange {
+			return inclusiveRange{
+				Begin: v.Begin,
+				End:   v.End,
+			}
+		}),
+		DaysOfMonth: slicesext.Map(interval.DaysOfMonth, func(v timeinterval.DayOfMonthRange) inclusiveRange {
+			return inclusiveRange{
+				Begin: v.Begin,
+				End:   v.End,
+			}
+		}),
+		Months: slicesext.Map(interval.Months, func(v timeinterval.MonthRange) inclusiveRange {
+			return inclusiveRange{
+				Begin: v.Begin,
+				End:   v.End,
+			}
+		}),
+		Years: slicesext.Map(interval.Years, func(v timeinterval.YearRange) inclusiveRange {
+			return inclusiveRange{
+				Begin: v.Begin,
+				End:   v.End,
+			}
+		}),
+		Location: location,
+	}
+}
+
+type timeRange struct {
+	StartMinute int
+	EndMinute   int
+}
+
+type inclusiveRange struct {
+	Begin int
+	End   int
+}
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
 	// Data sources
@@ -75,6 +330,122 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			RefID: f.UID,
 			Name:  f.Title,
 			Data:  f,
+		})
+	}
+
+	// Fetch alerting resources.
+
+	fmt.Printf("\n\naaaaaaa -- BUILD SNAPSHOTL orgID=%+v\n\n", signedInUser.OrgID)
+
+	alertRules, provenance, err := s.ngalert.Api.AlertRules.GetAlertRules(ctx, signedInUser)
+	if err != nil {
+		return nil, fmt.Errorf("fetching alert rules from store: %w", err)
+	}
+
+	fmt.Printf("\n\naaaaaaa provenance %+v\n\n", provenance)
+
+	fmt.Printf("\n\naaaaaaa len(alertRules) %+v\n\n", len(alertRules))
+	for _, rule := range alertRules {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.AlertRuleType,
+			RefID: rule.UID,
+			Name:  rule.Title,
+			Data: alertRule{
+				ID:           rule.ID,
+				UID:          rule.UID,
+				OrgID:        rule.OrgID,
+				NamespaceUID: rule.NamespaceUID,
+				RuleGroup:    rule.RuleGroup,
+				Title:        rule.Title,
+				Condition:    rule.Condition,
+				Data: slicesext.Map(rule.Data, func(query models.AlertQuery) alertQuery {
+					return alertQueryFromModel(query)
+				}),
+				Updated:      rule.Updated,
+				NoDataState:  rule.NoDataState.String(),
+				ExecErrState: rule.ExecErrState.String(),
+				For:          rule.For,
+				Annotations:  rule.Annotations,
+				Labels:       rule.Labels,
+				IsPaused:     rule.IsPaused,
+				NotificationSettings: slicesext.Map(rule.NotificationSettings, func(settings models.NotificationSettings) notificationSettings {
+					return notificationSettingsFromModel(settings)
+				}),
+				Record: recordFromModel(rule.Record),
+			},
+		})
+	}
+
+	contactPoints, err := s.ngalert.Api.ContactPointService.GetContactPoints(ctx, provisioning.ContactPointQuery{OrgID: signedInUser.OrgID, Decrypt: true}, signedInUser)
+	if err != nil {
+		return nil, fmt.Errorf("fetching contacts points: %w", err)
+	}
+	fmt.Printf("\n\naaaaaaa contactPoints %+v\n\n", contactPoints)
+	fmt.Printf("\n\naaaaaaa contactPoints[0] %+v\n\n", contactPoints[0].Settings)
+
+	for _, contact := range contactPoints {
+		fmt.Printf("\n\naaaaaaa contact.Name %+v\n\n", contact.Name)
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.ContactPointType,
+			RefID: contact.UID,
+			Name:  contact.Name,
+			Data: contactPoint{
+				UID:                   contact.UID,
+				Name:                  contact.Name,
+				Type:                  contact.Type,
+				Settings:              contact.Settings.Interface(),
+				DisableResolveMessage: contact.DisableResolveMessage,
+				Provenance:            contact.Provenance,
+			},
+		})
+	}
+
+	notificationPolicies, err := s.ngalert.Api.Policies.GetPolicyTree(ctx, signedInUser.OrgID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching alerting notification policies: %w", err)
+	}
+	fmt.Printf("\n\naaaaaaa notificationPolicies %+v\n\n", notificationPolicies)
+	notificationPoliciesJSONbytes, _ := json.MarshalIndent(notificationPolicies, "", "  ")
+	fmt.Printf("\n\naaaaaaa notificationPolicies JSON %+v\n\n", string(notificationPoliciesJSONbytes))
+	migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+		Type:  cloudmigration.NotificationPolicyType,
+		RefID: notificationPolicies.ResourceID(),
+		Name:  notificationPolicies.Receiver,
+		// TODO: create a model for this.
+		Data: notificationPolicies,
+	})
+
+	notificationTemplates, err := s.ngalert.Api.Templates.GetTemplates(ctx, signedInUser.OrgID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching alerting notification templates: %w", err)
+	}
+	fmt.Printf("\n\naaaaaaa notificationTemplates %+v\n\n", notificationTemplates)
+	for _, template := range notificationTemplates {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.NotificationTemplateType,
+			RefID: template.UID,
+			Name:  template.Name,
+			Data: notificationTemplate{
+				UID:             template.UID,
+				Name:            template.Name,
+				Template:        template.Template,
+				Provenance:      string(template.Provenance),
+				ResourceVersion: template.ResourceVersion,
+			},
+		})
+	}
+
+	muteTimings, err := s.ngalert.Api.MuteTimings.GetMuteTimings(ctx, signedInUser.OrgID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching alert mute timings: %w", err)
+	}
+	fmt.Printf("\n\naaaaaaa muteTimings %+v\n\n", muteTimings)
+	for _, muteTiming := range muteTimings {
+		migrationDataSlice = append(migrationDataSlice, cloudmigration.MigrateDataRequestItem{
+			Type:  cloudmigration.MuteTimingType,
+			RefID: muteTiming.UID,
+			Name:  muteTiming.Name,
+			Data:  muteTimeIntervalFromModel(&muteTiming),
 		})
 	}
 
@@ -198,6 +569,7 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	if err != nil {
 		return fmt.Errorf("instantiating snapshot writer: %w", err)
 	}
+	fmt.Printf("\n\naaaaaaa snapshotMeta.LocalDir %+v\n\n", snapshotMeta.LocalDir)
 
 	s.log.Debug(fmt.Sprintf("buildSnapshot: created snapshot writing in %d ms", time.Since(start).Milliseconds()))
 
@@ -229,6 +601,11 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 		cloudmigration.DatasourceDataType,
 		cloudmigration.FolderDataType,
 		cloudmigration.DashboardDataType,
+		cloudmigration.AlertRuleType,
+		cloudmigration.ContactPointType,
+		cloudmigration.NotificationPolicyType,
+		cloudmigration.NotificationTemplateType,
+		cloudmigration.MuteTimingType,
 	} {
 		for _, chunk := range slicesext.Chunks(int(maxItemsPerPartition), resourcesGroupedByType[resourceType]) {
 			if err := snapshotWriter.Write(string(resourceType), chunk); err != nil {

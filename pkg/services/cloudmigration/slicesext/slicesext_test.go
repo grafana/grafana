@@ -78,3 +78,9 @@ func TestChunks(t *testing.T) {
 		}
 	})
 }
+
+func TestMap(t *testing.T) {
+	t.Parallel()
+
+	panic("TODO")
+}

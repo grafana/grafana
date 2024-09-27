@@ -154,10 +154,14 @@ export type CreateSnapshotResponseDto = {
   uid?: string;
 };
 export type MigrateDataResponseItemDto = {
+  // The value may be the empty string because the field didn't exist for
+  // migrations created in older versions of the migration api. 
+  // It should be non-empty for new migrations.
+  name?: string;
   message?: string;
   refId: string;
   status: 'OK' | 'WARNING' | 'ERROR' | 'PENDING' | 'UNKNOWN';
-  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
+  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER' | 'ALERT_RULE' | 'CONTACT_POINT' | 'NOTIFICATION_POLICY' | 'NOTIFICATION_TEMPLATE';
 };
 export type SnapshotResourceStats = {
   statuses?: {
