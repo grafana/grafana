@@ -53,7 +53,6 @@ import (
 
 var orgID = int64(1)
 var usr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: {dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)}}}}
-var noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
 
 func TestIntegrationProvideFolderService(t *testing.T) {
 	if testing.Short() {
@@ -194,7 +193,6 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			}
 		})
 	})
-
 }
 
 func TestNestedFolderServiceFeatureToggle(t *testing.T) {
