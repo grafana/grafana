@@ -80,7 +80,6 @@
 /pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/cmd/ @grafana/grafana-backend-group
-/pkg/cmd/grafana/apiserver @grafana/grafana-app-platform-squad
 /pkg/components/apikeygen/ @grafana/identity-squad
 /pkg/components/satokengen/ @grafana/identity-squad
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
@@ -440,7 +439,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/invites/ @grafana/grafana-frontend-platform
 /public/app/features/library-panels/ @grafana/dashboards-squad
 /public/app/features/logs/ @grafana/observability-logs
-/public/app/features/live/ @grafana/grafana-app-platform-squad
+/public/app/features/live/ @grafana/dashboards-squad
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
@@ -492,7 +491,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/geomap/ @grafana/dataviz-squad
 /public/app/plugins/panel/canvas/ @grafana/dataviz-squad
 /public/app/plugins/panel/candlestick/ @grafana/dataviz-squad
-/public/app/plugins/panel/live/ @grafana/grafana-app-platform-squad
+/public/app/plugins/panel/live/ @grafana/dashboards-squad
 /public/app/plugins/panel/news/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/grafana-frontend-platform

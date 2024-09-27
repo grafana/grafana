@@ -1,5 +1,6 @@
 // Libraries
 import { useEffect, useMemo } from 'react';
+import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { UrlSyncContextProvider } from '@grafana/scenes';
@@ -19,8 +20,8 @@ import { getDashboardScenePageStateManager } from './DashboardScenePageStateMana
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {}
 
 export function DashboardScenePage({ match, route, queryParams, history }: Props) {
+  const prevMatch = usePrevious(match);
   const stateManager = getDashboardScenePageStateManager();
-
   const { dashboard, isLoading, loadError } = stateManager.useState();
 
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
@@ -83,12 +84,10 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   }
 
   // Do not render anything when transitioning from one dashboard to another
-  if (
-    match.params.type !== 'snapshot' &&
-    match.params.uid &&
-    dashboard.state.uid !== match.params.uid &&
-    route.routeName !== DashboardRoutes.Home
-  ) {
+  // A bit tricky for transition to or from Home dashbord that does not have a uid in the url (but could have it in the dashboard model)
+  // if prevMatch is undefined we are going from normal route to home route or vice versa
+  if (match.params.type !== 'snapshot' && (!prevMatch || match.params.uid !== prevMatch?.params.uid)) {
+    console.log('skipping rendering');
     return null;
   }
 

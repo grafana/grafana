@@ -14,6 +14,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -214,7 +215,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'd shift+c',
       onTrigger: () => {
-        scene.collapseAllRows();
+        if (scene.state.body instanceof DefaultGridLayoutManager) {
+          scene.state.body.collapseAllRows();
+        }
       },
     });
 
@@ -222,7 +225,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'd shift+e',
       onTrigger: () => {
-        scene.expandAllRows();
+        if (scene.state.body instanceof DefaultGridLayoutManager) {
+          scene.state.body.expandAllRows();
+        }
       },
     });
   }
