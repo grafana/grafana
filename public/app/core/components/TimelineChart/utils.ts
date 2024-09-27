@@ -16,6 +16,8 @@ import {
   TimeRange,
   cacheFieldDisplayNames,
   outerJoinDataFrames,
+  ValueMapping,
+  ThresholdsConfig,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -453,9 +455,13 @@ export function makeFramePerSeries(frames: DataFrame[]) {
   return outFrames;
 }
 
-export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2): VizLegendItem[] {
+export function getThresholdItems(
+  fieldConfig: FieldConfig,
+  theme: GrafanaTheme2,
+  thresholdItems?: ThresholdsConfig
+): VizLegendItem[] {
   const items: VizLegendItem[] = [];
-  const thresholds = fieldConfig.thresholds;
+  const thresholds = thresholdItems ? thresholdItems : fieldConfig.thresholds;
   if (!thresholds || !thresholds.steps.length) {
     return items;
   }
@@ -486,6 +492,66 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
+  }
+
+  return items;
+}
+
+export function getValueMappingItems(mappings: ValueMapping[], theme: GrafanaTheme2): VizLegendItem[] {
+  const items: VizLegendItem[] = [];
+  if (!mappings) {
+    return items;
+  }
+
+  for (let mapping of mappings) {
+    const { options, type } = mapping;
+
+    if (type === MappingType.ValueToText) {
+      for (let [label, value] of Object.entries(options)) {
+        const color = value.color;
+        items.push({
+          label: label,
+          color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+          yAxis: 1,
+        });
+      }
+    }
+
+    if (type === MappingType.RangeToText) {
+      const { from, result, to } = options;
+      const { text, color } = result;
+      const label = text ? `[${from} - ${to}] ${text}` : `[${from} - ${to}]`;
+
+      items.push({
+        label: label,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
+    }
+
+    if (type === MappingType.RegexToText) {
+      const { pattern, result } = options;
+      const { text, color } = result;
+      const label = `${text || pattern}`;
+
+      items.push({
+        label: label,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
+    }
+
+    if (type === MappingType.SpecialValue) {
+      const { match, result } = options;
+      const { text, color } = result;
+      const label = `${text || match}`;
+
+      items.push({
+        label: label,
+        color: theme.visualization.getColorByName(color ?? FALLBACK_COLOR),
+        yAxis: 1,
+      });
+    }
   }
 
   return items;
