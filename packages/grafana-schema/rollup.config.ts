@@ -1,17 +1,26 @@
 import resolve from '@rollup/plugin-node-resolve';
-import glob from 'glob';
+import { glob } from 'glob';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'path';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
-import { externals } from 'rollup-plugin-node-externals';
+import { nodeExternals } from 'rollup-plugin-node-externals';
 
-const pkg = require('./package.json');
+const rq = createRequire(import.meta.url);
+const pkg = rq('./package.json');
 
 export default [
   {
     input: 'src/index.ts',
-    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
+    plugins: [
+      nodeExternals({ deps: true, packagePath: './package.json' }),
+      resolve(),
+      esbuild({
+        target: 'es2018',
+        tsconfig: 'tsconfig.build.json',
+      }),
+    ],
     output: [
       {
         format: 'cjs',
@@ -45,7 +54,13 @@ export default [
           fileURLToPath(new URL(file, import.meta.url)),
         ])
     ),
-    plugins: [resolve(), esbuild()],
+    plugins: [
+      resolve(),
+      esbuild({
+        target: 'es2018',
+        tsconfig: 'tsconfig.build.json',
+      }),
+    ],
     output: {
       format: 'esm',
       dir: path.dirname(pkg.publishConfig.module),
