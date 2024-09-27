@@ -262,6 +262,7 @@ func testDescription(description string, expectedErr error) string {
 func TestHTTPServer_FolderMetadata(t *testing.T) {
 	setUpRBACGuardian(t)
 	folderService := &foldertest.FakeService{}
+	features := featuremgmt.WithFeatures()
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
 		hs.folderService = folderService
@@ -269,6 +270,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		hs.SearchService = &mockSearchService{
 			ExpectedResult: model.HitList{},
 		}
+		hs.Features = features
 	})
 
 	t.Run("Should attach access control metadata to folder response", func(t *testing.T) {
@@ -390,6 +392,7 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 	for _, tc := range tcs {
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = setting.NewCfg()
+			hs.Features = featuremgmt.WithFeatures()
 			hs.folderService = folderService
 		})
 
@@ -436,9 +439,10 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 	}
 	tcs := []testCase{
 		{
-			description:          "get folder by UID should return parent folders if nested folder are enabled",
+			description:          "get folder by UID should return parent folders",
 			URL:                  "/api/folders/uid",
 			expectedCode:         http.StatusOK,
+			features:             featuremgmt.WithFeatures(),
 			expectedParentUIDs:   []string{"parent", "subfolder"},
 			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{"parent title", "subfolder title"},
@@ -448,9 +452,10 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			g: &guardian.FakeDashboardGuardian{CanViewValue: true},
 		},
 		{
-			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
+			description:          "get folder by UID should return parent folders redacted if user does not have read access to parent folders",
 			URL:                  "/api/folders/uid",
 			expectedCode:         http.StatusOK,
+			features:             featuremgmt.WithFeatures(),
 			expectedParentUIDs:   []string{REDACTED, REDACTED},
 			expectedParentOrgIDs: []int64{0, 0},
 			expectedParentTitles: []string{REDACTED, REDACTED},
@@ -458,19 +463,6 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
 			},
 			g: &guardian.FakeDashboardGuardian{CanViewValue: false},
-		},
-		{
-			description:          "get folder by UID should not return parent folders if nested folder are disabled",
-			URL:                  "/api/folders/uid",
-			expectedCode:         http.StatusOK,
-			features:             featuremgmt.WithFeatures(),
-			expectedParentUIDs:   []string{},
-			expectedParentOrgIDs: []int64{0, 0},
-			expectedParentTitles: []string{},
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
-			},
-			g: &guardian.FakeDashboardGuardian{CanViewValue: true},
 		},
 	}
 
