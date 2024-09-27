@@ -1,5 +1,5 @@
-import { CSSInterpolation } from '@emotion/css';
 import { css } from '@emotion/react';
+import { CSSInterpolation } from '@emotion/serialize';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
