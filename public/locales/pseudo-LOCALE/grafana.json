@@ -218,7 +218,7 @@
     "rule-viewer": {
       "prometheus-consistency-check": {
         "alert-message": "Åľęřŧ řūľę ĥäş þęęŉ ūpđäŧęđ. Cĥäŉģęş mäy ŧäĸę ūp ŧő ä mįŉūŧę ŧő äppęäř őŉ ŧĥę Åľęřŧ řūľęş ľįşŧ vįęŵ.",
-        "alert-title": "Ůpđäŧęş įŉ přőģřęşş"
+        "alert-title": "Ůpđäŧę įŉ přőģřęşş"
       }
     },
     "rules": {
