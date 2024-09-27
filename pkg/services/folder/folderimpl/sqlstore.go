@@ -28,7 +28,7 @@ type FolderStoreImpl struct {
 }
 
 // sqlStore implements the store interface.
-var _ folder.StoreTempRename = (*FolderStoreImpl)(nil)
+var _ folder.Store = (*FolderStoreImpl)(nil)
 
 func ProvideStore(db db.DB) *FolderStoreImpl {
 	return &FolderStoreImpl{db: db, log: log.New("folder-store")}
@@ -445,7 +445,7 @@ func (ss *FolderStoreImpl) GetHeight(ctx context.Context, foldrUID string, orgID
 // The full path UIDs of C is "uid1/uid2/uid3".
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
-func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersQueryTempRename) ([]*folder.Folder, error) {
+func (ss *FolderStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
 	if q.BatchSize == 0 {
 		q.BatchSize = DEFAULT_BATCH_SIZE
 	}

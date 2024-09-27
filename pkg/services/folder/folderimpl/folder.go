@@ -40,7 +40,7 @@ import (
 const FULLPATH_SEPARATOR = "/"
 
 type Service struct {
-	store                folder.StoreTempRename
+	store                folder.Store
 	db                   db.DB
 	log                  *slog.Logger
 	dashboardStore       dashboards.Store

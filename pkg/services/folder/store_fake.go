@@ -19,7 +19,7 @@ func NewFakeStore() *fakeStore {
 	return &fakeStore{}
 }
 
-var _ StoreTempRename = (*fakeStore)(nil)
+var _ Store = (*fakeStore)(nil)
 
 func (f *fakeStore) Create(ctx context.Context, cmd CreateFolderCommand) (*Folder, error) {
 	f.CreateCalled = true
@@ -55,7 +55,7 @@ func (f *fakeStore) GetHeight(ctx context.Context, folderUID string, orgID int64
 	return f.ExpectedFolderHeight, f.ExpectedError
 }
 
-func (f *fakeStore) GetFolders(ctx context.Context, q GetFoldersQueryTempRename) ([]*Folder, error) {
+func (f *fakeStore) GetFolders(ctx context.Context, q GetFoldersFromStoreQuery) ([]*Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }
 

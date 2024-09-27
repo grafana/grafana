@@ -4,20 +4,20 @@ import (
 	"context"
 )
 
-type GetFoldersQueryTempRename struct {
+type GetFoldersFromStoreQuery struct {
 	GetFoldersQuery
 	AncestorUIDs []string
 }
 
-func NewGetFoldersQuery(q GetFoldersQuery) GetFoldersQueryTempRename {
-	return GetFoldersQueryTempRename{
+func NewGetFoldersQuery(q GetFoldersQuery) GetFoldersFromStoreQuery {
+	return GetFoldersFromStoreQuery{
 		GetFoldersQuery: q,
 		AncestorUIDs:    []string{},
 	}
 }
 
-// StoreTempRename is the interface which a folder StoreTempRename must implement.
-type StoreTempRename interface {
+// Store is the interface which a folder Store must implement.
+type Store interface {
 	// Create creates a folder and returns the newly-created
 	Create(ctx context.Context, cmd CreateFolderCommand) (*Folder, error)
 
@@ -45,7 +45,7 @@ type StoreTempRename interface {
 	GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error)
 
 	// GetFolders returns folders with given uids
-	GetFolders(ctx context.Context, q GetFoldersQueryTempRename) ([]*Folder, error)
+	GetFolders(ctx context.Context, q GetFoldersFromStoreQuery) ([]*Folder, error)
 	// GetDescendants returns all descendants of a folder
 	GetDescendants(ctx context.Context, orgID int64, anchestor_uid string) ([]*Folder, error)
 }

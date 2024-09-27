@@ -2496,7 +2496,7 @@ func TestSupportBundle(t *testing.T) {
 	}
 }
 
-func CreateSubtreeInStore(t *testing.T, store folder.StoreTempRename, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
+func CreateSubtreeInStore(t *testing.T, store folder.Store, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
 	t.Helper()
 
 	folders := make([]*folder.Folder, 0, depth)
@@ -2520,7 +2520,7 @@ func CreateSubtreeInStore(t *testing.T, store folder.StoreTempRename, service *S
 	return folders
 }
 
-func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder.FolderStore, nestedFolderStore folder.StoreTempRename, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, db db.DB) folder.Service {
+func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder.FolderStore, nestedFolderStore folder.Store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, db db.DB) folder.Service {
 	t.Helper()
 
 	// nothing enabled yet
