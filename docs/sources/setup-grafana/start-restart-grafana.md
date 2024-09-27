@@ -74,7 +74,6 @@ Complete the following steps to start the Grafana server using init.d and verify
 
    ```bash
    sudo service grafana-server start
-   sudo service grafana-server status
    ```
 
 1. To verify that the service is running, run the following command:
@@ -121,7 +120,7 @@ Alternatively, you can use the `docker compose restart` command to restart Grafa
 
 Configure your `docker-compose.yml` file. For example:
 
-```bash
+```yml
 version: "3.8"
 services:
   grafana:
