@@ -18,7 +18,6 @@ import {
   Pagination,
   Stack,
   Text,
-  TextLink,
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
@@ -277,9 +276,9 @@ const EvaluationGroupLoader = ({
                 <AlertRuleListItem
                   key={index}
                   state="normal"
-                  name={rule.alert}
+                  title={rule.alert}
                   href={'/'}
-                  summary={rule.annotations?.summary}
+                  description={rule.annotations?.summary}
                 />
               );
             }
@@ -292,9 +291,8 @@ const EvaluationGroupLoader = ({
               return (
                 <AlertRuleListItem
                   key={index}
-                  name={rule.grafana_alert.title}
-                  href={'/'}
-                  summary={rule.annotations?.summary}
+                  title={rule.grafana_alert.title}
+                  description={rule.annotations?.summary}
                   isProvisioned={Boolean(rule.grafana_alert.provenance)}
                 />
               );
@@ -372,7 +370,7 @@ const SkeletonListItem = () => {
       <Stack direction="row" alignItems="flex-start" gap={1}>
         <Skeleton width={16} height={16} circle />
         <Stack direction="row" alignItems={'center'} gap={1} flex="1">
-          <Stack direction="column" gap={0.5}>
+          <Stack direction="column" gap={0}>
             <div>
               <Skeleton height={16} width={350} />
             </div>
@@ -475,7 +473,7 @@ const RecordingRuleListItem = ({ name, error, isProvisioned, href }: RecordingRu
                     {/* TODO we might need an error variant for MetaText, dito for success */}
                     {/* TODO show error details on hover or elsewhere */}
                     <Text color="error" variant="bodySmall" weight="bold">
-                      <Stack direction="row" alignItems={'center'} gap={0.5}>
+                      <Stack direction="row" alignItems={'center'} gap={0}>
                         <Tooltip
                           content={
                             'failed to send notification to email addresses: gilles.demey@grafana.com: dial tcp 192.168.1.21:1025: connect: connection refused'
@@ -530,20 +528,17 @@ const RecordingRuleListItem = ({ name, error, isProvisioned, href }: RecordingRu
 };
 
 interface AlertRuleListItemProps {
-  name: string;
-  href: string;
-  summary?: string;
+  title: ReactNode;
+  description?: ReactNode;
   error?: string;
   state?: PromAlertingRuleState;
-  isProvisioned?: boolean;
-  groupName?: string;
-  namespace?: CombinedRuleNamespace;
+  meta?: ReactNode;
+  metaRight?: ReactNode;
+  actions?: ReactNode;
 }
 
 export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
-  const { name, summary, state, error, href, isProvisioned, groupName, namespace } = props;
-  const hasRuleLocation = namespace && groupName; // can be empty if we are using this component in the hierarchical view
-
+  const { title, description = null, state, error, meta = null, metaRight = null, actions = null } = props;
   const styles = useStyles2(getStyles);
 
   const icons: Record<PromAlertingRuleState, IconName> = {
@@ -564,82 +559,29 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
         <Text color={state ? color[state] : 'secondary'}>
           <Icon name={state ? icons[state] : 'circle'} size="lg" />
         </Text>
-        <Stack direction="column" gap={0.5} flex="1">
+        <Stack direction="column" gap={0} flex="1">
           <div>
             <Stack direction="column" gap={0}>
-              <TextLink href={href} inline={false}>
-                {name}
-              </TextLink>
-              {summary && (
-                <Text variant="bodySmall" color="secondary">
-                  {summary}
-                </Text>
-              )}
+              {title}
+              {description}
             </Stack>
           </div>
           <div>
             <Stack direction="row" gap={1}>
               {error ? (
-                <>
-                  {/* TODO we might need an error variant for MetaText, dito for success */}
-                  {/* TODO show error details on hover or elsewhere */}
-                  <Text color="error" variant="bodySmall">
-                    <Stack direction="row" alignItems={'center'} gap={0.5}>
-                      <Text truncate>{error}</Text>
-                    </Stack>
-                  </Text>
-                </>
+                <Text truncate color="error" variant="bodySmall">
+                  {error}
+                </Text>
               ) : (
-                <>
-                  {hasRuleLocation && (
-                    <Text color="secondary" variant="bodySmall">
-                      <RuleLocation namespace={namespace} group={groupName} />
-                    </Text>
-                  )}
-                  <MetaText icon="clock-nine">
-                    Firing for <Text color="primary">2m 34s</Text>
-                  </MetaText>
-                  <MetaText icon="hourglass">
-                    Next evaluation in <Text color="primary">34s</Text>
-                  </MetaText>
-                </>
+                meta
               )}
             </Stack>
           </div>
         </Stack>
 
         <Stack direction="row" alignItems="center" gap={1} wrap={false}>
-          <MetaText icon="layer-group">9</MetaText>
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="edit"
-            type="button"
-            disabled={isProvisioned}
-            aria-label="edit-rule-action"
-            data-testid="edit-rule-action"
-          >
-            Edit
-          </Button>
-          <Dropdown
-            overlay={
-              <Menu>
-                <Menu.Item label="Silence" icon="bell-slash" />
-                <Menu.Divider />
-                <Menu.Item label="Export" disabled={isProvisioned} icon="download-alt" />
-                <Menu.Item label="Delete" disabled={isProvisioned} icon="trash-alt" destructive />
-              </Menu>
-            }
-          >
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="ellipsis-h"
-              type="button"
-              aria-label="more-rule-actions"
-              data-testid="more-rule-actions"
-            />
-          </Dropdown>
+          {metaRight}
+          {actions}
         </Stack>
       </Stack>
     </li>
@@ -651,10 +593,11 @@ interface NamespaceProps extends PropsWithChildren {
   href?: string;
   application?: PromApplication | 'Grafana';
   collapsed?: boolean;
+  actions?: ReactNode;
 }
 
 // TODO hook up buttons
-export const Namespace = ({ children, name, href, application, collapsed = false }: NamespaceProps) => {
+export const Namespace = ({ children, name, href, application, collapsed = false, actions = null }: NamespaceProps) => {
   const styles = useStyles2(getStyles);
   const [isCollapsed, toggleCollapsed] = useToggle(collapsed);
 
@@ -697,10 +640,12 @@ export const Namespace = ({ children, name, href, application, collapsed = false
               name
             )}
           </Stack>
-          <Spacer />
-          <Button variant="secondary" size="sm" icon="unlock" type="button" aria-label="edit permissions">
-            Edit permissions
-          </Button>
+          {actions && (
+            <>
+              <Spacer />
+              {actions}
+            </>
+          )}
         </Stack>
       </div>
       {!isEmpty(children) && !isCollapsed && (
@@ -717,7 +662,7 @@ interface RuleLocationProps {
   group: string;
 }
 
-const RuleLocation = ({ namespace, group }: RuleLocationProps) => (
+export const RuleLocation = ({ namespace, group }: RuleLocationProps) => (
   <Stack direction="row" alignItems="center" gap={0.5}>
     <Icon size="xs" name="folder" />
     <Stack direction="row" alignItems="center" gap={0}>
@@ -763,7 +708,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.primary,
 
     borderBottom: `solid 1px ${theme.colors.border.weak}`,
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: `${theme.spacing(1)} ${theme.spacing(1)}`,
   }),
   headerWrapper: css({
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
@@ -782,7 +727,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(1),
   }),
   namespaceTitle: css({
-    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
+    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
 
     background: theme.colors.background.secondary,
 

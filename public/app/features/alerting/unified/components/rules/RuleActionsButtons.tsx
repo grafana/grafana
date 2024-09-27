@@ -1,9 +1,7 @@
-import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { LinkButton, Stack } from '@grafana/ui';
 import AlertRuleMenu from 'app/features/alerting/unified/components/rule-viewer/AlertRuleMenu';
 import { useDeleteModal } from 'app/features/alerting/unified/components/rule-viewer/DeleteModal';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
@@ -43,7 +41,6 @@ interface Props {
 export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton, rule, rulesSource }: Props) => {
   const dispatch = useDispatch();
   const location = useLocation();
-  const style = useStyles2(getStyles);
 
   const redirectToListView = compact ? false : true;
   const [deleteModal, showDeleteModal] = useDeleteModal(redirectToListView);
@@ -66,8 +63,6 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   const canEditRule = editRuleSupported && editRuleAllowed;
 
   const buttons: JSX.Element[] = [];
-
-  const buttonClasses = cx({ [style.compactButton]: compact });
   const buttonSize = compact ? 'sm' : 'md';
 
   const sourceName = getRulesSourceName(rulesSource);
@@ -77,17 +72,14 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
   if (showViewButton) {
     buttons.push(
       <LinkButton
-        tooltip={compact ? 'View' : undefined}
-        tooltipPlacement="top"
-        className={buttonClasses}
-        title={'View'}
+        title="View"
         size={buttonSize}
         key="view"
         variant="secondary"
         icon="eye"
         href={createViewLink(rulesSource, rule, returnTo)}
       >
-        {!compact && 'View'}
+        View
       </LinkButton>
     );
   }
@@ -100,18 +92,8 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
     });
 
     buttons.push(
-      <LinkButton
-        tooltip={compact ? 'Edit' : undefined}
-        tooltipPlacement="top"
-        title={'Edit'}
-        className={buttonClasses}
-        size={buttonSize}
-        key="edit"
-        variant="secondary"
-        icon="pen"
-        href={editURL}
-      >
-        {!compact && 'Edit'}
+      <LinkButton title="Edit" size={buttonSize} key="edit" variant="secondary" icon="pen" href={editURL}>
+        Edit
       </LinkButton>
     );
   }
@@ -153,9 +135,3 @@ export const RuleActionsButtons = ({ compact, showViewButton, showCopyLinkButton
     </Stack>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  compactButton: css({
-    padding: `0 ${theme.spacing(2)}`,
-  }),
-});

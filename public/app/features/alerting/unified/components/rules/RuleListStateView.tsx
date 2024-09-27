@@ -1,13 +1,19 @@
+import { isNumber } from 'lodash';
 import { useMemo } from 'react';
 
-import { Counter, Stack } from '@grafana/ui';
+import { Counter, Stack, Text, TextLink } from '@grafana/ui';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { createViewLink } from '../../utils/misc';
 import { hashRule } from '../../utils/rule-id';
-import { isAlertingRule } from '../../utils/rules';
-import { AlertRuleListItem, Namespace } from '../rule-list/components/components';
+import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { MetaText } from '../MetaText';
+import { ProvisioningBadge } from '../Provisioning';
+import { AlertRuleListItem, Namespace, RuleLocation } from '../rule-list/components/components';
+import { calculateTotalInstances } from '../rule-viewer/RuleViewer';
+
+import { RuleActionsButtons } from './RuleActionsButtons';
 
 interface Props {
   namespaces: CombinedRuleNamespace[];
@@ -41,7 +47,7 @@ export const RuleListStateView = ({ namespaces }: Props) => {
     return result;
   }, [namespaces]);
 
-  const titles: Record<string, string> = {
+  const titles: Record<PromAlertingRuleState, string> = {
     [PromAlertingRuleState.Firing]: 'Firing',
     [PromAlertingRuleState.Pending]: 'Pending',
     [PromAlertingRuleState.Inactive]: 'Normal',
@@ -52,26 +58,52 @@ export const RuleListStateView = ({ namespaces }: Props) => {
       {Object.entries(groupedRules).map(([state, rules]) => (
         <Namespace
           name={
-            <Stack alignItems="center" gap={-1}>
-              {titles[state] ?? 'Unknown'}
+            <Stack alignItems="center" gap={0}>
+              {titles[state as PromAlertingRuleState] ?? 'Unknown'}
               <Counter value={rules.length} />
             </Stack>
           }
           key={state}
           collapsed={rules.length === 0}
         >
-          {rules.map((rule) => (
-            <AlertRuleListItem
-              key={hashRule(rule.promRule!)}
-              state={state}
-              name={rule.name}
-              error={rule.promRule?.lastError}
-              summary={rule.annotations.summary}
-              href={createViewLink(rule.namespace.rulesSource, rule)}
-              groupName={rule.group.name}
-              namespace={rule.namespace}
-            />
-          ))}
+          {rules.map((rule) => {
+            const isProvisioned =
+              isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
+            const numInstances = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : null;
+
+            return (
+              <AlertRuleListItem
+                key={hashRule(rule.promRule!)}
+                state={state as PromAlertingRuleState}
+                title={
+                  <Stack direction="row" alignItems="center">
+                    <TextLink href={createViewLink(rule.namespace.rulesSource, rule)} inline={false}>
+                      {rule.name}
+                    </TextLink>
+                    {isProvisioned && <ProvisioningBadge />}
+                  </Stack>
+                }
+                error={rule.promRule?.lastError}
+                description={
+                  <Text variant="bodySmall" color="secondary">
+                    {rule.annotations.summary}
+                  </Text>
+                }
+                actions={<RuleActionsButtons compact rule={rule} rulesSource={rule.namespace.rulesSource} />}
+                metaRight={isNumber(numInstances) ? <MetaText icon="layer-group">{numInstances}</MetaText> : null}
+                meta={
+                  <>
+                    {rule.namespace.name && rule.group.name && (
+                      <Text color="secondary" variant="bodySmall">
+                        <RuleLocation namespace={rule.namespace} group={rule.group.name} />
+                      </Text>
+                    )}
+                    {state === PromAlertingRuleState.Firing && <MetaText icon="clock-nine">Firing for 2m 34s</MetaText>}
+                  </>
+                }
+              />
+            );
+          })}
         </Namespace>
       ))}
     </Stack>

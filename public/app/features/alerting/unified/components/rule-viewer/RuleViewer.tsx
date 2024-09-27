@@ -355,9 +355,14 @@ function usePageNav(rule: CombinedRule) {
   };
 }
 
-const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
+export const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) => {
   return chain(stats)
-    .pick([AlertInstanceTotalState.Alerting, AlertInstanceTotalState.Pending, AlertInstanceTotalState.Normal])
+    .pick([
+      AlertInstanceTotalState.Alerting,
+      AlertInstanceTotalState.Pending,
+      AlertInstanceTotalState.Normal,
+      AlertInstanceTotalState.NoData,
+    ])
     .values()
     .sum()
     .value();
