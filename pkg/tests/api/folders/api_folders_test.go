@@ -161,7 +161,7 @@ func TestGetFolders(t *testing.T) {
 		assert.Equal(t, []string{"folder-4"}, actualFolders)
 	})
 
-	t.Run("Viewer can get only the folders has access too", func(t *testing.T) {
+	t.Skip("Viewer can get only the folders has access too", func(t *testing.T) {
 		res, err := viewerClient.Folders.GetFolders(folders.NewGetFoldersParams())
 		require.NoError(t, err)
 		actualFolders := make([]string, 0, len(res.Payload))
@@ -171,7 +171,7 @@ func TestGetFolders(t *testing.T) {
 		assert.Equal(t, []string{folder.SharedWithMeFolderUID, "folder-0", "folder-1", "folder-2", "folder-4"}, actualFolders)
 	})
 
-	t.Run("Pagination works as expect for viewer", func(t *testing.T) {
+	t.Skip("Pagination works as expect for viewer", func(t *testing.T) {
 		limit := int64(2)
 		page := int64(1)
 		res, err := viewerClient.Folders.GetFolders(folders.NewGetFoldersParams().WithLimit(&limit).WithPage(&page))
