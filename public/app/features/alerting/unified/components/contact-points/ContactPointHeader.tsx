@@ -79,7 +79,7 @@ export const ContactPointHeader = ({ contactPoint, disabled = false, onDelete }:
   /** Does the current user have permissions to delete the contact point? */
   const hasAbilityToDelete = canDeleteEntity(contactPoint) || deleteAllowed;
   /** Can the contact point actually be deleted, regardless of permissions? i.e. ensuring it isn't provisioned and isn't referenced elsewhere */
-  const contactPointIsDeleteable = !provisioned && !numberOfPoliciesPreventingDeletion;
+  const contactPointIsDeleteable = !provisioned && !numberOfPoliciesPreventingDeletion && !numberOfRules;
   /** Given the alertmanager, the user's permissions, and the state of the contact point - can it actually be deleted? */
   const canBeDeleted = deleteSupported && hasAbilityToDelete && contactPointIsDeleteable;
 

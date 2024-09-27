@@ -472,6 +472,27 @@ describe('contact points', () => {
       ).toBeInTheDocument();
     });
 
+    it('does not permit deletion when contact point is only referenced by a rule', async () => {
+      const contactPointWithRule: ContactPointWithMetadata = {
+        ...basicContactPoint,
+        metadata: {
+          annotations: {
+            [K8sAnnotations.InUseRules]: '1',
+          },
+        },
+      };
+      const { user } = renderWithProvider(<ContactPoint contactPoint={contactPointWithRule} />);
+
+      expect(screen.getByText(/used by 1 alert rule/i)).toBeInTheDocument();
+
+      await clickMoreActionsButton(contactPointWithEverything.name);
+      const deleteButton = screen.getByRole('menuitem', { name: /delete/i });
+      expect(deleteButton).toBeDisabled();
+      await user.hover(deleteButton);
+
+      expect(await screen.findByText(/Contact point is referenced by one or more alert rules/i)).toBeInTheDocument();
+    });
+
     it('does not permit deletion when lacking permissions to delete', async () => {
       grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
       const contactPointWithoutPermissions: ContactPointWithMetadata = {
