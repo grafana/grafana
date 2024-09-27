@@ -10,8 +10,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 	marker := "Initialize resource tables"
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 
-	tables := []migrator.Table{}
-	tables = append(tables, migrator.Table{
+	resource_table := migrator.Table{
 		Name: "resource",
 		Columns: []*migrator.Column{
 			// primary identifier
@@ -33,8 +32,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Indices: []*migrator.Index{
 			{Cols: []string{"namespace", "group", "resource", "name"}, Type: migrator.UniqueIndex},
 		},
-	})
-
+	}
 	resource_history_table := migrator.Table{
 		Name: "resource_history",
 		Columns: []*migrator.Column{
@@ -63,7 +61,8 @@ func initResourceTables(mg *migrator.Migrator) string {
 			{Cols: []string{"resource_version"}, Type: migrator.IndexType},
 		},
 	}
-	tables = append(tables, resource_history_table)
+
+	tables := []migrator.Table{resource_table, resource_history_table}
 
 	// tables = append(tables, migrator.Table{
 	// 	Name: "resource_label_set",
@@ -98,10 +97,12 @@ func initResourceTables(mg *migrator.Migrator) string {
 		}
 	}
 
-	// Add
-	// add column to store creator of a dashboard
 	mg.AddMigration("Add column previous_resource_version in resource_history", migrator.NewAddColumnMigration(resource_history_table, &migrator.Column{
-		Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: true,
+		Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: false,
+	}))
+
+	mg.AddMigration("Add column previous_resource_version in resource", migrator.NewAddColumnMigration(resource_table, &migrator.Column{
+		Name: "previous_resource_version", Type: migrator.DB_BigInt, Nullable: false,
 	}))
 
 	return marker
