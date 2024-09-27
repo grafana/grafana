@@ -155,7 +155,7 @@ func NewDashboardIDScopeResolver(folderDB folder.FolderStore, ds DashboardServic
 			return nil, err
 		}
 
-		return resolveDashboardScope(ctx, folderDB, orgID, dashboard, folderSvc)
+		return resolveDashboardScope(ctx, folderDB, orgID, dashboard, folderSvc, folderStore)
 	})
 }
 
@@ -181,11 +181,11 @@ func NewDashboardUIDScopeResolver(folderDB folder.FolderStore, ds DashboardServi
 			return nil, err
 		}
 
-		return resolveDashboardScope(ctx, folderDB, orgID, dashboard, folderSvc)
+		return resolveDashboardScope(ctx, folderDB, orgID, dashboard, folderSvc, folderStore)
 	})
 }
 
-func resolveDashboardScope(ctx context.Context, folderDB folder.FolderStore, orgID int64, dashboard *Dashboard, folderSvc folder.Service) ([]string, error) {
+func resolveDashboardScope(ctx context.Context, folderDB folder.FolderStore, orgID int64, dashboard *Dashboard, folderSvc folder.Service, folderStore folder.Store) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.resolveDashboardScope")
 	span.End()
 
