@@ -24,8 +24,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
+import { VizTooltipWrapper } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipWrapper';
 import { getDataLinks, getFieldActions } from '../status-history/utils';
-import { getStyles } from '../timeseries/TimeSeriesTooltip';
 import { isTooltipScrollable } from '../timeseries/utils';
 
 import { HeatmapData } from './fields';
@@ -367,10 +367,8 @@ const HeatmapHoverCell = ({
     }
   }
 
-  const styles = useStyles2(getStyles);
-
   return (
-    <div className={styles.wrapper}>
+    <VizTooltipWrapper>
       <VizTooltipHeader item={headerItem} isPinned={isPinned} />
       <VizTooltipContent
         items={contentItems}
@@ -385,6 +383,6 @@ const HeatmapHoverCell = ({
         ))}
       </VizTooltipContent>
       {footer}
-    </div>
+    </VizTooltipWrapper>
   );
 };

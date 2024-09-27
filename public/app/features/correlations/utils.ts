@@ -53,19 +53,31 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
   dataFrame.fields.forEach((field) => {
     field.config.links = field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.Correlations) || [];
     correlations.map((correlation) => {
-      if (correlation.config?.field === field.name) {
-        const targetQuery = correlation.config?.target || {};
-        field.config.links!.push({
-          internal: {
-            query: { ...targetQuery, datasource: { uid: correlation.target.uid } },
-            datasourceUid: correlation.target.uid,
-            datasourceName: correlation.target.name,
-            transformations: correlation.config?.transformations,
-          },
-          url: '',
-          title: correlation.label || correlation.target.name,
-          origin: DataLinkConfigOrigin.Correlations,
-        });
+      if (correlation.config.field === field.name) {
+        if (correlation.type === 'query') {
+          const targetQuery = correlation.config.target || {};
+          field.config.links!.push({
+            internal: {
+              query: { ...targetQuery, datasource: { uid: correlation.target.uid } },
+              datasourceUid: correlation.target.uid,
+              datasourceName: correlation.target.name,
+            },
+            url: '',
+            title: correlation.label || correlation.target.name,
+            origin: DataLinkConfigOrigin.Correlations,
+            meta: {
+              transformations: correlation.config.transformations,
+            },
+          });
+        } else if (correlation.type === 'external') {
+          const externalTarget = correlation.config.target;
+          field.config.links!.push({
+            url: externalTarget.url,
+            title: correlation.label || 'External URL',
+            origin: DataLinkConfigOrigin.Correlations,
+            meta: { transformations: correlation.config?.transformations },
+          });
+        }
       }
     });
   });

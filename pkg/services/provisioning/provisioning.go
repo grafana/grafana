@@ -293,7 +293,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.resourcePermissions,
 	)
 	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
-		st, ps.SQLStore, receiverSvc, ps.log, &st)
+		st, ps.SQLStore, receiverSvc, ps.log, &st, ps.resourcePermissions)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(configStore, st, &st, ps.log, &st)

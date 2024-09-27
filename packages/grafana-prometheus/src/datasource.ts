@@ -141,6 +141,7 @@ export class PrometheusDatasource
     this.cache = new QueryCache({
       getTargetSignature: this.getPrometheusTargetSignature.bind(this),
       overlapString: instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow,
+      applyInterpolation: this.interpolateString.bind(this),
     });
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source

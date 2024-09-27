@@ -311,7 +311,21 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	moa, err := notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, ng.FeatureToggles, overrides...)
+	moa, err := notifier.NewMultiOrgAlertmanager(
+		ng.Cfg,
+		ng.store,
+		ng.store,
+		ng.KVStore,
+		ng.store,
+		decryptFn,
+		multiOrgMetrics,
+		ng.NotificationService,
+		ng.ResourcePermissions,
+		moaLogger,
+		ng.SecretsService,
+		ng.FeatureToggles,
+		overrides...,
+	)
 	if err != nil {
 		return err
 	}
@@ -441,7 +455,7 @@ func (ng *AlertNG) init() error {
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store)
+	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
