@@ -37,6 +37,7 @@ import { EditorColumnHeader } from '../contact-points/templates/EditorColumnHead
 import {
   NotificationTemplate,
   useCreateNotificationTemplate,
+  useNotificationTemplateMetadata,
   useUpdateNotificationTemplate,
   useValidateNotificationTemplate,
 } from '../contact-points/useNotificationTemplates';
@@ -105,7 +106,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertManagerSourceName
   const [payload, setPayload] = useState(defaultPayloadString);
   const [payloadFormatError, setPayloadFormatError] = useState<string | null>(null);
 
-  const isProvisioned = Boolean(originalTemplate?.provenance) && originalTemplate?.provenance !== PROVENANCE_NONE;
+  const { isProvisioned } = useNotificationTemplateMetadata(originalTemplate);
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
     : undefined;

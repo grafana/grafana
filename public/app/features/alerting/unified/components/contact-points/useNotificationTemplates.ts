@@ -301,3 +301,21 @@ export function useValidateNotificationTemplate({ alertmanager }: BaseAlertmanag
     titleIsUnique,
   };
 }
+
+interface NotificationTemplateMetadata {
+  isProvisioned: boolean;
+}
+
+export function useNotificationTemplateMetadata(
+  template: NotificationTemplate | undefined
+): NotificationTemplateMetadata {
+  if (!template) {
+    return {
+      isProvisioned: false,
+    };
+  }
+
+  return {
+    isProvisioned: Boolean(template.provenance) && template.provenance !== PROVENANCE_NONE,
+  };
+}

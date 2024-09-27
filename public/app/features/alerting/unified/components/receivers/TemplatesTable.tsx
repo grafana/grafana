@@ -7,12 +7,15 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { getAlertTableStyles } from '../../styles/table';
-import { PROVENANCE_NONE } from '../../utils/k8s/constants';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
 import { ProvisioningBadge } from '../Provisioning';
-import { NotificationTemplate, useDeleteNotificationTemplate } from '../contact-points/useNotificationTemplates';
+import {
+  NotificationTemplate,
+  useDeleteNotificationTemplate,
+  useNotificationTemplateMetadata,
+} from '../contact-points/useNotificationTemplates';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { TemplateEditor } from './TemplateEditor';
@@ -26,7 +29,6 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
   const appNotification = useAppNotification();
   const deleteTemplate = useDeleteNotificationTemplate({ alertmanager: alertManagerName });
 
-  const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
 
   const [templateToDelete, setTemplateToDelete] = useState<NotificationTemplate | undefined>();
@@ -75,90 +77,15 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
               <td colSpan={3}>No templates defined.</td>
             </tr>
           )}
-          {templates.map((notificationTemplate, idx) => {
-            const { uid, title: name, content: template, provenance } = notificationTemplate;
-
-            const isProvisioned = provenance !== PROVENANCE_NONE;
-            const isExpanded = expandedTemplates[uid];
-            return (
-              <Fragment key={uid}>
-                <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
-                  <td>
-                    <CollapseToggle
-                      isCollapsed={!expandedTemplates[uid]}
-                      onToggle={() => setExpandedTemplates({ ...expandedTemplates, [uid]: !isExpanded })}
-                    />
-                  </td>
-                  <td>
-                    {name} {isProvisioned && <ProvisioningBadge />}
-                  </td>
-                  <td className={tableStyles.actionsCell}>
-                    {isProvisioned && (
-                      <ActionIcon
-                        to={makeAMLink(
-                          `/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`,
-                          alertManagerName
-                        )}
-                        tooltip="view template"
-                        icon="file-alt"
-                      />
-                    )}
-                    {!isProvisioned && (
-                      <Authorize actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
-                        <ActionIcon
-                          to={makeAMLink(
-                            `/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`,
-                            alertManagerName
-                          )}
-                          tooltip="edit template"
-                          icon="pen"
-                        />
-                      </Authorize>
-                    )}
-                    <Authorize actions={[AlertmanagerAction.CreateContactPoint]}>
-                      <ActionIcon
-                        to={makeAMLink(
-                          `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,
-                          alertManagerName
-                        )}
-                        tooltip="Copy template"
-                        icon="copy"
-                      />
-                    </Authorize>
-                    {!isProvisioned && (
-                      <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
-                        <ActionIcon
-                          onClick={() => setTemplateToDelete(notificationTemplate)}
-                          tooltip="delete template"
-                          icon="trash-alt"
-                        />
-                      </Authorize>
-                    )}
-                  </td>
-                </tr>
-                {isExpanded && (
-                  <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
-                    <td></td>
-                    <td colSpan={2}>
-                      <DetailsField label="Description" horizontal={true}>
-                        <TemplateEditor
-                          width={'auto'}
-                          height={'auto'}
-                          autoHeight={true}
-                          value={template}
-                          showLineNumbers={false}
-                          monacoOptions={{
-                            readOnly: true,
-                            scrollBeyondLastLine: false,
-                          }}
-                        />
-                      </DetailsField>
-                    </td>
-                  </tr>
-                )}
-              </Fragment>
-            );
-          })}
+          {templates.map((notificationTemplate, idx) => (
+            <TemplateRow
+              key={notificationTemplate.uid}
+              notificationTemplate={notificationTemplate}
+              idx={idx}
+              alertManagerName={alertManagerName}
+              onDeleteClick={setTemplateToDelete}
+            />
+          ))}
         </tbody>
       </table>
 
@@ -175,3 +102,89 @@ export const TemplatesTable = ({ alertManagerName, templates }: Props) => {
     </>
   );
 };
+
+interface TemplateRowProps {
+  notificationTemplate: NotificationTemplate;
+  idx: number;
+  alertManagerName: string;
+  onDeleteClick: (template: NotificationTemplate) => void;
+}
+
+function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClick }: TemplateRowProps) {
+  const tableStyles = useStyles2(getAlertTableStyles);
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const { isProvisioned } = useNotificationTemplateMetadata(notificationTemplate);
+
+  const { uid, title: name, content: template } = notificationTemplate;
+
+  return (
+    <Fragment key={uid}>
+      <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
+        <td>
+          <CollapseToggle isCollapsed={!isExpanded} onToggle={() => setIsExpanded(!isExpanded)} />
+        </td>
+        <td>
+          {name} {isProvisioned && <ProvisioningBadge />}
+        </td>
+        <td className={tableStyles.actionsCell}>
+          {isProvisioned && (
+            <ActionIcon
+              to={makeAMLink(`/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`, alertManagerName)}
+              tooltip="view template"
+              icon="file-alt"
+            />
+          )}
+          {!isProvisioned && (
+            <Authorize actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
+              <ActionIcon
+                to={makeAMLink(`/alerting/notifications/templates/${encodeURIComponent(uid)}/edit`, alertManagerName)}
+                tooltip="edit template"
+                icon="pen"
+              />
+            </Authorize>
+          )}
+          <Authorize actions={[AlertmanagerAction.CreateContactPoint]}>
+            <ActionIcon
+              to={makeAMLink(
+                `/alerting/notifications/templates/${encodeURIComponent(uid)}/duplicate`,
+                alertManagerName
+              )}
+              tooltip="Copy template"
+              icon="copy"
+            />
+          </Authorize>
+          {!isProvisioned && (
+            <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
+              <ActionIcon
+                onClick={() => onDeleteClick(notificationTemplate)}
+                tooltip="delete template"
+                icon="trash-alt"
+              />
+            </Authorize>
+          )}
+        </td>
+      </tr>
+      {isExpanded && (
+        <tr className={idx % 2 === 0 ? tableStyles.evenRow : undefined}>
+          <td></td>
+          <td colSpan={2}>
+            <DetailsField label="Description" horizontal={true}>
+              <TemplateEditor
+                width={'auto'}
+                height={'auto'}
+                autoHeight={true}
+                value={template}
+                showLineNumbers={false}
+                monacoOptions={{
+                  readOnly: true,
+                  scrollBeyondLastLine: false,
+                }}
+              />
+            </DetailsField>
+          </td>
+        </tr>
+      )}
+    </Fragment>
+  );
+}
