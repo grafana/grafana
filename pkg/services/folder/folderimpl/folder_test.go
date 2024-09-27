@@ -811,6 +811,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		dashboardStore:       &dashStore,
 		dashboardFolderStore: dashboardFolderStore,
 		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		cfg:                  setting.NewCfg(),
 		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
 		tracer:               tracing.InitializeTracerForTest(),

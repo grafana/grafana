@@ -668,7 +668,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		f.ParentUID = nestedFolder.ParentUID
 	}
 
-	if err = s.setDefaultFolderPermissions(ctx, cmd.OrgID, cmd.SignedInUser, f); err != nil {
+	if err = s.setDefaultFolderPermissions(ctx, cmd.OrgID, user, f); err != nil {
 		return nil, err
 	}
 
