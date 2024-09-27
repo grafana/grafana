@@ -3,6 +3,9 @@ import { e2e } from '../utils';
 export const smokeTestScenario = () =>
   describe('Smoke tests', () => {
     before(() => {
+      cy.logToConsole('disabling dashboardScene feature toggle in localstorage');
+      cy.setLocalStorage('grafana.featureToggles', 'dashboardScene=false');
+      cy.reload();
       e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), false);
       e2e.flows.addDataSource();
       e2e.flows.addDashboard();
