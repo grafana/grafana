@@ -142,7 +142,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       ? getRuleGroupLocationFromRuleWithLocation(existing)
       : getRuleGroupLocationFromFormValues(values);
 
-    // @TODO what is "evaluateEvery" being used for?
     // @TODO move this to a hook too to make sure the logic here is tested for regressions?
     if (!existing) {
       // when creating a new rule, we save the manual routing setting , and editorSettings.simplifiedQueryEditor to the local storage
