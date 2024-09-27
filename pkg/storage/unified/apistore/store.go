@@ -252,13 +252,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-	decoder := &streamDecoder{
-		client:      client,
-		newFunc:     s.newFunc,
-		predicate:   predicate,
-		codec:       s.codec,
-		cancelWatch: cancelWatch,
-	}
+	decoder := newStreamDecoder(client, s.newFunc, predicate, s.codec, cancelWatch)
 
 	return watch.NewStreamWatcher(decoder, reporter), nil
 }

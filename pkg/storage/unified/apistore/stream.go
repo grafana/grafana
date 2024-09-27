@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 
 	grpcCodes "google.golang.org/grpc/codes"
 	grpcStatus "google.golang.org/grpc/status"
@@ -23,8 +24,18 @@ type streamDecoder struct {
 	predicate   storage.SelectionPredicate
 	codec       runtime.Codec
 	cancelWatch context.CancelFunc
+	done        sync.WaitGroup
 }
 
+func newStreamDecoder(client resource.ResourceStore_WatchClient, newFunc func() runtime.Object, predicate storage.SelectionPredicate, codec runtime.Codec, cancelWatch context.CancelFunc) *streamDecoder {
+	return &streamDecoder{
+		client:      client,
+		newFunc:     newFunc,
+		predicate:   predicate,
+		codec:       codec,
+		cancelWatch: cancelWatch,
+	}
+}
 func (d *streamDecoder) toObject(w *resource.WatchEvent_Resource) (runtime.Object, error) {
 	obj, _, err := d.codec.Decode(w.Value, nil, d.newFunc())
 	if err == nil {
@@ -38,24 +49,28 @@ func (d *streamDecoder) toObject(w *resource.WatchEvent_Resource) (runtime.Objec
 }
 
 func (d *streamDecoder) Decode() (action watch.EventType, object runtime.Object, err error) {
+	d.done.Add(1)
+	defer d.done.Done()
 decode:
 	for {
-		err := d.client.Context().Err()
-		if err != nil {
-			klog.Errorf("client: context error: %s\n", err)
-			return watch.Error, nil, err
+		var evt *resource.WatchEvent
+		var err error
+		select {
+		case <-d.client.Context().Done():
+		default:
+			evt, err = d.client.Recv()
 		}
 
-		evt, err := d.client.Recv()
-		if errors.Is(err, io.EOF) || errors.Is(d.client.Context().Err(), context.Canceled) {
+		switch {
+		case errors.Is(d.client.Context().Err(), context.Canceled):
 			return watch.Error, nil, io.EOF
-		}
-
-		if grpcStatus.Code(err) == grpcCodes.Canceled {
+		case d.client.Context().Err() != nil:
+			return watch.Error, nil, d.client.Context().Err()
+		case errors.Is(err, io.EOF):
+			return watch.Error, nil, io.EOF
+		case grpcStatus.Code(err) == grpcCodes.Canceled:
 			return watch.Error, nil, err
-		}
-
-		if err != nil {
+		case err != nil:
 			klog.Errorf("client: error receiving result: %s", err)
 			return watch.Error, nil, err
 		}
@@ -201,8 +216,10 @@ func (d *streamDecoder) Close() {
 	if err != nil {
 		klog.Errorf("error closing watch stream: %s", err)
 	}
-	// Cancel the watch context to close the receive stream
+	// Cancel the send context
 	d.cancelWatch()
+	// Wait for all decode operations to finish
+	d.done.Wait()
 }
 
 var _ watch.Decoder = (*streamDecoder)(nil)
