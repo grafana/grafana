@@ -129,9 +129,13 @@ certutil –addstore "Root" <path>/internal-root-ca.crt.pem
 
 ```Dockerfile
 FROM grafana/grafana-image-renderer:latest
+
 USER root
+
 RUN apk add --no-cache nss-tools
+
 USER grafana
+
 COPY internal-root-ca.crt.pem /etc/pki/tls/certs/internal-root-ca.crt.pem
 RUN mkdir -p /home/grafana/.pki/nssdb
 RUN certutil -d sql:/home/grafana/.pki/nssdb -A -n internal-root-ca -t C -i /etc/pki/tls/certs/internal-root-ca.crt.pem
