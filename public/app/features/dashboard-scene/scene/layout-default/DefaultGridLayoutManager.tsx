@@ -18,6 +18,7 @@ import {
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
+import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 import { RowActions } from '../row-actions/RowActions';
 import { DashboardLayoutManager } from '../types';
 
@@ -259,6 +260,53 @@ export class DefaultGridLayoutManager
     }
 
     return max + 1;
+  }
+
+  public collapseAllRows() {
+    this.state.grid.state.children.forEach((child) => {
+      if (!(child instanceof SceneGridRow)) {
+        return;
+      }
+      if (!child.state.isCollapsed) {
+        this.state.grid.toggleRow(child);
+      }
+    });
+  }
+
+  public expandAllRows() {
+    this.state.grid.state.children.forEach((child) => {
+      if (!(child instanceof SceneGridRow)) {
+        return;
+      }
+      if (child.state.isCollapsed) {
+        this.state.grid.toggleRow(child);
+      }
+    });
+  }
+
+  activateRepeaters(): void {
+    this.state.grid.forEachChild((child) => {
+      if (child instanceof DashboardGridItem && !child.isActive) {
+        child.activate();
+        return;
+      }
+
+      if (child instanceof SceneGridRow && child.state.$behaviors) {
+        for (const behavior of child.state.$behaviors) {
+          if (behavior instanceof RowRepeaterBehavior && !child.isActive) {
+            child.activate();
+            break;
+          }
+        }
+
+        child.state.children.forEach((child) => {
+          if (child instanceof DashboardGridItem && !child.isActive) {
+            child.activate();
+            return;
+          }
+        });
+      }
+    });
   }
 
   /**

@@ -48,6 +48,10 @@ export interface DashboardLayoutManager extends SceneObject {
    * @param saveModel
    */
   toSaveModel?(): any;
+  /**
+   * For dynamic panels that need to be viewed in isolation (SoloRoute)
+   */
+  activateRepeaters?(): void;
 }
 
 /**

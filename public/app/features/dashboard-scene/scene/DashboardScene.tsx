@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
-  SceneGridLayout,
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
@@ -639,40 +638,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Need to mark it non dirty to navigate away without unsaved changes warning
     this.setState({ isDirty: false });
     locationService.replace('/');
-  }
-
-  public collapseAllRows() {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Dashboard scene layout is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    sceneGridLayout.state.children.forEach((child) => {
-      if (!(child instanceof SceneGridRow)) {
-        return;
-      }
-      if (!child.state.isCollapsed) {
-        sceneGridLayout.toggleRow(child);
-      }
-    });
-  }
-
-  public expandAllRows() {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Dashboard scene layout is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    sceneGridLayout.state.children.forEach((child) => {
-      if (!(child instanceof SceneGridRow)) {
-        return;
-      }
-      if (child.state.isCollapsed) {
-        sceneGridLayout.toggleRow(child);
-      }
-    });
   }
 
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {

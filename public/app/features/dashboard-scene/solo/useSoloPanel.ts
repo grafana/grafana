@@ -63,31 +63,10 @@ function findRepeatClone(dashboard: DashboardScene, panelId: string): Promise<Vi
         resolve(panel);
       } else {
         // If rows are repeated they could add new panel repeaters that needs to be activated
-        activateAllRepeaters(dashboard.state.body);
+        dashboard.state.body.activateRepeaters?.();
       }
     });
 
-    activateAllRepeaters(dashboard.state.body);
-  });
-}
-
-function activateAllRepeaters(layout: SceneObject) {
-  layout.forEachChild((child) => {
-    if (child instanceof DashboardGridItem && !child.isActive) {
-      child.activate();
-      return;
-    }
-
-    if (child instanceof SceneGridRow && child.state.$behaviors) {
-      for (const behavior of child.state.$behaviors) {
-        if (behavior instanceof RowRepeaterBehavior && !child.isActive) {
-          child.activate();
-          break;
-        }
-      }
-
-      // Activate any panel DashboardGridItem inside the row
-      activateAllRepeaters(child);
-    }
+    dashboard.state.body.activateRepeaters?.();
   });
 }
