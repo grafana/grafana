@@ -358,6 +358,35 @@ func TestIntegrationPlaylist(t *testing.T) {
 
 		doPlaylistTests(t, helper)
 	})
+
+	t.Run("with dual write (etcd, mode 5)", func(t *testing.T) {
+		// NOTE: running local etcd, that will be wiped clean!
+		t.Skip("local etcd testing")
+
+		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "etcd", // requires etcd running on localhost:2379
+			EnableFeatureToggles: []string{
+				featuremgmt.FlagKubernetesPlaylists, // Required so that legacy calls are also written
+			},
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode5,
+				},
+			},
+		})
+
+		// Clear the collection before starting (etcd)
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+		err := client.Resource.DeleteCollection(context.Background(), metav1.DeleteOptions{}, metav1.ListOptions{})
+		require.NoError(t, err)
+
+		doPlaylistTests(t, helper)
+	})
 }
 
 func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {

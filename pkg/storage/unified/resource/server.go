@@ -225,10 +225,10 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 	if obj.GetUID() == "" {
 		return nil, NewBadRequestError("object is missing UID")
 	}
-	//TODO: understand why the apiserver expects a resource version
-	// if obj.GetResourceVersion() != "" {
-	// 	return nil, NewBadRequestError("object must not include resourceVersion")
-	// }
+
+	if obj.GetResourceVersion() != "" {
+		return nil, NewBadRequestError("object must not include resourceVersion")
+	}
 
 	event := &WriteEvent{
 		Value:  value,
