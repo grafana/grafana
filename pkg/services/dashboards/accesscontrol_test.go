@@ -150,12 +150,12 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 
 func TestNewDashboardIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewDashboardIDScopeResolver(foldertest.NewFakeFolderStore(t), &FakeDashboardService{}, foldertest.NewFakeService())
+		prefix, _ := NewDashboardIDScopeResolver(foldertest.NewFakeFolderStore(t), &FakeDashboardService{}, foldertest.NewFakeService(), folder.NewFakeStore())
 		require.Equal(t, "dashboards:id:", prefix)
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
-		_, resolver := NewDashboardIDScopeResolver(foldertest.NewFakeFolderStore(t), &FakeDashboardService{}, foldertest.NewFakeService())
+		_, resolver := NewDashboardIDScopeResolver(foldertest.NewFakeFolderStore(t), &FakeDashboardService{}, foldertest.NewFakeService(), folder.NewFakeStore())
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "dashboards:uid:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
