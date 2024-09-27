@@ -28,7 +28,7 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
@@ -75,10 +75,10 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "rimraf": "6.0.1",
-    "rollup": "2.79.1",
-    "rollup-plugin-dts": "^5.0.0",
-    "rollup-plugin-esbuild": "5.0.0",
-    "rollup-plugin-node-externals": "^5.0.0",
+    "rollup": "^4.22.4",
+    "rollup-plugin-dts": "^6.1.1",
+    "rollup-plugin-esbuild": "6.1.1",
+    "rollup-plugin-node-externals": "^7.1.3",
     "typescript": "5.5.4"
   },
   "peerDependencies": {
