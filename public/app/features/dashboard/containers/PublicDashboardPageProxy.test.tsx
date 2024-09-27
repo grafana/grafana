@@ -27,11 +27,6 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: () => ({ accessToken: 'an-access-token' }),
 }));
 
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useParams: () => ({ accessToken: 'an-access-token' }),
-}));
-
 function setup(props: Partial<PublicDashboardPageProxyProps>) {
   return render(
     <Routes>
@@ -45,7 +40,7 @@ function setup(props: Partial<PublicDashboardPageProxyProps>) {
             {...props}
           />
         }
-      ></Route>
+      />
     </Routes>,
     {
       historyOptions: { initialEntries: [`/public-dashboards/an-access-token`] },
