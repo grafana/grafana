@@ -20,6 +20,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Trans } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
@@ -673,9 +674,26 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       <ConfirmModal
         isOpen={showResetModeModal}
-        title="Switching to simple mode"
-        body="The selected queries and expressions cannot be converted to simple mode. Switching will remove them. Do you want to proceed?"
-        confirmText="Yes"
+        title="Disable advanced options"
+        body={
+          <div>
+            <Text element="p">
+              <Trans i18nKey="alerting.queryAndExpressionsStep.disableAdvancedOptions">
+                The selected queries and expressions cannot be converted to simple mode. If you choose to disable the
+                advanced options, your query and condition will be reset to the default settings. The selected queries
+                and expressions cannot be converted to simple mode. If you choose to disable the advanced options, your
+                query and condition will be reset to the default settings.
+              </Trans>
+            </Text>
+            <br />
+            <Text element="p">
+              <Trans i18nKey="alerting.queryAndExpressionsStep.disableAdvancedOptions.question">
+                Do you want to disable advanced options?
+              </Trans>
+            </Text>
+          </div>
+        }
+        confirmText="Disable"
         icon="exclamation-triangle"
         onConfirm={() => {
           setValue('editorSettings', { simplifiedQueryEditor: true });
