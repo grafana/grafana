@@ -1,4 +1,4 @@
-import { Route } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { render, screen } from 'test/test-utils';
 
@@ -24,10 +24,15 @@ jest.setTimeout(60 * 1000);
 
 setupMswServer();
 
-function renderRuleEditor(identifier?: string) {
-  return render(<Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />, {
-    historyOptions: { initialEntries: [identifier ? `/alerting/${identifier}/edit` : `/alerting/new`] },
-  });
+function renderRuleEditor(identifier: string) {
+  return render(
+    <Routes>
+      <Route path="/alerting/:id/edit" element={<RuleEditor />} />
+    </Routes>,
+    {
+      historyOptions: { initialEntries: [`/alerting/${identifier}/edit`] },
+    }
+  );
 }
 
 describe('RuleEditor grafana managed rules', () => {

@@ -215,6 +215,12 @@
       "paused": "Paused",
       "recording-rule": "Recording rule"
     },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.",
+        "alert-title": "Update in progress"
+      }
+    },
     "rules": {
       "add-rule": {
         "success": "Rule added successfully"
@@ -1845,6 +1851,9 @@
       "server-discovery-modal-close": "Close",
       "server-discovery-modal-loading": "Loading...",
       "server-discovery-modal-submit": "Submit"
+    },
+    "login": {
+      "error": "Login provider denied login request"
     }
   },
   "panel": {

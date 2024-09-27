@@ -1,7 +1,7 @@
 Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 disableEnvelopeEncryption,GA,@grafana/grafana-as-code,false,false,false
-live-service-web-worker,experimental,@grafana/grafana-app-platform-squad,false,false,true
-queryOverLive,experimental,@grafana/grafana-app-platform-squad,false,false,true
+live-service-web-worker,experimental,@grafana/dashboards-squad,false,false,true
+queryOverLive,experimental,@grafana/dashboards-squad,false,false,true
 panelTitleSearch,preview,@grafana/search-and-storage,false,false,false
 publicDashboards,GA,@grafana/sharing-squad,false,false,false
 publicDashboardsEmailSharing,preview,@grafana/sharing-squad,false,false,false
@@ -185,6 +185,7 @@ alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
 dataplaneAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
 newFiltersUI,experimental,@grafana/dashboards-squad,false,false,false
 lokiSendDashboardPanelNames,experimental,@grafana/observability-logs,false,false,false
+alertingPrometheusRulesPrimary,experimental,@grafana/alerting-squad,false,false,true
 singleTopNav,experimental,@grafana/grafana-frontend-platform,false,false,true
 exploreLogsShardSplitting,experimental,@grafana/observability-logs,false,false,true
 exploreLogsAggregatedMetrics,experimental,@grafana/observability-logs,false,false,true
