@@ -59,7 +59,7 @@ export const UserAdminPage = ({
   revokeAllSessions,
   syncLdapUser,
 }: Props) => {
-  const { id = '0' } = useParams();
+  const { id = '' } = useParams();
   useEffect(() => {
     const userId = parseInt(id, 10);
     loadAdminUserPage(userId);

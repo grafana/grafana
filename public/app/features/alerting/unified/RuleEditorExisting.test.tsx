@@ -35,10 +35,6 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
   QueryEditorRow: () => <p>hi</p>,
 }));
 
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useParams: () => ({ id: grafanaRulerRule.grafana_alert.uid }),
-}));
 jest.setTimeout(60 * 1000);
 
 const mocks = {

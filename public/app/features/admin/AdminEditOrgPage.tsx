@@ -17,7 +17,7 @@ interface OrgNameDTO {
 }
 
 const AdminEditOrgPage = () => {
-  const { id = '0' } = useParams();
+  const { id = '' } = useParams();
   const orgId = parseInt(id, 10);
   const canWriteOrg = contextSrv.hasPermission(AccessControlAction.OrgsWrite);
   const canReadUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
