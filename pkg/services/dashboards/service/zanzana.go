@@ -242,6 +242,9 @@ func (dr *DashboardServiceImpl) findDashboardsZanzanaList(ctx context.Context, q
 	if err != nil {
 		return nil, err
 	}
+	if len(resourceUIDs) == 0 {
+		return []dashboards.DashboardSearchProjection{}, nil
+	}
 
 	query.DashboardUIDs = resourceUIDs
 	query.SkipAccessControlFilter = true
