@@ -102,7 +102,7 @@ For OSS users,enable the `alertingQueryAndExpressionsStepMode` feature toggle.
 {{% admonition type="note" %}}
 Once you have created an alert rule using one of the modes, the system defaults to this mode for the next alert rule you create.
 
-You can toggle between the two options. However, if you want to switch from Advanced to Simple mode and you have more than one query or a custom recovery threshold, your data is removed.
+You can toggle between the two options. However, if you want to switch from Advanced to Simple mode and you have more than one query or a custom recovery threshold, your data is removed as it's not possible to transform these queries and expressions to the Simple mode.
 {{% /admonition %}}
 
 ## Steps
@@ -127,9 +127,9 @@ Define a query to get the data you want to measure and a condition that needs to
 1. Add a query.
 1. Add an alert condition.
 
-   The **When** input includes the reducer function and the threshold.
+   The **When** input includes the reducer function and the last input is the threshold. The **When** input includes the reducer function.
 
-1. Click **Preview** to verify.
+2. Click **Preview** to verify.
    {{< /collapse >}}
 
 {{< collapse title="Advanced mode" >}}
