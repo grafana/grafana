@@ -1081,3 +1081,8 @@ func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c context.Co
 func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return nil
 }
+
+// GetAll gets all library elements with support to query filters.
+func (l *mockLibraryElementService) GetAllElements(c context.Context, signedInUser identity.Requester, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error) {
+	return model.LibraryElementSearchResult{}, nil
+}
