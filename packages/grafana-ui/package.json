@@ -116,7 +116,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.25.2",
-    "@faker-js/faker": "^8.4.1",
+    "@faker-js/faker": "^9.0.0",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "15.3.0",
     "@storybook/addon-a11y": "^8.1.6",
