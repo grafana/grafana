@@ -1,7 +1,7 @@
-import { SnapshotCreateResponse } from '../../../public/app/features/dashboard/services/SnapshotSrv';
-import { fromBaseUrl } from '../../utils/support/url';
+import { SnapshotCreateResponse } from '../../public/app/features/dashboard/services/SnapshotSrv';
 import { e2e } from '../utils';
-import '../../utils/support/clipboard';
+import { fromBaseUrl } from '../utils/support/url';
+import '../utils/support/clipboard';
 
 describe('Snapshots', () => {
   beforeEach(() => {

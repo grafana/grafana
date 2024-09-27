@@ -1,6 +1,6 @@
-import { ShareLinkConfiguration } from '../../../public/app/features/dashboard-scene/sharing/ShareButton/utils';
+import { ShareLinkConfiguration } from '../../public/app/features/dashboard-scene/sharing/ShareButton/utils';
 import { e2e } from '../utils';
-import '../../utils/support/clipboard';
+import '../utils/support/clipboard';
 
 describe('Share internally', () => {
   beforeEach(() => {

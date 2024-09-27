@@ -1,6 +1,6 @@
-import { PublicDashboard } from '../../../public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import { PublicDashboard } from '../../public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { e2e } from '../utils';
-import '../../utils/support/clipboard';
+import '../utils/support/clipboard';
 
 describe('Shared dashboards', () => {
   beforeEach(() => {

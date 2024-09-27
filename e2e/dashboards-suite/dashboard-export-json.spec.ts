@@ -1,5 +1,5 @@
 import { e2e } from '../utils';
-import '../../utils/support/clipboard';
+import '../utils/support/clipboard';
 
 describe('Export as JSON', () => {
   beforeEach(() => {
