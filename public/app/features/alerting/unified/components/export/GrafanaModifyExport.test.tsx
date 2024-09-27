@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Route } from 'react-router-dom';
+import { useParams } from 'react-router-dom-v5-compat';
 import { Props } from 'react-virtualized-auto-sizer';
 import { render, waitFor, waitForElementToBeRemoved, userEvent } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
@@ -29,6 +30,11 @@ jest.mock('@grafana/ui', () => ({
   CodeEditor: ({ value }: { value: string }) => <textarea data-testid="code-editor" value={value} readOnly />,
 }));
 
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn().mockReturnValue({}),
+}));
+
 const ui = {
   loading: byText('Loading the rule...'),
   form: {
@@ -55,6 +61,7 @@ const dataSources = {
 };
 
 function renderModifyExport(ruleId: string) {
+  (useParams as jest.Mock).mockReturnValue({ id: ruleId });
   render(<Route path="/alerting/:id/modify-export" component={GrafanaModifyExport} />, {
     historyOptions: { initialEntries: [`/alerting/${ruleId}/modify-export`] },
   });
