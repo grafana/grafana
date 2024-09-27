@@ -58,6 +58,7 @@ type Service struct {
 }
 
 func ProvideService(
+	store *FolderStoreImpl,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
 	dashboardStore dashboards.Store,
@@ -68,7 +69,6 @@ func ProvideService(
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
 ) folder.Service {
-	store := ProvideStore(db)
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
