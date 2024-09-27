@@ -1904,8 +1904,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 		}
 	}
 
-	folderSvcOn := getSvc(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-	folderSvcOff := getSvc(featuremgmt.WithFeatures())
+	folderSvc := getSvc(featuremgmt.WithFeatures())
 
 	createCmd := folder.CreateFolderCommand{
 		OrgID:        orgID,
@@ -1914,7 +1913,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 	}
 
 	depth := 3
-	folders := CreateSubtreeInStore(t, folderSvcOn.store, &folderSvcOn, depth, "get/folder-", createCmd)
+	folders := CreateSubtreeInStore(t, folderSvc.store, &folderSvc, depth, "get/folder-", createCmd)
 	f := folders[1]
 
 	testCases := []struct {
@@ -1924,19 +1923,14 @@ func TestFolderServiceGetFolder(t *testing.T) {
 		expectedFullpath string
 	}{
 		{
-			name:             "when flag is off",
-			svc:              &folderSvcOff,
-			expectedFullpath: f.Title,
-		},
-		{
-			name:             "when flag is on and WithFullpath is false",
-			svc:              &folderSvcOn,
+			name:             "when WithFullpath is false",
+			svc:              &folderSvc,
 			WithFullpath:     false,
 			expectedFullpath: "",
 		},
 		{
-			name:             "when flag is on and WithFullpath is true",
-			svc:              &folderSvcOn,
+			name:             "when WithFullpath is true",
+			svc:              &folderSvc,
 			WithFullpath:     true,
 			expectedFullpath: "get\\/folder-folder-0/get\\/folder-folder-1",
 		},
