@@ -48,9 +48,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
-		for _, instance := range instances {
-			_ = dbstore.SaveAlertInstance(ctx, instance)
-		}
+		_ = dbstore.SaveAlertInstances(ctx, instances)
 		_ = dbstore.DeleteAlertInstances(ctx, keys...)
 	}
 }
@@ -99,7 +97,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			CurrentReason: string(models.InstanceStateError),
 			Labels:        labels,
 		}
-		err := dbstore.SaveAlertInstance(ctx, instance)
+		err := dbstore.SaveAlertInstances(ctx, []models.AlertInstance{instance})
 		require.NoError(t, err)
 
 		listCmd := &models.ListAlertInstancesQuery{
@@ -128,7 +126,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			CurrentState: models.InstanceStateNormal,
 			Labels:       labels,
 		}
-		err := dbstore.SaveAlertInstance(ctx, instance)
+		err := dbstore.SaveAlertInstances(ctx, []models.AlertInstance{instance})
 		require.NoError(t, err)
 
 		listCmd := &models.ListAlertInstancesQuery{
@@ -158,7 +156,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			Labels:       labels,
 		}
 
-		err := dbstore.SaveAlertInstance(ctx, instance1)
+		err := dbstore.SaveAlertInstances(ctx, []models.AlertInstance{instance1})
 		require.NoError(t, err)
 
 		labels = models.InstanceLabels{"test": "testValue2"}
@@ -172,7 +170,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			CurrentState: models.InstanceStateFiring,
 			Labels:       labels,
 		}
-		err = dbstore.SaveAlertInstance(ctx, instance2)
+		err = dbstore.SaveAlertInstances(ctx, []models.AlertInstance{instance2})
 		require.NoError(t, err)
 
 		listQuery := &models.ListAlertInstancesQuery{
@@ -219,9 +217,9 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			CurrentReason: models.StateReasonError,
 			Labels:        labels,
 		}
-		err := dbstore.SaveAlertInstance(ctx, instance1)
+		err := dbstore.SaveAlertInstances(ctx, []models.AlertInstance{instance1})
 		require.NoError(t, err)
-		err = dbstore.SaveAlertInstance(ctx, instance2)
+		err = dbstore.SaveAlertInstances(ctx, []models.AlertInstance{instance2})
 		require.NoError(t, err)
 
 		listQuery := &models.ListAlertInstancesQuery{
@@ -264,7 +262,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			Labels:       labels,
 		}
 
-		err := dbstore.SaveAlertInstance(ctx, instance1)
+		err := dbstore.SaveAlertInstances(ctx, []models.AlertInstance{instance1})
 		require.NoError(t, err)
 
 		instance2 := models.AlertInstance{
@@ -276,7 +274,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 			CurrentState: models.InstanceStateNormal,
 			Labels:       instance1.Labels,
 		}
-		err = dbstore.SaveAlertInstance(ctx, instance2)
+		err = dbstore.SaveAlertInstances(ctx, []models.AlertInstance{instance2})
 		require.NoError(t, err)
 
 		listQuery := &models.ListAlertInstancesQuery{

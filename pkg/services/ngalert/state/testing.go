@@ -35,10 +35,12 @@ func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.List
 	return nil, nil
 }
 
-func (f *FakeInstanceStore) SaveAlertInstance(_ context.Context, q models.AlertInstance) error {
+func (f *FakeInstanceStore) SaveAlertInstances(_ context.Context, q []models.AlertInstance) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
-	f.recordedOps = append(f.recordedOps, q)
+	for _, instance := range q {
+		f.recordedOps = append(f.recordedOps, instance)
+	}
 	return nil
 }
 

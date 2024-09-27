@@ -215,9 +215,7 @@ func TestWarmStateCache(t *testing.T) {
 		Labels:            labels,
 		ResultFingerprint: data.Fingerprint(2).String(),
 	})
-	for _, instance := range instances {
-		_ = dbstore.SaveAlertInstance(ctx, instance)
-	}
+	_ = dbstore.SaveAlertInstances(ctx, instances)
 
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
@@ -1750,9 +1748,7 @@ func TestStaleResultsHandler(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = dbstore.SaveAlertInstance(ctx, instance)
-	}
+	_ = dbstore.SaveAlertInstances(ctx, instances)
 
 	testCases := []struct {
 		desc               string
@@ -2008,9 +2004,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = dbstore.SaveAlertInstance(ctx, instance)
-	}
+	_ = dbstore.SaveAlertInstances(ctx, instances)
 
 	testCases := []struct {
 		desc          string
@@ -2150,9 +2144,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 		},
 	}
 
-	for _, instance := range instances {
-		_ = dbstore.SaveAlertInstance(ctx, instance)
-	}
+	_ = dbstore.SaveAlertInstances(ctx, instances)
 
 	testCases := []struct {
 		desc          string

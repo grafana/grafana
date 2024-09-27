@@ -45,8 +45,22 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 	return result, err
 }
 
-// SaveAlertInstance is a handler for saving a new alert instance.
-func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.AlertInstance) error {
+// SaveAlertInstances is a handler for saving multiple alert instances.
+// It saves each instance in a separate transaction, to keep the old behaviour
+// when saving instances happened one by one. This is done to avoid long transactions
+// when there are many instances to save.
+func (st DBstore) SaveAlertInstances(ctx context.Context, instances []models.AlertInstance) error {
+	for _, alertInstance := range instances {
+		if err := st.saveAlertInstance(ctx, alertInstance); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// saveAlertInstance is a handler for saving a new alert instance.
+func (st DBstore) saveAlertInstance(ctx context.Context, alertInstance models.AlertInstance) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		if err := models.ValidateAlertInstance(alertInstance); err != nil {
 			return err

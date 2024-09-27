@@ -9,7 +9,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 type SyncStatePersister struct {
@@ -54,7 +54,7 @@ func (a *SyncStatePersister) deleteAlertStates(ctx context.Context, states []Sta
 	}
 	logger := a.log.FromContext(ctx)
 	logger.Debug("Deleting alert states", "count", len(states))
-	toDelete := make([]ngModels.AlertInstanceKey, 0, len(states))
+	toDelete := make([]models.AlertInstanceKey, 0, len(states))
 
 	for _, s := range states {
 		key, err := s.GetAlertInstanceKey()
@@ -94,10 +94,10 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			return nil
 		}
-		instance := ngModels.AlertInstance{
+		instance := models.AlertInstance{
 			AlertInstanceKey:  key,
-			Labels:            ngModels.InstanceLabels(s.Labels),
-			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
+			Labels:            models.InstanceLabels(s.Labels),
+			CurrentState:      models.InstanceStateType(s.State.State.String()),
 			CurrentReason:     s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
@@ -107,7 +107,7 @@ func (a *SyncStatePersister) saveAlertStates(ctx context.Context, states ...Stat
 			ResultFingerprint: s.ResultFingerprint.String(),
 		}
 
-		err = a.store.SaveAlertInstance(ctx, instance)
+		err = a.store.SaveAlertInstances(ctx, []models.AlertInstance{instance})
 		if err != nil {
 			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
 			return nil
