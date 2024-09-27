@@ -1845,6 +1845,9 @@
       "server-discovery-modal-close": "Cľőşę",
       "server-discovery-modal-loading": "Ŀőäđįŉģ...",
       "server-discovery-modal-submit": "Ŝūþmįŧ"
+    },
+    "login": {
+      "error": "Ŀőģįŉ přővįđęř đęŉįęđ ľőģįŉ řęqūęşŧ"
     }
   },
   "panel": {

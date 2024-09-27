@@ -964,6 +964,10 @@ This setting is ignored if multiple OAuth providers are configured. Default is `
 How many seconds the OAuth state cookie lives before being deleted. Default is `600` (seconds)
 Administrators can increase this if they experience OAuth login state mismatch errors.
 
+### oauth_login_error_message
+
+A custom error message for when users are unauthorized. Default is a key for an internationalized phrase in the frontend, `Login provider denied login request`.
+
 ### oauth_refresh_token_server_lock_min_wait_ms
 
 Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.
