@@ -245,6 +245,7 @@ type Cfg struct {
 	IDResponseHeaderEnabled       bool
 	IDResponseHeaderPrefix        string
 	IDResponseHeaderNamespaces    map[string]struct{}
+	ManagedServiceAccountsEnabled bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders   []string
@@ -1668,6 +1669,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	for _, provider := range util.SplitString(providers) {
 		cfg.SSOSettingsConfigurableProviders[provider] = true
 	}
+
+	// Managed Service Accounts
+	cfg.ManagedServiceAccountsEnabled = auth.Key("managed_service_accounts_enabled").MustBool(false)
+
 	return nil
 }
 
