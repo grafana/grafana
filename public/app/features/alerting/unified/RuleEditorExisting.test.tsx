@@ -1,4 +1,4 @@
-import { Route } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { render, screen } from 'test/test-utils';
 
@@ -43,10 +43,15 @@ const mocks = {
 
 setupMswServer();
 
-function renderRuleEditor(identifier?: string) {
-  return render(<Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />, {
-    historyOptions: { initialEntries: [identifier ? `/alerting/${identifier}/edit` : `/alerting/new`] },
-  });
+function renderRuleEditor(identifier: string) {
+  return render(
+    <Routes>
+      <Route path="/alerting/:id/edit" element={<RuleEditor />} />
+    </Routes>,
+    {
+      historyOptions: { initialEntries: [`/alerting/${identifier}/edit`] },
+    }
+  );
 }
 
 describe('RuleEditor grafana managed rules', () => {
@@ -106,7 +111,6 @@ describe('RuleEditor grafana managed rules', () => {
 
     // mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     mocks.searchFolders.mockResolvedValue([folder, slashedFolder] as DashboardSearchHit[]);
-
     const { user } = renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
 
     // check that it's filled in

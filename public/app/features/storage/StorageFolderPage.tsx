@@ -1,16 +1,14 @@
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { DataFrame, NavModel, NavModelItem } from '@grafana/data';
 import { Card, Icon, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { getGrafanaStorage } from './storage';
 
-export interface Props extends GrafanaRouteComponentProps<{ slug: string }> {}
-
-export function StorageFolderPage(props: Props) {
-  const slug = props.match.params.slug ?? '';
+export function StorageFolderPage() {
+  const { slug = '' } = useParams();
   const listing = useAsync((): Promise<DataFrame | undefined> => {
     return getGrafanaStorage().list('content/' + slug);
   }, [slug]);

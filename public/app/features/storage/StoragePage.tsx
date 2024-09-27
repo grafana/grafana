@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
@@ -46,7 +47,7 @@ const getParentPath = (path: string) => {
 export default function StoragePage(props: Props) {
   const styles = useStyles2(getStyles);
   const navModel = useNavModel('storage');
-  const path = props.match.params.path ?? '';
+  const { path = '' } = useParams();
   const view = props.queryParams.view ?? StorageView.Data;
   const setPath = (p: string, view?: StorageView) => {
     let url = ('/admin/storage/' + p).replace('//', '/');
