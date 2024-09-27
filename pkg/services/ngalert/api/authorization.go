@@ -8,6 +8,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -242,9 +243,8 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/ngalert/alertmanagers":
 		return middleware.ReqOrgAdmin
 
-	// Grafana-only Provisioning Read Paths
+	// Grafana-only Provisioning Export Paths for everything except contact points.
 	case http.MethodGet + "/api/v1/provisioning/policies/export",
-		http.MethodGet + "/api/v1/provisioning/contact-points/export",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/export",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}/export":
 		eval = ac.EvalAny(
@@ -253,6 +253,22 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
 		)
+
+	// Grafana-only Provisioning Export Paths for contact points.
+	case http.MethodGet + "/api/v1/provisioning/contact-points/export":
+		perms := []ac.Evaluator{
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),             // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),              // organization scope
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
+		}
+		if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingApiServer) {
+			perms = append(perms,
+				ac.EvalPermission(ac.ActionAlertingReceiversRead),
+				ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+			)
+		}
+		eval = ac.EvalAny(perms...)
 
 	case http.MethodGet + "/api/v1/provisioning/alert-rules",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/export":
