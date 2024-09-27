@@ -48,6 +48,7 @@ func (d *streamDecoder) toObject(w *resource.WatchEvent_Resource) (runtime.Objec
 	return obj, err
 }
 
+// nolint: gocyclo // we may be able to simplify this in the future, but this is a complex function by nature
 func (d *streamDecoder) Decode() (action watch.EventType, object runtime.Object, err error) {
 	d.done.Add(1)
 	defer d.done.Done()
