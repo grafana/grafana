@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/testdata"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -119,6 +121,35 @@ func TestTraceTableToFrame(t *testing.T) {
 			testdata.CheckGoldenFrame(t, "../testdata", fmt.Sprintf("%s.%s", tt.testFile, strings.ReplaceAll(tt.name, " ", "-")), frame)
 		})
 	}
+}
+
+func TestLargeLogsResponse(t *testing.T) {
+	t.Run("large logs response", func(t *testing.T) {
+
+		res := AzureLogAnalyticsResponse{
+			Tables: []types.AzureResponseTable{
+				{Name: "PrimaryResult",
+					Columns: []struct {
+						Name string `json:"name"`
+						Type string `json:"type"`
+					}{
+						{Name: "value", Type: "int"},
+					}},
+			},
+		}
+		rows := [][]any{}
+		for i := 0; i <= 30000; i++ {
+			rows = append(rows, []any{json.Number(strconv.Itoa(i))})
+		}
+		res.Tables[0].Rows = rows
+		resultFormat := dataquery.ResultFormatLogs
+		frame, err := ResponseTableToFrame(&res.Tables[0], "A", "query", dataquery.AzureQueryTypeAzureLogAnalytics, resultFormat)
+		appendErrorNotice(frame, res.Error)
+		require.NoError(t, err)
+		require.Equal(t, frame.Rows(), 30000)
+
+		testdata.CheckGoldenFrame(t, "../testdata", "loganalytics/12-log-analytics-large-response-warning.json", frame)
+	})
 }
 
 func loadTestFileWithNumber(t *testing.T, name string) AzureLogAnalyticsResponse {

@@ -84,6 +84,14 @@ func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.Azu
 		converters = append(converters, converter)
 	}
 
+	rowLimit := 30000
+	limitExceeded := false
+	if len(t.Rows) > rowLimit && resultFormat == dataquery.ResultFormatLogs {
+		// We limit the number of rows to 30k to prevent crashing the browser tab as the logs viz is not virtualised.
+		t.Rows = t.Rows[:30000]
+		limitExceeded = true
+	}
+
 	fic, err := data.NewFrameInputConverter(converters, len(t.Rows))
 	if err != nil {
 		return nil, err
@@ -96,6 +104,13 @@ func converterFrameForTable(t *types.AzureResponseTable, queryType dataquery.Azu
 
 	fic.Frame.Meta = &data.FrameMeta{
 		Custom: &LogAnalyticsMeta{ColumnTypes: colTypes},
+	}
+
+	if limitExceeded {
+		fic.Frame.AppendNotices(data.Notice{
+			Severity: data.NoticeSeverityWarning,
+			Text:     "The number of results in the result set has been limited to 30,000.",
+		})
 	}
 
 	return fic, nil
