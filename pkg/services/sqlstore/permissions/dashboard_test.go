@@ -39,344 +39,6 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestIntegration_DashboardPermissionFilter(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	type testCase struct {
-		desc           string
-		queryType      string
-		permission     dashboardaccess.PermissionType
-		permissions    []accesscontrol.Permission
-		expectedResult int
-	}
-
-	tests := []testCase{
-		{
-			desc:       "Should be able to view all dashboards with wildcard scope",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
-			},
-			expectedResult: 110,
-		},
-		{
-			desc:       "Should be able to view all dashboards with folder wildcard scope",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
-			},
-			expectedResult: 110,
-		},
-		{
-			desc:       "Should not be able to view editable dashboards under the root with folders:uid:general scope if missing write action",
-			permission: dashboardaccess.PERMISSION_EDIT,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
-			},
-			expectedResult: 0,
-		},
-		{
-			desc:       "Should be able to view a subset of dashboards with dashboard scopes",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:110", Kind: "dashboards", Identifier: "110"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40", Kind: "dashboards", Identifier: "40"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:22", Kind: "dashboards", Identifier: "22"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:13", Kind: "dashboards", Identifier: "13"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:55", Kind: "dashboards", Identifier: "55"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:99", Kind: "dashboards", Identifier: "99"},
-			},
-			expectedResult: 6,
-		},
-		{
-			desc:       "Should be able to view all folders with folder wildcard",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:*"},
-			},
-			expectedResult: 10,
-		},
-		{
-			desc:       "Should be able to view a subset folders",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6", Kind: "folders", Identifier: "6"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:9", Kind: "folders", Identifier: "9"},
-			},
-			expectedResult: 3,
-		},
-		{
-			desc:       "Should return folders and dashboard with 'edit' permission",
-			permission: dashboardaccess.PERMISSION_EDIT,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
-				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
-				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
-			},
-			expectedResult: 2,
-		},
-		{
-			desc:       "Should return the dashboards that the User has dashboards:write permission on in case of 'edit' permission",
-			permission: dashboardaccess.PERMISSION_EDIT,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:31", Kind: "dashboards", Identifier: "31"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32", Kind: "dashboards", Identifier: "32"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
-				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
-			},
-			expectedResult: 1,
-		},
-		{
-			desc:       "Should return the folders that the User has dashboards:create permission on in case of 'edit' permission",
-			permission: dashboardaccess.PERMISSION_EDIT,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
-				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:4", Kind: "folders", Identifier: "4"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32", Kind: "dashboards", Identifier: "32"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33", Kind: "dashboards", Identifier: "33"},
-			},
-			expectedResult: 1,
-		},
-		{
-			desc:       "Should return folders that users can read alerts from",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			queryType:  searchstore.TypeAlertFolder,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:8", Kind: "folders", Identifier: "8"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8", Kind: "folders", Identifier: "8"},
-			},
-			expectedResult: 2,
-		},
-		{
-			desc:       "Should return folders that users can read alerts when user has read wildcard",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			queryType:  searchstore.TypeAlertFolder,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "*"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3", Kind: "folders", Identifier: "3"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8", Kind: "folders", Identifier: "8"},
-			},
-			expectedResult: 2,
-		},
-	}
-
-	for _, tt := range tests {
-		store := setupTest(t, 10, 110, tt.permissions)
-		recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
-		require.NoError(t, err)
-
-		usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.permissions)}}
-
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
-			m := features.GetEnabled(context.Background())
-			keys := make([]string, 0, len(m))
-			for k := range m {
-				keys = append(keys, k)
-			}
-			t.Run(tt.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
-				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, features, recursiveQueriesAreSupported)
-
-				var result int
-				err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-					q, params := filter.Where()
-					recQry, recQryParams := filter.With()
-					params = append(recQryParams, params...)
-					leftJoin := filter.LeftJoin()
-					s := recQry + "\nSELECT COUNT(*) FROM dashboard WHERE " + q
-					if leftJoin != "" {
-						s = recQry + "\nSELECT COUNT(*) FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q
-					}
-					_, err := sess.SQL(s, params...).Get(&result)
-					return err
-				})
-				require.NoError(t, err)
-
-				assert.Equal(t, tt.expectedResult, result)
-			})
-		}
-	}
-}
-
-func TestIntegration_DashboardPermissionFilter_WithSelfContainedPermissions(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	type testCase struct {
-		desc                    string
-		queryType               string
-		permission              dashboardaccess.PermissionType
-		signedInUserPermissions []accesscontrol.Permission
-		expectedResult          int
-	}
-
-	tests := []testCase{
-		{
-			desc:       "Should be able to view all dashboards with wildcard scope",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
-			},
-			expectedResult: 110,
-		},
-		{
-			desc:       "Should be able to view all dashboards with folder wildcard scope",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
-			},
-			expectedResult: 110,
-		},
-		{
-			desc:                    "Should not be able to view any dashboards or folders without any permissions",
-			permission:              dashboardaccess.PERMISSION_VIEW,
-			signedInUserPermissions: []accesscontrol.Permission{},
-			expectedResult:          0,
-		},
-		{
-			desc:       "Should be able to view a subset of dashboards with dashboard scopes",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:110"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:22"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:13"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:55"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:99"},
-			},
-			expectedResult: 6,
-		},
-		{
-			desc:       "Should not be able to view editable dashboards under the root with folders:uid:general scope if missing write action",
-			permission: dashboardaccess.PERMISSION_EDIT,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID)},
-			},
-			expectedResult: 0,
-		},
-		{
-			desc:       "Should be able to view all folders with folder wildcard",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:*"},
-			},
-			expectedResult: 10,
-		},
-		{
-			desc:       "Should be able to view a subset folders",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:9"},
-			},
-			expectedResult: 3,
-		},
-		{
-			desc:       "Should return folders and dashboard with 'edit' permission",
-			permission: dashboardaccess.PERMISSION_EDIT,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
-				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
-			},
-			expectedResult: 2,
-		},
-		{
-			desc:       "Should return the dashboards that the User has dashboards:write permission on in case of 'edit' permission",
-			permission: dashboardaccess.PERMISSION_EDIT,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:31"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
-				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:33"},
-			},
-			expectedResult: 1,
-		},
-		{
-			desc:       "Should return the folders that the User has dashboards:create permission on in case of 'edit' permission",
-			permission: dashboardaccess.PERMISSION_EDIT,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:4"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:32"},
-				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:33"},
-			},
-			expectedResult: 1,
-		},
-		{
-			desc:       "Should return folders that users can read alerts from",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			queryType:  searchstore.TypeAlertFolder,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:8"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
-			},
-			expectedResult: 2,
-		},
-		{
-			desc:       "Should return folders that users can read alerts when user has read wildcard",
-			permission: dashboardaccess.PERMISSION_VIEW,
-			queryType:  searchstore.TypeAlertFolder,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "*"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:3"},
-				{Action: accesscontrol.ActionAlertingRuleRead, Scope: "folders:uid:8"},
-			},
-			expectedResult: 2,
-		},
-	}
-
-	for _, tt := range tests {
-		store := setupTest(t, 10, 110, []accesscontrol.Permission{})
-		recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
-		require.NoError(t, err)
-
-		usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, AuthenticatedBy: login.ExtendedJWTModule, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByActionContext(context.Background(), tt.signedInUserPermissions)}}
-
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
-			m := features.GetEnabled(context.Background())
-			keys := make([]string, 0, len(m))
-			for k := range m {
-				keys = append(keys, k)
-			}
-			t.Run(tt.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
-				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, features, recursiveQueriesAreSupported)
-
-				var result int
-				err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-					q, params := filter.Where()
-					recQry, recQryParams := filter.With()
-					params = append(recQryParams, params...)
-					s := recQry + "\nSELECT COUNT(*) FROM dashboard WHERE " + q
-					leftJoin := filter.LeftJoin()
-					if leftJoin != "" {
-						s = recQry + "\nSELECT COUNT(*) FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q
-					}
-					_, err := sess.SQL(s, params...).Get(&result)
-					return err
-				})
-				require.NoError(t, err)
-
-				assert.Equal(t, tt.expectedResult, result)
-			})
-		}
-	}
-}
-
 func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 	testCases := []struct {
 		desc           string
@@ -425,16 +87,6 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			},
 			expectedResult: []string{"parent", "subfolder"},
 		},
-		{
-			desc:       "Should not be able to view inherited folders if nested folders are not enabled",
-			queryType:  searchstore.TypeFolder,
-			permission: dashboardaccess.PERMISSION_VIEW,
-			permissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent", Kind: "folders", Identifier: "parent"},
-			},
-			features:       []any{},
-			expectedResult: []string{"parent"},
-		},
 	}
 
 	origNewGuardian := guardian.New
@@ -454,7 +106,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		})
 		usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByActionContext(context.Background(), tc.permissions)}}
 
-		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagAccessActionSets)...), featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
+		for _, features := range []featuremgmt.FeatureToggles{featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagAccessActionSets)...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {
@@ -496,27 +148,27 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 		features                []any
 	}{
 		{
-			desc:                    "Should not be able to view dashboards under inherited folders with no permissions if nested folders are enabled",
+			desc:                    "Should not be able to view dashboards under inherited folders with no permissions",
 			queryType:               searchstore.TypeDashboard,
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
 			expectedResult:          nil,
 		},
 		{
-			desc:                    "Should not be able to view inherited folders with no permissions if nested folders are enabled",
+			desc:                    "Should not be able to view inherited folders with no permissions",
 			queryType:               searchstore.TypeFolder,
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
 			expectedResult:          nil,
 		},
 		{
-			desc:                    "Should not be able to view inherited dashboards and folders with no permissions if nested folders are enabled",
+			desc:                    "Should not be able to view inherited dashboards and folders with no permissions",
 			permission:              dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
 			expectedResult:          nil,
 		},
 		{
-			desc:       "Should be able to view dashboards under inherited folders with wildcard scope if nested folders are enabled",
+			desc:       "Should be able to view dashboards under inherited folders with wildcard scope",
 			queryType:  searchstore.TypeDashboard,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: []accesscontrol.Permission{
@@ -525,23 +177,13 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			expectedResult: []string{"dashboard under the root", "dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
-			desc:       "Should be able to view inherited folders if nested folders are enabled",
+			desc:       "Should be able to view inherited folders",
 			queryType:  searchstore.TypeFolder,
 			permission: dashboardaccess.PERMISSION_VIEW,
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 			},
 			expectedResult: []string{"parent", "subfolder"},
-		},
-		{
-			desc:       "Should not be able to view inherited folders if nested folders are not enabled",
-			queryType:  searchstore.TypeFolder,
-			permission: dashboardaccess.PERMISSION_VIEW,
-			signedInUserPermissions: []accesscontrol.Permission{
-				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
-			},
-			features:       []any{},
-			expectedResult: []string{"parent"},
 		},
 	}
 
