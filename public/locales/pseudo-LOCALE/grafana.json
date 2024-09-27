@@ -1936,6 +1936,12 @@
         "name-header": "Ńämę",
         "update-header": "Ůpđäŧę",
         "update-status-text": "pľūģįŉş ūpđäŧęđ"
+      },
+      "versions": {
+        "confirmation-text-1": "Åřę yőū řęäľľy şūřę yőū ŵäŉŧ ŧő đőŵŉģřäđę ŧő vęřşįőŉ",
+        "confirmation-text-2": "Ÿőū şĥőūľđ ŉőřmäľľy ŉőŧ þę đőįŉģ ŧĥįş",
+        "install-confirm": "Ĩŉşŧäľľ",
+        "install-title": "Ĩŉşŧäľľ pľūģįŉ vęřşįőŉ"
       }
     },
     "details": {

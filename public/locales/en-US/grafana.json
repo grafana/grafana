@@ -1936,6 +1936,12 @@
         "name-header": "Name",
         "update-header": "Update",
         "update-status-text": "plugins updated"
+      },
+      "versions": {
+        "confirmation-text-1": "Are you really sure you want to downgrade to version",
+        "confirmation-text-2": "You should normally not be doing this",
+        "install-confirm": "Install",
+        "install-title": "Install plugin version"
       }
     },
     "details": {
