@@ -56,7 +56,7 @@ sudo systemctl enable grafana-server.service
 
 ### Restart the Grafana server using systemd
 
-To restart the Grafana server, run the following commands:
+To restart the Grafana server, run the following command:
 
 ```bash
 sudo systemctl restart grafana-server
@@ -70,16 +70,15 @@ SUSE or openSUSE users might need to start the server with the systemd method, t
 
 Complete the following steps to start the Grafana server using init.d and verify that it is running:
 
-1. To start the Grafana server, run the following commands:
+1. To start the Grafana server, run the following command:
 
    ```bash
    sudo service grafana-server start
-   sudo service grafana-server status
    ```
 
 1. To verify that the service is running, run the following command:
 
-   ```
+   ```bash
    sudo service grafana-server status
    ```
 
@@ -93,7 +92,7 @@ sudo update-rc.d grafana-server defaults
 
 #### Restart the Grafana server using init.d
 
-To restart the Grafana server, run the following commands:
+To restart the Grafana server, run the following command:
 
 ```bash
 sudo service grafana-server restart
@@ -121,8 +120,8 @@ Alternatively, you can use the `docker compose restart` command to restart Grafa
 
 Configure your `docker-compose.yml` file. For example:
 
-```bash
-version: "3.8"
+```yml
+version: '3.8'
 services:
   grafana:
     image: grafana/grafana:latest
