@@ -105,7 +105,6 @@ Once you have created an alert rule using one of the modes, the system defaults 
 You can toggle between the two options. However, if you want to switch from Advanced to Simple mode and you have more than one query or a custom recovery threshold, your data is removed.
 {{% /admonition %}}
 
-
 ## Steps
 
 To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps.
