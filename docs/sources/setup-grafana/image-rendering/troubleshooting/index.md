@@ -125,6 +125,22 @@ If this happens, then you have to add the certificate to the trust store. If you
 certutil –addstore "Root" <path>/internal-root-ca.crt.pem
 ```
 
+**Container:**
+
+```Dockerfile
+FROM grafana/grafana-image-renderer:latest
+
+USER root
+
+RUN apk add --no-cache nss-tools
+
+USER grafana
+
+COPY internal-root-ca.crt.pem /etc/pki/tls/certs/internal-root-ca.crt.pem
+RUN mkdir -p /home/grafana/.pki/nssdb
+RUN certutil -d sql:/home/grafana/.pki/nssdb -A -n internal-root-ca -t C -i /etc/pki/tls/certs/internal-root-ca.crt.pem
+```
+
 ## Custom Chrome/Chromium
 
 As a last resort, if you already have [Chrome](https://www.google.com/chrome/) or [Chromium](https://www.chromium.org/)
