@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"maps"
+	"slices"
 	"sort"
 	"unsafe"
-
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -51,7 +51,7 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]defi
 	}
 
 	templates := make([]definitions.NotificationTemplate, 0, len(revision.Config.TemplateFiles))
-	names := maps.Keys(revision.Config.TemplateFiles)
+	names := slices.Collect(maps.Keys(revision.Config.TemplateFiles))
 	sort.Strings(names)
 	for _, name := range names {
 		content := revision.Config.TemplateFiles[name]
