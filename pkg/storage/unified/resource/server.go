@@ -328,12 +328,12 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 		rsp.Error = e
 		return rsp, nil
 	}
-
 	var err error
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 	}
+	s.log.Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
 }
 
@@ -539,6 +539,7 @@ func (s *server) initWatcher() error {
 			for {
 				// pipe all events
 				v := <-events
+				s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
 				s.mostRecentRV.Store(v.ResourceVersion)
 				out <- v
 			}
@@ -564,11 +565,17 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 	}
 	defer s.broadcaster.Unsubscribe(stream)
 
+	if !req.SendInitialEvents && req.Since == 0 {
+		// This is a temporary hack only relevant for tests to ensure that the first events are sent.
+		// This is required because the SQL backend polls the database every 100ms.
+		// TODO: Implement a getLatestResourceVersion method in the backend.
+		time.Sleep(10 * time.Millisecond)
+	}
+
 	mostRecentRV := s.mostRecentRV.Load() // get the latest resource version
 	var initialEventsRV int64             // resource version coming from the initial events
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
-		// todo ? I don't think we need to send since here , ResourceVersion: since
 		initialEventsRV, err = s.backend.ListIterator(ctx, &ListRequest{Options: req.Options}, func(iter ListIterator) error {
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
@@ -620,7 +627,7 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 				s.log.Debug("watch events closed")
 				return nil
 			}
-
+			s.log.Debug("Server Broadcasting", "type", event.Type, "rv", event.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "resource", event.Key.Resource, "name", event.Key.Name)
 			if event.ResourceVersion > since && matchesQueryKey(req.Options.Key, event.Key) {
 				value := event.Value
 				// remove the delete marker stored in the value for deleted objects
