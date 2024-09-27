@@ -678,7 +678,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         body={
           <div>
             <Text element="p">
-              <Trans i18nKey="alerting.queryAndExpressionsStep.disableAdvancedOptions">
+              <Trans i18nKey="alerting.queryAndExpressionsStep.disableAdvancedOptions.text">
                 The selected queries and expressions cannot be converted to simple mode. If you choose to disable the
                 advanced options, your query and condition will be reset to the default settings. The selected queries
                 and expressions cannot be converted to simple mode. If you choose to disable the advanced options, your
