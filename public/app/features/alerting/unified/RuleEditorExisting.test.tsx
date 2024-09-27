@@ -1,4 +1,4 @@
-import { Route } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom-v5-compat';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { render, screen } from 'test/test-utils';
 
@@ -35,10 +35,6 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
   QueryEditorRow: () => <p>hi</p>,
 }));
 
-jest.mock('react-router-dom-v5-compat', () => ({
-  ...jest.requireActual('react-router-dom-v5-compat'),
-  useParams: () => ({ id: grafanaRulerRule.grafana_alert.uid }),
-}));
 jest.setTimeout(60 * 1000);
 
 const mocks = {
@@ -47,10 +43,15 @@ const mocks = {
 
 setupMswServer();
 
-function renderRuleEditor(identifier?: string) {
-  return render(<Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />, {
-    historyOptions: { initialEntries: [identifier ? `/alerting/${identifier}/edit` : `/alerting/new`] },
-  });
+function renderRuleEditor(identifier: string) {
+  return render(
+    <Routes>
+      <Route path="/alerting/:id/edit" Component={RuleEditor} />
+    </Routes>,
+    {
+      historyOptions: { initialEntries: [`/alerting/${identifier}/edit`] },
+    }
+  );
 }
 
 describe('RuleEditor grafana managed rules', () => {
