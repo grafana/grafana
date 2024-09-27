@@ -28,7 +28,7 @@ func (m *orphanedServiceAccountPermissions) SQL(dialect migrator.Dialect) string
 	return CodeMigrationSQL
 }
 
-func (m *orphanedServiceAccountPermissions) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+func (m *orphanedServiceAccountPermissions) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	var idents []string
 
 	// find all permissions that are scopes directly to a service account
@@ -45,8 +45,12 @@ func (m *orphanedServiceAccountPermissions) Exec(sess *xorm.Session, migrator *m
 		}
 	}
 
+	if len(ids) == 0 {
+		return nil
+	}
+
 	// Then find all existing service accounts
-	raw := "SELECT u.id FROM " + migrator.Dialect.Quote("user") + " AS u WHERE u.is_service_account AND u.id IN(?" + strings.Repeat(",?", len(ids)-1) + ")"
+	raw := "SELECT u.id FROM " + mg.Dialect.Quote("user") + " AS u WHERE u.is_service_account AND u.id IN(?" + strings.Repeat(",?", len(ids)-1) + ")"
 	args := make([]any, 0, len(ids))
 	for _, id := range ids {
 		args = append(args, id)
