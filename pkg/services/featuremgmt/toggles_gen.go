@@ -127,10 +127,6 @@ const (
 	// Access control primitives for OnCall
 	FlagAccessControlOnCall = "accessControlOnCall"
 
-	// FlagNestedFolders
-	// Enable folder nesting
-	FlagNestedFolders = "nestedFolders"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"

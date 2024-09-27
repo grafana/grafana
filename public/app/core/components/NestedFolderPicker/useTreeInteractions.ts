@@ -27,7 +27,6 @@ export function useTreeInteractions({
   visible,
 }: TreeInteractionProps) {
   const [focusedItemIndex, setFocusedItemIndex] = useState(-1);
-  const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
 
   useEffect(() => {
     if (visible) {
@@ -47,7 +46,7 @@ export function useTreeInteractions({
 
   const handleKeyDown = useCallback(
     (ev: React.KeyboardEvent<HTMLInputElement>) => {
-      const foldersAreOpenable = nestedFoldersEnabled && !search;
+      const foldersAreOpenable = !search;
       switch (ev.key) {
         // Expand/collapse folder on right/left arrow keys
         case 'ArrowRight':
@@ -87,7 +86,7 @@ export function useTreeInteractions({
           break;
       }
     },
-    [focusedItemIndex, handleCloseOverlay, handleFolderExpand, handleFolderSelect, nestedFoldersEnabled, search, tree]
+    [focusedItemIndex, handleCloseOverlay, handleFolderExpand, handleFolderSelect, search, tree]
   );
 
   return {

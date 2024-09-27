@@ -97,34 +97,32 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 		permission = dashboardaccess.PERMISSION_EDIT
 	}
 
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
-		q := &folder.GetChildrenQuery{
-			OrgID:        c.SignedInUser.GetOrgID(),
-			Limit:        c.QueryInt64("limit"),
-			Page:         c.QueryInt64("page"),
-			UID:          c.Query("parentUid"),
-			Permission:   permission,
-			SignedInUser: c.SignedInUser,
-		}
-
-		folders, err := hs.folderService.GetChildren(c.Req.Context(), q)
-		if err != nil {
-			return apierrors.ToFolderErrorResponse(err)
-		}
-
-		hits := make([]dtos.FolderSearchHit, 0)
-		for _, f := range folders {
-			hits = append(hits, dtos.FolderSearchHit{
-				ID:        f.ID, // nolint:staticcheck
-				UID:       f.UID,
-				Title:     f.Title,
-				ParentUID: f.ParentUID,
-			})
-			metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolders).Inc()
-		}
-
-		return response.JSON(http.StatusOK, hits)
+	q := &folder.GetChildrenQuery{
+		OrgID:        c.SignedInUser.GetOrgID(),
+		Limit:        c.QueryInt64("limit"),
+		Page:         c.QueryInt64("page"),
+		UID:          c.Query("parentUid"),
+		Permission:   permission,
+		SignedInUser: c.SignedInUser,
 	}
+
+	folders, err := hs.folderService.GetChildren(c.Req.Context(), q)
+	if err != nil {
+		return apierrors.ToFolderErrorResponse(err)
+	}
+
+	hits := make([]dtos.FolderSearchHit, 0)
+	for _, f := range folders {
+		hits = append(hits, dtos.FolderSearchHit{
+			ID:        f.ID, // nolint:staticcheck
+			UID:       f.UID,
+			Title:     f.Title,
+			ParentUID: f.ParentUID,
+		})
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolders).Inc()
+	}
+
+	return response.JSON(http.StatusOK, hits)
 
 	hits, err := hs.searchFolders(c, permission)
 	if err != nil {
@@ -255,7 +253,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 	}
 
 	isNested := folder.ParentUID != ""
-	if !isNested || !hs.Features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+	if !isNested {
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
@@ -277,30 +275,25 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
-		cmd := folder.MoveFolderCommand{}
-		if err := web.Bind(c.Req, &cmd); err != nil {
-			return response.Error(http.StatusBadRequest, "bad request data", err)
-		}
-		var err error
-
-		cmd.OrgID = c.SignedInUser.GetOrgID()
-		cmd.UID = web.Params(c.Req)[":uid"]
-		cmd.SignedInUser = c.SignedInUser
-		theFolder, err := hs.folderService.Move(c.Req.Context(), &cmd)
-		if err != nil {
-			return response.ErrOrFallback(http.StatusInternalServerError, "move folder failed", err)
-		}
-
-		folderDTO, err := hs.newToFolderDto(c, theFolder)
-		if err != nil {
-			return response.Err(err)
-		}
-		return response.JSON(http.StatusOK, folderDTO)
+	cmd := folder.MoveFolderCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	result := map[string]string{}
-	result["message"] = "To use this service, you need to activate nested folder feature."
-	return response.JSON(http.StatusNotFound, result)
+	var err error
+
+	cmd.OrgID = c.SignedInUser.GetOrgID()
+	cmd.UID = web.Params(c.Req)[":uid"]
+	cmd.SignedInUser = c.SignedInUser
+	theFolder, err := hs.folderService.Move(c.Req.Context(), &cmd)
+	if err != nil {
+		return response.ErrOrFallback(http.StatusInternalServerError, "move folder failed", err)
+	}
+
+	folderDTO, err := hs.newToFolderDto(c, theFolder)
+	if err != nil {
+		return response.Err(err)
+	}
+	return response.JSON(http.StatusOK, folderDTO)
 }
 
 // swagger:route PUT /folders/{folder_uid} folders updateFolder
@@ -453,10 +446,6 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 	folderDTO, err := toDTO(f, false)
 	if err != nil {
 		return dtos.Folder{}, err
-	}
-
-	if !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
-		return folderDTO, nil
 	}
 
 	parents, err := hs.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})

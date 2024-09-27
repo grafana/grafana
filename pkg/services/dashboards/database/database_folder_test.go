@@ -258,9 +258,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		tracer := tracing.InitializeTracerForTest()
 		quotaService := quotatest.New(false, nil)
 
-		// enable nested folders so that the folder table is populated for all the tests
-		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-
 		var err error
 		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
@@ -394,8 +391,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			expectedTitles: []string{nestedFolders[0].Title},
 		},
 		{
-			desc:     "it should return subfolder if nested folders are enabled and the user has permission to read folders under parent folder",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagNestedFolders),
+			desc: "it should return subfolder if nested folders are enabled and the user has permission to read folders under parent folder",
 			permissions: map[string][]string{
 				dashboards.ActionFoldersRead: {fmt.Sprintf("folders:uid:%s", nestedFolders[0].UID)},
 			},

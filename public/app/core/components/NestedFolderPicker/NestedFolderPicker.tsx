@@ -69,8 +69,6 @@ export function NestedFolderPicker({
   const styles = useStyles2(getStyles);
   const selectedFolder = useGetFolderQuery(value || skipToken);
 
-  const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
-
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState<(QueryResponse & { items: DashboardViewItem[] }) | null>(null);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
@@ -330,7 +328,7 @@ export function NestedFolderPicker({
               onFolderExpand={handleFolderExpand}
               onFolderSelect={handleFolderSelect}
               idPrefix={overlayId}
-              foldersAreOpenable={nestedFoldersEnabled && !(search && searchResults)}
+              foldersAreOpenable={!(search && searchResults)}
               isItemLoaded={isItemLoaded}
               requestLoadMore={handleLoadMore}
             />

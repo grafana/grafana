@@ -481,8 +481,8 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		})
 	}
 
-	t.Run("when nested folders are enabled folders should contain full path", func(t *testing.T) {
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	t.Run("folders should contain full path", func(t *testing.T) {
+		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		query := &models.GetAlertRulesForSchedulingQuery{
 			PopulateFolders: true,
 		}
@@ -638,8 +638,8 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 	})
 
-	t.Run("when nested folders are enabled full path should be populated with correct value", func(t *testing.T) {
-		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	t.Run("full path should be populated with correct value", func(t *testing.T) {
+		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 		actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
 		require.NoError(t, err)
 		require.Equal(t, title, actual.Title)

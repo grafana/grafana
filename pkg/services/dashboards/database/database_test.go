@@ -821,7 +821,7 @@ func TestIntegrationFindDashboardsByTitle(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 
@@ -939,7 +939,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	quotaService := quotatest.New(false, nil)
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPanelTitleSearch)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 
@@ -1019,8 +1019,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			folderUIDs: []string{folder.GeneralFolderUID},
 			typ:        searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
-				"":                            {{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under general"}},
+				"": {{title: "dashboard under general"}},
 			},
 		},
 		{
@@ -1028,8 +1027,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			folderUIDs: []string{folder.GeneralFolderUID},
 			typ:        searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
-				"":                            {{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under general"}},
+				"": {{title: "dashboard under general"}},
 			},
 		},
 		{
@@ -1037,8 +1035,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			folderUIDs: []string{f0.UID},
 			typ:        searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
-				"":                            {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title}},
+				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title}},
 			},
 		},
 		{
@@ -1048,8 +1045,6 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
 					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title}},
 			},
 		},
 		{
@@ -1058,8 +1053,6 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			typ:        searchstore.TypeDashboard,
 			expectedResult: map[string][]res{
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
 					{title: "dashboard under general"}},
 			},
 		},
@@ -1071,9 +1064,6 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 				"": {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
 					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
 					{title: "dashboard under general"}},
-				featuremgmt.FlagNestedFolders: {{title: "dashboard under f0", folderUID: f0.UID, folderTitle: f0.Title},
-					{title: "dashboard under f1", folderUID: f1.UID, folderTitle: f1.Title},
-					{title: "dashboard under general"}},
 			},
 		},
 		{
@@ -1081,8 +1071,7 @@ func TestIntegrationFindDashboardsByFolder(t *testing.T) {
 			folderUIDs: []string{f0.UID},
 			typ:        searchstore.TypeFolder,
 			expectedResult: map[string][]res{
-				"":                            {},
-				featuremgmt.FlagNestedFolders: {{title: subfolder.Title, folderUID: f0.UID, folderTitle: f0.Title}},
+				"": {{title: subfolder.Title, folderUID: f0.UID, folderTitle: f0.Title}},
 			},
 		},
 	}

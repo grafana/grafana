@@ -930,10 +930,9 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	if len(query.FolderUIDs) > 0 {
 		filters = append(filters, searchstore.FolderUIDFilter{
-			Dialect:              d.store.GetDialect(),
-			OrgID:                orgID,
-			UIDs:                 query.FolderUIDs,
-			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
+			Dialect: d.store.GetDialect(),
+			OrgID:   orgID,
+			UIDs:    query.FolderUIDs,
 		})
 	}
 

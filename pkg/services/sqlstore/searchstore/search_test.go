@@ -208,7 +208,7 @@ func TestBuilder_RBAC(t *testing.T) {
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			},
 			level:    dashboardaccess.PERMISSION_VIEW,
-			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			features: featuremgmt.WithFeatures(),
 			expectedParams: []any{
 				int64(1),
 				int64(1),
@@ -275,7 +275,7 @@ func TestBuilder_RBAC(t *testing.T) {
 				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
 			},
 			level:    dashboardaccess.PERMISSION_EDIT,
-			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 			expectedParams: []any{
 				int64(1),
 				int64(1),

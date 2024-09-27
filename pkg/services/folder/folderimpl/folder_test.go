@@ -807,7 +807,6 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		db:                   db,
 		dashboardStore:       &dashStore,
 		dashboardFolderStore: dashboardFolderStore,
-		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
 		tracer:               tracing.InitializeTracerForTest(),
@@ -844,7 +843,6 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		db:                   db,
 		dashboardStore:       dashStore,
 		dashboardFolderStore: dashboardFolderStore,
-		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient()),
 		metrics:              newFoldersMetrics(nil),
 		tracer:               tracing.InitializeTracerForTest(),
@@ -2059,14 +2057,11 @@ func TestGetChildrenFilterByPermission(t *testing.T) {
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(featuresFlagOff, zanzana.NewNoopClient())
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
-
 	folderSvcOn := &Service{
 		log:                  slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		dashboardStore:       dashStore,
 		dashboardFolderStore: folderStore,
 		store:                nestedFolderStore,
-		features:             features,
 		bus:                  b,
 		db:                   db,
 		accessControl:        ac,
@@ -2322,7 +2317,7 @@ func TestIntegration_canMove(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	features := featuremgmt.WithFeatures("nestedFolders")
+	features := featuremgmt.WithFeatures()
 	folderSvc := setup(t, dashStore, dashboardFolderStore, folderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 
 	testCases := []struct {
