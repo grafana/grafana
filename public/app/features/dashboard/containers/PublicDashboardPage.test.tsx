@@ -63,7 +63,6 @@ jest.mock('react-router-dom-v5-compat', () => ({
 const setup = (propOverrides?: Partial<Props>, initialState?: Partial<appTypes.StoreState>) => {
   const context = getGrafanaContextMock();
   const store = configureStore(initialState);
-  // (useParams as jest.Mock).mockReturnValue({ accessToken: 'an-access-token' });
   const props: Props = {
     ...getRouteComponentProps({
       route: {

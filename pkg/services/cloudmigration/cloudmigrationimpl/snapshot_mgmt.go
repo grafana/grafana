@@ -212,13 +212,14 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 	resourcesGroupedByType := make(map[cloudmigration.MigrateDataType][]snapshot.MigrateDataRequestItemDTO, 0)
 	for i, item := range migrationData.Items {
 		resourcesGroupedByType[item.Type] = append(resourcesGroupedByType[item.Type], snapshot.MigrateDataRequestItemDTO{
+			Name:  item.Name,
 			Type:  snapshot.MigrateDataType(item.Type),
 			RefID: item.RefID,
-			Name:  item.Name,
 			Data:  item.Data,
 		})
 
 		localSnapshotResource[i] = cloudmigration.CloudMigrationResource{
+			Name:   item.Name,
 			Type:   item.Type,
 			RefID:  item.RefID,
 			Status: cloudmigration.ItemStatusPending,

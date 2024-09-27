@@ -37,7 +37,7 @@ import { addDefaultsToAlertmanagerConfig } from '../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames, getRulesDataSource } from '../utils/datasource';
 import { makeAMLink } from '../utils/misc';
 import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
-import { getAlertInfo, isRulerNotSupportedResponse } from '../utils/rules';
+import { getAlertInfo } from '../utils/rules';
 import { safeParsePrometheusDuration } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
@@ -150,18 +150,6 @@ export function fetchPromAndRulerRulesAction({
     await dispatch(fetchPromRulesAction({ rulesSourceName, identifier, filter, limitAlerts, matcher, state }));
     if (dsConfig.rulerConfig) {
       await dispatch(fetchRulerRulesAction({ rulesSourceName }));
-    }
-  };
-}
-
-// this will only trigger ruler rules fetch if rules are not loaded yet and request is not in flight
-export function fetchRulerRulesIfNotFetchedYet(rulesSourceName: string): ThunkResult<void> {
-  return (dispatch, getStore) => {
-    const { rulerRules } = getStore().unifiedAlerting;
-    const resp = rulerRules[rulesSourceName];
-    const emptyResults = isEmpty(resp?.result);
-    if (emptyResults && !(resp && isRulerNotSupportedResponse(resp)) && !resp?.loading) {
-      dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }
   };
 }
@@ -280,12 +268,15 @@ export function fetchAllPromAndRulerRulesAction(
   };
 }
 
-export function fetchAllPromRulesAction(force = false): ThunkResult<void> {
+export function fetchAllPromRulesAction(
+  force = false,
+  options: FetchPromRulesRulesActionProps = {}
+): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const { promRules } = getStore().unifiedAlerting;
     getAllRulesSourceNames().map((rulesSourceName) => {
       if (force || !promRules[rulesSourceName]?.loading) {
-        dispatch(fetchPromRulesAction({ rulesSourceName }));
+        dispatch(fetchPromRulesAction({ rulesSourceName, ...options }));
       }
     });
   };

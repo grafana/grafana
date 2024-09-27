@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { LocationServiceProvider, config, locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardRoutes } from '../../../types';
@@ -20,6 +20,11 @@ jest.mock('@grafana/runtime', () => ({
     },
     get: jest.fn().mockResolvedValue({}),
   }),
+}));
+
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: () => ({ accessToken: 'an-access-token' }),
 }));
 
 jest.mock('react-router-dom-v5-compat', () => ({

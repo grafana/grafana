@@ -215,6 +215,12 @@
       "paused": "Päūşęđ",
       "recording-rule": "Ŗęčőřđįŉģ řūľę"
     },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "Åľęřŧ řūľę ĥäş þęęŉ ūpđäŧęđ. Cĥäŉģęş mäy ŧäĸę ūp ŧő ä mįŉūŧę ŧő äppęäř őŉ ŧĥę Åľęřŧ řūľęş ľįşŧ vįęŵ.",
+        "alert-title": "Ůpđäŧę įŉ přőģřęşş"
+      }
+    },
     "rules": {
       "add-rule": {
         "success": "Ŗūľę äđđęđ şūččęşşƒūľľy"
@@ -244,6 +250,12 @@
         "state": "Ŝŧäŧę"
       },
       "save-query": "Ŝävę čūřřęŉŧ şęäřčĥ"
+    },
+    "simpleCondition": {
+      "alertCondition": "Åľęřŧ čőŉđįŧįőŉ",
+      "ofQuery": {
+        "To": "ŦØ"
+      }
     }
   },
   "annotations": {
@@ -1839,6 +1851,9 @@
       "server-discovery-modal-close": "Cľőşę",
       "server-discovery-modal-loading": "Ŀőäđįŉģ...",
       "server-discovery-modal-submit": "Ŝūþmįŧ"
+    },
+    "login": {
+      "error": "Ŀőģįŉ přővįđęř đęŉįęđ ľőģįŉ řęqūęşŧ"
     }
   },
   "panel": {
@@ -1920,13 +1935,16 @@
         "button": "Ůpđäŧę äľľ",
         "cloud-update-message": "* Ĩŧ mäy ŧäĸę ä ƒęŵ mįŉūŧęş ƒőř ŧĥę pľūģįŉş ŧő þę äväįľäþľę ƒőř ūşäģę.",
         "error": "Ēřřőř ūpđäŧįŉģ pľūģįŉ:",
+        "error-status-text": "ƒäįľęđ - şęę ęřřőř męşşäģęş",
         "header": "Ŧĥę ƒőľľőŵįŉģ pľūģįŉş ĥävę ūpđäŧę äväįľäþľę",
         "installed-header": "Ĩŉşŧäľľęđ",
         "modal-confirmation": "Ůpđäŧę",
         "modal-dismiss": "Cľőşę",
+        "modal-in-progress": "Ůpđäŧįŉģ...",
         "modal-title": "Ůpđäŧę Pľūģįŉş",
         "name-header": "Ńämę",
-        "update-header": "Ůpđäŧę"
+        "update-header": "Ůpđäŧę",
+        "update-status-text": "pľūģįŉş ūpđäŧęđ"
       }
     },
     "details": {

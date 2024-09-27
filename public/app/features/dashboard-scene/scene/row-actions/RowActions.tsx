@@ -1,7 +1,14 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneGridRow,
+  SceneObjectBase,
+  SceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import { Icon, TextLink, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -11,6 +18,7 @@ import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { DashboardScene } from '../DashboardScene';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
+import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 
 import { RowOptionsButton } from './RowOptionsButton';
 
@@ -27,6 +35,11 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
 
   public getDashboard(): DashboardScene {
     return getDashboardSceneFor(this);
+  }
+
+  public removeRow(removePanels?: boolean) {
+    const manager = sceneGraph.getAncestor(this, DefaultGridLayoutManager);
+    manager.removeRow(this.getParent(), removePanels);
   }
 
   public onUpdate = (title: string, repeat?: string | null): void => {
@@ -60,12 +73,8 @@ export class RowActions extends SceneObjectBase<RowActionsState> {
         text: 'Are you sure you want to remove this row and all its panels?',
         altActionText: 'Delete row only',
         icon: 'trash-alt',
-        onConfirm: () => {
-          this.getDashboard().removeRow(this.getParent(), true);
-        },
-        onAltAction: () => {
-          this.getDashboard().removeRow(this.getParent());
-        },
+        onConfirm: () => this.removeRow(true),
+        onAltAction: () => this.removeRow(),
       })
     );
   };
