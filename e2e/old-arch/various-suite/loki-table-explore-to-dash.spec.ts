@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-const dataSourceName = 'LokiEditor';
+const dataSourceName = 'LokiEditor' + Date.now();
 const addDataSource = () => {
   e2e.flows.addDataSource({
     type: 'Loki',
@@ -121,7 +121,8 @@ describe('Loki Query Editor', () => {
 
   beforeEach(() => {
     cy.window().then((win) => {
-      win.localStorage.setItem('grafana.featureToggles', 'logsExploreTableVisualisation=1');
+      cy.setLocalStorage('grafana.featureToggles', 'logsExploreTableVisualisation=1');
+      cy.setLocalStorage('grafana.featureToggles', 'dashboardScene=false');
     });
   });
   it('Should be able to add explore table to dashboard', () => {
