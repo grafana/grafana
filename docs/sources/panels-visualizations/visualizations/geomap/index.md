@@ -141,11 +141,11 @@ The other location types&mdash; airport codes or US state codes&mdash;aren't aut
 
 If you want to use other codes or give the field a custom name, you can follow the steps in the [Location mode](#location-mode) section.
 
-## Panel options
+## Configuration options
+
+### Panel options
 
 {{< docs/shared lookup="visualizations/panel-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-## Configuration options
 
 ### Map view options
 
@@ -165,42 +165,16 @@ The initial view configures how the geomap renders when the panel is first loade
 | Fit to data | fits the map view based on the data extents of Map layers and updates when data changes.<ul><li>**Data** - option allows selection of extent based on data from "All layers", a single "Layer", or the "Last value" from a selected layer.</li><li>**Layer** - can be selected if fitting data from a single "Layer" or the "Last value" of a layer.</li><li>**Padding** - sets padding in relative percent beyond data extent (not available when looking at "Last value" only).</li><li>**Max zoom** - sets the maximum zoom level when fitting data.</li> |
 | (0°, 0°) |  |
 | Coordinates | sets the map view based on: **Latitude** and **Longitude**. |
-| North America |  |
-| South America |  |
-| Europe |  |
-| Africa |  |
-| West Asia |  |
-| South Asia |  |
-| South-East Asia |  |
-| East Asia |  |
-| Australia |  |
-| Oceania |  |
 <!-- prettier-ignore-end -->
 
-<!--
+Default Views are also available including:
 
-- **View** sets the center for the map when the panel first loads.
-  - **Fit to data** fits the map view based on the data extents of Map layers and updates when data changes.
-    - **Data** option allows selection of extent based on data from "All layers", a single "Layer", or the "Last value" from a selected layer.
-    - **Layer** can be selected if fitting data from a single "Layer" or the "Last value" of a layer.
-    - **Padding** sets padding in relative percent beyond data extent (not available when looking at "Last value" only).
-    - **Max Zoom** sets the maximum zoom level when fitting data.
-  - **Coordinates** sets the map view based on:
-    - **Latitude**
-    - **Longitude**
-  - Default Views are also available including:
-    - **(0°, 0°)**
-    - **North America**
-    - **South America**
-    - **Europe**
-    - **Africa**
-    - **West Asia**
-    - **South Asia**
-    - **South-East Asia**
-    - **East Asia**
-    - **Australia**
-    - **Oceania**
--->
+<!-- prettier-ignore-start -->
+|               |               |        |        |           |
+| ------------- | ------------- | ------ | ------ | --------- |
+| North America | South America | Europe | Africa | West Asia |
+| South Asia | South-East Asia | East Asia | Australia | Oceania |
+<!-- prettier-ignore-end -->
 
 #### Share view
 
