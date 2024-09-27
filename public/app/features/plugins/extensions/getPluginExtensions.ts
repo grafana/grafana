@@ -15,7 +15,6 @@ import { RegistryType } from './registry/Registry';
 import type { PluginExtensionRegistries } from './registry/types';
 import {
   getReadOnlyProxy,
-  logWarning,
   generateExtensionId,
   wrapWithPluginContext,
   getLinkExtensionOnClick,
@@ -79,8 +78,16 @@ export const getPluginExtensions: GetExtensions = ({
         extensionsByPlugin[pluginId] = 0;
       }
 
+      const linkLog = log.child({
+        pluginId,
+        extensionPointId,
+        path: addedLink.path,
+        title: addedLink.title,
+        description: addedLink.description,
+        onClick: typeof addedLink.onClick,
+      });
       // Run the configure() function with the current context, and apply the ovverides
-      const overrides = getLinkExtensionOverrides(pluginId, addedLink, frozenContext);
+      const overrides = getLinkExtensionOverrides(pluginId, addedLink, linkLog, frozenContext);
 
       // configure() returned an `undefined` -> hide the extension
       if (addedLink.configure && overrides === undefined) {
@@ -92,7 +99,7 @@ export const getPluginExtensions: GetExtensions = ({
         id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
         type: PluginExtensionTypes.link,
         pluginId: pluginId,
-        onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, frozenContext),
+        onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
 
         // Configurable properties
         icon: overrides?.icon || addedLink.icon,
@@ -106,7 +113,7 @@ export const getPluginExtensions: GetExtensions = ({
       extensionsByPlugin[pluginId] += 1;
     } catch (error) {
       if (error instanceof Error) {
-        logWarning(error.message);
+        log.error(error.message, { error });
       }
     }
   }

@@ -84,12 +84,14 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
     }
 
     if (error) {
-      logWarning(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`);
+      log.error(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`, {
+        error: error,
+      });
       return null;
     }
 
     if (!pluginMeta) {
-      logWarning(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
+      log.error(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
       return null;
     }
 
@@ -300,7 +302,12 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
   return subMenu;
 }
 
-export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkRegistryItem, context?: object) {
+export function getLinkExtensionOverrides(
+  pluginId: string,
+  config: AddedLinkRegistryItem,
+  log: ExtensionsLog,
+  context?: object
+) {
   try {
     const overrides = config.configure?.(context, { isAppOpened: () => isAppOpened(pluginId) });
 
@@ -327,7 +334,7 @@ export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkReg
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
-      logWarning(
+      log.warning(
         `Extension "${config.title}", is trying to override restricted properties: ${Object.keys(rest).join(
           ', '
         )} which will be ignored.`
@@ -343,7 +350,7 @@ export function getLinkExtensionOverrides(pluginId: string, config: AddedLinkReg
     };
   } catch (error) {
     if (error instanceof Error) {
-      logWarning(error.message);
+      log.error(`Failed to configure link with title "${config.title}"`, { error });
     }
 
     // If there is an error, we hide the extension
@@ -356,6 +363,7 @@ export function getLinkExtensionOnClick(
   pluginId: string,
   extensionPointId: string,
   config: AddedLinkRegistryItem,
+  log: ExtensionsLog,
   context?: object
 ): ((event?: React.MouseEvent) => void) | undefined {
   const { onClick } = config;
@@ -386,13 +394,13 @@ export function getLinkExtensionOnClick(
       if (isPromise(result)) {
         result.catch((e) => {
           if (e instanceof Error) {
-            logWarning(e.message);
+            log.error(e.message, { error: e });
           }
         });
       }
     } catch (error) {
       if (error instanceof Error) {
-        logWarning(error.message);
+        log.error(error.message, { error });
       }
     }
   };

@@ -5,6 +5,7 @@ import { dateTime, usePluginContext } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { log } from './logs/log';
 import {
   deepFreeze,
   handleErrorsInFn,

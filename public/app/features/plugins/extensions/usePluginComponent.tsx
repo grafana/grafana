@@ -4,6 +4,7 @@ import { useObservable } from 'react-use';
 import { UsePluginComponentResult } from '@grafana/runtime';
 
 import { useExposedComponentsRegistry } from './ExtensionRegistriesContext';
+import { log } from './logs/log';
 import { wrapWithPluginContext } from './utils';
 
 // Returns a component exposed by a plugin.
@@ -21,10 +22,15 @@ export function usePluginComponent<Props extends object = {}>(id: string): UsePl
     }
 
     const registryItem = registryState[id];
+    const componentLog = log.child({
+      title: registryItem.title,
+      description: registryItem.description,
+      pluginId: registryItem.pluginId,
+    });
 
     return {
       isLoading: false,
-      component: wrapWithPluginContext(registryItem.pluginId, registryItem.component),
+      component: wrapWithPluginContext(registryItem.pluginId, registryItem.component, componentLog),
     };
   }, [id, registryState]);
 }
