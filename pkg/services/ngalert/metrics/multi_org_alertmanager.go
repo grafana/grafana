@@ -54,17 +54,18 @@ func (moa *MultiOrgAlertmanager) RemoveOrgRegistry(id int64) {
 }
 
 // GetOrCreateOrgRegistry gets or creates a *prometheus.Registry for the specified org. It is safe to call concurrently.
-func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Registerer {
+// the second return value means the reg existed or not
+func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) (prometheus.Registerer, bool) {
 	sid := strconv.FormatInt(id, 10)
 	reg := moa.registries.GetRegistryForTenant(sid)
 	if reg != nil {
-		return reg
+		return reg, true
 	}
 
 	result := prometheus.NewRegistry()
 	moa.registries.AddTenantRegistry(sid, result)
 
-	return result
+	return result, false
 }
 
 // AlertmanagerAggregatedMetrics are metrics collected directly from the registry.
