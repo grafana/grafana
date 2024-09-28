@@ -40,14 +40,6 @@ function ResourceInfo({ data }: { data: ResourceTableItem }) {
   }
 }
 
-function getDashboardTitle(dashboardData: object) {
-  if ('title' in dashboardData && typeof dashboardData.title === 'string') {
-    return dashboardData.title;
-  }
-
-  return undefined;
-}
-
 function DatasourceInfo({ data }: { data: ResourceTableItem }) {
   const datasourceUID = data.refId;
   const datasource = useDatasource(datasourceUID);
@@ -78,33 +70,47 @@ function DatasourceInfo({ data }: { data: ResourceTableItem }) {
 function DashboardInfo({ data }: { data: ResourceTableItem }) {
   const dashboardUID = data.refId;
   let dashboardName = data.name;
-  // TODO: really, the API should return this directly
-  const { data: dashboardData, isError } = useGetDashboardByUidQuery({
-    uid: dashboardUID,
-  });
+  let dashboardParentFolderName = data.parentFolderName;
 
-  const dashNameFromAPI = useMemo(() => {
-    return (dashboardData?.dashboard && getDashboardTitle(dashboardData.dashboard)) ?? dashboardUID;
-  }, [dashboardData, dashboardUID]);
+  let skipApiCall = !!dashboardName && !!dashboardParentFolderName;
 
-  if (isError) {
-    // Not translated because this is only temporary until the data comes through in the MigrationRun API
-    return (
-      <>
-        <Text italic>Unable to load dashboard</Text>
-        <Text color="secondary">Dashboard {dashboardUID}</Text>
-      </>
-    );
-  }
+  const { data: dashboardData, isError } = useGetDashboardByUidQuery(
+    {
+      uid: dashboardUID,
+    },
+    { skip: skipApiCall }
+  );
 
-  if (!dashboardData) {
-    return <InfoSkeleton />;
+  if (!skipApiCall) {
+    if (isError) {
+      // Not translated because this is only temporary until the data comes through in the MigrationRun API
+      return (
+        <>
+          <Text italic>Unable to load dashboard</Text>
+          <Text color="secondary">Dashboard {dashboardUID}</Text>
+        </>
+      );
+    }
+    if (!dashboardData) {
+      return <InfoSkeleton />;
+    }
+
+    if (
+      dashboardData?.dashboard &&
+      'title' in dashboardData?.dashboard &&
+      typeof dashboardData?.dashboard.title === 'string'
+    ) {
+      dashboardName = dashboardData?.dashboard?.title || dashboardUID;
+    } else {
+      dashboardName = dashboardUID;
+    }
+    dashboardParentFolderName = dashboardData?.meta?.folderTitle;
   }
 
   return (
     <>
-      <span>{dashboardName ?? dashNameFromAPI}</span>
-      <Text color="secondary">{dashboardData.meta?.folderTitle ?? 'Dashboards'}</Text>
+      <span>{dashboardName}</span>
+      <Text color="secondary">{dashboardParentFolderName ?? 'Dashboards'}</Text>
     </>
   );
 }
