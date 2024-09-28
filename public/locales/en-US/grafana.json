@@ -108,7 +108,18 @@
     },
     "contact-point": "Contact Point",
     "contact-points": {
+      "create": "Create contact point",
+      "delete-reasons": {
+        "heading": "Contact point cannot be deleted for the following reasons:",
+        "no-permissions": "You do not have the required permission to delete this contact point",
+        "policies": "Contact point is referenced by one or more notification policies",
+        "provisioned": "Contact point is provisioned and cannot be deleted via the UI",
+        "rules": "Contact point is referenced by one or more alert rules"
+      },
       "delivery-duration": "Last delivery took <1></1>",
+      "empty-state": {
+        "title": "You don't have any contact points yet"
+      },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
       "no-delivery-attempts": "No delivery attempts",
@@ -119,7 +130,9 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policy"
+      "used-by_other": "Used by {{ count }} notification policy",
+      "used-by-rules_one": "Used by {{ count }} alert rule",
+      "used-by-rules_other": "Used by {{ count }} alert rules"
     },
     "contactPointFilter": {
       "label": "Contact point"
@@ -141,6 +154,10 @@
           "title": "Grafana-managed"
         }
       }
+    },
+    "manage-permissions": {
+      "button": "Manage permissions",
+      "title": "Manage permissions"
     },
     "mute_timings": {
       "error-loading": {
