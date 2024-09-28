@@ -456,6 +456,14 @@ func (s *Storage) GuaranteedUpdate(
 				}
 				continue
 			}
+
+			acc, err := utils.MetaAccessor(existingObj)
+			if err != nil {
+				return err
+			}
+			acc.SetResourceVersionInt64(rsp.ResourceVersion)
+			res.ResourceVersion = uint64(rsp.ResourceVersion)
+
 		} else if !ignoreNotFound {
 			return apierrors.NewNotFound(s.gr, req.Key.Name)
 		}
