@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { ActionModel, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 
-import { Button, ButtonProps, DataLinkButton, Stack } from '..';
+import { Button, Stack, TextLink } from '..';
 import { useStyles2 } from '../../themes';
 import { ActionButton } from '../Actions/ActionButton';
 
@@ -15,14 +15,19 @@ interface VizTooltipFooterProps {
 export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
 const renderDataLinks = (dataLinks: LinkModel[]) => {
-  const buttonProps: ButtonProps = {
-    variant: 'secondary',
-  };
-
   return (
     <Stack direction="column" justifyContent="flex-start">
       {dataLinks.map((link, i) => (
-        <DataLinkButton key={i} link={link} buttonProps={buttonProps} />
+        <TextLink
+          key={i}
+          href={link.href}
+          external={link.target === '_blank'}
+          weight={'medium'}
+          inline={false}
+          variant={'bodySmall'}
+        >
+          {link.title}
+        </TextLink>
       ))}
     </Stack>
   );
