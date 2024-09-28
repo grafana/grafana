@@ -3,13 +3,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { withSerializedError } from 'app/features/alerting/unified/utils/redux';
 import { UpdatesService } from 'app/percona/shared/services/updates';
 
-import {
-  CheckUpdatesChangeLogsResponse,
-  CheckUpdatesPayload,
-  SnoozePayloadBody,
-  SnoozePayloadResponse,
-  UpdatesState,
-} from './updates.types';
+import { CheckUpdatesPayload, SnoozePayloadBody, SnoozePayloadResponse, UpdatesState } from './updates.types';
 import { responseToPayload } from './updates.utils';
 
 const initialState: UpdatesState = {
@@ -22,52 +16,26 @@ export const updatesSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder.addCase(checkUpdatesAction.pending, (state) => ({
-      ...initialState,
+      ...state,
       isLoading: true,
     }));
-
     builder.addCase(checkUpdatesAction.fulfilled, (state, { payload }) => ({
       ...state,
       ...payload,
-      updateAvailable: true, // to remove
-      latest: { version: '3.0.1' }, // to remove
-      isLoading: false,
-      lastChecked: '',
     }));
-
     builder.addCase(checkUpdatesAction.rejected, (state) => ({
-      ...initialState,
+      ...state,
       isLoading: false,
     }));
     builder.addCase(checkUpdatesChangeLogs.pending, (state) => ({
-      ...initialState,
+      ...state,
       isLoading: true,
     }));
-
     builder.addCase(checkUpdatesChangeLogs.fulfilled, (state, { payload }) => ({
       ...state,
       isLoading: false,
-      changeLogs: {
-        ...payload,
-        updates: [
-          {
-            version: 'PMM 3.0.1',
-            tag: 'string',
-            timestamp: '2024-09-24T09:12:31.488Z',
-            releaseNotesUrl: 'https://google.com',
-            releaseNotesText: 'asdasd',
-          },
-          {
-            version: 'PMM 3.0.1',
-            tag: 'string',
-            timestamp: '2024-09-24T09:12:31.488Z',
-            releaseNotesUrl: 'https://google.com',
-            releaseNotesText: 'asdasd',
-          },
-        ],
-      },
+      changeLogs: payload,
     }));
-
     builder.addCase(checkUpdatesChangeLogs.rejected, (state) => ({
       ...state,
       isLoading: false,
@@ -76,13 +44,11 @@ export const updatesSlice = createSlice({
       ...state,
       isLoading: true,
     }));
-
     builder.addCase(getSnoozeCurrentVersion.fulfilled, (state, { payload }) => ({
       ...state,
       snoozeCurrentVersion: payload,
       isLoading: false,
     }));
-
     builder.addCase(getSnoozeCurrentVersion.rejected, (state) => ({
       ...state,
       isLoading: false,
@@ -91,13 +57,11 @@ export const updatesSlice = createSlice({
       ...state,
       isLoading: true,
     }));
-
     builder.addCase(setSnoozeCurrentUpdate.fulfilled, (state, { payload }) => ({
       ...state,
       snoozeCurrentVersion: payload,
       isLoading: false,
     }));
-
     builder.addCase(setSnoozeCurrentUpdate.rejected, (state) => ({
       ...state,
       isLoading: false,
@@ -115,15 +79,9 @@ export const checkUpdatesAction = createAsyncThunk('percona/checkUpdates', async
   }
 });
 
-export const checkUpdatesChangeLogs = createAsyncThunk(
-  'percona/checkUpdatesChangelogs',
-  async (): Promise<CheckUpdatesChangeLogsResponse> =>
-    withSerializedError(
-      (async () => {
-        return await UpdatesService.getUpdatesChangelogs();
-      })()
-    )
-);
+export const checkUpdatesChangeLogs = createAsyncThunk('percona/checkUpdatesChangelogs', async () => {
+  return await UpdatesService.getUpdatesChangelogs();
+});
 
 export const setSnoozeCurrentUpdate = createAsyncThunk(
   'percona/setSnoozeCurrentUpdate',
