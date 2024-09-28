@@ -31,7 +31,7 @@ func TestList(t *testing.T) {
 
 		res, err := List(ctx, "items", nil, Pagination{Limit: 2}, func(ctx context.Context, ns claims.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
 			return &ListResponse[item]{
-				Items: []item{item{"1"}, item{"2"}},
+				Items: []item{{"1"}, {"2"}},
 			}, nil
 		})
 		assert.NoError(t, err)
@@ -47,7 +47,7 @@ func TestList(t *testing.T) {
 		})
 		res, err := List(ctx, "items", a, Pagination{Limit: 2}, func(ctx context.Context, ns claims.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
 			return &ListResponse[item]{
-				Items: []item{item{"1"}, item{"2"}},
+				Items: []item{{"1"}, {"2"}},
 			}, nil
 		})
 		assert.NoError(t, err)
@@ -70,13 +70,13 @@ func TestList(t *testing.T) {
 		res, err := List(ctx, "items", a, Pagination{Limit: 2}, func(ctx context.Context, ns claims.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
 			if called {
 				return &ListResponse[item]{
-					Items: []item{item{"3"}},
+					Items: []item{{"3"}},
 				}, nil
 			}
 
 			called = true
 			return &ListResponse[item]{
-				Items:    []item{item{"1"}, item{"2"}},
+				Items:    []item{{"1"}, {"2"}},
 				Continue: 3,
 			}, nil
 		})

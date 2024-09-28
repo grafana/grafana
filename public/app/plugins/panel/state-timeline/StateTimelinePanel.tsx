@@ -198,6 +198,7 @@ export const StateTimelinePanel = ({
                         annotate={enableAnnotationCreation ? annotate : undefined}
                         withDuration={true}
                         maxHeight={options.tooltip.maxHeight}
+                        replaceVariables={replaceVariables}
                       />
                     );
                   }}

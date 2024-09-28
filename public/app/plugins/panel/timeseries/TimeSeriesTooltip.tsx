@@ -1,16 +1,15 @@
-import { css } from '@emotion/css';
 import { ReactNode } from 'react';
 
-import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
+import { DataFrame, Field, FieldType, formattedValueToString, InterpolateFunction } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
 import { VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 
-import { VizTooltipWrapper } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipWrapper';
-import { getDataLinks } from '../status-history/utils';
+import { getDataLinks, getFieldActions } from '../status-history/utils';
 import { fmt } from '../xychart/utils';
 
 import { isTooltipScrollable } from './utils';
@@ -36,6 +35,8 @@ export interface TimeSeriesTooltipProps {
 
   annotate?: () => void;
   maxHeight?: number;
+
+  replaceVariables?: InterpolateFunction;
 }
 
 export const TimeSeriesTooltip = ({
@@ -48,6 +49,7 @@ export const TimeSeriesTooltip = ({
   isPinned,
   annotate,
   maxHeight,
+  replaceVariables,
 }: TimeSeriesTooltipProps) => {
   const xField = series.fields[0];
   const xVal = formattedValueToString(xField.display!(xField.values[dataIdxs[0]!]));
@@ -77,8 +79,9 @@ export const TimeSeriesTooltip = ({
     const field = series.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
+    const actions = getFieldActions(series, field, replaceVariables!);
 
-    footer = <VizTooltipFooter dataLinks={links} annotate={annotate} />;
+    footer = <VizTooltipFooter dataLinks={links} actions={actions} annotate={annotate} />;
   }
 
   const headerItem: VizTooltipItem | null = xField.config.custom?.hideFrom?.tooltip
@@ -101,10 +104,3 @@ export const TimeSeriesTooltip = ({
     </VizTooltipWrapper>
   );
 };
-
-export const getStyles = () => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-});

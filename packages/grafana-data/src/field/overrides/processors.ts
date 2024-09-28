@@ -1,3 +1,4 @@
+import { Action } from '../../types/action';
 import { Field } from '../../types/dataFrame';
 import { DataLink } from '../../types/dataLink';
 import { FieldOverrideContext } from '../../types/fieldOverrides';
@@ -56,6 +57,15 @@ export const dataLinksOverrideProcessor = (
   _context: FieldOverrideContext,
   _settings?: DataLinksFieldConfigSettings
 ): DataLink[] => {
+  return value;
+};
+
+export const actionsOverrideProcessor = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value: any,
+  _context: FieldOverrideContext,
+  _settings?: DataLinksFieldConfigSettings
+): Action[] => {
   return value;
 };
 

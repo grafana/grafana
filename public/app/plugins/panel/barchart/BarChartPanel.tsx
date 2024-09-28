@@ -24,16 +24,7 @@ const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
 const toRads = Math.PI / 180;
 
 export const BarChartPanel = (props: PanelProps<Options>) => {
-  const {
-    data,
-    options,
-    fieldConfig,
-    width,
-    height,
-    timeZone,
-    id,
-    // replaceVariables
-  } = props;
+  const { data, options, fieldConfig, width, height, timeZone, id, replaceVariables } = props;
 
   // will need this if joining on time to re-create data links
   // const { dataLinkPostProcessor } = usePanelContext();
@@ -177,6 +168,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     sortOrder={options.tooltip.sort}
                     isPinned={isPinned}
                     maxHeight={options.tooltip.maxHeight}
+                    replaceVariables={replaceVariables}
                   />
                 );
               }}

@@ -5,9 +5,9 @@ import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { VizTooltipWrapper } from '@grafana/ui/src/components/VizTooltip/VizTooltipWrapper';
 import { ColorIndicator, VizTooltipItem } from '@grafana/ui/src/components/VizTooltip/types';
 
-import { VizTooltipWrapper } from '../../../../../packages/grafana-ui/src/components/VizTooltip/VizTooltipWrapper';
 import { getDataLinks } from '../status-history/utils';
 
 import { Options } from './panelcfg.gen';
