@@ -83,7 +83,7 @@ function DashboardInfo({ data }: { data: ResourceTableItem }) {
     uid: dashboardUID,
   });
 
-  dashboardName = useMemo(() => {
+  const dashNameFromAPI = useMemo(() => {
     return (dashboardData?.dashboard && getDashboardTitle(dashboardData.dashboard)) ?? dashboardUID;
   }, [dashboardData, dashboardUID]);
 
@@ -103,7 +103,7 @@ function DashboardInfo({ data }: { data: ResourceTableItem }) {
 
   return (
     <>
-      <span>{dashboardName}</span>
+      <span>{dashboardName ?? dashNameFromAPI}</span>
       <Text color="secondary">{dashboardData.meta?.folderTitle ?? 'Dashboards'}</Text>
     </>
   );

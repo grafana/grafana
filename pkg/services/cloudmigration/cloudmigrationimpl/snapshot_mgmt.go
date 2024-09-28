@@ -24,7 +24,6 @@ import (
 )
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
-
 	// Data sources
 	dataSources, err := s.getDataSourceCommands(ctx)
 	if err != nil {

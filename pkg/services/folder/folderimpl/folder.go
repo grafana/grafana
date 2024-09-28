@@ -203,8 +203,6 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		return folder.SharedWithMeFolder.WithURL(), nil
 	}
 
-	fmt.Println("Folder id:", q.UID)
-
 	var dashFolder *folder.Folder
 	var err error
 	switch {
@@ -212,10 +210,8 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		if *q.UID == "" {
 			return &folder.GeneralFolder, nil
 		}
-		fmt.Println("Trying getting folder by UID: ", q.UID, q.OrgID)
 		dashFolder, err = s.getFolderByUID(ctx, q.OrgID, *q.UID)
 		if err != nil {
-			fmt.Println("Eror getting folder by UID: ", q.UID, q.OrgID)
 			return nil, err
 		}
 	// nolint:staticcheck
