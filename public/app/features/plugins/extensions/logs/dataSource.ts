@@ -5,22 +5,21 @@ import {
   createDataFrame,
   DataFrame,
   DataFrameType,
-  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
   FieldType,
   LoadingState,
   TestDataSourceResponse,
 } from '@grafana/data';
-import { RuntimeDataSource } from '@grafana/scenes';
+import { RuntimeDataSource, SceneDataQuery } from '@grafana/scenes';
 
 import { ExtensionsLog, LogItem } from './log';
 
-type LogDataQuery = DataQuery & {
+export interface LogDataQuery extends SceneDataQuery {
   pluginIds?: Set<string>;
   extensionPointIds?: Set<string>;
   levels?: Set<string>;
-};
+}
 
 export class ExtensionsLogDataSource extends RuntimeDataSource<LogDataQuery> {
   private pluginIds: Set<string>;
