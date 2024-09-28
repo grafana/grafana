@@ -77,19 +77,15 @@ function DatasourceInfo({ data }: { data: ResourceTableItem }) {
 
 function DashboardInfo({ data }: { data: ResourceTableItem }) {
   const dashboardUID = data.refId;
-
   let dashboardName = data.name;
-
   // TODO: really, the API should return this directly
   const { data: dashboardData, isError } = useGetDashboardByUidQuery({
     uid: dashboardUID,
   });
 
-  if (!dashboardName) {
-    dashboardName = useMemo(() => {
-      return (dashboardData?.dashboard && getDashboardTitle(dashboardData.dashboard)) ?? dashboardUID;
-    }, [dashboardData, dashboardUID]);
-  }
+  dashboardName = useMemo(() => {
+    return (dashboardData?.dashboard && getDashboardTitle(dashboardData.dashboard)) ?? dashboardUID;
+  }, [dashboardData, dashboardUID]);
 
   if (isError) {
     // Not translated because this is only temporary until the data comes through in the MigrationRun API

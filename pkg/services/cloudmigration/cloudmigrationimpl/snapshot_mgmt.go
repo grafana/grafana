@@ -24,6 +24,7 @@ import (
 )
 
 func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.SignedInUser) (*cloudmigration.MigrateDataRequest, error) {
+
 	// Data sources
 	dataSources, err := s.getDataSourceCommands(ctx)
 	if err != nil {
@@ -38,6 +39,20 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 		return nil, err
 	}
 
+	// Obtain the names of parent folders of Folder and Dahsboard data types
+	parentFolderNamesByType := make(map[cloudmigration.MigrateDataType]map[string](string))
+	for _, resourceType := range []cloudmigration.MigrateDataType{
+		cloudmigration.FolderDataType,
+		cloudmigration.DashboardDataType,
+	} {
+		parentFolderNamesByType[resourceType] = make(map[string]string)
+	}
+	foldersUIDsToFolderName, err := s.getParentFolderNames(ctx, signedInUser, dashs, folders)
+	if err != nil {
+		s.log.Error("Failed to get parent folder names", "err", err)
+	}
+
+	// Obtain migration data
 	migrationDataSlice := make(
 		[]cloudmigration.MigrateDataRequestItem, 0,
 		len(dataSources)+len(dashs)+len(folders),
@@ -66,6 +81,8 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 				FolderUID: dashboard.FolderUID,
 			},
 		})
+		// TODO: check foldersUIDsToFolderName is not empty and has dashboard.FolderUID
+		parentFolderNamesByType[cloudmigration.DashboardDataType][dashboard.UID] = foldersUIDsToFolderName[dashboard.FolderUID]
 	}
 
 	folders = sortFolders(folders)
@@ -76,10 +93,13 @@ func (s *Service) getMigrationDataJSON(ctx context.Context, signedInUser *user.S
 			Name:  f.Title,
 			Data:  f,
 		})
+		// TODO: check foldersUIDsToFolderName is not empty and has dashboard.FolderUID
+		parentFolderNamesByType[cloudmigration.FolderDataType][f.UID] = foldersUIDsToFolderName[f.ParentUID]
 	}
 
 	migrationData := &cloudmigration.MigrateDataRequest{
-		Items: migrationDataSlice,
+		Items:                 migrationDataSlice,
+		ItemParentFolderNames: parentFolderNamesByType,
 	}
 
 	return migrationData, nil
@@ -218,11 +238,18 @@ func (s *Service) buildSnapshot(ctx context.Context, signedInUser *user.SignedIn
 			Data:  item.Data,
 		})
 
+		// Obtain parent folder name for local storage, TODO: golang optional
+		parentFolderName := ""
+		if item.Type == cloudmigration.DashboardDataType || item.Type == cloudmigration.FolderDataType {
+			parentFolderName = migrationData.ItemParentFolderNames[item.Type][item.RefID]
+		}
+
 		localSnapshotResource[i] = cloudmigration.CloudMigrationResource{
-			Name:   item.Name,
-			Type:   item.Type,
-			RefID:  item.RefID,
-			Status: cloudmigration.ItemStatusPending,
+			Name:             item.Name,
+			Type:             item.Type,
+			RefID:            item.RefID,
+			Status:           cloudmigration.ItemStatusPending,
+			ParentFolderName: parentFolderName,
 		}
 	}
 
@@ -413,4 +440,48 @@ func sortFolders(input []folder.CreateFolderCommand) []folder.CreateFolderComman
 	})
 
 	return input
+}
+
+// getParentFolderNames queries the folders service to obtain folder names for a list of folderUIDs
+func (s *Service) getFolderNameForFolderUIDs(ctx context.Context, signedInUser *user.SignedInUser, folderUIDs []string) (map[string](string), error) {
+
+	folderUIDsToNames := make(map[string](string), 0)
+	folders, err := s.folderService.GetFolders(ctx, folder.GetFoldersQuery{
+		UIDs:             folderUIDs,
+		SignedInUser:     signedInUser,
+		WithFullpathUIDs: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range folders {
+		folderUIDsToNames[f.UID] = f.Title
+	}
+	return folderUIDsToNames, nil
+}
+
+// getParentFolderNames finds the parent folder names for the items and returns a map of folderUID : folderName
+func (s *Service) getParentFolderNames(ctx context.Context, signedInUser *user.SignedInUser, dashboards []dashboards.Dashboard, folders []folder.CreateFolderCommand) (map[string]string, error) {
+
+	// Obtain list of unique folderUIDs
+	parentFolderUIDsSet := make(map[string]struct{})
+	for _, dashboard := range dashboards {
+		parentFolderUIDsSet[dashboard.FolderUID] = struct{}{}
+	}
+	for _, f := range folders {
+		parentFolderUIDsSet[f.ParentUID] = struct{}{}
+	}
+	parentFolderUIDsSlice := make([]string, 0)
+	for parentFolderUID := range parentFolderUIDsSet {
+		parentFolderUIDsSlice = append(parentFolderUIDsSlice, parentFolderUID)
+	}
+
+	// Obtain folder names given a list of folderUIDs
+	foldersUIDsToFolderName, err := s.getFolderNameForFolderUIDs(ctx, signedInUser, parentFolderUIDsSlice)
+	if err != nil {
+		s.log.Error("Failed to get parent folder names from folder uids", "err", err)
+	}
+
+	return foldersUIDsToFolderName, err
 }

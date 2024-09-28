@@ -164,4 +164,16 @@ func addCloudMigrationsMigrations(mg *Migrator) {
 		Type:     DB_Text,
 		Nullable: true,
 	}))
+
+	mg.AddMigration("add cloud_migration_resource.dashboard_folder_name column", NewAddColumnMigration(migrationResourceTable, &Column{
+		Name:     "dashboard_folder_name",
+		Type:     DB_Text,
+		Nullable: true,
+	}))
+
+	mg.AddMigration("add cloud_migration_resource.parent_folder_name column", NewAddColumnMigration(migrationResourceTable, &Column{
+		Name:     "parent_folder_name",
+		Type:     DB_Text,
+		Nullable: true,
+	}))
 }
