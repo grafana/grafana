@@ -47,8 +47,9 @@
     "not IE 11"
   ],
   "dependencies": {
-    "@emotion/css": "11.11.2",
-    "@emotion/react": "11.11.4",
+    "@emotion/css": "11.13.0",
+    "@emotion/react": "11.13.3",
+    "@emotion/serialize": "1.3.2",
     "@floating-ui/react": "0.26.24",
     "@grafana/data": "11.3.0-pre",
     "@grafana/e2e-selectors": "11.3.0-pre",
@@ -110,12 +111,12 @@
     "slate-react": "0.22.10",
     "tinycolor2": "1.6.0",
     "tslib": "2.7.0",
-    "uplot": "1.6.30",
+    "uplot": "1.6.31",
     "uuid": "9.0.1"
   },
   "devDependencies": {
     "@babel/core": "7.25.2",
-    "@faker-js/faker": "^8.4.1",
+    "@faker-js/faker": "^9.0.0",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "15.3.0",
     "@storybook/addon-a11y": "^8.1.6",
