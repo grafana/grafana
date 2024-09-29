@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -629,6 +631,8 @@ type folderK8sHandler struct {
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider
 	// #TODO check if it makes more sense to move this to FolderAPIBuilder
 	accesscontrolService accesscontrol.Service
+	features             featuremgmt.FeatureToggles
+	userService          user.Service
 }
 
 //-----------------------------------------------------------------------------------------
@@ -641,6 +645,8 @@ func newFolderK8sHandler(hs *HTTPServer) *folderK8sHandler {
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 		accesscontrolService: hs.accesscontrolService,
+		features:             hs.Features,
+		userService:          hs.userService,
 	}
 }
 
@@ -698,7 +704,16 @@ func (fk8s *folderK8sHandler) createFolder(c *contextmodel.ReqContext) {
 		fk8s.writeError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, f)
+
+	legacyFolder := internalfolders.UnstructuredToLegacyFolder(*out)
+
+	folderDTO, err := fk8s.newToFolderDto(c, legacyFolder, f)
+	if err != nil {
+		fk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, folderDTO)
 }
 
 // func (fk8s *folderK8sHandler) getFolder(c *contextmodel.ReqContext) {
@@ -785,4 +800,93 @@ func (fk8s *folderK8sHandler) writeError(c *contextmodel.ReqContext, err error) 
 		return
 	}
 	errhttp.Write(c.Req.Context(), err, c.Resp)
+}
+
+func (fk8s *folderK8sHandler) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folder, fDTO *dtos.Folder) (dtos.Folder, error) {
+	ctx := c.Req.Context()
+	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
+		g, err := guardian.NewByFolder(c.Req.Context(), f, c.SignedInUser.GetOrgID(), c.SignedInUser)
+		if err != nil {
+			return dtos.Folder{}, err
+		}
+
+		canEdit, _ := g.CanEdit()
+		canSave, _ := g.CanSave()
+		canAdmin, _ := g.CanAdmin()
+		canDelete, _ := g.CanDelete()
+
+		// Finding creator and last updater of the folder
+		updater, creator := anonString, anonString
+		if f.CreatedBy > 0 {
+			creator = fk8s.getUserLogin(ctx, f.CreatedBy)
+		}
+		if f.UpdatedBy > 0 {
+			updater = fk8s.getUserLogin(ctx, f.UpdatedBy)
+		}
+
+		// acMetadata, _ := fk8s.getFolderACMetadata(c, f)
+
+		if checkCanView {
+			canView, _ := g.CanView()
+			if !canView {
+				return dtos.Folder{
+					UID:   REDACTED,
+					Title: REDACTED,
+				}, nil
+			}
+		}
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.NewToFolderDTO).Inc()
+
+		fDTO.CanSave = canSave
+		fDTO.CanEdit = canEdit
+		fDTO.CanAdmin = canAdmin
+		fDTO.CanDelete = canDelete
+		fDTO.CreatedBy = creator
+		fDTO.UpdatedBy = updater
+
+		return *fDTO, nil
+	}
+
+	// no need to check view permission for the starting folder since it's already checked by the callers
+	folderDTO, err := toDTO(f, false)
+	if err != nil {
+		return dtos.Folder{}, err
+	}
+
+	if !fk8s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagNestedFolders) {
+		return folderDTO, nil
+	}
+
+	// TODO: Maicon: figure out what to do here
+	/*
+			parents, err := fk8s.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+			if err != nil {
+				// log the error instead of failing
+				fk8s.log.Error("failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
+			}
+
+		folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
+		for _, f := range parents {
+			DTO, err := toDTO(f, true)
+			if err != nil {
+				// fk8s.log.Error("failed to convert folder to DTO", "folder", f.UID, "org", f.OrgID, "error", err)
+				continue
+			}
+			folderDTO.Parents = append(folderDTO.Parents, DTO)
+		}
+	*/
+
+	return folderDTO, nil
+}
+
+func (fk8s *folderK8sHandler) getUserLogin(ctx context.Context, userID int64) string {
+	ctx, span := tracer.Start(ctx, "api.getUserLogin")
+	defer span.End()
+
+	query := user.GetUserByIDQuery{ID: userID}
+	user, err := fk8s.userService.GetByID(ctx, &query)
+	if err != nil {
+		return anonString
+	}
+	return user.Login
 }
