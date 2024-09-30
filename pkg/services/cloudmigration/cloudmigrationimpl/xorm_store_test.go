@@ -228,12 +228,12 @@ func Test_SnapshotResources(t *testing.T) {
 }
 
 func TestGetSnapshotList(t *testing.T) {
-	_, s := setUpTest(t)
 	// Taken from setUpTest
 	sessionUID := "qwerty"
 	ctx := context.Background()
 
 	t.Run("returns list of snapshots that belong to a session", func(t *testing.T) {
+		_, s := setUpTest(t)
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100})
 		require.NoError(t, err)
 
@@ -248,12 +248,14 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 
 	t.Run("only the snapshots that belong to a specific session are returned", func(t *testing.T) {
+		_, s := setUpTest(t)
 		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: "session-uid-that-doesnt-exist", Page: 1, Limit: 100})
 		require.NoError(t, err)
 		assert.Empty(t, snapshots)
 	})
 
 	t.Run("if the session is deleted, snapshots can't be retrieved anymore", func(t *testing.T) {
+		_, s := setUpTest(t)
 		// Delete the session.
 		_, _, err := s.DeleteMigrationSessionByUID(ctx, sessionUID)
 		require.NoError(t, err)
