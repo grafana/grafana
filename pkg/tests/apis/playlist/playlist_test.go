@@ -489,31 +489,31 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.NotEmpty(t, uid)
 
 		expectedResult := `{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
-			"kind": "Playlist",
-			"metadata": {
-			  "creationTimestamp": "${creationTimestamp}",
-			  "name": "` + uid + `",
-			  "namespace": "default",
-			  "resourceVersion": "${resourceVersion}",
-			  "uid": "${uid}"
-			},
-			"spec": {
-			  "interval": "20s",
-			  "items": [
-				{
-				  "type": "dashboard_by_uid",
-				  "value": "xCmMwXdVz"
-				},
-				{
-				  "type": "dashboard_by_tag",
-				  "value": "graph-ng"
-				}
-			  ],
-			  "title": "Test"
-			},
-			"status": {}
-		  }`
+  "apiVersion": "playlist.grafana.app/v0alpha1",
+  "kind": "Playlist",
+  "metadata": {
+    "creationTimestamp": "${creationTimestamp}",
+    "name": "` + uid + `",
+    "namespace": "default",
+    "resourceVersion": "${resourceVersion}",
+    "uid": "${uid}"
+  },
+  "spec": {
+    "interval": "20s",
+    "items": [
+      {
+        "type": "dashboard_by_uid",
+        "value": "xCmMwXdVz"
+      },
+      {
+        "type": "dashboard_by_tag",
+        "value": "graph-ng"
+      }
+    ],
+    "title": "Test"
+  },
+  "status": {}
+}`
 
 		// List includes the expected result
 		k8sList, err := client.Resource.List(context.Background(), metav1.ListOptions{})
@@ -540,10 +540,38 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.Equal(t, uid, dtoResponse.Result.Uid)
 		require.Equal(t, "10m", dtoResponse.Result.Interval)
 
+		expectedUpdatedResult := `{
+  "apiVersion": "playlist.grafana.app/v0alpha1",
+  "kind": "Playlist",
+  "metadata": {
+    "creationTimestamp": "${creationTimestamp}",
+    "name": "` + uid + `",
+	"generateName": "` + uid + `",
+    "namespace": "default",
+    "resourceVersion": "${resourceVersion}",
+    "uid": "${uid}"
+  },
+  "spec": {
+    "interval": "10m",
+    "items": [
+      {
+        "type": "dashboard_by_uid",
+        "value": "xCmMwXdVz"
+      },
+      {
+        "type": "dashboard_by_tag",
+        "value": "graph-ng"
+      }
+    ],
+    "title": "Test"
+  },
+  "status": {}
+}`
+
 		// Make sure the changed interval is now returned from k8s
 		found, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 		require.NoError(t, err)
-		require.JSONEq(t, expectedResult, client.SanitizeJSON(found))
+		require.JSONEq(t, expectedUpdatedResult, client.SanitizeJSON(found))
 
 		// Delete does not return anything
 		deleteResponse := apis.DoRequest(helper, apis.RequestParams{
