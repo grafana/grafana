@@ -822,7 +822,9 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db), quotatest.New(false, nil))
 	require.NoError(t, err)
 
-	folderSvc := folderimpl.ProvideService(actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	fStore := folderimpl.ProvideStore(db)
+	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
+		folderimpl.ProvideDashboardFolderStore(db), db, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 	// create parent folder
 	parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{

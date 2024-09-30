@@ -457,18 +457,19 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
 
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
-
 	cfg := setting.NewCfg()
 	actionSets := resourcepermissions.NewActionSetService(features)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), zanzana.NewNoopClient(), sc.db, permreg.ProvidePermissionRegistry(),
 	)
-
+	fStore := folderimpl.ProvideStore(sc.db)
+	folderServiceWithFlagOn := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore,
+		folderStore, sc.db, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
+
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
 		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets)
 	require.NoError(b, err)
@@ -476,7 +477,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg, dashStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
-		folderServiceWithFlagOn, nil,
+		folderServiceWithFlagOn, fStore, nil,
 	)
 	require.NoError(b, err)
 

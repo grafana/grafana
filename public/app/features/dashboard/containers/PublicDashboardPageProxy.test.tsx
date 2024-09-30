@@ -25,10 +25,14 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: () => ({ accessToken: 'an-access-token' }),
+}));
+
 function setup(props: Partial<PublicDashboardPageProxyProps>) {
   const context = getGrafanaContextMock();
   const store = configureStore({});
-
   return render(
     <GrafanaContext.Provider value={context}>
       <Provider store={store}>

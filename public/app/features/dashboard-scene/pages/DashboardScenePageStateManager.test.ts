@@ -40,6 +40,22 @@ describe('DashboardScenePageStateManager', () => {
       expect(loader.state.loadError).toBe('Dashboard not found');
     });
 
+    it('should clear current dashboard while loading next', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(loader.state.dashboard).toBeDefined();
+
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash2', editable: true }, meta: {} });
+
+      loader.loadDashboard({ uid: 'fake-dash2', route: DashboardRoutes.Normal });
+
+      expect(loader.state.isLoading).toBe(true);
+      expect(loader.state.dashboard).toBeUndefined();
+    });
+
     it('shoud fetch dashboard from local storage and remove it after if it exists', async () => {
       const loader = new DashboardScenePageStateManager({});
       const localStorageDashboard = { uid: 'fake-dash' };
