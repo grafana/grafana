@@ -60,7 +60,7 @@ func LibraryPanelUIDScopeResolver(l *LibraryElementService, folderSvc folder.Ser
 			return nil, err
 		}
 
-		inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, libElDTO.FolderUID, folderSvc)
+		inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, libElDTO.FolderUID, folderSvc, folderStore)
 		if err != nil {
 			return nil, err
 		}

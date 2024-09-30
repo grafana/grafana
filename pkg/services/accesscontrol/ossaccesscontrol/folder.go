@@ -111,7 +111,7 @@ func ProvideFolderPermissions(
 			return nil
 		},
 		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
-			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService)
+			return dashboards.GetInheritedScopes(ctx, orgID, resourceID, folderService, folderStore)
 		},
 		Assignments: resourcepermissions.Assignments{
 			Users:           true,

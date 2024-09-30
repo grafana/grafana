@@ -63,7 +63,7 @@ func NewFolderNameScopeResolver(folderDB folder.FolderStore, folderSvc folder.Se
 			return nil, err
 		}
 
-		result, err := GetInheritedScopes(ctx, folder.OrgID, folder.UID, folderSvc)
+		result, err := GetInheritedScopes(ctx, folder.OrgID, folder.UID, folderSvc, folderStore)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +98,7 @@ func NewFolderIDScopeResolver(folderDB folder.FolderStore, folderSvc folder.Serv
 			return nil, err
 		}
 
-		result, err := GetInheritedScopes(ctx, folder.OrgID, folder.UID, folderSvc)
+		result, err := GetInheritedScopes(ctx, folder.OrgID, folder.UID, folderSvc, folderStore)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +125,7 @@ func NewFolderUIDScopeResolver(folderSvc folder.Service, folderStore folder.Stor
 			return nil, err
 		}
 
-		inheritedScopes, err := GetInheritedScopes(ctx, orgID, uid, folderSvc)
+		inheritedScopes, err := GetInheritedScopes(ctx, orgID, uid, folderSvc, folderStore)
 		if err != nil {
 			return nil, err
 		}
@@ -208,7 +208,7 @@ func resolveDashboardScope(ctx context.Context, folderDB folder.FolderStore, org
 		folderUID = folder.UID
 	}
 
-	result, err := GetInheritedScopes(ctx, orgID, folderUID, folderSvc)
+	result, err := GetInheritedScopes(ctx, orgID, folderUID, folderSvc, folderStore)
 	if err != nil {
 		return nil, err
 	}
@@ -223,17 +223,24 @@ func resolveDashboardScope(ctx context.Context, folderDB folder.FolderStore, org
 	return result, nil
 }
 
-func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, folderSvc folder.Service) ([]string, error) {
+func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, folderSvc folder.Service, folderStore folder.Store) ([]string, error) {
 	ctx, span := tracer.Start(ctx, "dashboards.GetInheritedScopes")
 	span.End()
 
 	if folderUID == ac.GeneralFolderUID {
 		return nil, nil
 	}
-	ancestors, err := folderSvc.GetParents(ctx, folder.GetParentsQuery{
-		UID:   folderUID,
-		OrgID: orgID,
-	})
+
+	var ancestors []*folder.Folder
+	var err error
+	if folderUID == folder.SharedWithMeFolderUID {
+		ancestors = []*folder.Folder{&folder.SharedWithMeFolder}
+	} else {
+		ancestors, err = folderStore.GetParents(ctx, folder.GetParentsQuery{
+			UID:   folderUID,
+			OrgID: orgID,
+		})
+	}
 
 	if err != nil {
 		if errors.Is(err, folder.ErrFolderNotFound) {
