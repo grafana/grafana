@@ -381,7 +381,7 @@ class DataSourceWithBackend<
   }
 
   /**
-   * EXPERIMENTAL. Calls migration endpoint. Requires grafanaAPIServerWithExperimentalAPIs or datasourceAPIServers feature toggle.
+   * @alpha Experimental: Calls migration endpoint. Requires grafanaAPIServerWithExperimentalAPIs or datasourceAPIServers feature toggle.
    */
   async postMigrateQuery(query: TQuery): Promise<TQuery> {
     if (!(config.featureToggles.grafanaAPIServerWithExperimentalAPIs || config.featureToggles.datasourceAPIServers)) {
