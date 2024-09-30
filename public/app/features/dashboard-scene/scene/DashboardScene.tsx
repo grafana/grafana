@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
-  SceneGridLayout,
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
@@ -648,10 +647,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public hasDashboardAngularPlugins() {
     const sceneGridLayout = this.state.body;
-    if (!(sceneGridLayout instanceof SceneGridLayout)) {
+    if (!(sceneGridLayout instanceof DefaultGridLayoutManager)) {
       return false;
     }
-    const gridItems = sceneGridLayout.state.children;
+    const gridItems = sceneGridLayout.state.grid.state.children;
     const dashboardWasAngular = gridItems.some((gridItem) => {
       if (!(gridItem instanceof DashboardGridItem)) {
         return false;
