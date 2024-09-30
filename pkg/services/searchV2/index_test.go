@@ -755,7 +755,7 @@ func setupIntegrationEnv(t *testing.T, folderCount, dashboardsPerFolder int, sql
 		ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 	}
 	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), actest.FakeService{},
-		tracing.InitializeTracerForTest(), features, orgSvc, nil, foldertest.NewFakeService(), folder.NewFakeStore()).(*StandardSearchService)
+		tracing.InitializeTracerForTest(), features, orgSvc, nil, folder.NewFakeStore()).(*StandardSearchService)
 	require.True(t, ok)
 
 	err = runSearchService(searchService)

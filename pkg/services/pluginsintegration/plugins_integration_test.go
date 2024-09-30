@@ -90,7 +90,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	my := mysql.ProvideService()
 	ms := mssql.ProvideService(cfg)
 	db := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
-	sv2 := searchV2.ProvideService(cfg, db, nil, nil, tracer, features, nil, nil, nil, nil)
+	sv2 := searchV2.ProvideService(cfg, db, nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
 	pyroscope := pyroscope.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)
