@@ -109,7 +109,7 @@ export function TraceQLEditor(props: Props) {
               errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
             );
 
-            // Later on, show all errors
+            // Show all errors after a short delay, to avoid flickering
             errorTimeoutId.current = window.setTimeout(() => {
               setMarkers(monaco, model, errorNodes);
             }, 500);
@@ -126,7 +126,7 @@ function setupPlaceholder(editor: monacoTypes.editor.IStandaloneCodeEditor, mona
     {
       range: new monaco.Range(1, 1, 1, 1),
       options: {
-        className: styles.placeholder, // The placeholder text is in styles.placeholder
+        className: styles.placeholder,
         isWholeLine: true,
       },
     },
