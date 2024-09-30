@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { grafanaRulerNamespace2 } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
+import { grafanaRulerNamespace } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
 import { DashboardSearchItemType } from 'app/features/search/types';
 
 export const FOLDER_TITLE_HAPPY_PATH = 'Folder A';
@@ -10,7 +10,7 @@ export const FOLDER_TITLE_HAPPY_PATH = 'Folder A';
 const defaultSearchResponse = [
   {
     title: FOLDER_TITLE_HAPPY_PATH,
-    uid: grafanaRulerNamespace2.uid,
+    uid: grafanaRulerNamespace.uid,
     id: 1,
     type: DashboardSearchItemType.DashFolder,
   },

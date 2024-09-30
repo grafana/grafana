@@ -53,6 +53,14 @@ export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']
 };
 
 /**
+ * Makes the mock server respond with different folder response, for just the folder in question
+ */
+export const setFolderResponse = (response: Partial<FolderDTO>) => {
+  const handler = http.get<{ folderUid: string }>(`/api/folders/${response.uid}`, () => HttpResponse.json(response));
+  server.use(handler);
+};
+
+/**
  * Makes the mock server respond with different Grafana Alertmanager config
  */
 export const setGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
