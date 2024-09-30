@@ -6140,6 +6140,10 @@
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "name": {
             "type": "string"
           },
@@ -9865,6 +9869,10 @@
           },
           "interval": {
             "$ref": "#/components/schemas/Duration"
+          },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
           },
           "name": {
             "type": "string"

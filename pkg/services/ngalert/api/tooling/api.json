@@ -1688,6 +1688,10 @@
     "interval": {
      "$ref": "#/definitions/Duration"
     },
+    "limit": {
+     "format": "int64",
+     "type": "integer"
+    },
     "name": {
      "type": "string"
     },
@@ -3655,6 +3659,10 @@
     },
     "interval": {
      "$ref": "#/definitions/Duration"
+    },
+    "limit": {
+     "format": "int64",
+     "type": "integer"
     },
     "name": {
      "type": "string"

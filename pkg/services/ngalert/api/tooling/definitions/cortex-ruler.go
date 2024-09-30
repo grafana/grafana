@@ -290,6 +290,7 @@ type GettableRuleGroupConfig struct {
 	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
 	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
 	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
+	Limit                         int             `yaml:"limit,omitempty" json:"limit,omitempty"`
 }
 
 func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {
