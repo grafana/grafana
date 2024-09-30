@@ -86,10 +86,10 @@ func (r *recordingRule) Type() ngmodels.RuleType {
 
 func (r *recordingRule) Status() ngmodels.RuleStatus {
 	return ngmodels.RuleStatus{
-		Health:            r.health.Load(),
-		LastError:         r.lastError.Load(),
-		EvaluatedAt:       r.evaluationTimestamp.Load(),
-		EvaluatedDuration: r.evaluationDuration.Load(),
+		Health:              r.health.Load(),
+		LastError:           r.lastError.Load(),
+		EvaluationTimestamp: r.evaluationTimestamp.Load(),
+		EvaluationDuration:  r.evaluationDuration.Load(),
 	}
 }
 

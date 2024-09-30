@@ -470,8 +470,8 @@ func toRuleGroup(log log.Logger, manager state.AlertInstanceManager, sr StatusRe
 			Health:         status.Health,
 			LastError:      errorOrEmpty(status.LastError),
 			Type:           rule.Type().String(),
-			LastEvaluation: status.EvaluatedAt,
-			EvaluationTime: status.EvaluatedDuration.Seconds(),
+			LastEvaluation: status.EvaluationTimestamp,
+			EvaluationTime: status.EvaluationDuration.Seconds(),
 		}
 
 		states := manager.GetStatesForRuleUID(rule.OrgID, rule.UID)

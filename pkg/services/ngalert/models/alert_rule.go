@@ -889,8 +889,8 @@ func hasAnyCondition(rule *AlertRuleWithOptionals) bool {
 
 // RuleStatus contains info about a rule's current evaluation state.
 type RuleStatus struct {
-	Health            string
-	LastError         error
-	EvaluatedAt       time.Time
-	EvaluatedDuration time.Duration
+	Health              string
+	LastError           error
+	EvaluationTimestamp time.Time
+	EvaluationDuration  time.Duration
 }

@@ -376,8 +376,8 @@ func TestRuleRoutine(t *testing.T) {
 				status := ruleInfo.Status()
 				require.Equal(t, "ok", status.Health)
 				require.Nil(t, status.LastError)
-				require.Equal(t, states[0].LastEvaluationTime, status.EvaluatedAt)
-				require.Equal(t, states[0].EvaluationDuration, status.EvaluatedDuration)
+				require.Equal(t, states[0].LastEvaluationTime, status.EvaluationTimestamp)
+				require.Equal(t, states[0].EvaluationDuration, status.EvaluationDuration)
 			})
 
 			t.Run("it reports metrics", func(t *testing.T) {
@@ -717,8 +717,8 @@ func TestRuleRoutine(t *testing.T) {
 			require.Equal(t, "error", status.Health)
 			require.NotNil(t, status.LastError, "expected status to carry the latest evaluation error")
 			require.Contains(t, status.LastError.Error(), "cannot reference itself")
-			require.Equal(t, int64(0), status.EvaluatedAt.UTC().Unix())
-			require.Equal(t, time.Duration(0), status.EvaluatedDuration)
+			require.Equal(t, int64(0), status.EvaluationTimestamp.UTC().Unix())
+			require.Equal(t, time.Duration(0), status.EvaluationDuration)
 		})
 	})
 

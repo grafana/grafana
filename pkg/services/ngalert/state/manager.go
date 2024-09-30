@@ -631,16 +631,16 @@ func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int
 
 func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
 	status := ngModels.RuleStatus{
-		Health:      "ok",
-		LastError:   nil,
-		EvaluatedAt: time.Time{},
+		Health:              "ok",
+		LastError:           nil,
+		EvaluationTimestamp: time.Time{},
 	}
 	for _, state := range states {
-		if state.LastEvaluationTime.After(status.EvaluatedAt) {
-			status.EvaluatedAt = state.LastEvaluationTime
+		if state.LastEvaluationTime.After(status.EvaluationTimestamp) {
+			status.EvaluationTimestamp = state.LastEvaluationTime
 		}
 
-		status.EvaluatedDuration = state.EvaluationDuration
+		status.EvaluationDuration = state.EvaluationDuration
 
 		switch state.State {
 		case eval.Normal:
