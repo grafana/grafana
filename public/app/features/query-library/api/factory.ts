@@ -29,14 +29,14 @@ export const queryLibraryApi = createApi({
     }),
     deleteQueryTemplate: builder.mutation<void, DeleteQueryTemplateCommand>({
       query: ({ uid }) => ({
-        url: `${uid}`,
+        url: `/${uid}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['QueryTemplatesList'],
     }),
     editQueryTemplate: builder.mutation<void, EditQueryTemplateCommand>({
       query: (editQueryTemplateCommand) => ({
-        url: `${editQueryTemplateCommand.uid}`,
+        url: `/${editQueryTemplateCommand.uid}`,
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/merge-patch+json',
