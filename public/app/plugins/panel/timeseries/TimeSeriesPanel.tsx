@@ -131,6 +131,7 @@ export const TimeSeriesPanel = ({
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       maxHeight={options.tooltip.maxHeight}
+                      replaceVariables={replaceVariables}
                     />
                   );
                 }}

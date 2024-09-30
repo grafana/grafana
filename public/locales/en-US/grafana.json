@@ -56,6 +56,10 @@
     "pause": "Pause evaluation"
   },
   "alerting": {
+    "annotations": {
+      "description": "Add more context to your alert notifications.",
+      "title": "Configure notification message"
+    },
     "central-alert-history": {
       "details": {
         "error": "Error loading rule for this event.",
@@ -108,7 +112,18 @@
     },
     "contact-point": "Contact Point",
     "contact-points": {
+      "create": "Create contact point",
+      "delete-reasons": {
+        "heading": "Contact point cannot be deleted for the following reasons:",
+        "no-permissions": "You do not have the required permission to delete this contact point",
+        "policies": "Contact point is referenced by one or more notification policies",
+        "provisioned": "Contact point is provisioned and cannot be deleted via the UI",
+        "rules": "Contact point is referenced by one or more alert rules"
+      },
       "delivery-duration": "Last delivery took <1></1>",
+      "empty-state": {
+        "title": "You don't have any contact points yet"
+      },
       "last-delivery-attempt": "Last delivery attempt",
       "last-delivery-failed": "Last delivery attempt failed",
       "no-delivery-attempts": "No delivery attempts",
@@ -119,7 +134,9 @@
         "parse-mode-warning-title": "Telegram messages are limited to 4096 UTF-8 characters."
       },
       "used-by_one": "Used by {{ count }} notification policy",
-      "used-by_other": "Used by {{ count }} notification policy"
+      "used-by_other": "Used by {{ count }} notification policies",
+      "used-by-rules_one": "Used by {{ count }} alert rule",
+      "used-by-rules_other": "Used by {{ count }} alert rules"
     },
     "contactPointFilter": {
       "label": "Contact point"
@@ -141,6 +158,10 @@
           "title": "Grafana-managed"
         }
       }
+    },
+    "manage-permissions": {
+      "button": "Manage permissions",
+      "title": "Manage permissions"
     },
     "mute_timings": {
       "error-loading": {
@@ -169,7 +190,7 @@
         "inherited": "Inherited",
         "mute-time": "Muted when",
         "n-instances_one": "instance",
-        "n-instances_other": "instance",
+        "n-instances_other": "instances",
         "timingOptions": {
           "groupInterval": {
             "description": "How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent.",
@@ -185,7 +206,7 @@
           }
         }
       },
-      "n-more-policies_one": "{{count}} additional policies",
+      "n-more-policies_one": "{{count}} additional policy",
       "n-more-policies_other": "{{count}} additional policies",
       "new-child": "New child policy",
       "new-policy": "Add new policy",
@@ -214,6 +235,12 @@
       "deleting": "Deleting",
       "paused": "Paused",
       "recording-rule": "Recording rule"
+    },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.",
+        "alert-title": "Update in progress"
+      }
     },
     "rules": {
       "add-rule": {
@@ -297,15 +324,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -1845,6 +1872,9 @@
       "server-discovery-modal-close": "Close",
       "server-discovery-modal-loading": "Loading...",
       "server-discovery-modal-submit": "Submit"
+    },
+    "login": {
+      "error": "Login provider denied login request"
     }
   },
   "panel": {
@@ -1869,6 +1899,9 @@
       "unlink-library-panel": "Unlink library panel",
       "view": "View"
     }
+  },
+  "panel-search": {
+    "unsupported-layout": "Unsupported layout"
   },
   "playlist-edit": {
     "error-prefix": "Error loading playlist:",
@@ -2188,16 +2221,16 @@
       "confirm-text": "Delete",
       "delete-button": "Delete",
       "delete-loading": "Deleting...",
-      "text_one": "This action will delete {{numberOfDashboards}} dashboards.",
+      "text_one": "This action will delete {{numberOfDashboards}} dashboard.",
       "text_other": "This action will delete {{numberOfDashboards}} dashboards.",
       "title": "Permanently Delete Dashboards"
     },
     "restore-modal": {
-      "folder-picker-text_one": "Please choose a folder where your dashboards will be restored.",
+      "folder-picker-text_one": "Please choose a folder where your dashboard will be restored.",
       "folder-picker-text_other": "Please choose a folder where your dashboards will be restored.",
       "restore-button": "Restore",
       "restore-loading": "Restoring...",
-      "text_one": "This action will restore {{numberOfDashboards}} dashboards.",
+      "text_one": "This action will restore {{numberOfDashboards}} dashboard.",
       "text_other": "This action will restore {{numberOfDashboards}} dashboards.",
       "title": "Restore Dashboards"
     }
