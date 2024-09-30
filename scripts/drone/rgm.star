@@ -246,7 +246,6 @@ def rgm_version_branch():
         name = "rgm-version-branch-prerelease",
         trigger = version_branch_trigger,
         steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
-        depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
 def rgm_nightly_build():
