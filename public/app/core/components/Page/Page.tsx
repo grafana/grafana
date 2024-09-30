@@ -10,6 +10,7 @@ import NativeScrollbar from '../NativeScrollbar';
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
 import { PageTabs } from './PageTabs';
+import { PageToolbarActions } from './PageToolbarActions';
 import { PageType } from './types';
 import { usePageNav } from './usePageNav';
 import { usePageTitle } from './usePageTitle';
@@ -24,6 +25,7 @@ export const Page: PageType = ({
   subTitle,
   children,
   className,
+  toolbar,
   info,
   layout = PageLayoutType.Standard,
   onSetScrollRef,
@@ -51,6 +53,7 @@ export const Page: PageType = ({
 
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
+      {toolbar && <PageToolbarActions>{toolbar}</PageToolbarActions>}
       {layout === PageLayoutType.Standard && (
         <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
