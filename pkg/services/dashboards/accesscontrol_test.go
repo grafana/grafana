@@ -18,7 +18,7 @@ import (
 
 func TestNewFolderNameScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewFolderNameScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService(), folder.NewFakeStore())
+		prefix, _ := NewFolderNameScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
 		require.Equal(t, "folders:name:", prefix)
 	})
 
@@ -31,7 +31,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 
 		scope := "folders:name:" + title
 
-		_, resolver := NewFolderNameScopeResolver(folderStore, foldertest.NewFakeService(), folder.NewFakeStore())
+		_, resolver := NewFolderNameScopeResolver(folderStore, folder.NewFakeStore())
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 1)
@@ -49,7 +49,6 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 
 		scope := "folders:name:" + title
 
-		folderSvc := foldertest.NewFakeService()
 		fStore := folder.NewFakeStore()
 		fStore.ExpectedParentFolders = []*folder.Folder{
 			{
@@ -59,7 +58,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 				UID: "grandparent",
 			},
 		}
-		_, resolver := NewFolderNameScopeResolver(folderStore, folderSvc, fStore)
+		_, resolver := NewFolderNameScopeResolver(folderStore, fStore)
 
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.NoError(t, err)
@@ -76,20 +75,20 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		folderStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title, mock.Anything)
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
-		_, resolver := NewFolderNameScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService(), folder.NewFakeStore())
+		_, resolver := NewFolderNameScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:id:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
-		_, resolver := NewFolderNameScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService(), folder.NewFakeStore())
+		_, resolver := NewFolderNameScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:name:")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		folderStore := foldertest.NewFakeFolderStore(t)
-		_, resolver := NewFolderNameScopeResolver(folderStore, foldertest.NewFakeService(), folder.NewFakeStore())
+		_, resolver := NewFolderNameScopeResolver(folderStore, folder.NewFakeStore())
 
 		orgId := rand.Int63()
 		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrDashboardNotFound).Once()
