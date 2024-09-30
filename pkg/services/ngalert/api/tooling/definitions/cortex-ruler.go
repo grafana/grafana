@@ -280,10 +280,16 @@ func (c *PostableRuleGroupConfig) validate() error {
 
 // swagger:model
 type GettableRuleGroupConfig struct {
-	Name          string                     `yaml:"name" json:"name"`
-	Interval      model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
-	SourceTenants []string                   `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
-	Rules         []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
+	Name     string                     `yaml:"name" json:"name"`
+	Interval model.Duration             `yaml:"interval,omitempty" json:"interval,omitempty"`
+	Rules    []GettableExtendedRuleNode `yaml:"rules" json:"rules"`
+
+	// fields below are used by Mimir/Loki rulers
+
+	SourceTenants                 []string        `yaml:"source_tenants,omitempty" json:"source_tenants,omitempty"`
+	EvaluationDelay               *model.Duration `yaml:"evaluation_delay,omitempty" json:"evaluation_delay,omitempty"`
+	QueryOffset                   *model.Duration `yaml:"query_offset,omitempty" json:"query_offset,omitempty"`
+	AlignEvaluationTimeOnInterval bool            `yaml:"align_evaluation_time_on_interval,omitempty" json:"align_evaluation_time_on_interval,omitempty"`
 }
 
 func (c *GettableRuleGroupConfig) UnmarshalJSON(b []byte) error {

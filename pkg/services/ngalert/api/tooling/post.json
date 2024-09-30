@@ -1660,10 +1660,19 @@
   },
   "GettableRuleGroupConfig": {
    "properties": {
+    "align_evaluation_time_on_interval": {
+     "type": "boolean"
+    },
+    "evaluation_delay": {
+     "type": "string"
+    },
     "interval": {
      "$ref": "#/definitions/Duration"
     },
     "name": {
+     "type": "string"
+    },
+    "query_offset": {
      "type": "string"
     },
     "rules": {
@@ -3616,10 +3625,19 @@
   },
   "RuleGroupConfigResponse": {
    "properties": {
+    "align_evaluation_time_on_interval": {
+     "type": "boolean"
+    },
+    "evaluation_delay": {
+     "type": "string"
+    },
     "interval": {
      "$ref": "#/definitions/Duration"
     },
     "name": {
+     "type": "string"
+    },
+    "query_offset": {
      "type": "string"
     },
     "rules": {
