@@ -3,14 +3,19 @@ package resource
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"slices"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/maputil"
+	"github.com/prometheus/prometheus/promql/parser"
 
 	"github.com/grafana/grafana/pkg/promlib/client"
+	"github.com/grafana/grafana/pkg/promlib/models"
 	"github.com/grafana/grafana/pkg/promlib/utils"
 )
 
@@ -80,6 +85,89 @@ func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceR
 	newReq := &backend.CallResourceRequest{
 		PluginContext: req.PluginContext,
 		Path:          "/api/v1/status/buildinfo",
+	}
+
+	return r.Execute(ctx, newReq)
+}
+
+func getSelectors(expr string) ([]string, error) {
+	parsed, err := parser.ParseExpr(expr)
+	if err != nil {
+		return nil, err
+	}
+
+	selectors := make([]string, 0)
+
+	parser.Inspect(parsed, func(node parser.Node, nodes []parser.Node) error {
+		switch v := node.(type) {
+		case *parser.VectorSelector:
+			for _, matcher := range v.LabelMatchers {
+				if matcher == nil {
+					continue
+				}
+				if matcher.Name == "__name__" {
+					selectors = append(selectors, matcher.Value)
+				}
+			}
+		}
+		return nil
+	})
+
+	return selectors, nil
+}
+
+type SuggestionRequest struct {
+	// TODO: Add Start and End
+	LabelName    string               `json:"labelName"`
+	Queries      []string             `json:"queries"`
+	Scopes       []models.ScopeFilter `json:"scopes"`
+	AdhocFilters []models.ScopeFilter `json:"AdhocFilters"`
+}
+
+func (r *Resource) GetSuggestions(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
+	// TODO: Takes a list of queries and returns the selectors for the queries
+	// Note: Not sure if I need to interpolate any query macros. Will make it expect
+	// fully formed queries for now.
+	sugReq := SuggestionRequest{}
+	err := json.Unmarshal(req.Body, &sugReq)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling suggestion request: %v", err)
+	}
+
+	selectorList := []string{}
+	for _, query := range sugReq.Queries {
+		s, err := getSelectors(query)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing selectors: %v", err)
+		}
+		selectorList = append(selectorList, s...)
+	}
+
+	slices.Sort(selectorList)
+	selectorList = slices.Compact(selectorList)
+
+	matchers, err := models.FiltersToMatchers(sugReq.Scopes, sugReq.AdhocFilters)
+	if err != nil {
+		return nil, fmt.Errorf("error converting filters to matchers: %v", err)
+	}
+
+	values := url.Values{}
+
+	for _, s := range selectorList {
+		vs := parser.VectorSelector{Name: s, LabelMatchers: matchers}
+		values.Add("match[]", vs.String())
+	}
+
+	newReq := &backend.CallResourceRequest{
+		PluginContext: req.PluginContext,
+	}
+
+	if sugReq.LabelName != "" {
+		newReq.Path = "/api/v1/label/" + sugReq.LabelName + "/values"
+		newReq.URL = "/api/v1/label/" + sugReq.LabelName + "/values?" + values.Encode()
+	} else {
+		newReq.Path = "/api/v1/labels"
+		newReq.URL = "/api/v1/labels?" + values.Encode()
 	}
 
 	return r.Execute(ctx, newReq)
