@@ -104,7 +104,8 @@ const useK8sContactPoints = (...[hookParams, queryOptions]: Parameters<typeof us
 
       return {
         ...result,
-        data,
+        // K8S API will return 403 error for no-permissions case, so its cleaner to fallback to empty array
+        data: result.error ? [] : data,
         currentData: data,
       };
     },
@@ -126,7 +127,6 @@ const useFetchGrafanaContactPoints = ({ skip }: Skippable = {}) => {
         ...item,
         provisioned: item.grafana_managed_receiver_configs?.some((item) => item.provenance),
       }));
-
       return {
         ...result,
         data,
@@ -164,6 +164,7 @@ export const useGrafanaContactPoints = ({
   const onCallResponse = useOnCallIntegrations(potentiallySkip);
   const alertNotifiers = useGrafanaNotifiersQuery(undefined, potentiallySkip);
   const contactPointsListResponse = useFetchGrafanaContactPoints(potentiallySkip);
+
   const contactPointsStatusResponse = useGetContactPointsStatusQuery(undefined, {
     ...defaultOptions,
     pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
@@ -176,7 +177,7 @@ export const useGrafanaContactPoints = ({
   return useMemo(() => {
     const isLoading = onCallResponse.isLoading || alertNotifiers.isLoading || contactPointsListResponse.isLoading;
 
-    if (isLoading || !contactPointsListResponse.data) {
+    if (isLoading) {
       return {
         ...contactPointsListResponse,
         // If we're inside this block, it means that at least one of the endpoints we care about is still loading,
@@ -192,7 +193,7 @@ export const useGrafanaContactPoints = ({
       status: contactPointsStatusResponse.data,
       notifiers: alertNotifiers.data,
       onCallIntegrations: onCallResponse?.data,
-      contactPoints: contactPointsListResponse.data,
+      contactPoints: contactPointsListResponse.data || [],
       alertmanagerConfiguration: alertmanagerConfigResponse.data,
     });
 

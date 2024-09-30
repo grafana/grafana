@@ -245,6 +245,7 @@ type Cfg struct {
 	IDResponseHeaderEnabled       bool
 	IDResponseHeaderPrefix        string
 	IDResponseHeaderNamespaces    map[string]struct{}
+	ManagedServiceAccountsEnabled bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders   []string
@@ -262,6 +263,7 @@ type Cfg struct {
 
 	// OAuth
 	OAuthAutoLogin                       bool
+	OAuthLoginErrorMessage               string
 	OAuthCookieMaxAge                    int
 	OAuthAllowInsecureEmailLookup        bool
 	OAuthRefreshTokenServerLockMinWaitMs int64
@@ -423,6 +425,8 @@ type Cfg struct {
 	// LiveHAEngine is a type of engine to use to achieve HA with Grafana Live.
 	// Zero value means in-memory single node setup.
 	LiveHAEngine string
+	// LiveHAPRefix is a prefix for HA engine keys.
+	LiveHAPrefix string
 	// LiveHAEngineAddress is a connection address for Live HA engine.
 	LiveHAEngineAddress  string
 	LiveHAEnginePassword string
@@ -531,7 +535,8 @@ type Cfg struct {
 }
 
 type UnifiedStorageConfig struct {
-	DualWriterMode rest.DualWriterMode
+	DualWriterMode                       rest.DualWriterMode
+	DualWriterPeriodicDataSyncJobEnabled bool
 }
 
 type InstallPlugin struct {
@@ -1617,6 +1622,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.Logger.Warn("[Deprecated] The oauth_auto_login configuration setting is deprecated. Please use auto_login inside auth provider section instead.")
 	}
 
+	// Default to the translation key used in the frontend
+	cfg.OAuthLoginErrorMessage = valueAsString(auth, "oauth_login_error_message", "oauth.login.error")
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	cfg.OAuthRefreshTokenServerLockMinWaitMs = auth.Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(1000)
 	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
@@ -1665,6 +1672,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	for _, provider := range util.SplitString(providers) {
 		cfg.SSOSettingsConfigurableProviders[provider] = true
 	}
+
+	// Managed Service Accounts
+	cfg.ManagedServiceAccountsEnabled = auth.Key("managed_service_accounts_enabled").MustBool(false)
+
 	return nil
 }
 
@@ -2023,6 +2034,7 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	default:
 		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
 	}
+	cfg.LiveHAPrefix = section.Key("ha_prefix").MustString("")
 	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
 	cfg.LiveHAEnginePassword = section.Key("ha_engine_password").MustString("")
 

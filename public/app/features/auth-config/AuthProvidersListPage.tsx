@@ -57,7 +57,13 @@ export const AuthConfigPageUnconnected = ({
 
   providers = providers.map((p) => {
     if (p.provider === 'ldap') {
-      p.settings.type = p.provider;
+      return {
+        ...p,
+        settings: {
+          ...p.settings,
+          type: 'LDAP',
+        },
+      };
     }
     return p;
   });
