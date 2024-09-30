@@ -12,14 +12,12 @@ import {
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
-  SceneFlexLayout,
-  sceneGraph,
-  SceneGridLayout,
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneTimeRange,
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
@@ -52,15 +50,10 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl, getViewPanelUrl } from '../utils/urlBuilders';
 import {
-  NEW_PANEL_HEIGHT,
-  NEW_PANEL_WIDTH,
-  forceRenderChildren,
   getClosestVizPanel,
   getDashboardSceneFor,
-  getDefaultRow,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
-  getQueryRunnerFor,
   getVizPanelKeyForPanelId,
   isPanelClone,
 } from '../utils/utils';
@@ -74,8 +67,12 @@ import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DashboardLayoutManager } from './types';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
+export const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
+export const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -95,7 +92,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** @deprecated */
   id?: number | null;
   /** Layout of panels */
-  body: SceneObject;
+  body: DashboardLayoutManager;
   /** NavToolbar actions */
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */
@@ -124,6 +121,10 @@ export interface DashboardSceneState extends SceneObjectState {
   kioskMode?: KioskMode;
   /** Share view */
   shareView?: string;
+  /** Renders panels in grid and filtered */
+  panelSearch?: string;
+  /** How many panels to show per row for search results */
+  panelsPerRow?: number;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -175,7 +176,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       title: 'Dashboard',
       meta: {},
       editable: true,
-      body: state.body ?? new SceneFlexLayout({ children: [] }),
+      $timeRange: state.$timeRange ?? new SceneTimeRange({}),
+      body: state.body ?? DefaultGridLayoutManager.fromVizPanels(),
       links: state.links ?? [],
       ...state,
     });
@@ -191,6 +193,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     let prevSceneContext = window.__grafanaSceneContext;
 
     window.__grafanaSceneContext = this;
+
+    this._initializePanelSearch();
 
     if (this.state.isEditing) {
       this._initialUrlState = locationService.getLocation();
@@ -225,6 +229,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     };
   }
 
+  private _initializePanelSearch() {
+    const systemPanelFilter = sceneGraph.lookupVariable(PANEL_SEARCH_VAR, this)?.getValue();
+    if (typeof systemPanelFilter === 'string') {
+      this.setState({ panelSearch: systemPanelFilter });
+    }
+
+    const panelsPerRow = sceneGraph.lookupVariable(PANELS_PER_ROW_VAR, this)?.getValue();
+    if (typeof panelsPerRow === 'string') {
+      const perRow = Number.parseInt(panelsPerRow, 10);
+      this.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
+    }
+  }
+
   public onEnterEditMode = (fromExplore = false) => {
     this._fromExplore = fromExplore;
     // Save this state
@@ -235,7 +252,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isEditing: true });
 
     // Propagate change edit mode change to children
-    this.propagateEditModeChange();
+    this.state.body.editModeChanged(true);
 
     // Propagate edit mode to scopes
     this._scopesFacade?.enterReadOnly();
@@ -252,6 +269,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     };
 
     this._changeTracker.stopTrackingChanges();
+
     this.setState({
       version: result.version,
       isDirty: false,
@@ -267,14 +285,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       },
     });
 
+    this.state.editPanel?.dashboardSaved();
     this._changeTracker.startTrackingChanges();
-  }
-
-  private propagateEditModeChange() {
-    if (this.state.body instanceof SceneGridLayout) {
-      this.state.body.setState({ isDraggable: this.state.isEditing, isResizable: this.state.isEditing });
-      forceRenderChildren(this.state.body, true);
-    }
   }
 
   public exitEditMode({ skipConfirm, restoreInitialState }: { skipConfirm: boolean; restoreInitialState?: boolean }) {
@@ -310,15 +322,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
-    locationService.replace(
-      locationUtil.getUrlForPartial(this._initialUrlState!, {
-        editPanel: null,
-        editview: null,
-        inspect: null,
-        inspectTab: null,
-        shareView: null,
-      })
-    );
+    const url = locationUtil.getUrlForPartial(this._initialUrlState!, {
+      editPanel: null,
+      editview: null,
+      inspect: null,
+      inspectTab: null,
+      shareView: null,
+    });
+
+    locationService.replace(locationUtil.stripBaseFromUrl(url));
 
     if (this._fromExplore) {
       this.cleanupStateFromExplore();
@@ -340,7 +352,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     // Disable grid dragging
-    this.propagateEditModeChange();
+    this.state.body.editModeChanged(false);
   }
 
   private cleanupStateFromExplore() {
@@ -350,10 +362,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._initialSaveModel.panels = this._initialSaveModel.panels.slice(1);
     }
 
-    if (this._initialState && this._initialState.body instanceof SceneGridLayout) {
-      this._initialState.body.setState({
-        children: this._initialState.body.state.children.slice(1),
-      });
+    if (this._initialState) {
+      this._initialState.body.cleanUpStateFromExplore?.();
     }
   }
 
@@ -465,79 +475,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
-  public addRow(row: SceneGridRow) {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    // find all panels until the first row and put them into the newly created row. If there are no other rows,
-    // add all panels to the row. If there are no panels just create an empty row
-    const indexTillNextRow = sceneGridLayout.state.children.findIndex((child) => child instanceof SceneGridRow);
-    const rowChildren = sceneGridLayout.state.children
-      .splice(0, indexTillNextRow === -1 ? sceneGridLayout.state.children.length : indexTillNextRow)
-      .map((child) => child.clone());
-
-    if (rowChildren) {
-      row.setState({
-        children: rowChildren,
-      });
-    }
-
-    sceneGridLayout.setState({
-      children: [row, ...sceneGridLayout.state.children],
-    });
-  }
-
-  public removeRow(row: SceneGridRow, removePanels = false) {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    const children = sceneGridLayout.state.children.filter((child) => child.state.key !== row.state.key);
-
-    if (!removePanels) {
-      const rowChildren = row.state.children.map((child) => child.clone());
-      const indexOfRow = sceneGridLayout.state.children.findIndex((child) => child.state.key === row.state.key);
-
-      children.splice(indexOfRow, 0, ...rowChildren);
-    }
-
-    sceneGridLayout.setState({ children });
-  }
-
   public addPanel(vizPanel: VizPanel): void {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
+    if (!this.state.isEditing) {
+      this.onEnterEditMode();
     }
 
-    const sceneGridLayout = this.state.body;
-
-    const panelId = getPanelIdForVizPanel(vizPanel);
-    const newGridItem = new DashboardGridItem({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      body: vizPanel,
-      key: `grid-item-${panelId}`,
-    });
-
-    sceneGridLayout.setState({
-      children: [newGridItem, ...sceneGridLayout.state.children],
-    });
+    this.state.body.addPanel(vizPanel);
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
-    const layout = this.state.body;
-
-    if (!(layout instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
     const body = panelToReplace.clone({
       $behaviors: [new LibraryPanelBehavior({ uid: libPanel.uid, name: libPanel.name })],
     });
@@ -552,74 +498,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
-    if (!vizPanel.parent) {
-      return;
-    }
-
-    const gridItem = vizPanel.parent;
-
-    if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('Trying to duplicate a panel in a layout that is not DashboardGridItem');
-      return;
-    }
-
-    let panelState;
-    let panelData;
-    let newGridItem;
-    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
-
-    if (gridItem instanceof DashboardGridItem) {
-      panelState = sceneUtils.cloneSceneObjectState(gridItem.state.body.state);
-
-      let queryRunner = getQueryRunnerFor(gridItem.state.body);
-      const queries = queryRunner?.state.queries.map((q) => ({ ...q }));
-      queryRunner = queryRunner?.clone({ queries });
-      panelData = sceneGraph.getData(gridItem.state.body).clone({ $data: queryRunner });
-    } else {
-      panelState = sceneUtils.cloneSceneObjectState(vizPanel.state);
-
-      let queryRunner = getQueryRunnerFor(vizPanel);
-      const queries = queryRunner?.state.queries.map((q) => ({ ...q }));
-      queryRunner = queryRunner?.clone({ queries });
-      panelData = sceneGraph.getData(vizPanel).clone({ $data: queryRunner });
-    }
-
-    // when we duplicate a panel we don't want to clone the alert state
-    delete panelData.state.data?.alertState;
-
-    newGridItem = new DashboardGridItem({
-      x: gridItem.state.x,
-      y: gridItem.state.y,
-      height: gridItem.state.height,
-      width: gridItem.state.width,
-      variableName: gridItem.state.variableName,
-      repeatDirection: gridItem.state.repeatDirection,
-      maxPerRow: gridItem.state.maxPerRow,
-      body: new VizPanel({ ...panelState, $data: panelData, key: getVizPanelKeyForPanelId(newPanelId) }),
-    });
-
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      console.error('Trying to duplicate a panel in a layout that is not SceneGridLayout ');
-      return;
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    if (gridItem.parent instanceof SceneGridRow) {
-      const row = gridItem.parent;
-
-      row.setState({
-        children: [...row.state.children, newGridItem],
-      });
-
-      sceneGridLayout.forceRender();
-
-      return;
-    }
-
-    sceneGridLayout.setState({
-      children: [...sceneGridLayout.state.children, newGridItem],
-    });
+    this.state.body.duplicatePanel(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
@@ -641,83 +520,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public pastePanel() {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Trying to add a panel in a layout that is not SceneGridLayout');
-    }
-
     const jsonData = store.get(LS_PANEL_COPY_KEY);
     const jsonObj = JSON.parse(jsonData);
     const panelModel = new PanelModel(jsonObj);
     const gridItem = buildGridItemForPanel(panelModel);
-
-    const sceneGridLayout = this.state.body;
-
-    if (!(gridItem instanceof DashboardGridItem)) {
-      throw new Error('Cannot paste invalid grid item');
-    }
-
     const panelId = dashboardSceneGraph.getNextPanelId(this);
+    const panel = gridItem.state.body;
 
-    gridItem.state.body.setState({
-      key: getVizPanelKeyForPanelId(panelId),
-    });
+    panel.setState({ key: getVizPanelKeyForPanelId(panelId) });
+    panel.clearParent();
 
-    gridItem.setState({
-      height: NEW_PANEL_HEIGHT,
-      width: NEW_PANEL_WIDTH,
-      x: 0,
-      y: 0,
-      key: `grid-item-${panelId}`,
-    });
-
-    sceneGridLayout.setState({
-      children: [gridItem, ...sceneGridLayout.state.children],
-    });
+    this.state.body.addPanel(panel);
 
     store.delete(LS_PANEL_COPY_KEY);
   }
 
   public removePanel(panel: VizPanel) {
-    const panels: SceneObject[] = [];
-    const key = panel.parent?.state.key;
-
-    if (!key) {
-      return;
-    }
-
-    let row: SceneGridRow | undefined;
-
-    try {
-      row = sceneGraph.getAncestor(panel, SceneGridRow);
-    } catch {
-      row = undefined;
-    }
-
-    if (row) {
-      row.state.children.forEach((child: SceneObject) => {
-        if (child.state.key !== key) {
-          panels.push(child);
-        }
-      });
-
-      row.setState({ children: panels });
-
-      this.state.body.forceRender();
-
-      return;
-    }
-
-    this.state.body.forEachChild((child: SceneObject) => {
-      if (child.state.key !== key) {
-        panels.push(child);
-      }
-    });
-
-    const layout = this.state.body;
-
-    if (layout instanceof SceneGridLayout || layout instanceof SceneFlexLayout) {
-      layout.setState({ children: panels });
-    }
+    this.state.body.removePanel(panel);
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {
@@ -773,18 +592,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onCreateNewRow() {
-    const row = getDefaultRow(this);
-
-    this.addRow(row);
-
-    return getPanelIdForVizPanel(row);
+    this.state.body.addNewRow();
   }
 
   public onCreateNewPanel(): VizPanel {
-    if (!this.state.isEditing) {
-      this.onEnterEditMode();
-    }
-
     const vizPanel = getDefaultVizPanel(this);
 
     this.addPanel(vizPanel);
@@ -801,7 +612,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     let panel = getClosestVizPanel(sceneObject);
 
     if (dashboard.state.isEditing && dashboard.state.editPanel) {
-      panel = dashboard.state.editPanel.state.vizManager.state.panel;
+      panel = dashboard.state.editPanel.state.panelRef.resolve();
     }
 
     let panelId = 0;
@@ -850,40 +661,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.replace('/');
   }
 
-  public collapseAllRows() {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Dashboard scene layout is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    sceneGridLayout.state.children.forEach((child) => {
-      if (!(child instanceof SceneGridRow)) {
-        return;
-      }
-      if (!child.state.isCollapsed) {
-        sceneGridLayout.toggleRow(child);
-      }
-    });
-  }
-
-  public expandAllRows() {
-    if (!(this.state.body instanceof SceneGridLayout)) {
-      throw new Error('Dashboard scene layout is not SceneGridLayout');
-    }
-
-    const sceneGridLayout = this.state.body;
-
-    sceneGridLayout.state.children.forEach((child) => {
-      if (!(child instanceof SceneGridRow)) {
-        return;
-      }
-      if (child.state.isCollapsed) {
-        sceneGridLayout.toggleRow(child);
-      }
-    });
-  }
-
   public onSetScrollRef = (scrollElement: ScrollRefElement): void => {
     this._scrollRef = scrollElement;
   };
@@ -918,16 +695,29 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
     }
 
+    if (variable.state.name === PANEL_SEARCH_VAR) {
+      const searchValue = variable.getValue();
+      if (typeof searchValue === 'string') {
+        this._dashboard.setState({ panelSearch: searchValue });
+      }
+    } else if (variable.state.name === PANELS_PER_ROW_VAR) {
+      const panelsPerRow = variable.getValue();
+      if (typeof panelsPerRow === 'string') {
+        const perRow = Number.parseInt(panelsPerRow, 10);
+        this._dashboard.setState({ panelsPerRow: Number.isInteger(perRow) ? perRow : undefined });
+      }
+    }
+
     /**
      * Propagate variable changes to repeat row behavior as it does not get it when it's nested under local value
      * The first repeated row has the row repeater behavior but it also has a local SceneVariableSet with a local variable value
      */
     const layout = this._dashboard.state.body;
-    if (!(layout instanceof SceneGridLayout)) {
+    if (!(layout instanceof DefaultGridLayoutManager)) {
       return;
     }
 
-    for (const child of layout.state.children) {
+    for (const child of layout.state.grid.state.children) {
       if (!(child instanceof SceneGridRow) || !child.state.$behaviors) {
         continue;
       }

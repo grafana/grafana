@@ -860,7 +860,7 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 
 	var keyBytes []byte
 	// Process the PKCS-encrypted PEM block.
-	if strings.Contains(keyPemBlock.Type, "ENCRYPTED") {
+	if strings.Contains(keyPemBlock.Type, "ENCRYPTED PRIVATE KEY") {
 		// The pkcs8 package only handles the PKCS #5 v2.0 scheme.
 		decrypted, err := pkcs8.ParsePKCS8PrivateKey(keyPemBlock.Bytes, []byte(certKeyFilePassword))
 		if err != nil {
@@ -869,6 +869,19 @@ func handleEncryptedCertificates(cfg *setting.Cfg) (*tls.Certificate, error) {
 		keyBytes, err = x509.MarshalPKCS8PrivateKey(decrypted)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling PKCS8 Private key: %w", err)
+		}
+	} else if strings.Contains(keyPemBlock.Type, "RSA PRIVATE KEY") {
+		// Check if the PEM block is encrypted with PKCS#1
+		// Even if these methods are deprecated, RSA PKCS#1 was requested by some customers and fairly used
+		// nolint:staticcheck
+		if !x509.IsEncryptedPEMBlock(keyPemBlock) {
+			return nil, fmt.Errorf("password provided but Private key is not recorgnized as encrypted")
+		}
+		// Only covers encrypted PEM data with a DEK-Info header.
+		// nolint:staticcheck
+		keyBytes, err = x509.DecryptPEMBlock(keyPemBlock, []byte(certKeyFilePassword))
+		if err != nil {
+			return nil, fmt.Errorf("error decrypting x509 PemBlock: %w", err)
 		}
 	} else {
 		return nil, fmt.Errorf("password provided but Private key is not encrypted or not supported")

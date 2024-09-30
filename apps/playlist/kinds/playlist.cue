@@ -13,8 +13,8 @@ externalName: {
 	pluralName: "Playlists"
 	current: "v0alpha1"
 	versions: {
-	    "v0alpha1": {
-	        schema: {
+		"v0alpha1": {
+			schema: {
 				#Item: {
 					// type of the item.
 					type: "dashboard_by_tag" | "dashboard_by_uid" | "dashboard_by_id" @cuetsy(kind="enum")
@@ -27,12 +27,13 @@ externalName: {
 					//  - dashboard_by_uid: The value is the dashboard UID
 					value: string
 				}
-                spec: {
+								
+				spec: {
 					title: string
 					interval: string
 					items: [...#Item]
 				}
-	        }
-	    }
+			}
+		}
 	}
 }

@@ -43,12 +43,12 @@
 /docs/sources/dashboards/                                                         @imatwawana
 /docs/sources/datasources/                                                        @jdbaldry
 /docs/sources/explore/                                                            @grafana/explore-squad @lwandz13
-/docs/sources/fundamentals                                                        @chri2547
-/docs/sources/getting-started/                                                    @chri2547
-/docs/sources/introduction/                                                       @chri2547
+/docs/sources/fundamentals                                                        @irenerl24
+/docs/sources/getting-started/                                                    @irenerl24
+/docs/sources/introduction/                                                       @irenerl24
 /docs/sources/panels-visualizations/                                              @imatwawana
 /docs/sources/release-notes/                                                      @Eve832 @GrafanaWriter
-/docs/sources/setup-grafana/                                                      @chri2547
+/docs/sources/setup-grafana/                                                      @irenerl24
 /docs/sources/upgrade-guide/                                                      @imatwawana
 /docs/sources/whatsnew/                                                           @imatwawana
 
@@ -80,7 +80,6 @@
 /pkg/apis/query @grafana/grafana-datasources-core-services
 /pkg/bus/ @grafana/grafana-search-and-storage
 /pkg/cmd/ @grafana/grafana-backend-group
-/pkg/cmd/grafana/apiserver @grafana/grafana-app-platform-squad
 /pkg/components/apikeygen/ @grafana/identity-squad
 /pkg/components/satokengen/ @grafana/identity-squad
 /pkg/components/dashdiffs/ @grafana/grafana-app-platform-squad
@@ -199,6 +198,7 @@
 /devenv/docker/blocks/mariadb/ @grafana/oss-big-tent
 /devenv/docker/blocks/memcached/ @grafana/grafana-backend-group
 /devenv/docker/blocks/mimir_backend/ @grafana/alerting-backend
+/devenv/docker/blocks/mqtt/ @grafana/alerting-backend
 /devenv/docker/blocks/mssql/ @grafana/partner-datasources
 /devenv/docker/blocks/mssql_arm64/ @grafana/partner-datasources
 /devenv/docker/blocks/mssql_tests/ @grafana/partner-datasources
@@ -439,7 +439,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/features/invites/ @grafana/grafana-frontend-platform
 /public/app/features/library-panels/ @grafana/dashboards-squad
 /public/app/features/logs/ @grafana/observability-logs
-/public/app/features/live/ @grafana/grafana-app-platform-squad
+/public/app/features/live/ @grafana/dashboards-squad
 /public/app/features/apiserver/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
@@ -491,7 +491,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/plugins/panel/geomap/ @grafana/dataviz-squad
 /public/app/plugins/panel/canvas/ @grafana/dataviz-squad
 /public/app/plugins/panel/candlestick/ @grafana/dataviz-squad
-/public/app/plugins/panel/live/ @grafana/grafana-app-platform-squad
+/public/app/plugins/panel/live/ @grafana/dashboards-squad
 /public/app/plugins/panel/news/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/grafana-frontend-platform
@@ -736,7 +736,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
-/.github/workflows/run-scenes-e2e.yml @grafana/dashboards-squad
 /.github/workflows/go_lint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 /.github/workflows/changelog.yml @zserge

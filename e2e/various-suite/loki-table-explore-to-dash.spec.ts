@@ -110,7 +110,8 @@ const lokiQueryResult = {
   },
 };
 
-describe('Loki Query Editor', () => {
+// Skipping due to race conditions with same old arch test e2e/various-suite/loki-table-explore-to-dash.spec.ts
+describe.skip('Loki Query Editor', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

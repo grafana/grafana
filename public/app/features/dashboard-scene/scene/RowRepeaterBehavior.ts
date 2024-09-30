@@ -141,12 +141,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       return;
     }
 
-    if (variable instanceof MultiValueVariable) {
-      if (!(variable as MultiValueVariable).state.isMulti) {
-        // There is no use in repeating a row for a variable that is not a multi value select variable.
-        return;
-      }
-    } else {
+    if (!(variable instanceof MultiValueVariable)) {
       console.error('RepeatedRowBehavior: Variable is not a MultiValueVariable');
       return;
     }
@@ -222,7 +217,8 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         localValue,
         variableTexts[index],
         rowContentHeight,
-        children
+        children,
+        variable
       );
       this._clonedRows.push(rowClone);
     }
@@ -239,13 +235,22 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     value: VariableValueSingle,
     text: VariableValueSingle,
     rowContentHeight: number,
-    children: SceneGridItemLike[]
+    children: SceneGridItemLike[],
+    variable: MultiValueVariable
   ): SceneGridRow {
     if (index === 0) {
       rowToRepeat.setState({
         // not activated
         $variables: new SceneVariableSet({
-          variables: [new LocalValueVariable({ name: this.state.variableName, value, text: String(text) })],
+          variables: [
+            new LocalValueVariable({
+              name: this.state.variableName,
+              value,
+              text: String(text),
+              isMulti: variable.state.isMulti,
+              includeAll: variable.state.includeAll,
+            }),
+          ],
         }),
         children,
       });
@@ -257,7 +262,15 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     return rowToRepeat.clone({
       key: `${rowToRepeat.state.key}-clone-${value}`,
       $variables: new SceneVariableSet({
-        variables: [new LocalValueVariable({ name: this.state.variableName, value, text: String(text) })],
+        variables: [
+          new LocalValueVariable({
+            name: this.state.variableName,
+            value,
+            text: String(text),
+            isMulti: variable.state.isMulti,
+            includeAll: variable.state.includeAll,
+          }),
+        ],
       }),
       $behaviors: [],
       children,
