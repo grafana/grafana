@@ -790,4 +790,8 @@ const (
 	// FlagUseSessionStorageForRedirection
 	// Use session storage for handling the redirection after login
 	FlagUseSessionStorageForRedirection = "useSessionStorageForRedirection"
+
+	// FlagAzureMonitorDisableLogLimit
+	// Disables the log limit restriction for Azure Monitor when true
+	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
 )

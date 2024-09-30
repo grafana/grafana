@@ -71,6 +71,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                                                                     |                    |
 | `openSearchBackendFlowEnabled`         | Enables the backend query flow for Open Search datasource plugin                                                                                                          | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                                                             | Yes                |
+| `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true                                                                                                            |                    |
 
 ## Public preview feature toggles
 

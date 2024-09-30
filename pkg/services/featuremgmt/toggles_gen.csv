@@ -195,3 +195,4 @@ appSidecar,experimental,@grafana/explore-squad,false,false,false
 groupAttributeSync,experimental,@grafana/identity-access-team,false,false,false
 improvedExternalSessionHandling,experimental,@grafana/identity-access-team,false,false,false
 useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,false,false
+azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false

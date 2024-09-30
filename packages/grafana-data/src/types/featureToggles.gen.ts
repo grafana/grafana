@@ -214,4 +214,5 @@ export interface FeatureToggles {
   groupAttributeSync?: boolean;
   improvedExternalSessionHandling?: boolean;
   useSessionStorageForRedirection?: boolean;
+  azureMonitorDisableLogLimit?: boolean;
 }
