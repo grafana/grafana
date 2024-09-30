@@ -6,6 +6,9 @@ import { dateTime } from '@grafana/data';
 import { TimeRangeInput } from './TimeRangeInput';
 
 describe('TimeRangeInput', () => {
+  // TODO: This test is evergreen - the check that we haven't accidentally closed
+  // the picker still passes without the appropriate fix
+  // Seems to be related to jest-dom and how it handles clicking outside the node etc.
   it('handles selecting dates over multiple months', async () => {
     const user = userEvent.setup();
     const from = dateTime('2024-01-01T00:00:00Z');
