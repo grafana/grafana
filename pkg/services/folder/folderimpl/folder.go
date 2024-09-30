@@ -88,7 +88,7 @@ func ProvideService(
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv, store))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv, store))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv, store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(store))
 	return srv
 }
 
