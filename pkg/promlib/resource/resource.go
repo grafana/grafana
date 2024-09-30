@@ -116,18 +116,30 @@ func getSelectors(expr string) ([]string, error) {
 	return selectors, nil
 }
 
+// SuggestionRequest is the request body for the GetSuggestions resource.
 type SuggestionRequest struct {
-	// TODO: Add Start and End
-	LabelName    string               `json:"labelName"`
-	Queries      []string             `json:"queries"`
+	// LabelName, if provides, will results in label values being returned for the given label name.
+	LabelName string `json:"labelName"`
+
+	Queries []string `json:"queries"`
+
 	Scopes       []models.ScopeFilter `json:"scopes"`
 	AdhocFilters []models.ScopeFilter `json:"AdhocFilters"`
+
+	// Start and End are proxied directly to the prometheus endpoint (which is rfc3339 | unix_timestamp)
+	Start string `json:"start"`
+	End   string `json:"end"`
+
+	// Limit is the maximum number of suggestions to return and is proxied directly to the prometheus endpoint.
+	Limit int64 `json:"limit"`
 }
 
+// GetSuggestions takes a Suggestion Request in the body of the resource request.
+// It builds a to call prometheus' labels endpoint (or label values endpoint if labelName is provided)
+// The match parameters for the endpoints are built from metrics extracted from the queries
+// combined with the scopes and adhoc filters provided in the request.
+// Queries must be valid raw promql.
 func (r *Resource) GetSuggestions(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
-	// TODO: Takes a list of queries and returns the selectors for the queries
-	// Note: Not sure if I need to interpolate any query macros. Will make it expect
-	// fully formed queries for now.
 	sugReq := SuggestionRequest{}
 	err := json.Unmarshal(req.Body, &sugReq)
 	if err != nil {
@@ -158,14 +170,26 @@ func (r *Resource) GetSuggestions(ctx context.Context, req *backend.CallResource
 		values.Add("match[]", vs.String())
 	}
 
+	if sugReq.Start != "" {
+		values.Add("start", sugReq.Start)
+	}
+	if sugReq.End != "" {
+		values.Add("end", sugReq.End)
+	}
+	if sugReq.Limit > 0 {
+		values.Add("limit", fmt.Sprintf("%d", sugReq.Limit))
+	}
+
 	newReq := &backend.CallResourceRequest{
 		PluginContext: req.PluginContext,
 	}
 
 	if sugReq.LabelName != "" {
+		// Get label values for the given name (key)
 		newReq.Path = "/api/v1/label/" + sugReq.LabelName + "/values"
 		newReq.URL = "/api/v1/label/" + sugReq.LabelName + "/values?" + values.Encode()
 	} else {
+		// Get Label names (keys)
 		newReq.Path = "/api/v1/labels"
 		newReq.URL = "/api/v1/labels?" + values.Encode()
 	}
