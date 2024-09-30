@@ -795,3 +795,19 @@ func TestGetRuleExtraLabels(t *testing.T) {
 		})
 	}
 }
+
+func Test_GetAnnotations(t *testing.T) {
+	state := State{
+		Annotations: map[string]string{
+			"annotation-1": "value-1",
+			"annotation-2": "value-2",
+		},
+	}
+
+	annotations := state.GetAnnotations()
+	require.Equal(t, state.Annotations, annotations)
+
+	// change the returned map and check that the state is not modified
+	annotations["annotation-3"] = "new-value"
+	require.NotEqual(t, state.Annotations, annotations)
+}

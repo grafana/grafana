@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"strings"
 	"time"
@@ -520,6 +521,10 @@ func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {
 	}
 
 	return labels
+}
+
+func (a *State) GetAnnotations() map[string]string {
+	return maps.Clone(a.Annotations)
 }
 
 func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
