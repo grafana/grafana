@@ -95,6 +95,7 @@ export enum Severity {
 import {
   TemplateAnnotation,
   TemplateParam,
+  TemplateParamType,
 } from 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.types';
 
 export enum AlertRuleParamType {
@@ -159,7 +160,7 @@ export interface AlertRulesListPayloadFilter {
 
 export interface AlertRulesListResponseParam {
   name: string;
-  type: keyof typeof AlertRuleParamType;
+  type: TemplateParamType;
   [AlertRuleParamType.BOOL]?: boolean;
   [AlertRuleParamType.FLOAT]?: number;
   [AlertRuleParamType.STRING]?: string;

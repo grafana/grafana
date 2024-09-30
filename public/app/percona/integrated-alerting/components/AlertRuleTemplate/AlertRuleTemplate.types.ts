@@ -35,23 +35,23 @@ export interface TemplatesList extends Omit<TemplatesListAPI, 'templates'> {
 }
 
 export enum SourceDescription {
-  BUILT_IN = 'BUILT_IN',
-  SAAS = 'SAAS',
-  USER_FILE = 'USER_FILE',
-  USER_API = 'USER_API',
+  BUILT_IN = 'TEMPLATE_SOURCE_BUILT_IN',
+  SAAS = 'TEMPLATE_SOURCE_SAAS',
+  USER_FILE = 'TEMPLATE_SOURCE_USER_FILE',
+  USER_API = 'TEMPLATE_SOURCE_USER_API',
 }
 
-// https://github.com/percona-platform/saas/blob/main/pkg/alert/type.go
+// https://github.com/percona/saas/blob/main/pkg/alert/type.go
 export enum TemplateParamType {
-  FLOAT = 'FLOAT',
-  BOOL = 'BOOL',
-  STRING = 'STRING',
+  FLOAT = 'PARAM_TYPE_FLOAT',
+  BOOL = 'PARAM_TYPE_BOOL',
+  STRING = 'PARAM_TYPE_STRING',
 }
 
-// https://github.com/percona-platform/saas/blob/main/pkg/alert/unit.go
+// https://github.com/percona/saas/blob/main/pkg/alert/unit.go
 export enum TemplateParamUnit {
-  PERCENTAGE = 'PERCENTAGE',
-  SECONDS = 'SECONDS',
+  PERCENTAGE = 'PARAM_UNIT_PERCENTAGE',
+  SECONDS = 'PARAM_UNIT_SECONDS',
 }
 
 export interface TemplateFloatParamAPI {

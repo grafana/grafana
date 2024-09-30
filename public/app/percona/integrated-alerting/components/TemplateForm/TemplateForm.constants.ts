@@ -1,6 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 import { Severity } from 'app/percona/shared/core';
 
+import { TemplateParamType } from '../AlertRuleTemplate/AlertRuleTemplate.types';
+
 // TODO: generate SEVERITY_OPTIONS from its type definitions
 export const SEVERITY_OPTIONS: Array<SelectableValue<keyof typeof Severity>> = [
   {
@@ -40,3 +42,9 @@ export const SEVERITY_OPTIONS: Array<SelectableValue<keyof typeof Severity>> = [
 // We define our default evaluation interval as 60s
 // 'for' can't be less than that, hence this minimum
 export const MINIMUM_DURATION_VALUE = 60;
+
+export const TYPE_TO_KEY_MAP: Record<TemplateParamType, 'bool' | 'float' | 'string'> = {
+  PARAM_TYPE_BOOL: 'bool',
+  PARAM_TYPE_FLOAT: 'float',
+  PARAM_TYPE_STRING: 'string',
+};

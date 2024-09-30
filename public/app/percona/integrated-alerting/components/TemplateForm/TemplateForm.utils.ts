@@ -4,6 +4,8 @@ import { AlertRuleCreatePayload, AlertRulesListResponseChannel, Severity } from 
 
 import { TemplatedAlertFormValues } from '../../types';
 
+import { TYPE_TO_KEY_MAP } from './TemplateForm.constants';
+
 export const formatChannelsOptions = (channels: string[]): Array<SelectableValue<string>> =>
   channels
     ? channels.map((channel) => ({
@@ -48,7 +50,7 @@ export const formatCreateAPIPayload = (data: TemplatedAlertFormValues): AlertRul
       payload.params?.push({
         name,
         type,
-        [type.toLowerCase()]: value,
+        [TYPE_TO_KEY_MAP[type]]: value,
       });
     }
   });
