@@ -218,18 +218,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    this.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
-      const isAnnotationChange =
-        payload.changedObject instanceof DashboardAnnotationsDataLayer &&
-        !Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data');
-      const isSceneVariableChange = isSceneVariableInstance(payload.changedObject);
-
-      if (isAnnotationChange || isSceneVariableChange) {
-        // DashboardModel triggers RefreshEvent when variables change
-        // To avoid compatibility issues in plugins we need to trigger the same event
-        this.publishEvent(new RefreshEvent());
-      }
-    });
+    this.subscribeToEvent(SceneObjectStateChangedEvent, this.triggerRefreshEvent);
 
     // Deactivation logic
     return () => {
@@ -915,6 +904,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this._scrollRef?.scrollTo(0, this._prevScrollPos!);
     }
   }
+
+  private triggerRefreshEvent = ({ payload }: SceneObjectStateChangedEvent) => {
+    const isAnnotationChange =
+      payload.changedObject instanceof DashboardAnnotationsDataLayer &&
+      !Object.prototype.hasOwnProperty.call(payload.partialUpdate, 'data');
+    const isSceneVariableChange = isSceneVariableInstance(payload.changedObject);
+
+    if (isAnnotationChange || isSceneVariableChange) {
+      // DashboardModel triggers RefreshEvent when variables change
+      // To avoid compatibility issues in plugins we need to trigger the same event
+      this.publishEvent(new RefreshEvent());
+    }
+  };
 }
 
 export class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
