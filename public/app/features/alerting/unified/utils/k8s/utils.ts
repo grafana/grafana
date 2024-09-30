@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
+import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
-import { PROVENANCE_ANNOTATION, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
+import { K8sAnnotations, PROVENANCE_NONE } from 'app/features/alerting/unified/utils/k8s/constants';
 
 /**
  * Get the correct namespace to use when using the K8S API.
@@ -18,15 +19,30 @@ export const shouldUseK8sApi = (alertmanager?: string) => {
   return featureToggleEnabled && alertmanager === GRAFANA_RULES_SOURCE_NAME;
 };
 
-type Entity = {
-  metadata: {
-    annotations?: Record<string, string>;
-  };
+type EntityToCheck = {
+  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
 };
 
 /**
  * Check the metadata of a kubernetes entity and check if has the necessary annotations
  * that denote it as provisioned
  */
-export const isK8sEntityProvisioned = (item: Entity) =>
-  item.metadata.annotations?.[PROVENANCE_ANNOTATION] !== PROVENANCE_NONE;
+export const isK8sEntityProvisioned = (k8sEntity: EntityToCheck) =>
+  getAnnotation(k8sEntity, K8sAnnotations.Provenance) !== PROVENANCE_NONE;
+
+export const ANNOTATION_PREFIX_ACCESS = 'grafana.com/access/';
+
+/**
+ * Checks annotations on a k8s entity to see if the requesting user has the required permission
+ */
+export const getAnnotation = (k8sEntity: EntityToCheck, annotation: K8sAnnotations) =>
+  k8sEntity.metadata?.annotations?.[annotation];
+
+export const canEditEntity = (k8sEntity: EntityToCheck) =>
+  getAnnotation(k8sEntity, K8sAnnotations.AccessWrite) === 'true';
+
+export const canAdminEntity = (k8sEntity: EntityToCheck) =>
+  getAnnotation(k8sEntity, K8sAnnotations.AccessAdmin) === 'true';
+
+export const canDeleteEntity = (k8sEntity: EntityToCheck) =>
+  getAnnotation(k8sEntity, K8sAnnotations.AccessDelete) === 'true';
