@@ -111,6 +111,12 @@ Classic conditions exist mainly for compatibility reasons and should be avoided 
 
 Classic condition checks if any time series data matches the alert condition. It always produce one alert instance only, no matter how many time series meet the condition.
 
+| Condition operators | How it works                                                                                                                                                                                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| and                 | Two conditions before and after must be true for the overall condition to be true.                                                                                                                                                                          |
+| or                  | If one of conditions before and after are true, the overall condition is true.                                                                                                                                                                              |
+| logic-or            | If the condition before `logic-or` is true, the overall condition is immediately true, without evaluating subsequent conditions. For instance, `TRUE and TRUE logic-or FALSE and FALSE` evaluate to `TRUE`, because the preceding condition returns `TRUE`. |
+
 ## Aggregations
 
 Grafana Alerting provides the following aggregation functions to enable you to further refine your query.
