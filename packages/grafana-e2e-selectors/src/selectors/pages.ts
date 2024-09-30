@@ -57,7 +57,6 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
-      settingsButton: 'data-testid settings-button',
       scrollContainer: 'data-testid Dashboard canvas scroll container',
       newShareButton: {
         container: 'data-testid new share button',
@@ -240,9 +239,6 @@ export const Pages = {
      */
     dashboards: (title: string) => `Dashboard search item ${title}`,
   },
-  RecentlyDeleted: {
-    url: '/dashboard/recently-deleted',
-  },
   SaveDashboardAsModal: {
     newName: 'Save dashboard title field',
     save: 'Save dashboard button',
@@ -406,10 +402,6 @@ export const Pages = {
     url: '/?search=openn',
     FolderView: {
       url: '/?search=open&layout=folders',
-    },
-    table: {
-      body: 'data-testid search-table',
-      row: (name: string) => `data-testid search row ${name}`,
     },
   },
   PublicDashboards: {

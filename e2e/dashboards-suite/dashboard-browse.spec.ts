@@ -49,12 +49,4 @@ describe.skip('Dashboard browse', () => {
     e2e.flows.confirmDelete();
     e2e.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard').should('not.exist');
   });
-
-  afterEach(() => {
-    // Permanently delete dashboard
-    e2e.pages.RecentlyDeleted.visit();
-    e2e.pages.Search.table.row('E2E Test - Import Dashboard').find('[type="checkbox"]').click({ force: true });
-    cy.contains('button', 'Delete permanently').click();
-    e2e.flows.confirmDelete();
-  });
 });

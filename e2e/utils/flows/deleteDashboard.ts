@@ -29,14 +29,6 @@ export const deleteDashboard = ({ quick = false, title, uid }: DeleteDashboardCo
 
 const quickDelete = (uid: string) => {
   cy.request('DELETE', fromBaseUrl(`/api/dashboards/uid/${uid}`));
-  cy.window().then((win: Cypress.AUTWindow) => {
-    if (
-      win.grafanaBootData.settings.featureToggles.dashboardRestore &&
-      win.grafanaBootData.settings.featureToggles.dashboardRestoreUI
-    ) {
-      cy.request('DELETE', fromBaseUrl(`/api/dashboards/uid/${uid}/trash`));
-    }
-  });
 };
 
 const uiDelete = (uid: string, title: string) => {
