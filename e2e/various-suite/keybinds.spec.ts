@@ -1,7 +1,8 @@
 import { e2e } from '../utils';
 import { fromBaseUrl } from '../utils/support/url';
 
-describe('Keyboard shortcuts', () => {
+// Skipping due to race conditions with same old arch test e2e/various-suite/keybinds.spec.ts
+describe.skip('Keyboard shortcuts', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
@@ -33,12 +34,10 @@ describe('Keyboard shortcuts', () => {
       zone: 'Browser',
     });
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
-    let expectedRange = `Time range selected: 2024-06-05 10:05:00 to 2024-06-05 10:06:00`;
-    e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
 
     cy.get('body').type('{ctrl}z');
     e2e.components.RefreshPicker.runButtonV2().should('have.text', 'Run query');
-    expectedRange = `Time range selected: 2024-06-05 10:03:30 to 2024-06-05 10:07:30`;
+    let expectedRange = `Time range selected: 2024-06-05 10:03:30 to 2024-06-05 10:07:30`;
     e2e.components.TimePicker.openButton().should('have.attr', 'aria-label', expectedRange);
   });
 

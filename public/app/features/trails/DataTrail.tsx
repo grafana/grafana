@@ -504,6 +504,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState({
         otelTargets,
         otelJoinQuery,
+        useOtelExperience: false,
       });
     }
   }
@@ -550,6 +551,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       this.setState({
         otelTargets: { jobs: [], instances: [] },
         otelJoinQuery: '',
+        useOtelExperience: false,
       });
     }
   }
