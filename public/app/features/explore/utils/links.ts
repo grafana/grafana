@@ -19,6 +19,7 @@ import {
   DataLinkPostProcessor,
   ExploreUrlState,
   urlUtil,
+  FieldType,
 } from '@grafana/data';
 import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -136,6 +137,21 @@ export const getFieldLinksForExplore = (options: {
       },
       text: 'Data',
     };
+
+    if (field.type === FieldType.other && field.hasOwnProperty('typeInfo')) {
+      // handle special datasource stuff here
+      const specialField: Field & {
+        typeInfo?: { frame: string };
+      } = field;
+
+      if (specialField.typeInfo?.frame === 'json.RawMessage') {
+        Object.entries(field.values[rowIndex]).forEach((value) => {
+          scopedVars[value[0]] = {
+            value: value[1],
+          };
+        });
+      }
+    }
 
     dataFrame.fields.forEach((f) => {
       if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
