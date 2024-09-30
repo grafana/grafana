@@ -2595,16 +2595,6 @@
             "in": "query"
           },
           {
-            "enum": [
-              "latest"
-            ],
-            "type": "string",
-            "format": "string",
-            "description": "Sort order of results",
-            "name": "sort",
-            "in": "query"
-          },
-          {
             "type": "string",
             "description": "Session UID of a session",
             "name": "uid",
