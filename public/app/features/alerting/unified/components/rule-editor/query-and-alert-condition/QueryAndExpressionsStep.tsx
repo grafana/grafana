@@ -20,7 +20,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
@@ -656,7 +656,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                     onClick={() => runQueriesPreview()}
                     disabled={emptyQueries}
                   >
-                    Preview
+                    {isAdvancedMode
+                      ? t('alerting.queryAndExpressionsStep.preview', 'Preview')
+                      : t('alerting.queryAndExpressionsStep.previewCondition', 'Preview alert rule condition')}
                   </Button>
                 )}
               </Stack>

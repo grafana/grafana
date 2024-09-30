@@ -199,7 +199,9 @@
       "disableAdvancedOptions": {
         "question": "Do you want to deactivate advanced options?",
         "text": "The selected queries and expressions cannot be converted. If you choose to deactivate the advanced options, your query and condition will be reset to the default settings."
-      }
+      },
+      "preview": "Preview",
+      "previewCondition": "Preview alert rule condition"
     },
     "rule-groups": {
       "delete": {
