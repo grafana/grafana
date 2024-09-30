@@ -3,6 +3,7 @@ package pluginsintegration
 import (
 	"github.com/google/wire"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -139,13 +140,13 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	finder.ProvideLocalFinder,
 	wire.Bind(new(finder.Finder), new(*finder.Local)),
-	ProvideClientDecorator,
-	wire.Bind(new(plugins.Client), new(*client.Decorator)),
+	ProvideClientWithMiddlewares,
+	wire.Bind(new(plugins.Client), new(*backend.MiddlewareHandler)),
 	managedplugins.NewNoop,
 	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
 )
 
-func ProvideClientDecorator(
+func ProvideClientWithMiddlewares(
 	cfg *setting.Cfg,
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
@@ -153,23 +154,23 @@ func ProvideClientDecorator(
 	cachingService caching.CachingService,
 	features featuremgmt.FeatureToggles,
 	promRegisterer prometheus.Registerer,
-) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features, promRegisterer, pluginRegistry)
+) (*backend.MiddlewareHandler, error) {
+	return NewMiddlewareHandler(cfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features, promRegisterer, pluginRegistry)
 }
 
-func NewClientDecorator(
+func NewMiddlewareHandler(
 	cfg *setting.Cfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, cachingService caching.CachingService, features featuremgmt.FeatureToggles,
 	promRegisterer prometheus.Registerer, registry registry.Service,
-) (*client.Decorator, error) {
+) (*backend.MiddlewareHandler, error) {
 	c := client.ProvideService(pluginRegistry)
 	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features, promRegisterer, registry)
-	return client.NewDecorator(c, middlewares...)
+	return backend.HandlerFromMiddlewares(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features featuremgmt.FeatureToggles, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
-	middlewares := []plugins.ClientMiddleware{
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features featuremgmt.FeatureToggles, promRegisterer prometheus.Registerer, registry registry.Service) []backend.HandlerMiddleware {
+	middlewares := []backend.HandlerMiddleware{
 		clientmiddleware.NewPluginRequestMetaMiddleware(),
 		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewMetricsMiddleware(promRegisterer, registry),
@@ -187,7 +188,6 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
-		clientmiddleware.NewResourceResponseMiddleware(),
 		clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features),
 		clientmiddleware.NewForwardIDMiddleware(),
 	)
