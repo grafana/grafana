@@ -22,6 +22,7 @@ import (
 )
 
 const trace_prefix = "sql.resource."
+const defaultPollingInterval = 100 * time.Millisecond
 
 type Backend interface {
 	resource.StorageBackend
@@ -30,8 +31,9 @@ type Backend interface {
 }
 
 type BackendOptions struct {
-	DBProvider db.DBProvider
-	Tracer     trace.Tracer
+	DBProvider      db.DBProvider
+	Tracer          trace.Tracer
+	PollingInterval time.Duration
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -43,12 +45,17 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 
+	pollingInterval := opts.PollingInterval
+	if pollingInterval == 0 {
+		pollingInterval = defaultPollingInterval
+	}
 	return &backend{
-		done:       ctx.Done(),
-		cancel:     cancel,
-		log:        log.New("sql-resource-server"),
-		tracer:     opts.Tracer,
-		dbProvider: opts.DBProvider,
+		done:            ctx.Done(),
+		cancel:          cancel,
+		log:             log.New("sql-resource-server"),
+		tracer:          opts.Tracer,
+		dbProvider:      opts.DBProvider,
+		pollingInterval: pollingInterval,
 	}, nil
 }
 
@@ -70,6 +77,7 @@ type backend struct {
 
 	// watch streaming
 	//stream chan *resource.WatchEvent
+	pollingInterval time.Duration
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -180,7 +188,6 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 
 		return nil
 	})
-
 	return newVersion, err
 }
 
@@ -512,8 +519,7 @@ func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.Writte
 }
 
 func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan<- *resource.WrittenEvent) {
-	interval := 100 * time.Millisecond // TODO make this configurable
-	t := time.NewTicker(interval)
+	t := time.NewTicker(b.pollingInterval)
 	defer close(stream)
 	defer t.Stop()
 
@@ -526,7 +532,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 			grv, err := b.listLatestRVs(ctx)
 			if err != nil {
 				b.log.Error("get the latest resource version", "err", err)
-				t.Reset(interval)
+				t.Reset(b.pollingInterval)
 				continue
 			}
 			for group, items := range grv {
@@ -543,7 +549,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 					next, err := b.poll(ctx, group, resource, since[group][resource], stream)
 					if err != nil {
 						b.log.Error("polling for resource", "err", err)
-						t.Reset(interval)
+						t.Reset(b.pollingInterval)
 						continue
 					}
 					if next > since[group][resource] {
@@ -552,7 +558,7 @@ func (b *backend) poller(ctx context.Context, since groupResourceRV, stream chan
 				}
 			}
 
-			t.Reset(interval)
+			t.Reset(b.pollingInterval)
 		}
 	}
 }
@@ -636,7 +642,8 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 					Resource:  rec.Key.Resource,
 					Name:      rec.Key.Name,
 				},
-				Type: resource.WatchEvent_Type(rec.Action),
+				Type:       resource.WatchEvent_Type(rec.Action),
+				PreviousRV: rec.PreviousRV,
 			},
 			ResourceVersion: rec.ResourceVersion,
 			// Timestamp:  , // TODO: add timestamp
@@ -663,15 +670,16 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// if there wasn't a row associated with the given resource, we create one with
-		// version 1
+		// version 2 to match the etcd behavior.
 		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
-			SQLTemplate: sqltemplate.New(d),
-			Group:       key.Group,
-			Resource:    key.Resource,
+			SQLTemplate:     sqltemplate.New(d),
+			Group:           key.Group,
+			Resource:        key.Resource,
+			resourceVersion: &resourceVersion{1},
 		}); err != nil {
 			return 0, fmt.Errorf("insert into resource_version: %w", err)
 		}
-		return 1, nil
+		return 2, nil
 	}
 
 	if err != nil {
