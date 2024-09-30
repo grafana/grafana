@@ -118,7 +118,7 @@ func getSelectors(expr string) ([]string, error) {
 
 // SuggestionRequest is the request body for the GetSuggestions resource.
 type SuggestionRequest struct {
-	// LabelName, if provides, will results in label values being returned for the given label name.
+	// LabelName, if provided, will result in label values being returned for the given label name.
 	LabelName string `json:"labelName"`
 
 	Queries []string `json:"queries"`
