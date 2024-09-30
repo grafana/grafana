@@ -32,7 +32,7 @@ func (is indexServer) Index(ctx context.Context, req *IndexRequest) (*IndexRespo
 }
 
 // Init sets the resource server on the index server
-// so we can call the resouce server from the index server
+// so we can call the resource server from the index server
 // TODO: a chicken and egg problem - index server needs the resource server but the resource server is created with the index server
 func (is *indexServer) Init(rs *server) {
 	is.s = rs
