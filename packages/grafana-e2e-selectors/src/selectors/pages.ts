@@ -57,6 +57,7 @@ export const Pages = {
       navV2: 'data-testid Dashboard navigation',
       publicDashboardTag: 'data-testid public dashboard tag',
       shareButton: 'data-testid share-button',
+      settingsButton: 'data-testid settings-button',
       scrollContainer: 'data-testid Dashboard canvas scroll container',
       newShareButton: {
         container: 'data-testid new share button',
@@ -239,6 +240,9 @@ export const Pages = {
      */
     dashboards: (title: string) => `Dashboard search item ${title}`,
   },
+  RecentlyDeleted: {
+    url: '/dashboard/recently-deleted',
+  },
   SaveDashboardAsModal: {
     newName: 'Save dashboard title field',
     save: 'Save dashboard button',
@@ -286,23 +290,51 @@ export const Pages = {
     },
   },
   ShareDashboardDrawer: {
+    ShareInternally: {
+      container: 'data-testid share internally drawer container',
+      lockTimeRangeSwitch: 'data-testid share internally lock time range switch',
+      shortenUrlSwitch: 'data-testid share internally shorten url switch',
+      copyUrlButton: 'data-testid share internally copy url button',
+    },
     ShareExternally: {
       container: 'data-testid share externally drawer container',
-      copyUrlButton: 'data-testid share externally copy url button',
+      publicAlert: 'data-testid public share alert',
+      emailSharingAlert: 'data-testid email share alert',
       shareTypeSelect: 'data-testid share externally share type select',
+      Creation: {
+        PublicShare: {
+          createButton: 'data-testid public share dashboard create button',
+          cancelButton: 'data-testid public share dashboard cancel button',
+        },
+        EmailShare: {
+          createButton: 'data-testid email share dashboard create button',
+          cancelButton: 'data-testid email share dashboard cancel button',
+        },
+        willBePublicCheckbox: 'data-testid share dashboard will be public checkbox',
+      },
+      Configuration: {
+        enableTimeRangeSwitch: 'data-testid share externally enable time range switch',
+        enableAnnotationsSwitch: 'data-testid share externally enable annotations switch',
+        copyUrlButton: 'data-testid share externally copy url button',
+        revokeAccessButton: 'data-testid share externally revoke access button',
+        toggleAccessButton: 'data-testid share externally pause or resume access button',
+      },
     },
     ShareSnapshot: {
+      url: (key: string) => `/dashboard/snapshot/${key}`,
       container: 'data-testid share snapshot drawer container',
+      publishSnapshot: 'data-testid share snapshot publish button',
+      copyUrlButton: 'data-testid share snapshot copy url button',
     },
   },
   ExportDashboardDrawer: {
     ExportAsJson: {
-      container: 'data-testid export as Json drawer container',
-      codeEditor: 'data-testid export as Json code editor',
-      exportExternallyToggle: 'data-testid export externally toggle type select',
-      saveToFileButton: 'data-testid save to file button',
-      copyToClipboardButton: 'data-testid copy to clipboard button',
-      cancelButton: 'data-testid cancel button',
+      container: 'data-testid export as json drawer container',
+      codeEditor: 'data-testid export as json code editor',
+      exportExternallyToggle: 'data-testid export as json externally switch',
+      saveToFileButton: 'data-testid export as json save to file button',
+      copyToClipboardButton: 'data-testid export as json copy to clipboard button',
+      cancelButton: 'data-testid export as json cancel button',
     },
   },
   PublicDashboard: {
@@ -374,6 +406,10 @@ export const Pages = {
     url: '/?search=openn',
     FolderView: {
       url: '/?search=open&layout=folders',
+    },
+    table: {
+      body: 'data-testid search-table',
+      row: (name: string) => `data-testid search row ${name}`,
     },
   },
   PublicDashboards: {

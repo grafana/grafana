@@ -35,13 +35,19 @@ func Test_buildBasePath(t *testing.T) {
 		expected    string
 	}{
 		{
-			description: "domain starts with http://localhost, should return domain",
-			domain:      "http://localhost:8080",
+			description: "domain starts with http://, should return domain",
+			domain:      "http://some-domain:8080",
 			clusterSlug: "anything",
-			expected:    "http://localhost:8080",
+			expected:    "http://some-domain:8080",
 		},
 		{
-			description: "domain doesn't start with http://localhost, should build a string using the domain and clusterSlug",
+			description: "domain starts with https://, should return domain",
+			domain:      "https://some-domain:8080",
+			clusterSlug: "anything",
+			expected:    "https://some-domain:8080",
+		},
+		{
+			description: "domain doesn't start with http or https, should build a string using the domain and clusterSlug",
 			domain:      "gms-dev",
 			clusterSlug: "us-east-1",
 			expected:    "https://cms-us-east-1.gms-dev/cloud-migrations",

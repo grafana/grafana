@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
-	"go.opentelemetry.io/otel/trace"
 	"xorm.io/xorm"
 )
 
-func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error) {
+func getEngineMySQL(getter *sectionGetter, tracer tracing.Tracer) (*xorm.Engine, error) {
 	config := mysql.NewConfig()
 	config.User = getter.String("db_user")
 	config.Passwd = getter.String("db_pass")
@@ -31,6 +31,7 @@ func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error)
 	config.Loc = time.UTC
 	config.AllowNativePasswords = true
 	config.ClientFoundRows = true
+	config.ParseTime = true
 
 	// allow executing multiple SQL statements in a single roundtrip, and also
 	// enable executing the CALL statement to run stored procedures that execute
@@ -50,6 +51,8 @@ func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error)
 	}
 
 	// FIXME: get rid of xorm
+	// TODO figure out why wrapping the db driver with hooks causes mysql errors when writing
+	//driverName := sqlstore.WrapDatabaseDriverWithHooks(db.DriverMySQL, tracer)
 	engine, err := xorm.NewEngine(db.DriverMySQL, config.FormatDSN())
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
@@ -62,7 +65,7 @@ func getEngineMySQL(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error)
 	return engine, nil
 }
 
-func getEnginePostgres(getter *sectionGetter, _ trace.Tracer) (*xorm.Engine, error) {
+func getEnginePostgres(getter *sectionGetter, tracer tracing.Tracer) (*xorm.Engine, error) {
 	dsnKV := map[string]string{
 		"user":     getter.String("db_user"),
 		"password": getter.String("db_pass"),

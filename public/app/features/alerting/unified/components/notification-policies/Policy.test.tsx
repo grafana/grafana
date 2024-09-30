@@ -2,6 +2,7 @@ import { render, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { first, noop } from 'lodash';
 import { Router } from 'react-router-dom';
+import { CompatRouter } from 'react-router-dom-v5-compat';
 
 import { config, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
@@ -347,7 +348,9 @@ describe('Policy', () => {
 const renderPolicy = (element: JSX.Element) =>
   render(
     <Router history={locationService.getHistory()}>
-      <AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>
+      <CompatRouter>
+        <AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>
+      </CompatRouter>
     </Router>
   );
 

@@ -15,15 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/idtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func Test_ProvideService(t *testing.T) {
-	t.Run("should register post auth hook when feature flag is enabled", func(t *testing.T) {
-		features := featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding)
-
+	t.Run("should register post auth hook", func(t *testing.T) {
 		var hookRegistered bool
 		authnService := &authntest.MockService{
 			RegisterPostAuthHookFunc: func(_ authn.PostAuthHookFn, _ uint) {
@@ -31,22 +28,8 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
+		_ = ProvideService(setting.NewCfg(), nil, nil, authnService, nil)
 		assert.True(t, hookRegistered)
-	})
-
-	t.Run("should not register post auth hook when feature flag is disabled", func(t *testing.T) {
-		features := featuremgmt.WithFeatures()
-
-		var hookRegistered bool
-		authnService := &authntest.MockService{
-			RegisterPostAuthHookFunc: func(_ authn.PostAuthHookFn, _ uint) {
-				hookRegistered = true
-			},
-		}
-
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
-		assert.False(t, hookRegistered)
 	})
 }
 
@@ -67,7 +50,6 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
@@ -78,7 +60,6 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
 		token, _, err := s.SignIdentity(context.Background(), &authn.Identity{
@@ -104,7 +85,6 @@ func TestService_SignIdentity(t *testing.T) {
 	t.Run("should sign identity with authenticated by if user is externally authenticated", func(t *testing.T) {
 		s := ProvideService(
 			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
-			featuremgmt.WithFeatures(featuremgmt.FlagIdForwarding),
 			&authntest.FakeService{}, nil,
 		)
 		_, gotClaims, err := s.SignIdentity(context.Background(), &authn.Identity{

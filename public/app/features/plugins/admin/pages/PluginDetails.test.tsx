@@ -326,6 +326,24 @@ describe('Plugin details page', () => {
       expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
     });
 
+    it('should not display an update button for a plugin that is pre installed', async () => {
+      const { queryByRole, getByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        hasUpdate: true,
+        isPreinstalled: { found: true, withVersion: true },
+      });
+
+      // Does not display an "update" button
+      expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();
+
+      // Does not display "install" button
+      expect(queryByRole('button', { name: /^install/i })).not.toBeInTheDocument();
+
+      // Display an uninstall button but disabled
+      expect(getByText(/Uninstall/i).closest('button')).toBeDisabled();
+    });
+
     it('should display an install button for enterprise plugins if license is valid', async () => {
       config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
 
@@ -895,13 +913,13 @@ describe('Plugin details page', () => {
       config.featureToggles.pluginsDetailsRightPanel = false;
     });
 
-    it('should display Last updated and report abuse information', async () => {
+    it('should display Last updated and report a concern information', async () => {
       const id = 'right-panel-test-plugin';
       const updatedAt = '2023-10-26T16:54:55.000Z';
       const { queryByText } = renderPluginDetails({ id, updatedAt });
       expect(queryByText('Last updated:')).toBeVisible();
       expect(queryByText('10/26/2023')).toBeVisible();
-      expect(queryByText('Report Abuse')).toBeVisible();
+      expect(queryByText('Report a concern')).toBeVisible();
     });
 
     it('should not display Last updated if there is no updated At data', async () => {

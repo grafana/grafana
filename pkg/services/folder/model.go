@@ -54,7 +54,7 @@ type Folder struct {
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
-var RootFolder = &Folder{ID: 0, Title: "Root", UID: GeneralFolderUID, ParentUID: ""}
+var RootFolder = &Folder{ID: 0, Title: "Dashbboards", UID: GeneralFolderUID, ParentUID: ""}
 var SharedWithMeFolder = Folder{
 	Title:       "Shared with me",
 	Description: "Dashboards and folders shared with me",

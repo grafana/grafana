@@ -6,7 +6,7 @@ jest.mock('./cache', () => ({
 
 import { server } from './pluginLoader.mock';
 import { SystemJS } from './systemjs';
-import { decorateSystemJSFetch, decorateSystemJSResolve } from './systemjsHooks';
+import { decorateSystemJSFetch, decorateSystemJSResolve, getLoadPluginCssUrl } from './systemjsHooks';
 import { SystemJSWithLoaderHooks } from './types';
 
 describe('SystemJS Loader Hooks', () => {
@@ -44,6 +44,7 @@ describe('SystemJS Loader Hooks', () => {
       expect(source).toContain('var pluginPath = "/public/plugins/";');
     });
   });
+
   describe('decorateSystemJSResolve', () => {
     it('removes legacy wildcard from resolved url', () => {
       const id = '/public/plugins/my-datasource/styles.css!';
@@ -103,5 +104,30 @@ describe('SystemJS Loader Hooks', () => {
 
       expect(result).toBe('http://localhost/public/plugins/my-plugin/module.js?_cache=1234');
     });
+  });
+});
+
+describe('getLoadPluginCssUrl', () => {
+  test('should return a fallback path if SystemJS.entries is empty', () => {
+    const path = 'plugins/sample-plugin/styles/dark.css';
+    const result = getLoadPluginCssUrl(path);
+
+    expect(result).toBe(`/public/${path}`);
+  });
+
+  test('should return a resolved url if SystemJS a entry exists', () => {
+    SystemJS.set('http://localhost/public/plugins/sample-plugin/module.js', {});
+    const path = 'plugins/sample-plugin/styles/dark.css';
+    const result = getLoadPluginCssUrl(path);
+
+    expect(result).toBe('http://localhost/public/plugins/sample-plugin/styles/dark.css');
+  });
+
+  test('should return a resolved url for entries that live on a cdn', () => {
+    SystemJS.set('http://my-cdn.com/sample-cdn-plugin/1.0.0/public/plugins/sample-cdn-plugin/module.js', {});
+    const path = 'plugins/sample-cdn-plugin/styles/dark.css';
+    const result = getLoadPluginCssUrl(path);
+
+    expect(result).toBe('http://my-cdn.com/sample-cdn-plugin/1.0.0/public/plugins/sample-cdn-plugin/styles/dark.css');
   });
 });

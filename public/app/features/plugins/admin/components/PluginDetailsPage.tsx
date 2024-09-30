@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -113,15 +113,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
     }),
     // Needed due to block formatting context
-    tabContent: config.featureToggles.bodyScrolling
-      ? css({
-          paddingLeft: '5px',
-        })
-      : css({
-          overflow: 'auto',
-          height: '100%',
-          paddingLeft: '5px',
-        }),
+    tabContent: css({
+      paddingLeft: '5px',
+    }),
   };
 };
 

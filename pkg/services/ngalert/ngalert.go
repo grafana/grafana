@@ -77,6 +77,7 @@ func ProvideService(
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
 	httpClientProvider httpclient.Provider,
+	resourcePermissions accesscontrol.ReceiverPermissionsService,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                  cfg,
@@ -98,12 +99,13 @@ func ProvideService(
 		dashboardService:     dashboardService,
 		renderService:        renderService,
 		bus:                  bus,
-		accesscontrolService: accesscontrolService,
+		AccesscontrolService: accesscontrolService,
 		annotationsRepo:      annotationsRepo,
 		pluginsStore:         pluginsStore,
 		tracer:               tracer,
 		store:                ruleStore,
 		httpClientProvider:   httpClientProvider,
+		ResourcePermissions:  resourcePermissions,
 	}
 
 	if ng.IsDisabled() {
@@ -147,7 +149,8 @@ type AlertNG struct {
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
-	accesscontrolService accesscontrol.Service
+	AccesscontrolService accesscontrol.Service
+	ResourcePermissions  accesscontrol.ReceiverPermissionsService
 	annotationsRepo      annotations.Repository
 	store                *store.DBstore
 
@@ -308,7 +311,21 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	moa, err := notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, ng.FeatureToggles, overrides...)
+	moa, err := notifier.NewMultiOrgAlertmanager(
+		ng.Cfg,
+		ng.store,
+		ng.store,
+		ng.KVStore,
+		ng.store,
+		decryptFn,
+		multiOrgMetrics,
+		ng.NotificationService,
+		ng.ResourcePermissions,
+		moaLogger,
+		ng.SecretsService,
+		ng.FeatureToggles,
+		overrides...,
+	)
 	if err != nil {
 		return err
 	}
@@ -346,6 +363,10 @@ func (ng *AlertNG) init() error {
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService)
 	conditionValidator := eval.NewConditionValidator(ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 
+	if !ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagGrafanaManagedRecordingRules) {
+		// Force-disable the feature if the feature toggle is not on - sets us up for feature toggle removal.
+		ng.Cfg.UnifiedAlerting.RecordingRules.Enabled = false
+	}
 	recordingWriter, err := createRecordingWriter(ng.FeatureToggles, ng.Cfg.UnifiedAlerting.RecordingRules, ng.httpClientProvider, clk, ng.Metrics.GetRemoteWriterMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to initialize recording writer: %w", err)
@@ -362,7 +383,7 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
-		FeatureToggles:       ng.FeatureToggles,
+		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
@@ -415,22 +436,26 @@ func (ng *AlertNG) init() error {
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, false),
 		configStore,
 		ng.store,
+		ng.store,
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
+		ng.ResourcePermissions,
 	)
 	provisioningReceiverService := notifier.NewReceiverService(
 		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
 		configStore,
 		ng.store,
+		ng.store,
 		ng.SecretsService,
 		ng.store,
 		ng.Log,
+		ng.ResourcePermissions,
 	)
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store)
+	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
@@ -483,7 +508,7 @@ func (ng *AlertNG) init() error {
 		return key.LogContext(), true
 	})
 
-	return DeclareFixedRoles(ng.accesscontrolService)
+	return DeclareFixedRoles(ng.AccesscontrolService, ng.FeatureToggles)
 }
 
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
@@ -667,7 +692,7 @@ func createRemoteAlertmanager(cfg remote.AlertmanagerConfig, kvstore kvstore.KVS
 func createRecordingWriter(featureToggles featuremgmt.FeatureToggles, settings setting.RecordingRuleSettings, httpClientProvider httpclient.Provider, clock clock.Clock, m *metrics.RemoteWriter) (schedule.RecordingWriter, error) {
 	logger := log.New("ngalert.writer")
 
-	if featureToggles.IsEnabledGlobally(featuremgmt.FlagGrafanaManagedRecordingRules) {
+	if settings.Enabled {
 		return writer.NewPrometheusWriter(settings, httpClientProvider, clock, logger, m)
 	}
 

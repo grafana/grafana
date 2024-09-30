@@ -481,6 +481,33 @@ describe('LogsPanel', () => {
       expect(screen.getByText('logline text')).toBeInTheDocument();
     });
 
+    it('updates the provided fields instead of the log line', async () => {
+      const { rerender, props } = setup({
+        data: {
+          series,
+        },
+        options: {
+          showLabels: false,
+          showTime: false,
+          wrapLogMessage: false,
+          showCommonLabels: false,
+          prettifyLogMessage: false,
+          sortOrder: LogsSortOrder.Descending,
+          dedupStrategy: LogsDedupStrategy.none,
+          enableLogDetails: true,
+          onClickHideField: undefined,
+          onClickShowField: undefined,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(screen.getByText('logline text')).toBeInTheDocument();
+
+      rerender(<LogsPanel {...props} options={{ ...props.options, displayedFields: ['app'] }} />);
+
+      expect(screen.getByText('app=common_app')).toBeInTheDocument();
+    });
+
     it('enables the behavior with a default implementation', async () => {
       setup({
         data: {

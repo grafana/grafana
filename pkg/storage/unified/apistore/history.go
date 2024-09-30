@@ -3,15 +3,17 @@ package apistore
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -57,7 +59,7 @@ func (r *historyREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *historyREST) Connect(ctx context.Context, uid string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
+	info, err := NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -100,4 +102,13 @@ func (r *historyREST) Connect(ctx context.Context, uid string, opts runtime.Obje
 		}
 		responder.Object(http.StatusOK, list)
 	}), nil
+}
+
+// TODO: This is a temporary copy of the function from pkg/services/apiserver/endpoints/request/namespace.go
+func NamespaceInfoFrom(ctx context.Context, requireOrgID bool) (claims.NamespaceInfo, error) {
+	info, err := claims.ParseNamespace(request.NamespaceValue(ctx))
+	if err == nil && requireOrgID && info.OrgID < 1 {
+		return info, fmt.Errorf("expected valid orgId in namespace")
+	}
+	return info, err
 }

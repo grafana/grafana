@@ -112,8 +112,8 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.NotNil(t, cdt.QueryDataReq)
 			require.Len(t, cdt.QueryDataReq.Headers, 3)
 			require.Equal(t, "test", cdt.QueryDataReq.Headers[otherHeader])
-			require.Equal(t, "Bearer access-token", cdt.QueryDataReq.Headers[tokenHeaderName])
-			require.Equal(t, "id-token", cdt.QueryDataReq.Headers[idTokenHeaderName])
+			require.Equal(t, "Bearer access-token", cdt.QueryDataReq.Headers[backend.OAuthIdentityTokenHeaderName])
+			require.Equal(t, "id-token", cdt.QueryDataReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
 		})
 
 		t.Run("Should forward OAuth Identity when calling CallResource", func(t *testing.T) {
@@ -125,10 +125,10 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.NotNil(t, cdt.CallResourceReq)
 			require.Len(t, cdt.CallResourceReq.Headers, 3)
 			require.Equal(t, "test", cdt.CallResourceReq.Headers[otherHeader][0])
-			require.Len(t, cdt.CallResourceReq.Headers[tokenHeaderName], 1)
-			require.Equal(t, "Bearer access-token", cdt.CallResourceReq.Headers[tokenHeaderName][0])
-			require.Len(t, cdt.CallResourceReq.Headers[idTokenHeaderName], 1)
-			require.Equal(t, "id-token", cdt.CallResourceReq.Headers[idTokenHeaderName][0])
+			require.Len(t, cdt.CallResourceReq.Headers[backend.OAuthIdentityTokenHeaderName], 1)
+			require.Equal(t, "Bearer access-token", cdt.CallResourceReq.Headers[backend.OAuthIdentityTokenHeaderName][0])
+			require.Len(t, cdt.CallResourceReq.Headers[backend.OAuthIdentityIDTokenHeaderName], 1)
+			require.Equal(t, "id-token", cdt.CallResourceReq.Headers[backend.OAuthIdentityIDTokenHeaderName][0])
 		})
 
 		t.Run("Should forward OAuth Identity when calling CheckHealth", func(t *testing.T) {
@@ -140,8 +140,8 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.NotNil(t, cdt.CheckHealthReq)
 			require.Len(t, cdt.CheckHealthReq.Headers, 3)
 			require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
-			require.Equal(t, "Bearer access-token", cdt.CheckHealthReq.Headers[tokenHeaderName])
-			require.Equal(t, "id-token", cdt.CheckHealthReq.Headers[idTokenHeaderName])
+			require.Equal(t, "Bearer access-token", cdt.CheckHealthReq.Headers[backend.OAuthIdentityTokenHeaderName])
+			require.Equal(t, "id-token", cdt.CheckHealthReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
 		})
 	})
 }

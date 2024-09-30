@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -326,6 +326,7 @@ export const DashNav = memo<Props>((props) => {
         <ToolbarButton
           tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
           icon="cog"
+          data-testid={e2eSelectors.pages.Dashboard.DashNav.settingsButton}
           onClick={onOpenSettings}
           key="button-settings"
         />

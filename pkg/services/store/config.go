@@ -126,11 +126,11 @@ type StorageGCSConfig struct {
 	CredentialsFile string `json:"credentialsFile"`
 }
 
-func newStorage(cfg RootStorageConfig, localWorkCache string) (storageRuntime, error) {
+func newStorage(cfg RootStorageConfig, _ string) (storageRuntime, error) {
 	switch cfg.Type {
 	case rootStorageTypeDisk:
 		return newDiskStorage(RootStorageMeta{}, cfg), nil
 	}
 
-	return nil, fmt.Errorf("unsupported store: " + cfg.Type)
+	return nil, fmt.Errorf("unsupported store: %s", cfg.Type)
 }

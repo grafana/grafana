@@ -326,11 +326,11 @@ func schema_aggregator_apis_aggregation_v0alpha1_Service(ref common.ReferenceCal
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type is the type of service to proxy.\n\nPossible enum values:\n - `\"admission\"` maps to pluginv2.AdmissionControl\n - `\"conversion\"` maps to pluginv2.ResourceConversion\n - `\"data\"` DataSourceServiceType maps to pluginv2.Data\n - `\"datsource-proxy\"` is a reverse proxy for making requests directly to the HTTP URL specified in datasource instance settings.\n - `\"route\"` maps pluginv2.Resource\n - `\"stream\"` maps to pluginv2.Stream",
+							Description: "Type is the type of service to proxy.\n\nPossible enum values:\n - `\"admission\"` maps to pluginv2.AdmissionControl\n - `\"conversion\"` maps to pluginv2.ResourceConversion\n - `\"datsource-proxy\"` is a reverse proxy for making requests directly to the HTTP URL specified in datasource instance settings.\n - `\"query\"` maps to pluginv2.Data\n - `\"route\"` maps pluginv2.Resource\n - `\"stream\"` maps to pluginv2.Stream",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"admission", "conversion", "data", "datsource-proxy", "route", "stream"},
+							Enum:        []interface{}{"admission", "conversion", "datsource-proxy", "query", "route", "stream"},
 						},
 					},
 					"method": {

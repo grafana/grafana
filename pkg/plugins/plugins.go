@@ -76,6 +76,7 @@ var (
 	_ = backend.CallResourceHandler(&Plugin{})
 	_ = backend.StreamHandler(&Plugin{})
 	_ = backend.AdmissionHandler(&Plugin{})
+	_ = backend.ConversionHandler(&Plugin{})
 )
 
 type AngularMeta struct {
@@ -111,18 +112,19 @@ type JSONData struct {
 	AutoEnabled bool `json:"autoEnabled"`
 
 	// Datasource settings
-	Annotations  bool            `json:"annotations"`
-	Metrics      bool            `json:"metrics"`
-	Alerting     bool            `json:"alerting"`
-	Explore      bool            `json:"explore"`
-	Table        bool            `json:"tables"`
-	Logs         bool            `json:"logs"`
-	Tracing      bool            `json:"tracing"`
-	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
-	BuiltIn      bool            `json:"builtIn,omitempty"`
-	Mixed        bool            `json:"mixed,omitempty"`
-	Streaming    bool            `json:"streaming"`
-	SDK          bool            `json:"sdk,omitempty"`
+	Annotations               bool            `json:"annotations"`
+	Metrics                   bool            `json:"metrics"`
+	Alerting                  bool            `json:"alerting"`
+	Explore                   bool            `json:"explore"`
+	Table                     bool            `json:"tables"`
+	Logs                      bool            `json:"logs"`
+	Tracing                   bool            `json:"tracing"`
+	QueryOptions              map[string]bool `json:"queryOptions,omitempty"`
+	BuiltIn                   bool            `json:"builtIn,omitempty"`
+	Mixed                     bool            `json:"mixed,omitempty"`
+	Streaming                 bool            `json:"streaming"`
+	SDK                       bool            `json:"sdk,omitempty"`
+	MultiValueFilterOperators bool            `json:"multiValueFilterOperators,omitempty"`
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
@@ -391,12 +393,12 @@ func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequ
 }
 
 // ConvertObject implements backend.AdmissionHandler.
-func (p *Plugin) ConvertObject(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+func (p *Plugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, ErrPluginUnavailable
 	}
-	return pluginClient.ConvertObject(ctx, req)
+	return pluginClient.ConvertObjects(ctx, req)
 }
 
 func (p *Plugin) File(name string) (fs.File, error) {
@@ -458,6 +460,7 @@ type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.AdmissionHandler
+	backend.ConversionHandler
 	backend.StreamHandler
 }
 
@@ -503,6 +506,7 @@ const (
 	ClassCore     Class = "core"
 	ClassBundled  Class = "bundled"
 	ClassExternal Class = "external"
+	ClassCDN      Class = "cdn"
 )
 
 func (c Class) String() string {

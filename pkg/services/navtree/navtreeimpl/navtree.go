@@ -164,19 +164,17 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	// remove user access if empty. Happens if grafana-auth-app is not injected
-	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && (sec.Children == nil || len(sec.Children) == 0) {
+	if sec := treeRoot.FindById(navtree.NavIDCfgAccess); sec != nil && len(sec.Children) == 0 {
 		treeRoot.RemoveSectionByID(navtree.NavIDCfgAccess)
 	}
 
 	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPinNavItems) {
-		bookmarks := s.buildBookmarksNavLinks(prefs, treeRoot)
-
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:           "Bookmarks",
 			Id:             navtree.NavIDBookmarks,
 			Icon:           "bookmark",
 			SortWeight:     navtree.WeightBookmarks,
-			Children:       bookmarks,
+			Children:       []*navtree.NavLink{},
 			EmptyMessageId: "bookmarks-empty",
 			Url:            s.cfg.AppSubURL + "/bookmarks",
 		})
@@ -203,6 +201,18 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 		Url:        homeUrl,
 		Icon:       "home-alt",
 		SortWeight: navtree.WeightHome,
+	}
+	ctx := c.Req.Context()
+	if s.features.IsEnabled(ctx, featuremgmt.FlagHomeSetupGuide) {
+		var children []*navtree.NavLink
+		// setup guide (a submenu item under Home)
+		children = append(children, &navtree.NavLink{
+			Id:         "home-setup-guide",
+			Text:       "Setup guide",
+			Url:        homeUrl + "/setup-guide",
+			SortWeight: navtree.WeightHome,
+		})
+		homeNode.Children = children
 	}
 	return homeNode
 }
@@ -335,39 +345,6 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 
 	return starredItemsChildNavs, nil
 }
-func (s *ServiceImpl) buildBookmarksNavLinks(prefs *pref.Preference, treeRoot *navtree.NavTreeRoot) []*navtree.NavLink {
-	bookmarksChildNavs := []*navtree.NavLink{}
-
-	bookmarkUrls := prefs.JSONData.Navbar.BookmarkUrls
-
-	if len(bookmarkUrls) > 0 {
-		for _, url := range bookmarkUrls {
-			item := treeRoot.FindByURL(url)
-			if item != nil {
-				bookmarksChildNavs = append(bookmarksChildNavs, &navtree.NavLink{
-					Id:             item.Id,
-					Text:           item.Text,
-					SubTitle:       item.SubTitle,
-					Icon:           item.Icon,
-					Img:            item.Img,
-					Url:            item.Url,
-					Target:         item.Target,
-					HideFromTabs:   item.HideFromTabs,
-					RoundIcon:      item.RoundIcon,
-					IsSection:      item.IsSection,
-					HighlightText:  item.HighlightText,
-					HighlightID:    item.HighlightID,
-					PluginID:       item.PluginID,
-					IsCreateAction: item.IsCreateAction,
-					Keywords:       item.Keywords,
-					ParentItem:     &navtree.NavLink{Id: navtree.NavIDBookmarks},
-				})
-			}
-		}
-	}
-
-	return bookmarksChildNavs
-}
 
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
@@ -440,11 +417,32 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsRead), ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead))) {
+	contactPointsPerms := []ac.Evaluator{
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+	}
+
+	// With the new alerting API, we have other permissions to consider. We don't want to consider these with the old
+	// alerting API to maintain backwards compatibility.
+	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
+		contactPointsPerms = append(contactPointsPerms,
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+		)
+	}
+
+	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Contact points", SubTitle: "Choose how to notify your  contact points when an alert instance fires", Id: "receivers", Url: s.cfg.AppSubURL + "/alerting/notifications",
 			Icon: "comment-alt-share",
 		})
+	}
+
+	if hasAccess(ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
+	)) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{Text: "Notification policies", SubTitle: "Determine how alerts are routed to contact points", Id: "am-routes", Url: s.cfg.AppSubURL + "/alerting/routes", Icon: "sitemap"})
 	}
 

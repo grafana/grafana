@@ -58,7 +58,7 @@ var (
 )
 
 type sqlResourceRequest struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	GUID       string
 	WriteEvent resource.WriteEvent
 }
@@ -70,6 +70,7 @@ func (r sqlResourceRequest) Validate() error {
 type historyPollResponse struct {
 	Key             resource.ResourceKey
 	ResourceVersion int64
+	PreviousRV      int64
 	Value           []byte
 	Action          int
 }
@@ -79,16 +80,32 @@ func (r *historyPollResponse) Results() (*historyPollResponse, error) {
 }
 
 type groupResourceRV map[string]map[string]int64
+
 type sqlResourceHistoryPollRequest struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	Resource             string
 	Group                string
 	SinceResourceVersion int64
 	Response             *historyPollResponse
 }
 
-func (r sqlResourceHistoryPollRequest) Validate() error {
+func (r *sqlResourceHistoryPollRequest) Validate() error {
 	return nil // TODO
+}
+
+func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) {
+	return &historyPollResponse{
+		Key: resource.ResourceKey{
+			Namespace: r.Response.Key.Namespace,
+			Group:     r.Response.Key.Group,
+			Resource:  r.Response.Key.Resource,
+			Name:      r.Response.Key.Name,
+		},
+		ResourceVersion: r.Response.ResourceVersion,
+		PreviousRV:      r.Response.PreviousRV,
+		Value:           r.Response.Value,
+		Action:          r.Response.Action,
+	}, nil
 }
 
 // sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
@@ -102,18 +119,28 @@ func (r *readResponse) Results() (*readResponse, error) {
 }
 
 type sqlResourceReadRequest struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	Request *resource.ReadRequest
 	*readResponse
 }
 
-func (r sqlResourceReadRequest) Validate() error {
+func (r *sqlResourceReadRequest) Validate() error {
 	return nil // TODO
+}
+
+func (r *sqlResourceReadRequest) Results() (*readResponse, error) {
+	return &readResponse{
+		ReadResponse: resource.ReadResponse{
+			Error:           r.ReadResponse.Error,
+			ResourceVersion: r.ReadResponse.ResourceVersion,
+			Value:           r.ReadResponse.Value,
+		},
+	}, nil
 }
 
 // List
 type sqlResourceListRequest struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	Request *resource.ListRequest
 }
 
@@ -126,7 +153,7 @@ type historyListRequest struct {
 	Options                        *resource.ListOptions
 }
 type sqlResourceHistoryListRequest struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	Request  *historyListRequest
 	Response *resource.ResourceWrapper
 }
@@ -150,7 +177,7 @@ func (r sqlResourceHistoryListRequest) Results() (*resource.ResourceWrapper, err
 // update RV
 
 type sqlResourceUpdateRVRequest struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	GUID            string
 	ResourceVersion int64
 }
@@ -174,7 +201,7 @@ func (r *resourceVersion) Results() (*resourceVersion, error) {
 }
 
 type sqlResourceVersionRequest struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	Group, Resource string
 	ReadOnly        bool
 	*resourceVersion
@@ -185,10 +212,15 @@ func (r sqlResourceVersionRequest) Validate() error {
 }
 
 type sqlResourceVersionListRequest struct {
-	*sqltemplate.SQLTemplate
+	sqltemplate.SQLTemplate
 	*groupResourceVersion
 }
 
-func (r sqlResourceVersionListRequest) Validate() error {
+func (r *sqlResourceVersionListRequest) Validate() error {
 	return nil // TODO
+}
+
+func (r *sqlResourceVersionListRequest) Results() (*groupResourceVersion, error) {
+	x := *r.groupResourceVersion
+	return &x, nil
 }

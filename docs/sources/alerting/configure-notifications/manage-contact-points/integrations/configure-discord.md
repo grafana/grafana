@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Discord
 title: Configure Discord for Alerting
-weight: 10
+weight: 0
 ---
 
 # Configure Discord for Alerting

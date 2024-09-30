@@ -18,12 +18,13 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
   const [isOpen, setIsOpen] = useState(false);
 
   const [_, buildUrl] = useAsyncFn(async () => {
+    DashboardInteractions.toolbarShareClick();
     return await buildShareUrl(dashboard, panel);
   }, [dashboard]);
 
   const onMenuClick = useCallback((isOpen: boolean) => {
     if (isOpen) {
-      DashboardInteractions.toolbarShareClick();
+      DashboardInteractions.toolbarShareDropdownClick();
     }
 
     setIsOpen(isOpen);
@@ -36,7 +37,7 @@ export default function ShareButton({ dashboard, panel }: { dashboard: Dashboard
       <Button
         data-testid={newShareButtonSelector.shareLink}
         size="sm"
-        tooltip={t('share-dashboard.share-button-tooltip', 'Copy shortened link')}
+        tooltip={t('share-dashboard.share-button-tooltip', 'Copy link')}
         onClick={buildUrl}
       >
         <Trans i18nKey="share-dashboard.share-button">Share</Trans>

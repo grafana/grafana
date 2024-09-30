@@ -1,8 +1,10 @@
 // Libraries
 import { useEffect, useMemo } from 'react';
+import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { UrlSyncContextProvider } from '@grafana/scenes';
+import { Alert, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -18,8 +20,8 @@ import { getDashboardScenePageStateManager } from './DashboardScenePageStateMana
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {}
 
 export function DashboardScenePage({ match, route, queryParams, history }: Props) {
+  const prevMatch = usePrevious(match);
   const stateManager = getDashboardScenePageStateManager();
-
   const { dashboard, isLoading, loadError } = stateManager.useState();
 
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
@@ -68,25 +70,29 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
 
   if (!dashboard) {
     return (
-      <Page layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
-        {isLoading && <PageLoader />}
-        {loadError && <h2>{loadError}</h2>}
+      <Page navId="dashboards/browse" layout={PageLayoutType.Canvas} data-testid={'dashboard-scene-page'}>
+        <Box paddingY={4} display="flex" direction="column" alignItems="center">
+          {isLoading && <PageLoader />}
+          {loadError && (
+            <Alert title="Dashboard failed to load" severity="error" data-testid="dashboard-not-found">
+              {loadError}
+            </Alert>
+          )}
+        </Box>
       </Page>
     );
   }
 
   // Do not render anything when transitioning from one dashboard to another
-  if (
-    match.params.type !== 'snapshot' &&
-    dashboard.state.uid &&
-    dashboard.state.uid !== match.params.uid &&
-    route.routeName !== DashboardRoutes.Home
-  ) {
+  // A bit tricky for transition to or from Home dashbord that does not have a uid in the url (but could have it in the dashboard model)
+  // if prevMatch is undefined we are going from normal route to home route or vice versa
+  if (match.params.type !== 'snapshot' && (!prevMatch || match.params.uid !== prevMatch?.params.uid)) {
+    console.log('skipping rendering');
     return null;
   }
 
   return (
-    <UrlSyncContextProvider scene={dashboard}>
+    <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
     </UrlSyncContextProvider>
