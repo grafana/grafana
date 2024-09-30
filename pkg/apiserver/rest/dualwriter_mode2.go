@@ -49,12 +49,14 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		return nil, err
 	}
 	if accIn.GetUID() != "" {
-		return nil, fmt.Errorf("there is an UID and it should not: %v", accIn.GetUID())
+		return nil, fmt.Errorf("UID should not be present: %v", accIn.GetUID())
 	}
 
-	if accIn.GetName() == "" && accIn.GetGenerateName() == "" {
-		return nil, fmt.Errorf("name is empty")
+	if accIn.GetGenerateName() == "" {
+		return nil, fmt.Errorf("generate name is empty")
 	}
+
+	accIn.SetName(accIn.GetGenerateName())
 
 	startLegacy := time.Now()
 	createdFromLegacy, err := d.Legacy.Create(ctx, in, createValidation, options)
@@ -284,14 +286,6 @@ func (d *DualWriterMode2) Update(ctx context.Context, name string, objInfo rest.
 	var method = "update"
 	log := d.Log.WithValues("name", name, "method", method)
 	ctx = klog.NewContext(ctx, log)
-
-	accIn, err := meta.Accessor(objInfo.UpdatedObject)
-	if err != nil {
-		return nil, false, err
-	}
-	if accIn.GetName() == "" && accIn.GetGenerateName() == "" {
-		return nil, false, fmt.Errorf("name is empty")
-	}
 
 	startLegacy := time.Now()
 	objFromLegacy, created, err := d.Legacy.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)

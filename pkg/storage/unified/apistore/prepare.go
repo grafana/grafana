@@ -85,6 +85,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
 	obj.SetResourceVersion("")
+	obj.SetName(previous.GetName())
+
+	if obj.GetGenerateName() == "" {
+		obj.SetGenerateName(obj.GetName())
+	}
 
 	// Read+write will verify that origin format is accurate
 	origin, err := obj.GetOriginInfo()
