@@ -16,6 +16,16 @@ jest.mock('uuid', () => ({
   v4: jest.fn().mockReturnValue('uuid'),
 }));
 
+beforeAll(() => {
+  // @ts-expect-error
+  jest.spyOn(global, 'setTimeout').mockImplementation((callback) => {
+    callback();
+  });
+});
+afterAll(() => {
+  jest.mocked(global.setTimeout).mockReset();
+});
+
 describe('runSplitQuery()', () => {
   let datasource: LokiDatasource;
   const range = {
@@ -48,6 +58,17 @@ describe('runSplitQuery()', () => {
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Retries failed requests', async () => {
+    jest
+      .mocked(datasource.runQuery)
+      .mockReturnValueOnce(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith((response) => {
+      // 3 days, 3 chunks, 1 retry, 4 requests.
+      expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+      
     });
   });
 
