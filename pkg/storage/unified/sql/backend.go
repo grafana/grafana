@@ -662,25 +662,16 @@ func (b *backend) poll(ctx context.Context, grp string, res string, since int64,
 // in a single roundtrip. This would reduce the latency of the operation, and also increase the
 // throughput of the system. This is a good candidate for a future optimization.
 func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemplate.Dialect, key *resource.ResourceKey) (newVersion int64, err error) {
-	// 1. Increase the resource version to the current epoch with microseconds precision.
-	// This is an update statement that will lock to row and prevent concurrent updates until the transaction is committed.
-	out, err := dbutil.Exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
+	// 1. Lock to row and prevent concurrent updates until the transaction is committed.
+	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
 		SQLTemplate:     sqltemplate.New(d),
 		Group:           key.Group,
 		Resource:        key.Resource,
 		resourceVersion: new(resourceVersion),
+		ReadOnly:        false, // This locks the row for update
 	})
-	if err != nil {
-		return 0, fmt.Errorf("increase resource version: %w", err)
-	}
-	rows, err := out.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("get rows affected: %w", err)
-	}
-
-	if rows == 0 {
-		// if there wasn't a row associated with the given resource, we create one with
-		// version 2 to match the etcd behavior.
+	if errors.Is(err, sql.ErrNoRows) {
+		// if there wasn't a row associated with the given resource
 		if _, err = dbutil.Exec(ctx, x, sqlResourceVersionInsert, sqlResourceVersionRequest{
 			SQLTemplate:     sqltemplate.New(d),
 			Group:           key.Group,
@@ -689,14 +680,29 @@ func resourceVersionAtomicInc(ctx context.Context, x db.ContextExecer, d sqltemp
 		}); err != nil {
 			return 0, fmt.Errorf("insert into resource_version: %w", err)
 		}
+	} else if err != nil {
+		return 0, fmt.Errorf("lock the resource version: %w", err)
 	}
 
-	// Fetch the new resource version
-	res, err := dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
+	// 2. Increase the resource version to the current epoch with microseconds precision.
+	// This is an update statement that will
+	_, err = dbutil.Exec(ctx, x, sqlResourceVersionInc, sqlResourceVersionRequest{
 		SQLTemplate:     sqltemplate.New(d),
 		Group:           key.Group,
 		Resource:        key.Resource,
 		resourceVersion: new(resourceVersion),
+	})
+	if err != nil {
+		return 0, fmt.Errorf("increase resource version: %w", err)
+	}
+
+	// 3. Fetch the new resource version
+	res, err = dbutil.QueryRow(ctx, x, sqlResourceVersionGet, sqlResourceVersionRequest{
+		SQLTemplate:     sqltemplate.New(d),
+		Group:           key.Group,
+		Resource:        key.Resource,
+		resourceVersion: new(resourceVersion),
+		ReadOnly:        true,
 	})
 
 	if err != nil {

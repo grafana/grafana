@@ -204,9 +204,15 @@ func TestBackend_IsHealthy(t *testing.T) {
 // expectSuccessfulResourceVersionAtomicInc sets up expectations for calling
 // resourceVersionAtomicInc, where the returned RV will be 1.
 func expectSuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend) {
-	b.ExecWithResult("update resource_version set resource_version", 0, 0)
-	b.ExecWithResult("insert resource_version", 0, 1)
 	b.QueryWithResult("select resource_version for update", 1, Rows{{1}})
+	b.ExecWithResult("update resource_version set resource_version", 0, 0)
+	// b.ExecWithResult("insert resource_version", 0, 1)
+	// b.ExecWithResult("update resource_version set resource_version", 0, 0)
+	// b.ExecWithResult("insert resource_version", 0, 1)
+
+	// b.QueryWithResult("select resource_version for update", 1, Rows{{1}})
+	// b.ExecWithResult("insert resource_version", 0, 1)
+	b.QueryWithResult("select resource_version", 1, Rows{{2}})
 }
 
 // expectUnsuccessfulResourceVersionAtomicInc sets up expectations for calling
@@ -236,6 +242,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 
 		b, ctx := setupBackendTest(t)
 
+		b.QueryWithResult("select resource_version", 1, Rows{{12345}})
 		b.ExecWithResult("update resource_version", 0, 1)
 		b.QueryWithResult("select resource_version", 1, Rows{{12345}})
 
@@ -247,13 +254,12 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 	t.Run("error getting current version", func(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
-		b.ExecWithResult("update resource_version", 0, 1)
 		b.QueryWithErr("select resource_version for update", errTest)
 
 		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
 		require.Zero(t, v)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "could not fetch resource version")
+		require.ErrorContains(t, err, "lock the resource version")
 	})
 
 	t.Run("error inserting new row", func(t *testing.T) {
@@ -261,7 +267,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 
 		b, ctx := setupBackendTest(t)
 
-		b.ExecWithResult("update resource_version", 0, 0)
+		b.QueryWithResult("select resource_version", 0, Rows{})
 		b.ExecWithErr("insert resource_version", errTest)
 
 		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
