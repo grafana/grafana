@@ -38,7 +38,7 @@ func ProvideServiceAccountsProxy(
 	s := &ServiceAccountsProxy{
 		log:            log.New("serviceaccounts.proxy"),
 		proxiedService: proxiedService,
-		isProxyEnabled: features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		isProxyEnabled: cfg.ManagedServiceAccountsEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 	}
 
 	serviceaccountsAPI := api.NewServiceAccountsAPI(cfg, s, ac, accesscontrolService, routeRegister, permissionService, features)

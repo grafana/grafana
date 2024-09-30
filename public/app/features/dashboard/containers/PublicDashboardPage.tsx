@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
@@ -52,7 +53,8 @@ const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
 };
 
 const PublicDashboardPage = (props: Props) => {
-  const { match, route, location } = props;
+  const { route, location } = props;
+  const { accessToken } = useParams();
   const dispatch = useDispatch();
   const context = useGrafana();
   const prevProps = usePrevious(props);
@@ -65,11 +67,11 @@ const PublicDashboardPage = (props: Props) => {
       initDashboard({
         routeName: route.routeName,
         fixUrl: false,
-        accessToken: match.params.accessToken,
+        accessToken,
         keybindingSrv: context.keybindings,
       })
     );
-  }, [route.routeName, match.params.accessToken, context.keybindings, dispatch]);
+  }, [route.routeName, accessToken, context.keybindings, dispatch]);
 
   useEffect(() => {
     if (prevProps?.location.search !== location.search) {
@@ -88,7 +90,7 @@ const PublicDashboardPage = (props: Props) => {
         getTimeSrv().setAutoRefresh(urlParams.refresh);
       }
     }
-  }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden, match.params.accessToken]);
+  }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden, accessToken]);
 
   if (!dashboard) {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;

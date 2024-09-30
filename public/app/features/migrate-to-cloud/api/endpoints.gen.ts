@@ -159,7 +159,7 @@ export type MigrateDataResponseItemDto = {
   message?: string;
   refId: string;
   status: 'OK' | 'WARNING' | 'ERROR' | 'PENDING' | 'UNKNOWN';
-  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER';
+  type: 'DASHBOARD' | 'DATASOURCE' | 'FOLDER' | 'LIBRARY_ELEMENT';
 };
 export type SnapshotResourceStats = {
   statuses?: {

@@ -281,6 +281,8 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application} env=${environment}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
+        },
+        meta: {
           transformations: [
             { type: SupportedTransformationType.Logfmt },
             { type: SupportedTransformationType.Regex, expression: 'host=(dev|prod)', mapValue: 'environment' },
@@ -330,6 +332,8 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{env=${msg}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
+        },
+        meta: {
           transformations: [
             { type: SupportedTransformationType.Regex, expression: 'fieldA=(asparagus|broccoli)' },
             { type: SupportedTransformationType.Regex, expression: 'fieldB=(apple|banana)' },
@@ -372,6 +376,8 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{env=${msg}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
+        },
+        meta: {
           transformations: [
             {
               type: SupportedTransformationType.Regex,
@@ -427,8 +433,8 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application} isOnline=${online}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationType.Logfmt }],
         },
+        meta: { transformations: [{ type: SupportedTransformationType.Logfmt }] },
       };
 
       const { field, range, dataFrame } = setup(transformationLink, true, {
@@ -466,8 +472,8 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
-          transformations: [{ type: SupportedTransformationType.Logfmt, field: 'fieldNamedInTransformation' }],
         },
+        meta: { transformations: [{ type: SupportedTransformationType.Logfmt, field: 'fieldNamedInTransformation' }] },
       };
 
       // fieldWithLink has the transformation, but the transformation has defined fieldNamedInTransformation as its field to transform
@@ -518,6 +524,8 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application} env=${environment}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
+        },
+        meta: {
           transformations: [
             {
               type: SupportedTransformationType.Regex,
@@ -598,6 +606,8 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=${application} env=${diffVar}}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
+        },
+        meta: {
           transformations: [{ type: SupportedTransformationType.Logfmt }],
         },
       };
@@ -623,6 +633,8 @@ describe('explore links utils', () => {
           query: { query: 'http_requests{app=test}' },
           datasourceUid: 'uid_1',
           datasourceName: 'test_ds',
+        },
+        meta: {
           transformations: [{ type: SupportedTransformationType.Logfmt }],
         },
       };
