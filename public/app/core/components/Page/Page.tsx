@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -32,7 +33,8 @@ export const Page: PageType = ({
   onSetScrollRef,
   ...otherProps
 }) => {
-  const styles = useStyles2(getStyles, Boolean(toolbar));
+  const isSingleTopNav = config.featureToggles.singleTopNav;
+  const styles = useStyles2(getStyles, Boolean(isSingleTopNav && toolbar));
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
 
@@ -54,7 +56,7 @@ export const Page: PageType = ({
 
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
-      {toolbar && <PageToolbarActions>{toolbar}</PageToolbarActions>}
+      {isSingleTopNav && toolbar && <PageToolbarActions>{toolbar}</PageToolbarActions>}
       {layout === PageLayoutType.Standard && (
         <NativeScrollbar
           // This id is used by the image renderer to scroll through the dashboard
