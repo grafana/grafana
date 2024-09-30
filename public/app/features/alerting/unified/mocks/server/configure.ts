@@ -1,18 +1,23 @@
-import { HttpResponse } from 'msw';
+import { HttpResponse, http } from 'msw';
 
 import { config } from '@grafana/runtime';
 import server, { mockFeatureDiscoveryApi } from 'app/features/alerting/unified/mockApi';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
+  ALERTMANAGER_UPDATE_ERROR_RESPONSE,
+  getAlertmanagerConfigHandler,
   getGrafanaAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
+  updateGrafanaAlertmanagerConfigHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
+import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import {
   getDisabledPluginHandler,
   getPluginMissingHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertManagerCortexConfig, AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 
@@ -48,10 +53,25 @@ export const setFolderAccessControl = (accessControl: FolderDTO['accessControl']
 };
 
 /**
+ * Makes the mock server respond with different folder response, for just the folder in question
+ */
+export const setFolderResponse = (response: Partial<FolderDTO>) => {
+  const handler = http.get<{ folderUid: string }>(`/api/folders/${response.uid}`, () => HttpResponse.json(response));
+  server.use(handler);
+};
+
+/**
  * Makes the mock server respond with different Grafana Alertmanager config
  */
 export const setGrafanaAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
   server.use(getGrafanaAlertmanagerConfigHandler(config));
+};
+
+/**
+ * Makes the mock server respond with different (other) Alertmanager config
+ */
+export const setAlertmanagerConfig = (config: AlertManagerCortexConfig) => {
+  server.use(getAlertmanagerConfigHandler(config));
 };
 
 /**
@@ -65,12 +85,25 @@ export const setUpdateRulerRuleNamespaceHandler = (options?: HandlerOptions) => 
 };
 
 /**
- * Makes the mock server response with different responses for a ruler rule group
+ * Makes the mock server respond with different responses for a ruler rule group
  */
 export const setRulerRuleGroupHandler = (options?: HandlerOptions) => {
   const handler = rulerRuleGroupHandler(options);
   server.use(handler);
 
+  return handler;
+};
+
+/**
+ * Makes the mock server respond with an error when fetching list of mute timings
+ */
+export const setMuteTimingsListError = () => {
+  const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
+  const handler = http.get(listMuteTimingsPath, () => {
+    return HttpResponse.json({}, { status: 401 });
+  });
+
+  server.use(handler);
   return handler;
 };
 
@@ -102,5 +135,11 @@ export const removePlugin = (pluginId: string) => {
 
 /** Make a plugin respond with `enabled: false`, as if its installed but disabled */
 export const disablePlugin = (pluginId: SupportedPlugin) => {
+  clearPluginSettingsCache(pluginId);
   server.use(getDisabledPluginHandler(pluginId));
+};
+
+/** Make alertmanager config update fail */
+export const makeGrafanaAlertmanagerConfigUpdateFail = () => {
+  server.use(updateGrafanaAlertmanagerConfigHandler(ALERTMANAGER_UPDATE_ERROR_RESPONSE));
 };

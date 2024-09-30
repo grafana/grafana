@@ -59,6 +59,12 @@ export interface AngularMeta {
   hideDeprecation: boolean;
 }
 
+// Signals to SystemJS how to load frontend js assets.
+export enum PluginLoadingStrategy {
+  fetch = 'fetch',
+  script = 'script',
+}
+
 export interface PluginMeta<T extends KeyValue = {}> {
   id: string;
   name: string;
@@ -91,6 +97,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   live?: boolean;
   angular?: AngularMeta;
   angularDetected?: boolean;
+  loadingStrategy?: PluginLoadingStrategy;
 }
 
 interface PluginDependencyInfo {

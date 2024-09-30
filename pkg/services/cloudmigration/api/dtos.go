@@ -106,22 +106,24 @@ type MigrateDataResponseDTO struct {
 }
 
 type MigrateDataResponseItemDTO struct {
+	Name string `json:"name"`
 	// required:true
 	Type MigrateDataType `json:"type"`
 	// required:true
 	RefID string `json:"refId"`
 	// required:true
-	Status ItemStatus `json:"status"`
-	Error  string     `json:"error,omitempty"`
+	Status  ItemStatus `json:"status"`
+	Message string     `json:"message,omitempty"`
 }
 
 // swagger:enum MigrateDataType
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType      MigrateDataType = "DASHBOARD"
+	DatasourceDataType     MigrateDataType = "DATASOURCE"
+	FolderDataType         MigrateDataType = "FOLDER"
+	LibraryElementDataType MigrateDataType = "LIBRARY_ELEMENT"
 )
 
 // swagger:enum ItemStatus
@@ -129,6 +131,7 @@ type ItemStatus string
 
 const (
 	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusWarning ItemStatus = "WARNING"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
 	ItemStatusUnknown ItemStatus = "UNKNOWN"
@@ -184,23 +187,6 @@ func convertSessionListToDTO(sl cloudmigration.CloudMigrationSessionListResponse
 	}
 	return CloudMigrationSessionListResponseDTO{
 		Sessions: slDTOs,
-	}
-}
-
-func convertMigrateDataResponseToDTO(r cloudmigration.MigrateDataResponse) MigrateDataResponseDTO {
-	items := make([]MigrateDataResponseItemDTO, len(r.Items))
-	for i := 0; i < len(r.Items); i++ {
-		item := r.Items[i]
-		items[i] = MigrateDataResponseItemDTO{
-			Type:   MigrateDataType(item.Type),
-			RefID:  item.RefID,
-			Status: ItemStatus(item.Status),
-			Error:  item.Error,
-		}
-	}
-	return MigrateDataResponseDTO{
-		RunUID: r.RunUID,
-		Items:  items,
 	}
 }
 
@@ -307,6 +293,7 @@ type GetSnapshotResponseDTO struct {
 type SnapshotResourceStats struct {
 	Types    map[MigrateDataType]int `json:"types"`
 	Statuses map[ItemStatus]int      `json:"statuses"`
+	Total    int                     `json:"total"`
 }
 
 // swagger:parameters getShapshotList

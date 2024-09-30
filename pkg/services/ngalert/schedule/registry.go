@@ -15,7 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-var errRuleDeleted = errors.New("rule deleted")
+var (
+	errRuleDeleted   = errors.New("rule deleted")
+	errRuleRestarted = errors.New("rule restarted")
+)
 
 type ruleFactory interface {
 	new(context.Context, *models.AlertRule) Rule

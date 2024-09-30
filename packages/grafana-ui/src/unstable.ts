@@ -10,3 +10,4 @@
  */
 
 export * from './utils/skeleton';
+export * from './components/Combobox/Combobox';

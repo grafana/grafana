@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
@@ -485,7 +486,7 @@ func TestOAuth_Logout(t *testing.T) {
 			}
 			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg}, featuremgmt.WithFeatures())
 
-			redirect, ok := c.Logout(context.Background(), &authn.Identity{})
+			redirect, ok := c.Logout(context.Background(), &authn.Identity{ID: "1", Type: claims.TypeUser})
 
 			assert.Equal(t, tt.expectedOK, ok)
 			if tt.expectedOK {

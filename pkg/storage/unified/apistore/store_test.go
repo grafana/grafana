@@ -20,6 +20,7 @@ import (
 	examplev1 "k8s.io/apiserver/pkg/apis/example/v1"
 	"k8s.io/apiserver/pkg/storage"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 )
@@ -32,7 +33,7 @@ func init() {
 	// Make sure there is a user in every context
 	storagetesting.NewContext = func() context.Context {
 		testUserA := &identity.StaticRequester{
-			Namespace:      identity.NamespaceUser,
+			Type:           claims.TypeUser,
 			Login:          "testuser",
 			UserID:         123,
 			UserUID:        "u123",
@@ -91,12 +92,13 @@ func TestCreate(t *testing.T) {
 	storagetesting.RunTestCreate(ctx, t, store, checkStorageInvariants(store))
 }
 
-func TestCreateWithTTL(t *testing.T) {
-	ctx, store, destroyFunc, err := testSetup(t)
-	defer destroyFunc()
-	assert.NoError(t, err)
-	storagetesting.RunTestCreateWithTTL(ctx, t, store)
-}
+// No TTL support in unifed storage
+// func TestCreateWithTTL(t *testing.T) {
+// 	ctx, store, destroyFunc, err := testSetup(t)
+// 	defer destroyFunc()
+// 	assert.NoError(t, err)
+// 	storagetesting.RunTestCreateWithTTL(ctx, t, store)
+// }
 
 func TestCreateWithKeyExist(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)

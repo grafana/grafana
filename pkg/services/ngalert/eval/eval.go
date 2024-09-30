@@ -15,23 +15,18 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var logger = log.New("ngalert.eval")
 
 type EvaluatorFactory interface {
-	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
-	Validate(ctx EvaluationContext, condition models.Condition) error
 	// Create builds an evaluator pipeline ready to evaluate a rule's query
 	Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error)
 }
@@ -112,21 +107,18 @@ type evaluatorImpl struct {
 	evaluationResultLimit int
 	dataSourceCache       datasources.CacheService
 	expressionService     expressionBuilder
-	pluginsStore          pluginstore.Store
 }
 
 func NewEvaluatorFactory(
 	cfg setting.UnifiedAlertingSettings,
 	datasourceCache datasources.CacheService,
 	expressionService *expr.Service,
-	pluginsStore pluginstore.Store,
 ) EvaluatorFactory {
 	return &evaluatorImpl{
 		evaluationTimeout:     cfg.EvaluationTimeout,
 		evaluationResultLimit: cfg.EvaluationResultLimit,
 		dataSourceCache:       datasourceCache,
 		expressionService:     expressionService,
-		pluginsStore:          pluginsStore,
 	}
 }
 
@@ -333,8 +325,10 @@ func ParseStateString(repr string) (State, error) {
 func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map[string]string {
 	headers := make(map[string]string, len(metadata)+3)
 
-	for key, value := range metadata {
-		headers[fmt.Sprintf("X-Rule-%s", key)] = url.QueryEscape(value)
+	if len(metadata) > 0 {
+		for key, value := range metadata {
+			headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(value)
+		}
 	}
 
 	// Many data sources check this in query method as sometimes alerting needs special considerations.
@@ -653,6 +647,9 @@ func datasourceUIDsToRefIDs(refIDsToDatasourceUIDs map[string]string) map[string
 // Each non-empty Frame must be a single Field of type []*float64 and of length 1.
 // Also, each Frame must be uniquely identified by its Field.Labels or a single Error result will be returned.
 //
+// An exception to this is data that is returned by the query service, which might have a timestamp and single value.
+// Those are handled with the appropriated logic.
+//
 // Per Frame, data becomes a State based on the following rules:
 //
 // If no value is set:
@@ -739,23 +736,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 		}
 
 		val := f.Fields[0].At(0).(*float64) // type checked by data.FieldTypeNullableFloat64 above
-
-		r := Result{
-			Instance:           f.Fields[0].Labels,
-			EvaluatedAt:        ts,
-			EvaluationDuration: time.Since(ts),
-			EvaluationString:   extractEvalString(f),
-			Values:             extractValues(f),
-		}
-
-		switch {
-		case val == nil:
-			r.State = NoData
-		case *val == 0:
-			r.State = Normal
-		default:
-			r.State = Alerting
-		}
+		r := buildResult(f, val, ts)
 
 		evalResults = append(evalResults, r)
 	}
@@ -779,6 +760,25 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 	}
 
 	return evalResults
+}
+
+func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
+	r := Result{
+		Instance:           f.Fields[0].Labels,
+		EvaluatedAt:        ts,
+		EvaluationDuration: time.Since(ts),
+		EvaluationString:   extractEvalString(f),
+		Values:             extractValues(f),
+	}
+	switch {
+	case val == nil:
+		r.State = NoData
+	case *val == 0:
+		r.State = Normal
+	default:
+		r.State = Alerting
+	}
+	return r
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
@@ -823,36 +823,6 @@ func (evalResults Results) AsDataFrame() data.Frame {
 	return *frame
 }
 
-func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Condition) error {
-	req, err := getExprRequest(ctx, condition, e.dataSourceCache, ctx.AlertingResultsReader)
-	if err != nil {
-		return err
-	}
-	for _, query := range req.Queries {
-		if query.DataSource == nil {
-			continue
-		}
-		switch expr.NodeTypeFromDatasourceUID(query.DataSource.UID) {
-		case expr.TypeDatasourceNode:
-			p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
-			if !found { // technically this should fail earlier during datasource resolution phase.
-				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
-			}
-			if !p.Backend {
-				return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
-			}
-		case expr.TypeMLNode:
-			_, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
-			if !found {
-				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
-			}
-		case expr.TypeCMDNode:
-		}
-	}
-	_, err = e.create(condition, req)
-	return err
-}
-
 func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error) {
 	if len(condition.Data) == 0 {
 		return nil, errors.New("expression list is empty. must be at least 1 expression")
@@ -885,5 +855,5 @@ func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (C
 		}
 		conditions = append(conditions, node.RefID())
 	}
-	return nil, fmt.Errorf("condition %s does not exist, must be one of %v", condition.Condition, conditions)
+	return nil, models.ErrConditionNotExist(condition.Condition, conditions)
 }

@@ -28,12 +28,7 @@ import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
 
 import { ShowModalReactEvent } from '../../types/events';
-import {
-  isContentTypeApplicationJson,
-  parseInitFromOptions,
-  parseResponseBody,
-  parseUrlFromOptions,
-} from '../utils/fetch';
+import { isContentTypeJson, parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 
 import { FetchQueue } from './FetchQueue';
@@ -229,7 +224,7 @@ export class BackendSrv implements BackendService {
       mergeMap(async (response) => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
 
-        const responseType = options.responseType ?? (isContentTypeApplicationJson(headers) ? 'json' : undefined);
+        const responseType = options.responseType ?? (isContentTypeJson(headers) ? 'json' : undefined);
 
         const data = await parseResponseBody<T>(response, responseType);
         const fetchResponse: FetchResponse<T> = {

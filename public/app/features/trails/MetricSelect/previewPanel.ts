@@ -2,7 +2,7 @@ import { PromQuery } from '@grafana/prometheus';
 import { SceneCSSGridItem, SceneQueryRunner, SceneVariableSet } from '@grafana/scenes';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
-import { getVariablesWithMetricConstant, trailDS } from '../shared';
+import { getVariablesWithMetricConstant, MDP_METRIC_PREVIEW, trailDS } from '../shared';
 import { getColorByIndex } from '../utils';
 
 import { SelectMetricAction } from './SelectMetricAction';
@@ -29,7 +29,7 @@ export function getPreviewPanelFor(metric: string, index: number, currentFilterC
     $behaviors: [hideEmptyPreviews(metric)],
     $data: new SceneQueryRunner({
       datasource: trailDS,
-      maxDataPoints: 200,
+      maxDataPoints: MDP_METRIC_PREVIEW,
       queries,
     }),
     body: vizPanel,

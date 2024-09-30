@@ -5,6 +5,7 @@
  */
 
 const { execSync } = require('child_process');
+const fs = require('fs');
 
 /**
  * Extracts the package name from a given location string.
@@ -13,8 +14,18 @@ const { execSync } = require('child_process');
  * @returns {string} - The extracted package name, or an empty string if no match is found.
  */
 function getPackage(location) {
-  const match = location.match(/\/(@[^@]+)@/);
-  return match ? match[1] : '';
+  const match = location.match(/(.+\/)dist\//);
+  if (match) {
+    const packageJsonPath = match[1] + 'package.json';
+    const data = fs.readFileSync(packageJsonPath, 'utf8');
+
+    if (!data) {
+      return '';
+    }
+
+    return JSON.parse(data)?.name || '';
+  }
+  return '';
 }
 
 const PANEL_URL = 'https://ops.grafana-ops.net/d/dmb2o0xnz/imported-property-details?orgId=1';
@@ -63,8 +74,12 @@ function makeQuery(section) {
     .filter((item) => item !== undefined)
     .join(' OR ');
 
+  if (!whereClause) {
+    return '';
+  }
+
   return `
-    SELECT
+    SELECT DISTINCT
       property_name,
       package_name,
       plugin_id
@@ -113,6 +128,10 @@ function printAffectedPluginsSection(data) {
 
   try {
     const sqlQuery = makeQuery([...removals, ...changes]);
+    if (!sqlQuery) {
+      throw new Error("Couldn't generate SQL query");
+    }
+
     const cmd = `bq query --nouse_legacy_sql "${sqlQuery}"`;
     const stdout = execSync(cmd, { encoding: 'utf-8' });
 
@@ -140,6 +159,12 @@ function printAffectedPluginsSection(data) {
     }
   } catch (error) {
     markdown += `<h4>Error generating detailed report ${error}</h4>`;
+    if (error.stdout) {
+      markdown += `<h5>Error stdout ${error.stdout}</h5>`;
+    }
+    if (error.stderr) {
+      markdown += `<h5>Error stderr ${error.stderr}</h5>`;
+    }
   }
 
   return markdown;

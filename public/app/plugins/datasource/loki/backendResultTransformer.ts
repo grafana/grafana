@@ -2,7 +2,7 @@ import { DataQueryResponse, DataFrame, isDataFrame, FieldType, QueryResultMeta, 
 
 import { getDerivedFields } from './getDerivedFields';
 import { makeTableFrames } from './makeTableFrames';
-import { getHighlighterExpressionsFromQuery } from './queryUtils';
+import { getExpressionFromExecutedQuery, getHighlighterExpressionsFromQuery } from './queryUtils';
 import { dataFrameHasLokiError } from './responseUtils';
 import { DerivedFieldConfig, LokiQuery, LokiQueryType } from './types';
 
@@ -39,7 +39,7 @@ function processStreamFrame(
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'logs',
     limit: query?.maxLines,
-    searchWords: query !== undefined ? getHighlighterExpressionsFromQuery(query.expr) : undefined,
+    searchWords: query ? getHighlighterExpressionsFromQuery(query.expr) : undefined,
     custom,
   };
 
@@ -145,7 +145,17 @@ export function transformBackendResult(
     return d;
   });
 
-  const queryMap = new Map(queries.map((query) => [query.refId, query]));
+  const queryMap = new Map(
+    queries.map((query) => {
+      const executedExpr = response.data.find((data) => data.refId === query.refId)?.meta.executedQueryString;
+      const executedQuery = {
+        ...query,
+        expr: executedExpr ? getExpressionFromExecutedQuery(executedExpr) : query.expr,
+      };
+
+      return [query.refId, executedQuery];
+    })
+  );
 
   const { streamsFrames, metricInstantFrames, metricRangeFrames } = groupFrames(dataFrames, queryMap);
 

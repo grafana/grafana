@@ -33,6 +33,38 @@ const enableCustomables = (moveable: Moveable) => {
   };
 };
 
+/* 
+  Helper function that determines if the selected DOM target is currently selected in selecto state.
+
+  For context canvas elements each have a different level of nesting.
+  Given this, we need to traverse up the DOM tree from the selected target to find
+  the element's registered selecto div to determine if the selected target is already selected in selecto state.
+  See `initMoveable` and `generateTargetElements` for more context.
+*/
+const isTargetAlreadySelected = (selectedTarget: HTMLElement, scene: Scene) => {
+  let selectedTargetParent = selectedTarget.parentElement;
+  let isTargetAlreadySelected = false;
+
+  // Traverse up the DOM tree to check if the selected target is already selected
+  while (selectedTargetParent) {
+    // If the selected target is the scene's root element div, break the loop
+    if (selectedTargetParent === scene.root.div) {
+      break;
+    }
+
+    // Check if the selected target is already selected
+    isTargetAlreadySelected = scene.selecto?.getSelectedTargets().includes(selectedTargetParent) ?? false;
+    if (isTargetAlreadySelected) {
+      break;
+    }
+
+    // Move up the DOM tree to the next parent element to check
+    selectedTargetParent = selectedTargetParent.parentElement;
+  }
+
+  return isTargetAlreadySelected;
+};
+
 // Generate HTML element divs for every canvas element to configure selecto / moveable
 const generateTargetElements = (rootElements: ElementState[]): HTMLDivElement[] => {
   let targetElements: HTMLDivElement[] = [];
@@ -335,9 +367,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
         scene.moveable!.isMoveableElement(selectedTarget) ||
         targets.some((target) => target === selectedTarget || target.contains(selectedTarget));
 
-      const isTargetAlreadySelected = scene.selecto
-        ?.getSelectedTargets()
-        .includes(selectedTarget.parentElement.parentElement);
+      const isElementSelected = isTargetAlreadySelected(selectedTarget, scene);
 
       // Apply grabbing cursor while dragging, applyLayoutStylesToDiv() resets it to grab when done
       if (
@@ -349,7 +379,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
         scene.selecto.getSelectedTargets()[0].style.cursor = 'grabbing';
       }
 
-      if (isTargetMoveableElement || isTargetAlreadySelected || !scene.isEditingEnabled) {
+      if (isTargetMoveableElement || isElementSelected || !scene.isEditingEnabled) {
         // Prevent drawing selection box when selected target is a moveable element or already selected
         event.stop();
       }

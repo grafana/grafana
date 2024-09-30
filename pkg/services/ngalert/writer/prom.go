@@ -2,8 +2,8 @@ package writer
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,9 +12,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 
@@ -30,6 +28,11 @@ const (
 
 	// Best effort error messages
 	PrometheusDuplicateTimestampError = "duplicate sample for timestamp"
+)
+
+var (
+	ErrWriteFailure = errors.New("failed to write time series")
+	ErrBadFrame     = errors.New("failed to read dataframe")
 )
 
 var DuplicateTimestampErrors = [...]string{
@@ -63,15 +66,20 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 
 	points := make([]Point, 0, len(col.Refs))
 	for _, ref := range col.Refs {
-		// Use a default value of NaN if the value is empty or nil.
-		f := math.NaN()
-		if fp, empty, _ := ref.NullableFloat64Value(); !empty && fp != nil {
-			f = *fp
+		fp, empty, err := ref.NullableFloat64Value()
+		if err != nil {
+			return nil, fmt.Errorf("unable to read float64 value: %w", err)
+		}
+		if empty {
+			return nil, fmt.Errorf("empty frame")
+		}
+		if fp == nil {
+			return nil, fmt.Errorf("nil frame")
 		}
 
 		metric := Metric{
 			T: t,
-			V: f,
+			V: *fp,
 		}
 
 		labels := ref.GetLabels().Copy()
@@ -108,7 +116,6 @@ func NewPrometheusWriter(
 	settings setting.RecordingRuleSettings,
 	httpClientProvider HttpClientProvider,
 	clock clock.Clock,
-	tracer tracing.Tracer,
 	l log.Logger,
 	metrics *metrics.RemoteWriter,
 ) (*PrometheusWriter, error) {
@@ -121,14 +128,9 @@ func NewPrometheusWriter(
 		headers.Add(k, v)
 	}
 
-	middlewares := []httpclient.Middleware{
-		httpclient.TracingMiddleware(tracer),
-	}
-
 	cl, err := httpClientProvider.New(httpclient.Options{
-		Middlewares: middlewares,
-		BasicAuth:   createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
-		Header:      headers,
+		BasicAuth: createAuthOpts(settings.BasicAuthUsername, settings.BasicAuthPassword),
+		Header:    headers,
 	})
 	if err != nil {
 		return nil, err
@@ -183,18 +185,13 @@ func createAuthOpts(username, password string) *httpclient.BasicAuthOptions {
 }
 
 // Write writes the given frames to the Prometheus remote write endpoint.
-func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, extraLabels map[string]string) error {
+func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
-	ruleKey, found := models.RuleKeyFromContext(ctx)
-	if !found {
-		// sanity check, this should never happen
-		return fmt.Errorf("rule key not found in context")
-	}
-	lvs := []string{fmt.Sprint(ruleKey.OrgID), backendType}
+	lvs := []string{fmt.Sprint(orgID), backendType}
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {
-		return err
+		return errors.Join(ErrBadFrame, err)
 	}
 
 	series := make([]promremote.TimeSeries, 0, len(points))
@@ -217,7 +214,7 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	w.metrics.WritesTotal.WithLabelValues(lvs...).Inc()
 
 	if err, ignored := checkWriteError(writeErr); err != nil {
-		return fmt.Errorf("failed to write time series: %w", err)
+		return errors.Join(ErrWriteFailure, err)
 	} else if ignored {
 		l.Debug("Ignored write error", "error", err, "status_code", res.StatusCode)
 	}

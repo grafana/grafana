@@ -5,6 +5,7 @@ import { Controller, RegisterOptions, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Field, Icon, IconButton, Input, Label, Stack, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import { isGrafanaAlertingRuleByType } from 'app/features/alerting/unified/utils/rules';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { LogMessages, logInfo } from '../../Analytics';
@@ -24,12 +25,12 @@ import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
-const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
+const forValidationOptions = (evaluateEvery: string): RegisterOptions<{ evaluateFor: string }> => ({
   required: {
     value: true,
     message: 'Required.',
   },
-  validate: (value: string) => {
+  validate: (value) => {
     // parsePrometheusDuration does not allow 0 but does allow 0s
     if (value === '0') {
       return true;
@@ -114,7 +115,6 @@ function FolderGroupAndEvaluationInterval({
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
   const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !groupName;
-
   const emptyNamespace: CombinedRuleNamespace = {
     name: folderName,
     rulesSource: GRAFANA_RULES_SOURCE_NAME,
@@ -145,7 +145,7 @@ function FolderGroupAndEvaluationInterval({
               <Stack direction="column" gap={1}>
                 {getValues('group') && getValues('evaluateEvery') && (
                   <span>
-                    <Trans i18nKey="alert-rule-form.evaluation-behaviour-group.text" evaluateEvery={evaluateEvery}>
+                    <Trans i18nKey="alert-rule-form.evaluation-behaviour-group.text" values={{ evaluateEvery }}>
                       All rules in the selected group are evaluated every {{ evaluateEvery }}.
                     </Trans>
                     {!isNewGroup && (
@@ -184,11 +184,11 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   };
 
   return (
-    <Stack direction="row" justify-content="flex-start" align-items="flex-start">
+    <Stack direction="column" justify-content="flex-start" align-items="flex-start">
       <Field
         label={
           <Label
-            htmlFor="evaluateFor"
+            htmlFor={evaluateForId}
             description='Period the threshold condition must be met to trigger the alert. Selecting "None" triggers the alert immediately once the condition is met.'
           >
             <Trans i18nKey="alert-rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
@@ -199,15 +199,13 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         invalid={Boolean(errors.evaluateFor?.message) ? true : undefined}
         validationMessageHorizontalOverflow={true}
       >
-        <Stack direction="row" alignItems="center">
-          <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
-          <PendingPeriodQuickPick
-            selectedPendingPeriod={currentPendingPeriod}
-            groupEvaluationInterval={evaluateEvery}
-            onSelect={setPendingPeriod}
-          />
-        </Stack>
+        <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
       </Field>
+      <PendingPeriodQuickPick
+        selectedPendingPeriod={currentPendingPeriod}
+        groupEvaluationInterval={evaluateEvery}
+        onSelect={setPendingPeriod}
+      />
     </Stack>
   );
 }
@@ -290,6 +288,9 @@ export function GrafanaEvaluationBehavior({
   const { watch, setValue } = useFormContext<RuleFormValues>();
 
   const isPaused = watch('isPaused');
+  const type = watch('type');
+
+  const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
 
   return (
     // TODO remove "and alert condition" for recording rules
@@ -300,7 +301,8 @@ export function GrafanaEvaluationBehavior({
           evaluateEvery={evaluateEvery}
           enableProvisionedGroups={enableProvisionedGroups}
         />
-        <ForInput evaluateEvery={evaluateEvery} />
+        {/* Show the pending period input only for Grafana alerting rules */}
+        {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
@@ -327,44 +329,48 @@ export function GrafanaEvaluationBehavior({
           </Field>
         )}
       </Stack>
-      <CollapseToggle
-        isCollapsed={!showErrorHandling}
-        onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
-        text="Configure no data and error handling"
-      />
-      {showErrorHandling && (
+      {isGrafanaAlertingRule && (
         <>
-          <NeedHelpInfoForConfigureNoDataError />
-          <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
-            <Controller
-              render={({ field: { onChange, ref, ...field } }) => (
-                <GrafanaAlertStatePicker
-                  {...field}
-                  inputId="no-data-state-input"
-                  width={42}
-                  includeNoData={true}
-                  includeError={false}
-                  onChange={(value) => onChange(value?.value)}
+          <CollapseToggle
+            isCollapsed={!showErrorHandling}
+            onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
+            text="Configure no data and error handling"
+          />
+          {showErrorHandling && (
+            <>
+              <NeedHelpInfoForConfigureNoDataError />
+              <Field htmlFor="no-data-state-input" label="Alert state if no data or all values are null">
+                <Controller
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      inputId="no-data-state-input"
+                      width={42}
+                      includeNoData={true}
+                      includeError={false}
+                      onChange={(value) => onChange(value?.value)}
+                    />
+                  )}
+                  name="noDataState"
                 />
-              )}
-              name="noDataState"
-            />
-          </Field>
-          <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
-            <Controller
-              render={({ field: { onChange, ref, ...field } }) => (
-                <GrafanaAlertStatePicker
-                  {...field}
-                  inputId="exec-err-state-input"
-                  width={42}
-                  includeNoData={false}
-                  includeError={true}
-                  onChange={(value) => onChange(value?.value)}
+              </Field>
+              <Field htmlFor="exec-err-state-input" label="Alert state if execution error or timeout">
+                <Controller
+                  render={({ field: { onChange, ref, ...field } }) => (
+                    <GrafanaAlertStatePicker
+                      {...field}
+                      inputId="exec-err-state-input"
+                      width={42}
+                      includeNoData={false}
+                      includeError={true}
+                      onChange={(value) => onChange(value?.value)}
+                    />
+                  )}
+                  name="execErrState"
                 />
-              )}
-              name="execErrState"
-            />
-          </Field>
+              </Field>
+            </>
+          )}
         </>
       )}
     </RuleEditorSection>

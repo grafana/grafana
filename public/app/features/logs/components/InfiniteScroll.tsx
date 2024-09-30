@@ -1,14 +1,17 @@
 import { css } from '@emotion/css';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
-import { AbsoluteTimeRange, LogRowModel, TimeRange } from '@grafana/data';
+import { AbsoluteTimeRange, CoreApp, LogRowModel, TimeRange } from '@grafana/data';
 import { convertRawToRange, isRelativeTime, isRelativeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { config, reportInteraction } from '@grafana/runtime';
 import { LogsSortOrder, TimeZone } from '@grafana/schema';
+import { Button, Icon } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { LoadingIndicator } from './LoadingIndicator';
 
 export type Props = {
+  app?: CoreApp;
   children: ReactNode;
   loading: boolean;
   loadMoreLogs?: (range: AbsoluteTimeRange) => void;
@@ -21,6 +24,7 @@ export type Props = {
 };
 
 export const InfiniteScroll = ({
+  app,
   children,
   loading,
   loadMoreLogs,
@@ -135,10 +139,37 @@ export const InfiniteScroll = ({
   const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
   const hideBottomMessage = sortOrder === LogsSortOrder.Ascending && isRelativeTime(range.raw.to);
 
+  const loadOlderLogs = useCallback(() => {
+    //If we are not on the last page, use next page's range
+    reportInteraction('grafana_explore_logs_infinite_pagination_clicked', {
+      pageType: 'olderLogsButton',
+    });
+    const newRange = canScrollTop(getVisibleRange(rows), range, timeZone, sortOrder);
+    if (!newRange) {
+      setUpperOutOfRange(true);
+      return;
+    }
+    setUpperOutOfRange(false);
+    loadMoreLogs?.(newRange);
+    setUpperLoading(true);
+    scrollElement?.scroll({
+      behavior: 'auto',
+      top: 0,
+    });
+  }, [loadMoreLogs, range, rows, scrollElement, sortOrder, timeZone]);
+
   return (
     <>
       {upperLoading && <LoadingIndicator adjective={sortOrder === LogsSortOrder.Descending ? 'newer' : 'older'} />}
       {!hideTopMessage && upperOutOfRange && outOfRangeMessage}
+      {sortOrder === LogsSortOrder.Ascending && app === CoreApp.Explore && (
+        <Button className={styles.navButton} variant="secondary" onClick={loadOlderLogs} disabled={loading}>
+          <div className={styles.navButtonContent}>
+            <Icon name="angle-up" size="lg" />
+            <Trans i18nKey="logs.infinite-scroll.older-logs">Older logs</Trans>
+          </div>
+        </Button>
+      )}
       {children}
       {!hideBottomMessage && lowerOutOfRange && outOfRangeMessage}
       {lowerLoading && <LoadingIndicator adjective={sortOrder === LogsSortOrder.Descending ? 'older' : 'newer'} />}
@@ -150,6 +181,26 @@ const styles = {
   messageContainer: css({
     textAlign: 'center',
     padding: 0.25,
+  }),
+  navButton: css({
+    width: '58px',
+    height: '68px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    lineHeight: '1',
+    position: 'absolute',
+    top: 0,
+    right: -3,
+    zIndex: 1,
+  }),
+  navButtonContent: css({
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    whiteSpace: 'normal',
   }),
 };
 

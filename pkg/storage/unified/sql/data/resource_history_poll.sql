@@ -5,8 +5,13 @@ SELECT
     {{ .Ident "resource" | .Into .Response.Key.Resource }},
     {{ .Ident "name" | .Into .Response.Key.Name }},
     {{ .Ident "value" | .Into .Response.Value }},
-    {{ .Ident "action" | .Into .Response.Action }}
+    {{ .Ident "action" | .Into .Response.Action }},
+    {{ .Ident "previous_resource_version" | .Into .Response.PreviousRV }}
 
     FROM {{ .Ident "resource_history" }}
-    WHERE {{ .Ident "resource_version" }} > {{ .Arg .SinceResourceVersion }}
+    WHERE 1 = 1
+    AND {{ .Ident "group" }} = {{ .Arg .Group }}
+    AND {{ .Ident "resource" }} = {{ .Arg .Resource }}
+    AND {{ .Ident "resource_version" }} > {{ .Arg .SinceResourceVersion }}
+    ORDER BY {{ .Ident "resource_version" }} ASC
 ;

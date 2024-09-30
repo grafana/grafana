@@ -4,5 +4,7 @@ SELECT
     WHERE 1 = 1
         AND {{ .Ident "group" }}    = {{ .Arg .Group }}
         AND {{ .Ident "resource" }} = {{ .Arg .Resource }}
+    {{ if not .ReadOnly }}
     {{ .SelectFor "UPDATE" }}
+    {{ end}}
 ;

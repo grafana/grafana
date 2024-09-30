@@ -1407,27 +1407,30 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 			podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
 			expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
 		},
-
-		{
-			name:                                 "legacy, RV=0",
-			resourceVersion:                      "0",
-			initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
-			expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
-			podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
-			expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
-		},
-		{
-			name:                                 "legacy, RV=unset",
-			initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
-			expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
-			podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
-			expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
-		},
+		// Not Supported by unistore because there is no way to differentiate between:
+		// - SendInitialEvents=nil && resourceVersion=0
+		// - sendInitialEvents=false && resourceVersion=0
+		// This is a Legacy feature in k8s.io/apiserver/pkg/storage/etcd3/watcher_test.go#196
+		// {
+		// 	name:                                 "legacy, RV=0",
+		// 	resourceVersion:                      "0",
+		// 	initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
+		// 	expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
+		// 	podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
+		// 	expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
+		// },
+		// {
+		// 	name:                                 "legacy, RV=unset",
+		// 	initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
+		// 	expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
+		// 	podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
+		// 	expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
+		// },
 	}
 	for idx, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			// set up env
-			defer featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.WatchList, true)()
+			defer featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.WatchList, true)
 			if scenario.expectedInitialEventsInStrictOrder == nil {
 				scenario.expectedInitialEventsInStrictOrder = func(_ []*example.Pod) []watch.Event { return nil }
 			}
@@ -1504,7 +1507,7 @@ func RunWatchSemanticInitialEventsExtended(ctx context.Context, t *testing.T, st
 			}},
 		}
 	}
-	defer featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.WatchList, true)()
+	defer featuregatetesting.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.WatchList, true)
 
 	ns := "ns-foo"
 	pod := makePod("1")

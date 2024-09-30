@@ -81,6 +81,10 @@ export const UsersListPageUnconnected = ({
     setShowInvites(!showInvites);
   };
 
+  const onUserRolesChange = () => {
+    loadUsers();
+  };
+
   const renderTable = () => {
     if (showInvites) {
       return <InviteesTable invitees={invitees} />;
@@ -92,6 +96,7 @@ export const UsersListPageUnconnected = ({
           rolesLoading={rolesLoading}
           onRoleChange={onRoleChange}
           onRemoveUser={onRemoveUser}
+          onUserRolesChange={onUserRolesChange}
           fetchData={changeSort}
           changePage={changePage}
           page={page}

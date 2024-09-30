@@ -3,7 +3,8 @@ import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alertin
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
 
 export enum RuleFormType {
-  grafana = 'grafana',
+  grafana = 'grafana-alerting',
+  grafanaRecording = 'grafana-recording',
   cloudAlerting = 'cloud-alerting',
   cloudRecording = 'cloud-recording',
 }
@@ -22,6 +23,10 @@ export interface ContactPoint {
 // key: name of alert manager, value ContactPoint
 export interface AlertManagerManualRouting {
   [key: string]: ContactPoint;
+}
+
+export interface SimplifiedEditor {
+  simplifiedQueryEditor: boolean;
 }
 
 export interface RuleFormValues {
@@ -45,6 +50,8 @@ export interface RuleFormValues {
   isPaused?: boolean;
   manualRouting: boolean; // if true contactPoints are used. This field will not be used for saving the rule
   contactPoints?: AlertManagerManualRouting;
+  editorSettings?: SimplifiedEditor;
+  metric?: string;
 
   // cortex / loki rules
   namespace: string;

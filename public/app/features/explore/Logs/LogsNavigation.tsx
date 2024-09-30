@@ -214,6 +214,7 @@ const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean) => {
   return {
     navContainer: css`
       max-height: ${navContainerHeight};
+      ${oldestLogsFirst ? 'width: 58px;' : ''}
       display: flex;
       flex-direction: column;
       ${config.featureToggles.logsInfiniteScrolling

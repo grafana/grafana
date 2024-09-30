@@ -61,7 +61,7 @@ Grafana Enterprise adds the following features:
 - [Data source permissions]({{< relref "../administration/data-source-management#data-source-permissions" >}}) to restrict query access to specific teams and users.
 - [Data source query and resource caching]({{< relref "../administration/data-source-management#query-and-resource-caching" >}}) to temporarily store query results in Grafana to reduce data source load and rate limiting.
 - [Reporting]({{< relref "../dashboards/create-reports" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whomever you choose.
-- [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels#export-dashboard-as-pdf" >}})
+- [Export dashboard as PDF]({{< relref "../dashboards/share-dashboards-panels#export-a-dashboard-as-pdf" >}})
 - [Custom branding]({{< relref "../setup-grafana/configure-grafana/configure-custom-branding" >}}) to customize Grafana from the brand and logo to the footer links.
 - [Usage insights]({{< relref "../dashboards/assess-dashboard-usage" >}}) to understand how your Grafana instance is used.
 - [Recorded queries]({{< relref "../administration/recorded-queries" >}}) to see trends over time for your data sources.
@@ -76,17 +76,22 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 
 - [Adobe Analytics](/grafana/plugins/grafana-adobeanalytics-datasource)
 - [AppDynamics](/grafana/plugins/dlopes7-appdynamics-datasource)
+- [Atlassian Statuspage](/grafana/plugins/grafana-atlassianstatuspage-datasource)
+- [Aurora](/grafana/plugins/grafana-aurora-datasource)
 - [Azure CosmosDB](/grafana/plugins/grafana-azurecosmosdb-datasource)
 - [Azure Devops](/grafana/plugins/grafana-azuredevops-datasource)
 - [Catchpoint](/grafana/plugins/grafana-catchpoint-datasource)
 - [Cloudflare](/grafana/plugins/grafana-cloudflare-datasource)
+- [CockroachDB](/grafana/plugins/grafana-cockroachdb-datasource)
 - [Databricks](/grafana/plugins/grafana-databricks-datasource)
 - [DataDog](/grafana/plugins/grafana-datadog-datasource)
+- [Drone](/grafana/plugins/grafana-drone-datasource)
 - [Dynatrace](/grafana/plugins/grafana-dynatrace-datasource)
 - [Gitlab](/grafana/plugins/grafana-gitlab-datasource)
 - [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource)
 - [Jira](/grafana/plugins/grafana-jira-datasource)
 - [MongoDB](/grafana/plugins/grafana-mongodb-datasource)
+- [Netlify](/grafana/plugins/grafana-netlify-datasource)
 - [New Relic](/grafana/plugins/grafana-newrelic-datasource)
 - [Oracle Database](/grafana/plugins/grafana-oracle-datasource)
 - [PagerDuty](/grafana/plugins/grafana-pagerduty-datasource)

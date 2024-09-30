@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, QueryTemplate } from '../types';
+import { AddQueryTemplateCommand, DeleteQueryTemplateCommand, EditQueryTemplateCommand, QueryTemplate } from '../types';
 
 import { convertAddQueryTemplateCommandToDataQuerySpec, convertDataQueryResponseToQueryTemplates } from './mappers';
 import { baseQuery } from './query';
@@ -25,6 +25,17 @@ export const queryLibraryApi = createApi({
       query: ({ uid }) => ({
         url: `${uid}`,
         method: 'DELETE',
+      }),
+      invalidatesTags: ['QueryTemplatesList'],
+    }),
+    editQueryTemplate: builder.mutation<void, EditQueryTemplateCommand>({
+      query: (editQueryTemplateCommand) => ({
+        url: `${editQueryTemplateCommand.uid}`,
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/merge-patch+json',
+        },
+        data: { spec: editQueryTemplateCommand.partialSpec },
       }),
       invalidatesTags: ['QueryTemplatesList'],
     }),

@@ -1,11 +1,9 @@
 import { CellProps } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { MigrateDataResponseItemDto } from '../api';
+import { ResourceTableItem } from './types';
 
-export function TypeCell(props: CellProps<MigrateDataResponseItemDto>) {
-  const { type } = props.row.original;
-
+export function prettyTypeName(type: ResourceTableItem['type']) {
   switch (type) {
     case 'DATASOURCE':
       return t('migrate-to-cloud.resource-type.datasource', 'Data source');
@@ -16,4 +14,9 @@ export function TypeCell(props: CellProps<MigrateDataResponseItemDto>) {
     default:
       return t('migrate-to-cloud.resource-type.unknown', 'Unknown');
   }
+}
+
+export function TypeCell(props: CellProps<ResourceTableItem>) {
+  const { type } = props.row.original;
+  return <>{prettyTypeName(type)}</>;
 }

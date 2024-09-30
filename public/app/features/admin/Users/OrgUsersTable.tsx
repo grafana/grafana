@@ -19,7 +19,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
@@ -48,12 +48,14 @@ export interface Props {
   page: number;
   totalPages: number;
   rolesLoading?: boolean;
+  onUserRolesChange?: () => void;
 }
 
 export const OrgUsersTable = ({
   users,
   orgId,
   onRoleChange,
+  onUserRolesChange,
   onRemoveUser,
   fetchData,
   changePage,
@@ -118,10 +120,19 @@ export const OrgUsersTable = ({
         header: 'Role',
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const basicRoleDisabled = getBasicRoleDisabled(original);
+          const onUserRolesUpdate = async (newRoles: Role[], userId: number, orgId: number | undefined) => {
+            await updateUserRoles(newRoles, userId, orgId);
+            if (onUserRolesChange) {
+              onUserRolesChange();
+            }
+          };
+
           return contextSrv.licensedAccessControlEnabled() ? (
             <UserRolePicker
               userId={original.userId}
-              roles={original.roles || []}
+              roles={original.roles}
+              apply={true}
+              onApplyRoles={onUserRolesUpdate}
               isLoading={rolesLoading}
               orgId={orgId}
               roleOptions={roleOptions}
@@ -207,7 +218,7 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [rolesLoading, orgId, roleOptions, onRoleChange]
+    [rolesLoading, orgId, roleOptions, onUserRolesChange, onRoleChange]
   );
 
   return (

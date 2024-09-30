@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -40,6 +40,7 @@ func NewServiceAccountsAPI(
 	permissionService accesscontrol.ServiceAccountPermissionsService,
 	features featuremgmt.FeatureToggles,
 ) *ServiceAccountsAPI {
+	enabled := features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts) && cfg.ManagedServiceAccountsEnabled
 	return &ServiceAccountsAPI{
 		cfg:                  cfg,
 		service:              service,
@@ -48,7 +49,7 @@ func NewServiceAccountsAPI(
 		RouterRegister:       routerRegister,
 		log:                  log.New("serviceaccounts.api"),
 		permissionService:    permissionService,
-		isExternalSAEnabled:  features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		isExternalSAEnabled:  enabled,
 	}
 }
 
@@ -98,24 +99,24 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
-	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if api.cfg.RBAC.PermissionsOnCreation("service-account") {
+		if c.SignedInUser.IsIdentityType(claims.TypeUser) {
+			userID, err := c.SignedInUser.GetInternalID()
+			if err != nil {
+				return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
+			}
 
-	if namespace == identity.NamespaceUser {
-		userID, err := identity.IntIdentifier(namespace, identifier)
-		if err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to parse user id", err)
-		}
+			if _, err := api.permissionService.SetUserPermission(c.Req.Context(),
+				c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID},
+				strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
+			}
 
-		if _, err := api.permissionService.SetUserPermission(c.Req.Context(),
-			c.SignedInUser.GetOrgID(), accesscontrol.User{ID: userID},
-			strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
-			return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
+			// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
+			// Required for cases when caller wants to immediately interact with the newly created object
+			api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 		}
 	}
-
-	// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
 	return response.JSON(http.StatusCreated, serviceAccount)
 }

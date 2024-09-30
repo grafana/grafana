@@ -2,12 +2,12 @@ import { urlUtil } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
-  getUrlSyncManager,
   sceneGraph,
   SceneObject,
   SceneObjectState,
   SceneObjectUrlValues,
   SceneTimeRange,
+  sceneUtils,
 } from '@grafana/scenes';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
@@ -35,7 +35,7 @@ export function newMetricsTrail(initialDS?: string): DataTrail {
 }
 
 export function getUrlForTrail(trail: DataTrail) {
-  const params = getUrlSyncManager().getUrlState(trail);
+  const params = sceneUtils.getUrlState(trail);
   return getUrlForValues(params);
 }
 
@@ -100,7 +100,9 @@ export function getColorByIndex(index: number) {
 export type SceneTimeRangeState = SceneObjectState & {
   from: string;
   to: string;
+  timeZone?: string;
 };
+
 export function isSceneTimeRangeState(state: SceneObjectState): state is SceneTimeRangeState {
   const keys = Object.keys(state);
   return keys.includes('from') && keys.includes('to');

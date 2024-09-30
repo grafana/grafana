@@ -305,6 +305,51 @@ describe('FilterByValue transformer', () => {
     });
   });
 
+  it('should interpolate dashboard variables for regex matcher', async () => {
+    mockTransformationsVariableSupport.mockReturnValue(true);
+
+    const regex: MatcherConfig<BasicValueMatcherOptions<string | number>> = {
+      id: ValueMatcherID.regex,
+      options: { value: '.*thiswillinterpolateto6' },
+    };
+
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.all,
+        filters: [
+          {
+            fieldName: 'numbers',
+            config: regex,
+          },
+        ],
+      },
+    };
+
+    const ctxmock = { interpolate: jest.fn(() => '6') };
+
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField], ctxmock)).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [6000],
+          state: {},
+        },
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: [6],
+          state: {},
+        },
+      ]);
+    });
+  });
+
   it('should not interpolate dashboard variables when feature toggle is off', async () => {
     mockTransformationsVariableSupport.mockReturnValue(false);
 

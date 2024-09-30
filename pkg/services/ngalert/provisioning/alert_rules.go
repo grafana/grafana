@@ -598,6 +598,14 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
 	rule.IntervalSeconds = storedRule.IntervalSeconds
+
+	// Currently metadata contains only editor settings, so we can just copy it.
+	// If we add more fields to metadata, we might need to handle them separately,
+	// and/or merge or update their values.
+	if rule.Metadata == (models.AlertRuleMetadata{}) {
+		rule.Metadata = storedRule.Metadata
+	}
+
 	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
 		return models.AlertRule{}, err
@@ -659,12 +667,10 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, user ident
 // checkLimitsTransactionCtx checks whether the current transaction (as identified by the ctx) breaches configured alert rule limits.
 func (service *AlertRuleService) checkLimitsTransactionCtx(ctx context.Context, user identity.Requester) error {
 	// default to 0 if there is no user
-	userID := int64(0)
-	u, err := identity.UserIdentifier(user.GetNamespacedID())
-	if err != nil {
-		return fmt.Errorf("failed to check alert rule quota: %w", err)
+	var userID int64
+	if id, err := identity.UserIdentifier(user.GetID()); err == nil {
+		userID = id
 	}
-	userID = u
 
 	limitReached, err := service.quotas.CheckQuotaReached(ctx, models.QuotaTargetSrv, &quota.ScopeParameters{
 		OrgID:  user.GetOrgID(),

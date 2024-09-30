@@ -591,10 +591,11 @@ func TestValidate(t *testing.T) {
 				pluginsStore: store,
 			})
 
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()), store)
+			expressions := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest())
+			validator := NewConditionValidator(cacheService, expressions, store)
 			evalCtx := NewContext(context.Background(), u)
 
-			err := evaluator.Validate(evalCtx, condition)
+			err := validator.Validate(evalCtx, condition)
 			if testCase.error {
 				require.Error(t, err)
 			} else {
@@ -709,7 +710,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				cache:        cacheService,
 				pluginsStore: store,
 			})
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()), store)
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()))
 			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
 
 			eval, err := evaluator.Create(evalCtx, condition)
@@ -1262,9 +1263,9 @@ func TestCreate(t *testing.T) {
 		}
 
 		expectedHeaders := map[string]string{
-			"X-Rule-Test1":             "data1",
-			"X-Rule-Test2":             "%D0%BC%D1%83%D0%B7%D1%8B%D0%BA%D0%B0+%F0%9F%8E%B6",
-			"X-Rule-Test3":             "",
+			"http_X-Rule-Test1":        "data1",
+			"http_X-Rule-Test2":        "%D0%BC%D1%83%D0%B7%D1%8B%D0%BA%D0%B0+%F0%9F%8E%B6",
+			"http_X-Rule-Test3":        "",
 			models.FromAlertHeaderName: "true",
 			models.CacheSkipHeaderName: "true",
 			"X-Grafana-Org-Id":         strconv.FormatInt(orgID, 10),

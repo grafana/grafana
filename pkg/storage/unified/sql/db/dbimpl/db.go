@@ -4,11 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
-	resourcedb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
-func NewDB(d *sql.DB, driverName string) resourcedb.DB {
+func NewDB(d *sql.DB, driverName string) db.DB {
+	// remove the suffix from the instrumented driver created by the older
+	// Grafana code
+	driverName = strings.TrimSuffix(driverName, "WithHooks")
+
 	return sqldb{
 		DB:         d,
 		driverName: driverName,
@@ -24,7 +29,7 @@ func (d sqldb) DriverName() string {
 	return d.driverName
 }
 
-func (d sqldb) BeginTx(ctx context.Context, opts *sql.TxOptions) (resourcedb.Tx, error) {
+func (d sqldb) BeginTx(ctx context.Context, opts *sql.TxOptions) (db.Tx, error) {
 	t, err := d.DB.BeginTx(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -34,7 +39,7 @@ func (d sqldb) BeginTx(ctx context.Context, opts *sql.TxOptions) (resourcedb.Tx,
 	}, nil
 }
 
-func (d sqldb) WithTx(ctx context.Context, opts *sql.TxOptions, f resourcedb.TxFunc) error {
+func (d sqldb) WithTx(ctx context.Context, opts *sql.TxOptions, f db.TxFunc) error {
 	t, err := d.BeginTx(ctx, opts)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)

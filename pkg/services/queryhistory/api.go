@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -15,13 +16,25 @@ import (
 
 func (s *QueryHistoryService) registerAPIEndpoints() {
 	s.RouteRegister.Group("/api/query-history", func(entities routing.RouteRegister) {
-		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(s.createHandler))
-		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(s.searchHandler))
-		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(s.deleteHandler))
-		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.starHandler))
-		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.unstarHandler))
-		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(s.patchCommentHandler))
+		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.createHandler, "Failed to create query history")))
+		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.searchHandler, "Failed to get query history")))
+		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.deleteHandler, "Failed to delete query history")))
+		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.starHandler, "Failed to star query history")))
+		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.unstarHandler, "Failed to unstar query history")))
+		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(s.permissionsMiddleware(s.patchCommentHandler, "Failed to update comment of query in query history")))
 	})
+}
+
+type CallbackHandler func(c *contextmodel.ReqContext) response.Response
+
+func (s *QueryHistoryService) permissionsMiddleware(handler CallbackHandler, errorMessage string) CallbackHandler {
+	return func(c *contextmodel.ReqContext) response.Response {
+		hasAccess := ac.HasAccess(s.accessControl, c)
+		if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit && !hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
+			return response.Error(http.StatusUnauthorized, errorMessage, nil)
+		}
+		return handler(c)
+	}
 }
 
 // swagger:route POST /query-history query_history createQuery
@@ -36,10 +49,6 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response.Response {
-	if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
-		return response.Error(http.StatusUnauthorized, "Failed to create query history", nil)
-	}
-
 	cmd := CreateQueryInQueryHistoryCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -66,10 +75,6 @@ func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response.Response {
-	if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
-		return response.Error(http.StatusUnauthorized, "Failed to get query history", nil)
-	}
-
 	timeRange := gtime.NewTimeRange(c.Query("from"), c.Query("to"))
 
 	query := SearchInQueryHistoryQuery{
@@ -102,10 +107,6 @@ func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) deleteHandler(c *contextmodel.ReqContext) response.Response {
-	if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
-		return response.Error(http.StatusUnauthorized, "Failed to delete query history", nil)
-	}
-
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -163,9 +164,6 @@ func (s *QueryHistoryService) patchCommentHandler(c *contextmodel.ReqContext) re
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) starHandler(c *contextmodel.ReqContext) response.Response {
-	if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
-		return response.Error(http.StatusUnauthorized, "Failed to star query history", nil)
-	}
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -190,9 +188,6 @@ func (s *QueryHistoryService) starHandler(c *contextmodel.ReqContext) response.R
 // 401: unauthorisedError
 // 500: internalServerError
 func (s *QueryHistoryService) unstarHandler(c *contextmodel.ReqContext) response.Response {
-	if c.GetOrgRole() == org.RoleViewer && !s.Cfg.ViewersCanEdit {
-		return response.Error(http.StatusUnauthorized, "Failed to unstar query history", nil)
-	}
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)

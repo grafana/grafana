@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { chain, isEmpty, truncate } from 'lodash';
 import { useState } from 'react';
+import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, LinkButton, LoadingBar, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/ui/src/utils/i18n';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
@@ -12,19 +14,22 @@ import { AlertInstanceTotalState, CombinedRule, RuleHealth, RuleIdentifier } fro
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../RuleViewer';
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import { usePrometheusCreationConsistencyCheck } from '../../hooks/usePrometheusConsistencyCheck';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { Annotation } from '../../utils/constants';
-import { makeDashboardLink, makePanelLink } from '../../utils/misc';
+import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
 import {
-  RulePluginOrigin,
   getRulePluginOrigin,
   isAlertingRule,
   isFederatedRuleGroup,
+  isGrafanaRecordingRule,
   isGrafanaRulerRule,
   isGrafanaRulerRulePaused,
   isRecordingRule,
+  RulePluginOrigin,
 } from '../../utils/rules';
-import { createUrl } from '../../utils/url';
+import { createRelativeUrl } from '../../utils/url';
 import { AlertLabels } from '../AlertLabels';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
@@ -50,8 +55,10 @@ export enum ActiveTab {
   Details = 'details',
 }
 
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+
 const RuleViewer = () => {
-  const { rule } = useAlertRule();
+  const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
 
   // this will be used to track if we are in the process of cloning a rule
@@ -111,6 +118,7 @@ const RuleViewer = () => {
         </Stack>
       }
     >
+      {prometheusRulesPrimary && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
       <Stack direction="column" gap={2}>
         {/* tabs and tab content */}
         <TabContent>
@@ -192,6 +200,13 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
       ),
     });
   }
+  if (isGrafanaRecordingRule(rule.rulerRule)) {
+    const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
+    metadata.push({
+      label: 'Metric name',
+      value: <Text color="primary">{metric}</Text>,
+    });
+  }
 
   if (interval) {
     metadata.push({
@@ -214,7 +229,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
 // TODO move somewhere else
 export const createListFilterLink = (values: Array<[string, string]>) => {
   const params = new URLSearchParams([['search', values.map(([key, value]) => `${key}:"${value}"`).join(' ')]]);
-  return createUrl(`/alerting/list?` + params.toString());
+  return createRelativeUrl(`/alerting/list`, params);
 };
 
 interface TitleProps {
@@ -253,11 +268,47 @@ export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigi
   );
 };
 
+/**
+ * This component displays an Alert warning component if discovers inconsistencies between Prometheus and Ruler rules
+ * It will show loading indicator until the Prometheus and Ruler rule is consistent
+ * It will not show the warning if the rule is Grafana managed
+ */
+function PrometheusConsistencyCheck({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }) {
+  const [ref, { width }] = useMeasure<HTMLDivElement>();
+  const { isConsistent, error } = usePrometheusCreationConsistencyCheck(ruleIdentifier);
+
+  if (isConsistent) {
+    return null;
+  }
+
+  if (error) {
+    return (
+      <Alert title="Unable to check the rule status" bottomSpacing={0} topSpacing={2}>
+        {stringifyErrorLike(error)}
+      </Alert>
+    );
+  }
+
+  return (
+    <Stack direction="column" gap={0} ref={ref}>
+      <LoadingBar width={width} />
+      <Alert
+        title={t('alerting.rule-viewer.prometheus-consistency-check.alert-title', 'Update in progress')}
+        severity="info"
+      >
+        <Trans i18nKey="alerting.rule-viewer.prometheus-consistency-check.alert-message">
+          Alert rule has been updated. Changes may take up to a minute to appear on the Alert rules list view.
+        </Trans>
+      </Alert>
+    </Stack>
+  );
+}
+
 export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 
 export function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
-  const tabFromQuery = queryParams['tab'];
+  const tabFromQuery = queryParams.tab;
 
   const activeTab = isValidTab(tabFromQuery) ? tabFromQuery : ActiveTab.Query;
 

@@ -6,8 +6,6 @@ comments: |
 
 **Standard options** in the panel editor pane let you change how field data is displayed in your visualizations. When you set a standard option, the change is applied to all fields or series. For more granular control over the display of fields, refer to [Configure overrides](../../configure-overrides/).
 
-You can customize the following standard options:
-
 | Option        | Description                                                                                                                                       |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Unit          | Choose which unit a field should use.                                                                                                             |

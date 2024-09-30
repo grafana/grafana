@@ -61,7 +61,7 @@ const INVALID_FORMAT = new Error(
  */
 export function parsePrometheusDuration(duration: string): number {
   let input = duration;
-  let parts: Array<[number, string]> = [];
+  const parts: Array<[number, string]> = [];
 
   function matchDuration(part: string) {
     const match = DURATION_REGEXP.exec(part);

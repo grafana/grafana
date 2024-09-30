@@ -37,7 +37,7 @@ type CloudMigrationSnapshot struct {
 	UID            string `xorm:"uid"`
 	SessionUID     string `xorm:"session_uid"`
 	Status         SnapshotStatus
-	EncryptionKey  string `xorm:"encryption_key"` // stored in the unified secrets table
+	EncryptionKey  []byte `xorm:"-"` // stored in the unified secrets table
 	LocalDir       string `xorm:"local_directory"`
 	GMSSnapshotUID string `xorm:"gms_snapshot_uid"`
 	ErrorString    string `xorm:"error_string"`
@@ -68,6 +68,7 @@ type CloudMigrationResource struct {
 	ID  int64  `xorm:"pk autoincr 'id'"`
 	UID string `xorm:"uid"`
 
+	Name   string          `xorm:"name" json:"name"`
 	Type   MigrateDataType `xorm:"resource_type" json:"type"`
 	RefID  string          `xorm:"resource_uid" json:"refId"`
 	Status ItemStatus      `xorm:"status" json:"status"`
@@ -79,15 +80,17 @@ type CloudMigrationResource struct {
 type MigrateDataType string
 
 const (
-	DashboardDataType  MigrateDataType = "DASHBOARD"
-	DatasourceDataType MigrateDataType = "DATASOURCE"
-	FolderDataType     MigrateDataType = "FOLDER"
+	DashboardDataType      MigrateDataType = "DASHBOARD"
+	DatasourceDataType     MigrateDataType = "DATASOURCE"
+	FolderDataType         MigrateDataType = "FOLDER"
+	LibraryElementDataType MigrateDataType = "LIBRARY_ELEMENT"
 )
 
 type ItemStatus string
 
 const (
 	ItemStatusOK      ItemStatus = "OK"
+	ItemStatusWarning ItemStatus = "WARNING"
 	ItemStatusError   ItemStatus = "ERROR"
 	ItemStatusPending ItemStatus = "PENDING"
 )
@@ -145,6 +148,7 @@ type ListSnapshotsQuery struct {
 
 type UpdateSnapshotCmd struct {
 	UID       string
+	SessionID string
 	Status    SnapshotStatus
 	Resources []CloudMigrationResource
 }
@@ -207,7 +211,8 @@ type StartSnapshotResponse struct {
 	SnapshotID           string `json:"snapshotID"`
 	MaxItemsPerPartition uint32 `json:"maxItemsPerPartition"`
 	Algo                 string `json:"algo"`
-	EncryptionKey        string `json:"encryptionKey"`
+	EncryptionKey        []byte `json:"encryptionKey"`
+	Metadata             []byte `json:"metadata"`
 }
 
 // Based on Grafana Migration Service DTOs

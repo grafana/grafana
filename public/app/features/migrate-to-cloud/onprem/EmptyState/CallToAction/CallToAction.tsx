@@ -26,7 +26,7 @@ export const CallToAction = () => {
       <ConnectModal
         isOpen={modalOpen}
         isLoading={createMigrationResponse.isLoading}
-        isError={createMigrationResponse.isError}
+        error={createMigrationResponse.error}
         onConfirm={createMigration}
         hideModal={() => setModalOpen(false)}
       />

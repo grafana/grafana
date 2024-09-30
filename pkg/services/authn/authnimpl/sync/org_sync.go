@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/grafana/authlib/claims"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -38,14 +39,14 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 
 	ctxLogger := s.log.FromContext(ctx).New("id", id.ID, "login", id.Login)
 
-	if !id.ID.IsNamespace(authn.NamespaceUser) {
-		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "namespace", id.ID.Namespace())
+	if !id.IsIdentityType(claims.TypeUser) {
+		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "type", id.GetIdentityType())
 		return nil
 	}
 
-	userID, err := id.ID.ParseInt()
+	userID, err := id.GetInternalID()
 	if err != nil {
-		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "namespace", id.ID.Namespace(), "err", err)
+		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "type", id.GetIdentityType(), "err", err)
 		return nil
 	}
 
@@ -144,14 +145,14 @@ func (s *OrgSync) SetDefaultOrgHook(ctx context.Context, currentIdentity *authn.
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	if !currentIdentity.ID.IsNamespace(authn.NamespaceUser) {
-		ctxLogger.Debug("Skipping default org sync, not a user", "namespace", currentIdentity.ID.Namespace())
+	if !currentIdentity.IsIdentityType(claims.TypeUser) {
+		ctxLogger.Debug("Skipping default org sync, not a user", "type", currentIdentity.GetIdentityType())
 		return
 	}
 
-	userID, err := currentIdentity.ID.ParseInt()
+	userID, err := currentIdentity.GetInternalID()
 	if err != nil {
-		ctxLogger.Debug("Skipping default org sync, invalid ID for identity", "id", currentIdentity.ID, "namespace", currentIdentity.ID.Namespace(), "err", err)
+		ctxLogger.Debug("Skipping default org sync, invalid ID for identity", "id", currentIdentity.ID, "type", currentIdentity.GetIdentityType(), "err", err)
 		return
 	}
 

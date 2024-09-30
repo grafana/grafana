@@ -3,11 +3,11 @@ import { formatDistanceToNowStrict } from 'date-fns';
 import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Text, Stack, useStyles2, ClipboardButton, TextLink } from '@grafana/ui';
+import { ClipboardButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
-import { Annotations } from 'app/types/unified-alerting-dto';
 
-import { isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
+import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
+import { getAnnotations, isGrafanaRecordingRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../../utils/rules';
 import { MetaText } from '../../MetaText';
 import { Tokenize } from '../../Tokenize';
 
@@ -17,6 +17,7 @@ interface DetailsProps {
 
 enum RuleType {
   GrafanaManagedAlertRule = 'Grafana-managed alert rule',
+  GrafanaManagedRecordingRule = 'Grafana-managed recording rule',
   CloudAlertRule = 'Cloud alert rule',
   CloudRecordingRule = 'Cloud recording rule',
 }
@@ -26,8 +27,12 @@ const Details = ({ rule }: DetailsProps) => {
 
   let ruleType: RuleType;
 
+  const pendingPeriod = usePendingPeriod(rule);
+
   if (isGrafanaRulerRule(rule.rulerRule)) {
-    ruleType = RuleType.GrafanaManagedAlertRule;
+    ruleType = isGrafanaRecordingRule(rule.rulerRule)
+      ? RuleType.GrafanaManagedRecordingRule
+      : RuleType.GrafanaManagedAlertRule;
   } else if (isRecordingRulerRule(rule.rulerRule)) {
     ruleType = RuleType.CloudRecordingRule;
   } else {
@@ -46,9 +51,7 @@ const Details = ({ rule }: DetailsProps) => {
     }
   }, [rule.rulerRule]);
 
-  const annotations: Annotations | undefined = !isRecordingRulerRule(rule.rulerRule)
-    ? rule.annotations ?? []
-    : undefined;
+  const annotations = getAnnotations(rule);
 
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);
 
@@ -89,27 +92,30 @@ const Details = ({ rule }: DetailsProps) => {
           )}
         </MetaText>
         <MetaText direction="column">
-          {!isRecordingRulerRule(rule.rulerRule) && (
+          {pendingPeriod && (
             <>
               Pending period
-              <Text color="primary">{rule.rulerRule?.for ?? '0s'}</Text>
+              <Text color="primary">{pendingPeriod}</Text>
             </>
           )}
         </MetaText>
 
         {/* nodata and execution error state mapping */}
-        {isGrafanaRulerRule(rule.rulerRule) && (
-          <>
-            <MetaText direction="column">
-              Alert state if no data or all values are null
-              <Text color="primary">{rule.rulerRule.grafana_alert.no_data_state}</Text>
-            </MetaText>
-            <MetaText direction="column">
-              Alert state if execution error or timeout
-              <Text color="primary">{rule.rulerRule.grafana_alert.exec_err_state}</Text>
-            </MetaText>
-          </>
-        )}
+        {isGrafanaRulerRule(rule.rulerRule) &&
+          // grafana recording rules don't have these fields
+          rule.rulerRule.grafana_alert.no_data_state &&
+          rule.rulerRule.grafana_alert.exec_err_state && (
+            <>
+              <MetaText direction="column">
+                Alert state if no data or all values are null
+                <Text color="primary">{rule.rulerRule.grafana_alert.no_data_state}</Text>
+              </MetaText>
+              <MetaText direction="column">
+                Alert state if execution error or timeout
+                <Text color="primary">{rule.rulerRule.grafana_alert.exec_err_state}</Text>
+              </MetaText>
+            </>
+          )}
       </div>
 
       {/* annotations go here */}

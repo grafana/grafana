@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import { Component } from 'react';
-import { match } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { Dashboard } from '@grafana/schema';
@@ -75,7 +74,10 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           ...getRouteComponentProps({
             match: {
               params: { slug: 'my-dash', uid: '11' },
-            } as unknown as match,
+              isExact: false,
+              path: '',
+              url: '',
+            },
             queryParams: {
               panelId: '1',
             },

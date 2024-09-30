@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -188,14 +187,14 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
 
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
+					return AddOrUpdateTeamMemberHook(sess, userId, testOrgID, team1.ID, false, team.PermissionTypeAdmin)
 				})
 				require.NoError(t, err)
 
 				qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
 				qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
-				require.Equal(t, qAfterUpdateResult[0].Permission, dashboardaccess.PERMISSION_ADMIN)
+				require.Equal(t, qAfterUpdateResult[0].Permission, team.PermissionTypeAdmin)
 			})
 
 			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
@@ -213,9 +212,9 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
 
-				invalidPermissionLevel := dashboardaccess.PERMISSION_EDIT
+				invalidPermissionLevel := 2
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userID, testOrgID, team1.ID, false, invalidPermissionLevel)
+					return AddOrUpdateTeamMemberHook(sess, userID, testOrgID, team1.ID, false, team.PermissionType(invalidPermissionLevel))
 				})
 				require.NoError(t, err)
 
@@ -355,7 +354,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 			t.Run("Should have empty teams", func(t *testing.T) {
 				err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-					return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
+					return AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
 				})
 				require.NoError(t, err)
 
@@ -378,11 +377,11 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					setup()
 
 					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-						err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
+						err := AddOrUpdateTeamMemberHook(sess, userIds[0], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
 						if err != nil {
 							return err
 						}
-						return AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, team1.ID, false, dashboardaccess.PERMISSION_ADMIN)
+						return AddOrUpdateTeamMemberHook(sess, userIds[1], testOrgID, team1.ID, false, team.PermissionTypeAdmin)
 					})
 					require.NoError(t, err)
 					err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {

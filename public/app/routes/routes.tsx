@@ -1,7 +1,6 @@
 import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
-import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
@@ -20,6 +19,7 @@ import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
 import { AccessControlAction, DashboardRoutes } from 'app/types';
 
+import { BookmarksPage } from '../core/components/Bookmarks/BookmarksPage';
 import { SafeDynamicImport } from '../core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from '../core/navigation/types';
 import { getPublicDashboardRoutes } from '../features/dashboard/routes';
@@ -83,7 +83,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/d-solo/:uid/:slug?',
-      pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
@@ -95,7 +94,6 @@ export function getAppRoutes(): RouteDescriptor[] {
     // This route handles embedding of snapshot/scripted dashboard panels
     {
       path: '/dashboard-solo/:type/:slug',
-      pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(
@@ -221,9 +219,8 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/org/users',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UsersListPage" */ 'app/features/users/UsersListPage')
-      ),
+      // Org users page has been combined with admin users
+      component: () => <Redirect to={'/admin/users'} />,
     },
     {
       path: '/org/users/invite',
@@ -300,7 +297,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/authentication/ldap',
-      component: LdapPage,
+      component: config.featureToggles.ssoSettingsLDAP
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "LdapSettingsPage" */ 'app/features/admin/ldap/LdapSettingsPage')
+          )
+        : LdapPage,
     },
     {
       path: '/admin/authentication/:provider',
@@ -380,7 +381,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     // LOGIN / SIGNUP
     {
       path: '/login',
-      component: LoginPage,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "LoginPage" */ 'app/core/components/Login/LoginPage')
+      ),
       pageClass: 'login-page',
       chromeless: true,
     },
@@ -513,6 +516,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
       ),
+    },
+    {
+      path: '/bookmarks',
+      component: () => <BookmarksPage />,
     },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),

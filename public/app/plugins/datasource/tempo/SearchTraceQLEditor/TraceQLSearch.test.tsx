@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { initTemplateSrv } from '../test_utils';
+import { initTemplateSrv } from '../test/test_utils';
 import { TempoQuery } from '../types';
 
 import TraceQLSearch from './TraceQLSearch';
@@ -64,6 +64,7 @@ describe('TraceQLSearch', () => {
       ],
     },
   } as TempoDatasource;
+  datasource.isStreamingSearchEnabled = () => false;
   datasource.languageProvider = new TempoLanguageProvider(datasource);
   let query: TempoQuery = {
     refId: 'A',
@@ -216,6 +217,7 @@ describe('TraceQLSearch', () => {
         ],
       },
     } as TempoDatasource;
+    datasource.isStreamingSearchEnabled = () => false;
     datasource.languageProvider = new TempoLanguageProvider(datasource);
     await act(async () => {
       const { container } = render(

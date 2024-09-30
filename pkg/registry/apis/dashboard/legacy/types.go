@@ -10,10 +10,9 @@ import (
 // This does not check if you have permissions!
 
 type DashboardQuery struct {
-	OrgID    int64
-	UID      string // to select a single dashboard
-	Limit    int
-	MaxBytes int
+	OrgID int64
+	UID   string // to select a single dashboard
+	Limit int
 
 	// Included in the continue token
 	// This is the ID from the last dashboard sent in the previous page
@@ -30,6 +29,20 @@ type DashboardQuery struct {
 	Labels []*resource.Requirement
 }
 
+func (r *DashboardQuery) UseHistoryTable() bool {
+	return r.GetHistory || r.Version > 0
+}
+
+type LibraryPanelQuery struct {
+	OrgID int64
+	UID   string // to select a single dashboard
+	Limit int64
+
+	// Included in the continue token
+	// This is the ID from the last dashboard sent in the previous page
+	LastID int64
+}
+
 type DashboardAccess interface {
 	resource.StorageBackend
 	resource.ResourceIndexServer
@@ -37,4 +50,7 @@ type DashboardAccess interface {
 	GetDashboard(ctx context.Context, orgId int64, uid string, version int64) (*dashboardsV0.Dashboard, int64, error)
 	SaveDashboard(ctx context.Context, orgId int64, dash *dashboardsV0.Dashboard) (*dashboardsV0.Dashboard, bool, error)
 	DeleteDashboard(ctx context.Context, orgId int64, uid string) (*dashboardsV0.Dashboard, bool, error)
+
+	// Get a typed list
+	GetLibraryPanels(ctx context.Context, query LibraryPanelQuery) (*dashboardsV0.LibraryPanelList, error)
 }

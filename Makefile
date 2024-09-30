@@ -7,10 +7,10 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-
 GO = go
-GO_VERSION = 1.22.4
-GO_FILES ?= ./pkg/... ./pkg/apiserver/... ./pkg/apimachinery/... ./pkg/promlib/...
+GO_VERSION = 1.23.1
+GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
+GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
@@ -172,10 +172,10 @@ gen-jsonnet:
 .PHONY: update-workspace
 update-workspace:
 	@echo "updating workspace"
-	$(GO) mod download
+	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: update-workspace gen-go ## Build all Go binaries.
+build-go: gen-go update-workspace ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
@@ -236,8 +236,16 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	go list -f '{{.Dir}}/...' -m | xargs \
+	printf '$(GO_TEST_FILES)' | xargs \
 	$(GO) test $(GO_RACE_FLAG) -short -covermode=atomic -timeout=30m
+
+.PHONY: test-go-unit-pretty
+test-go-unit-pretty: check-tparse
+	@if [ -z "$(FILES)" ]; then \
+		echo "Notice: FILES variable is not set. Try \"make test-go-unit-pretty FILES=./pkg/services/mysvc\""; \
+		exit 1; \
+	fi
+	$(GO) test $(GO_RACE_FLAG) -timeout=10s $(FILES) -json | tparse -all
 
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
@@ -290,10 +298,10 @@ golangci-lint: $(GOLANGCI_LINT)
 	@echo "lint via golangci-lint"
 	$(GOLANGCI_LINT) run \
 		--config .golangci.toml \
-		$(GO_FILES)
+		$(GO_LINT_FILES)
 
 .PHONY: lint-go
-lint-go: golangci-lint ## Run all code checks for backend. You can use GO_FILES to specify exact files to check
+lint-go: golangci-lint ## Run all code checks for backend. You can use GO_LINT_FILES to specify exact files to check
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
@@ -338,27 +346,32 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 
 ##@ Services
 
-# create docker-compose file with provided sources and start them
-# example: make devenv sources=postgres,auth/openldap
+COMPOSE := $(shell if docker compose --help >/dev/null 2>&1; then echo docker compose; else echo docker-compose; fi)
+ifeq ($(COMPOSE),docker-compose)
+$(warning From July 2023 Compose V1 (docker-compose) stopped receiving updates. Migrate to Compose V2 (docker compose). https://docs.docker.com/compose/migrate/)
+endif
+
+# Create a Docker Compose file with provided sources and start them.
+# For example, `make devenv sources=postgres,auth/openldap`
 .PHONY: devenv
 ifeq ($(sources),)
 devenv:
-	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
+	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,auth/openldap\n'
 else
-devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
+devenv: devenv-down ## Start optional services like Postgresql, Prometheus, or Elasticsearch.
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
 	(rm -rf {docker-compose.yaml,conf.tmp,.env}; exit 1)
 
 	@cd devenv; \
-	docker-compose up -d --build
+	$(COMPOSE) up -d --build
 endif
 
 .PHONY: devenv-down
 devenv-down: ## Stop optional services.
 	@cd devenv; \
 	test -f docker-compose.yaml && \
-	docker-compose down || exit 0;
+	$(COMPOSE) down || exit 0;
 
 .PHONY: devenv-postgres
 devenv-postgres:
@@ -382,10 +395,9 @@ devenv-mysql:
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	go install google.golang.org/protobuf/cmd/protoc-gen-go
-	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/plugins/backendplugin/secretsmanagerplugin --template pkg/plugins/backendplugin/secretsmanagerplugin/buf.gen.yaml
-	buf generate pkg/services/store/entity --template pkg/services/store/entity/buf.gen.yaml
 	buf generate pkg/storage/unified/resource --template pkg/storage/unified/resource/buf.gen.yaml
 
 .PHONY: clean
@@ -431,6 +443,12 @@ go-race-is-enabled:
 .PHONY: enable-go-race
 enable-go-race:
 	@touch .go-race-enabled-locally
+
+check-tparse:
+	@command -v tparse >/dev/null 2>&1 || { \
+		echo >&2 "Error: tparse is not installed. Refer to https://github.com/mfridman/tparse"; \
+		exit 1; \
+	}
 
 .PHONY: help
 help: ## Display this help.
