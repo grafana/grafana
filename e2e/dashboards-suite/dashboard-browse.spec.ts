@@ -1,7 +1,7 @@
 import testDashboard from '../dashboards/TestDashboard.json';
 import { e2e } from '../utils';
-
-describe('Dashboard browse', () => {
+// Skipping due to race conditions with same old arch test e2e/dashboards-suite/dashboard-browse.spec.ts
+describe.skip('Dashboard browse', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });

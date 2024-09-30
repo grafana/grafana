@@ -840,40 +840,52 @@
     {
       "metadata": {
         "name": "dashboardScene",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-13T08:51:21Z"
+        "resourceVersion": "1727354524763",
+        "creationTimestamp": "2023-11-13T08:51:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables dashboard rendering using scenes for all roles",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "dashboardSceneForViewers",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2023-11-02T19:02:25Z"
+        "resourceVersion": "1727354524763",
+        "creationTimestamp": "2023-11-02T19:02:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables dashboard rendering using Scenes for viewer roles",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "dashboardSceneSolo",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-02-11T08:08:47Z"
+        "resourceVersion": "1727354524763",
+        "creationTimestamp": "2024-02-11T08:08:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables rendering dashboards using scenes for solo panels",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {
@@ -2516,14 +2528,18 @@
     {
       "metadata": {
         "name": "publicDashboardsScene",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2024-03-22T14:48:21Z"
+        "resourceVersion": "1727354524763",
+        "creationTimestamp": "2024-03-22T14:48:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 12:42:04.763233 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables public dashboard rendering using scenes",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "frontend": true
+        "frontend": true,
+        "expression": "true"
       }
     },
     {

@@ -14,7 +14,8 @@ const DATASOURCE_NAME = 'aprometheusAnnotationDS';
  *
  */
 function navigateToAnnotations() {
-  e2e.components.PageToolbar.item('Dashboard settings').click();
+  e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
+  e2e.components.NavToolbar.editDashboard.settingsButton().should('be.visible').click();
   e2e.components.Tab.title('Annotations').click();
 }
 
@@ -67,7 +68,7 @@ describe('Prometheus annotations', () => {
     // series value as timestamp
     e2e.components.DataSource.Prometheus.annotations.seriesValueAsTimestamp().scrollIntoView().should('exist');
 
-    e2e.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard().click();
+    e2e.components.NavToolbar.editDashboard.backToDashboardButton().should('be.visible').click();
 
     // check that annotation exists
     cy.get('body').contains(annotationName);
