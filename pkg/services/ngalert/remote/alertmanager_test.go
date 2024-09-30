@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -377,8 +376,8 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 		Alert: &apimodels.TestReceiversConfigAlertParams{},
 		Receivers: []*definition.PostableApiReceiver{
 			{
-				PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
-					GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+				PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
+					GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{
 						{
 							SecureSettings: map[string]string{
 								testKey: base64.StdEncoding.EncodeToString([]byte(testValue)),
