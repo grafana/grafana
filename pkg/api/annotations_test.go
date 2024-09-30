@@ -404,7 +404,7 @@ func TestAPI_Annotations(t *testing.T) {
 				hs.DashboardService = dashService
 				hs.folderService = folderService
 				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, hs.Features, dashService, folderService, fStore))
+				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo, hs.Features, dashService, fStore))
 				hs.AccessControl.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderDB, dashService, fStore))
 			})
 			var body io.Reader
@@ -505,7 +505,7 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tc.featureToggles...)
-			prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo, features, dashSvc, &foldertest.FakeService{}, folder.NewFakeStore())
+			prefix, resolver := AnnotationTypeScopeResolver(fakeAnnoRepo, features, dashSvc, folder.NewFakeStore())
 			require.Equal(t, "annotations:id:", prefix)
 
 			resolved, err := resolver.Resolve(context.Background(), 1, tc.given)
