@@ -93,7 +93,7 @@ func registerDashboardRoles(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, folderStore folder.Store, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, folderStore folder.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
