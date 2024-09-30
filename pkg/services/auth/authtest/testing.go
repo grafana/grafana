@@ -18,6 +18,8 @@ type FakeUserAuthTokenService struct {
 	CreateTokenProvider                 func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string, extSession *auth.ExternalSession) (*auth.UserToken, error)
 	RotateTokenProvider                 func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
 	GetTokenByExternalSessionIDProvider func(ctx context.Context, externalSessionID int64) (*auth.UserToken, error)
+	GetExternalSessionProvider          func(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error)
+	FindExternalSessionsProvider        func(ctx context.Context, query *auth.GetExternalSessionQuery) ([]*auth.ExternalSession, error)
 	TryRotateTokenProvider              func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider                 func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider                 func(ctx context.Context, token *auth.UserToken, soft bool) error
@@ -83,6 +85,14 @@ func (s *FakeUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.Rot
 
 func (s *FakeUserAuthTokenService) GetTokenByExternalSessionID(ctx context.Context, externalSessionID int64) (*auth.UserToken, error) {
 	return s.GetTokenByExternalSessionIDProvider(ctx, externalSessionID)
+}
+
+func (s *FakeUserAuthTokenService) GetExternalSession(ctx context.Context, externalSessionID int64) (*auth.ExternalSession, error) {
+	return s.GetExternalSessionProvider(ctx, externalSessionID)
+}
+
+func (s *FakeUserAuthTokenService) FindExternalSessions(ctx context.Context, query *auth.GetExternalSessionQuery) ([]*auth.ExternalSession, error) {
+	return s.FindExternalSessionsProvider(context.Background(), query)
 }
 
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {

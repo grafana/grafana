@@ -47,6 +47,12 @@ func (s *Store) GetExternalSession(ctx context.Context, extSessionID int64) (*au
 	if err != nil {
 		return nil, err
 	}
+
+	err = s.decryptSecrets(externalSession)
+	if err != nil {
+		return nil, err
+	}
+
 	return externalSession, nil
 }
 
@@ -59,15 +65,16 @@ func (s *Store) FindExternalSessions(ctx context.Context, query *auth.GetExterna
 		externalSession.ID = query.ID
 	}
 
-	if query.SessionIndex != "" {
-		hash := sha256.New()
-		hash.Write([]byte(query.SessionIndex))
+	hash := sha256.New()
+
+	if query.SessionID != "" {
+		hash.Write([]byte(query.SessionID))
 		externalSession.SessionIDHash = base64.RawStdEncoding.EncodeToString(hash.Sum(nil))
 	}
 
 	if query.NameID != "" {
-		hash := sha256.New()
-		hash.Write([]byte(query.SessionIndex))
+		hash.Reset()
+		hash.Write([]byte(query.NameID))
 		externalSession.NameIDHash = base64.RawStdEncoding.EncodeToString(hash.Sum(nil))
 	}
 
@@ -80,28 +87,7 @@ func (s *Store) FindExternalSessions(ctx context.Context, query *auth.GetExterna
 	}
 
 	for _, extSession := range queryResult {
-		var err error
-		extSession.AccessToken, err = s.decodeAndDecrypt(extSession.AccessToken)
-		if err != nil {
-			return nil, err
-		}
-
-		extSession.RefreshToken, err = s.decodeAndDecrypt(extSession.RefreshToken)
-		if err != nil {
-			return nil, err
-		}
-
-		extSession.IDToken, err = s.decodeAndDecrypt(extSession.IDToken)
-		if err != nil {
-			return nil, err
-		}
-
-		extSession.NameID, err = s.decodeAndDecrypt(extSession.NameID)
-		if err != nil {
-			return nil, err
-		}
-
-		extSession.SessionID, err = s.decodeAndDecrypt(extSession.SessionID)
+		err := s.decryptSecrets(extSession)
 		if err != nil {
 			return nil, err
 		}
@@ -186,6 +172,35 @@ func (s *Store) DeleteExternalSessionsByUserID(ctx context.Context, userID int64
 		return err
 	})
 	return err
+}
+
+func (s *Store) decryptSecrets(extSession *auth.ExternalSession) error {
+	var err error
+	extSession.AccessToken, err = s.decodeAndDecrypt(extSession.AccessToken)
+	if err != nil {
+		return err
+	}
+
+	extSession.RefreshToken, err = s.decodeAndDecrypt(extSession.RefreshToken)
+	if err != nil {
+		return err
+	}
+
+	extSession.IDToken, err = s.decodeAndDecrypt(extSession.IDToken)
+	if err != nil {
+		return err
+	}
+
+	extSession.NameID, err = s.decodeAndDecrypt(extSession.NameID)
+	if err != nil {
+		return err
+	}
+
+	extSession.SessionID, err = s.decodeAndDecrypt(extSession.SessionID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Store) encryptAndEncode(str string) (string, error) {

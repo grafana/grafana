@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -555,6 +556,7 @@ func createTestContext(t *testing.T) *testContext {
 		sqlStore:     sqlstore,
 		cfg:          cfg,
 		log:          log.New("test-logger"),
+		features:     featuremgmt.WithFeatures(),
 		singleflight: new(singleflight.Group),
 	}
 
