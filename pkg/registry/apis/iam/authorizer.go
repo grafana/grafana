@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/authlib/claims"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,8 +21,8 @@ func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIden
 			Resource: iamv0.UserResourceInfo.GetName(),
 			Attr:     "id",
 			Mapping: map[string]string{
-				"get":  accesscontrol.ActionOrgUsersRead,
-				"list": accesscontrol.ActionOrgUsersRead,
+				utils.VerbGet:  accesscontrol.ActionOrgUsersRead,
+				utils.VerbList: accesscontrol.ActionOrgUsersRead,
 			},
 			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns claims.NamespaceInfo, name string) ([]string, error) {
 				res, err := store.GetUserInternalID(ctx, ns, legacy.GetUserInternalIDQuery{
@@ -36,9 +37,22 @@ func newLegacyAuthorizer(ac accesscontrol.AccessControl, store legacy.LegacyIden
 		accesscontrol.ResourceAuthorizerOptions{
 			Resource: "display",
 			Unchecked: map[string]bool{
-				"get":  true,
-				"list": true,
+				utils.VerbGet:  true,
+				utils.VerbList: true,
 			},
+		},
+		accesscontrol.ResourceAuthorizerOptions{
+			Resource: iamv0.ServiceAccountResourceInfo.GetName(),
+			Attr:     "id",
+			Resolver: accesscontrol.ResourceResolverFunc(func(ctx context.Context, ns claims.NamespaceInfo, name string) ([]string, error) {
+				res, err := store.GetServiceAccountInternalID(ctx, ns, legacy.GetServiceAccountInternalIDQuery{
+					UID: name,
+				})
+				if err != nil {
+					return nil, err
+				}
+				return []string{fmt.Sprintf("serviceaccounts:id:%d", res.ID)}, nil
+			}),
 		},
 	)
 
