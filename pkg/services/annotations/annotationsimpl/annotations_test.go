@@ -212,8 +212,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	setupFolderStructure := func() db.DB {
 		sql, cfg := db.InitTestDBWithCfg(t)
 
-		// enable nested folders so that the folder table is populated for all the tests
-		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+		features := featuremgmt.WithFeatures()
 
 		tagService := tagimpl.ProvideService(sql)
 
@@ -304,7 +303,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		},
 		{
 			desc:     "Should find only annotations from dashboards under inherited folders if nested folder are enabled",
-			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			features: featuremgmt.WithFeatures(),
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
 				dashboards.ActionDashboardsRead:     {"folders:uid:f0"},

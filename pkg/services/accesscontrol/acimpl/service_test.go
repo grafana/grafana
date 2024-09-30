@@ -910,10 +910,12 @@ func TestService_SaveExternalServiceRole(t *testing.T) {
 				}
 				require.NoError(t, err)
 
+				expectedPerms := append(r.cmd.Permissions, accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"})
+
 				// Check that the permissions and assignment are stored correctly
 				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
-				assert.ElementsMatch(t, r.cmd.Permissions, perms)
+				assert.ElementsMatch(t, expectedPerms, perms)
 			}
 		})
 	}
@@ -966,7 +968,9 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 				// Check that the permissions and assignment are removed correctly
 				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: tt.initCmd.AssignmentOrgID, UserID: 2}, accesscontrol.Options{})
 				require.NoError(t, errGetPerms)
-				assert.Empty(t, perms)
+
+				defaultPerms := []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}
+				assert.EqualValues(t, perms, defaultPerms)
 			}
 		})
 	}
