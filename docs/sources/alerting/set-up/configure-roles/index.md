@@ -67,21 +67,20 @@ To manage folder permissions, complete the following steps.
 
 ## Manage access using contact point permissions
 
-Available only when feature flag `alertingApiServer` is enabled.
 
-You can extend or limit the access provided by a role to contact points by assigning permissions to individual contact point.
+Extend or limit the access provided by a role to contact points by assigning permissions to individual contact point.
 
 This allows different users, teams, or service accounts to have customized access to read or modify specific contact points.
 
-Refer to the following table for details on the additional access provided by contact point permissions:
+Refer to the following table for details on the additional access provided by contact point permissions.
 
 | Folder permission | Additional Access                                                                                                                            |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| View              | Ability to view and export contact point as well as select it in Alert rule edit page                                                        |
+| View              | View and export contact point as well as select it on the Alert rule edit page                                                        |
 | Edit              | Update or delete the contact point                                                                                                           |
-| Admin             | Same additional access as Edit and manage permissions for the contact point. User should have additional permissions to read users and teams |
+| Admin             | Same additional access as Edit and manage permissions for the contact point. User should have additional permissions to read users and teams. |
 
-To contact point permissions, complete the following steps.
+To update contact point permissions, complete the following steps.
 
 1. In the left-side menu, click **Contact points**.
 1. Hover your mouse cursor over a contact point and click **More**.
