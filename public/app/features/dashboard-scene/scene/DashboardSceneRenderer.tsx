@@ -15,9 +15,11 @@ import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
+import { PanelSearchLayout } from './PanelSearchLayout';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene } = model.useState();
+  const { controls, overlay, editview, editPanel, isEmpty, meta, viewPanelScene, panelSearch, panelsPerRow } =
+    model.useState();
   const headerHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, headerHeight);
   const location = useLocation();
@@ -63,13 +65,16 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   const notFound = meta.dashboardNotFound && <EntityNotFound entity="Dashboard" key="dashboard-not-found" />;
 
-  let body = [withPanels];
+  let body: React.ReactNode = [withPanels];
 
   if (notFound) {
     body = [notFound];
   } else if (isEmpty) {
     body = [emptyState, withPanels];
+  } else if (panelSearch || panelsPerRow) {
+    body = <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
   }
+
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
