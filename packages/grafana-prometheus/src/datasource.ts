@@ -74,7 +74,13 @@ import {
 import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
+const GET_AND_POST_METADATA_ENDPOINTS = [
+  'api/v1/query',
+  'api/v1/query_range',
+  'api/v1/series',
+  'api/v1/labels',
+  'resources',
+];
 
 export const InstantQueryRefIdIndex = '-Instant';
 
@@ -263,7 +269,9 @@ export class PrometheusDatasource
             .join('&');
       }
     } else {
-      options.headers!['Content-Type'] = 'application/x-www-form-urlencoded';
+      if (!options.headers!['Content-Type']) {
+        options.headers!['Content-Type'] = 'application/x-www-form-urlencoded';
+      }
       options.data = data;
     }
 
@@ -599,22 +607,20 @@ export class PrometheusDatasource
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
-    if (!options || options.filters.length === 0) {
+    if (!options || (options.filters.length === 0 && (options.scopes?.length ?? 0) === 0)) {
       await this.languageProvider.fetchLabels(options.timeRange, options.queries);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
 
-    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
-      label: f.key,
-      value: f.value,
-      op: f.operator,
-    }));
-    const expr = promQueryModeller.renderLabels(labelFilters);
-
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
+    const suggestions = await this.languageProvider.fetchSuggestions(
+      options.timeRange,
+      options.queries,
+      options.scopes,
+      options.filters
+    );
 
     // filter out already used labels
-    return Object.keys(labelsIndex)
+    return suggestions
       .filter((labelName) => !options.filters.find((filter) => filter.key === labelName))
       .map((k) => ({ value: k, text: k }));
   }
