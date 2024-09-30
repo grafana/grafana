@@ -116,6 +116,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'failed_no_folderDTO' });
     }
   };
+
+  const handleButtonClickToRecentlyDeleted = () => {
+    reportInteraction('grafana_browse_dashboards_page_button_to_recently_deleted');
+  };
+
   return (
     <Page
       navId="dashboards/browse"
@@ -124,7 +129,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       actions={
         <>
           {config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI && hasAdminRights && (
-            <LinkButton variant="secondary" href={getConfig().appSubUrl + '/dashboard/recently-deleted'}>
+            <LinkButton
+              variant="secondary"
+              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
+              onClick={handleButtonClickToRecentlyDeleted}
+            >
               <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">To recently deleted</Trans>
             </LinkButton>
           )}
