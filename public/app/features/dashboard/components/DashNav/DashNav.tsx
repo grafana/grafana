@@ -326,6 +326,7 @@ export const DashNav = memo<Props>((props) => {
         <ToolbarButton
           tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
           icon="cog"
+          data-testid={e2eSelectors.pages.Dashboard.DashNav.settingsButton}
           onClick={onOpenSettings}
           key="button-settings"
         />

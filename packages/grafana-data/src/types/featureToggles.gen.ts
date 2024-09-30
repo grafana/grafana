@@ -204,6 +204,7 @@ export interface FeatureToggles {
   dataplaneAggregator?: boolean;
   newFiltersUI?: boolean;
   lokiSendDashboardPanelNames?: boolean;
+  alertingPrometheusRulesPrimary?: boolean;
   singleTopNav?: boolean;
   exploreLogsShardSplitting?: boolean;
   exploreLogsAggregatedMetrics?: boolean;

@@ -308,6 +308,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
+		folder.NewFakeStore(),
 		nil,
 	)
 	require.NoError(t, err)
@@ -328,7 +329,9 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+	store := folderimpl.ProvideStore(sc.sqlStore)
+	s := folderimpl.ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore, folderStore, sc.sqlStore,
+		features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := identity.WithRequester(context.Background(), &sc.user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
@@ -391,7 +394,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, dashboardPermissions, ac,
-		foldertest.NewFakeService(),
+		foldertest.NewFakeService(), folder.NewFakeStore(),
 		nil,
 	)
 	require.NoError(t, svcErr)
@@ -453,16 +456,19 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
 			features, folderPermissions, dashboardPermissions, ac,
-			foldertest.NewFakeService(),
+			foldertest.NewFakeService(), folder.NewFakeStore(),
 			nil,
 		)
 		require.NoError(t, dashSvcErr)
 		guardian.InitAccessControlGuardian(cfg, ac, dashService)
+		fStore := folderimpl.ProvideStore(sqlStore)
+		folderSrv := folderimpl.ProvideService(fStore, ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore,
+			features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 		service := LibraryElementService{
 			Cfg:           cfg,
 			features:      featuremgmt.WithFeatures(),
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracer), dashboardStore, folderStore, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest()),
+			folderService: folderSrv,
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
