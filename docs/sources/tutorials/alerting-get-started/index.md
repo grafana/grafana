@@ -64,9 +64,7 @@ There are different ways you can follow along with this tutorial.
 
 ### Grafana Cloud
 
-As a Grafana Cloud user, you don't have to install anything.
-
-[Create your free account](https://grafana.com/auth/sign-up/create-user).
+As a Grafana Cloud user, you don't have to install anything. [Create your free account](http://grafana.com/auth/sign-up/create-user).
 
 Continue to [Create a contact point](#create-a-contact-point).
 
@@ -75,8 +73,6 @@ Continue to [Create a contact point](#create-a-contact-point).
 Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/).
 
 It's a fully configured environment with all the dependencies already installed.
-
-Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
 
 ### Grafana OSS
 
