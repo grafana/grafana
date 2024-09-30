@@ -145,7 +145,7 @@ func ProvideDashboardPermissions(
 				}
 				parentScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(queryResult.UID)
 
-				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, queryResult.UID, folderService, folderStore)
+				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, queryResult.UID, folderStore)
 				if err != nil {
 					return nil, err
 				}

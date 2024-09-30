@@ -33,14 +33,14 @@ func (a *simpleAuthService) GetDashboardReadFilter(ctx context.Context, orgID in
 	canReadDashboard, canReadFolder := accesscontrol.Checker(user, dashboards.ActionDashboardsRead), accesscontrol.Checker(user, dashboards.ActionFoldersRead)
 	return func(kind entityKind, uid, parent string) bool {
 		if kind == entityKindFolder {
-			scopes, err := dashboards.GetInheritedScopes(ctx, orgID, uid, a.folderService, a.folderStore)
+			scopes, err := dashboards.GetInheritedScopes(ctx, orgID, uid, a.folderStore)
 			if err != nil {
 				a.logger.Debug("Could not retrieve inherited folder scopes:", "err", err)
 			}
 			scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid))
 			return canReadFolder(scopes...)
 		} else if kind == entityKindDashboard {
-			scopes, err := dashboards.GetInheritedScopes(ctx, orgID, parent, a.folderService, a.folderStore)
+			scopes, err := dashboards.GetInheritedScopes(ctx, orgID, parent, a.folderStore)
 			if err != nil {
 				a.logger.Debug("Could not retrieve inherited folder scopes:", "err", err)
 			}
