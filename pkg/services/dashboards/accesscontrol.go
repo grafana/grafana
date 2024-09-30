@@ -135,7 +135,7 @@ func NewFolderUIDScopeResolver(folderSvc folder.Service, folderStore folder.Stor
 
 // NewDashboardIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:id:"
 // into uid based scopes for both dashboard and folder
-func NewDashboardIDScopeResolver(folderDB folder.FolderStore, ds DashboardService, folderSvc folder.Service, folderStore folder.Store) (string, ac.ScopeAttributeResolver) {
+func NewDashboardIDScopeResolver(folderDB folder.FolderStore, ds DashboardService, folderStore folder.Store) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeDashboardsProvider.GetResourceScope("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		ctx, span := tracer.Start(ctx, "dashboards.NewDashboardIDScopeResolver")

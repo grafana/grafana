@@ -81,7 +81,7 @@ func ProvideDashboardServiceImpl(
 		metrics:              newDashboardsMetrics(r),
 	}
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc, fStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, fStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, dashSvc, fStore))
 
 	if err := folderSvc.RegisterService(dashSvc); err != nil {
