@@ -102,7 +102,7 @@ For OSS users,enable the `alertingQueryAndExpressionsStepMode` feature toggle.
 {{% admonition type="note" %}}
 Once you have created an alert rule using one of the options, the system defaults to this option for the next alert rule you create.
 
-You can toggle between the two options. However, if you want to switch from advanced options to the default and you have more than one query or a custom recovery threshold, your data is not convered as it's not possible to transform these queries and expressions to the default settings.
+You can toggle between the two options. However, if you want to switch from advanced options to the default, it may be that your query and expressions cannot be converted. In this case, a warning message checks whether you want to continue to reset to default settings.
 {{% /admonition %}}
 
 ## Steps
