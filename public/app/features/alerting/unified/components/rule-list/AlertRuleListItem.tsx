@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 import pluralize from 'pluralize';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, Stack, Text, TextLink, Dropdown, Button, Menu, Alert } from '@grafana/ui';
+import { Alert, Button, Dropdown, Menu, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { CombinedRule, RuleHealth } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -56,65 +56,66 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
   return (
     <li className={styles.alertListItemContainer} role="treeitem" aria-selected="false">
       <Stack direction="row" alignItems="start" gap={1} wrap="nowrap">
+        {/* rule state */}
         <RuleListIcon state={state} health={health} isPaused={isPaused} />
+
+        {/* rule metadata */}
         <Stack direction="column" gap={0.5} flex="1">
-          <div>
-            <Stack direction="column" gap={0}>
-              <Stack direction="row" alignItems="start">
-                <TextLink href={href} inline={false}>
-                  {name}
+          <Stack direction="column" gap={0}>
+            <Stack direction="row" alignItems="start">
+              <TextLink href={href} inline={false}>
+                {name}
+              </TextLink>
+              {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
+              {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
+            </Stack>
+            <Summary content={summary} error={error} />
+          </Stack>
+
+          <Stack direction="row" gap={1}>
+            {/* show evaluation-related metadata if the rule isn't paused – paused rules don't have instances and shouldn't show evaluation timestamps */}
+            {!isPaused && (
+              <>
+                <EvaluationMetadata
+                  lastEvaluation={lastEvaluation}
+                  evaluationInterval={evaluationInterval}
+                  state={state}
+                />
+                <MetaText icon="layers-alt">
+                  <TextLink href={href + '?tab=instances'} variant="bodySmall" color="primary" inline={false}>
+                    {pluralize('instance', instancesCount, true)}
+                  </TextLink>
+                </MetaText>
+              </>
+            )}
+
+            {/* show label count */}
+            {!isEmpty(labels) && (
+              <MetaText icon="tag-alt">
+                <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
+                  {pluralize('label', labelsSize(labels), true)}
                 </TextLink>
-                {/* let's not show labels for now, but maybe users would be interested later? Or maybe show them only in the list view? */}
-                {/* {labels && <AlertLabels labels={labels} size="xs" />} */}
-              </Stack>
-              <Summary content={summary} error={error} />
-            </Stack>
-          </div>
-          <div>
-            <Stack direction="row" gap={1}>
-              {/* show evaluation-related metadata if the rule isn't paused – paused rules don't have instances and shouldn't show evaluation timestamps */}
-              {!isPaused && (
-                <>
-                  <EvaluationMetadata
-                    lastEvaluation={lastEvaluation}
-                    evaluationInterval={evaluationInterval}
-                    state={state}
-                  />
-                  <MetaText icon="layers-alt">
-                    <TextLink href={href + '?tab=instances'} variant="bodySmall" color="primary" inline={false}>
-                      {pluralize('instance', instancesCount, true)}
-                    </TextLink>
-                  </MetaText>
-                </>
-              )}
+              </MetaText>
+            )}
 
-              {/* show label count */}
-              {!isEmpty(labels) && (
-                <MetaText icon="tag-alt">
-                  <TextLink href={href} variant="bodySmall" color="primary" inline={false}>
-                    {pluralize('label', labelsSize(labels), true)}
-                  </TextLink>
-                </MetaText>
-              )}
-
-              {/* show if the alert rule is using direct contact point or notification policy routing, not for paused rules or recording rules */}
-              {contactPoint && !isPaused && (
-                <MetaText icon="at">
-                  Delivered to{' '}
-                  <TextLink
-                    href={createContactPointLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
-                    variant="bodySmall"
-                    color="primary"
-                    inline={false}
-                  >
-                    {contactPoint}
-                  </TextLink>
-                </MetaText>
-              )}
-            </Stack>
-          </div>
+            {/* show if the alert rule is using direct contact point or notification policy routing, not for paused rules or recording rules */}
+            {contactPoint && !isPaused && (
+              <MetaText icon="at">
+                Delivered to{' '}
+                <TextLink
+                  href={createContactPointLink(contactPoint, GRAFANA_RULES_SOURCE_NAME)}
+                  variant="bodySmall"
+                  color="primary"
+                  inline={false}
+                >
+                  {contactPoint}
+                </TextLink>
+              </MetaText>
+            )}
+          </Stack>
         </Stack>
 
+        {/* rule actions */}
         <Stack direction="row" alignItems="center" gap={1} wrap="nowrap">
           <Button variant="secondary" size="sm" icon="pen" type="button" disabled={isProvisioned}>
             Edit
