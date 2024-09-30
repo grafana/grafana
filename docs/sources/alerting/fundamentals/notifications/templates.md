@@ -17,6 +17,7 @@ labels:
     - enterprise
     - oss
 title: Templates
+meta_image: /media/docs/alerting/how-notification-templates-works.png
 weight: 115
 refs:
   labels:
