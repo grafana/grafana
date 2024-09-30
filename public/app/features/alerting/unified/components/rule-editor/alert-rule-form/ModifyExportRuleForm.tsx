@@ -2,7 +2,6 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { config } from '@grafana/runtime';
 import { Button, CustomScrollbar, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -41,7 +40,6 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
     shouldFocusError: true,
   });
   const [queryParams] = useQueryParams();
-  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const existing = Boolean(ruleForm); // always should be true
   const notifyApp = useAppNotification();
@@ -84,7 +82,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   return (
     <>
       <FormProvider {...formAPI}>
-        {!isSingleTopNav && <AppChromeUpdate actions={actionButtons} />}
+        <AppChromeUpdate actions={actionButtons} />
         <form onSubmit={(e) => e.preventDefault()}>
           <div>
             <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>

@@ -7,7 +7,7 @@ import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config as runtimeConfig, isFetchError, locationService } from '@grafana/runtime';
+import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -89,7 +89,6 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
 
   const createNewTemplate = useCreateNotificationTemplate({ alertmanager: alertManagerSourceName });
   const updateTemplate = useUpdateNotificationTemplate({ alertmanager: alertManagerSourceName });
-  const isSingleTopNav = runtimeConfig.featureToggles.singleTopNav;
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
   const formRef = useRef<HTMLFormElement>(null);
@@ -175,7 +174,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
   return (
     <>
       <FormProvider {...formApi}>
-        {!isSingleTopNav && <AppChromeUpdate actions={actionButtons} />}
+        <AppChromeUpdate actions={actionButtons} />
         <form onSubmit={handleSubmit(submit)} ref={formRef} className={styles.form}>
           {/* error message */}
           {error && (
