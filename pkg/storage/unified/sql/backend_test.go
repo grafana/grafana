@@ -204,15 +204,8 @@ func TestBackend_IsHealthy(t *testing.T) {
 // expectSuccessfulResourceVersionAtomicInc sets up expectations for calling
 // resourceVersionAtomicInc, where the returned RV will be 1.
 func expectSuccessfulResourceVersionAtomicInc(t *testing.T, b testBackend) {
-	b.QueryWithResult("select resource_version for update", 1, Rows{{1}})
+	b.QueryWithResult("select resource_version for update", 2, Rows{{12345, 23456}})
 	b.ExecWithResult("update resource_version set resource_version", 0, 0)
-	// b.ExecWithResult("insert resource_version", 0, 1)
-	// b.ExecWithResult("update resource_version set resource_version", 0, 0)
-	// b.ExecWithResult("insert resource_version", 0, 1)
-
-	// b.QueryWithResult("select resource_version for update", 1, Rows{{1}})
-	// b.ExecWithResult("insert resource_version", 0, 1)
-	b.QueryWithResult("select resource_version", 1, Rows{{2}})
 }
 
 // expectUnsuccessfulResourceVersionAtomicInc sets up expectations for calling
@@ -234,7 +227,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 
 		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), v)
+		require.Equal(t, int64(23456), v)
 	})
 
 	t.Run("happy path - update existing row", func(t *testing.T) {
@@ -242,13 +235,12 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 
 		b, ctx := setupBackendTest(t)
 
-		b.QueryWithResult("select resource_version", 1, Rows{{12345}})
+		b.QueryWithResult("select resource_version for update", 2, Rows{{12345, 23456}})
 		b.ExecWithResult("update resource_version", 0, 1)
-		b.QueryWithResult("select resource_version", 1, Rows{{12345}})
 
 		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
 		require.NoError(t, err)
-		require.Equal(t, int64(12345), v)
+		require.Equal(t, int64(23456), v)
 	})
 
 	t.Run("error getting current version", func(t *testing.T) {
@@ -280,7 +272,7 @@ func TestResourceVersionAtomicInc(t *testing.T) {
 		t.Parallel()
 		b, ctx := setupBackendTest(t)
 
-		b.QueryWithResult("select resource_version for update", 1, Rows{{2}})
+		b.QueryWithResult("select resource_version for update", 2, Rows{{12345, 23456}})
 		b.ExecWithErr("update resource_version", errTest)
 
 		v, err := resourceVersionAtomicInc(ctx, b.DB, dialect, resKey)
@@ -311,7 +303,7 @@ func TestBackend_create(t *testing.T) {
 
 		v, err := b.create(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), v)
+		require.Equal(t, int64(23456), v)
 	})
 
 	t.Run("error inserting into resource", func(t *testing.T) {
@@ -409,14 +401,14 @@ func TestBackend_update(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.ExecWithResult("update resource", 0, 1)
 		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
+		expectSuccessfulResourceVersionAtomicInc(t, b)
 		b.ExecWithResult("update resource_history", 0, 1)
 		b.ExecWithResult("update resource", 0, 1)
 		b.SQLMock.ExpectCommit()
 
 		v, err := b.update(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), v)
+		require.Equal(t, int64(23456), v)
 	})
 
 	t.Run("error in first update to resource", func(t *testing.T) {
@@ -514,13 +506,13 @@ func TestBackend_delete(t *testing.T) {
 		b.SQLMock.ExpectBegin()
 		b.ExecWithResult("delete resource", 0, 1)
 		b.ExecWithResult("insert resource_history", 0, 1)
-		expectSuccessfulResourceVersionAtomicInc(t, b) // returns RV=1
+		expectSuccessfulResourceVersionAtomicInc(t, b)
 		b.ExecWithResult("update resource_history", 0, 1)
 		b.SQLMock.ExpectCommit()
 
 		v, err := b.delete(ctx, event)
 		require.NoError(t, err)
-		require.Equal(t, int64(2), v)
+		require.Equal(t, int64(23456), v)
 	})
 
 	t.Run("error deleting resource", func(t *testing.T) {

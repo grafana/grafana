@@ -57,9 +57,9 @@ func newServer(t *testing.T) (sql.Backend, resource.ResourceServer) {
 }
 
 func TestIntegrationBackendHappyPath(t *testing.T) {
-	if infraDB.IsTestDbSQLite() {
-		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
-	}
+	// if infraDB.IsTestDbSQLite() {
+	// 	t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
+	// }
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
