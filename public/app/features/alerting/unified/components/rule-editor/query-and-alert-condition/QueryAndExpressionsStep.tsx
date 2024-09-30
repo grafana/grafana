@@ -674,24 +674,24 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       <ConfirmModal
         isOpen={showResetModeModal}
-        title="Disable advanced options"
+        title="Deactivate advanced options"
         body={
           <div>
             <Text element="p">
               <Trans i18nKey="alerting.queryAndExpressionsStep.disableAdvancedOptions.text">
-                The selected queries and expressions cannot be converted. If you choose to disable the advanced options,
-                your query and condition will be reset to the default settings.
+                The selected queries and expressions cannot be converted. If you choose to deactivate the advanced
+                options, your query and condition will be reset to the default settings.
               </Trans>
             </Text>
             <br />
             <Text element="p">
               <Trans i18nKey="alerting.queryAndExpressionsStep.disableAdvancedOptions.question">
-                Do you want to disable advanced options?
+                Do you want to deactivate advanced options?
               </Trans>
             </Text>
           </div>
         }
-        confirmText="Disable"
+        confirmText="Deactivate"
         icon="exclamation-triangle"
         onConfirm={() => {
           setValue('editorSettings', { simplifiedQueryEditor: true });
