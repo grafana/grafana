@@ -8386,15 +8386,34 @@
       },
       "PostableRuleGroupConfig": {
         "properties": {
+          "align_evaluation_time_on_interval": {
+            "type": "boolean"
+          },
+          "evaluation_delay": {
+            "type": "string"
+          },
           "interval": {
             "$ref": "#/components/schemas/Duration"
           },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
           "name": {
+            "type": "string"
+          },
+          "query_offset": {
             "type": "string"
           },
           "rules": {
             "items": {
               "$ref": "#/components/schemas/PostableExtendedRuleNode"
+            },
+            "type": "array"
+          },
+          "source_tenants": {
+            "items": {
+              "type": "string"
             },
             "type": "array"
           }

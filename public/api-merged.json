@@ -18154,16 +18154,35 @@
     "PostableRuleGroupConfig": {
       "type": "object",
       "properties": {
+        "align_evaluation_time_on_interval": {
+          "type": "boolean"
+        },
+        "evaluation_delay": {
+          "type": "string"
+        },
         "interval": {
           "$ref": "#/definitions/Duration"
         },
+        "limit": {
+          "type": "integer",
+          "format": "int64"
+        },
         "name": {
+          "type": "string"
+        },
+        "query_offset": {
           "type": "string"
         },
         "rules": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/PostableExtendedRuleNode"
+          }
+        },
+        "source_tenants": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }
