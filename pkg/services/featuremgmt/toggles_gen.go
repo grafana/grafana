@@ -802,4 +802,8 @@ const (
 	// FlagRolePickerDrawer
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
+
+	// FlagPrometheusUsesCombobox
+	// Use new combobox component for Prometheus query editor
+	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 )

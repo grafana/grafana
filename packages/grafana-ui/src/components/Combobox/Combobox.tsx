@@ -23,6 +23,7 @@ interface ComboboxProps<T extends string | number>
   createCustomValue?: boolean;
   options: Array<ComboboxOption<T>>;
   onChange: (option: ComboboxOption<T> | null) => void;
+  onInputChange?: (inputValue: string) => void;
   value: T | null;
 }
 
@@ -54,6 +55,7 @@ export const Combobox = <T extends string | number>({
   isClearable = false,
   createCustomValue = false,
   id,
+  onInputChange,
   'aria-labelledby': ariaLabelledBy,
   ...restProps
 }: ComboboxProps<T>) => {
@@ -124,6 +126,8 @@ export const Combobox = <T extends string | number>({
     defaultHighlightedIndex: selectedItemIndex ?? 0,
     scrollIntoView: () => {},
     onInputValueChange: ({ inputValue }) => {
+      onInputChange?.(inputValue);
+
       const filteredItems = options.filter(itemFilter(inputValue));
       if (createCustomValue && inputValue && filteredItems.findIndex((opt) => opt.label === inputValue) === -1) {
         const customValueOption: ComboboxOption<T> = {
