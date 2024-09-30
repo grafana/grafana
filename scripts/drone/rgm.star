@@ -226,7 +226,6 @@ def rgm_tag():
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
         steps = rgm_run("rgm-build", "drone_build_tag_grafana.sh"),
-        depends_on = [],
     )
 
 def rgm_tag_windows():
