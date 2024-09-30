@@ -56,6 +56,10 @@
     "pause": ""
   },
   "alerting": {
+    "annotations": {
+      "description": "",
+      "title": ""
+    },
     "central-alert-history": {
       "details": {
         "error": "",
