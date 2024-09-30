@@ -18,7 +18,7 @@ func NewGetFoldersQuery(q GetFoldersQuery) GetFoldersFromStoreQuery {
 
 // Store is the interface which a folder Store must implement.
 type Store interface {
-	// Create creates a folder and returns the newly-created
+	// Create creates a folder and returns the newly-created folder.
 	Create(ctx context.Context, cmd CreateFolderCommand) (*Folder, error)
 
 	// Delete folders with the specified UIDs and orgID from the folder store.
@@ -30,14 +30,14 @@ type Store interface {
 	// otherwise, it moves the folder under the root folder (parent_uid column is set to NULL).
 	Update(ctx context.Context, cmd UpdateFolderCommand) (*Folder, error)
 
-	// Get returns a
+	// Get returns a folder.
 	Get(ctx context.Context, q GetFolderQuery) (*Folder, error)
 
-	// GetParents returns an ordered list of parent folder of the given
+	// GetParents returns an ordered list of parent folder of the given folder.
 	GetParents(ctx context.Context, q GetParentsQuery) ([]*Folder, error)
 
 	// GetChildren returns the set of immediate children folders (depth=1) of the
-	// given
+	// given folder.
 	GetChildren(ctx context.Context, q GetChildrenQuery) ([]*Folder, error)
 
 	// GetHeight returns the height of the folder tree. When parentUID is set, the function would
