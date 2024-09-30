@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -42,17 +41,11 @@ type IdentityAccessManagementAPIBuilder struct {
 }
 
 func RegisterAPIService(
-	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	ssoService ssosettings.Service,
 	sql db.DB,
 	ac accesscontrol.AccessControl,
 ) (*IdentityAccessManagementAPIBuilder, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		// skip registration unless opting into experimental apis
-		return nil, nil
-	}
-
 	store := legacy.NewLegacySQLStores(legacysql.NewDatabaseProvider(sql))
 	authorizer, client := newLegacyAuthorizer(ac, store)
 
@@ -114,9 +107,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	storage[userResource.StoragePath()] = user.NewLegacyStore(b.store, b.accessClient)
 	storage[userResource.StoragePath("teams")] = user.NewLegacyTeamMemberREST(b.store)
 
-	serviceaccountResource := iamv0.ServiceAccountResourceInfo
-	storage[serviceaccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store)
-	storage[serviceaccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
+	serviceAccountResource := iamv0.ServiceAccountResourceInfo
+	storage[serviceAccountResource.StoragePath()] = serviceaccount.NewLegacyStore(b.store)
+	storage[serviceAccountResource.StoragePath("tokens")] = serviceaccount.NewLegacyTokenREST(b.store)
 
 	if b.sso != nil {
 		ssoResource := iamv0.SSOSettingResourceInfo
