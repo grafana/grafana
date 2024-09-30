@@ -216,6 +216,13 @@
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
       "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI"
     },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": "The selected queries and expressions cannot be converted to default. If you deactivate advanced options, your query and condition will be reset to default settings."
+      },
+      "preview": "Preview",
+      "previewCondition": "Preview alert rule condition"
+    },
     "rule-groups": {
       "delete": {
         "success": "Successfully deleted rule group"

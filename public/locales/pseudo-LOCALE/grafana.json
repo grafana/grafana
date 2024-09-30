@@ -216,6 +216,13 @@
       "badge-tooltip-provenance": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ vįä {{provenance}} äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ",
       "badge-tooltip-standard": "Ŧĥįş řęşőūřčę ĥäş þęęŉ přővįşįőŉęđ äŉđ čäŉŉőŧ þę ęđįŧęđ ŧĥřőūģĥ ŧĥę ŮĨ"
     },
+    "queryAndExpressionsStep": {
+      "disableAdvancedOptions": {
+        "text": "Ŧĥę şęľęčŧęđ qūęřįęş äŉđ ęχpřęşşįőŉş čäŉŉőŧ þę čőŉvęřŧęđ ŧő đęƒäūľŧ. Ĩƒ yőū đęäčŧįväŧę äđväŉčęđ őpŧįőŉş, yőūř qūęřy äŉđ čőŉđįŧįőŉ ŵįľľ þę řęşęŧ ŧő đęƒäūľŧ şęŧŧįŉģş."
+      },
+      "preview": "Přęvįęŵ",
+      "previewCondition": "Přęvįęŵ äľęřŧ řūľę čőŉđįŧįőŉ"
+    },
     "rule-groups": {
       "delete": {
         "success": "Ŝūččęşşƒūľľy đęľęŧęđ řūľę ģřőūp"

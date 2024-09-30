@@ -20,6 +20,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { t, Trans } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
@@ -655,7 +656,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                     onClick={() => runQueriesPreview()}
                     disabled={emptyQueries}
                   >
-                    Preview
+                    {isAdvancedMode
+                      ? t('alerting.queryAndExpressionsStep.preview', 'Preview')
+                      : t('alerting.queryAndExpressionsStep.previewCondition', 'Preview alert rule condition')}
                   </Button>
                 )}
               </Stack>
@@ -673,9 +676,19 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       <ConfirmModal
         isOpen={showResetModeModal}
-        title="Switching to simple mode"
-        body="The selected queries and expressions cannot be converted to simple mode. Switching will remove them. Do you want to proceed?"
-        confirmText="Yes"
+        title="Deactivate advanced options"
+        body={
+          <div>
+            <Text element="p">
+              <Trans i18nKey="alerting.queryAndExpressionsStep.disableAdvancedOptions.text">
+                The selected queries and expressions cannot be converted to default. If you deactivate advanced options,
+                your query and condition will be reset to default settings.
+              </Trans>
+            </Text>
+            <br />
+          </div>
+        }
+        confirmText="Deactivate"
         icon="exclamation-triangle"
         onConfirm={() => {
           setValue('editorSettings', { simplifiedQueryEditor: true });
