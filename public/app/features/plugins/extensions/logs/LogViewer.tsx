@@ -1,25 +1,14 @@
 import { nanoid } from 'nanoid';
-import { ReactElement, useMemo } from 'react';
-import { useObservable } from 'react-use';
+import { ReactElement, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import {
-  EmbeddedScene,
-  PanelBuilders,
-  SceneComponentProps,
-  SceneFlexItem,
-  SceneFlexLayout,
-  sceneGraph,
-  SceneObjectBase,
-  SceneQueryRunner,
-  sceneUtils,
-} from '@grafana/scenes';
+import { SceneQueryRunner, sceneUtils, VizConfigBuilders } from '@grafana/scenes';
+import { SceneContextProvider, useQueryRunner, VizPanel } from '@grafana/scenes-react';
 import { InlineField, InlineFieldRow, MultiSelect } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { getNavModel } from 'app/core/selectors/navModel';
-import { useSelector } from 'app/types/store';
 
-import { ExtensionsLogDataSource } from './dataSource';
+import { VizGrid } from './VizGrid';
+import { ExtensionsLogDataSource, LogDataQuery } from './dataSource';
 import { log } from './log';
 
 const DATASOURCE_REF = {
@@ -27,131 +16,76 @@ const DATASOURCE_REF = {
   type: 'grafana-extensions-log',
 };
 
-const baseQuery = {
-  refId: 'A',
-  datasource: {
-    uid: DATASOURCE_REF.uid,
-  },
-};
+const logsViz = VizConfigBuilders.logs().build();
 
 const dataSource = new ExtensionsLogDataSource(DATASOURCE_REF.type, DATASOURCE_REF.uid, log);
 sceneUtils.registerRuntimeDataSource({ dataSource });
 
-export default function PluginExtensionsLog(): ReactElement | null {
-  const scene = useLogScene();
-  const navModel = useSelector((state) => {
-    return getNavModel(state.navIndex, 'extensions');
+export default function LogViewer(): ReactElement | null {
+  return (
+    <SceneContextProvider>
+      <LogViewScene />
+    </SceneContextProvider>
+  );
+}
+
+function LogViewScene(): ReactElement | null {
+  const [query, setQuery] = useState<LogDataQuery>({ refId: 'A' });
+
+  const queryRunner = useQueryRunner({
+    datasource: DATASOURCE_REF,
+    queries: [query],
+    maxDataPoints: 1000,
+    liveStreaming: true,
   });
 
   return (
-    <Page navModel={navModel}>
-      <Page.Contents>
-        <scene.Component model={scene} />
-      </Page.Contents>
+    <Page navId="extensions" actions={<LogFilters queryRunner={queryRunner} query={query} onChangeQuery={setQuery} />}>
+      <SceneContextProvider>
+        <VizGrid>
+          <VizPanel title="Logs" viz={logsViz} dataProvider={queryRunner} />
+        </VizGrid>
+      </SceneContextProvider>
     </Page>
   );
 }
 
-function useLogScene() {
-  return useMemo(() => {
-    const queryRunner = new SceneQueryRunner({
-      datasource: DATASOURCE_REF,
-      queries: [baseQuery],
-      maxDataPoints: 1000,
-      liveStreaming: true,
-    });
-
-    return new EmbeddedScene({
-      $data: queryRunner,
-      body: new SceneFlexLayout({
-        children: [
-          new SceneFlexItem({
-            minHeight: 300,
-            body: PanelBuilders.logs().setTitle('Logs').build(),
-          }),
-        ],
-      }),
-      controls: [new LogFilterScene(queryRunner, dataSource)],
-    });
-  }, []);
+interface LogFilterProps {
+  queryRunner: SceneQueryRunner;
+  query: LogDataQuery;
+  onChangeQuery: (query: LogDataQuery) => void;
 }
 
-class LogFilterScene extends SceneObjectBase {
-  static Component = LogFilterSceneRenderer;
+function LogFilters({ queryRunner, query, onChangeQuery }: LogFilterProps): ReactElement {
+  const pluginIds = dataSource.getPluginIds().map((id) => ({ label: id, value: id }));
+  const extensionPointIds = dataSource.getExtensionPointIds().map((id) => ({ label: id, value: id }));
+  const levels = dataSource.getLevels().map((id) => ({ label: id, value: id }));
 
-  constructor(
-    private queryRunner: SceneQueryRunner,
-    private dataSource: ExtensionsLogDataSource
-  ) {
-    super({});
-  }
-
-  public getSelectablePluginIds = (): Array<SelectableValue<string>> => {
-    return this.dataSource.getPluginIds().map((id) => ({ label: id, value: id }));
-  };
-
-  public getSelectableExtensionPointIds = (): Array<SelectableValue<string>> => {
-    return this.dataSource.getExtensionPointIds().map((id) => ({ label: id, value: id }));
-  };
-
-  public getSelectableLevels = (): Array<SelectableValue<string>> => {
-    return this.dataSource.getLevels().map((id) => ({ label: id, value: id }));
-  };
-
-  public onChangePluginIds = (values: Array<SelectableValue<string>>) => {
-    const [existingQuery] = this.queryRunner.state.queries;
-    this.queryRunner.setState({
-      queries: [
-        {
-          ...existingQuery,
-          pluginIds: mapToSet(values),
-        },
-      ],
-    });
-    this.queryRunner.runQueries();
-  };
-
-  public onChangeExtensionPointIds = (values: Array<SelectableValue<string>>) => {
-    const [existingQuery] = this.queryRunner.state.queries;
-    this.queryRunner.setState({
-      queries: [
-        {
-          ...existingQuery,
-          extensionPointIds: mapToSet(values),
-        },
-      ],
-    });
-    this.queryRunner.runQueries();
-  };
-
-  public onChangeLevels = (values: Array<SelectableValue<string>>) => {
-    const [existingQuery] = this.queryRunner.state.queries;
-    this.queryRunner.setState({
-      queries: [
-        {
-          ...existingQuery,
-          levels: mapToSet(values),
-        },
-      ],
-    });
-    this.queryRunner.runQueries();
-  };
-}
-
-function LogFilterSceneRenderer({ model }: SceneComponentProps<LogFilterScene>) {
   // Added to get responsive UI with the selectable options when things changes in the data.
-  useObservable(sceneGraph.getData(model).getResultsStream());
+  queryRunner.useState();
+
+  const onChangePluginIds = (values: Array<SelectableValue<string>>) => {
+    onChangeQuery({ ...query, pluginIds: mapToSet(values) });
+  };
+
+  const onChangeExtensionPointIds = (values: Array<SelectableValue<string>>) => {
+    onChangeQuery({ ...query, extensionPointIds: mapToSet(values) });
+  };
+
+  const onChangeLevels = (values: Array<SelectableValue<string>>) => {
+    onChangeQuery({ ...query, levels: mapToSet(values) });
+  };
 
   return (
     <InlineFieldRow>
       <InlineField label="Plugin Id">
-        <MultiSelect options={model.getSelectablePluginIds()} onChange={model.onChangePluginIds} />
+        <MultiSelect options={pluginIds} onChange={onChangePluginIds} />
       </InlineField>
-      <InlineField label="Extension Points">
-        <MultiSelect options={model.getSelectableExtensionPointIds()} onChange={model.onChangeExtensionPointIds} />
+      <InlineField label="Extension">
+        <MultiSelect options={extensionPointIds} onChange={onChangeExtensionPointIds} />
       </InlineField>
       <InlineField label="Levels">
-        <MultiSelect options={model.getSelectableLevels()} onChange={model.onChangeLevels} />
+        <MultiSelect options={levels} onChange={onChangeLevels} />
       </InlineField>
     </InlineFieldRow>
   );
@@ -162,12 +96,5 @@ function mapToSet(selected: Array<SelectableValue<string>>): Set<string> | undef
     return undefined;
   }
 
-  const values = selected.reduce((all: string[], current) => {
-    if (typeof current?.value === 'string') {
-      all.push(current.value);
-    }
-    return all;
-  }, []);
-
-  return new Set<string>(values);
+  return new Set<string>(selected.map((item) => item.value!));
 }
