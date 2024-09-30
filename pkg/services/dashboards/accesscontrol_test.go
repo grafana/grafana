@@ -51,7 +51,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 
 		folderSvc := foldertest.NewFakeService()
 		fStore := folder.NewFakeStore()
-		folderSvc.ExpectedFolders = []*folder.Folder{
+		fStore.ExpectedParentFolders = []*folder.Folder{
 			{
 				UID: "parent",
 			},
