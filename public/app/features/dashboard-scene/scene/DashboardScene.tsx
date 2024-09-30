@@ -301,15 +301,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
-    locationService.replace(
-      locationUtil.getUrlForPartial(this._initialUrlState!, {
-        editPanel: null,
-        editview: null,
-        inspect: null,
-        inspectTab: null,
-        shareView: null,
-      })
-    );
+    const url = locationUtil.getUrlForPartial(this._initialUrlState!, {
+      editPanel: null,
+      editview: null,
+      inspect: null,
+      inspectTab: null,
+      shareView: null,
+    });
+
+    locationService.replace(locationUtil.stripBaseFromUrl(url));
 
     if (this._fromExplore) {
       this.cleanupStateFromExplore();
