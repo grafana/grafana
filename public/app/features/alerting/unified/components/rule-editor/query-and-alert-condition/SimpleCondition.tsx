@@ -103,7 +103,7 @@ export const SimpleConditionEditor = ({
             <Trans i18nKey="alerting.simpleCondition.alertCondition">Alert condition</Trans>
           </Text>
         </header>
-        <InlineFieldRow>
+        <InlineFieldRow className={styles.condition.container}>
           <InlineField label="WHEN">
             <Select
               options={reducerTypes}
@@ -114,7 +114,12 @@ export const SimpleConditionEditor = ({
           </InlineField>
           <InlineField label="OF QUERY">
             <Stack direction="row" gap={1} alignItems="center">
-              <ButtonSelect options={thresholdFunctions} onChange={onEvalFunctionChange} value={thresholdFunction} />
+              <ButtonSelect
+                className={styles.buttonSelectText}
+                options={thresholdFunctions}
+                onChange={onEvalFunctionChange}
+                value={thresholdFunction}
+              />
               {isRange ? (
                 <>
                   <Input
@@ -123,7 +128,7 @@ export const SimpleConditionEditor = ({
                     value={simpleCondition.evaluator.params[0]}
                     onChange={(event) => onEvaluateValueChange(event, 0)}
                   />
-                  <div>
+                  <div className={styles.condition.button}>
                     <Trans i18nKey="alerting.simpleCondition.ofQuery.To">TO</Trans>
                   </div>
                   <Input
@@ -223,6 +228,12 @@ export function getSimpleConditionFromExpressions(expressions: Array<AlertQuery<
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  buttonSelectText: css({
+    color: theme.colors.primary.text,
+    fontSize: theme.typography.bodySmall.fontSize,
+    textTransform: 'uppercase',
+    padding: `0 ${theme.spacing(1)}`,
+  }),
   condition: {
     wrapper: css({
       display: 'flex',
@@ -231,11 +242,32 @@ const getStyles = (theme: GrafanaTheme2) => ({
       height: 'fit-content',
       borderRadius: theme.shape.radius.default,
     }),
+    container: css({
+      display: 'flex',
+      flexDirection: 'row',
+      padding: theme.spacing(1),
+      flex: 1,
+      width: '100%',
+    }),
     header: css({
       background: theme.colors.background.secondary,
       padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
       borderBottom: `solid 1px ${theme.colors.border.weak}`,
       flex: 1,
+    }),
+    button: css({
+      height: '32px',
+      color: theme.colors.primary.text,
+      fontSize: theme.typography.bodySmall.fontSize,
+      textTransform: 'uppercase',
+      display: 'flex',
+      alignItems: 'center',
+      borderRadius: theme.shape.radius.default,
+      fontWeight: theme.typography.fontWeightBold,
+      border: `1px solid ${theme.colors.border.medium}`,
+      whiteSpace: 'nowrap',
+      padding: `0 ${theme.spacing(1)}`,
+      backgroundColor: theme.colors.background.primary,
     }),
   },
 });
