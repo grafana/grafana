@@ -49,31 +49,47 @@ Before you dive in, remember that you can [explore advanced topics like alert in
 {{< /docs/ignore >}}
 
 <!-- INTERACTIVE page intro.md END -->
-
 <!-- INTERACTIVE page step1.md START -->
+<!-- INTERACTIVE ignore START -->
+
+{{< docs/ignore >}}
+
+## Set up the Grafana stack
+
+{{< /docs/ignore >}}
 
 ## Before you begin
 
-### Grafana Cloud users
+There are different ways you can follow along with this tutorial.
+
+### Grafana Cloud
 
 As a Grafana Cloud user, you don't have to install anything.
 
-<!-- INTERACTIVE ignore START -->
+[Create your free account](https://grafana.com/auth/sign-up/create-user).
 
 Continue to [Create a contact point](#create-a-contact-point).
 
-<!-- INTERACTIVE ignore END -->
+### Interactive learning environment
 
-### Grafana OSS users
+Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/).
 
-In order to run a Grafana stack locally, ensure you have the following applications installed.
+It's a fully configured environment with all the dependencies already installed.
+
+Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
+
+### Grafana OSS
+
+If you opt to run a Grafana stack locally, ensure you have the following applications installed:
 
 - [Docker Compose](https://docs.docker.com/get-docker/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
 
-#### Set up the Grafana Stack (OSS users)
+#### Set up the Grafana stack (OSS users)
 
-To demonstrate the observation of data using the Grafana stack, download the files to your local machine.
+<!-- INTERACTIVE ignore END -->
+
+To demonstrate the observation of data using the Grafana stack, download and run the following files.
 
 1. Clone the [tutorial environment repository](https://www.github.com/grafana/tutorial-environment).
 
