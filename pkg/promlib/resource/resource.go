@@ -124,7 +124,7 @@ type SuggestionRequest struct {
 	Queries []string `json:"queries"`
 
 	Scopes       []models.ScopeFilter `json:"scopes"`
-	AdhocFilters []models.ScopeFilter `json:"AdhocFilters"`
+	AdhocFilters []models.ScopeFilter `json:"adhocFilters"`
 
 	// Start and End are proxied directly to the prometheus endpoint (which is rfc3339 | unix_timestamp)
 	Start string `json:"start"`
