@@ -36,6 +36,64 @@ Each template is evaluated whenever the alert rule is evaluated, and is evaluate
 Extra whitespace in label templates can break matches with notification policies.
 {{% /admonition %}}
 
+## Variables
+
+In Grafana templating, the `$` and `.` symbols are used to reference variables and their properties. You can reference variables directly in your alert rule definitions using the `$` symbol followed by the variable name. Similarly, you can access properties of variables using the dot (`.`) notation within alert rule definitions.
+
+The following variables are available to you when templating labels and annotations:
+
+### The labels variable
+
+The `$labels` variable contains all labels from the query. For example, suppose you have a query that returns CPU usage for all of your servers, and you have an alert rule that fires when any of your servers have exceeded 80% CPU usage for the last 5 minutes. You want to add a summary annotation to the alert that tells you which server is experiencing high CPU usage. With the `$labels` variable you can write a template that prints a human-readable sentence such as:
+
+```
+CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes
+```
+
+> If you are using a classic condition then `$labels` will not contain any labels from the query. Classic conditions discard these labels in order to enforce uni-dimensional behavior (at most one alert per alert rule). If you want to use labels from the query in your template then use the example [here](#print-all-labels-from-a-classic-condition).
+
+### The value variable
+
+The `$value` variable is a string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule. It does not contain the results of range queries, as these can return anywhere from 10s to 10,000s of rows or metrics. If it did, for especially large queries a single alert could use 10s of MBs of memory and Grafana would run out of memory very quickly.
+
+To print the `$value` variable in the summary you would write something like this:
+
+```
+CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ $value }}
+```
+
+And would look something like this:
+
+```
+CPU usage for instance1 has exceeded 80% for the last 5 minutes: [ var='A' labels={instance=instance1} value=81.234 ]
+```
+
+Here `var='A'` refers to the instant query with Ref ID A, `labels={instance=instance1}` refers to the labels, and `value=81.234` refers to the average CPU usage over the last 5 minutes.
+
+If you want to print just some of the string instead of the full string then use the `$values` variable. It contains the same information as `$value`, but in a structured table, and is much easier to use then writing a regular expression to match just the text you want.
+
+### The values variable
+
+The `$values` variable is a table containing the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs.
+
+To print the value of the instant query with Ref ID A:
+
+```
+CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "A" }}
+```
+
+For example, given an alert with the labels `instance=server1` and an instant query with the value `81.2345`, this would print:
+
+```
+CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
+```
+
+If the query in Ref ID A is a range query rather than an instant query then add a reduce expression with Ref ID B and replace `(index $values "A")` with `(index $values "B")`:
+
+```
+CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "B" }}
+```
+
 ## Examples
 
 The following examples attempt to show the most common use-cases we have seen for templates. You can use these examples verbatim, or adapt them as necessary for your use case. For more information on how to write text/template refer see [the beginner's guide to alert notification templates in Grafana](https://grafana.com/blog/2023/04/05/grafana-alerting-a-beginners-guide-to-templating-alert-notifications/).
@@ -214,62 +272,6 @@ B0: 81.2345
 B1: 92.3456
 B2: 84.5678
 B3: 95.6789
-```
-
-## Variables
-
-The following variables are available to you when templating labels and annotations:
-
-### The labels variable
-
-The `$labels` variable contains all labels from the query. For example, suppose you have a query that returns CPU usage for all of your servers, and you have an alert rule that fires when any of your servers have exceeded 80% CPU usage for the last 5 minutes. You want to add a summary annotation to the alert that tells you which server is experiencing high CPU usage. With the `$labels` variable you can write a template that prints a human-readable sentence such as:
-
-```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes
-```
-
-> If you are using a classic condition then `$labels` will not contain any labels from the query. Classic conditions discard these labels in order to enforce uni-dimensional behavior (at most one alert per alert rule). If you want to use labels from the query in your template then use the example [here](#print-all-labels-from-a-classic-condition).
-
-### The value variable
-
-The `$value` variable is a string containing the labels and values of all instant queries; threshold, reduce and math expressions, and classic conditions in the alert rule. It does not contain the results of range queries, as these can return anywhere from 10s to 10,000s of rows or metrics. If it did, for especially large queries a single alert could use 10s of MBs of memory and Grafana would run out of memory very quickly.
-
-To print the `$value` variable in the summary you would write something like this:
-
-```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ $value }}
-```
-
-And would look something like this:
-
-```
-CPU usage for instance1 has exceeded 80% for the last 5 minutes: [ var='A' labels={instance=instance1} value=81.234 ]
-```
-
-Here `var='A'` refers to the instant query with Ref ID A, `labels={instance=instance1}` refers to the labels, and `value=81.234` refers to the average CPU usage over the last 5 minutes.
-
-If you want to print just some of the string instead of the full string then use the `$values` variable. It contains the same information as `$value`, but in a structured table, and is much easier to use then writing a regular expression to match just the text you want.
-
-### The values variable
-
-The `$values` variable is a table containing the labels and floating point values of all instant queries and expressions, indexed by their Ref IDs.
-
-To print the value of the instant query with Ref ID A:
-
-```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "A" }}
-```
-
-For example, given an alert with the labels `instance=server1` and an instant query with the value `81.2345`, this would print:
-
-```
-CPU usage for instance1 has exceeded 80% for the last 5 minutes: 81.2345
-```
-
-If the query in Ref ID A is a range query rather than an instant query then add a reduce expression with Ref ID B and replace `(index $values "A")` with `(index $values "B")`:
-
-```
-CPU usage for {{ index $labels "instance" }} has exceeded 80% for the last 5 minutes: {{ index $values "B" }}
 ```
 
 ## Functions
