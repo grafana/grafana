@@ -61,11 +61,14 @@ func (d *DualWriterMode2) Create(ctx context.Context, in runtime.Object, createV
 		return nil, fmt.Errorf("UID should not be present: %v", accIn.GetUID())
 	}
 
-	if accIn.GetGenerateName() == "" {
-		return nil, fmt.Errorf("generate name is empty")
+	if accIn.GetName() == "" && accIn.GetGenerateName() == "" {
+		return nil, fmt.Errorf("name is empty")
 	}
 
-	accIn.SetName(accIn.GetGenerateName())
+	if accIn.GetName() == "" && accIn.GetGenerateName() != "" {
+	   accIn.SetName(names.SimpleNameGenerator.GenerateName(accIn.GetGenerateName()))
+       accIn.SetGenerateName("")
+	}
 
 	startLegacy := time.Now()
 	createdFromLegacy, err := d.Legacy.Create(ctx, in, createValidation, options)
