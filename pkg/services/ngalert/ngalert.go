@@ -478,6 +478,7 @@ func (ng *AlertNG) init() error {
 		ProvenanceStore:      ng.store,
 		MultiOrgAlertmanager: ng.MultiOrgAlertmanager,
 		StateManager:         ng.stateManager,
+		Scheduler:            scheduler,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
 		ReceiverService:      receiverService,

@@ -489,6 +489,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		t.Run("should return sorted", func(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
 			fakeAIM := NewFakeAlertInstanceManager(t)
+			fakeSch := newFakeSchedulerReader(t).setupStates(fakeAIM)
 			groupKey := ngmodels.GenerateGroupKey(orgID)
 			gen := ngmodels.RuleGen
 			rules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
@@ -497,6 +498,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			api := PrometheusSrv{
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
+				status:  fakeSch,
 				store:   ruleStore,
 				authz:   &fakeRuleAccessControlService{},
 			}
@@ -558,6 +560,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		api := PrometheusSrv{
 			log:     log.NewNopLogger(),
 			manager: fakeAIM,
+			status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 			store:   ruleStore,
 			authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
 		}
@@ -673,6 +676,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			api := PrometheusSrv{
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
+				status:  newFakeSchedulerReader(t).setupStates(fakeAIM),
 				store:   ruleStore,
 				authz:   accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())),
 			}
@@ -1389,11 +1393,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, PrometheusSrv) {
 	fakeStore := fakes.NewRuleStore(t)
 	fakeAIM := NewFakeAlertInstanceManager(t)
+	fakeSch := newFakeSchedulerReader(t).setupStates(fakeAIM)
 	fakeAuthz := &fakeRuleAccessControlService{}
 
 	api := PrometheusSrv{
 		log:     log.NewNopLogger(),
 		manager: fakeAIM,
+		status:  fakeSch,
 		store:   fakeStore,
 		authz:   fakeAuthz,
 	}
