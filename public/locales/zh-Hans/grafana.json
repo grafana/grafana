@@ -1890,6 +1890,9 @@
       "view": "查看"
     }
   },
+  "panel-search": {
+    "unsupported-layout": ""
+  },
   "playlist-edit": {
     "error-prefix": "加载播放列表时发生错误：",
     "form": {

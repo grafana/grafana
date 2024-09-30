@@ -1900,6 +1900,9 @@
       "view": "Afficher"
     }
   },
+  "panel-search": {
+    "unsupported-layout": ""
+  },
   "playlist-edit": {
     "error-prefix": "Erreur lors du chargement de la playlist :",
     "form": {
