@@ -123,7 +123,6 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
       retryTimer = setTimeout(
         () => {
-          console.log(`Retrying ${key} (${retries + 1})`);
           runNextRequest(subscriber, requestN, requestGroup);
         },
         1500 * Math.pow(2, retries)
@@ -149,7 +148,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
 
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
-        if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
+        if ((partialResponse.errors ?? []).length > 0 || partialResponse.error != null) {
           if (retry(partialResponse)) {
             return;
           }
