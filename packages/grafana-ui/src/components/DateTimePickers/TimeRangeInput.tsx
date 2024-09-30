@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { createRef, FormEvent, MouseEvent, useRef, useState } from 'react';
+import { createRef, FormEvent, MouseEvent, useState } from 'react';
 
 import { dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -80,7 +80,7 @@ export const TimeRangeInput = ({
   };
 
   const overlayRef = createRef<HTMLElement>();
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = createRef<HTMLButtonElement>();
 
   const { dialogProps } = useDialog({}, overlayRef);
 
