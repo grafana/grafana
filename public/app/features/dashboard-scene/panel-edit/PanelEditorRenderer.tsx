@@ -2,10 +2,8 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { UnlinkModal } from '../scene/UnlinkModal';
@@ -157,7 +155,6 @@ function VizWrapper({ panel, tableView }: VizWrapperProps) {
 }
 
 function getStyles(theme: GrafanaTheme2) {
-  const isSingleTopNav = config.featureToggles.singleTopNav;
   return {
     pageContainer: css({
       display: 'grid',
@@ -189,8 +186,7 @@ function getStyles(theme: GrafanaTheme2) {
     content: css({
       position: 'absolute',
       width: '100%',
-      height: isSingleTopNav ? `calc(100% - ${TOP_BAR_LEVEL_HEIGHT}px)` : '100%',
-      top: isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : 'unset',
+      height: '100%',
     }),
     body: css({
       label: 'body',

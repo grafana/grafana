@@ -5,6 +5,7 @@ import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
 import NativeScrollbar from '../NativeScrollbar';
 
 import { PageContents } from './PageContents';
@@ -31,7 +32,7 @@ export const Page: PageType = ({
   onSetScrollRef,
   ...otherProps
 }) => {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, Boolean(toolbar));
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
 
@@ -94,13 +95,14 @@ export const Page: PageType = ({
 
 Page.Contents = PageContents;
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, hasToolbar: boolean) => {
   return {
     wrapper: css({
       label: 'page-wrapper',
       display: 'flex',
       flex: '1 1 0',
       flexDirection: 'column',
+      marginTop: hasToolbar ? TOP_BAR_LEVEL_HEIGHT : 0,
       position: 'relative',
     }),
     pageContent: css({
