@@ -318,6 +318,9 @@
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required."
     },
+    "actions": {
+      "button-to-recently-deleted": "To recently deleted"
+    },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
       "alertRule_other": "{{count}} alert rule",

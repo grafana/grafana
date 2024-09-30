@@ -3,13 +3,16 @@ import { memo, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { FilterInput, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
+import { LinkButton, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
 
+import { getConfig } from '../../core/config';
+import { contextSrv } from '../../core/services/context_srv';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
@@ -90,6 +93,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   const { data: rootFolder } = useGetFolderQuery('general');
   let folder = folderDTO ? folderDTO : rootFolder;
   const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
+  const hasAdminRights = contextSrv.user.orgRole === OrgRole.Admin;
 
   const showEditTitle = canEditFolders && folderUID;
   const canSelect = canEditFolders || canEditDashboards;
@@ -112,7 +116,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'failed_no_folderDTO' });
     }
   };
-
+  //TODO: translatable
   return (
     <Page
       navId="dashboards/browse"
@@ -120,6 +124,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       onEditTitle={showEditTitle ? onEditTitle : undefined}
       actions={
         <>
+          {config.featureToggles.dashboardRestore && config.featureToggles.dashboardRestoreUI && hasAdminRights && (
+            <LinkButton variant="secondary" href={getConfig().appSubUrl + '/dashboard/recently-deleted'}>
+              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">To recently deleted</Trans>
+            </LinkButton>
+          )}
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
           {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton
