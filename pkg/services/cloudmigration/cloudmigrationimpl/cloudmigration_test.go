@@ -58,7 +58,7 @@ func Test_CreateGetAndDeleteToken(t *testing.T) {
 	assert.NoError(t, err)
 
 	_, err = s.GetToken(context.Background())
-	assert.ErrorIs(t, cloudmigration.ErrTokenNotFound, err)
+	assert.ErrorIs(t, err, cloudmigration.ErrTokenNotFound)
 
 	cm := cloudmigration.CloudMigrationSession{}
 	err = s.ValidateToken(context.Background(), cm)
