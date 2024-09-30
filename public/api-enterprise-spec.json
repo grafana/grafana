@@ -3382,6 +3382,7 @@
       }
     },
     "CorrelationType": {
+      "description": "the type of correlation, either query for containing query information, or external for containing an external URL\n+enum",
       "type": "string"
     },
     "CreateAccessTokenResponseDTO": {
@@ -5414,6 +5415,9 @@
       ],
       "properties": {
         "message": {
+          "type": "string"
+        },
+        "name": {
           "type": "string"
         },
         "refId": {
@@ -8348,6 +8352,10 @@
           "type": "string"
         },
         "CreatedAt": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ExternalSessionId": {
           "type": "integer",
           "format": "int64"
         },
