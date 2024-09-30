@@ -345,42 +345,26 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return this.getTagsCompletions();
       }
       case 'SPANSET_IN_THE_MIDDLE':
-        return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
       case 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE':
-        return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        return this.getOperatorsCompletions([...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps]);
       case 'SPANSET_IN_NAME':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
         return this.getTagsCompletions(undefined, situation.scope);
       case 'SPANSET_EXPRESSION_OPERATORS':
-        return [
+        return this.getOperatorsCompletions([
           ...CompletionProvider.comparisonOps,
           ...CompletionProvider.logicalOps,
           ...CompletionProvider.arithmeticOps,
-        ].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        ]);
       case 'SPANFIELD_COMBINING_OPERATORS':
-        return [
+        return this.getOperatorsCompletions([
           ...CompletionProvider.logicalOps,
           ...CompletionProvider.arithmeticOps,
           ...CompletionProvider.comparisonOps,
-        ].map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        ]);
       case 'SPANSET_COMBINING_OPERATORS':
-        return CompletionProvider.spansetOps.map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        return this.getOperatorsCompletions(CompletionProvider.spansetOps);
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
         const functions = CompletionProvider.functions.map((key) => ({
           ...key,
@@ -470,6 +454,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       insertText: (prepend || '') + key + (append || ''),
       type: 'SCOPE',
       insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+    }));
+  }
+
+  private getOperatorsCompletions(ops: MinimalCompletionItem[]): CompletionItem[] {
+    return ops.map((key) => ({
+      ...key,
+      type: 'OPERATOR',
     }));
   }
 }

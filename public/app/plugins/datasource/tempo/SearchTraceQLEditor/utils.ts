@@ -113,7 +113,11 @@ export const getFilteredTags = (tags: string[], staticTags: Array<string | undef
 
 export const getUnscopedTags = (scopes: Scope[]) => {
   return uniq(
-    scopes.map((scope: Scope) => (scope.name && scope.name !== 'intrinsic' && scope.tags ? scope.tags : [])).flat()
+    scopes
+      .map((scope: Scope) =>
+        scope.name && scope.name !== TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []
+      )
+      .flat()
   );
 };
 
