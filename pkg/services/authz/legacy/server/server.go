@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacy/store"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -15,25 +16,33 @@ import (
 
 var _ openfgav1.OpenFGAServiceServer = (*Server)(nil)
 
-func NewServer(sql legacysql.LegacyDatabaseProvider) *Server {
+func NewServer(sql legacysql.LegacyDatabaseProvider, logger log.Logger) *Server {
 	return &Server{
-		store: store.NewStore(sql),
+		store:  store.NewStore(sql),
+		logger: logger,
 	}
 }
 
 type Server struct {
 	openfgav1.UnimplementedOpenFGAServiceServer
-	store store.LegacyStore
+	logger log.Logger
+	store  store.LegacyStore
 }
 
 // FIXME: error handling
 // FIXME: action sets
 // FIXME: shared with me
 func (s *Server) Check(ctx context.Context, r *openfgav1.CheckRequest) (*openfgav1.CheckResponse, error) {
+	if r.TupleKey == nil {
+		return nil, status.Error(codes.InvalidArgument, "missing required tuple key")
+	}
+
 	ns, err := claims.ParseNamespace(r.StoreId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	s.logger.Info("check req", "id", r.TupleKey.User, "relation", r.TupleKey.Relation, "object", r.TupleKey.Object)
 
 	// FIXME: cache
 	res, err := s.store.GetIdentity(ctx, ns, store.GetIdentityQuery{
@@ -42,6 +51,8 @@ func (s *Server) Check(ctx context.Context, r *openfgav1.CheckRequest) (*openfga
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
+	s.logger.Info("got identitiy", "id", r.TupleKey.User, "res", res)
 
 	// FIXME: cache
 	listRes, err := s.store.ListPermissions(ctx, ns, store.ListPermissionsQuery{
@@ -80,13 +91,13 @@ func (s *Server) Check(ctx context.Context, r *openfgav1.CheckRequest) (*openfga
 }
 
 func (s *Server) Read(ctx context.Context, r *openfgav1.ReadRequest) (*openfgav1.ReadResponse, error) {
+	if r.TupleKey == nil {
+		return nil, status.Error(codes.InvalidArgument, "tuple key is required for read request")
+	}
+
 	ns, err := claims.ParseNamespace(r.StoreId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	if r.TupleKey == nil {
-		return nil, status.Error(codes.Unimplemented, "tuple key is required for read request")
 	}
 
 	// FIXME: cache

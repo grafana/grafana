@@ -1,4 +1,4 @@
-package legacy
+package store
 
 import (
 	"context"
@@ -55,7 +55,7 @@ func (s *Store) GetIdentity(ctx context.Context, ns claims.NamespaceInfo, q GetI
 		err := sql.DB.WithDbSession(ctx, func(sess *db.Session) error {
 			// resolve teams for user
 			err = sess.SQL(
-				"SELECT id FROM team AS t INNER JOIN team_member AS tm ON tm.team_id = t.id WHERE tm.user_id = ? AND tm.org_id = ?",
+				"SELECT t.id FROM team AS t INNER JOIN team_member AS tm ON tm.team_id = t.id WHERE tm.user_id = ? AND tm.org_id = ?",
 				ident.UserID,
 				ns.OrgID,
 			).Find(&ident.Teams)
@@ -116,11 +116,11 @@ func getUserRoles(sess *db.Session, dialect migrator.Dialect, orgID int64, id in
 
 	var u user
 	// resolve role for user
-	err := sess.SQL(
+	_, err := sess.SQL(
 		"SELECT u.is_admin, ou.role FROM "+dialect.Quote("user")+" AS u INNER JOIN org_user AS ou ON u.id = ou.user_id WHERE u.id = ? AND ou.org_id = ?",
 		id,
 		orgID,
-	).Find(&u)
+	).Get(&u)
 
 	if err != nil {
 		return nil, err
