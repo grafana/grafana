@@ -92,7 +92,7 @@ const AnnotationsStep = () => {
     return (
       <Stack direction="row" gap={0.5} alignItems="center">
         <Text variant="bodySmall" color="secondary">
-          Add more context in your notification messages.
+          Add more context to your alert notifications.
         </Text>
         <NeedHelpInfo
           contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
@@ -105,7 +105,12 @@ const AnnotationsStep = () => {
   }
 
   return (
-    <RuleEditorSection stepNo={5} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
+    <RuleEditorSection
+      stepNo={5}
+      title="Configure notification message"
+      description={getAnnotationsSectionDescription()}
+      fullWidth
+    >
       <Stack direction="column" gap={1}>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
