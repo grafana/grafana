@@ -2157,7 +2157,9 @@
     }
   },
   "query-library": {
-    "delete-query-button": "Delete query"
+    "datasource-names": "Datasource name(s):",
+    "delete-query-button": "Delete query",
+    "search": "Search by data source, query content or description"
   },
   "query-operation": {
     "header": {

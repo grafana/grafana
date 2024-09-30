@@ -2157,7 +2157,9 @@
     }
   },
   "query-library": {
-    "delete-query-button": "Đęľęŧę qūęřy"
+    "datasource-names": "Đäŧäşőūřčę ŉämę(ş):",
+    "delete-query-button": "Đęľęŧę qūęřy",
+    "search": "Ŝęäřčĥ þy đäŧä şőūřčę, qūęřy čőŉŧęŉŧ őř đęşčřįpŧįőŉ"
   },
   "query-operation": {
     "header": {
