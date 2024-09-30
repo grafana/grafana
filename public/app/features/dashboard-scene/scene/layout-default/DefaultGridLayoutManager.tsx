@@ -352,25 +352,4 @@ export class DefaultGridLayoutManager
   public static Component = ({ model }: SceneComponentProps<DefaultGridLayoutManager>) => {
     return <model.state.grid.Component model={model.state.grid} />;
   };
-
-  public getDashboardPanels() {
-    return dashboardSceneGraph.getVizPanels(this);
-  }
-
-  public hasDashboardAngularPlugins() {
-    const sceneGridLayout = this.state.body;
-    if (!(sceneGridLayout instanceof SceneGridLayout)) {
-      return false;
-    }
-    const gridItems = sceneGridLayout.state.children;
-    const dashboardWasAngular = gridItems.some((gridItem) => {
-      if (!(gridItem instanceof DashboardGridItem)) {
-        return false;
-      }
-      const isAngularPanel = isUsingAngularPanelPlugin(gridItem.state.body);
-      const isAngularDs = isUsingAngularDatasourcePlugin(gridItem.state.body);
-      return isAngularPanel || isAngularDs;
-    });
-    return dashboardWasAngular;
-  }
 }
