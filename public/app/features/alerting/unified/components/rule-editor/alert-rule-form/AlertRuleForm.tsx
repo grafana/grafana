@@ -84,6 +84,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const uidFromParams = routeParams.id;
 
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const isSingleTopNav = config.featureToggles.singleTopNav;
 
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
@@ -263,7 +264,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   }
   return (
     <FormProvider {...formAPI}>
-      <AppChromeUpdate actions={actionButtons} />
+      {!isSingleTopNav && <AppChromeUpdate actions={actionButtons} />}
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
           {isPaused && <InfoPausedRule />}
