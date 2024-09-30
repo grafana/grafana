@@ -197,7 +197,7 @@
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
-        "text": "The selected queries and expressions cannot be converted. If you deactivate advanced options, your query and condition will be reset to default settings."
+        "text": "The selected queries and expressions cannot be converted to default. If you deactivate advanced options, your query and condition will be reset to default settings."
       },
       "preview": "Preview",
       "previewCondition": "Preview alert rule condition"

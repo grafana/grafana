@@ -681,8 +681,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <div>
             <Text element="p">
               <Trans i18nKey="alerting.queryAndExpressionsStep.disableAdvancedOptions.text">
-                The selected queries and expressions cannot be converted. If you deactivate advanced options, your query
-                and condition will be reset to default settings.
+                The selected queries and expressions cannot be converted to default. If you deactivate advanced options,
+                your query and condition will be reset to default settings.
               </Trans>
             </Text>
             <br />
