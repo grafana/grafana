@@ -116,7 +116,6 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       reportInteraction('grafana_browse_dashboards_page_edit_folder_name', { status: 'failed_no_folderDTO' });
     }
   };
-  //TODO: translatable
   return (
     <Page
       navId="dashboards/browse"
