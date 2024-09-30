@@ -5,7 +5,7 @@
 //
 exports[`better eslint`] = {
   value: `{
-    "e2e/scenes/utils/support/types.ts:5381": [
+    "e2e/old-arch/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "e2e/utils/support/types.ts:5381": [
@@ -7230,7 +7230,7 @@ exports[`no undocumented stories`] = {
 
 exports[`no gf-form usage`] = {
   value: `{
-    "e2e/scenes/utils/flows/addDataSource.ts:5381": [
+    "e2e/old-arch/utils/flows/addDataSource.ts:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "e2e/utils/flows/addDataSource.ts:5381": [
