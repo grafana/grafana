@@ -324,7 +324,10 @@ def verify_release_pipeline(
         gcp_key = from_secret(rgm_gcp_key_base64),
         version = "${DRONE_TAG}",
         trigger = {},
-        depends_on = []):
+        depends_on = [
+            "release-build-e2e-publish",
+            "release-windows",
+        ]):
     """
     Runs a script that 'gsutil stat's every artifact that should have been produced by the pre-release process.
 
