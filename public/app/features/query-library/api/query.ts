@@ -45,10 +45,7 @@ export const baseQuery: BaseQueryFn<QueryLibraryBackendRequest, DataQuerySpecRes
       data: requestOptions.data,
       headers: { ...requestOptions.headers },
     });
-
-    const response = await lastValueFrom(responseObservable);
-
-    return response;
+    return await lastValueFrom(responseObservable);
   } catch (error) {
     if (isFetchError(error)) {
       return { error: new Error(error.data.message) };
