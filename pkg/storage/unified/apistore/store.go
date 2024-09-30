@@ -463,6 +463,7 @@ func (s *Storage) GuaranteedUpdate(
 			}
 			acc.SetResourceVersionInt64(rsp.ResourceVersion)
 			res.ResourceVersion = uint64(rsp.ResourceVersion)
+			acc.SetGenerateName(req.Key.Name)
 
 		} else if !ignoreNotFound {
 			return apierrors.NewNotFound(s.gr, req.Key.Name)
