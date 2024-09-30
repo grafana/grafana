@@ -110,7 +110,6 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	}
 
 	switch {
-
 	case strings.EqualFold(req.Path, "version-detect"):
 		versionObj, found := i.versionCache.Get("version")
 		if found {
