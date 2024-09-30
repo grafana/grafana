@@ -121,7 +121,7 @@ require (
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
 	github.com/matryer/is v1.4.0 // @grafana/grafana-as-code
 	github.com/mattn/go-isatty v0.0.20 // @grafana/grafana-backend-group
-	github.com/mattn/go-sqlite3 v1.14.22 // @grafana/grafana-backend-group
+	github.com/mattn/go-sqlite3 v1.14.23 // @grafana/grafana-backend-group
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-backend
 	github.com/microsoft/go-mssqldb v1.7.0 // @grafana/grafana-bi-squad
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c //@grafana/identity-access-team
