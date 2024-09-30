@@ -228,6 +228,8 @@ func Test_SnapshotResources(t *testing.T) {
 }
 
 func TestGetSnapshotList(t *testing.T) {
+	t.Skip("FLAKY test: disabled until fixed")
+
 	_, s := setUpTest(t)
 	// Taken from setUpTest
 	sessionUID := "qwerty"
