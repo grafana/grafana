@@ -22,11 +22,10 @@ type FutureAuthService interface {
 var _ FutureAuthService = (*simpleAuthService)(nil)
 
 type simpleAuthService struct {
-	sql           db.DB
-	ac            accesscontrol.Service
-	folderService folder.Service
-	folderStore   folder.Store
-	logger        log.Logger
+	sql         db.DB
+	ac          accesscontrol.Service
+	folderStore folder.Store
+	logger      log.Logger
 }
 
 func (a *simpleAuthService) GetDashboardReadFilter(ctx context.Context, orgID int64, user *user.SignedInUser) (ResourceFilter, error) {
