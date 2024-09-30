@@ -56,6 +56,10 @@
     "pause": "Pause evaluation"
   },
   "alerting": {
+    "annotations": {
+      "description": "Add more context to your alert notifications.",
+      "title": "Configure notification message"
+    },
     "central-alert-history": {
       "details": {
         "error": "Error loading rule for this event.",

@@ -56,6 +56,10 @@
     "pause": "Päūşę ęväľūäŧįőŉ"
   },
   "alerting": {
+    "annotations": {
+      "description": "Åđđ mőřę čőŉŧęχŧ ŧő yőūř äľęřŧ ŉőŧįƒįčäŧįőŉş.",
+      "title": "Cőŉƒįģūřę ŉőŧįƒįčäŧįőŉ męşşäģę"
+    },
     "central-alert-history": {
       "details": {
         "error": "Ēřřőř ľőäđįŉģ řūľę ƒőř ŧĥįş ęvęŉŧ.",
