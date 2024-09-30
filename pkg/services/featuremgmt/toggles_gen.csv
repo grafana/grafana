@@ -198,3 +198,4 @@ alertingQueryAndExpressionsStepMode,experimental,@grafana/alerting-squad,false,f
 improvedExternalSessionHandling,experimental,@grafana/identity-access-team,false,false,false
 useSessionStorageForRedirection,preview,@grafana/identity-access-team,false,false,false
 rolePickerDrawer,experimental,@grafana/identity-access-team,false,false,false
+unifiedStorageSearch,experimental,@grafana/search-and-storage,false,false,false

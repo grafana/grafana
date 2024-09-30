@@ -1497,6 +1497,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
 		},
+		{
+			Name:              "unifiedStorageSearch",
+			Description:       "Enable unified storage search",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaSearchAndStorageSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 

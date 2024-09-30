@@ -27,5 +27,9 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg, features featuremgmt.Fea
 	opts.Diagnostics = store
 	opts.Lifecycle = store
 
+	if features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorageSearch) {
+		opts.Index = resource.NewResourceIndexServer()
+	}
+
 	return resource.NewResourceServer(opts)
 }

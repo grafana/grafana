@@ -217,4 +217,5 @@ export interface FeatureToggles {
   improvedExternalSessionHandling?: boolean;
   useSessionStorageForRedirection?: boolean;
   rolePickerDrawer?: boolean;
+  unifiedStorageSearch?: boolean;
 }
