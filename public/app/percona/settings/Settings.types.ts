@@ -96,7 +96,7 @@ export interface SettingsPayload
     values: string[];
   };
   platform_email: string;
-  enable_updates: boolean;
+  updates_enabled: boolean;
   telemetry_enabled: boolean;
   advisor_enabled: boolean;
   alerting_enabled: boolean;

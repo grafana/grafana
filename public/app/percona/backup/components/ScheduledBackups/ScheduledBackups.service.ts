@@ -87,6 +87,6 @@ export const ScheduledBackupsService = {
     return api.put(`${BASE_URL}:changeScheduled`, { scheduled_backup_id: id, enabled });
   },
   async delete(id: string) {
-    return api.delete(`${BASE_URL}/scheduled/${id}`);
+    return api.delete(`${BASE_URL}/${id}`);
   },
 };

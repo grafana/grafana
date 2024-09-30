@@ -43,9 +43,9 @@ export const RestoreHistoryService = {
       })
     );
   },
-  async getLogs(restoreId: string, offset: number, limit: number, cancelToken?: CancelToken): Promise<BackupLogs> {
+  async getLogs(artefactId: string, offset: number, limit: number, cancelToken?: CancelToken): Promise<BackupLogs> {
     const { logs = [], end } = await api.get<BackupLogResponse, { offset: number; limit: number }>(
-      `${BASE_URL}/${restoreId}/logs`,
+      `${BASE_URL}/${artefactId}/logs`,
       false,
       { cancelToken, params: { offset, limit } }
     );

@@ -5,9 +5,11 @@ import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
+import { BackupType } from '../../Backup.types';
 import { LocationType } from '../StorageLocations/StorageLocations.types';
 
 import AddBackupPage from './AddBackupPage';
@@ -18,8 +20,8 @@ jest.mock('../BackupInventory/BackupInventory.service');
 jest.mock('./AddBackupPage.service');
 jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
 
-const AddBackupPageWrapper: FC<PropsWithChildren> = ({ children }) => {
-  return (
+const AddBackupPageWrapper: FC<PropsWithChildren> = ({ children }) =>
+  wrapWithGrafanaContextMock(
     <Provider
       store={configureStore({
         percona: {
@@ -46,7 +48,6 @@ const AddBackupPageWrapper: FC<PropsWithChildren> = ({ children }) => {
       <Router history={locationService.getHistory()}>{children}</Router>
     </Provider>
   );
-};
 
 describe('AddBackupPage', () => {
   it('should render fields', async () => {
@@ -77,7 +78,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: 'scheduled_task_id', id: '' }, isExact: true, path: '', url: '' },
+            match: { params: { type: BackupType.SCHEDULED, id: '' }, isExact: true, path: '', url: '' },
           })}
         />
       </AddBackupPageWrapper>
@@ -94,7 +95,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: 'scheduled_task_id', id: '' }, isExact: true, path: '', url: '' },
+            match: { params: { type: BackupType.SCHEDULED, id: '' }, isExact: true, path: '', url: '' },
           })}
         />
       </AddBackupPageWrapper>
@@ -124,7 +125,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: 'scheduled_task_id', id: '' }, isExact: true, path: '', url: '' },
+            match: { params: { type: BackupType.SCHEDULED, id: '' }, isExact: true, path: '', url: '' },
           })}
         />
       </AddBackupPageWrapper>
@@ -157,7 +158,7 @@ describe('AddBackupPage', () => {
       <AddBackupPageWrapper>
         <AddBackupPage
           {...getRouteComponentProps({
-            match: { params: { type: 'scheduled_task_id', id: '' }, isExact: true, path: '', url: '' },
+            match: { params: { type: BackupType.SCHEDULED, id: '' }, isExact: true, path: '', url: '' },
           })}
         />
       </AddBackupPageWrapper>

@@ -35,7 +35,7 @@ export const SettingsService = {
 
 const toModel = (response: SettingsPayload): Settings => ({
   awsPartitions: response.aws_partitions.values,
-  updatesEnabled: response.enable_updates,
+  updatesEnabled: response.updates_enabled,
   telemetryEnabled: response.telemetry_enabled,
   telemetrySummaries: response.telemetry_summaries || [],
   metricsResolutions: response.metrics_resolutions,

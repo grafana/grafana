@@ -11,7 +11,8 @@ export const STATUS_OPTIONS: Array<SelectableValue<string>> = [
 ];
 export const INTERVAL_OPTIONS: Array<SelectableValue<Interval | string>> = [
   { value: 'all', label: 'All' },
-  { value: Interval.FREQUENT, label: Interval.FREQUENT },
-  { value: Interval.STANDARD, label: Interval.STANDARD },
-  { value: Interval.RARE, label: Interval.RARE },
+  { value: Interval.ADVISOR_CHECK_INTERVAL_FREQUENT, label: Interval.ADVISOR_CHECK_INTERVAL_FREQUENT },
+  { value: Interval.ADVISOR_CHECK_INTERVAL_STANDARD, label: Interval.ADVISOR_CHECK_INTERVAL_STANDARD },
+  { value: Interval.ADVISOR_CHECK_INTERVAL_RARE, label: Interval.ADVISOR_CHECK_INTERVAL_RARE },
+  { value: Interval.ADVISOR_CHECK_INTERVAL_UNSPECIFIED, label: Interval.ADVISOR_CHECK_INTERVAL_UNSPECIFIED },
 ];

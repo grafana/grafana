@@ -1,4 +1,4 @@
-export interface CheckUpdatesBody {
+export interface CheckUpdatesParams {
   force: boolean;
   only_installed_version?: boolean;
 }

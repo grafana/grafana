@@ -8,6 +8,7 @@ import { locationService } from '@grafana/runtime';
 import { LinkButton, useStyles } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
+import { BackupType } from 'app/percona/backup/Backup.types';
 import { DeleteModal } from 'app/percona/shared/components/Elements/DeleteModal';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
@@ -241,7 +242,7 @@ export const ScheduledBackups: FC = () => {
   };
 
   const onEditClick = (backup: ScheduledBackup) => {
-    locationService.push(`/backup${backup.id}/edit`);
+    locationService.push(`/backup/${BackupType.SCHEDULED}/${backup.id}/edit`);
   };
 
   const getCellProps = useCallback(

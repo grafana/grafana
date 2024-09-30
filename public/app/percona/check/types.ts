@@ -77,9 +77,10 @@ export enum AlertState {
 }
 
 export enum Interval {
-  STANDARD = 'Standard',
-  RARE = 'Rare',
-  FREQUENT = 'Frequent',
+  ADVISOR_CHECK_INTERVAL_STANDARD = 'Standard',
+  ADVISOR_CHECK_INTERVAL_RARE = 'Rare',
+  ADVISOR_CHECK_INTERVAL_FREQUENT = 'Frequent',
+  ADVISOR_CHECK_INTERVAL_UNSPECIFIED = 'Unspecified',
 }
 
 export interface CheckDetails {

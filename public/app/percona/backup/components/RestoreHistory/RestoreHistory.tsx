@@ -200,7 +200,7 @@ export const RestoreHistory: FC = () => {
 
   const getLogs = useCallback(
     async (startingChunk: number, offset: number, token?: CancelToken) =>
-      RestoreHistoryService.getLogs(selectedRestore!.id, startingChunk, offset, token),
+      RestoreHistoryService.getLogs(selectedRestore!.artifactId, startingChunk, offset, token),
     [selectedRestore]
   );
 

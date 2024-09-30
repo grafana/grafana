@@ -143,16 +143,20 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
         type: FilterFieldTypes.DROPDOWN,
         options: [
           {
-            label: Interval.STANDARD,
-            value: Interval.STANDARD,
+            label: Interval.ADVISOR_CHECK_INTERVAL_STANDARD,
+            value: Interval.ADVISOR_CHECK_INTERVAL_STANDARD,
           },
           {
-            label: Interval.RARE,
-            value: Interval.RARE,
+            label: Interval.ADVISOR_CHECK_INTERVAL_RARE,
+            value: Interval.ADVISOR_CHECK_INTERVAL_RARE,
           },
           {
-            label: Interval.FREQUENT,
-            value: Interval.FREQUENT,
+            label: Interval.ADVISOR_CHECK_INTERVAL_FREQUENT,
+            value: Interval.ADVISOR_CHECK_INTERVAL_FREQUENT,
+          },
+          {
+            label: Interval.ADVISOR_CHECK_INTERVAL_UNSPECIFIED,
+            value: Interval.ADVISOR_CHECK_INTERVAL_UNSPECIFIED,
           },
         ],
       },

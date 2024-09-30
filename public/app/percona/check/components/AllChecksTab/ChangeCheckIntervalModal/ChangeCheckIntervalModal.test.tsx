@@ -17,7 +17,7 @@ jest.mock('app/core/app_events', () => {
 const TEST_CHECK: CheckDetails = {
   summary: 'Test',
   name: 'test',
-  interval: 'STANDARD',
+  interval: 'ADVISOR_CHECK_INTERVAL_STANDARD',
   description: 'test description',
   disabled: false,
   category: '',
