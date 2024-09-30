@@ -179,7 +179,8 @@ func (s *Service) GetToken(ctx context.Context) (gcom.TokenView, error) {
 	}
 
 	logger.Info("cloud migration token not found")
-	return gcom.TokenView{}, cloudmigration.ErrTokenNotFound
+	return gcom.TokenView{}, fmt.Errorf("fetching cloud migration token: instance=%+v accessPolicyName=%s accessTokenName=%s %w",
+		instance, accessPolicyName, accessTokenName, cloudmigration.ErrTokenNotFound)
 }
 
 func (s *Service) CreateToken(ctx context.Context) (cloudmigration.CreateAccessTokenResponse, error) {
@@ -300,7 +301,7 @@ func (s *Service) ValidateToken(ctx context.Context, cm cloudmigration.CloudMigr
 	defer span.End()
 
 	if err := s.gmsClient.ValidateKey(ctx, cm); err != nil {
-		return fmt.Errorf("validating key: %w", err)
+		return fmt.Errorf("validating token: %w", err)
 	}
 
 	return nil

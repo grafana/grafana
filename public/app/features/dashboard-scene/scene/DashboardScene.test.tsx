@@ -1,4 +1,4 @@
-import { CoreApp, LoadingState, getDefaultTimeRange, store } from '@grafana/data';
+import { CoreApp, GrafanaConfig, LoadingState, getDefaultTimeRange, locationUtil, store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   sceneGraph,
@@ -87,6 +87,12 @@ jest.mock('app/features/manage-dashboards/state/actions', () => ({
   deleteDashboard: jest.fn().mockResolvedValue({}),
 }));
 
+locationUtil.initialize({
+  config: { appSubUrl: '/subUrl' } as GrafanaConfig,
+  getVariablesUrlParams: jest.fn(),
+  getTimeRangeForUrl: jest.fn(),
+});
+
 const worker = createWorker();
 mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
 
@@ -145,6 +151,7 @@ describe('DashboardScene', () => {
 
       beforeEach(() => {
         scene = buildTestScene();
+        locationService.push('/d/dash-1');
         deactivateScene = scene.activate();
         scene.onEnterEditMode();
         jest.clearAllMocks();
@@ -152,6 +159,11 @@ describe('DashboardScene', () => {
 
       it('Should set isEditing to true', () => {
         expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('Can exit edit mode', () => {
+        scene.exitEditMode({ skipConfirm: true });
+        expect(locationService.getLocation().pathname).toBe('/d/dash-1');
       });
 
       it('Exiting already saved dashboard should not restore initial state', () => {
