@@ -9,7 +9,7 @@ import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
-import { CompletionProvider, CompletionType } from './autocomplete';
+import { CompletionProvider, CompletionItemType } from './autocomplete';
 import { getErrorNodes, setMarkers } from './highlighting';
 import { languageDefinition } from './traceql';
 
@@ -163,7 +163,7 @@ function setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: 
 }
 
 function setupRegisterInteractionCommand(editor: monacoTypes.editor.IStandaloneCodeEditor): string | null {
-  return editor.addCommand(0, function (_, label, type: CompletionType) {
+  return editor.addCommand(0, function (_, label, type: CompletionItemType) {
     const properties: Record<string, unknown> = { datasourceType: 'tempo', type };
     // Filter out the label for TAG_VALUE completions to avoid potentially exposing sensitive data
     if (type !== 'TAG_VALUE') {

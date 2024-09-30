@@ -9,17 +9,23 @@ import TempoLanguageProvider from '../language_provider';
 import { getSituation, Situation } from './situation';
 import { intrinsics, scopes } from './traceql';
 
-interface Props {
-  languageProvider: TempoLanguageProvider;
-  setAlertText: (text?: string) => void;
-}
-
 type MinimalCompletionItem = {
   label: string;
   insertText: string;
   detail?: string;
   documentation?: string | IMarkdownString;
 };
+
+export type CompletionItemType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE' | 'FUNCTION';
+type CompletionItem = MinimalCompletionItem & {
+  type: CompletionItemType;
+  insertTextRules?: monacoTypes.languages.CompletionItemInsertTextRule; // we used it to position the cursor
+};
+
+interface Props {
+  languageProvider: TempoLanguageProvider;
+  setAlertText: (text?: string) => void;
+}
 
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
@@ -322,7 +328,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @param situation
    * @private
    */
-  private async getCompletions(situation: Situation, setAlertText: (text?: string) => void): Promise<Completion[]> {
+  private async getCompletions(situation: Situation, setAlertText: (text?: string) => void): Promise<CompletionItem[]> {
     switch (situation.type) {
       // This should only happen for cases that we do not support yet
       case 'UNKNOWN': {
@@ -403,8 +409,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           }
         }
 
-        const items: Completion[] = [];
-
         const getInsertionText = (val: SelectableValue<string>): string => {
           if (situation.betweenQuotes) {
             return val.label!;
@@ -412,6 +416,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           return val.type === 'string' ? `"${val.label}"` : val.label!;
         };
 
+        const items: CompletionItem[] = [];
         tagValues?.forEach((val) => {
           if (val?.label) {
             items.push({
@@ -439,7 +444,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
   }
 
-  private getTagsCompletions(prepend?: string, scope?: string): Completion[] {
+  private getTagsCompletions(prepend?: string, scope?: string): CompletionItem[] {
     const tags = this.languageProvider.getTraceqlAutocompleteTags(scope);
     return tags
       .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
@@ -450,7 +455,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       }));
   }
 
-  private getIntrinsicsCompletions(prepend?: string, append?: string): Completion[] {
+  private getIntrinsicsCompletions(prepend?: string, append?: string): CompletionItem[] {
     return intrinsics.map((key) => ({
       label: key,
       insertText: (prepend || '') + key + (append || ''),
@@ -459,7 +464,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }));
   }
 
-  private getScopesCompletions(prepend?: string, append?: string): Completion[] {
+  private getScopesCompletions(prepend?: string, append?: string): CompletionItem[] {
     return scopes.map((key) => ({
       label: key,
       insertText: (prepend || '') + key + (append || ''),
@@ -474,7 +479,10 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
  * @param type
  * @param monaco
  */
-function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): monacoTypes.languages.CompletionItemKind {
+function getMonacoCompletionItemKind(
+  type: CompletionItemType,
+  monaco: Monaco
+): monacoTypes.languages.CompletionItemKind {
   switch (type) {
     case 'TAG_NAME':
       return monaco.languages.CompletionItemKind.Enum;
@@ -489,24 +497,9 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
     case 'FUNCTION':
       return monaco.languages.CompletionItemKind.Function;
     default:
-      throw new Error(`Unexpected CompletionType: ${type}`);
+      throw new Error(`Unexpected CompletionItemType: ${type}`);
   }
 }
-
-export type CompletionType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE' | 'FUNCTION';
-type Completion = {
-  type: CompletionType;
-  label: string;
-  insertText: string;
-  insertTextRules?: monacoTypes.languages.CompletionItemInsertTextRule; // we used it to position the cursor
-  documentation?: string | IMarkdownString;
-  detail?: string;
-};
-
-export type Tag = {
-  name: string;
-  value: string;
-};
 
 function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel, position: monacoTypes.Position) {
   const word = model.getWordAtPosition(position);
@@ -539,7 +532,7 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
  */
 function fixSuggestion(
   suggestion: monacoTypes.languages.CompletionItem,
-  itemType: CompletionType,
+  itemType: CompletionItemType,
   model: monacoTypes.editor.ITextModel,
   offset: number
 ) {
