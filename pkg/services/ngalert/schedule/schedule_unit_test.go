@@ -113,6 +113,11 @@ func TestProcessTicks(t *testing.T) {
 
 	folderWithRuleGroup1 := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(alertRule1.NamespaceUID), alertRule1.RuleGroup)
 
+	t.Run("before 1st tick status should not be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.False(t, ok, "status for a rule should not be present before the scheduler has created it")
+	})
+
 	t.Run("on 1st tick alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 
@@ -137,11 +142,24 @@ func TestProcessTicks(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("after 1st tick status for rule should be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		// Interestingly, the rules in this test are randomised, and are sometimes invalid.
+		// Therefore, we can't reliably assert anything about the actual health. It might be error, it might not, depending on randomness.
+		// We are only testing that things were scheduled, not that the rule routine worked internally.
+	})
+
 	// add alert rule under main org with three base intervals
 	alertRule2 := gen.With(gen.WithOrgID(mainOrgID), gen.WithInterval(3*cfg.BaseInterval), gen.WithTitle("rule-2")).GenerateRef()
 	ruleStore.PutRule(ctx, alertRule2)
 
 	folderWithRuleGroup2 := fmt.Sprintf("%s;%s", ruleStore.getNamespaceTitle(alertRule2.NamespaceUID), alertRule2.RuleGroup)
+
+	t.Run("before 2nd tick status for rule should not be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule2.GetKey())
+		require.False(t, ok, "status for a rule should not be present before the scheduler has created it")
+	})
 
 	t.Run("on 2nd tick first alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
@@ -184,6 +202,16 @@ func TestProcessTicks(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, keys...)
 	})
 
+	t.Run("after 3rd tick status for both rules should be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		// Interestingly, the rules in this test are randomised, and are sometimes invalid.
+		// Therefore, we can't reliably assert anything about the actual health. It might be error, it might not, depending on randomness.
+		// We are only testing that things were scheduled, not that the rule routine worked internally.
+	})
+
 	t.Run("on 4th tick only one alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
@@ -221,6 +249,16 @@ func TestProcessTicks(t *testing.T) {
 
 		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
 		require.NoError(t, err)
+	})
+
+	t.Run("after 5th tick status for both rules should be available regardless of pause state", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		// Interestingly, the rules in this test are randomised, and are sometimes invalid.
+		// Therefore, we can't reliably assert anything about the actual health. It might be error, it might not, depending on randomness.
+		// We are only testing that things were scheduled, not that the rule routine worked internally.
 	})
 
 	t.Run("on 6th tick all alert rule are paused (it still enters evaluation but it is early skipped)", func(t *testing.T) {
@@ -309,6 +347,13 @@ func TestProcessTicks(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("after 8th tick status for deleted rule should not be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.False(t, ok, "status for a rule that was deleted should not be available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+	})
+
 	t.Run("on 9th tick one alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 
@@ -337,6 +382,14 @@ func TestProcessTicks(t *testing.T) {
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
 		require.Emptyf(t, updated, "None rules are expected to be updated")
 		assertEvalRun(t, evalAppliedCh, tick, alertRule3.GetKey())
+	})
+	t.Run("after 10th tick status for remaining rules should be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.False(t, ok, "status for a rule that was deleted should not be available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
+		_, ok = sched.Status(alertRule3.GetKey())
+		require.True(t, ok, "status for a rule that just evaluated was not available")
 	})
 	t.Run("on 11th tick rule2 should be updated", func(t *testing.T) {
 		newRule2 := models.CopyRule(alertRule2)
@@ -464,6 +517,14 @@ func TestProcessTicks(t *testing.T) {
 		require.Len(t, stopped, len(expectedToBeStopped))
 
 		require.Emptyf(t, updated, "No rules should be updated")
+	})
+	t.Run("after 12th tick no status should be available", func(t *testing.T) {
+		_, ok := sched.Status(alertRule1.GetKey())
+		require.False(t, ok, "status for a rule that was deleted should not be available")
+		_, ok = sched.Status(alertRule2.GetKey())
+		require.False(t, ok, "status for a rule that just evaluated was not available")
+		_, ok = sched.Status(alertRule3.GetKey())
+		require.False(t, ok, "status for a rule that just evaluated was not available")
 	})
 
 	t.Run("scheduled rules should be sorted", func(t *testing.T) {
