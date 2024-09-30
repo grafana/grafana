@@ -4331,7 +4331,8 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
+depends_on:
+- rgm-build
 image_pull_secrets:
 - gcr
 - gar
@@ -6015,6 +6016,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7ed6ed0ad07d8c1e0181136ef4158392ed5d421bb003362cb08b1af2e9d0ee9b
+hmac: 9e943f7905ea9f12923f9eb11734bb631877b2e7172b501fcf6751517f2a835c
 
 ...
