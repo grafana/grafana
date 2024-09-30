@@ -282,10 +282,10 @@ Grafana supports user authentication through Okta, which is useful when you want
    - Leave the default values for **Name ID format** and **Application username**.
    - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana. The attribute names in Okta need to match exactly what is defined within Grafana, for example:
 
-     | Attribute name (in Grafana) | Name and value (in Okta profile)       |
-     | --------------------------- | -------------------------------------- |
-     | Login                       | Login `user.login`                     |
-     | Email                       | Email `user.email`                     |
+     | Attribute name (in Grafana) | Name and value (in Okta profile)                   |
+     | --------------------------- | -------------------------------------------------- |
+     | Login                       | Login `user.login`                                 |
+     | Email                       | Email `user.email`                                 |
      | DisplayName                 | DisplayName `user.firstName + " " + user.lastName` |
 
    - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`) and set filter to `Matches regex .*` to return all user groups.
