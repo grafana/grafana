@@ -273,7 +273,7 @@ func TestGetSnapshotList(t *testing.T) {
 	})
 
 	t.Run("returns desc sorted list of snapshots that belong to a session", func(t *testing.T) {
-		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100, Latest: true})
+		snapshots, err := s.GetSnapshotList(ctx, cloudmigration.ListSnapshotsQuery{SessionUID: sessionUID, Page: 1, Limit: 100, Sort: "latest"})
 		require.NoError(t, err)
 
 		ids := make([]string, 0)

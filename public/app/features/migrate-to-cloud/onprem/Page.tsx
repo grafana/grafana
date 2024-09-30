@@ -71,7 +71,7 @@ function useGetLatestSnapshot(sessionUid?: string, page = 1) {
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const listResult = useGetShapshotListQuery(
-    sessionUid ? { uid: sessionUid, page: 1, limit: 1, latest: true } : skipToken
+    sessionUid ? { uid: sessionUid, page: 1, limit: 1, sort: 'latest' } : skipToken
   );
   const lastItem = listResult.currentData?.snapshots?.at(0);
 

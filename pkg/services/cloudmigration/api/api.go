@@ -392,7 +392,7 @@ func (cma *CloudMigrationAPI) GetSnapshotList(c *contextmodel.ReqContext) respon
 		SessionUID: uid,
 		Limit:      c.QueryInt("limit"),
 		Page:       c.QueryInt("page"),
-		Latest:     c.QueryBool("latest"),
+		Sort:       c.Query("sort"),
 	}
 	if q.Limit == 0 {
 		q.Limit = 100

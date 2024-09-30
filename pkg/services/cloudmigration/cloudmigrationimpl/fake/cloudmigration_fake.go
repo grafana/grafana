@@ -125,7 +125,7 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 		},
 	}
 
-	if query.Latest {
+	if query.Sort == "latest" {
 		sort.Slice(cloudSnapshots, func(first, second int) bool {
 			return cloudSnapshots[first].Created.After(cloudSnapshots[second].Created)
 		})

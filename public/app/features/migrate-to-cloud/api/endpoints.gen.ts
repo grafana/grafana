@@ -41,7 +41,7 @@ const injectedRtkApi = api.injectEndpoints({
     getShapshotList: build.query<GetShapshotListApiResponse, GetShapshotListApiArg>({
       query: (queryArg) => ({
         url: `/cloudmigration/migration/${queryArg.uid}/snapshots`,
-        params: { page: queryArg.page, limit: queryArg.limit, latest: queryArg.latest },
+        params: { page: queryArg.page, limit: queryArg.limit, sort: queryArg.sort },
       }),
     }),
     getCloudMigrationToken: build.query<GetCloudMigrationTokenApiResponse, GetCloudMigrationTokenApiArg>({
@@ -112,8 +112,8 @@ export type GetShapshotListApiArg = {
   page?: number;
   /** Max limit for results returned. */
   limit?: number;
-  /** Latest true to return results sorted in descending order */
-  latest?: boolean;
+  /** Sort with value latest to return results sorted in descending order */
+  sort?: string;
   /** Session UID of a session */
   uid: string;
 };
