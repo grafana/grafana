@@ -8,6 +8,11 @@ import { nodeExternals } from 'rollup-plugin-node-externals';
 const rq = createRequire(import.meta.url);
 const pkg = rq('./package.json');
 
+const legacyOutputDefaults = {
+  esModule: true,
+  interop: 'compat',
+};
+
 export default [
   {
     input: 'src/index.ts',
@@ -25,6 +30,7 @@ export default [
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.main),
         preserveModules: true,
+        ...legacyOutputDefaults,
       },
     ],
   },
