@@ -40,7 +40,7 @@ import (
 const FULLPATH_SEPARATOR = "/"
 
 type Service struct {
-	store                store
+	store                folder.Store
 	db                   db.DB
 	log                  *slog.Logger
 	dashboardStore       dashboards.Store
@@ -58,6 +58,7 @@ type Service struct {
 }
 
 func ProvideService(
+	store *FolderStoreImpl,
 	ac accesscontrol.AccessControl,
 	bus bus.Bus,
 	dashboardStore dashboards.Store,
@@ -68,7 +69,6 @@ func ProvideService(
 	r prometheus.Registerer,
 	tracer tracing.Tracer,
 ) folder.Service {
-	store := ProvideStore(db)
 	srv := &Service{
 		log:                  slog.Default().With("logger", "folder-service"),
 		dashboardStore:       dashboardStore,
@@ -143,10 +143,10 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	qry := NewGetFoldersQuery(q)
+	qry := folder.NewGetFoldersQuery(q)
 	permissions := q.SignedInUser.GetPermissions()
 	folderPermissions := permissions[dashboards.ActionFoldersRead]
-	qry.ancestorUIDs = make([]string, 0, len(folderPermissions))
+	qry.AncestorUIDs = make([]string, 0, len(folderPermissions))
 	if len(folderPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {
 		return nil, nil
 	}
@@ -154,12 +154,12 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		if p == dashboards.ScopeFoldersAll {
 			// no need to query for folders with permissions
 			// the user has permission to access all folders
-			qry.ancestorUIDs = nil
+			qry.AncestorUIDs = nil
 			break
 		}
 		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
-			if !slices.Contains(qry.ancestorUIDs, folderUid) {
-				qry.ancestorUIDs = append(qry.ancestorUIDs, folderUid)
+			if !slices.Contains(qry.AncestorUIDs, folderUid) {
+				qry.AncestorUIDs = append(qry.AncestorUIDs, folderUid)
 			}
 		}
 	}

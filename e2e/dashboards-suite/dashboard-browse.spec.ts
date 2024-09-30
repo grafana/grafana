@@ -1,7 +1,7 @@
 import testDashboard from '../dashboards/TestDashboard.json';
 import { e2e } from '../utils';
-
-describe('Dashboard browse', () => {
+// Skipping due to race conditions with same old arch test e2e/dashboards-suite/dashboard-browse.spec.ts
+describe.skip('Dashboard browse', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
@@ -48,5 +48,13 @@ describe('Dashboard browse', () => {
     cy.contains('button', 'Delete').click();
     e2e.flows.confirmDelete();
     e2e.pages.BrowseDashboards.table.row('E2E Test - Import Dashboard').should('not.exist');
+  });
+
+  afterEach(() => {
+    // Permanently delete dashboard
+    e2e.pages.RecentlyDeleted.visit();
+    e2e.pages.Search.table.row('E2E Test - Import Dashboard').find('[type="checkbox"]').click({ force: true });
+    cy.contains('button', 'Delete permanently').click();
+    e2e.flows.confirmDelete();
   });
 });

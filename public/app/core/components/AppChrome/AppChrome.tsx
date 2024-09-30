@@ -36,7 +36,6 @@ export function AppChrome({ children }: Props) {
   const scopesDashboardsState = useScopesDashboardsState();
   const isScopesDashboardsOpen = Boolean(scopesDashboardsState?.isEnabled && scopesDashboardsState?.isPanelOpened);
   const isSingleTopNav = config.featureToggles.singleTopNav;
-
   useMediaQueryChange({
     breakpoint: dockedMenuBreakpoint,
     onChange: (e) => {
@@ -93,7 +92,7 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             Skip to main content
           </LinkButton>
-          <header className={cx(styles.topNav)}>
+          <header className={cx(styles.topNav, isSingleTopNav && menuDockedAndOpen && styles.topNavMenuDocked)}>
             {isSingleTopNav ? (
               <SingleTopBar
                 sectionNav={state.sectionNav.node}
@@ -181,8 +180,12 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       },
       {
         position: 'fixed',
-        height: `calc(100% - ${searchBarHidden || isSingleTopNav ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
+        height: `calc(100% - ${searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2}px)`,
         zIndex: 2,
+      },
+      isSingleTopNav && {
+        height: '100%',
+        top: 0,
       }
     ),
     scopesDashboardsContainer: css({
@@ -201,6 +204,9 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden: boolean) => {
       right: 0,
       background: theme.colors.background.primary,
       flexDirection: 'column',
+    }),
+    topNavMenuDocked: css({
+      left: MENU_WIDTH,
     }),
     panes: css({
       display: 'flex',
