@@ -239,14 +239,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
-<<<<<<< HEAD
 func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
-=======
-// TODO: Refactor this function to reduce the cylomatic complexity
-//
-//nolint:gocyclo
-func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
->>>>>>> 8e7bedd172b (rename to StatusReader)
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
