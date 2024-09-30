@@ -376,10 +376,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           .concat(this.getTagsCompletions('.'));
         return [...functions, ...tags];
       case 'SPANSET_COMPARISON_OPERATORS':
-        return CompletionProvider.comparisonOps.map((key) => ({
-          ...key,
-          type: 'OPERATOR',
-        }));
+        return this.getOperatorsCompletions(CompletionProvider.comparisonOps);
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
