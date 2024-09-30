@@ -3,6 +3,7 @@ module github.com/grafana/grafana/pkg/promlib
 go 1.23.1
 
 require (
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/grafana/dskit v0.0.0-20240805174438-dfa83b4ed2d3
 	github.com/grafana/grafana-plugin-sdk-go v0.251.0
 	github.com/json-iterator/go v1.1.12
@@ -31,7 +32,6 @@ require (
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/chromedp/cdproto v0.0.0-20240810084448-b931b754e476 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.4 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/varint v1.0.0 // indirect
 	github.com/elazarl/goproxy v0.0.0-20240726154733-8b0c20506380 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
