@@ -1,13 +1,16 @@
 import { isNumber } from 'lodash';
 import { useMemo } from 'react';
 
-import { Counter, Stack, Text, TextLink } from '@grafana/ui';
+import { intervalToAbbreviatedDurationString } from '@grafana/data';
+import { Counter, Pagination, Stack, Text, TextLink } from '@grafana/ui';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { CombinedRule, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { usePagination } from '../../hooks/usePagination';
 import { createViewLink } from '../../utils/misc';
 import { hashRule } from '../../utils/rule-id';
-import { isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
+import { getFirstActiveAt, isAlertingRule, isGrafanaRulerRule } from '../../utils/rules';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { AlertRuleListItem, Namespace, RuleLocation } from '../rule-list/components/components';
@@ -25,8 +28,8 @@ export const RuleListStateView = ({ namespaces }: Props) => {
   const groupedRules = useMemo(() => {
     const result: GroupedRules = {
       [PromAlertingRuleState.Firing]: [],
-      [PromAlertingRuleState.Inactive]: [],
       [PromAlertingRuleState.Pending]: [],
+      [PromAlertingRuleState.Inactive]: [],
     };
 
     namespaces.forEach((namespace) =>
@@ -47,65 +50,100 @@ export const RuleListStateView = ({ namespaces }: Props) => {
     return result;
   }, [namespaces]);
 
-  const titles: Record<PromAlertingRuleState, string> = {
-    [PromAlertingRuleState.Firing]: 'Firing',
-    [PromAlertingRuleState.Pending]: 'Pending',
-    [PromAlertingRuleState.Inactive]: 'Normal',
-  };
-
   return (
     <Stack direction="column">
       {Object.entries(groupedRules).map(([state, rules]) => (
-        <Namespace
-          name={
-            <Stack alignItems="center" gap={0}>
-              {titles[state as PromAlertingRuleState] ?? 'Unknown'}
-              <Counter value={rules.length} />
-            </Stack>
-          }
-          key={state}
-          collapsed={rules.length === 0}
-        >
-          {rules.map((rule) => {
-            const isProvisioned =
-              isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
-            const numInstances = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : null;
-
-            return (
-              <AlertRuleListItem
-                key={hashRule(rule.promRule!)}
-                state={state as PromAlertingRuleState}
-                title={
-                  <Stack direction="row" alignItems="center">
-                    <TextLink href={createViewLink(rule.namespace.rulesSource, rule)} inline={false}>
-                      {rule.name}
-                    </TextLink>
-                    {isProvisioned && <ProvisioningBadge />}
-                  </Stack>
-                }
-                error={rule.promRule?.lastError}
-                description={
-                  <Text variant="bodySmall" color="secondary">
-                    {rule.annotations.summary}
-                  </Text>
-                }
-                actions={<RuleActionsButtons compact rule={rule} rulesSource={rule.namespace.rulesSource} />}
-                metaRight={isNumber(numInstances) ? <MetaText icon="layer-group">{numInstances}</MetaText> : null}
-                meta={
-                  <>
-                    {rule.namespace.name && rule.group.name && (
-                      <Text color="secondary" variant="bodySmall">
-                        <RuleLocation namespace={rule.namespace} group={rule.group.name} />
-                      </Text>
-                    )}
-                    {state === PromAlertingRuleState.Firing && <MetaText icon="clock-nine">Firing for 2m 34s</MetaText>}
-                  </>
-                }
-              />
-            );
-          })}
-        </Namespace>
+        <RulesByState key={state} state={state as PromAlertingRuleState} rules={rules} />
       ))}
     </Stack>
   );
 };
+
+const STATE_TITLES: Record<PromAlertingRuleState, string> = {
+  [PromAlertingRuleState.Firing]: 'Firing',
+  [PromAlertingRuleState.Pending]: 'Pending',
+  [PromAlertingRuleState.Inactive]: 'Normal',
+};
+
+function RulesByState({ state, rules }: { state: PromAlertingRuleState; rules: CombinedRule[] }) {
+  const { page, pageItems, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
+
+  return (
+    <Namespace
+      name={
+        <Stack alignItems="center" gap={0}>
+          {STATE_TITLES[state] ?? 'Unknown'}
+          <Counter value={rules.length} />
+        </Stack>
+      }
+      key={state}
+      collapsed={rules.length === 0}
+    >
+      <Stack direction="column">
+        {pageItems.map((rule) => {
+          const { rulerRule, promRule } = rule;
+
+          const isProvisioned = isGrafanaRulerRule(rulerRule) && Boolean(rulerRule.grafana_alert.provenance);
+
+          const numInstances = isAlertingRule(rule.promRule) ? calculateTotalInstances(rule.instanceTotals) : null;
+          const firstActiveAt = isAlertingRule(promRule) ? getFirstActiveAt(promRule) : null;
+
+          if (!promRule) {
+            return null;
+          }
+
+          return (
+            <AlertRuleListItem
+              key={hashRule(promRule)}
+              state={state as PromAlertingRuleState}
+              title={
+                <Stack direction="row" alignItems="center">
+                  <TextLink href={createViewLink(rule.namespace.rulesSource, rule)} inline={false}>
+                    {rule.name}
+                  </TextLink>
+                  {isProvisioned && <ProvisioningBadge />}
+                </Stack>
+              }
+              error={rule.promRule?.lastError}
+              description={
+                <Text variant="bodySmall" color="secondary">
+                  {rule.annotations.summary}
+                </Text>
+              }
+              actions={<RuleActionsButtons compact rule={rule} rulesSource={rule.namespace.rulesSource} />}
+              metaRight={isNumber(numInstances) ? <MetaText icon="layer-group">{numInstances}</MetaText> : null}
+              meta={
+                <>
+                  {rule.namespace.name && rule.group.name && (
+                    <Text color="secondary" variant="bodySmall">
+                      <RuleLocation namespace={rule.namespace} group={rule.group.name} />
+                    </Text>
+                  )}
+                  {state === PromAlertingRuleState.Firing && firstActiveAt && (
+                    <MetaText icon="clock-nine">
+                      Firing for{' '}
+                      {intervalToAbbreviatedDurationString({
+                        start: firstActiveAt,
+                        end: Date.now(),
+                      })}
+                    </MetaText>
+                  )}
+                  {state === PromAlertingRuleState.Pending && firstActiveAt && (
+                    <MetaText icon="clock-nine">
+                      Pending for{' '}
+                      {intervalToAbbreviatedDurationString({
+                        start: firstActiveAt,
+                        end: Date.now(),
+                      })}
+                    </MetaText>
+                  )}
+                </>
+              }
+            />
+          );
+        })}
+        <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} />
+      </Stack>
+    </Namespace>
+  );
+}
