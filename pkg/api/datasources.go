@@ -451,8 +451,8 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
 
-	// Temporary: we only want users to be able to update team HTTP headers from the updateDatasourceLBACRules
-	// until we move from datasources, we need to keep this check to make sure that we don't allow users to update team HTTP headers from datasources apis
+	// It's forbidden to update the rules from the datasource api.
+	// team HTTP headers update have to be done through `updateDatasourceLBACRules`
 	if hs.Features != nil && hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagTeamHttpHeaders) && cmd.JsonData != nil && cmd.JsonData.Get("teamHttpHeaders").MustString() != "" {
 		return response.Error(http.StatusForbidden, "Cannot update team HTTP headers for data source, need to use updateDatasourceLBACRules API", nil)
 	}
