@@ -103,12 +103,12 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 
 func TestNewFolderIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService(), folder.NewFakeStore())
+		prefix, _ := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
 		require.Equal(t, "folders:id:", prefix)
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
-		_, resolver := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService(), folder.NewFakeStore())
+		_, resolver := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:uid:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
@@ -118,7 +118,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 		var (
 			orgId       = rand.Int63()
 			scope       = "folders:id:0"
-			_, resolver = NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService(), folder.NewFakeStore())
+			_, resolver = NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
 		)
 
 		resolved, err := resolver.Resolve(context.Background(), orgId, scope)
@@ -129,7 +129,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 	})
 
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
-		_, resolver := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService(), folder.NewFakeStore())
+		_, resolver := NewFolderIDScopeResolver(foldertest.NewFakeFolderStore(t), folder.NewFakeStore())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:id:")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
@@ -137,7 +137,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		folderStore := foldertest.NewFakeFolderStore(t)
 		folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrDashboardNotFound).Once()
-		_, resolver := NewFolderIDScopeResolver(folderStore, foldertest.NewFakeService(), folder.NewFakeStore())
+		_, resolver := NewFolderIDScopeResolver(folderStore, folder.NewFakeStore())
 
 		orgId := rand.Int63()
 		scope := "folders:id:10"

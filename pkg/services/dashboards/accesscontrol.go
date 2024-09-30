@@ -74,7 +74,7 @@ func NewFolderNameScopeResolver(folderDB folder.FolderStore, folderStore folder.
 }
 
 // NewFolderIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:id:" into an uid based scope.
-func NewFolderIDScopeResolver(folderDB folder.FolderStore, folderSvc folder.Service, folderStore folder.Store) (string, ac.ScopeAttributeResolver) {
+func NewFolderIDScopeResolver(folderDB folder.FolderStore, folderStore folder.Store) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeFoldersProvider.GetResourceScope("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		ctx, span := tracer.Start(ctx, "dashboards.NewFolderIDScopeResolver")

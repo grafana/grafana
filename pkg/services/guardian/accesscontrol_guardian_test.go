@@ -959,14 +959,13 @@ func setupAccessControlGuardianTest(
 	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Maybe().Return(d, nil)
 
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zanzana.NewNoopClient())
-	folderSvc := foldertest.NewFakeService()
 
 	fStore := folder.NewFakeStore()
 	folderStore := foldertest.NewFakeFolderStore(t)
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, fakeDashboardService, fStore))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(fStore))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, folderSvc, fStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, fStore))
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()

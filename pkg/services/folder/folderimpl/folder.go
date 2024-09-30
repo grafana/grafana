@@ -87,7 +87,7 @@ func ProvideService(
 	supportBundles.RegisterSupportItemCollector(srv.supportBundleCollector())
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, store))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv, store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, store))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(store))
 	return srv
 }
