@@ -163,6 +163,14 @@
    ],
    "type": "object"
   },
+  "AlertRuleEditorSettings": {
+   "properties": {
+    "simplified_query_and_expressions_section": {
+     "type": "boolean"
+    }
+   },
+   "type": "object"
+  },
   "AlertRuleExport": {
    "properties": {
     "annotations": {
@@ -282,6 +290,14 @@
     "interval": {
      "format": "int64",
      "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "AlertRuleMetadata": {
+   "properties": {
+    "editor_settings": {
+     "$ref": "#/definitions/AlertRuleEditorSettings"
     }
    },
    "type": "object"
@@ -1573,6 +1589,9 @@
     "is_paused": {
      "type": "boolean"
     },
+    "metadata": {
+     "$ref": "#/definitions/AlertRuleMetadata"
+    },
     "namespace_uid": {
      "type": "string"
     },
@@ -2794,6 +2813,9 @@
     },
     "is_paused": {
      "type": "boolean"
+    },
+    "metadata": {
+     "$ref": "#/definitions/AlertRuleMetadata"
     },
     "no_data_state": {
      "enum": [
