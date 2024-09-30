@@ -19,7 +19,7 @@ import { DataSourceType, GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/u
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import { grafanaRulerEmptyGroup } from '../../../../mocks/grafanaRulerApi';
+import { grafanaRulerGroup } from '../../../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../../../testSetup/datasources';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
@@ -52,7 +52,7 @@ const selectFolderAndGroup = async () => {
   await clickSelectOption(folderInput, FOLDER_TITLE_HAPPY_PATH);
   const groupInput = await ui.inputs.group.find();
   await user.click(await byRole('combobox').find(groupInput));
-  await clickSelectOption(groupInput, grafanaRulerEmptyGroup.name);
+  await clickSelectOption(groupInput, grafanaRulerGroup.name);
 };
 
 describe('Can create a new grafana managed alert using simplified routing', () => {

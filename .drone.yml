@@ -660,14 +660,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
+  - ./bin/build e2e-tests --port 3001 --suite old-arch/dashboards-suite
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes/dashboards-suite
+  name: end-to-end-tests-old-arch/dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
@@ -678,14 +678,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
+  - ./bin/build e2e-tests --port 3001 --suite old-arch/smoke-tests-suite
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes/smoke-tests-suite
+  name: end-to-end-tests-old-arch/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
@@ -696,14 +696,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
+  - ./bin/build e2e-tests --port 3001 --suite old-arch/panels-suite
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes/panels-suite
+  name: end-to-end-tests-old-arch/panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
@@ -714,14 +714,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-various-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
+  - ./bin/build e2e-tests --port 3001 --suite old-arch/various-suite
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes/various-suite
+  name: end-to-end-tests-old-arch/various-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -2084,14 +2084,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/dashboards-suite
+  - ./bin/build e2e-tests --port 3001 --suite old-arch/dashboards-suite
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes/dashboards-suite
+  name: end-to-end-tests-old-arch/dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
@@ -2102,14 +2102,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/smoke-tests-suite
+  - ./bin/build e2e-tests --port 3001 --suite old-arch/smoke-tests-suite
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes/smoke-tests-suite
+  name: end-to-end-tests-old-arch/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
@@ -2120,14 +2120,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/panels-suite
+  - ./bin/build e2e-tests --port 3001 --suite old-arch/panels-suite
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes/panels-suite
+  name: end-to-end-tests-old-arch/panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
@@ -2138,14 +2138,14 @@ steps:
   image: cypress/included:13.10.0
   name: end-to-end-tests-various-suite
 - commands:
-  - ./bin/build e2e-tests --port 3001 --suite scenes/various-suite
+  - ./bin/build e2e-tests --port 3001 --suite old-arch/various-suite
   depends_on:
   - grafana-server
   - build-test-plugins
   environment:
     HOST: grafana-server
   image: cypress/included:13.10.0
-  name: end-to-end-tests-scenes/various-suite
+  name: end-to-end-tests-old-arch/various-suite
 - commands:
   - cd /
   - ./cpp-e2e/scripts/ci-run.sh azure ${DRONE_SOURCE_BRANCH}
@@ -6151,6 +6151,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 495b2466a038f0e208edc8cf65c78edc4795a380d2f1c1ff31d10259e4338431
+hmac: e35ebf7a31abb198c576ca8f623b63fb2bd9d84de2a6111e28b2415587d5377b
 
 ...
