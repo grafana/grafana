@@ -2,7 +2,7 @@ import { within } from '@testing-library/react';
 import { render, waitFor, screen, userEvent } from 'test/test-utils';
 import { byText, byRole } from 'testing-library-selector';
 
-import { setPluginExtensionsHook } from '@grafana/runtime';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setFolderAccessControl } from 'app/features/alerting/unified/mocks/server/configure';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
@@ -66,8 +66,8 @@ const ELEMENTS = {
 
 setupMswServer();
 setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'mimir-1' }));
-setPluginExtensionsHook(() => ({
-  extensions: [
+setPluginLinksHook(() => ({
+  links: [
     mockPluginLinkExtension({ pluginId: 'grafana-slo-app', title: 'SLO dashboard', path: '/a/grafana-slo-app' }),
     mockPluginLinkExtension({
       pluginId: 'grafana-asserts-app',

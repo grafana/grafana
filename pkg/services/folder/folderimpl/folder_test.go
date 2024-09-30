@@ -62,8 +62,10 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	}
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		ac := acmock.New()
-		db := db.InitTestDB(t)
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
+		db, _ := db.InitTestDBWithCfg(t)
+		store := ProvideStore(db)
+		ProvideService(store, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), nil, nil, db,
+			featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(), nil, tracing.InitializeTracerForTest())
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
@@ -418,7 +420,8 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db, cfg := sqlstore.InitTestReplDB(t)
+	db, cfg := sqlstore.InitTestDB(t)
+	cfg.UnifiedAlerting.BaseInterval = time.Second
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -485,7 +488,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				CanEditValue: true,
 			})
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nil)
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, dashboardPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOn, db, serviceWithFlagOn, dashSrv, ac)
@@ -567,7 +570,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			})
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
-				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nil)
+				folderPermissions, dashboardPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil)
 			require.NoError(t, err)
 
 			alertStore, err := ngstore.ProvideDBStore(cfg, featuresFlagOff, db, serviceWithFlagOff, dashSrv, ac)
@@ -712,7 +715,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				tc.service.dashboardStore = dashStore
 				tc.service.store = nestedFolderStore
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, nil)
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, dashboardPermissions, ac, tc.service, tc.service.store, nil)
 				require.NoError(t, err)
 				alertStore, err := ngstore.ProvideDBStore(cfg, tc.featuresFlag, db, tc.service, dashSrv, ac)
 				require.NoError(t, err)
@@ -791,7 +794,7 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		guardian.New = g
 	})
 
-	nestedFolderStore := NewFakeStore()
+	nestedFolderStore := folder.NewFakeStore()
 
 	dashStore := dashboards.FakeDashboardStore{}
 	dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
@@ -827,7 +830,7 @@ func TestFolderServiceDualWrite(t *testing.T) {
 		guardian.New = g
 	})
 
-	db, _ := sqlstore.InitTestReplDB(t)
+	db, _ := sqlstore.InitTestDB(t)
 	cfg := setting.NewCfg()
 	features := featuremgmt.WithFeatures()
 	nestedFolderStore := ProvideStore(db)
@@ -905,7 +908,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			features := featuremgmt.WithFeatures()
 
 			db, _ := sqlstore.InitTestDB(t)
@@ -943,7 +946,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dash, nil)
 
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			features := featuremgmt.WithFeatures("nestedFolders")
 
 			tempUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
@@ -973,7 +976,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			features := featuremgmt.WithFeatures("nestedFolders")
 
 			tempUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
@@ -1043,7 +1046,7 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_parent")}}
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			db, _ := sqlstore.InitTestDB(t)
 			features := featuremgmt.WithFeatures("nestedFolders")
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), db)
@@ -1084,7 +1087,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{UID: "newUID"}, nil)
 
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 
 			db, _ := sqlstore.InitTestDB(t)
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
@@ -1121,7 +1124,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 			dashboardFolderStore.On("GetFolderByUID", mock.Anything, orgID, dashboardFolder.UID).Return(f, nil)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{
 				{UID: "newFolder", ParentUID: "newFolder"},
 				{UID: "newFolder2", ParentUID: "newFolder2"},
@@ -1163,7 +1166,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
 			// return an error from the folder store
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedError = errors.New("FAILED")
 
 			// the service return success as long as the legacy create succeeds
@@ -1188,7 +1191,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 			//dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 
 			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
@@ -1204,7 +1207,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{
 				{UID: "newFolder", ParentUID: "newFolder"},
@@ -1235,7 +1238,7 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceAllScope()}}
 
 			features := featuremgmt.WithFeatures("nestedFolders")
-			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), NewFakeStore(), features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
+			folderSvc := setup(t, &dashboards.FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), folder.NewFakeStore(), features, acimpl.ProvideAccessControl(features, zanzana.NewNoopClient()), dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: accesscontrol.K6FolderUID, NewParentUID: "newFolder", OrgID: orgID, SignedInUser: nestedFolderUser})
 			require.Error(t, err, folder.ErrBadRequest)
 		})
@@ -1245,7 +1248,7 @@ func TestNestedFolderService(t *testing.T) {
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersProvider.GetResourceAllScope()}}
 
 			childUID := "k6-app-child"
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{
 				OrgID:     orgID,
 				UID:       childUID,
@@ -1262,7 +1265,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 
 			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
@@ -1278,7 +1281,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{
 				{UID: "newFolder", ParentUID: "newFolder"},
@@ -1306,7 +1309,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 
 			nestedFolderUser := &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
 			nestedFolderUser.Permissions[orgID] = map[string][]string{dashboards.ActionFoldersCreate: {dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_subfolder")}}
@@ -1327,7 +1330,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			nestedFolderStore.ExpectedError = folder.ErrCircularReference
 
@@ -1349,7 +1352,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{
 				{UID: "newFolder", ParentUID: "newFolder"},
@@ -1375,7 +1378,7 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{{UID: "myFolder", ParentUID: "12345"}, {UID: "12345", ParentUID: ""}}
 
@@ -1408,7 +1411,7 @@ func TestNestedFolderService(t *testing.T) {
 				parents = append(parents, &folder.Folder{UID: fmt.Sprintf("folder%d", i)})
 			}
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			//nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 			nestedFolderStore.ExpectedParentFolders = parents
 
@@ -1438,7 +1441,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
 
-			nestedFolderStore := NewFakeStore()
+			nestedFolderStore := folder.NewFakeStore()
 			nestedFolderStore.ExpectedError = folder.ErrFolderNotFound
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
@@ -1458,7 +1461,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db, cfg := sqlstore.InitTestReplDB(t)
+	db, cfg := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -1492,6 +1495,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		dashboardPermissions,
 		actest.FakeAccessControl{},
 		serviceWithFlagOn,
+		nestedFolderStore,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1862,7 +1866,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 }
 
 func TestFolderServiceGetFolder(t *testing.T) {
-	db, _ := sqlstore.InitTestReplDB(t)
+	db, _ := sqlstore.InitTestDB(t)
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
@@ -1961,7 +1965,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 }
 
 func TestFolderServiceGetFolders(t *testing.T) {
-	db, cfg := sqlstore.InitTestReplDB(t)
+	db, cfg := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -2037,7 +2041,7 @@ func TestFolderServiceGetFolders(t *testing.T) {
 // TODO replace it with an API test under /pkg/tests/api/folders
 // whenever the golang client with get updated to allow filtering child folders by permission
 func TestGetChildrenFilterByPermission(t *testing.T) {
-	db, cfg := sqlstore.InitTestReplDB(t)
+	db, cfg := sqlstore.InitTestDB(t)
 
 	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
 		orgID: {
@@ -2495,7 +2499,7 @@ func TestSupportBundle(t *testing.T) {
 	}
 }
 
-func CreateSubtreeInStore(t *testing.T, store store, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
+func CreateSubtreeInStore(t *testing.T, store folder.Store, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
 	t.Helper()
 
 	folders := make([]*folder.Folder, 0, depth)
@@ -2519,7 +2523,7 @@ func CreateSubtreeInStore(t *testing.T, store store, service *Service, depth int
 	return folders
 }
 
-func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder.FolderStore, nestedFolderStore store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, db db.DB) folder.Service {
+func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder.FolderStore, nestedFolderStore folder.Store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, db db.DB) folder.Service {
 	t.Helper()
 
 	// nothing enabled yet
@@ -2538,24 +2542,19 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 
 func createRule(t *testing.T, store *ngstore.DBstore, folderUID, title string) *models.AlertRule {
 	t.Helper()
-
-	rule := models.AlertRule{
-		OrgID:        orgID,
-		NamespaceUID: folderUID,
-		Title:        title,
-		Updated:      time.Now(),
-		UID:          util.GenerateShortUID(),
-	}
-	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	gen := models.RuleGen
+	rule := gen.With(
+		gen.WithOrgID(orgID),
+		gen.WithTitle(title),
+		gen.WithNamespaceUID(folderUID),
+		gen.WithIntervalSeconds(10),
+	).Generate()
+	ids, err := store.InsertAlertRules(context.Background(), []models.AlertRule{rule})
 	require.NoError(t, err)
 
-	return &rule
+	result, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{OrgID: orgID, UID: ids[0].UID})
+	require.NoError(t, err)
+	return result
 }
 
 func TestSplitFullpath(t *testing.T) {

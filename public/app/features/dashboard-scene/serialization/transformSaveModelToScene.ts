@@ -19,10 +19,8 @@ import {
   SceneDataLayerProvider,
   SceneDataLayerControls,
   UserActionEvent,
-  sceneGraph,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ScopesFacade } from 'app/features/scopes';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -32,12 +30,14 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardGridItem, RepeatDirection } from '../scene/DashboardGridItem';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowActions } from '../scene/row-actions/RowActions';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
@@ -222,10 +222,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     title: oldModel.title,
     uid: oldModel.uid,
     version: oldModel.version,
-    body: new SceneGridLayout({
-      isLazy: dto.preload ? false : true,
-      children: createSceneObjectsForPanels(oldModel.panels),
-      $behaviors: [trackIfEmpty],
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        isLazy: dto.preload ? false : true,
+        children: createSceneObjectsForPanels(oldModel.panels),
+        $behaviors: [trackIfEmpty],
+      }),
     }),
     $timeRange: new SceneTimeRange({
       from: oldModel.time.from,
@@ -245,8 +247,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       registerPanelInteractionsReporter,
       new behaviors.LiveNowTimer({ enabled: oldModel.liveNow }),
       preserveDashboardSceneStateInLocalStorage,
-      new ScopesFacade({
-        handler: (facade) => sceneGraph.getTimeRange(facade).onRefresh(),
+      new DashboardScopesFacade({
+        reloadOnScopesChange: oldModel.meta.reloadOnScopesChange,
+        uid: oldModel.uid,
       }),
     ],
     $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),

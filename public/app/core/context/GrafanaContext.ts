@@ -48,9 +48,9 @@ export function useChromeHeaderHeight() {
   const { chrome } = useGrafana();
   const { kioskMode, searchBarHidden, chromeless } = chrome.useState();
 
-  if (kioskMode || chromeless || !config.featureToggles.bodyScrolling) {
+  if (kioskMode || chromeless) {
     return 0;
-  } else if (searchBarHidden) {
+  } else if (searchBarHidden || config.featureToggles.singleTopNav) {
     return SINGLE_HEADER_BAR_HEIGHT;
   } else {
     return SINGLE_HEADER_BAR_HEIGHT * 2;

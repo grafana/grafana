@@ -423,7 +423,7 @@ const buildPercentileReducers = (percentiles = [...Array.from({ length: 99 }, (_
 
   percentiles.forEach((p) => {
     const percentile = p / 100;
-    const id = `p${p}` as ReducerID;
+    const id = `p${p}`;
     const name = `${p}${nth(p)} %`;
     const description = `${p}${nth(p)} percentile value`;
 
@@ -582,7 +582,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
   }
 
   if (isNumber(calcs.firstNotNull) && isNumber(calcs.diff)) {
-    calcs.diffperc = calcs.diff / calcs.firstNotNull;
+    calcs.diffperc = (calcs.diff / calcs.firstNotNull) * 100;
   }
   return calcs;
 }

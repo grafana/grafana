@@ -49,6 +49,13 @@ export const ContactPoint = ({ disabled = false, contactPoint }: ContactPointPro
             })
           }
         />
+        {receivers.length === 0 && (
+          <div className={styles.noIntegrationsContainer}>
+            <MetaText color="warning" icon="exclamation-circle">
+              <Trans i18nKey="alerting.contact-points.no-integrations">No integrations configured</Trans>
+            </MetaText>
+          </div>
+        )}
         {showFullMetadata ? (
           <div>
             {receivers.map((receiver, index) => {
@@ -285,5 +292,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadataRow: css({
     borderBottomLeftRadius: `${theme.shape.radius.default}`,
     borderBottomRightRadius: `${theme.shape.radius.default}`,
+  }),
+  noIntegrationsContainer: css({
+    paddingTop: `${theme.spacing(1.5)}`,
+    paddingLeft: `${theme.spacing(1.5)}`,
   }),
 });

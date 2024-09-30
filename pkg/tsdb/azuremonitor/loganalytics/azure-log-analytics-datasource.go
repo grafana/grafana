@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -26,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/utils"
 )
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
@@ -243,11 +243,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 		azureLogAnalyticsQuery, err = buildLogAnalyticsQuery(query, dsInfo, appInsightsRegExp, fromAlert)
 		if err != nil {
 			errorMessage := fmt.Errorf("failed to build azure log analytics query: %w", err)
-			var sourceError errorsource.Error
-			if errors.As(err, &sourceError) {
-				return nil, errorsource.SourceError(sourceError.Source(), errorMessage, false)
-			}
-			return nil, errorMessage
+			return nil, utils.ApplySourceFromError(errorMessage, err)
 		}
 	}
 
@@ -262,11 +258,7 @@ func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query back
 		azureAppInsightsQuery, err := buildAppInsightsQuery(ctx, query, dsInfo, appInsightsRegExp, e.Logger)
 		if err != nil {
 			errorMessage := fmt.Errorf("failed to build azure application insights query: %w", err)
-			var sourceError errorsource.Error
-			if errors.As(err, &sourceError) {
-				return nil, errorsource.SourceError(sourceError.Source(), errorMessage, false)
-			}
-			return nil, errorMessage
+			return nil, utils.ApplySourceFromError(errorMessage, err)
 		}
 		azureLogAnalyticsQuery = azureAppInsightsQuery
 	}
@@ -612,11 +604,11 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, err
+			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
 		}
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
-			return AzureCorrelationAPIResponse{}, err
+			return AzureCorrelationAPIResponse{}, errorsource.DownstreamError(err, false)
 		}
 
 		defer func() {

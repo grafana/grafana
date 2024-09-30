@@ -367,6 +367,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 		rsp, err := s.pluginClient.ValidateAdmission(ctx, req)
 		if err != nil {
 			if errors.Is(err, plugins.ErrMethodNotImplemented) {
+				if settings.APIVersion == "v0alpha1" {
+					// For v0alpha1 we don't require plugins to implement ValidateAdmission
+					return settings, nil
+				}
 				return nil, errutil.Internal("plugin.unimplemented").
 					Errorf("plugin (%s) with apiVersion=%s must implement ValidateAdmission", p.ID, settings.APIVersion)
 			}
@@ -388,6 +392,10 @@ func (s *Service) prepareInstanceSettings(ctx context.Context, settings *backend
 	rsp, err := s.pluginClient.MutateAdmission(ctx, req)
 	if err != nil {
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			if settings.APIVersion == "v0alpha1" {
+				// For v0alpha1 we don't require plugins to implement MutateAdmission
+				return settings, nil
+			}
 			return nil, errutil.Internal("plugin.unimplemented").
 				Errorf("plugin (%s) with apiVersion=%s must implement MutateAdmission", p.ID, settings.APIVersion)
 		}

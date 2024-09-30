@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { setPluginExtensionsHook } from '@grafana/runtime';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { RuleListStateView } from 'app/features/alerting/unified/components/rules/RuleListStateView';
 import {
   mockCombinedRule,
@@ -10,8 +10,8 @@ import {
 } from 'app/features/alerting/unified/mocks';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-setPluginExtensionsHook(() => ({
-  extensions: [],
+setPluginLinksHook(() => ({
+  links: [],
   isLoading: false,
 }));
 

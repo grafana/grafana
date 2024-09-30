@@ -17,6 +17,8 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('TrailStore', () => {
   beforeAll(() => {
+    jest.spyOn(DataTrail.prototype, 'checkDataSourceForOTelResources').mockImplementation(() => Promise.resolve());
+
     let localStore: Record<string, string> = {};
 
     const localStorageMock = {
@@ -494,6 +496,8 @@ describe('TrailStore', () => {
               from: 'now-1h',
               to: 'now',
               'var-ds': 'prom-mock',
+              'var-deployment_environment': ['undefined'],
+              'var-otel_resources': [''],
               'var-filters': [],
               refresh: '',
             },
@@ -691,6 +695,8 @@ describe('TrailStore', () => {
                   from: 'now-1h',
                   to: 'now',
                   'var-ds': 'prom-mock',
+                  'var-deployment_environment': ['undefined'],
+                  'var-otel_resources': [''],
                   'var-filters': [],
                   refresh: '',
                 },
@@ -702,6 +708,8 @@ describe('TrailStore', () => {
                   from: 'now-1h',
                   to: 'now',
                   'var-ds': 'prom-mock',
+                  'var-deployment_environment': ['undefined'],
+                  'var-otel_resources': [''],
                   'var-filters': [],
                   refresh: '',
                 },
@@ -713,6 +721,8 @@ describe('TrailStore', () => {
                   from: 'now-1h',
                   to: 'now',
                   'var-ds': 'prom-mock',
+                  'var-deployment_environment': ['undefined'],
+                  'var-otel_resources': [''],
                   'var-filters': [],
                   refresh: '',
                 },
@@ -732,6 +742,8 @@ describe('TrailStore', () => {
               from: 'now-1h',
               to: 'now',
               'var-ds': 'prom-mock',
+              'var-deployment_environment': ['undefined'],
+              'var-otel_resources': [''],
               'var-filters': [],
               refresh: '',
             },
