@@ -171,7 +171,7 @@ The following options are the same for both **Builder** and **Code** mode:
 
 - **Line limit** -Defines the upper limit for the number of log lines returned by a query. The default is `1000`
 
-- **Direction** - Determines the search order. `Backward` is a backward search starting at the end of the time range. `Forward` is a forward search starting at the beginning of the time range. The default is `Backward`
+- **Direction** - Determines the search order. **Backward** is a backward search starting at the end of the time range. **Forward** is a forward search starting at the beginning of the time range. The default is **Backward**
 
 - **Step** Sets the step parameter of Loki metrics queries. The default value equals to the value of `$__interval` variable, which is calculated using the time range and the width of the graph (the number of pixels).
 
