@@ -6,6 +6,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../../../dashboard/state';
 import { RuleFormValues } from '../../types/rule-form';
@@ -92,7 +93,7 @@ const AnnotationsStep = () => {
     return (
       <Stack direction="row" gap={0.5} alignItems="center">
         <Text variant="bodySmall" color="secondary">
-          Add more context in your notification messages.
+          <Trans i18nKey="alerting.annotations.description">Add more context to your alert notifications.</Trans>
         </Text>
         <NeedHelpInfo
           contentText={`Annotations add metadata to provide more information on the alert in your alert notification messages.
@@ -105,7 +106,12 @@ const AnnotationsStep = () => {
   }
 
   return (
-    <RuleEditorSection stepNo={5} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
+    <RuleEditorSection
+      stepNo={5}
+      title={t('alerting.annotations.title', 'Configure notification message')}
+      description={getAnnotationsSectionDescription()}
+      fullWidth
+    >
       <Stack direction="column" gap={1}>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');

@@ -23,11 +23,7 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   subTitle?: React.ReactNode;
   /** Control the page layout. */
   layout?: PageLayoutType;
-  /**
-   * TODO: Not sure we should deprecated it given the sidecar project?
-   * @deprecated this will be removed when bodyScrolling is enabled by default
-   * Can be used to get the scroll container element to access scroll position
-   * */
+  /** Can be used to get the scroll container element to access scroll position */
   onSetScrollRef?: (ref: ScrollRefElement) => void;
 }
 

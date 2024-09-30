@@ -4,20 +4,11 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
 	ServiceAccounts AuthProvider = "ServiceAccounts"
 )
-
-func DefaultOrgID(cfg *setting.Cfg) int64 {
-	orgID := int64(1)
-	if cfg.AutoAssignOrg && cfg.AutoAssignOrgId > 0 {
-		orgID = int64(cfg.AutoAssignOrgId)
-	}
-	return orgID
-}
 
 type AuthProvider string
 
