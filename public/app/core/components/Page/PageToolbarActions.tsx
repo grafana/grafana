@@ -8,8 +8,6 @@ import { Stack, useStyles2 } from '@grafana/ui';
 
 import { TOP_BAR_LEVEL_HEIGHT } from '../AppChrome/types';
 
-export const TOGGLE_BUTTON_ID = 'mega-menu-toggle';
-
 export interface Props {}
 
 export function PageToolbarActions({ children }: PropsWithChildren<Props>) {
