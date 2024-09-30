@@ -1900,6 +1900,9 @@
       "view": "Vista"
     }
   },
+  "panel-search": {
+    "unsupported-layout": ""
+  },
   "playlist-edit": {
     "error-prefix": "Error al cargar la lista de reproducción:",
     "form": {
