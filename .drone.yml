@@ -4331,7 +4331,8 @@ volumes:
 ---
 clone:
   retries: 3
-depends_on: []
+depends_on:
+- release-whatsnew-checker
 image_pull_secrets:
 - gcr
 - gar
@@ -6015,6 +6016,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7ed6ed0ad07d8c1e0181136ef4158392ed5d421bb003362cb08b1af2e9d0ee9b
+hmac: a5a68a99500638b3be0b1cf711f23918bc151ca81c0ec541b428b51dfeec039e
 
 ...
