@@ -801,11 +801,12 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:         "teamHttpHeaders",
-			Description:  "Enables Team LBAC for datasources to apply team headers to the client requests",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: false,
-			Owner:        identityAccessTeam,
+			Name:           "teamHttpHeaders",
+			Description:    "Enables LBAC for datasources to apply LogQL filtering of logs to the client requests for users in teams",
+			Stage:          FeatureStagePublicPreview,
+			FrontendOnly:   false,
+			AllowSelfServe: true,
+			Owner:          identityAccessTeam,
 		},
 		{
 			Name:         "cachingOptimizeSerializationMemoryUsage",
@@ -1217,9 +1218,10 @@ var (
 		{
 			Name:         "newDashboardSharingComponent",
 			Description:  "Enables the new sharing drawer design",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSharingSquad,
 			FrontendOnly: true,
+			Expression:   "false", // disabled by default
 		},
 		{
 			Name:         "alertingListViewV2",
@@ -1323,13 +1325,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "databaseReadReplica",
-			Description: "Use a read replica for some database queries.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendServicesSquad,
-			Expression:  "false", // enabled by default
-		},
-		{
 			Name:              "zanzana",
 			Description:       "Use openFGA as authorization engine.",
 			Stage:             FeatureStageExperimental,
@@ -1370,17 +1365,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:              "bodyScrolling",
-			Description:       "Adjusts Page to make body the scrollable element",
-			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaFrontendPlatformSquad,
-			Expression:        "false", // enabled by default
-			FrontendOnly:      true,
-			AllowSelfServe:    true,
-			HideFromDocs:      true,
-			HideFromAdminPage: false,
-		},
-		{
 			Name:         "cloudwatchMetricInsightsCrossAccount",
 			Description:  "Enables cross account observability for Cloudwatch Metric Insights query builder",
 			Stage:        FeatureStagePublicPreview,
@@ -1399,13 +1383,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-		},
-		{
-			Name:            "backgroundPluginInstaller",
-			Description:     "Enable background plugin installer",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaPluginsPlatformSquad,
-			RequiresRestart: true,
 		},
 		{
 			Name:            "dataplaneAggregator",
@@ -1455,6 +1432,13 @@ var (
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:         "homeSetupGuide",
+			Description:  "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        growthAndOnboarding,
+		},
+		{
 			Name:              "appPlatformAccessTokens",
 			Description:       "Enables the use of access tokens for the App Platform",
 			Stage:             FeatureStageExperimental,
@@ -1476,12 +1460,31 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "alertingQueryAndExpressionsStepMode",
+			Description:  "Enables step mode for alerting queries and expressions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:              "improvedExternalSessionHandling",
 			Description:       "Enable improved support for external sessions in Grafana",
 			Stage:             FeatureStageExperimental,
 			Owner:             identityAccessTeam,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
+		},
+		{
+			Name:        "useSessionStorageForRedirection",
+			Description: "Use session storage for handling the redirection after login",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
+		},
+		{
+			Name:        "rolePickerDrawer",
+			Description: "Enables the new role picker drawer design",
+			Stage:       FeatureStageExperimental,
+			Owner:       identityAccessTeam,
 		},
 		{
 			Name:              "unifiedStorageSearch",

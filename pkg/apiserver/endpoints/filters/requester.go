@@ -51,7 +51,9 @@ func WithRequester(handler http.Handler) http.Handler {
 					Permissions: map[int64]map[string][]string{
 						orgId: {
 							"*": {"*"}, // all resources, all scopes
-
+							// FIXME(kalleep): We don't support wildcard actions so we need to list all possible actions
+							// for this user. This is not scalable and we should look into how to fix this.
+							"org.users:read": {"*"},
 							// Dashboards do not support wildcard action
 							// dashboards.ActionDashboardsRead:   {"*"},
 							// dashboards.ActionDashboardsCreate: {"*"},

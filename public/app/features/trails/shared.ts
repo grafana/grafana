@@ -2,7 +2,7 @@ import { BusEventWithPayload } from '@grafana/data';
 import { ConstantVariable, SceneObject } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 
-export type ActionViewType = 'overview' | 'breakdown' | 'logs' | 'related';
+export type ActionViewType = 'overview' | 'breakdown' | 'label-breakdown' | 'logs' | 'related';
 export interface ActionViewDefinition {
   displayName: string;
   value: ActionViewType;
@@ -37,10 +37,11 @@ export const trailDS = { uid: VAR_DATASOURCE_EXPR };
 
 // Local storage keys
 export const RECENT_TRAILS_KEY = 'grafana.trails.recent';
-
 export const TRAIL_BOOKMARKS_KEY = 'grafana.trails.bookmarks';
-
 export const TRAIL_BREAKDOWN_VIEW_KEY = 'grafana.trails.breakdown.view';
+
+export const MDP_METRIC_PREVIEW = 250;
+export const MDP_METRIC_OVERVIEW = 500;
 
 export type MakeOptional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>;
 

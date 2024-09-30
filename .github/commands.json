@@ -557,14 +557,6 @@
   },
   {
     "type": "label",
-    "name": "area/provisioning",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/52"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/scenes",
     "action": "addToProject",
     "addToProject": {
