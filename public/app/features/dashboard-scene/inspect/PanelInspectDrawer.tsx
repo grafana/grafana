@@ -28,7 +28,7 @@ import { SceneInspectTab } from './types';
 
 interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: SceneInspectTab[];
-  panelRef?: SceneObjectRef<VizPanel>;
+  panelRef: SceneObjectRef<VizPanel>;
   pluginNotLoaded?: boolean;
   canEdit?: boolean;
 }
@@ -51,7 +51,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
    */
   async buildTabs(retry: number) {
     const panelRef = this.state.panelRef;
-    const plugin = panelRef?.resolve()?.getPlugin();
+    const plugin = panelRef.resolve()?.getPlugin();
     const tabs: SceneInspectTab[] = [];
 
     if (!plugin) {
