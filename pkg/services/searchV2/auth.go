@@ -25,6 +25,7 @@ type simpleAuthService struct {
 	sql           db.DB
 	ac            accesscontrol.Service
 	folderService folder.Service
+	folderStore   folder.Store
 	logger        log.Logger
 }
 

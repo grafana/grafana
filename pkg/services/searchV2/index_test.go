@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -754,7 +755,7 @@ func setupIntegrationEnv(t *testing.T, folderCount, dashboardsPerFolder int, sql
 		ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
 	}
 	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), actest.FakeService{},
-		tracing.InitializeTracerForTest(), features, orgSvc, nil, foldertest.NewFakeService()).(*StandardSearchService)
+		tracing.InitializeTracerForTest(), features, orgSvc, nil, foldertest.NewFakeService(), folder.NewFakeStore()).(*StandardSearchService)
 	require.True(t, ok)
 
 	err = runSearchService(searchService)

@@ -86,7 +86,7 @@ var (
 func service(t *testing.T) *StandardSearchService {
 	service, ok := ProvideService(&setting.Cfg{Search: setting.SearchSettings{}},
 		nil, nil, accesscontrolmock.New(), tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(),
-		nil, nil, nil).(*StandardSearchService)
+		nil, nil, nil, nil).(*StandardSearchService)
 	require.True(t, ok)
 	return service
 }
