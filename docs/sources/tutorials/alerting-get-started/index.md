@@ -151,19 +151,6 @@ To demonstrate the observation of data using the Grafana stack, download and run
 
    {{< /docs/ignore >}}
 
-   <!-- INTERACTIVE ignore START -->
-
-   {{< admonition type="tip" >}}
-   Alternatively, you can try out this example in our interactive learning environment: [Get started with Grafana Alerting](https://killercoda.com/grafana-labs/course/grafana/alerting-get-started/).
-
-   It's a fully configured environment with all the dependencies already installed.
-
-   ![Interactive](/media/docs/grafana/full-stack-ile.png)
-
-   Provide feedback, report bugs, and raise issues in the [Grafana Killercoda repository](https://github.com/grafana/killercoda).
-   {{< /admonition >}}
-   <!-- INTERACTIVE ignore END -->
-
 <!-- INTERACTIVE page step1.md END -->
 <!-- INTERACTIVE page step2.md START -->
 
