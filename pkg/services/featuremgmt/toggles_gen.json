@@ -242,6 +242,35 @@
     },
     {
       "metadata": {
+        "name": "alertingPrometheusRulesPrimary",
+        "resourceVersion": "1727332930692",
+        "creationTimestamp": "2024-09-09T13:56:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-26 06:42:10.692959 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingQueryAndExpressionsStepMode",
+        "resourceVersion": "1725978395461",
+        "creationTimestamp": "2024-09-10T14:26:35Z"
+      },
+      "spec": {
+        "description": "Enables step mode for alerting queries and expressions",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingQueryOptimization",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-01-10T20:52:58Z",
@@ -595,6 +624,7 @@
         "name": "bodyScrolling",
         "resourceVersion": "1721723807004",
         "creationTimestamp": "2024-07-01T10:28:39Z",
+        "deletionTimestamp": "2024-09-24T09:17:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-23 08:36:47.004393 +0000 UTC"
         }
@@ -868,6 +898,7 @@
         "name": "databaseReadReplica",
         "resourceVersion": "1720021873452",
         "creationTimestamp": "2024-06-18T15:07:15Z",
+        "deletionTimestamp": "2024-09-20T20:03:26Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2024-07-03 15:51:13.452477 +0000 UTC"
         }
@@ -1434,6 +1465,22 @@
     },
     {
       "metadata": {
+        "name": "homeSetupGuide",
+        "resourceVersion": "1726258153467",
+        "creationTimestamp": "2024-09-10T15:46:32Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-13 20:09:13.467989 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Used in Home for users who want to return to the onboarding flow or quickly find popular config pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/growth-and-onboarding",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "idForwarding",
         "resourceVersion": "1718727528075",
         "creationTimestamp": "2023-09-25T15:21:28Z",
@@ -1631,13 +1678,16 @@
     {
       "metadata": {
         "name": "live-service-web-worker",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "resourceVersion": "1727432782383",
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-27 10:26:22.38366 +0000 UTC"
+        }
       },
       "spec": {
         "description": "This will use a webworker thread to processes events rather than the main thread",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
     },
@@ -2492,13 +2542,16 @@
     {
       "metadata": {
         "name": "queryOverLive",
-        "resourceVersion": "1718727528075",
-        "creationTimestamp": "2022-01-26T17:44:20Z"
+        "resourceVersion": "1727432782383",
+        "creationTimestamp": "2022-01-26T17:44:20Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-09-27 10:26:22.38366 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Use Grafana Live WebSocket to execute backend queries",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
     },
@@ -2624,6 +2677,18 @@
         "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "rolePickerDrawer",
+        "resourceVersion": "1727337187819",
+        "creationTimestamp": "2024-09-26T07:53:07Z"
+      },
+      "spec": {
+        "description": "Enables the new role picker drawer design",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team"
       }
     },
     {

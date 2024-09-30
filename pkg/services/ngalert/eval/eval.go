@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 var logger = log.New("ngalert.eval")
@@ -705,13 +704,6 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 			continue
 		}
 
-		// The query service returns instant vectors from prometheus as scalars. We need to handle them accordingly.
-		if val, ok := scalarInstantVector(f); ok {
-			r := buildResult(f, val, ts)
-			evalResults = append(evalResults, r)
-			continue
-		}
-
 		if len(f.TypeIndices(data.FieldTypeTime, data.FieldTypeNullableTime)) > 0 {
 			appendErrRes(&invalidEvalResultFormatError{refID: f.RefID, reason: "looks like time series data, only reduced data can be alerted on."})
 			continue
@@ -787,23 +779,6 @@ func buildResult(f *data.Frame, val *float64, ts time.Time) Result {
 		r.State = Alerting
 	}
 	return r
-}
-
-func scalarInstantVector(f *data.Frame) (*float64, bool) {
-	if len(f.Fields) != 2 {
-		return nil, false
-	}
-	if f.Fields[0].Len() > 1 || (f.Fields[0].Type() != data.FieldTypeNullableTime && f.Fields[0].Type() != data.FieldTypeTime) {
-		return nil, false
-	}
-	switch f.Fields[1].Type() {
-	case data.FieldTypeFloat64:
-		return util.Pointer(f.Fields[1].At(0).(float64)), true
-	case data.FieldTypeNullableFloat64:
-		return f.Fields[1].At(0).(*float64), true
-	default:
-		return nil, true
-	}
 }
 
 // AsDataFrame forms the EvalResults in Frame suitable for displaying in the table panel of the front end.
