@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
+  sceneGraph,
   SceneGridRow,
   SceneObject,
   SceneObjectBase,
