@@ -285,7 +285,7 @@ func (c *PostableRuleGroupConfig) validate() error {
 	}
 
 	if hasGrafRules && (len(c.SourceTenants) > 0 || c.EvaluationDelay != nil || c.QueryOffset != nil || c.AlignEvaluationTimeOnInterval || c.Limit > 0) {
-		return fmt.Errorf("Grafana managed rules cannot have source_tenants, evaluation_delay, query_offset, align_evaluation_time_on_interval or limit set")
+		return fmt.Errorf("fields source_tenants, evaluation_delay, query_offset, align_evaluation_time_on_interval and limit are not supported for Grafana rules")
 	}
 	return nil
 }
