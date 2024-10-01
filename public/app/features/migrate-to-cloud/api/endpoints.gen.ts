@@ -155,7 +155,7 @@ export type CreateSnapshotResponseDto = {
 };
 export type MigrateDataResponseItemDto = {
   name?: string,
-  parentFolderName?: string,
+  parentName?: string,
   message?: string;
   refId: string;
   status: 'OK' | 'WARNING' | 'ERROR' | 'PENDING' | 'UNKNOWN';

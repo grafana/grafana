@@ -70,9 +70,9 @@ function DatasourceInfo({ data }: { data: ResourceTableItem }) {
 function DashboardInfo({ data }: { data: ResourceTableItem }) {
   const dashboardUID = data.refId;
   let dashboardName = data.name;
-  let dashboardParentFolderName = data.parentFolderName;
+  let dashboardParentName = data.parentName;
 
-  let skipApiCall = !!dashboardName && !!dashboardParentFolderName;
+  let skipApiCall = !!dashboardName && !!dashboardParentName;
 
   const { data: dashboardData, isError } = useGetDashboardByUidQuery(
     {
@@ -104,13 +104,13 @@ function DashboardInfo({ data }: { data: ResourceTableItem }) {
     } else {
       dashboardName = dashboardUID;
     }
-    dashboardParentFolderName = dashboardData?.meta?.folderTitle;
+    dashboardParentName = dashboardData?.meta?.folderTitle;
   }
 
   return (
     <>
       <span>{dashboardName}</span>
-      <Text color="secondary">{dashboardParentFolderName ?? 'Dashboards'}</Text>
+      <Text color="secondary">{dashboardParentName ?? 'Dashboards'}</Text>
     </>
   );
 }
@@ -131,12 +131,12 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
     );
   }
 
-  const parentFolderName = folderData.parents?.[folderData.parents.length - 1]?.title;
+  const parentName = folderData.parents?.[folderData.parents.length - 1]?.title;
 
   return (
     <>
       <span>{folderData.title}</span>
-      <Text color="secondary">{parentFolderName ?? 'Dashboards'}</Text>
+      <Text color="secondary">{parentName ?? 'Dashboards'}</Text>
     </>
   );
 }

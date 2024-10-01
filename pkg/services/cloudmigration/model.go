@@ -74,8 +74,8 @@ type CloudMigrationResource struct {
 	Status ItemStatus      `xorm:"status" json:"status"`
 	Error  string          `xorm:"error_string" json:"error"`
 
-	SnapshotUID      string `xorm:"snapshot_uid"`
-	ParentFolderName string `xorm:"parent_folder_name" json:"parentFolderName"`
+	SnapshotUID string `xorm:"snapshot_uid"`
+	ParentName  string `xorm:"parent_folder_name" json:"parentName"`
 }
 
 type MigrateDataType string
@@ -185,8 +185,8 @@ type Base64HGInstance struct {
 // GMS domain structs
 
 type MigrateDataRequest struct {
-	Items                 []MigrateDataRequestItem
-	ItemParentFolderNames map[MigrateDataType]map[string](string)
+	Items           []MigrateDataRequestItem
+	ItemParentNames map[MigrateDataType]map[string](string)
 }
 
 type MigrateDataRequestItem struct {

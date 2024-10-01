@@ -388,37 +388,37 @@ func Test_NonCoreDataSourcesHaveWarning(t *testing.T) {
 			State: cloudmigration.SnapshotStateFinished,
 			Results: []cloudmigration.CloudMigrationResource{
 				{
-					Name:             "1 name",
-					ParentFolderName: "1 folder name",
-					Type:             cloudmigration.DatasourceDataType,
-					RefID:            "1", // this will be core
-					Status:           cloudmigration.ItemStatusOK,
-					SnapshotUID:      snapshotUid,
+					Name:        "1 name",
+					ParentName:  "1 parent name",
+					Type:        cloudmigration.DatasourceDataType,
+					RefID:       "1", // this will be core
+					Status:      cloudmigration.ItemStatusOK,
+					SnapshotUID: snapshotUid,
 				},
 				{
-					Name:             "2 name",
-					ParentFolderName: "",
-					Type:             cloudmigration.DatasourceDataType,
-					RefID:            "2", // this will be non-core
-					Status:           cloudmigration.ItemStatusOK,
-					SnapshotUID:      snapshotUid,
+					Name:        "2 name",
+					ParentName:  "",
+					Type:        cloudmigration.DatasourceDataType,
+					RefID:       "2", // this will be non-core
+					Status:      cloudmigration.ItemStatusOK,
+					SnapshotUID: snapshotUid,
 				},
 				{
-					Name:             "3 name",
-					ParentFolderName: "3 folder name",
-					Type:             cloudmigration.DatasourceDataType,
-					RefID:            "3", // this will be non-core with an error
-					Status:           cloudmigration.ItemStatusError,
-					Error:            "please don't overwrite me",
-					SnapshotUID:      snapshotUid,
+					Name:        "3 name",
+					ParentName:  "3 parent name",
+					Type:        cloudmigration.DatasourceDataType,
+					RefID:       "3", // this will be non-core with an error
+					Status:      cloudmigration.ItemStatusError,
+					Error:       "please don't overwrite me",
+					SnapshotUID: snapshotUid,
 				},
 				{
-					Name:             "4 name",
-					ParentFolderName: "4 folder name",
-					Type:             cloudmigration.DatasourceDataType,
-					RefID:            "4", // this will be deleted
-					Status:           cloudmigration.ItemStatusOK,
-					SnapshotUID:      snapshotUid,
+					Name:        "4 name",
+					ParentName:  "4 folder name",
+					Type:        cloudmigration.DatasourceDataType,
+					RefID:       "4", // this will be deleted
+					Status:      cloudmigration.ItemStatusOK,
+					SnapshotUID: snapshotUid,
 				},
 			},
 		},
