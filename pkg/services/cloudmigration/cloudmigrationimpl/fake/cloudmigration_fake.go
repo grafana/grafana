@@ -3,6 +3,7 @@ package fake
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
@@ -108,18 +109,31 @@ func (m FakeServiceImpl) GetSnapshotList(ctx context.Context, query cloudmigrati
 	if m.ReturnError {
 		return nil, fmt.Errorf("mock error")
 	}
-	return []cloudmigration.CloudMigrationSnapshot{
+
+	cloudSnapshots := []cloudmigration.CloudMigrationSnapshot{
 		{
 			UID:        "fake_uid",
 			SessionUID: query.SessionUID,
 			Status:     cloudmigration.SnapshotStatusCreating,
+			Created:    time.Date(2024, 6, 5, 17, 30, 40, 0, time.UTC),
 		},
 		{
 			UID:        "fake_uid",
 			SessionUID: query.SessionUID,
 			Status:     cloudmigration.SnapshotStatusCreating,
+			Created:    time.Date(2024, 6, 5, 18, 30, 40, 0, time.UTC),
 		},
-	}, nil
+	}
+
+	if query.Sort == "latest" {
+		sort.Slice(cloudSnapshots, func(first, second int) bool {
+			return cloudSnapshots[first].Created.After(cloudSnapshots[second].Created)
+		})
+	}
+	if query.Limit > 0 {
+		return cloudSnapshots[0:min(len(cloudSnapshots), query.Limit)], nil
+	}
+	return cloudSnapshots, nil
 }
 
 func (m FakeServiceImpl) UploadSnapshot(ctx context.Context, sessionUid string, snapshotUid string) error {

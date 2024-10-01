@@ -5416,6 +5416,9 @@
         "message": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
         "refId": {
           "type": "string"
         },

@@ -23,9 +23,10 @@ type sqlStore struct {
 }
 
 const (
-	tableName       = "cloud_migration_resource"
-	secretType      = "cloudmigration-snapshot-encryption-key"
-	GetAllSnapshots = -1
+	tableName                    = "cloud_migration_resource"
+	secretType                   = "cloudmigration-snapshot-encryption-key"
+	GetAllSnapshots              = -1
+	GetSnapshotListSortingLatest = "latest"
 )
 
 func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, uid string) (*cloudmigration.CloudMigrationSession, error) {
@@ -278,7 +279,9 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 			offset := (query.Page - 1) * query.Limit
 			sess.Limit(query.Limit, offset)
 		}
-		sess.OrderBy("cloud_migration_snapshot.created DESC")
+		if query.Sort == GetSnapshotListSortingLatest {
+			sess.OrderBy("cloud_migration_snapshot.created DESC")
+		}
 		return sess.Find(&snapshots, &cloudmigration.CloudMigrationSnapshot{
 			SessionUID: query.SessionUID,
 		})
