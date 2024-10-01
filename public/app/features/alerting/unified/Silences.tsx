@@ -1,4 +1,4 @@
-import { Route, RouteChildrenProps, Switch } from 'react-router-dom';
+import { Route, Switch } from 'react-router-dom';
 
 import { withErrorBoundary } from '@grafana/ui';
 import {
@@ -51,13 +51,7 @@ const Silences = () => {
           }}
         </Route>
         <Route exact path="/alerting/silence/:id/edit">
-          {({ match }: RouteChildrenProps<{ id: string }>) => {
-            return (
-              match?.params.id && (
-                <ExistingSilenceEditor silenceId={match.params.id} alertManagerSourceName={selectedAlertmanager} />
-              )
-            );
-          }}
+          <ExistingSilenceEditor alertManagerSourceName={selectedAlertmanager} />
         </Route>
       </Switch>
     </>

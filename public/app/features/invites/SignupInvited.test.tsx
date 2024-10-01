@@ -2,11 +2,9 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-
 import { backendSrv } from '../../core/services/backend_srv';
 
-import { SignupInvitedPage, Props } from './SignupInvited';
+import { SignupInvitedPage } from './SignupInvited';
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
@@ -17,6 +15,11 @@ jest.mock('app/core/core', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
+}));
+
+jest.mock('react-router-dom-v5-compat', () => ({
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useParams: jest.fn().mockReturnValue({ code: 'some code' }),
 }));
 
 const defaultGet = {
@@ -35,18 +38,7 @@ async function setupTestContext({ get = defaultGet }: { get?: typeof defaultGet 
   const postSpy = jest.spyOn(backendSrv, 'post');
   postSpy.mockResolvedValue([]);
 
-  const props: Props = {
-    ...getRouteComponentProps({
-      match: {
-        params: { code: 'some code' },
-        isExact: false,
-        path: '',
-        url: '',
-      },
-    }),
-  };
-
-  render(<SignupInvitedPage {...props} />);
+  render(<SignupInvitedPage />);
 
   await waitFor(() => expect(getSpy).toHaveBeenCalled());
   expect(getSpy).toHaveBeenCalledTimes(1);
