@@ -16,7 +16,6 @@ import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { enrichHelpItem } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsContainer';
-import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 import { TOP_BAR_LEVEL_HEIGHT } from '../types';
 
@@ -59,7 +58,6 @@ export const SingleTopBar = memo(function SingleTopBar({
           </ToolbarButton>
         )}
         <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-        <OrganizationSwitcher />
         <ScopesSelector />
       </TopSearchBarSection>
 
