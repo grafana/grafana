@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,26 +35,22 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagZanzana)
 
-		sqlStore := db.InitTestDB(t)
+		db := db.InitTestDB(t)
 
 		cfg := setting.NewCfg()
 		// Enable zanzana and run in embedded mode (part of grafana server)
 		cfg.Zanzana.ZanzanaOnlyEvaluation = true
 		cfg.Zanzana.Mode = setting.ZanzanaModeEmbedded
-		cfg.Raw.Section("database").NewKey("type", string(sqlStore.GetDBType()))
-		// cfg.Raw.Section("database").NewKey("host", "localhost")
-		cfg.Raw.Section("database").NewKey("name", "grafana_tests")
-		cfg.Raw.Section("database").NewKey("user", "grafana")
-		cfg.Raw.Section("database").NewKey("password", "password")
+		setDBConfig(t, cfg, db)
 
 		quotaService := quotatest.New(false, nil)
-		tagService := tagimpl.ProvideService(sqlStore)
-		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-		fStore := folderimpl.ProvideStore(sqlStore)
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagService, quotaService)
+		tagService := tagimpl.ProvideService(db)
+		folderStore := folderimpl.ProvideDashboardFolderStore(db)
+		fStore := folderimpl.ProvideStore(db)
+		dashboardStore, err := database.ProvideDashboardStore(db, cfg, features, tagService, quotaService)
 		require.NoError(t, err)
 
-		zclient, err := authz.ProvideZanzana(cfg, sqlStore, features)
+		zclient, err := authz.ProvideZanzana(cfg, db, features)
 		require.NoError(t, err)
 		ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures(), zclient)
 
@@ -67,6 +64,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 			fStore,
 			nil,
 		)
+		require.NoError(t, err)
 
 		_, err = dashboardStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 			OrgID: 1,
@@ -80,7 +78,7 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		require.NoError(t, err)
 
 		// Sync Grafana DB with zanzana (migrate data)
-		zanzanaSyncronizer := migrator.NewZanzanaSynchroniser(zclient, sqlStore)
+		zanzanaSyncronizer := migrator.NewZanzanaSynchroniser(zclient, db)
 		zanzanaSyncronizer.Sync(context.Background())
 
 		query := &dashboards.FindPersistedDashboardsQuery{
@@ -94,4 +92,15 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 0, len(res))
 	})
+}
+
+func setDBConfig(t *testing.T, cfg *setting.Cfg, db *sqlstore.SQLStore) {
+	_, err := cfg.Raw.Section("database").NewKey("type", string(db.GetDBType()))
+	require.NoError(t, err)
+	_, err = cfg.Raw.Section("database").NewKey("name", "grafana_tests")
+	require.NoError(t, err)
+	_, err = cfg.Raw.Section("database").NewKey("user", "grafana")
+	require.NoError(t, err)
+	_, err = cfg.Raw.Section("database").NewKey("password", "password")
+	require.NoError(t, err)
 }
