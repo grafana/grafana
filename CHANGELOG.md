@@ -44,6 +44,7 @@
 - **Reporting:** Disable dashboardSceneSolo when rendering PDFs the old way (Enterprise)
 - **Templating:** Fix searching non-latin template variables [#92893](https://github.com/grafana/grafana/pull/92893), [@leeoniya](https://github.com/leeoniya)
 - **TutorialCard:** Fix link to tutorial not opening [#92647](https://github.com/grafana/grafana/pull/92647), [@eledobleefe](https://github.com/eledobleefe)
+- **Alerting:** Fixed CVE-2024-8118. 
 
 ### Plugin development fixes & changes
 
