@@ -134,7 +134,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
               href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
               onClick={handleButtonClickToRecentlyDeleted}
             >
-              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">To recently deleted</Trans>
+              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
             </LinkButton>
           )}
           {folderDTO && <FolderActionsButton folder={folderDTO} />}

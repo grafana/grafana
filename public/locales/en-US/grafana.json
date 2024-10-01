@@ -323,7 +323,7 @@
       "new-folder-name-required-phrase": "Folder name is required."
     },
     "actions": {
-      "button-to-recently-deleted": "To recently deleted"
+      "button-to-recently-deleted": "Recently deleted"
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
