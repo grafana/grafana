@@ -32,14 +32,14 @@ var (
 			Description:  "This will use a webworker thread to processes events rather than the main thread",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaAppPlatformSquad,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:         "queryOverLive",
 			Description:  "Use Grafana Live WebSocket to execute backend queries",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaAppPlatformSquad,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:              "panelTitleSearch",
@@ -67,9 +67,10 @@ var (
 		{
 			Name:         "publicDashboardsScene",
 			Description:  "Enables public dashboard rendering using scenes",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaSharingSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:        "lokiExperimentalStreaming",
@@ -888,23 +889,26 @@ var (
 		{
 			Name:         "dashboardSceneForViewers",
 			Description:  "Enables dashboard rendering using Scenes for viewer roles",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSceneSolo",
 			Description:  "Enables rendering dashboards using scenes for solo panels",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "panelFilterVariable",
@@ -1404,6 +1408,13 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
+			Name:         "alertingPrometheusRulesPrimary",
+			Description:  "Uses Prometheus rules as the primary source of truth for ruler-enabled data sources",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "singleTopNav",
 			Description:  "Unifies the top search bar and breadcrumb bar into one",
 			Stage:        FeatureStageExperimental,
@@ -1460,6 +1471,13 @@ var (
 			HideFromDocs: true,
 		},
 		{
+			Name:         "alertingQueryAndExpressionsStepMode",
+			Description:  "Enables step mode for alerting queries and expressions",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+		},
+		{
 			Name:              "improvedExternalSessionHandling",
 			Description:       "Enable improved support for external sessions in Grafana",
 			Stage:             FeatureStageExperimental,
@@ -1471,6 +1489,12 @@ var (
 			Name:        "useSessionStorageForRedirection",
 			Description: "Use session storage for handling the redirection after login",
 			Stage:       FeatureStagePublicPreview,
+			Owner:       identityAccessTeam,
+		},
+		{
+			Name:        "rolePickerDrawer",
+			Description: "Enables the new role picker drawer design",
+			Stage:       FeatureStageExperimental,
 			Owner:       identityAccessTeam,
 		},
 	}

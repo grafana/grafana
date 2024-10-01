@@ -6,7 +6,9 @@ import {
   useCreateContactPoint,
   useUpdateContactPoint,
 } from 'app/features/alerting/unified/components/contact-points/useContactPoints';
+import { showManageContactPointPermissions } from 'app/features/alerting/unified/components/contact-points/utils';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { canEditEntity } from 'app/features/alerting/unified/utils/k8s/utils';
 import {
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
@@ -121,7 +123,9 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
     }
   };
 
-  const isEditable = !readOnly && !contactPoint?.provisioned;
+  const isEditable = Boolean(
+    (!readOnly || (contactPoint && canEditEntity(contactPoint))) && !contactPoint?.provisioned
+  );
   const isTestable = !readOnly;
 
   if (isLoadingNotifiers || isLoadingOnCallIntegration) {
@@ -150,6 +154,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       {contactPoint?.provisioned && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
 
       <ReceiverForm<GrafanaChannelValues>
+        contactPointId={contactPoint?.id}
         isEditable={isEditable}
         isTestable={isTestable}
         onSubmit={onSubmit}
@@ -160,6 +165,9 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
         defaultItem={{ ...defaultChannelValues }}
         commonSettingsComponent={GrafanaCommonChannelSettings}
         customValidators={{ [ReceiverTypes.OnCall]: onCallFormValidators }}
+        canManagePermissions={
+          editMode && contactPoint && showManageContactPointPermissions(GRAFANA_RULES_SOURCE_NAME, contactPoint)
+        }
       />
       <TestContactPointModal
         onDismiss={() => setTestChannelValues(undefined)}

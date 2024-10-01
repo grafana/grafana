@@ -108,7 +108,18 @@
     },
     "contact-point": "",
     "contact-points": {
+      "create": "",
+      "delete-reasons": {
+        "heading": "",
+        "no-permissions": "",
+        "policies": "",
+        "provisioned": "",
+        "rules": ""
+      },
       "delivery-duration": "",
+      "empty-state": {
+        "title": ""
+      },
       "last-delivery-attempt": "",
       "last-delivery-failed": "",
       "no-delivery-attempts": "",
@@ -118,7 +129,8 @@
         "parse-mode-warning-body": "",
         "parse-mode-warning-title": ""
       },
-      "used-by_other": ""
+      "used-by_other": "",
+      "used-by-rules_other": ""
     },
     "contactPointFilter": {
       "label": ""
@@ -140,6 +152,10 @@
           "title": ""
         }
       }
+    },
+    "manage-permissions": {
+      "button": "",
+      "title": ""
     },
     "mute_timings": {
       "error-loading": {
@@ -212,6 +228,12 @@
       "paused": "",
       "recording-rule": ""
     },
+    "rule-viewer": {
+      "prometheus-consistency-check": {
+        "alert-message": "",
+        "alert-title": ""
+      }
+    },
     "rules": {
       "add-rule": {
         "success": ""
@@ -241,6 +263,12 @@
         "state": ""
       },
       "save-query": ""
+    },
+    "simpleCondition": {
+      "alertCondition": "",
+      "ofQuery": {
+        "To": ""
+      }
     }
   },
   "annotations": {
@@ -1736,6 +1764,9 @@
       "subtitle": "使用服务帐户在 Grafana 中运行自动化工作负载",
       "title": "服务帐户"
     },
+    "setup-guide": {
+      "title": ""
+    },
     "shared-dashboard": {
       "subtitle": "",
       "title": ""
@@ -1827,6 +1858,9 @@
       "server-discovery-modal-close": "",
       "server-discovery-modal-loading": "",
       "server-discovery-modal-submit": ""
+    },
+    "login": {
+      "error": ""
     }
   },
   "panel": {
@@ -1908,13 +1942,16 @@
         "button": "",
         "cloud-update-message": "",
         "error": "",
+        "error-status-text": "",
         "header": "",
         "installed-header": "",
         "modal-confirmation": "",
         "modal-dismiss": "",
+        "modal-in-progress": "",
         "modal-title": "",
         "name-header": "",
-        "update-header": ""
+        "update-header": "",
+        "update-status-text": ""
       }
     },
     "details": {
