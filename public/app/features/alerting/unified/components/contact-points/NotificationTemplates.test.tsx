@@ -2,6 +2,7 @@ import { render, screen, within } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
+import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../../mockApi';
@@ -75,13 +76,7 @@ describe('NotificationTemplates', () => {
   });
 
   describe('k8s API', () => {
-    beforeAll(() => {
-      config.featureToggles.alertingApiServer = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.alertingApiServer = false;
-    });
+    testWithFeatureToggles(['alertingApiServer']);
 
     it('Should render templates table with the correct rows', async () => {
       renderWithProvider();
