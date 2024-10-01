@@ -114,7 +114,7 @@ For information about recent improvements to the reporting UI, refer to [Grafana
 
 ## Access control
 
-When [RBAC](ref:rbac) is enabled, you need to have the relevant [Permissions][ref:permission] to create and manage reports.
+When [RBAC](ref:rbac) is enabled, you need to have the relevant [Permissions](ref:permission) to create and manage reports.
 
 ## Create or update a report
 
