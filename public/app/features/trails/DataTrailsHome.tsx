@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Trans } from 'react-i18next';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -34,39 +34,40 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
   public constructor(state: DataTrailsHomeState) {
     // need to declare state in the constructor
     super(state);
-
-    this.addActivationHandler(this._onActivate.bind(this)); // calling the onActivate (have to use bind and pass this to it)
+    this._updateRecentExplorations()
+    // this.addActivationHandler(this._onActivate.bind(this)); // calling the onActivate (have to use bind and pass this to it)
   }
-  private _onActivate() {
+  private _updateRecentExplorations() {
+    console.log("inside _updateRecentExplorations")
     // everything in here to set up the state
     // where we make the list of recent explorations
     // say what type to type the array
-    if (this.state.recentExplorations === undefined) {
-      // if it's never defined before
-      const recentExplorations = getTrailStore().recent.map((trail, index) => {
-        // store data into recentExplorations
-        const resolvedTrail = trail.resolve();
-        const state: RecentExplorationState = {
-          metric: resolvedTrail.state.metric,
-          createdAt: resolvedTrail.state.createdAt,
-          $timeRange: resolvedTrail.state.$timeRange,
-        };
-        const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, resolvedTrail); // sceneGraph is a bunch of utility methods that lets you get things from graph of scene objects that something belongs to
-        // resolvedTrail is what we want to show in the box,
-        if (filtersVariable instanceof AdHocFiltersVariable) {
-          console.log('in filtersVariable if statement!!!');
-          state.filters = filtersVariable.state.filters;
-        }
-        console.log('after if statement, filtersVariable: ', filtersVariable);
-        const datasourceVariable = sceneGraph.lookupVariable(VAR_DATASOURCE, resolvedTrail);
-        // is this object you gave me an instance of DAtaSourceVariable
-        if (datasourceVariable instanceof DataSourceVariable) {
-          state.datasource = datasourceVariable?.state.value.toString();
-        }
-        return new RecentExplorationScene(state);
-      });
-      this.setState({ recentExplorations }); // passing recentExplorations from ln 42 into the state, which will update the variable into line 29
-    }
+    // if (this.state.recentExplorations === undefined) {
+    // if it's never defined before
+    const recentExplorations = getTrailStore().recent.map((trail, index) => {
+      // store data into recentExplorations
+      const resolvedTrail = trail.resolve();
+      const state: RecentExplorationState = {
+        metric: resolvedTrail.state.metric,
+        createdAt: resolvedTrail.state.createdAt,
+        $timeRange: resolvedTrail.state.$timeRange,
+      };
+      const filtersVariable = sceneGraph.lookupVariable(VAR_FILTERS, resolvedTrail); // sceneGraph is a bunch of utility methods that lets you get things from graph of scene objects that something belongs to
+      // resolvedTrail is what we want to show in the box,
+      if (filtersVariable instanceof AdHocFiltersVariable) {
+        console.log('in filtersVariable if statement!!!');
+        state.filters = filtersVariable.state.filters;
+      }
+      console.log('after if statement, filtersVariable: ', filtersVariable);
+      const datasourceVariable = sceneGraph.lookupVariable(VAR_DATASOURCE, resolvedTrail);
+      // is this object you gave me an instance of DAtaSourceVariable
+      if (datasourceVariable instanceof DataSourceVariable) {
+        state.datasource = datasourceVariable?.state.value.toString();
+      }
+      return new RecentExplorationScene(state);
+    });
+    this.setState({ recentExplorations });
+    // }
   }
 
   // CB funcs we pass into components; convention for react, when doing an event CB func (event handler func? e.g., onClick, onChange, on...) which means it's a CB func we pass into a component. safe to update state in these funcs bc they're not always being called. only called when user interacts w the component
@@ -107,6 +108,12 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     };
 
     const { recentExplorations } = model.useState(); // current state list of recent explorations in scene format, we want to iterate over it with map
+
+    const storeLastChanged = getTrailStore().lastModified;
+    useEffect(() => {
+      console.log("inside useEffect")
+      model._updateRecentExplorations()
+    }, [model, storeLastChanged])
 
     // current/old code: if there are no recent trails, show metrics select page (all metrics)
     // probably need to change this logic to - if there are recent trails, show the sparklines, etc
@@ -177,7 +184,7 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
               // make sure this element is in the last extra group
               const isInLastGroup = truePosition - (groups * 3) < 3 && truePosition - (groups * 3) >= 1;
               // let the world know!
-              console.log("isInLastGroup", isInLastGroup, recent);
+              // console.log("isInLastGroup", isInLastGroup, recent);
               return (
                 // when there is no remainder, use normal trailCard style
                 <div key={index} className={isInLastGroup ? styles.remainderTrailCard : styles.trailCard}>
