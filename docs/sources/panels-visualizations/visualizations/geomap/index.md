@@ -644,13 +644,9 @@ Displays attribution for basemap layers.
 
 #### Show scale
 
-Displays scale information in the bottom left corner.
+Displays scale information in the bottom left corner in meters (m) or kilometers (km).
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-scale-9-1-0.png" max-width="1200px" alt="Geomap panel scale" >}}
-
-{{% admonition type="note" %}}
-Currently only displays units in [m]/[km].
-{{% /admonition %}}
 
 #### Show measure tools
 
@@ -662,9 +658,7 @@ Displays measure tools in the upper right corner. Measurements appear only when 
 - **Continue clicking** to continue measurement
 - **Double-click** to end measurement
 
-{{% admonition type="note" %}}
 When you change measurement type or units, the previous measurement is removed from the map. If the control is closed and then re-opened, the most recent measurement is displayed. A measurement can be modified by clicking and dragging on it.
-{{% /admonition %}}
 
 ##### Length
 
