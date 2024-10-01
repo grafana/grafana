@@ -73,7 +73,7 @@ If you want to learn more, in detail, about all the improvements we've made, don
 
 {{< youtube id="kcKwBhvrsHc" >}}
 
-[Documentation](https://grafana.com/docs/grafana/latest/dashboards/)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/)
 
 ## Dashboards and visualizations
 
@@ -133,7 +133,41 @@ When you set up a binary operation calculation, there's a new **All number field
 
 {{< figure src="/media/docs/grafana/transformations/screenshot-grafana-11-3-all-number-fields-binary-operation.png" alt="Binary operation calculation being applied to all number fields" >}}
 
-[Documentation](https://grafana.com/docs/grafana/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation)
+
+## Alerting
+
+### Simplified query section for alert rule creation
+
+<!-- Sonia Aguilar -->
+
+_Generally available in all editions of Grafana_
+
+Introduces a simplified version of the query and alert conditions step for creating Grafana-managed alert rules. The default options streamline rule creation with a cleaner header and a single query and condition. For more complex rules, switch to advanced options to add multiple queries and expressions.
+
+This feature is rolling out to Grafana Cloud over the next couple of weeks.
+
+Grafana Enterprise and OSS:
+
+To use this feature, enable the `alertingQueryAndExpressionsStepMode` feature toggle.
+
+{{< figure src="/media/docs/alerting/simple-query-form.png" alt="Image shows the alert creation form in simple mode" >}}
+
+[Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/)
+
+## Data sources
+
+### GitHub App authentication for the GitHub data source
+
+<!-- #grafana-oss-big-tent -->
+
+_Generally available in all editions of Grafana_
+
+You can now authenticate the GitHub data source using a GitHub App, providing an alternative to personal access tokens (PATs). GitHub App authentication offers enhanced security by granting more granular permissions, reducing the risk of over-permissioning.
+
+For more information, refer to the [GitHub data source documentation](https://grafana.com/docs/plugins/grafana-github-datasource/latest/setup/token/#using-github-app-authentication) for detailed instructions on setting up GitHub App authentication.
+
+[Documentation](https://grafana.com/docs/plugins/grafana-github-datasource/latest/)
 
 ## OnCall
 
