@@ -2600,6 +2600,12 @@
             "name": "uid",
             "in": "path",
             "required": true
+          },
+          {
+            "type": "string",
+            "description": "Sort with value latest to return results sorted in descending order.",
+            "name": "sort",
+            "in": "query"
           }
         ],
         "responses": {
@@ -16868,6 +16874,9 @@
         "message": {
           "type": "string"
         },
+        "name": {
+          "type": "string"
+        },
         "refId": {
           "type": "string"
         },
@@ -16886,7 +16895,8 @@
           "enum": [
             "DASHBOARD",
             "DATASOURCE",
-            "FOLDER"
+            "FOLDER",
+            "LIBRARY_ELEMENT"
           ]
         }
       }
