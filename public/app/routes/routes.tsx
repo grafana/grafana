@@ -1,4 +1,5 @@
-import { Redirect, RouteComponentProps } from 'react-router-dom';
+import { RouteComponentProps } from 'react-router-dom';
+import { Navigate } from 'react-router-dom-v5-compat';
 
 import { isTruthy } from '@grafana/data';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
@@ -108,23 +109,23 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: DATASOURCES_ROUTES.List,
-      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSources} />,
+      component: () => <Navigate to={CONNECTIONS_ROUTES.DataSources} />,
     },
     {
       path: DATASOURCES_ROUTES.Edit,
       component: (props: RouteComponentProps<{ uid: string }>) => (
-        <Redirect to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', props.match.params.uid)} />
+        <Navigate to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', props.match.params.uid)} />
       ),
     },
     {
       path: DATASOURCES_ROUTES.Dashboards,
       component: (props: RouteComponentProps<{ uid: string }>) => (
-        <Redirect to={CONNECTIONS_ROUTES.DataSourcesDashboards.replace(':uid', props.match.params.uid)} />
+        <Navigate to={CONNECTIONS_ROUTES.DataSourcesDashboards.replace(':uid', props.match.params.uid)} />
       ),
     },
     {
       path: DATASOURCES_ROUTES.New,
-      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSourcesNew} />,
+      component: () => <Navigate to={CONNECTIONS_ROUTES.DataSourcesNew} />,
     },
     {
       path: '/datasources/correlations',
@@ -220,7 +221,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org/users',
       // Org users page has been combined with admin users
-      component: () => <Redirect to={'/admin/users'} />,
+      component: () => <Navigate to={'/admin/users'} />,
     },
     {
       path: '/org/users/invite',
@@ -293,7 +294,7 @@ export function getAppRoutes(): RouteDescriptor[] {
               () =>
                 import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/AuthProvidersListPage')
             )
-          : () => <Redirect to="/admin" />,
+          : () => <Navigate to="/admin" />,
     },
     {
       path: '/admin/authentication/ldap',
@@ -310,7 +311,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         ? SafeDynamicImport(
             () => import(/* webpackChunkName: "AdminAuthentication" */ '../features/auth-config/ProviderConfigPage')
           )
-        : () => <Redirect to="/admin" />,
+        : () => <Navigate to="/admin" />,
     },
     {
       path: '/admin/settings',
@@ -356,7 +357,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         ? SafeDynamicImport(
             () => import(/* webpackChunkName: "AdminFeatureTogglesPage" */ 'app/features/admin/AdminFeatureTogglesPage')
           )
-        : () => <Redirect to="/admin" />,
+        : () => <Navigate to="/admin" />,
     },
     {
       path: '/admin/storage/:path*',
@@ -397,7 +398,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/verify',
       component: !config.verifyEmailEnabled
-        ? () => <Redirect to="/signup" />
+        ? () => <Navigate to="/signup" />
         : SafeDynamicImport(
             () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
           ),
@@ -407,7 +408,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/signup',
       component: config.disableUserSignUp
-        ? () => <Redirect to="/login" />
+        ? () => <Navigate to="/login" />
         : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
       pageClass: 'login-page',
       chromeless: true,
