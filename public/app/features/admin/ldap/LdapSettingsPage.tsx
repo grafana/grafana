@@ -225,7 +225,7 @@ export const LdapSettingsPage = () => {
    * Button's Actions
    */
   const submitAndEnableLdapSettings = async (payload: LdapPayload) => {
-    payload.settings.enabled = true;
+    payload.settings.enabled = !payload.settings.enabled;
     await putPayload(payload);
     reportInteraction('authentication_ldap_enabled');
   };
@@ -388,9 +388,18 @@ export const LdapSettingsPage = () => {
                 </Box>
                 <Box display="flex" gap={2} marginTop={5}>
                   <Stack alignItems="center" gap={2}>
-                    <Button type="submit">
-                      <Trans i18nKey="ldap-settings-page.buttons-section.save-and-enable-button">Save and enable</Trans>
-                    </Button>
+                    {!watch('settings.enabled') && (
+                      <Button type="submit">
+                        <Trans i18nKey="ldap-settings-page.buttons-section.save-and-enable-button">
+                          Save and enable
+                        </Trans>
+                      </Button>
+                    )}
+                    {watch('settings.enabled') && (
+                      <Button variant="secondary" type="submit">
+                        <Trans i18nKey="ldap-settings-page.buttons-section.disable-button">Disable</Trans>
+                      </Button>
+                    )}
                     <Button variant="secondary" onClick={saveForm}>
                       <Trans i18nKey="ldap-settings-page.buttons-section.save-button">Save</Trans>
                     </Button>
