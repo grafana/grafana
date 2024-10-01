@@ -18,11 +18,11 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
   alerting?: boolean;
-  hideName?: boolean;
+  hideRefId?: boolean;
 }
 
 export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQuery>) => {
-  const { query, queries, onChange, collapsedText, renderExtras, hidden, hideName = false } = props;
+  const { query, queries, onChange, collapsedText, renderExtras, hidden, hideRefId = false } = props;
 
   const styles = useStyles2(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -86,7 +86,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
   return (
     <>
       <div className={styles.wrapper}>
-        {!hideName && !isEditing && (
+        {!hideRefId && !isEditing && (
           <button
             className={styles.queryNameWrapper}
             aria-label={selectors.components.QueryEditorRow.title(query.refId)}
@@ -100,7 +100,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
           </button>
         )}
 
-        {!hideName && isEditing && (
+        {!hideRefId && isEditing && (
           <>
             <Input
               type="text"
