@@ -1097,7 +1097,7 @@
   },
   "ldap-drawer": {
     "attributes-section": {
-      "description": "Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
+      "description": "Specify the LDAP attributes that map to the user's given name, surname, and email address, ensuring the application correctly retrieves and displays user information.",
       "email-label": "Email",
       "label": "Attributes",
       "member-of-label": "Member Of",
@@ -1205,12 +1205,6 @@
       "discard-button": "Discard",
       "save-and-enable-button": "Save and enable",
       "save-button": "Save"
-    },
-    "discard-modal": {
-      "cancel-button": "Back to editing",
-      "description": "Are you sure you want to abandon the changes you&lsquo;ve made to the LDAP configuration? All changes will be lost.",
-      "discard-button": "Abandon LDAP",
-      "title": "Leave LDAP configuration?"
     },
     "documentation": "documentation",
     "host": {

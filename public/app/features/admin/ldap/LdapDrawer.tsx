@@ -155,10 +155,7 @@ export const LdapDrawerComponent = ({
       </CollapsableSection>
       <CollapsableSection label={t('ldap-drawer.attributes-section.label', 'Attributes')} isOpen={true}>
         <Text color="secondary">
-          <Trans i18nKey="ldap-drawer.attributes-section.description">
-            Specify the LDAP attributes that map to the user&lsquo;s given name, surname, and email address, ensuring
-            the application correctly retrieves and displays user information.
-          </Trans>
+          {t('ldap-drawer.attributes-section.description', 'Specify the LDAP attributes that map to the user\'s given name, surname, and email address, ensuring the application correctly retrieves and displays user information.')}
         </Text>
         <Field label={t('ldap-drawer.attributes-section.name-label', 'Name')}>
           <Input id={nameId} {...register(`${serverConfig}.attributes.name`)} />
