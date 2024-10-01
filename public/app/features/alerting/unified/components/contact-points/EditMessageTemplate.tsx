@@ -1,5 +1,4 @@
-import { RouteChildrenProps, useParams } from 'react-router-dom';
-// import { useParams } from 'react-router-dom-v5-compat';
+import { useParams } from 'react-router-dom';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
