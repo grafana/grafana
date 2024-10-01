@@ -1006,3 +1006,258 @@ export const IncrementalStorageDataFrameScenarios = {
     },
   },
 };
+
+export const differentDisplayNameFromDS = {
+  first: {
+    dataFrames: [
+      {
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          typeVersion: [0, 1],
+          custom: {
+            resultType: 'matrix',
+          },
+          executedQueryString:
+            'Expr: sum by (org, stackId)(count_over_time(hosted_grafana:grafana_datasource_loki_orgs_stacks_queries:count2m{org=~".*", stackId=~".*"}[5m]))\nStep: 5m0s',
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: {
+              frame: 'time.Time',
+            },
+            config: {
+              interval: 300000,
+            },
+            values: [1726829100000, 1726829400000, 1726829700000],
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: {
+              frame: 'float64',
+            },
+            labels: {
+              org: 'rutgerkerkhoffdevuseast',
+              stackId: '2791',
+            },
+            config: {
+              displayNameFromDS: 'rutgerkerkhoffdevuseast-customLegend',
+            },
+            values: [3, 2, 3],
+            entities: {},
+          },
+        ],
+        length: 3,
+      },
+      {
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          typeVersion: [0, 1],
+          custom: {
+            resultType: 'matrix',
+          },
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: {
+              frame: 'time.Time',
+            },
+            config: {
+              interval: 300000,
+            },
+            values: [1726829100000, 1726829400000, 1726829700000],
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: {
+              frame: 'float64',
+            },
+            labels: {
+              org: 'securityops',
+              stackId: '1533',
+            },
+            config: {
+              displayNameFromDS: 'securityops-customLegend',
+            },
+            values: [3, 2, 3],
+            entities: {},
+          },
+        ],
+        length: 3,
+      },
+      {
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          typeVersion: [0, 1],
+          custom: {
+            resultType: 'matrix',
+          },
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: {
+              frame: 'time.Time',
+            },
+            config: {
+              interval: 300000,
+            },
+            values: [1726829100000, 1726829400000, 1726829700000],
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: {
+              frame: 'float64',
+            },
+            labels: {
+              org: 'stephaniehingtgen',
+              stackId: '3740',
+            },
+            config: {
+              displayNameFromDS: 'stephaniehingtgen-customLegend',
+            },
+            values: [3, 2, 3],
+            entities: {},
+          },
+        ],
+        length: 3,
+      },
+    ],
+  },
+  second: {
+    dataFrames: [
+      {
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          typeVersion: [0, 1],
+          custom: {
+            resultType: 'matrix',
+          },
+          executedQueryString:
+            'Expr: sum by (org, stackId)(count_over_time(hosted_grafana:grafana_datasource_loki_orgs_stacks_queries:count2m{org=~".*", stackId=~".*"}[5m]))\nStep: 5m0s',
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: {
+              frame: 'time.Time',
+            },
+            config: {
+              interval: 300000,
+            },
+            values: [1726829100000, 1726829400000, 1726829700000],
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: {
+              frame: 'float64',
+            },
+            labels: {
+              org: 'rutgerkerkhoffdevuseast',
+              stackId: '2791',
+            },
+            config: {},
+            values: [3, 2, 3],
+            entities: {},
+          },
+        ],
+        length: 3,
+      },
+      {
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          typeVersion: [0, 1],
+          custom: {
+            resultType: 'matrix',
+          },
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: {
+              frame: 'time.Time',
+            },
+            config: {
+              interval: 300000,
+            },
+            values: [1726829100000, 1726829400000, 1726829700000],
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: {
+              frame: 'float64',
+            },
+            labels: {
+              org: 'securityops',
+              stackId: '1533',
+            },
+            config: {},
+            values: [3, 2, 3],
+            entities: {},
+          },
+        ],
+        length: 3,
+      },
+      {
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          typeVersion: [0, 1],
+          custom: {
+            resultType: 'matrix',
+          },
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: {
+              frame: 'time.Time',
+            },
+            config: {
+              interval: 300000,
+            },
+            values: [1726829100000, 1726829400000, 1726829700000],
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: {
+              frame: 'float64',
+            },
+            labels: {
+              org: 'stephaniehingtgen',
+              stackId: '3740',
+            },
+            config: {},
+            values: [3, 2, 3],
+            entities: {},
+          },
+        ],
+        length: 3,
+      },
+    ],
+  },
+};
