@@ -449,13 +449,19 @@ export class PrometheusDatasource
     }
 
     const scopedVars = {
-      __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
+      ...this.getIntervalVars(),
       ...this.getRangeScopedVars(options?.range ?? getDefaultTimeRange()),
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
     return metricFindQuery.process(options?.range ?? getDefaultTimeRange());
+  }
+
+  getIntervalVars() {
+    return {
+      __interval: { text: this.interval, value: this.interval },
+      __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
+    };
   }
 
   getRangeScopedVars(range: TimeRange) {
