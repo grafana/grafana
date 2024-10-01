@@ -79,7 +79,8 @@ func TestIntegrationDashboardServiceZanzana(t *testing.T) {
 
 		// Sync Grafana DB with zanzana (migrate data)
 		zanzanaSyncronizer := migrator.NewZanzanaSynchroniser(zclient, db)
-		zanzanaSyncronizer.Sync(context.Background())
+		err = zanzanaSyncronizer.Sync(context.Background())
+		require.NoError(t, err)
 
 		query := &dashboards.FindPersistedDashboardsQuery{
 			SignedInUser: &user.SignedInUser{
