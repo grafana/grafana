@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Space, Text } from '@grafana/ui';
@@ -23,19 +23,16 @@ export const RestoreModal = ({
   isLoading,
   ...props
 }: RestoreModalProps) => {
-  const [restoreTarget, setRestoreTarget] = useState<string>();
+  const [restoreTarget, setRestoreTarget] = useState<string | undefined>(() => {
+    // Preselect the restore target if all selected dashboards come from the same folder
+    return dashboardOrigin.length > 0 &&
+      dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0])
+      ? dashboardOrigin[0]
+      : undefined;
+  });
   const numberOfDashboards = selectedDashboards.length;
 
-  useEffect(() => {
-    // restoreTarget is used by the folder picker to preselect a folder and therefore enable the confirm button
-    // if there is only one dashboard selected or all selected dashboards come from the same folder
-    if (
-      dashboardOrigin.length > 0 &&
-      dashboardOrigin.every((originalLocation) => originalLocation === dashboardOrigin[0])
-    ) {
-      setRestoreTarget(dashboardOrigin[0]);
-    }
-  }, [dashboardOrigin, selectedDashboards]);
+  console.info('restoreTarget', restoreTarget);
 
   const onRestore = async () => {
     reportInteraction('grafana_restore_confirm_clicked', {
@@ -48,6 +45,11 @@ export const RestoreModal = ({
       onDismiss();
     }
   };
+
+  const handleFolderPickerChange = useCallback((folderUID: string) => {
+    console.log('handle folder picker change', { folderUID });
+    setRestoreTarget(folderUID);
+  }, []);
 
   return (
     <ConfirmModal
@@ -65,7 +67,7 @@ export const RestoreModal = ({
             </Trans>
           </Text>
           <Space v={1} />
-          <FolderPicker onChange={setRestoreTarget} value={restoreTarget} />
+          <FolderPicker onChange={handleFolderPickerChange} value={restoreTarget} />
         </>
         // TODO: replace by list of dashboards (list up to 5 dashboards) or number (from 6 dashboards)?
       }
